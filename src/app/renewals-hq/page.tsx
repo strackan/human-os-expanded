@@ -7,7 +7,9 @@ import {
   HandRaisedIcon, 
   CurrencyDollarIcon,
   ChevronDownIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ClockIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const renewalStages = [
@@ -17,6 +19,13 @@ const renewalStages = [
   { id: 4, name: 'Approval', status: 'upcoming' },
   { id: 5, name: 'Closed', status: 'upcoming' },
 ] as const;
+
+const snoozeOptions = [
+  { label: '1 hour', value: '1h' },
+  { label: '1 day', value: '1d' },
+  { label: '1 week', value: '1w' },
+  { label: 'Custom', value: 'custom' },
+];
 
 const stages = [
   { name: 'Planning', count: 2 },
@@ -36,46 +45,273 @@ const timeFrames = [
   { label: '120d', count: 1 },
 ];
 
+const customerRecords = [
+  {
+    id: 1,
+    name: 'Acme Corporation',
+    arr: '$450,000',
+    renewalDate: 'Aug 15, 2024',
+    daysUntil: 45,
+    exec: 'Sarah Johnson',
+    health: 'Healthy',
+    healthColor: 'green',
+    stages: [
+      { id: 1, name: 'Planning', status: 'complete' },
+      { id: 2, name: 'Outreach', status: 'complete' },
+      { id: 3, name: 'Negotiation', status: 'current' },
+      { id: 4, name: 'Approval', status: 'upcoming' },
+      { id: 5, name: 'Closed', status: 'upcoming' },
+    ]
+  },
+  {
+    id: 2,
+    name: 'Globex Inc.',
+    arr: '$320,000',
+    renewalDate: 'Sep 10, 2024',
+    daysUntil: 70,
+    exec: 'Alex Park',
+    health: 'At Risk',
+    healthColor: 'red',
+    stages: [
+      { id: 1, name: 'Planning', status: 'complete' },
+      { id: 2, name: 'Outreach', status: 'current' },
+      { id: 3, name: 'Negotiation', status: 'upcoming' },
+      { id: 4, name: 'Approval', status: 'upcoming' },
+      { id: 5, name: 'Closed', status: 'upcoming' },
+    ]
+  },
+  {
+    id: 3,
+    name: 'Initech',
+    arr: '$210,000',
+    renewalDate: 'Oct 2, 2024',
+    daysUntil: 90,
+    exec: 'Michael Bolton',
+    health: 'Expansion Ready',
+    healthColor: 'blue',
+    stages: [
+      { id: 1, name: 'Planning', status: 'current' },
+      { id: 2, name: 'Outreach', status: 'upcoming' },
+      { id: 3, name: 'Negotiation', status: 'upcoming' },
+      { id: 4, name: 'Approval', status: 'upcoming' },
+      { id: 5, name: 'Closed', status: 'upcoming' },
+    ]
+  }
+];
+
+type Stage = {
+  id: number;
+  name: string;
+  status: 'complete' | 'current' | 'upcoming';
+};
+
+type Customer = {
+  id: number;
+  name: string;
+  arr: string;
+  renewalDate: string;
+  daysUntil: number;
+  exec: string;
+  health: string;
+  healthColor: string;
+  stages: Stage[];
+};
+
+interface CustomerCardProps {
+  customer: Customer;
+  isTop: boolean;
+  onSnooze: () => void;
+  isSwiping: boolean;
+  style?: React.CSSProperties;
+  index: number;
+}
+
+const CustomerCard: React.FC<CustomerCardProps> = ({ customer, isTop, onSnooze, isSwiping, style, index }) => (
+  <div
+    className={[
+      'bg-white shadow-md rounded-lg px-8 py-6 border border-gray-100 relative transition-all duration-400 ease-in-out w-full',
+      isSwiping ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100',
+      isTop ? '' : 'pointer-events-none select-none',
+      `z-[${10 - index}]`,
+      `top-[${index * 16}px]`,
+      `scale-[${1 - index * 0.04}]`,
+      'absolute',
+    ].join(' ')}
+    aria-label={`Customer card for ${customer.name}`}
+  >
+    {/* Snooze/Skip Icon Button - absolute right, centered vertically with stages */}
+    {isTop && (
+      <button
+        type="button"
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full text-gray-400 hover:bg-gray-100 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 z-10"
+        aria-label="Snooze or skip this action"
+        title="Snooze or skip this action"
+        onClick={onSnooze}
+      >
+        <ClockIcon className="h-6 w-6" />
+      </button>
+    )}
+    <div className="flex flex-col space-y-4">
+      {/* Customer Info Section */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-3">
+          <h2 className="text-3xl font-bold text-gray-900">
+            <span className="text-blue-600">{customer.name}</span>
+          </h2>
+          <div className="space-y-2">
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">Current ARR:</span>
+                <span className="text-lg font-semibold text-gray-900">{customer.arr}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">Renewal Date:</span>
+                <span className="text-lg font-semibold text-gray-900">{customer.renewalDate}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">Days Until Renewal:</span>
+                <span className="text-lg font-semibold text-green-600">{customer.daysUntil}</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">Account Executive:</span>
+                <span className="text-gray-900">{customer.exec}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-gray-500">Customer Health:</span>
+                <span className={`px-2 py-1 rounded-full text-sm font-medium bg-${customer.healthColor}-50 text-${customer.healthColor}-700`}>
+                  {customer.health}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Stages Progress */}
+        <div className="flex items-center space-x-4">
+          {customer.stages.map((stage: Stage, idx: number) => (
+            <div 
+              key={stage.id}
+              className="flex flex-col items-center"
+            >
+              <div className="relative flex items-center">
+                {idx !== 0 && (
+                  <div 
+                    className={`h-0.5 w-8 -ml-4 ${
+                      stage.status === 'upcoming' 
+                        ? 'bg-gray-200' 
+                        : 'bg-blue-500'
+                    }`}
+                  />
+                )}
+                <div 
+                  className={`
+                    w-6 h-6 rounded-full flex items-center justify-center
+                    ${stage.status === 'complete' ? 'bg-blue-500 text-white' : ''}
+                    ${stage.status === 'current' ? 'bg-blue-100 border-2 border-blue-500 text-blue-500' : ''}
+                    ${stage.status === 'upcoming' ? 'bg-gray-100 text-gray-400' : ''}
+                  `}
+                >
+                  {stage.status === 'complete' ? (
+                    <CheckCircleIcon className="w-4 h-4" />
+                  ) : (
+                    <span className="text-xs font-medium">{stage.id}</span>
+                  )}
+                </div>
+              </div>
+              <span 
+                className={`
+                  mt-2 text-xs font-medium whitespace-nowrap
+                  ${stage.status === 'complete' ? 'text-blue-500' : ''}
+                  ${stage.status === 'current' ? 'text-blue-700' : ''}
+                  ${stage.status === 'upcoming' ? 'text-gray-400' : ''}
+                `}
+              >
+                {stage.name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Actions Section */}
+      <div className="flex items-center space-x-4 pt-4">
+        {/* Recommended Action */}
+        <button
+          type="button"
+          className="flex items-center px-4 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        >
+          <HandRaisedIcon className="h-5 w-5 mr-2" />
+          Prepare to Negotiate
+        </button>
+        {/* Other Actions Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            className="flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-haspopup="true"
+            aria-expanded="false"
+            id={`actions-menu-button-${customer.id}`}
+            tabIndex={isTop ? 0 : -1}
+          >
+            More Actions
+            <ChevronDownIcon className="h-5 w-5 ml-2" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const RenewalsHQPage = () => {
-  const [viewMode, setViewMode] = useState<'stage' | 'date'>('stage');
-  const [isActionsOpen, setIsActionsOpen] = useState(false);
+  const [deck, setDeck] = useState(customerRecords);
+  const [swiping, setSwiping] = useState(false);
+
+  const handleSnooze = () => {
+    setSwiping(true);
+    setTimeout(() => {
+      setDeck(d => d.slice(1));
+      setSwiping(false);
+    }, 400);
+  };
 
   return (
     <div className="w-full max-w-7xl mx-auto">
       {/* Local header section */}
-      <div>
-        <header className="bg-white shadow-md rounded-lg px-8 py-6 mb-8 border border-gray-100">
+      <div className="relative">
+        <header
+          className={`bg-white shadow-md rounded-lg px-8 py-6 mb-8 border border-gray-100 relative transition-transform duration-400 ease-in-out min-h-[220px] ${swiping ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
+        >
           <div className="flex flex-col space-y-4">
             {/* Customer Info Section */}
             <div className="flex justify-between items-start">
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold text-gray-900">
-                  <span className="text-blue-600">Acme Corporation</span>
+                  <span className="text-blue-600">{deck[0].name}</span>
                 </h2>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Current ARR:</span>
-                      <span className="text-lg font-semibold text-gray-900">$450,000</span>
+                      <span className="text-lg font-semibold text-gray-900">{deck[0].arr}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Renewal Date:</span>
-                      <span className="text-lg font-semibold text-gray-900">Aug 15, 2024</span>
+                      <span className="text-lg font-semibold text-gray-900">{deck[0].renewalDate}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Days Until Renewal:</span>
-                      <span className="text-lg font-semibold text-green-600">45</span>
+                      <span className="text-lg font-semibold text-green-600">{deck[0].daysUntil}</span>
                     </div>
                   </div>
                   <div className="flex items-center space-x-6">
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Account Executive:</span>
-                      <span className="text-gray-900">Sarah Johnson</span>
+                      <span className="text-gray-900">{deck[0].exec}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="text-gray-500">Customer Health:</span>
-                      <span className="px-2 py-1 rounded-full text-sm font-medium bg-green-50 text-green-700">
-                        Healthy
+                      <span className={`px-2 py-1 rounded-full text-sm font-medium bg-${deck[0].healthColor}-50 text-${deck[0].healthColor}-700`}>
+                        {deck[0].health}
                       </span>
                     </div>
                   </div>
@@ -84,7 +320,7 @@ const RenewalsHQPage = () => {
 
               {/* Stages Progress */}
               <div className="flex items-center space-x-4">
-                {renewalStages.map((stage, index) => (
+                {deck[0].stages.map((stage, index) => (
                   <div 
                     key={stage.id}
                     className="flex flex-col items-center"
@@ -144,7 +380,6 @@ const RenewalsHQPage = () => {
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => setIsActionsOpen(!isActionsOpen)}
                   className="flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   aria-haspopup="true"
                   aria-expanded="false"
@@ -153,51 +388,12 @@ const RenewalsHQPage = () => {
                   More Actions
                   <ChevronDownIcon className="h-5 w-5 ml-2" />
                 </button>
-
-                {isActionsOpen && (
-                  <div 
-                    className="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="actions-menu-button"
-                  >
-                    <div className="py-1">
-                      <span
-                        role="menuitem"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 opacity-50 cursor-not-allowed"
-                        aria-disabled="true"
-                      >
-                        <DocumentTextIcon className="h-5 w-5 mr-3" />
-                        Review Contract
-                      </span>
-                      <button
-                        role="menuitem"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                        onClick={() => {
-                          // Handle email action
-                          setIsActionsOpen(false);
-                        }}
-                      >
-                        <EnvelopeIcon className="h-5 w-5 mr-3" />
-                        Send an Email
-                      </button>
-                      <span
-                        role="menuitem"
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 opacity-50 cursor-not-allowed"
-                        aria-disabled="true"
-                      >
-                        <CurrencyDollarIcon className="h-5 w-5 mr-3" />
-                        Create a Quote
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </header>
       </div>
-      
+
       {/* Main content container */}
       <div className="flex gap-8 mt-8">
         {/* Target Accounts Section - 60% */}

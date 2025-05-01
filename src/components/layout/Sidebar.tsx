@@ -89,7 +89,7 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               onClick={() => onToggle(!isCollapsed)}
               className="rounded-lg p-2 text-gray-400 hover:bg-[#3D3A63] hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] transition-colors"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={!isCollapsed}
+              aria-expanded={!isCollapsed ? "true" : "false"}
               tabIndex={0}
             >
               {isCollapsed ? (
