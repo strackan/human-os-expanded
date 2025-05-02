@@ -9,8 +9,13 @@ import {
   ChevronDownIcon,
   CheckCircleIcon,
   ClockIcon,
-  XMarkIcon
+  XMarkIcon,
+  ChatBubbleLeftRightIcon,
+  UserGroupIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline';
+import ChatModal from '@/components/ChatModal';
+import { Customer, Stage } from '@/types';
 
 const renewalStages = [
   { id: 1, name: 'Planning', status: 'complete' },
@@ -99,24 +104,6 @@ const customerRecords: Customer[] = [
   }
 ];
 
-type Stage = {
-  id: number;
-  name: string;
-  status: 'complete' | 'current' | 'upcoming';
-};
-
-type Customer = {
-  id: number;
-  name: string;
-  arr: string;
-  renewalDate: string;
-  daysUntil: number;
-  exec: string;
-  health: string;
-  healthColor: string;
-  stages: Stage[];
-};
-
 interface CustomerCardProps {
   customer: Customer;
   isTop: boolean;
@@ -126,6 +113,7 @@ interface CustomerCardProps {
   index: number;
   cardNumber: number;
   currentIndex: number;
+  onStartDiscussion: () => void;
 }
 
 const CustomerCard: React.FC<CustomerCardProps> = ({
@@ -137,11 +125,11 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
   index,
   cardNumber,
   currentIndex,
+  onStartDiscussion
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -156,7 +144,6 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [dropdownOpen]);
 
-  // Use cardNumber for button logic
   let actionLabel = "Prepare to Negotiate";
   let ActionIcon = HandRaisedIcon;
 
@@ -175,7 +162,6 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
         isSwiping ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100',
         isTop ? 'z-30' : 'pointer-events-none select-none',
         `absolute top-[${index * 16}px]`,
-        `transform-gpu scale-[${1 - index * 0.04}] origin-top`,
       ].join(' ')}
       style={{
         ...style,
@@ -236,43 +222,37 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
           </div>
           {/* Stages Progress */}
           <div className="flex items-center space-x-4">
-            {customer.stages.map((stage: Stage, idx: number) => (
+            {customer.stages.map((stage, idx) => (
               <div 
                 key={stage.id}
                 className="flex flex-col items-center"
               >
-                <div className="relative flex items-center">
-                  {idx !== 0 && (
+                <div className="flex items-center">
+                  {stage.status === 'complete' ? (
+                    <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                  ) : stage.status === 'current' ? (
+                    <div className="h-6 w-6 rounded-full border-2 border-blue-500 bg-blue-100" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full border-2 border-gray-300" />
+                  )}
+                  {idx < customer.stages.length - 1 && (
                     <div 
-                      className={`h-0.5 w-8 -ml-4 ${
-                        stage.status === 'upcoming' 
-                          ? 'bg-gray-200' 
-                          : 'bg-blue-500'
+                      className={`h-0.5 w-8 ${
+                        stage.status === 'complete' 
+                          ? 'bg-green-500' 
+                          : 'bg-gray-300'
                       }`}
                     />
                   )}
-                  <div 
-                    className={`
-                      w-6 h-6 rounded-full flex items-center justify-center
-                      ${stage.status === 'complete' ? 'bg-blue-500 text-white' : ''}
-                      ${stage.status === 'current' ? 'bg-blue-100 border-2 border-blue-500 text-blue-500' : ''}
-                      ${stage.status === 'upcoming' ? 'bg-gray-100 text-gray-400' : ''}
-                    `}
-                  >
-                    {stage.status === 'complete' ? (
-                      <CheckCircleIcon className="w-4 h-4" />
-                    ) : (
-                      <span className="text-xs font-medium">{stage.id}</span>
-                    )}
-                  </div>
                 </div>
                 <span 
-                  className={`
-                    mt-2 text-xs font-medium whitespace-nowrap
-                    ${stage.status === 'complete' ? 'text-blue-500' : ''}
-                    ${stage.status === 'current' ? 'text-blue-700' : ''}
-                    ${stage.status === 'upcoming' ? 'text-gray-400' : ''}
-                  `}
+                  className={`mt-2 text-sm ${
+                    stage.status === 'complete'
+                      ? 'text-green-600'
+                      : stage.status === 'current'
+                      ? 'text-blue-600 font-medium'
+                      : 'text-gray-500'
+                  }`}
                 >
                   {stage.name}
                 </span>
@@ -290,14 +270,23 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
             <ActionIcon className="h-5 w-5 mr-2" />
             {actionLabel}
           </button>
+          {/* Add Discuss button next to More Actions */}
+          <button
+            type="button"
+            className="flex items-center px-4 py-2.5 bg-white border-2 border-blue-500 text-blue-600 rounded-lg font-medium hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            onClick={onStartDiscussion}
+          >
+            <SparklesIcon className="h-5 w-5 mr-2" />
+            Discuss with AI
+          </button>
           {/* More Actions Dropdown */}
           <div className="relative inline-block text-left" ref={dropdownRef}>
             <button
               type="button"
               className="flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              aria-expanded={dropdownOpen}
-              aria-haspopup="true"
+              aria-expanded={dropdownOpen ? "true" : "false"}
+              aria-haspopup="menu"
               id={`actions-menu-button-${customer.id}`}
             >
               More Actions
@@ -315,34 +304,23 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
                   <button
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => { setDropdownOpen(false); alert('Send Email'); }}
                   >
-                    <EnvelopeIcon className="h-4 w-4 mr-2" />
+                    <EnvelopeIcon className="mr-3 h-5 w-5 text-gray-400" />
                     Send Email
                   </button>
                   <button
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => { setDropdownOpen(false); alert('Review Contract'); }}
                   >
-                    <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Review Contract
+                    <DocumentTextIcon className="mr-3 h-5 w-5 text-gray-400" />
+                    View Contract
                   </button>
                   <button
                     className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     role="menuitem"
-                    onClick={() => { setDropdownOpen(false); alert('Generate Quote'); }}
                   >
-                    <CurrencyDollarIcon className="h-4 w-4 mr-2" />
+                    <CurrencyDollarIcon className="mr-3 h-5 w-5 text-gray-400" />
                     Generate Quote
-                  </button>
-                  <button
-                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    role="menuitem"
-                    onClick={() => { setDropdownOpen(false); alert('Send Invoice'); }}
-                  >
-                    <DocumentTextIcon className="h-4 w-4 mr-2" />
-                    Send Invoice
                   </button>
                 </div>
               </div>
@@ -357,22 +335,24 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
 const RenewalsHQPage = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
-  const [leftPaneWidth, setLeftPaneWidth] = useState(60); // Default to 60%
+  const [leftPaneWidth, setLeftPaneWidth] = useState(60);
+  const [showChat, setShowChat] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const isDragging = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSnooze = () => {
     setIsExiting(true);
-    // Use requestAnimationFrame for smoother animation
     requestAnimationFrame(() => {
       setTimeout(() => {
-        setCurrentIndex((i) => (i + 1) % customerRecords.length);
         setIsExiting(false);
+        setCurrentIndex((prevIndex) => (prevIndex + 1) % customerRecords.length);
       }, 500);
     });
   };
 
   const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     isDragging.current = true;
     document.body.style.cursor = 'col-resize';
     document.addEventListener('mousemove', handleResize);
@@ -381,17 +361,15 @@ const RenewalsHQPage = () => {
 
   const handleResize = useCallback((e: MouseEvent) => {
     if (!isDragging.current || !containerRef.current) return;
-    
+
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
-    
-    // Use requestAnimationFrame for smoother resizing
+
     requestAnimationFrame(() => {
       const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
       const clampedWidth = Math.min(Math.max(newWidth, 20), 80);
       setLeftPaneWidth(Math.round(clampedWidth));
       
-      // Add visual feedback class during resize
       container.classList.add('resizing');
     });
   }, []);
@@ -415,8 +393,13 @@ const RenewalsHQPage = () => {
     };
   }, [handleResize, stopResize]);
 
+  const handleStartDiscussion = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowChat(true);
+  };
+
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full max-w-screen-2xl mx-auto px-4 py-8">
       <div className="relative min-h-[220px] mb-8 h-[260px] overflow-visible">
         <CustomerCard
           customer={customerRecords[currentIndex]}
@@ -426,6 +409,7 @@ const RenewalsHQPage = () => {
           index={0}
           cardNumber={currentIndex}
           currentIndex={currentIndex}
+          onStartDiscussion={() => handleStartDiscussion(customerRecords[currentIndex])}
         />
       </div>
 
@@ -603,7 +587,7 @@ const RenewalsHQPage = () => {
             <div className="flex gap-4">
               <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center flex-shrink-0">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </div>
               <div className="flex-1">
@@ -721,6 +705,16 @@ const RenewalsHQPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={showChat}
+        onClose={() => {
+          setShowChat(false);
+          setSelectedCustomer(null);
+        }}
+        customer={selectedCustomer}
+      />
     </div>
   );
 };
