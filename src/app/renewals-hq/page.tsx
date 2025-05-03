@@ -285,7 +285,7 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
               type="button"
               className="flex items-center px-4 py-2.5 bg-white border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              aria-expanded={dropdownOpen ? "true" : "false"}
+              aria-expanded={dropdownOpen ? "true" : "false" as "true" | "false"}
               aria-haspopup="menu"
               id={`actions-menu-button-${customer.id}`}
             >
