@@ -285,7 +285,7 @@ const ConstraintsTab = () => {
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Simulation Constraints</h2>
       {/* Add constraints configuration UI here */}
       <div className="text-gray-600">Constraints configuration coming soon...</div>
-    </div>
+      </div>
   );
 };
 
@@ -295,7 +295,7 @@ const ResultsTab = () => {
       <h2 className="text-xl font-semibold text-gray-800 mb-6">Simulation Results</h2>
       {/* Add results visualization UI here */}
       <div className="text-gray-600">Results visualization coming soon...</div>
-    </div>
+            </div>
   );
 };
 

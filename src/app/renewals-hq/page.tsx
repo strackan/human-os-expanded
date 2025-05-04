@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import {
+import { 
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronDownIcon,
@@ -100,11 +100,11 @@ const StageTimeline: React.FC<{ stages: any[] }> = ({ stages }) => (
             <div
               className={`h-0.5 w-8 ${
                 stage.status === "complete" ? "bg-green-500" : "bg-gray-300"
-              }`}
-            />
-          )}
-        </div>
-        <span
+                    }`}
+                  />
+                )}
+              </div>
+              <span 
           className={`mt-2 text-sm ${
             stage.status === "complete"
               ? "text-green-600"
@@ -112,12 +112,12 @@ const StageTimeline: React.FC<{ stages: any[] }> = ({ stages }) => (
               ? "text-blue-600 font-medium"
               : "text-gray-500"
           }`}
-        >
-          {stage.name}
-        </span>
-      </div>
-    ))}
-  </div>
+              >
+                {stage.name}
+              </span>
+            </div>
+          ))}
+        </div>
 );
 
 const categoryColor = {
@@ -129,10 +129,10 @@ const categoryColor = {
 
 // Conversational chat steps
 interface ChatStep {
-  bot: string;
-  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput';
+  bot: string | string[];
+  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
   choices?: string[];
-  onUser: (answer: string) => string;
+  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string;
 }
 
 const chatSteps: ChatStep[] = [
@@ -140,20 +140,44 @@ const chatSteps: ChatStep[] = [
     bot: "Let's confirm the account details and renewal outlook. Acme Corp has 92% usage, $450k ARR, and a high likelihood of renewal. Do you agree with this assessment and want to proceed with an aggressive price increase strategy, or would you prefer a more conservative approach?",
     inputType: 'choice',
     choices: ["Aggressive (recommended)", "Conservative"],
-    onUser: (answer) => {
+    onUser: (answer, ctx) => {
       if (/conservative/i.test(answer)) {
         return "We'll proceed with a more conservative renewal strategy.";
       }
       return "Great, we'll proceed with the recommended aggressive strategy.";
     },
   },
+  // Contract check step (now step 2)
   {
-    bot: "Based on your strategy, I recommend a 7% price increase for this renewal. Would you like to proceed with 7%, or enter a different percentage?",
+    bot: [
+      "Checking contract for price increase limits...",
+      "The contract has language that does not allow price increases above 3%. Would you like to: 1) Draft an amendment to increase the price limit, 2) Revert to a 3% price increase, or 3) Come back to this later?"
+    ],
     inputType: 'numberOrSkip',
-    onUser: (answer) => {
+    onUser: (answer, ctx) => {
+      const trimmed = answer.trim();
+      if (trimmed === '1') {
+        return "I'll plan to include an amendment in our ongoing strategy. I recommend a 7% price increase as our target. Would you like to proceed with 7%, or enter a different percentage?";
+      }
+      if (trimmed === '2') {
+        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(3);
+        return "Got it. We'll go with a 3% increase for this renewal. I'll make a note to revisit the amendment discussion as a future action.";
+      }
+      if (trimmed === '3') {
+        return "No problem, we can revisit this later.";
+      }
+      return "Please enter 1, 2, or 3.";
+    },
+  },
+  // Price input step (only if user chose 1 above)
+  {
+    bot: "", // Leave bot message empty, since the previous step's reply already contains the question
+    inputType: 'numberOrSkip',
+    onUser: (answer, ctx) => {
       if (/skip|pass/i.test(answer)) return "No problem, we'll revisit the price increase later.";
       const num = parseFloat(answer);
       if (!isNaN(num)) {
+        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(num);
         if (num >= 10) {
           return `You entered ${num}%. This amount needs manager approval. We'll let you know when we hear back (or you can edit the number).`;
         }
@@ -166,9 +190,9 @@ const chatSteps: ChatStep[] = [
     },
   },
   {
-    bot: "Who should receive the renewal notice? The primary contact is Sarah Johnson (sarah@acme.com), and the executive sponsor is Michael Chen (michael@acme.com). Enter 1 for Sarah, 2 for Michael, 3 for both, or type one or more emails, or 'Skip'.",
+    bot: "Who should be involved in the renewal process? The primary contact is Sarah Johnson, and the executive sponsor is Michael Chen. Should I include anyone else in these upcoming discussions?",
     inputType: 'emailOrSkip',
-    onUser: (answer) => {
+    onUser: (answer, ctx) => {
       if (/skip|pass/i.test(answer)) return "No problem, we'll confirm recipients later.";
       if (answer.trim() === '1') return "Got it. The renewal notice will go to: Sarah Johnson (sarah@acme.com)";
       if (answer.trim() === '2') return "Got it. The renewal notice will go to: Michael Chen (michael@acme.com)";
@@ -179,7 +203,7 @@ const chatSteps: ChatStep[] = [
   {
     bot: "There's one risk: Feature X usage declined 15% last quarter. Enter 1 to schedule a usage review meeting before sending the renewal notice, 2 to proceed directly, or type your answer:",
     inputType: 'numberOrSkip',
-    onUser: (answer) => {
+    onUser: (answer, ctx) => {
       if (answer.trim() === '1') return "I'll help you schedule a usage review meeting before renewal outreach.";
       if (answer.trim() === '2') return "Understood. We'll proceed directly with the renewal notice.";
       if (/schedule/i.test(answer)) return "I'll help you schedule a usage review meeting before renewal outreach.";
@@ -191,7 +215,7 @@ const chatSteps: ChatStep[] = [
     bot: "All set! You're ready to send the official renewal notice. Would you like to send it now?",
     inputType: 'choice',
     choices: ["Send Now", "Not Yet"],
-    onUser: (answer) => {
+    onUser: (answer, ctx) => {
       if (/send/i.test(answer)) return "Renewal notice sent! 🎉";
       return "No problem, you can send it whenever you're ready.";
     },
@@ -210,40 +234,47 @@ const RenewalChecklist: React.FC<{
   step: number;
   answers: string[];
   onEdit: (stepIdx: number) => void;
-}> = ({ step, answers, onEdit }) => (
-  <div className="space-y-6">
-    <div>
-      <h4 className="text-lg font-bold mb-2">Preparation Checklist</h4>
-      <ul className="space-y-1">
-        {checklistItems.map((item, idx) => (
-          <li key={item.label} className="flex items-center gap-2 group">
-            <CheckCircleIcon className={`w-4 h-4 ${answers[idx] !== undefined ? 'text-green-500' : 'text-gray-300'}`} />
-            <span className="flex-1">{item.label}</span>
-            <PencilIcon
-              className={`w-4 h-4 ml-1 inline-block align-text-bottom ${answers[idx] !== undefined ? 'text-gray-400 group-hover:text-blue-500 cursor-pointer' : 'text-gray-200 cursor-not-allowed'}`}
-              aria-label="Editable"
-              aria-disabled={answers[idx] === undefined}
-            />
-            {answers[idx] !== undefined && (
-              <span className="text-xs text-gray-500 ml-2">{answers[idx]}</span>
-            )}
-            {answers[idx] !== undefined && (
-              <button
-                className="ml-2 text-blue-600 text-xs underline opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-                tabIndex={0}
-                aria-label={`Edit answer for ${item.label}`}
-                onClick={() => onEdit(idx)}
-                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onEdit(idx)}
-              >
-                Edit
-              </button>
-            )}
-          </li>
-        ))}
-      </ul>
+}> = ({ step, answers, onEdit }) => {
+  // Debug log for answers and step
+  console.log('DEBUG: RenewalChecklist render - step:', step, 'answers:', answers);
+  return (
+    <div className="space-y-6">
+      <div>
+        <h4 className="text-lg font-bold mb-2">Preparation Checklist</h4>
+        <ul className="space-y-1">
+          {checklistItems.map((item, idx) => {
+            console.log('DEBUG: Checklist item', idx, 'label:', item.label, 'answers[idx]:', answers[idx]);
+            return (
+              <li key={item.label} className="flex items-center gap-2 group">
+                <CheckCircleIcon className={`w-4 h-4 ${answers[idx] !== undefined ? 'text-green-500' : 'text-gray-300'}`} />
+                <span className="flex-1">{item.label}</span>
+                <PencilIcon
+                  className={`w-4 h-4 ml-1 inline-block align-text-bottom ${answers[idx] !== undefined ? 'text-gray-400 group-hover:text-blue-500 cursor-pointer' : 'text-gray-200 cursor-not-allowed'}`}
+                  aria-label="Editable"
+                  aria-disabled={answers[idx] === undefined}
+                />
+                {answers[idx] !== undefined && (
+                  <span className="text-xs text-gray-500 ml-2">{answers[idx]}</span>
+                )}
+                {answers[idx] !== undefined && (
+                  <button
+                    className="ml-2 text-blue-600 text-xs underline opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
+                    tabIndex={0}
+                    aria-label={`Edit answer for ${item.label}`}
+                    onClick={() => onEdit(idx)}
+                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onEdit(idx)}
+                  >
+                    Edit
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const ConversationalChat: React.FC<{
   step: number;
@@ -252,15 +283,24 @@ const ConversationalChat: React.FC<{
   onSubmit: (answer: string) => void;
   onInputChange: (val: string) => void;
   input: string;
-}> = ({ step, answers, waiting, onSubmit, onInputChange, input }) => {
+  setPrice: (price: number) => void;
+  lastContractCheckAnswer: string | null;
+  setLastContractCheckAnswer: (val: string) => void;
+}> = ({ step, answers, waiting, onSubmit, onInputChange, input, setPrice, lastContractCheckAnswer, setLastContractCheckAnswer }) => {
   const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([
-    { role: 'bot', text: chatSteps[0].bot },
+    { role: 'bot', text: typeof chatSteps[0].bot === 'string' ? chatSteps[0].bot : chatSteps[0].bot[0] },
   ]);
   const [localStep, setLocalStep] = useState(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Debug: log localStep and currentStep.inputType whenever localStep changes
+  useEffect(() => {
+    const currentStep = chatSteps[localStep];
+    console.log('DEBUG: localStep', localStep, 'currentStep.inputType', currentStep.inputType);
+  }, [localStep]);
 
   // Only auto-scroll if user is at (or near) the bottom
   useEffect(() => {
@@ -290,7 +330,7 @@ const ConversationalChat: React.FC<{
       setHistory(prev => {
         // Find the index of the last bot message for the current step
         let idx = prev.findIndex(
-          (msg, i) => msg.role === 'bot' && msg.text === chatSteps[step].bot && i > 0
+          (msg, i) => msg.role === 'bot' && (msg.text === (typeof chatSteps[step].bot === 'string' ? chatSteps[step].bot : chatSteps[step].bot[0])) && i > 0
         );
         if (idx === -1) idx = prev.length - 1;
         return prev.slice(0, idx + 1);
@@ -298,6 +338,12 @@ const ConversationalChat: React.FC<{
       setLocalStep(step);
     }
   }, [step]);
+
+  // Debug: log step and chatSteps
+  useEffect(() => {
+    console.log('DEBUG: ConversationalChat localStep', localStep, chatSteps[localStep]);
+    console.log('DEBUG: ConversationalChat history', history);
+  }, [localStep, history]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -324,12 +370,50 @@ const ConversationalChat: React.FC<{
       return [...prev, { role: 'user', text: choice }];
     });
     onSubmit(choice); // update parent state
-    const botAck = chatSteps[localStep].onUser(choice);
+    const botAck = chatSteps[localStep].onUser(choice, { setPrice });
     setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+
+    // If this is the contract check step, store the answer
+    if (localStep === 1) {
+      setLastContractCheckAnswer(choice.trim());
+    }
+
+    // Custom step advancement logic
+    if (localStep === 1 && choice.trim() === '2') {
+      // If user chose to revert to 3%, skip price input step and its input prompt
+      // Simulate price input step with '3'
+      const priceStep = chatSteps[localStep + 1];
+      const priceBotAck = priceStep.onUser('3', { setPrice });
+      setHistory(prev => [...prev, { role: 'bot', text: priceBotAck }]);
+      // Add the next bot message (stakeholder confirmation) immediately
+      const nextBot = chatSteps[localStep + 2].bot;
+      if (typeof nextBot === 'string') {
+        setHistory(prev => [...prev, { role: 'bot', text: nextBot }]);
+      } else if (Array.isArray(nextBot)) {
+        nextBot.forEach(msg => {
+          setHistory(prev => [...prev, { role: 'bot', text: msg }]);
+        });
+      }
+      setLocalStep(3); // jump directly to stakeholder step
+      onInputChange('');
+      return;
+    }
     setLocalStep(s => s + 1);
     setTimeout(() => {
       if (localStep + 1 < chatSteps.length) {
-        setHistory(prev => [...prev, { role: 'bot', text: chatSteps[localStep + 1].bot }]);
+        const nextBot = chatSteps[localStep + 1].bot;
+        if (typeof nextBot === 'string') {
+          setHistory(prev => [...prev, { role: 'bot', text: nextBot }]);
+        } else if (Array.isArray(nextBot)) {
+          // Add each string in the array as a separate bot message, with a small delay between them
+          let delay = 0;
+          nextBot.forEach((msg, idx) => {
+            setTimeout(() => {
+              setHistory(prev => [...prev, { role: 'bot', text: msg }]);
+            }, delay);
+            delay += 700; // 700ms between each message
+          });
+        }
       }
     }, 900);
   };
@@ -343,27 +427,23 @@ const ConversationalChat: React.FC<{
         ref={chatContainerRef}
         onScroll={handleChatScroll}
       >
-        {history.map((msg, i) => (
-          <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
-            <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
-              {msg.text}
+        {history.map((msg, i) =>
+          msg.text && (
+            <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
+              <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
+                {msg.text}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        )}
         <div ref={chatEndRef} />
       </div>
       {!waiting && localStep < chatSteps.length && (
         <form className="mt-4 flex gap-2" onSubmit={handleSubmit}>
-          {currentStep.inputType === 'numberOrSkip' && (
+          {currentStep.inputType === 'numberOrSkip' ? (
             <input
               className="border rounded px-3 py-2 flex-1"
-              placeholder={
-                localStep === 1
-                  ? "Enter % (e.g. 7) or 'Skip'"
-                  : localStep === 3
-                  ? "Enter 1 for 'Schedule meeting', 2 for 'Proceed', or type your answer"
-                  : "Enter a number or 'Skip'"
-              }
+              placeholder="Enter a number, or 'Skip'"
               value={input}
               onChange={e => onInputChange(e.target.value)}
               type="text"
@@ -371,21 +451,17 @@ const ConversationalChat: React.FC<{
               autoComplete="off"
               ref={inputRef}
             />
-          )}
-          {currentStep.inputType === 'emailOrSkip' && (
+          ) : null}
+          {(currentStep.inputType === 'emailOrSkip' || currentStep.inputType === 'choiceOrInput') ? (
             <input
               className="border rounded px-3 py-2 flex-1"
-              placeholder={
-                localStep === 2
-                  ? "Enter 1 for Sarah, 2 for Michael, 3 for both, or type email(s) or 'Skip'"
-                  : "Enter email(s) or 'Skip'"
-              }
+              placeholder="Reply or press <enter> to skip"
               value={input}
               onChange={e => onInputChange(e.target.value)}
               autoComplete="off"
               ref={inputRef}
             />
-          )}
+          ) : null}
           {currentStep.inputType === 'choice' && currentStep.choices && (
             <div className={
               currentStep.choices.length === 2
@@ -398,11 +474,11 @@ const ConversationalChat: React.FC<{
                       key={choice}
                       type="button"
                       className={
-                        (localStep === 0
+                        ((localStep === 0
                           ? (choice.toLowerCase().includes('aggressive')
                               ? 'bg-green-100 text-green-700 border border-green-300 hover:bg-green-200'
                               : 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200')
-                          : 'bg-blue-600 text-white hover:bg-blue-700')
+                          : 'bg-blue-600 text-white hover:bg-blue-700'))
                         + ' min-w-[140px] px-4 py-2 rounded-lg transition font-semibold'
                       }
                       onClick={() => handleChoiceSubmit(choice)}
@@ -413,16 +489,16 @@ const ConversationalChat: React.FC<{
                     </button>
                   ))
                 : currentStep.choices.map(choice => (
-                    <button
+                <button
                       key={choice}
-                      type="button"
+                  type="button"
                       className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
                       onClick={() => handleChoiceSubmit(choice)}
                       tabIndex={0}
                       aria-label={`Select ${choice}`}
                     >
                       {choice}
-                    </button>
+                </button>
                   ))}
             </div>
           )}
@@ -436,12 +512,12 @@ const ConversationalChat: React.FC<{
 };
 
 const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
-  <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full overflow-y-auto">
-    <div className="mb-6">
+  <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col h-full w-full overflow-hidden">
+    <div className="mb-4">
       <h3 className="text-xl font-bold mb-2">Key Metrics</h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3 overflow-hidden">
         {stats.map((stat) => (
-          <div className="bg-gray-50 rounded-lg p-3 min-h-[48px]" key={stat.label}>
+          <div className="bg-gray-50 rounded-lg p-2 min-h-0 min-w-0" key={stat.label}>
             <span className="text-xs text-gray-500 font-medium">{stat.label}</span>
             <span className="text-lg font-bold text-gray-900 mt-1 block">{stat.value}</span>
           </div>
@@ -449,7 +525,7 @@ const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
       </div>
     </div>
     {/* Sparklines */}
-    <div className="flex gap-4 mb-6">
+    <div className="flex gap-4 mb-4">
       {miniCharts.map((chart, i) => (
         <div className="flex flex-col items-center" key={i}>
           <MiniSparklineChart data={chart.data} />
@@ -458,9 +534,9 @@ const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
       ))}
     </div>
     {/* AI Insights */}
-    <div className="grid grid-cols-2 gap-4 mb-6">
+    <div className="grid grid-cols-2 gap-3 mb-4 overflow-hidden">
       {aiInsights.map((insight, i) => (
-        <div key={i} className="bg-gray-50 rounded-lg p-4 h-full flex flex-col items-center">
+        <div key={i} className="bg-gray-50 rounded-lg p-2 h-full flex flex-col items-center">
           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${categoryColor[insight.color]}`}>{insight.category}</span>
           <span className="text-sm text-gray-700 text-center">{insight.text}</span>
         </div>
@@ -512,19 +588,19 @@ const ProgressStepper: React.FC<{ currentStep: number }> = ({ currentStep }) => 
               : 'bg-gray-100 border-gray-300 text-gray-400'
           }`}>
             {idx < currentStep ? <CheckCircleIcon className="w-5 h-5" /> : idx + 1}
-          </div>
+              </div>
           <span className={`text-sm ${idx === currentStep ? 'font-bold text-blue-700' : idx < currentStep ? 'text-gray-500 line-through' : 'text-gray-400'}`}>{item.label}</span>
         </li>
       ))}
     </ol>
-  </div>
+                </div>
 );
 
 // 3. Stub ChatPanel (reuse existing chat logic for now)
 const ChatPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="bg-green-50 rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
     {children}
-  </div>
+                </div>
 );
 
 const RenewalsHQ2Page = () => {
@@ -539,6 +615,13 @@ const RenewalsHQ2Page = () => {
   const [input, setInput] = useState('');
   const [waiting, setWaiting] = useState(false);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const [price, setPrice] = useState<number | null>(null);
+  const [lastContractCheckAnswer, setLastContractCheckAnswer] = useState<string | null>(null);
+
+  // Debug log for mode state
+  useEffect(() => {
+    console.log('DEBUG: mode changed:', mode);
+  }, [mode]);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -549,7 +632,7 @@ const RenewalsHQ2Page = () => {
 
   // Drag handlers for vertical divider
   const startDrag = (e: React.MouseEvent) => {
-    console.log('startDrag', e.clientX);
+    console.log('DEBUG: startDrag', e.clientX);
     isDragging.current = true;
     document.body.style.cursor = "col-resize";
     document.addEventListener("mousemove", handleDrag);
@@ -561,11 +644,11 @@ const RenewalsHQ2Page = () => {
     const rect = container.getBoundingClientRect();
     let newWidth = e.clientX - rect.left;
     newWidth = Math.max(320, Math.min(newWidth, rect.width - 320));
-    console.log('handleDrag', e.clientX, rect.left, newWidth);
+    console.log('DEBUG: handleDrag', e.clientX, rect.left, newWidth);
     setLeftWidthPx(newWidth);
   };
   const stopDrag = () => {
-    console.log('stopDrag');
+    console.log('DEBUG: stopDrag');
     isDragging.current = false;
     document.body.style.cursor = "default";
     document.removeEventListener("mousemove", handleDrag);
@@ -614,8 +697,8 @@ const RenewalsHQ2Page = () => {
       <div className="max-w-7xl mx-auto space-y-10">
         {/* Top Card */}
         <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-4 min-h-[180px]">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 flex-1">
-            <div className="space-y-2">
+          <div className="flex flex-col md:flex-row md:justify-between gap-4 flex-1">
+            <div className="space-y-2 flex flex-col justify-center h-full">
               <h2 className="text-3xl font-extrabold text-blue-700 tracking-tight">
                 {acmeCustomer.name}
               </h2>
@@ -627,17 +710,7 @@ const RenewalsHQ2Page = () => {
             <StageTimeline stages={acmeCustomer.stages} />
           </div>
           {/* Navigation arrows at bottom left and right */}
-          <div className="flex w-full justify-between items-end mt-4">
-            <button
-              className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 focus:outline-none"
-              tabIndex={0}
-              aria-label={`Go to previous customer: ${prevCustomer}`}
-              onClick={() => {/* handle prev customer navigation */}}
-              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && /* handle prev customer navigation */ null}
-            >
-              <ChevronLeftIcon className="w-7 h-7 text-gray-300" />
-              <span>Prev: {prevCustomer}</span>
-            </button>
+          <div className="flex w-full justify-end items-end mt-4">
             <button
               className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 focus:outline-none"
               tabIndex={0}
@@ -652,16 +725,33 @@ const RenewalsHQ2Page = () => {
         </div>
         {/* Main Container: Before chat, show only ContextPanel. After, show resizable split with ProgressStepper and ContextPanel, and ChatPanel on the right. */}
         {mode !== 'chat' ? (
-          <div className="flex w-full h-[65vh]">
-            <div className="flex-1 h-full">
+          <div className="flex w-full h-[70vh]" ref={containerRef}>
+            <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full">
               <ContextPanel currentStep={step} />
+            </div>
+            {/* Draggable Divider for pre-action stage */}
+            <div
+              className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
+              style={{ marginLeft: '-1px', marginRight: '-1px' }}
+              onMouseDown={e => {
+                console.log('DEBUG: Divider (pre-action) onMouseDown', e.clientX);
+                startDrag(e);
+              }}
+              tabIndex={0}
+              aria-label="Resize panel"
+              role="separator"
+            >
+              <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
             </div>
             <div className="flex-1 h-full flex flex-col justify-center items-center">
               <button
                 className="px-8 py-4 bg-green-600 text-white rounded-xl text-lg font-bold flex items-center gap-2 hover:bg-green-700 transition focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow"
                 tabIndex={0}
                 aria-label="Prepare for Renewal"
-                onClick={() => setMode('chat')}
+                onClick={() => {
+                  console.log('DEBUG: Prepare for Renewal button clicked');
+                  setMode('chat');
+                }}
               >
                 <HandRaisedIcon className="h-6 w-6" />
                 Prepare for Renewal
@@ -670,14 +760,13 @@ const RenewalsHQ2Page = () => {
           </div>
         ) : (
           <div className="flex w-full" ref={containerRef}>
-            {/* Card background for stepper + context */}
             <div
-              className="bg-white rounded-2xl shadow-lg flex h-[70vh] transition-all duration-300"
+              className="bg-white rounded-2xl shadow-lg flex h-[70vh]"
               style={{ width: leftWidthPx, minWidth: 320, zIndex: 10 }}
             >
               <div className="flex flex-row h-full w-full">
                 {/* ProgressStepper (collapsible) */}
-                <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] transition-all duration-300 ${progressCollapsed ? 'w-12' : 'w-2/5'}`} style={{alignItems: 'flex-start', justifyContent: 'flex-start'}}>
+                <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] ${progressCollapsed ? 'w-12' : 'w-2/5'}`} style={{alignItems: 'flex-start', justifyContent: 'flex-start'}}>
                   {/* Collapse/Expand Icon */}
                   <button
                     className="mt-2 mb-4 p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 self-end"
@@ -695,23 +784,28 @@ const RenewalsHQ2Page = () => {
                   {!progressCollapsed && <ProgressStepper currentStep={step} />}
                 </div>
                 {/* ContextPanel (Key Metrics) */}
-                <div className="flex-1 h-full flex flex-col transition-all duration-300">
+                <div className="flex-1 h-full flex flex-col">
                   <ContextPanel currentStep={step} />
                 </div>
               </div>
             </div>
-            {/* Draggable Divider */}
+            {/* Draggable Divider for chat mode */}
             <div
-              className="relative z-20 h-full w-2 cursor-col-resize bg-gray-200 hover:bg-gray-400 transition-colors duration-150 flex-shrink-0"
+              className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
               style={{ marginLeft: '-1px', marginRight: '-1px' }}
-              onMouseDown={startDrag}
+              onMouseDown={e => {
+                console.log('DEBUG: Divider (chat) onMouseDown', e.clientX);
+                startDrag(e);
+              }}
               tabIndex={0}
               aria-label="Resize panel"
               role="separator"
-            />
+            >
+              <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
+            </div>
             {/* ChatPanel on the right */}
-            <div className="flex-1 h-[70vh] bg-white">
-              <div className="rounded-2xl p-6 flex flex-col h-full w-full">
+            <div className="flex-1 h-[70vh]">
+              <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
                 <ConversationalChat
                   step={step}
                   answers={answers}
@@ -719,6 +813,9 @@ const RenewalsHQ2Page = () => {
                   onSubmit={handleChatSubmit}
                   onInputChange={handleInputChange}
                   input={input}
+                  setPrice={setPrice}
+                  lastContractCheckAnswer={lastContractCheckAnswer}
+                  setLastContractCheckAnswer={setLastContractCheckAnswer}
                 />
               </div>
             </div>

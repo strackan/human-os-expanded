@@ -58,6 +58,6 @@ const ReportsPage = () => (
       </ReportCard>
     </div>
   </main>
-);
+  );
 
 export default ReportsPage; 
