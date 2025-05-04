@@ -11,6 +11,8 @@ import {
   PencilIcon,
   Bars3Icon,
 } from "@heroicons/react/24/outline";
+import ConversationalChat from "../../../components/chat/ConversationalChat";
+import { renewalsChatSteps } from "../../../components/chat/chatWorkflow";
 
 // Mock data for Acme Corp
 const acmeCustomer = {
@@ -127,101 +129,6 @@ const categoryColor = {
   red: "bg-red-100 text-red-700",
 };
 
-// Conversational chat steps
-interface ChatStep {
-  bot: string | string[];
-  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
-  choices?: string[];
-  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string;
-}
-
-const chatSteps: ChatStep[] = [
-  {
-    bot: "Let's confirm the account details and renewal outlook. Acme Corp has 92% usage, $450k ARR, and a high likelihood of renewal. Do you agree with this assessment and want to proceed with an aggressive price increase strategy, or would you prefer a more conservative approach?",
-    inputType: 'choice',
-    choices: ["Aggressive (recommended)", "Conservative"],
-    onUser: (answer, ctx) => {
-      if (/conservative/i.test(answer)) {
-        return "We'll proceed with a more conservative renewal strategy.";
-      }
-      return "Great, we'll proceed with the recommended aggressive strategy.";
-    },
-  },
-  // Contract check step (now step 2)
-  {
-    bot: [
-      "Checking contract for price increase limits...",
-      "The contract has language that does not allow price increases above 3%. Would you like to: 1) Draft an amendment to increase the price limit, 2) Revert to a 3% price increase, or 3) Come back to this later?"
-    ],
-    inputType: 'numberOrSkip',
-    onUser: (answer, ctx) => {
-      const trimmed = answer.trim();
-      if (trimmed === '1') {
-        return "I'll plan to include an amendment in our ongoing strategy. I recommend a 7% price increase as our target. Would you like to proceed with 7%, or enter a different percentage?";
-      }
-      if (trimmed === '2') {
-        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(3);
-        return "Got it. We'll go with a 3% increase for this renewal. I'll make a note to revisit the amendment discussion as a future action.";
-      }
-      if (trimmed === '3') {
-        return "No problem, we can revisit this later.";
-      }
-      return "Please enter 1, 2, or 3.";
-    },
-  },
-  // Price input step (only if user chose 1 above)
-  {
-    bot: "", // Leave bot message empty, since the previous step's reply already contains the question
-    inputType: 'numberOrSkip',
-    onUser: (answer, ctx) => {
-      if (/skip|pass/i.test(answer)) return "No problem, we'll revisit the price increase later.";
-      const num = parseFloat(answer);
-      if (!isNaN(num)) {
-        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(num);
-        if (num >= 10) {
-          return `You entered ${num}%. This amount needs manager approval. We'll let you know when we hear back (or you can edit the number).`;
-        }
-        if (num === 7) {
-          return `Great, 7% is a strong, data-backed choice for this renewal.`;
-        }
-        return `Noted, we'll propose a ${num}% increase for this renewal.`;
-      }
-      return "Please enter a number, or type 'Skip'.";
-    },
-  },
-  {
-    bot: "Who should be involved in the renewal process? The primary contact is Sarah Johnson, and the executive sponsor is Michael Chen. Should I include anyone else in these upcoming discussions?",
-    inputType: 'emailOrSkip',
-    onUser: (answer, ctx) => {
-      if (/skip|pass/i.test(answer)) return "No problem, we'll confirm recipients later.";
-      if (answer.trim() === '1') return "Got it. The renewal notice will go to: Sarah Johnson (sarah@acme.com)";
-      if (answer.trim() === '2') return "Got it. The renewal notice will go to: Michael Chen (michael@acme.com)";
-      if (answer.trim() === '3') return "Got it. The renewal notice will go to: Sarah Johnson (sarah@acme.com), Michael Chen (michael@acme.com)";
-      return `Got it. The renewal notice will go to: ${answer}`;
-    },
-  },
-  {
-    bot: "There's one risk: Feature X usage declined 15% last quarter. Enter 1 to schedule a usage review meeting before sending the renewal notice, 2 to proceed directly, or type your answer:",
-    inputType: 'numberOrSkip',
-    onUser: (answer, ctx) => {
-      if (answer.trim() === '1') return "I'll help you schedule a usage review meeting before renewal outreach.";
-      if (answer.trim() === '2') return "Understood. We'll proceed directly with the renewal notice.";
-      if (/schedule/i.test(answer)) return "I'll help you schedule a usage review meeting before renewal outreach.";
-      if (/proceed/i.test(answer)) return "Understood. We'll proceed directly with the renewal notice.";
-      return "Please enter 1, 2, or type your answer.";
-    },
-  },
-  {
-    bot: "All set! You're ready to send the official renewal notice. Would you like to send it now?",
-    inputType: 'choice',
-    choices: ["Send Now", "Not Yet"],
-    onUser: (answer, ctx) => {
-      if (/send/i.test(answer)) return "Renewal notice sent! 🎉";
-      return "No problem, you can send it whenever you're ready.";
-    },
-  },
-];
-
 const checklistItems = [
   { label: "Review account data" },
   { label: "Confirm renewal strategy" },
@@ -272,241 +179,6 @@ const RenewalChecklist: React.FC<{
           })}
         </ul>
       </div>
-    </div>
-  );
-};
-
-const ConversationalChat: React.FC<{
-  step: number;
-  answers: string[];
-  waiting: boolean;
-  onSubmit: (answer: string) => void;
-  onInputChange: (val: string) => void;
-  input: string;
-  setPrice: (price: number) => void;
-  lastContractCheckAnswer: string | null;
-  setLastContractCheckAnswer: (val: string) => void;
-}> = ({ step, answers, waiting, onSubmit, onInputChange, input, setPrice, lastContractCheckAnswer, setLastContractCheckAnswer }) => {
-  const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([
-    { role: 'bot', text: typeof chatSteps[0].bot === 'string' ? chatSteps[0].bot : chatSteps[0].bot[0] },
-  ]);
-  const [localStep, setLocalStep] = useState(0);
-  const chatContainerRef = useRef<HTMLDivElement>(null);
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Debug: log localStep and currentStep.inputType whenever localStep changes
-  useEffect(() => {
-    const currentStep = chatSteps[localStep];
-    console.log('DEBUG: localStep', localStep, 'currentStep.inputType', currentStep.inputType);
-  }, [localStep]);
-
-  // Only auto-scroll if user is at (or near) the bottom
-  useEffect(() => {
-    if (shouldAutoScroll) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [history, shouldAutoScroll]);
-
-  // Focus input when step changes or input is rendered
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, [localStep, waiting]);
-
-  // Track user scroll position
-  const handleChatScroll = () => {
-    const container = chatContainerRef.current;
-    if (!container) return;
-    const threshold = 40; // px from bottom
-    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-    setShouldAutoScroll(atBottom);
-  };
-
-  // Sync localStep with parent step (for edit)
-  useEffect(() => {
-    if (step < localStep) {
-      // If editing, trim history to the correct point
-      setHistory(prev => {
-        // Find the index of the last bot message for the current step
-        let idx = prev.findIndex(
-          (msg, i) => msg.role === 'bot' && (msg.text === (typeof chatSteps[step].bot === 'string' ? chatSteps[step].bot : chatSteps[step].bot[0])) && i > 0
-        );
-        if (idx === -1) idx = prev.length - 1;
-        return prev.slice(0, idx + 1);
-      });
-      setLocalStep(step);
-    }
-  }, [step]);
-
-  // Debug: log step and chatSteps
-  useEffect(() => {
-    console.log('DEBUG: ConversationalChat localStep', localStep, chatSteps[localStep]);
-    console.log('DEBUG: ConversationalChat history', history);
-  }, [localStep, history]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (waiting) return;
-    // If input is blank and current step allows skip, treat as 'Skip'
-    const currentStepObj = chatSteps[localStep];
-    const allowsSkip = ["numberOrSkip", "emailOrSkip", "choiceOrInput"].includes(currentStepObj.inputType);
-    if (!input.trim() && allowsSkip) {
-      handleChoiceSubmit("Skip");
-      return;
-    }
-    if (!input.trim()) return;
-    handleChoiceSubmit(input);
-  };
-
-  const handleChoiceSubmit = (choice: string) => {
-    if (!choice.trim() || waiting) return;
-    // Only add the user answer once
-    setHistory(prev => {
-      // Prevent duplicate user answers for the same step
-      if (prev.length > 0 && prev[prev.length - 1].role === 'user' && prev[prev.length - 1].text === choice) {
-        return prev;
-      }
-      return [...prev, { role: 'user', text: choice }];
-    });
-    onSubmit(choice); // update parent state
-    const botAck = chatSteps[localStep].onUser(choice, { setPrice });
-    setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
-
-    // If this is the contract check step, store the answer
-    if (localStep === 1) {
-      setLastContractCheckAnswer(choice.trim());
-    }
-
-    // Custom step advancement logic
-    if (localStep === 1 && choice.trim() === '2') {
-      // If user chose to revert to 3%, skip price input step and its input prompt
-      // Simulate price input step with '3'
-      const priceStep = chatSteps[localStep + 1];
-      const priceBotAck = priceStep.onUser('3', { setPrice });
-      setHistory(prev => [...prev, { role: 'bot', text: priceBotAck }]);
-      // Add the next bot message (stakeholder confirmation) immediately
-      const nextBot = chatSteps[localStep + 2].bot;
-      if (typeof nextBot === 'string') {
-        setHistory(prev => [...prev, { role: 'bot', text: nextBot }]);
-      } else if (Array.isArray(nextBot)) {
-        nextBot.forEach(msg => {
-          setHistory(prev => [...prev, { role: 'bot', text: msg }]);
-        });
-      }
-      setLocalStep(3); // jump directly to stakeholder step
-      onInputChange('');
-      return;
-    }
-    setLocalStep(s => s + 1);
-    setTimeout(() => {
-      if (localStep + 1 < chatSteps.length) {
-        const nextBot = chatSteps[localStep + 1].bot;
-        if (typeof nextBot === 'string') {
-          setHistory(prev => [...prev, { role: 'bot', text: nextBot }]);
-        } else if (Array.isArray(nextBot)) {
-          // Add each string in the array as a separate bot message, with a small delay between them
-          let delay = 0;
-          nextBot.forEach((msg, idx) => {
-            setTimeout(() => {
-              setHistory(prev => [...prev, { role: 'bot', text: msg }]);
-            }, delay);
-            delay += 700; // 700ms between each message
-          });
-        }
-      }
-    }, 900);
-  };
-
-  const currentStep = chatSteps[localStep];
-
-  return (
-    <div className="flex flex-col h-full">
-      <div
-        className="flex-1 overflow-y-auto space-y-4 p-2"
-        ref={chatContainerRef}
-        onScroll={handleChatScroll}
-      >
-        {history.map((msg, i) =>
-          msg.text && (
-            <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
-              <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
-                {msg.text}
-              </div>
-            </div>
-          )
-        )}
-        <div ref={chatEndRef} />
-      </div>
-      {!waiting && localStep < chatSteps.length && (
-        <form className="mt-4 flex gap-2" onSubmit={handleSubmit}>
-          {currentStep.inputType === 'numberOrSkip' ? (
-            <input
-              className="border rounded px-3 py-2 flex-1"
-              placeholder="Enter a number, or 'Skip'"
-              value={input}
-              onChange={e => onInputChange(e.target.value)}
-              type="text"
-              title="Enter a number, 'Skip', or 'Pass'"
-              autoComplete="off"
-              ref={inputRef}
-            />
-          ) : null}
-          {(currentStep.inputType === 'emailOrSkip' || currentStep.inputType === 'choiceOrInput') ? (
-            <input
-              className="border rounded px-3 py-2 flex-1"
-              placeholder="Reply or press <enter> to skip"
-              value={input}
-              onChange={e => onInputChange(e.target.value)}
-              autoComplete="off"
-              ref={inputRef}
-            />
-          ) : null}
-          {currentStep.inputType === 'choice' && currentStep.choices && (
-            <div className={
-              currentStep.choices.length === 2
-                ? 'flex w-full justify-between items-center'
-                : 'flex gap-2'
-            }>
-              {currentStep.choices.length === 2
-                ? [...currentStep.choices].reverse().map((choice, idx) => (
-                    <button
-                      key={choice}
-                      type="button"
-                      className={
-                        ((localStep === 0
-                          ? (choice.toLowerCase().includes('aggressive')
-                              ? 'bg-green-100 text-green-700 border border-green-300 hover:bg-green-200'
-                              : 'bg-red-100 text-red-700 border border-red-300 hover:bg-red-200')
-                          : 'bg-blue-600 text-white hover:bg-blue-700'))
-                        + ' min-w-[140px] px-4 py-2 rounded-lg transition font-semibold'
-                      }
-                      onClick={() => handleChoiceSubmit(choice)}
-                      tabIndex={0}
-                      aria-label={`Select ${choice}`}
-                    >
-                      {choice.replace(/\(recommended\)/i, '(recommended)')}
-                    </button>
-                  ))
-                : currentStep.choices.map(choice => (
-                <button
-                      key={choice}
-                  type="button"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition"
-                      onClick={() => handleChoiceSubmit(choice)}
-                      tabIndex={0}
-                      aria-label={`Select ${choice}`}
-                    >
-                      {choice}
-                </button>
-                  ))}
-            </div>
-          )}
-          {currentStep.inputType !== 'choice' && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" type="submit">Submit</button>
-          )}
-        </form>
-      )}
     </div>
   );
 };
@@ -665,7 +337,7 @@ const RenewalsHQ2Page = () => {
         newAnswers[step] = answer;
         // If this is the last step (send notice) and user sends, check off the fifth box and collapse ProgressStepper
         if (
-          step === chatSteps.length - 1 &&
+          step === renewalsChatSteps.length - 1 &&
           (/send/i.test(answer))
         ) {
           newAnswers[4] = answer;
@@ -674,7 +346,7 @@ const RenewalsHQ2Page = () => {
         return newAnswers;
       });
       setWaiting(false);
-      if (step < chatSteps.length - 1) {
+      if (step < renewalsChatSteps.length - 1) {
         setStep(s => s + 1);
         setInput('');
       }
@@ -691,6 +363,14 @@ const RenewalsHQ2Page = () => {
 
   // Handle input change
   const handleInputChange = (val: string) => setInput(val);
+
+  // Add new callback for multi-step advance
+  const handleMultiStepAdvance = (nextStep: number, updatedAnswers: string[]) => {
+    setAnswers(updatedAnswers);
+    setStep(nextStep);
+    setInput('');
+    setWaiting(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 py-10">
@@ -807,6 +487,7 @@ const RenewalsHQ2Page = () => {
             <div className="flex-1 h-[70vh]">
               <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
                 <ConversationalChat
+                  steps={renewalsChatSteps}
                   step={step}
                   answers={answers}
                   waiting={waiting}
@@ -816,6 +497,7 @@ const RenewalsHQ2Page = () => {
                   setPrice={setPrice}
                   lastContractCheckAnswer={lastContractCheckAnswer}
                   setLastContractCheckAnswer={setLastContractCheckAnswer}
+                  onMultiStepAdvance={handleMultiStepAdvance}
                 />
               </div>
             </div>
