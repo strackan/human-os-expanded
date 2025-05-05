@@ -64,31 +64,29 @@ export const renewalsChatSteps: ChatStep[] = [
     bot: "Who should be involved in the renewal process? The primary contact is Sarah Johnson, and the executive sponsor is Michael Chen. Should I include anyone else in these upcoming discussions?",
     inputType: 'emailOrSkip',
     onUser: (answer, ctx) => {
-      if (/skip|pass/i.test(answer)) return "No problem, we'll confirm recipients later.";
-      if (answer.trim() === '1') return "Got it. The renewal notice will go to: Sarah Johnson (sarah@acme.com)";
-      if (answer.trim() === '2') return "Got it. The renewal notice will go to: Michael Chen (michael@acme.com)";
-      if (answer.trim() === '3') return "Got it. The renewal notice will go to: Sarah Johnson (sarah@acme.com), Michael Chen (michael@acme.com)";
-      return `Got it. The renewal notice will go to: ${answer}`;
+      return "Got it.";
     },
   },
   {
     bot: "There's one risk: Feature X usage declined 15% last quarter. Should I set a reminder to schedule a meeting about this?",
     inputType: 'numberOrSkip',
     onUser: (answer, ctx) => {
-      if (answer.trim() === '1') return "I'll help you schedule a usage review meeting before renewal outreach.";
-      if (answer.trim() === '2') return "Understood. We'll proceed directly with the renewal notice.";
-      if (/schedule/i.test(answer)) return "I'll help you schedule a usage review meeting before renewal outreach.";
-      if (/proceed/i.test(answer)) return "Understood. We'll proceed directly with the renewal notice.";
-      return "Please enter 1, 2, or type your answer.";
-    },
-  },
-  {
-    bot: "All set! You're ready to send the official renewal notice. Would you like to send it now?",
-    inputType: 'choice',
-    choices: ["Send Now", "Not Yet"],
-    onUser: (answer, ctx) => {
-      if (/send/i.test(answer)) return "Renewal notice sent! 🎉";
-      return "No problem, you can send it whenever you're ready.";
+      const trimmed = answer.trim().toLowerCase();
+      if (["1", "y", "yes", "schedule"].includes(trimmed)) {
+        return [
+          "Okay, I'll remind you to schedule a meeting in a few days.",
+          "You're all set. I'll check back later when it's time to send the notice.",
+          { type: "link", text: "Go to next customer – Initech", href: "/customers/initech" }
+        ];
+      }
+      if (["2", "n", "no", "proceed"].includes(trimmed)) {
+        return [
+          "Understood. We'll proceed directly with the renewal notice.",
+          "You're all set. I'll check back later when it's time to send the notice.",
+          { type: "link", text: "Go to next customer – Initech", href: "/customers/initech" }
+        ];
+      }
+      return "Please enter Yes, No, 1, 2, or type your answer.";
     },
   },
 ]; 

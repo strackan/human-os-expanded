@@ -155,17 +155,17 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Debug log for form submission
+    // @ts-ignore
+    console.log('DEBUG: handleSubmit called', {
+      eventType: e.nativeEvent?.type,
+      inputValue: input,
+      isStakeholderStep,
+      localStep,
+      currentStep,
+    });
     if (waiting) return;
     if (isStakeholderStep) {
-      if (!input.trim() || /skip|pass/i.test(input)) {
-        handleChoiceSubmit("Skip");
-        return;
-      }
-      const emailRegex = /[\w.-]+@[\w.-]+\.[A-Za-z]{2,}/;
-      if (!emailRegex.test(input)) {
-        onInputChange("");
-        return;
-      }
       handleChoiceSubmit(input);
       return;
     }
@@ -262,7 +262,11 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
             </div>
           )}
           {currentStep.inputType !== 'choice' && (
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" type="submit">Submit</button>
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition" type="submit"
+              onClick={() => {
+                console.log('DEBUG: Submit button clicked', { inputValue: input });
+              }}
+            >Submit</button>
           )}
         </form>
       )}
