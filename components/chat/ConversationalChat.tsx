@@ -69,6 +69,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   }, [step]);
 
   const stakeholderStepIndex = steps.findIndex(s => s.inputType === 'emailOrSkip');
+  const contractCheckStepIndex = steps.findIndex(s => Array.isArray(s.bot) && s.bot.some(b => typeof b === 'string' && b.includes('price increase limits')));
 
   const handleChoiceSubmit = (choice: string) => {
     if (!choice.trim() || waiting) return;
@@ -79,10 +80,47 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       return [...prev, { role: 'user', text: choice }];
     });
 
+    // Special logic: If user chooses '3' on contract check step, skip the number input step
+    if (localStep === contractCheckStepIndex && choice.trim() === '3') {
+      const botAck = steps[localStep].onUser(choice, { setPrice });
+      if (Array.isArray(botAck)) {
+        botAck.forEach(item => {
+          setHistory(prev => [...prev, { role: 'bot', text: item }]);
+        });
+      } else {
+        setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+      }
+      const updatedAnswers = [...answers];
+      updatedAnswers[localStep] = choice;
+      updatedAnswers[localStep + 1] = 'Skipped';
+      setLocalStep(localStep + 2);
+      onMultiStepAdvance(localStep + 2, updatedAnswers);
+      onInputChange('');
+      const nextBot = steps[localStep + 2]?.bot;
+      if (nextBot) {
+        if (typeof nextBot === 'string') {
+          setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: nextBot }]), 700);
+        } else if (Array.isArray(nextBot)) {
+          let delay = 0;
+          nextBot.forEach((msg) => {
+            setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: msg }]), delay);
+            delay += 700;
+          });
+        }
+      }
+      return;
+    }
+
     // Example: custom logic for contract check step (if needed, can be passed as prop or context)
     if (typeof setPrice === 'function' && localStep === 1 && choice.trim() === '2') {
       const botAck = steps[localStep].onUser(choice, { setPrice });
-      setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+      if (Array.isArray(botAck)) {
+        botAck.forEach(item => {
+          setHistory(prev => [...prev, { role: 'bot', text: item }]);
+        });
+      } else {
+        setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+      }
       if (setLastContractCheckAnswer) setLastContractCheckAnswer(choice.trim());
       const updatedAnswers = [...answers];
       updatedAnswers[localStep] = choice;
@@ -127,7 +165,13 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     // Normal step handling
     onSubmit(choice);
     const botAck = steps[localStep].onUser(choice, { setPrice });
-    setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+    if (Array.isArray(botAck)) {
+      botAck.forEach(item => {
+        setHistory(prev => [...prev, { role: 'bot', text: item }]);
+      });
+    } else {
+      setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+    }
     if (typeof setLastContractCheckAnswer === 'function' && localStep === 1) {
       setLastContractCheckAnswer(choice.trim());
     }
@@ -186,15 +230,32 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
         ref={chatContainerRef}
         onScroll={handleChatScroll}
       >
-        {history.map((msg, i) =>
-          msg.text && (
-            <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
-              <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
-                {msg.text}
+        {history.map((msg, i) => {
+          if (!msg.text) return null;
+          if (typeof msg.text === 'string') {
+            return (
+              <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
+                <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
+                  {msg.text}
+                </div>
               </div>
-            </div>
-          )
-        )}
+            );
+          }
+          // If it's a link object
+          if (typeof msg.text === 'object' && msg.text.type === 'link') {
+            return (
+              <div key={i} className="text-center mt-4">
+                <a
+                  href={msg.text.href}
+                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {msg.text.text}
+                </a>
+              </div>
+            );
+          }
+          return null;
+        })}
         <div ref={chatEndRef} />
       </div>
       {!waiting && localStep < steps.length && (
