@@ -15,6 +15,14 @@ interface ConversationalChatProps {
   onMultiStepAdvance: (nextStep: number, updatedAnswers: string[]) => void;
 }
 
+const TypingIndicator = () => (
+  <div className="text-left">
+    <span className="inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2 font-mono">
+      <span className="animate-pulse">▍</span>
+    </span>
+  </div>
+);
+
 const ConversationalChat: React.FC<ConversationalChatProps> = ({
   steps,
   step,
@@ -29,13 +37,18 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   onMultiStepAdvance,
 }) => {
   const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([
-    { role: 'bot', text: typeof steps[0].bot === 'string' ? steps[0].bot : steps[0].bot[0] },
+    steps && steps.length > 0 && steps[0] && steps[0].bot
+      ? { role: 'bot', text: typeof steps[0].bot === 'string' ? steps[0].bot : steps[0].bot[0] }
+      : { role: 'bot', text: "Welcome! (No chat steps configured.)" }
   ]);
   const [localStep, setLocalStep] = useState(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isBotTyping, setIsBotTyping] = useState(false);
+
+  const SEVEN_PERCENT_STEP_INDEX = 2; // 0-based index for the 7% confirmation step
 
   useEffect(() => {
     if (shouldAutoScroll) {
@@ -85,10 +98,10 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       const botAck = steps[localStep].onUser(choice, { setPrice });
       if (Array.isArray(botAck)) {
         botAck.forEach(item => {
-          setHistory(prev => [...prev, { role: 'bot', text: item }]);
+          addBotMessage(item);
         });
       } else {
-        setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+        addBotMessage(botAck);
       }
       const updatedAnswers = [...answers];
       updatedAnswers[localStep] = choice;
@@ -99,11 +112,11 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       const nextBot = steps[localStep + 2]?.bot;
       if (nextBot) {
         if (typeof nextBot === 'string') {
-          setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: nextBot }]), 700);
+          setTimeout(() => addBotMessage(nextBot), 700);
         } else if (Array.isArray(nextBot)) {
           let delay = 0;
           nextBot.forEach((msg) => {
-            setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: msg }]), delay);
+            setTimeout(() => addBotMessage(msg), delay);
             delay += 700;
           });
         }
@@ -116,10 +129,10 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       const botAck = steps[localStep].onUser(choice, { setPrice });
       if (Array.isArray(botAck)) {
         botAck.forEach(item => {
-          setHistory(prev => [...prev, { role: 'bot', text: item }]);
+          addBotMessage(item);
         });
       } else {
-        setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+        addBotMessage(botAck);
       }
       if (setLastContractCheckAnswer) setLastContractCheckAnswer(choice.trim());
       const updatedAnswers = [...answers];
@@ -130,11 +143,11 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       onInputChange('');
       const nextBot = steps[localStep + 2].bot;
       if (typeof nextBot === 'string') {
-        setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: nextBot }]), 700);
+        setTimeout(() => addBotMessage(nextBot), 700);
       } else if (Array.isArray(nextBot)) {
         let delay = 0;
         nextBot.forEach((msg) => {
-          setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: msg }]), delay);
+          setTimeout(() => addBotMessage(msg), delay);
           delay += 700;
         });
       }
@@ -143,7 +156,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
 
     // Stakeholder step: after valid input, reply 'Got it.' and advance
     if (localStep === stakeholderStepIndex) {
-      setHistory(prev => [...prev, { role: 'bot', text: 'Got it.' }]);
+      addBotMessage('Got it.');
       const updatedAnswers = [...answers];
       updatedAnswers[localStep] = choice;
       setLocalStep(localStep + 1);
@@ -151,11 +164,11 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       onInputChange('');
       const nextBot = steps[localStep + 1].bot;
       if (typeof nextBot === 'string') {
-        setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: nextBot }]), 700);
+        setTimeout(() => addBotMessage(nextBot), 700);
       } else if (Array.isArray(nextBot)) {
         let delay = 0;
         nextBot.forEach((msg) => {
-          setTimeout(() => setHistory(prev => [...prev, { role: 'bot', text: msg }]), delay);
+          setTimeout(() => addBotMessage(msg), delay);
           delay += 700;
         });
       }
@@ -167,10 +180,10 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     const botAck = steps[localStep].onUser(choice, { setPrice });
     if (Array.isArray(botAck)) {
       botAck.forEach(item => {
-        setHistory(prev => [...prev, { role: 'bot', text: item }]);
+        addBotMessage(item);
       });
     } else {
-      setHistory(prev => [...prev, { role: 'bot', text: botAck }]);
+      addBotMessage(botAck);
     }
     if (typeof setLastContractCheckAnswer === 'function' && localStep === 1) {
       setLastContractCheckAnswer(choice.trim());
@@ -180,12 +193,12 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       if (localStep + 1 < steps.length) {
         const nextBot = steps[localStep + 1].bot;
         if (typeof nextBot === 'string') {
-          setHistory(prev => [...prev, { role: 'bot', text: nextBot }]);
+          addBotMessage(nextBot);
         } else if (Array.isArray(nextBot)) {
           let delay = 0;
           nextBot.forEach((msg, idx) => {
             setTimeout(() => {
-              setHistory(prev => [...prev, { role: 'bot', text: msg }]);
+              addBotMessage(msg);
             }, delay);
             delay += 700;
           });
@@ -215,12 +228,34 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     }
     const currentStepObj = steps[localStep];
     const allowsSkip = ["numberOrSkip", "emailOrSkip", "choiceOrInput"].includes(currentStepObj.inputType);
+    
+    // Handle 7% confirmation step
+    if (localStep === SEVEN_PERCENT_STEP_INDEX) {
+      // If input is empty, treat it as accepting 7%
+      if (!input.trim()) {
+        handleChoiceSubmit('7');
+        return;
+      }
+      handleChoiceSubmit(input);
+      return;
+    }
+
+    // Handle other steps
     if (!input.trim() && allowsSkip) {
       handleChoiceSubmit("Skip");
       return;
     }
     if (!input.trim()) return;
     handleChoiceSubmit(input);
+  };
+
+  // Helper to add a bot message with typing effect
+  const addBotMessage = (msg: string) => {
+    setIsBotTyping(true);
+    setTimeout(() => {
+      setHistory(prev => [...prev, { role: 'bot', text: msg }]);
+      setIsBotTyping(false);
+    }, Math.max(600, Math.min(2000, msg.length * 30)));
   };
 
   return (
@@ -256,6 +291,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
           }
           return null;
         })}
+        {isBotTyping && <TypingIndicator />}
         <div ref={chatEndRef} />
       </div>
       {!waiting && localStep < steps.length && (
@@ -263,7 +299,11 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
           {currentStep.inputType === 'numberOrSkip' ? (
             <input
               className="border rounded px-3 py-2 flex-1"
-              placeholder="Enter a number, or 'Skip'"
+              placeholder={
+                localStep === SEVEN_PERCENT_STEP_INDEX
+                  ? "Press <enter> to accept 7% or enter a different percentage"
+                  : "Enter a number, or 'Skip'"
+              }
               value={input}
               onChange={e => onInputChange(e.target.value)}
               type="text"

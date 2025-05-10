@@ -38,13 +38,22 @@ export const renewalsChatSteps: ChatStep[] = [
       if (trimmed === '3') {
         return "No problem, we can revisit this later.";
       }
-      return "Please enter 1, 2, or 3.";
+      // Reprompt with the original question and error message
+      return [
+        "The contract has language that does not allow price increases above 3%. Would you like to: 1) Draft an amendment to increase the price limit, 2) Revert to a 3% price increase, or 3) Come back to this later?",
+        "Please enter 1, 2, or 3."
+      ];
     },
   },
   {
     bot: "", // Leave bot message empty, since the previous step's reply already contains the question
     inputType: 'numberOrSkip',
     onUser: (answer, ctx) => {
+      if (!answer.trim()) {
+        // Treat empty input as 7
+        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(7);
+        return `Great, 7% is a strong, data-backed choice for this renewal.`;
+      }
       if (/skip|pass/i.test(answer)) return "No problem, we'll revisit the price increase later.";
       const num = parseFloat(answer);
       if (!isNaN(num)) {
@@ -72,14 +81,14 @@ export const renewalsChatSteps: ChatStep[] = [
     inputType: 'numberOrSkip',
     onUser: (answer, ctx) => {
       const trimmed = answer.trim().toLowerCase();
-      if (["1", "y", "yes", "schedule"].includes(trimmed)) {
+      if (trimmed.includes('yes') || trimmed === '1' || trimmed === 'y' || trimmed === 'schedule') {
         return [
           "Okay, I'll remind you to schedule a meeting in a few days.",
           "You're all set. I'll check back later when it's time to send the notice.",
           { type: "link", text: "Go to next customer – Initech", href: "/customers/initech" }
         ];
       }
-      if (["2", "n", "no", "proceed"].includes(trimmed)) {
+      if (trimmed.includes('no') || trimmed === '2' || trimmed === 'n' || trimmed === 'proceed') {
         return [
           "Understood. We'll proceed directly with the renewal notice.",
           "You're all set. I'll check back later when it's time to send the notice.",
