@@ -1,8 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { UserCircleIcon, Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { UserCircleIcon, Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -11,6 +16,34 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const sampleReminders = [
+    {
+      title: "Draft Amendment",
+      description: "Prepare amendment for additional seats",
+      dueDate: "Tomorrow",
+    },
+    {
+      title: "Schedule QBR",
+      description: "Book quarterly business review with executive sponsor",
+      dueDate: "Next week",
+    },
+    {
+      title: "Prepare Negotiation",
+      description: "Review pricing strategy and prepare counter-offers",
+      dueDate: "In 3 days",
+    },
+    {
+      title: "Update Success Plan",
+      description: "Document recent wins and usage metrics",
+      dueDate: "Today",
+    },
+    {
+      title: "Follow-up Meeting",
+      description: "Schedule follow-up with procurement team",
+      dueDate: "Next week",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -41,6 +74,51 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Reminder Icon with badge and popover */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-lg p-2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
+                    aria-label="Reminders"
+                    tabIndex={0}
+                    data-testid="reminder-icon"
+                  >
+                    <BookmarkIcon className="h-6 w-6" aria-hidden="true" />
+                    {/* Alert badge */}
+                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full border-2 border-white shadow">1</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-0 z-50 bg-green-50" align="end">
+                  <div className="p-4 border-b border-gray-200">
+                    <h3 className="font-semibold text-gray-900">Sample Reminders</h3>
+                    <p className="text-sm text-gray-500">Common tasks for renewal workflow</p>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {sampleReminders.map((reminder, index) => (
+                      <div
+                        key={index}
+                        className="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{reminder.title}</h4>
+                            <p className="text-sm text-gray-500">{reminder.description}</p>
+                          </div>
+                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                            {reminder.dueDate}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="p-3 bg-gray-50 border-t border-gray-200">
+                    <button className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium">
+                      Add New Reminder
+                    </button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <form 
                 className="relative" 
                 role="search" 

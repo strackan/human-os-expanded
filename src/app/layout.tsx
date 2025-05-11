@@ -4,6 +4,7 @@ import "./globals.css";
 import { ChatProvider } from "@/context/ChatContext";
 import GlobalChat from "@/components/GlobalChat";
 import AppLayout from "@/components/layout/AppLayout";
+import { PageTransitionProvider } from "../components/layout/PageTransitionContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,10 +22,12 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ChatProvider>
-          <AppLayout>
-            {children}
-            <GlobalChat />
-          </AppLayout>
+          <PageTransitionProvider>
+            <AppLayout>
+              {children}
+              <GlobalChat />
+            </AppLayout>
+          </PageTransitionProvider>
         </ChatProvider>
       </body>
     </html>

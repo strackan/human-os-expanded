@@ -13,6 +13,7 @@ import {
   DocumentDuplicateIcon,
   LightBulbIcon
 } from '@heroicons/react/24/outline';
+import Image from 'next/image';
 
 interface NavItem {
   name: string;
@@ -75,14 +76,21 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           {/* Logo/Brand */}
           <div className="mb-8 flex items-center justify-between">
             <div className={`overflow-hidden transition-all duration-300 ${
-              isCollapsed ? 'w-0 opacity-0' : 'w-32 opacity-100'
+              isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
             }`}>
               <Link 
                 href="/"
-                className="text-xl font-bold text-white whitespace-nowrap hover:text-blue-200 transition-colors"
+                className="whitespace-nowrap hover:text-blue-200 transition-colors flex items-center"
                 aria-label="Renubu home"
               >
-                Renubu
+                <Image
+                  src="/logo.png"
+                  alt="Renubu Logo"
+                  width={120}
+                  height={135}
+                  className="block my-2 ml-5"
+                  priority
+                />
               </Link>
             </div>
             <button
