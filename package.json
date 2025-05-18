@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.3",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-popover": "^1.1.13",
     "clsx": "^2.1.1",
