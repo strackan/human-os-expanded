@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 
 export interface Metric {
@@ -71,10 +73,10 @@ const KeyMetricsCard: React.FC<KeyMetricsCardProps> = ({
     <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col h-full w-full overflow-hidden">
       <div className="mb-4">
         <h3 className="text-xl font-bold mb-2">Key Metrics</h3>
-        <div className="grid grid-cols-2 gap-3 overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 overflow-hidden">
           {metrics.map((stat, i) => (
             <div
-              className="bg-gray-50 rounded-lg p-2 min-h-0 min-w-0 flex flex-col"
+              className="bg-gray-50 rounded-lg p-4 min-h-[72px] min-w-0 flex flex-col justify-between"
               key={stat.label}
             >
               <span className="text-xs text-gray-500 font-medium">{stat.label}</span>
@@ -92,7 +94,7 @@ const KeyMetricsCard: React.FC<KeyMetricsCardProps> = ({
           {miniCharts.map((chart, i) => {
             itemIdx = metrics.length + i;
             return (
-              <div className="flex flex-col items-center" key={chart.label}>
+              <div className="flex-1 flex flex-col items-center min-w-0" key={chart.label}>
                 {itemIdx < revealIdx ? <MiniSparklineChart data={chart.data} /> : null}
                 {itemIdx === revealIdx && animate && <span className="animate-pulse text-blue-500">|</span>}
                 <span className="text-xs text-gray-500 mt-1">{chart.label}</span>
@@ -103,13 +105,13 @@ const KeyMetricsCard: React.FC<KeyMetricsCardProps> = ({
       )}
       {/* AI Insights */}
       {insights.length > 0 && (
-        <div className="grid grid-cols-2 gap-3 mb-4 overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 mb-0 overflow-hidden">
           {insights.map((insight, i) => {
             itemIdx = metrics.length + miniCharts.length + i;
             return (
               <div
                 key={i}
-                className="bg-gray-50 rounded-lg p-2 h-full flex flex-col items-center"
+                className="bg-gray-50 rounded-lg p-4 min-h-[72px] h-full flex flex-col items-center justify-between"
               >
                 <span
                   className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${categoryColor[insight.color]}`}

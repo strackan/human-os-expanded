@@ -3,6 +3,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 import CustomerChatDialog, { ChatMessage } from "./CustomerChatDialog";
 import { useRouter } from 'next/navigation';
+import ConversationalChat from '../../../components/chat/ConversationalChat';
+import { renewalsChatSteps } from '../../../components/chat/chatWorkflow';
 
 export type CustomerRenewalLayoutProps = {
   customer: {
@@ -113,6 +115,11 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
   const [answers, setAnswers] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState(0);
+  const [workflowAnswers, setWorkflowAnswers] = useState<string[]>([]);
+  const [workflowInput, setWorkflowInput] = useState('');
+  const [workflowWaiting, setWorkflowWaiting] = useState(false);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -218,6 +225,30 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
     setMode('chat');
   };
 
+  const handlePrepareForRenewal = () => {
+    setShowWorkflow(true);
+    setWorkflowStep(0);
+    setWorkflowAnswers([]);
+    setWorkflowInput('');
+    setWorkflowWaiting(false);
+  };
+
+  const handleWorkflowSubmit = (answer: string) => {
+    const nextStep = workflowStep + 1;
+    const updatedAnswers = [...workflowAnswers, answer];
+    setWorkflowAnswers(updatedAnswers);
+    if (nextStep >= renewalsChatSteps.length) {
+      setShowWorkflow(false); // End workflow
+      setWorkflowStep(0);
+      setWorkflowAnswers([]);
+      setWorkflowInput('');
+      setWorkflowWaiting(false);
+      return;
+    }
+    setWorkflowStep(nextStep);
+    setWorkflowInput('');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-10">
       <div className="max-w-7xl mx-auto space-y-10">
@@ -273,15 +304,36 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
             {/* Right panel: Q&A Chat and Recommended Action */}
             <div className="flex-1 h-full flex flex-col justify-center items-center">
               <div className="w-full max-w-md h-full flex flex-col">
-                <CustomerChatDialog
-                  messages={messages}
-                  setMessages={setMessages}
-                  recommendedAction={chatConfig.recommendedAction}
-                  workflowSteps={[]}
-                  onPrepare={handleProceedToRenewal}
-                  botIntroMessage={chatConfig.botIntroMessage}
-                  inputPlaceholder={chatConfig.inputPlaceholder}
-                />
+                {showWorkflow ? (
+                  <ConversationalChat
+                    steps={renewalsChatSteps}
+                    step={workflowStep}
+                    answers={workflowAnswers}
+                    waiting={workflowWaiting}
+                    onSubmit={handleWorkflowSubmit}
+                    onInputChange={setWorkflowInput}
+                    input={workflowInput}
+                    onMultiStepAdvance={(nextStep, updatedAnswers) => {
+                      setWorkflowStep(nextStep);
+                      setWorkflowAnswers(updatedAnswers);
+                    }}
+                  />
+                ) : (
+                  <CustomerChatDialog
+                    messages={messages}
+                    setMessages={setMessages}
+                    recommendedAction={{
+                      label: chatConfig.recommendedAction.label,
+                      icon: typeof chatConfig.recommendedAction.icon === 'string'
+                        ? chatConfig.recommendedAction.icon
+                        : 'HandRaisedIcon',
+                    }}
+                    workflowSteps={[]}
+                    onPrepare={handlePrepareForRenewal}
+                    botIntroMessage={chatConfig.botIntroMessage}
+                    inputPlaceholder={chatConfig.inputPlaceholder}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -334,7 +386,12 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
                 <CustomerChatDialog
                   messages={messages}
                   setMessages={setMessages}
-                  recommendedAction={chatConfig.recommendedAction}
+                  recommendedAction={{
+                    label: chatConfig.recommendedAction.label,
+                    icon: typeof chatConfig.recommendedAction.icon === 'string'
+                      ? chatConfig.recommendedAction.icon
+                      : 'HandRaisedIcon',
+                  }}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}
