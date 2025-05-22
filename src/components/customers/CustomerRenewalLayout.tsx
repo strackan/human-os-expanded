@@ -152,7 +152,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
 
   // ContextPanel
   const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
-    <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col h-full w-full overflow-hidden">
+    <>
       <div className="mb-4">
         <h3 className="text-xl font-bold mb-2">Key Metrics</h3>
         <div className="grid grid-cols-2 gap-3 overflow-hidden">
@@ -182,7 +182,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
           </div>
         ))}
       </div>
-    </div>
+    </>
   );
 
   // ProgressStepper
@@ -286,9 +286,11 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
         </div>
         {/* Main Container: Before chat, show only ContextPanel. After, show resizable split with ProgressStepper and ContextPanel, and ChatPanel on the right. */}
         {mode !== 'chat' ? (
-          <div className="flex w-full h-[calc(100vh-300px)]" ref={containerRef}>
-            <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full">
-              <ContextPanel currentStep={step} />
+          <div className="flex w-full h-[calc(100vh-20rem)]" ref={containerRef}>
+            <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full overflow-auto pr-2">
+              <div className="bg-white rounded-2xl shadow-lg p-4 mb-2">
+                <ContextPanel currentStep={step} />
+              </div>
             </div>
             {/* Draggable Divider for pre-action stage */}
             <div
@@ -302,7 +304,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
               <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
             </div>
             {/* Right panel: Q&A Chat and Recommended Action */}
-            <div className="flex-1 h-full flex flex-col justify-center items-center">
+            <div className="flex-1 h-full flex flex-col">
               <div className="w-full max-w-md h-full flex flex-col">
                 {showWorkflow ? (
                   <ConversationalChat
@@ -338,9 +340,9 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
             </div>
           </div>
         ) : (
-          <div className="flex w-full" ref={containerRef}>
+          <div className="flex w-full h-[calc(100vh-20rem)]" ref={containerRef}>
             <div
-              className="bg-white rounded-2xl shadow-lg flex h-[70vh]"
+              className="bg-white rounded-2xl shadow-lg flex h-full"
               style={{ width: leftWidthPx, minWidth: 320, zIndex: 10 }}
             >
               <div className="flex flex-row h-full w-full">
@@ -370,7 +372,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
             </div>
             {/* Draggable Divider for chat mode */}
             <div
-              className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
+              className="relative w-6 h-full flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
               style={{ marginLeft: '-1px', marginRight: '-1px' }}
               onMouseDown={startDrag}
               tabIndex={0}
@@ -380,9 +382,8 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
               <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
             </div>
             {/* ChatPanel on the right */}
-            <div className="flex-1 h-[70vh]">
+            <div className="flex-1 h-full">
               <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
-                {/* You can add a more advanced chat workflow here if needed */}
                 <CustomerChatDialog
                   messages={messages}
                   setMessages={setMessages}

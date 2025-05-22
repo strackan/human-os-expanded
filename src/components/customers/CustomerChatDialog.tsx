@@ -57,7 +57,7 @@ const CustomerChatDialog: React.FC<CustomerChatDialogProps> = ({
   const IconComponent = iconMap[recommendedAction.icon as keyof typeof iconMap] || HandRaisedIcon;
 
   return (
-    <div className="flex flex-col h-full w-full max-h-[calc(100vh-180px)]">
+    <div className="relative flex flex-col h-full w-full">
       {/* Recommended Action Card */}
       <div className="mb-4">
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-4 shadow-sm justify-center">
@@ -117,12 +117,12 @@ const CustomerChatDialog: React.FC<CustomerChatDialogProps> = ({
         )}
       </div>
 
-      {/* Input - always visible at bottom, no margin-top */}
-      <div className="flex items-center gap-2 pt-2">
+      {/* Input - sticky at bottom */}
+      <div className="sticky bottom-0 left-0 w-full bg-gray-50 z-30 flex items-center gap-2 p-2 mb-2 shadow-[0_-2px_8px_-2px_rgba(0,0,0,0.04)] border-t border-gray-200">
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder={inputPlaceholder}
           value={input}
           onChange={e => setInput(e.target.value)}
