@@ -4,17 +4,31 @@ import { ChevronLeftIcon, ChevronRightIcon, CheckCircleIcon } from "@heroicons/r
 import CustomerChatDialog, { ChatMessage } from "./CustomerChatDialog";
 import { useRouter } from 'next/navigation';
 import ConversationalChat from '../../../components/chat/ConversationalChat';
-import { renewalsChatSteps } from '../../../components/chat/chatWorkflow';
+import { renewalsChatWorkflow } from '../../../components/chat/chatWorkflow';
 
 export type CustomerRenewalLayoutProps = {
   customer: {
     name: string;
     arr: string;
-    stages: any[];
+    stages: {
+      id: number;
+      name: string;
+      status: 'complete' | 'current' | 'upcoming';
+    }[];
   };
-  stats: { label: string; value: string }[];
-  aiInsights: { category: string; color: 'green' | 'blue' | 'purple' | 'red'; text: string }[];
-  miniCharts: { label: string; data: number[] }[];
+  stats: {
+    label: string;
+    value: string;
+  }[];
+  aiInsights: {
+    category: string;
+    color: 'green' | 'blue' | 'purple' | 'red';
+    text: string;
+  }[];
+  miniCharts: {
+    label: string;
+    data: number[];
+  }[];
   contextByStep: any[][];
   additionalSteps?: any[];
   riskLevel: string;
@@ -121,6 +135,12 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
   const [workflowInput, setWorkflowInput] = useState('');
   const [workflowWaiting, setWorkflowWaiting] = useState(false);
 
+  // Add new state for tracking completed steps
+  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+
+  // Update the chatSteps constant
+  const chatSteps = renewalsChatWorkflow.steps;
+
   useEffect(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
@@ -199,20 +219,32 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
         {checklistItems.map((item, idx) => (
           <li key={item} className="flex items-center gap-3">
             <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${
-              idx < currentStep
+              completedSteps.includes(idx)
                 ? 'bg-green-100 border-green-500 text-green-700'
                 : idx === currentStep
                 ? 'bg-blue-100 border-blue-500 text-blue-700 font-bold'
                 : 'bg-gray-100 border-gray-300 text-gray-400'
             }`}>
-              {idx < currentStep ? <CheckCircleIcon className="w-5 h-5" /> : idx + 1}
+              {completedSteps.includes(idx) ? <CheckCircleIcon className="w-5 h-5" /> : idx + 1}
             </div>
-            <span className={`text-sm ${idx === currentStep ? 'font-bold text-blue-700' : idx < currentStep ? 'text-gray-500 line-through' : 'text-gray-400'}`}>{item}</span>
+            <span className={`text-sm ${
+              completedSteps.includes(idx)
+                ? 'text-gray-500 line-through'
+                : idx === currentStep
+                ? 'font-bold text-blue-700'
+                : 'text-gray-400'
+            }`}>{item}</span>
           </li>
         ))}
       </ol>
     </div>
   );
+
+  // Method to handle step progression
+  const handleStepProgression = (stepIndex: number) => {
+    setCompletedSteps(prev => [...prev, stepIndex]);
+    setStep(stepIndex + 1);
+  };
 
   // Unified handler for proceeding to renewal workflow
   const handleProceedToRenewal = () => {
@@ -221,10 +253,12 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
       newAnswers[0] = 'Completed in initial review';
       return newAnswers;
     });
-    setStep(1);
+    setStep(0);
     setMode('chat');
+    setProgressCollapsed(false);
+    setCompletedSteps([]); // Reset completed steps
     setMessages([
-      { sender: 'bot', text: typeof renewalsChatSteps[0].bot === 'string' ? renewalsChatSteps[0].bot : renewalsChatSteps[0].bot[0] }
+      { sender: 'bot', text: typeof renewalsChatWorkflow.steps[0].bot === 'string' ? renewalsChatWorkflow.steps[0].bot : renewalsChatWorkflow.steps[0].bot[0] }
     ]);
   };
 
@@ -237,48 +271,48 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
   };
 
   const handleWorkflowSubmit = (answer: string) => {
-    if (workflowWaiting) return;
+    if (workflowWaiting || !answer.trim()) return;
     setWorkflowWaiting(true);
     setTimeout(() => {
-      const currentStep = renewalsChatSteps[workflowStep];
+      const currentStep = chatSteps[workflowStep];
       const response = currentStep.onUser(answer);
       setWorkflowAnswers(prev => [...prev, answer]);
-      
-      if (Array.isArray(response)) {
-        response.forEach((msg, idx) => {
-          setTimeout(() => {
-            setMessages(prev => [...prev, { sender: 'bot', text: msg }]);
-          }, idx * 700);
-        });
-      } else {
-        setMessages(prev => [...prev, { sender: 'bot', text: response }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: response }]);
+
+      // Update progress stepper if this step has a progressStep property
+      if (currentStep.progressStep !== undefined) {
+        setCompletedSteps(prev => [...prev, currentStep.progressStep!]);
+        setStep(currentStep.progressStep! + 1);
       }
 
       const nextStep = workflowStep + 1;
-      if (nextStep >= renewalsChatSteps.length) {
+      if (nextStep >= chatSteps.length) {
+        // Workflow is complete
         setShowWorkflow(false);
         setWorkflowStep(0);
         setWorkflowAnswers([]);
         setWorkflowInput('');
         setWorkflowWaiting(false);
+        // Don't reset messages to keep the conversation history
         return;
       }
 
-      setTimeout(() => {
-        const nextBot = renewalsChatSteps[nextStep].bot;
-        if (typeof nextBot === 'string') {
-          setMessages(prev => [...prev, { sender: 'bot', text: nextBot }]);
-        } else if (Array.isArray(nextBot)) {
-          nextBot.forEach((msg, idx) => {
-            setTimeout(() => {
-              setMessages(prev => [...prev, { sender: 'bot', text: msg }]);
-            }, idx * 700);
-          });
-        }
-        setWorkflowStep(nextStep);
-        setWorkflowInput('');
-        setWorkflowWaiting(false);
-      }, 900);
+      // Move to next step
+      setWorkflowStep(nextStep);
+      setWorkflowInput('');
+      setWorkflowWaiting(false);
+
+      // Add the next bot message
+      const nextBot = chatSteps[nextStep].bot;
+      if (typeof nextBot === 'string') {
+        setMessages(prev => [...prev, { sender: 'bot', text: nextBot }]);
+      } else if (Array.isArray(nextBot)) {
+        nextBot.forEach((msg, idx) => {
+          setTimeout(() => {
+            setMessages(prev => [...prev, { sender: 'bot', text: msg }]);
+          }, idx * 700);
+        });
+      }
     }, 800);
   };
 
@@ -400,7 +434,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
               <div className="flex-1 h-[70vh]">
                 <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
                   <ConversationalChat
-                    steps={renewalsChatSteps}
+                    steps={chatSteps}
                     step={workflowStep}
                     answers={workflowAnswers}
                     waiting={workflowWaiting}

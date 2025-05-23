@@ -1,18 +1,23 @@
 // Chat step types and workflows for conversational chat
 
+import { ChatStep } from '../../src/types/chat';
+import { createChatWorkflowConfig } from '../../src/config/chatWorkflow';
+
 export interface ChatStep {
   bot: string | string[];
   inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
   choices?: string[];
+  progressStep?: number;
   onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string;
 }
 
 // Renewals HQ workflow steps
-export const renewalsChatSteps: ChatStep[] = [
+const renewalsChatSteps: ChatStep[] = [
   {
     bot: "Let's confirm the account details and renewal outlook. Acme Corp has 92% usage, $450k ARR, and a high likelihood of renewal. Do you agree with this assessment and want to proceed with an aggressive price increase strategy, or would you prefer a more conservative approach?",
     inputType: 'choice',
     choices: ["Aggressive (recommended)", "Conservative"],
+    progressStep: 0, // Move from "Review account data" to "Confirm renewal strategy"
     onUser: (answer, ctx) => {
       if (/conservative/i.test(answer)) {
         return "We'll proceed with a more conservative renewal strategy.";
@@ -48,6 +53,7 @@ export const renewalsChatSteps: ChatStep[] = [
   {
     bot: "", // Leave bot message empty, since the previous step's reply already contains the question
     inputType: 'numberOrSkip',
+    progressStep: 1, // Move from "Confirm renewal strategy" to "Confirm contacts"
     onUser: (answer, ctx) => {
       if (!answer.trim()) {
         // Treat empty input as 7
@@ -72,6 +78,7 @@ export const renewalsChatSteps: ChatStep[] = [
   {
     bot: "Who should be involved in the renewal process? The primary contact is Sarah Johnson, and the executive sponsor is Michael Chen. Should I include anyone else in these upcoming discussions?",
     inputType: 'emailOrSkip',
+    progressStep: 2, // Move from "Confirm contacts" to "Address risk"
     onUser: (answer, ctx) => {
       return "Got it.";
     },
@@ -79,6 +86,7 @@ export const renewalsChatSteps: ChatStep[] = [
   {
     bot: "There's one risk: Feature X usage declined 15% last quarter. Should I set a reminder to schedule a meeting about this?",
     inputType: 'numberOrSkip',
+    progressStep: 3, // Move from "Address risk" to "Send renewal notice"
     onUser: (answer, ctx) => {
       const trimmed = answer.trim().toLowerCase();
       if (trimmed.includes('yes') || trimmed === '1' || trimmed === 'y' || trimmed === 'schedule') {
@@ -98,4 +106,18 @@ export const renewalsChatSteps: ChatStep[] = [
       return "Please enter Yes, No, 1, 2, or type your answer.";
     },
   },
-]; 
+  {
+    bot: "Would you like to send the renewal notice now?",
+    inputType: 'choice',
+    choices: ["Yes, send now", "No, review first"],
+    progressStep: 4, // Final step - "Send renewal notice"
+    onUser: (answer, ctx) => {
+      if (answer.toLowerCase().includes("yes")) {
+        return "Great! The renewal notice has been sent.";
+      }
+      return "Understood. Let me know when you're ready to send the notice.";
+    },
+  }
+];
+
+export const renewalsChatWorkflow = createChatWorkflowConfig(renewalsChatSteps); 

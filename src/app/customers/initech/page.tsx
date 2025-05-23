@@ -18,17 +18,38 @@ import { useRouter } from 'next/navigation';
 import PageTransition from "../../../components/layout/PageTransition";
 import { initechData } from "../../../data/customers";
 import CustomerRenewalLayout from "../../../components/customers/CustomerRenewalLayout";
+import { CustomerData, ProgressStep } from '../../../types/chat';
+import { defaultChecklistItems, defaultProgressSteps, defaultRecommendedAction } from '../../../config/chatWorkflow';
 
 // Mock data for Initech
-const initechCustomer = {
+const initechCustomer: CustomerData = {
   name: "Initech",
   arr: "$320,000",
   stages: [
-    { id: 1, name: "Planning", status: "complete" },
-    { id: 2, name: "Outreach", status: "current" },
-    { id: 3, name: "Negotiation", status: "upcoming" },
-    { id: 4, name: "Approval", status: "upcoming" },
-    { id: 5, name: "Closed", status: "upcoming" },
+    { id: 1, name: "Planning", status: "complete" as const },
+    { id: 2, name: "Outreach", status: "current" as const },
+    { id: 3, name: "Negotiation", status: "upcoming" as const },
+    { id: 4, name: "Approval", status: "upcoming" as const },
+    { id: 5, name: "Closed", status: "upcoming" as const },
+  ],
+  stats: [
+    { label: "Current ARR", value: "$320,000" },
+    { label: "Renewal Date", value: "Sep 30, 2024" },
+    { label: "Usage", value: "88%" },
+    { label: "2Y Avg PI%", value: "4.8%" },
+    { label: "Support Tickets (30d)", value: "5" },
+    { label: "Last Engagement", value: "2 days ago" },
+  ],
+  aiInsights: [
+    { category: "Profit", color: "green", text: "Customer is open to a 3-5% price increase." },
+    { category: "Engagement", color: "blue", text: "Recent support tickets resolved; sentiment neutral." },
+    { category: "Sponsor", color: "purple", text: "VP of IT attended last QBR." },
+    { category: "Risk", color: "red", text: "No open escalations; renewal risk is low." },
+  ],
+  miniCharts: [
+    { label: "ARR Trend", data: [8, 9, 10, 11, 12, 13, 14] },
+    { label: "Usage", data: [70, 75, 80, 85, 88, 87, 88] },
+    { label: "PI%", data: [4.1, 4.3, 4.5, 4.7, 4.8, 4.8, 4.8] },
   ],
 };
 
@@ -55,12 +76,6 @@ const recommendedAction = {
   label: "Prepare for Renewal",
   icon: RocketLaunchIcon,
 };
-
-const miniCharts = [
-  { label: "ARR Trend", data: [8, 9, 10, 11, 12, 13, 14] },
-  { label: "Usage", data: [70, 75, 80, 85, 88, 87, 88] },
-  { label: "PI%", data: [4.1, 4.3, 4.5, 4.7, 4.8, 4.8, 4.8] },
-];
 
 const MiniSparklineChart: React.FC<{ data: number[] }> = ({ data }) => (
   <svg width="60" height="24" viewBox="0 0 60 24" fill="none" className="overflow-visible">
@@ -189,7 +204,7 @@ const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
     </div>
     {/* Sparklines */}
     <div className="flex gap-4 mb-4">
-      {miniCharts.map((chart, i) => (
+      {initechCustomer.miniCharts.map((chart, i) => (
         <div className="flex flex-col items-center" key={i}>
           <MiniSparklineChart data={chart.data} />
           <span className="text-xs text-gray-500 mt-1">{chart.label}</span>
@@ -198,7 +213,7 @@ const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
     </div>
     {/* AI Insights */}
     <div className="grid grid-cols-2 gap-3 mb-4 overflow-hidden">
-      {aiInsights.map((insight, i) => (
+      {initechCustomer.aiInsights.map((insight, i) => (
         <div key={i} className="bg-gray-50 rounded-lg p-2 h-full flex flex-col items-center">
           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold mb-2 ${categoryColor[insight.color]}`}>{insight.category}</span>
           <span className="text-sm text-gray-700 text-center">{insight.text}</span>
