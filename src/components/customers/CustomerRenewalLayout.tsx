@@ -152,7 +152,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
 
   // ContextPanel
   const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
-    <>
+    <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
       <div className="mb-4">
         <h3 className="text-xl font-bold mb-2">Key Metrics</h3>
         <div className="grid grid-cols-2 gap-3 overflow-hidden">
@@ -182,7 +182,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 
   // ProgressStepper
@@ -223,6 +223,9 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
     });
     setStep(1);
     setMode('chat');
+    setMessages([
+      { sender: 'bot', text: typeof renewalsChatSteps[0].bot === 'string' ? renewalsChatSteps[0].bot : renewalsChatSteps[0].bot[0] }
+    ]);
   };
 
   const handlePrepareForRenewal = () => {
@@ -234,19 +237,49 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
   };
 
   const handleWorkflowSubmit = (answer: string) => {
-    const nextStep = workflowStep + 1;
-    const updatedAnswers = [...workflowAnswers, answer];
-    setWorkflowAnswers(updatedAnswers);
-    if (nextStep >= renewalsChatSteps.length) {
-      setShowWorkflow(false); // End workflow
-      setWorkflowStep(0);
-      setWorkflowAnswers([]);
-      setWorkflowInput('');
-      setWorkflowWaiting(false);
-      return;
-    }
-    setWorkflowStep(nextStep);
-    setWorkflowInput('');
+    if (workflowWaiting) return;
+    setWorkflowWaiting(true);
+    setTimeout(() => {
+      const currentStep = renewalsChatSteps[workflowStep];
+      const response = currentStep.onUser(answer);
+      setWorkflowAnswers(prev => [...prev, answer]);
+      
+      if (Array.isArray(response)) {
+        response.forEach((msg, idx) => {
+          setTimeout(() => {
+            setMessages(prev => [...prev, { sender: 'bot', text: msg }]);
+          }, idx * 700);
+        });
+      } else {
+        setMessages(prev => [...prev, { sender: 'bot', text: response }]);
+      }
+
+      const nextStep = workflowStep + 1;
+      if (nextStep >= renewalsChatSteps.length) {
+        setShowWorkflow(false);
+        setWorkflowStep(0);
+        setWorkflowAnswers([]);
+        setWorkflowInput('');
+        setWorkflowWaiting(false);
+        return;
+      }
+
+      setTimeout(() => {
+        const nextBot = renewalsChatSteps[nextStep].bot;
+        if (typeof nextBot === 'string') {
+          setMessages(prev => [...prev, { sender: 'bot', text: nextBot }]);
+        } else if (Array.isArray(nextBot)) {
+          nextBot.forEach((msg, idx) => {
+            setTimeout(() => {
+              setMessages(prev => [...prev, { sender: 'bot', text: msg }]);
+            }, idx * 700);
+          });
+        }
+        setWorkflowStep(nextStep);
+        setWorkflowInput('');
+        setWorkflowWaiting(false);
+      }, 900);
+    }, 800);
   };
 
   return (
@@ -256,17 +289,17 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
         <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-4 min-h-[180px]">
           <div className="flex flex-col md:flex-row md:justify-between gap-4 flex-1">
             <div className="space-y-2 flex flex-col justify-center h-full">
-              <div className="flex items-center gap-3">
-                <h2 className={`text-3xl font-extrabold text-${riskColor}-700 tracking-tight`}>
-                  {customer.name}
-                </h2>
-              </div>
+              <h2 className="text-3xl font-extrabold text-blue-700 tracking-tight">
+                {customer.name}
+              </h2>
               <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-700 text-base items-center">
-                <span className="font-medium text-gray-500">Success Likelihood:</span>
-                <span className={`inline-block px-2 py-0.5 rounded-full bg-${riskColor}-100 text-${riskColor}-700 text-xs font-semibold ml-2`}>{riskLevel}</span>
+                <span className="font-medium text-gray-500">Risk Level:</span>
+                <span className={`inline-block px-2 py-0.5 rounded-full bg-${riskColor}-100 text-${riskColor}-700 text-xs font-semibold ml-2`}>
+                  {riskLevel}
+                </span>
               </div>
             </div>
-            <StageTimeline stages={[...customer.stages, ...additionalSteps]} />
+            <StageTimeline stages={customer.stages} />
           </div>
           {/* Navigation arrows at bottom left and right */}
           <div className="flex w-full justify-end items-end mt-4">
@@ -284,29 +317,88 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
             )}
           </div>
         </div>
-        {/* Main Container: Before chat, show only ContextPanel. After, show resizable split with ProgressStepper and ContextPanel, and ChatPanel on the right. */}
-        {mode !== 'chat' ? (
-          <div className="flex w-full h-[calc(100vh-20rem)]" ref={containerRef}>
-            <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full overflow-auto pr-2">
-              <div className="bg-white rounded-2xl shadow-lg p-4 mb-2">
+        {/* Main Container */}
+        <div className="flex w-full" ref={containerRef}>
+          {mode === 'pre-action' ? (
+            <div className="flex w-full h-[70vh]">
+              <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full">
                 <ContextPanel currentStep={step} />
               </div>
+              {/* Draggable Divider for pre-action stage */}
+              <div
+                className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
+                style={{ marginLeft: '-1px', marginRight: '-1px' }}
+                onMouseDown={startDrag}
+                tabIndex={0}
+                aria-label="Resize panel"
+                role="separator"
+              >
+                <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-orange-700 group-hover:bg-orange-700 cursor-col-resize"></div>
+              </div>
+              {/* Right panel: Q&A Chat and Recommended Action */}
+              <div className="flex-1 h-full flex flex-col">
+                <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
+                  <CustomerChatDialog
+                    messages={messages}
+                    setMessages={setMessages}
+                    recommendedAction={{
+                      label: chatConfig.recommendedAction.label,
+                      icon: typeof chatConfig.recommendedAction.icon === 'string' 
+                        ? chatConfig.recommendedAction.icon 
+                        : 'HandRaisedIcon'
+                    }}
+                    onPrepare={handleProceedToRenewal}
+                    botIntroMessage={chatConfig.botIntroMessage}
+                    inputPlaceholder={chatConfig.inputPlaceholder}
+                  />
+                </div>
+              </div>
             </div>
-            {/* Draggable Divider for pre-action stage */}
-            <div
-              className="relative w-6 h-full flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
-              style={{ marginLeft: '-1px', marginRight: '-1px' }}
-              onMouseDown={startDrag}
-              tabIndex={0}
-              aria-label="Resize panel"
-              role="separator"
-            >
-              <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
-            </div>
-            {/* Right panel: Q&A Chat and Recommended Action */}
-            <div className="flex-1 h-full flex flex-col">
-              <div className="w-full max-w-md h-full flex flex-col">
-                {showWorkflow ? (
+          ) : (
+            <div className="flex w-full h-[70vh]">
+              <div
+                className="bg-white rounded-2xl shadow-lg flex h-full"
+                style={{ width: leftWidthPx, minWidth: 320, zIndex: 10 }}
+              >
+                <div className="flex flex-row h-full w-full">
+                  {/* ProgressStepper (collapsible) */}
+                  <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] ${progressCollapsed ? 'w-12' : 'w-2/5'}`} style={{alignItems: 'flex-start', justifyContent: 'flex-start'}}>
+                    {/* Collapse/Expand Icon */}
+                    <button
+                      className="mt-2 mb-4 p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 self-end"
+                      tabIndex={0}
+                      aria-label={progressCollapsed ? 'Expand Progress Stepper' : 'Collapse Progress Stepper'}
+                      onClick={() => setProgressCollapsed(c => !c)}
+                      onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setProgressCollapsed(c => !c)}
+                    >
+                      {progressCollapsed ? (
+                        <ChevronRightIcon className="w-6 h-6 text-gray-500" />
+                      ) : (
+                        <ChevronLeftIcon className="w-6 h-6 text-gray-500" />
+                      )}
+                    </button>
+                    {!progressCollapsed && <ProgressStepper currentStep={step} />}
+                  </div>
+                  {/* ContextPanel (Key Metrics) */}
+                  <div className="flex-1 h-full flex flex-col">
+                    <ContextPanel currentStep={step} />
+                  </div>
+                </div>
+              </div>
+              {/* Draggable Divider */}
+              <div
+                className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
+                style={{ marginLeft: '-1px', marginRight: '-1px' }}
+                onMouseDown={startDrag}
+                tabIndex={0}
+                aria-label="Resize panel"
+                role="separator"
+              >
+                <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-orange-700 group-hover:bg-orange-700 cursor-col-resize"></div>
+              </div>
+              {/* ChatPanel on the right */}
+              <div className="flex-1 h-[70vh]">
+                <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
                   <ConversationalChat
                     steps={renewalsChatSteps}
                     step={workflowStep}
@@ -320,88 +412,11 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
                       setWorkflowAnswers(updatedAnswers);
                     }}
                   />
-                ) : (
-                  <CustomerChatDialog
-                    messages={messages}
-                    setMessages={setMessages}
-                    recommendedAction={{
-                      label: chatConfig.recommendedAction.label,
-                      icon: typeof chatConfig.recommendedAction.icon === 'string'
-                        ? chatConfig.recommendedAction.icon
-                        : 'HandRaisedIcon',
-                    }}
-                    workflowSteps={[]}
-                    onPrepare={handlePrepareForRenewal}
-                    botIntroMessage={chatConfig.botIntroMessage}
-                    inputPlaceholder={chatConfig.inputPlaceholder}
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex w-full h-[calc(100vh-20rem)]" ref={containerRef}>
-            <div
-              className="bg-white rounded-2xl shadow-lg flex h-full"
-              style={{ width: leftWidthPx, minWidth: 320, zIndex: 10 }}
-            >
-              <div className="flex flex-row h-full w-full">
-                {/* ProgressStepper (collapsible) */}
-                <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] ${progressCollapsed ? 'w-12' : 'w-2/5'}`} style={{alignItems: 'flex-start', justifyContent: 'flex-start'}}>
-                  {/* Collapse/Expand Icon */}
-                  <button
-                    className="mt-2 mb-4 p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 self-end"
-                    tabIndex={0}
-                    aria-label={progressCollapsed ? 'Expand Progress Stepper' : 'Collapse Progress Stepper'}
-                    onClick={() => setProgressCollapsed(c => !c)}
-                    onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && setProgressCollapsed(c => !c)}
-                  >
-                    {progressCollapsed ? (
-                      <ChevronRightIcon className="w-6 h-6 text-gray-500" />
-                    ) : (
-                      <ChevronLeftIcon className="w-6 h-6 text-gray-500" />
-                    )}
-                  </button>
-                  {!progressCollapsed && <ProgressStepper currentStep={step} />}
-                </div>
-                {/* ContextPanel (Key Metrics) */}
-                <div className="flex-1 h-full flex flex-col">
-                  <ContextPanel currentStep={step} />
                 </div>
               </div>
             </div>
-            {/* Draggable Divider for chat mode */}
-            <div
-              className="relative w-6 h-full flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
-              style={{ marginLeft: '-1px', marginRight: '-1px' }}
-              onMouseDown={startDrag}
-              tabIndex={0}
-              aria-label="Resize panel"
-              role="separator"
-            >
-              <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-blue-700 group-hover:bg-blue-700 cursor-col-resize"></div>
-            </div>
-            {/* ChatPanel on the right */}
-            <div className="flex-1 h-full">
-              <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
-                <CustomerChatDialog
-                  messages={messages}
-                  setMessages={setMessages}
-                  recommendedAction={{
-                    label: chatConfig.recommendedAction.label,
-                    icon: typeof chatConfig.recommendedAction.icon === 'string'
-                      ? chatConfig.recommendedAction.icon
-                      : 'HandRaisedIcon',
-                  }}
-                  workflowSteps={[]}
-                  onPrepare={handleProceedToRenewal}
-                  botIntroMessage={chatConfig.botIntroMessage}
-                  inputPlaceholder={chatConfig.inputPlaceholder}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -126,11 +126,11 @@ const categoryColor = {
 };
 
 const checklistItems = [
-  { label: "Review account data" },
-  { label: "Confirm renewal strategy" },
-  { label: "Confirm contacts" },
-  { label: "Address risk (if any)" },
-  { label: "Send renewal notice" },
+  "Review account data",
+  "Confirm renewal strategy",
+  "Confirm contacts",
+  "Address risk (if any)",
+  "Send renewal notice",
 ];
 
 const RenewalChecklist: React.FC<{
@@ -144,9 +144,9 @@ const RenewalChecklist: React.FC<{
         <h4 className="text-lg font-bold mb-2">Preparation Checklist</h4>
         <ul className="space-y-1">
           {checklistItems.map((item, idx) => (
-            <li key={item.label} className="flex items-center gap-2 group">
+            <li key={item} className="flex items-center gap-2 group">
               <CheckCircleIcon className={`w-4 h-4 ${answers[idx] !== undefined ? 'text-orange-500' : 'text-gray-300'}`} />
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">{item}</span>
               <PencilIcon
                 className={`w-4 h-4 ml-1 inline-block align-text-bottom ${answers[idx] !== undefined ? 'text-gray-400 group-hover:text-orange-500 cursor-pointer' : 'text-gray-200 cursor-not-allowed'}`}
                 aria-label="Editable"
@@ -159,7 +159,7 @@ const RenewalChecklist: React.FC<{
                 <button
                   className="ml-2 text-orange-600 text-xs underline opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
                   tabIndex={0}
-                  aria-label={`Edit answer for ${item.label}`}
+                  aria-label={`Edit answer for ${item}`}
                   onClick={() => onEdit(idx)}
                   onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onEdit(idx)}
                 >
@@ -356,11 +356,42 @@ const InitialQnAChat: React.FC<{
   );
 };
 
+const ProgressStepper: React.FC<{ currentStep: number }> = ({ currentStep }) => (
+  <div className="flex flex-col items-center h-full w-full py-6">
+    <ol className="space-y-4 w-full">
+      {checklistItems.map((item, idx) => (
+        <li key={item} className="flex items-center gap-3">
+          <div className={`rounded-full w-7 h-7 flex items-center justify-center border-2 ${
+            idx < currentStep
+              ? 'bg-green-100 border-green-500 text-green-700'
+              : idx === currentStep
+              ? 'bg-blue-100 border-blue-500 text-blue-700 font-bold'
+              : 'bg-gray-100 border-gray-300 text-gray-400'
+          }`}>
+            {idx < currentStep ? <CheckCircleIcon className="w-5 h-5" /> : idx + 1}
+          </div>
+          <span className={`text-sm ${idx === currentStep ? 'font-bold text-blue-700' : idx < currentStep ? 'text-gray-500 line-through' : 'text-gray-400'}`}>{item}</span>
+        </li>
+      ))}
+    </ol>
+  </div>
+);
+
 const customerName = initechCustomer.name;
 const chatSteps = initechChatSteps.map(step => ({
   ...step,
   bot: step.message(customerName),
-  inputType: 'choiceOrInput', // adjust as needed for your workflow
+  inputType: 'choiceOrInput' as const,
+  onUser: (answer: string) => {
+    // Handle user response
+    if (answer === '1') {
+      return 'Great! We\'ll proceed with the moderate price increase strategy.';
+    } else if (answer === '2') {
+      return 'Understood. We\'ll take a more conservative approach with the price increase.';
+    } else {
+      return 'Please select either option 1 or 2 to proceed.';
+    }
+  }
 }));
 
 const InitechPage = () => {
@@ -456,11 +487,9 @@ const InitechPage = () => {
     setStep(1);
     setMode('chat');
     setRenewalStep('strategy');
-    setTimeout(() => {
-      setMessages([
-        { sender: 'bot', text: initechChatSteps[0].message(initechCustomer.name) }
-      ]);
-    }, 0);
+    setMessages([
+      { sender: 'bot', text: initechChatSteps[0].message(initechCustomer.name) }
+    ]);
   };
 
   const handleStrategyAnswered = (answer: string) => {
@@ -558,7 +587,7 @@ const InitechPage = () => {
                         <ChevronLeftIcon className="w-6 h-6 text-gray-500" />
                       )}
                     </button>
-                    {/* You can add a ProgressStepper here if desired */}
+                    {!progressCollapsed && <ProgressStepper currentStep={step} />}
                   </div>
                   {/* ContextPanel (Key Metrics) */}
                   <div className="flex-1 h-full flex flex-col">
