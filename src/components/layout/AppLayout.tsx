@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { UserCircleIcon, Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
+import { useAuth } from '@/components/auth/AuthProvider'; // ← ADD THIS IMPORT
 import {
   Popover,
   PopoverContent,
@@ -16,6 +17,29 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // ← ADD THIS: Get user data from auth context
+  const { user, profile, loading } = useAuth();
+  
+  // ← ADD THIS: Extract first name from user data
+  const getFirstName = () => {
+    if (loading) return 'User'; // Show fallback while loading
+    
+    // Try to get name from profile first, then user metadata
+    const fullName = profile?.full_name || user?.user_metadata?.full_name;
+    
+    if (fullName) {
+      // Extract first name (everything before the first space)
+      return fullName.split(' ')[0];
+    }
+    
+    // Fallback to email username if no full name
+    if (user?.email) {
+      return user.email.split('@')[0];
+    }
+    
+    return 'User'; // Final fallback
+  };
 
   const sampleReminders = [
     {
@@ -60,8 +84,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center space-x-6">
+              {/* ← UPDATED: Use dynamic first name */}
               <h1 className="text-2xl font-semibold text-gray-900">
-                Welcome back, Justin
+                Welcome back, {getFirstName()}
               </h1>
               <div 
                 className="flex items-center space-x-2" 
@@ -222,4 +247,4 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </main>
     </div>
   );
-} 
+}
