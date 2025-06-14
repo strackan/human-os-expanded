@@ -33,26 +33,38 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const supabase = createClient()
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (!mounted) return
+
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          // Fetch user profile
-          const { data: profile } = await supabase
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single()
           
-          setProfile(profile)
+          if (profileError) {
+            console.error('❌ Profile fetch error:', profileError.message)
+          }
+          
+          if (mounted) {
+            setProfile(profile)
+          }
         }
       } catch (error) {
-        console.error('Error getting initial session:', error)
+        console.error('❌ Session error:', error)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     }
 
@@ -61,42 +73,53 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state changed:', event, session?.user?.email || 'signed out')
+        if (!mounted) return
         
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          // Create or update profile on sign in
           try {
+            console.log('📝 User metadata:', session.user.user_metadata)
             const { data: profile, error } = await supabase
               .from('profiles')
               .upsert({
                 id: session.user.id,
                 email: session.user.email!,
-                full_name: session.user.user_metadata.full_name,
+                full_name: session.user.user_metadata.full_name || 
+                          session.user.user_metadata.name || 
+                          session.user.user_metadata.given_name,
                 avatar_url: session.user.user_metadata.avatar_url,
                 updated_at: new Date().toISOString(),
               })
               .select()
               .single()
 
-            if (!error) {
+            if (!error && mounted) {
+              console.log('✅ Profile updated:', profile)
               setProfile(profile)
-            } else {
-              console.error('Error upserting profile:', error)
+            } else if (error) {
+              console.error('❌ Profile update error:', error.message)
             }
           } catch (error) {
-            console.error('Error handling profile:', error)
+            console.error('❌ Profile error:', error)
           }
         } else {
-          setProfile(null)
+          if (mounted) {
+            setProfile(null)
+          }
         }
         
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+        }
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      console.log('🧹 Cleaning up auth subscription')
+      subscription.unsubscribe()
+    }
   }, [supabase])
 
   return (

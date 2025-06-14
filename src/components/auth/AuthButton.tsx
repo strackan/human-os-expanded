@@ -15,15 +15,25 @@ export default function AuthButton() {
   const handleSignIn = async () => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const callbackUrl = `${location.origin}/api/auth`
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${location.origin}/auth/callback`
+          redirectTo: callbackUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
         }
       })
-      if (error) throw error
+      
+      if (error) {
+        console.error('❌ Sign in error:', error.message)
+        throw error
+      }
     } catch (error) {
-      console.error('Error signing in:', error)
+      console.error('❌ Sign in error:', error)
       alert('Error signing in. Please try again.')
     } finally {
       setLoading(false)
@@ -37,7 +47,7 @@ export default function AuthButton() {
       if (error) throw error
       router.push('/')
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('❌ Sign out error:', error)
       alert('Error signing out. Please try again.')
     } finally {
       setLoading(false)

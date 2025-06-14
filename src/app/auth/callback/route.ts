@@ -9,11 +9,27 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next') ?? '/dashboard'
+  const error = searchParams.get('error')
+  const errorDescription = searchParams.get('error_description')
+
+  console.log('📝 Callback params:', { 
+    hasCode: !!code, 
+    next,
+    origin,
+    url: request.url,
+    error,
+    errorDescription
+  })
+
+  if (error) {
+    console.error('❌ Auth error received:', { error, errorDescription })
+    return NextResponse.redirect(`${origin}/login?error=${error}`)
+  }
 
   if (code) {
     console.log('✅ Auth code received, exchanging for session')
     
-    const cookieStore = await cookies() // ← CRITICAL: await for Next.js 15
+    const cookieStore = await cookies()
     
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,13 +52,16 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
     
-    if (!error) {
-      console.log('✅ Session created successfully, redirecting to:', next)
+    if (!sessionError) {
+      console.log('✅ Session created successfully:', { 
+        user: data?.user?.email,
+        session: !!data?.session
+      })
       return NextResponse.redirect(`${origin}${next}`)
     } else {
-      console.error('❌ Session exchange failed:', error)
+      console.error('❌ Session exchange failed:', sessionError)
     }
   } else {
     console.error('❌ No auth code received in callback')

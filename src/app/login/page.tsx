@@ -5,24 +5,59 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
 import AuthButton from '@/components/auth/AuthButton'
+import { createClient } from '@/lib/supabase'
 
 export default function LoginPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const supabase = createClient()
+
+  // Clean up any stale sessions on login page load
+  useEffect(() => {
+    const cleanupSession = async () => {
+      console.log('🧹 Starting session cleanup...')
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('📝 Current session state:', { 
+          hasSession: !!session, 
+          hasUser: !!session?.user,
+          error: error?.message 
+        })
+        
+        if (session) {
+          console.log('👋 Signing out from stale session')
+          await supabase.auth.signOut()
+        }
+      } catch (error) {
+        console.error('❌ Error cleaning up session:', error)
+      }
+    }
+    cleanupSession()
+  }, [supabase])
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
-    if (!loading && user) {
-      console.log('📊 User already logged in, redirecting to dashboard')
-      router.push('/dashboard')
+    if (!loading) {
+      console.log('📊 Auth state:', { 
+        hasUser: !!user, 
+        loading 
+      })
+      
+      if (user) {
+        console.log('🔄 Redirecting to dashboard...')
+        router.push('/dashboard')
+      }
     }
   }, [user, loading, router])
 
-  // Show loading state
+  // Show loading state with more information
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Checking authentication status...</p>
+        </div>
       </div>
     )
   }

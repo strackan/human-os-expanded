@@ -23,22 +23,46 @@ export default function AppLayout({ children }: AppLayoutProps) {
   
   // ← ADD THIS: Extract first name from user data
   const getFirstName = () => {
-    if (loading) return 'User'; // Show fallback while loading
+    console.log('🔍 Getting first name from:', {
+      hasUser: !!user,
+      hasProfile: !!profile,
+      userMetadata: user?.user_metadata,
+      profileData: profile
+    });
+
+    if (loading) return 'User';
     
-    // Try to get name from profile first, then user metadata
-    const fullName = profile?.full_name || user?.user_metadata?.full_name;
-    
-    if (fullName) {
-      // Extract first name (everything before the first space)
-      return fullName.split(' ')[0];
+    // Try to get name from profile first
+    if (profile?.full_name) {
+      const name = profile.full_name.split(' ')[0];
+      console.log('✅ Found name in profile:', name);
+      return name;
     }
     
-    // Fallback to email username if no full name
+    // Then try user metadata from Google OAuth
+    if (user?.user_metadata) {
+      const metadata = user.user_metadata;
+      // Try different possible name fields from Google OAuth
+      const name = metadata.given_name || 
+                  metadata.name?.split(' ')[0] || 
+                  metadata.full_name?.split(' ')[0];
+      
+      if (name) {
+        console.log('✅ Found name in user metadata:', name);
+        return name;
+      }
+    }
+    
+    // Fallback to email username if no name found
     if (user?.email) {
-      return user.email.split('@')[0];
+      const emailPrefix = user.email.split('@')[0];
+      const name = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+      console.log('✅ Using email prefix as name:', name);
+      return name;
     }
     
-    return 'User'; // Final fallback
+    console.log('⚠️ No name found, using fallback');
+    return 'User';
   };
 
   const sampleReminders = [
