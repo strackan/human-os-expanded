@@ -36,6 +36,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const handleProfileUpdate = async (user: User) => {
     try {
       console.log('📝 Updating profile for user:', user.id)
+      
+      // First get the existing profile to preserve company_id
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single()
+
       const { data: profile, error } = await supabase
         .from('profiles')
         .upsert({
@@ -45,6 +53,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                     user.user_metadata.name || 
                     user.user_metadata.given_name,
           avatar_url: user.user_metadata.avatar_url,
+          company_id: existingProfile?.company_id, // Preserve existing company_id
           updated_at: new Date().toISOString(),
         })
         .select()
