@@ -32,19 +32,69 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
+  // Helper function to handle profile updates
+  const handleProfileUpdate = async (user: User) => {
+    try {
+      console.log('📝 Updating profile for user:', user.id)
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email!,
+          full_name: user.user_metadata.full_name || 
+                    user.user_metadata.name || 
+                    user.user_metadata.given_name,
+          avatar_url: user.user_metadata.avatar_url,
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Profile update error:', error.message)
+      } else {
+        console.log('✅ Profile updated:', profile)
+        setProfile(profile)
+      }
+    } catch (error) {
+      console.error('❌ Profile error:', error)
+    }
+  }
+
   useEffect(() => {
     let mounted = true
+    console.log('🔐 AuthProvider mounted')
 
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('📥 Getting initial session...')
         const { data: { session }, error } = await supabase.auth.getSession()
         
-        if (!mounted) return
+        if (!mounted) {
+          console.log('⚠️ Component unmounted, skipping session update')
+          return
+        }
+
+        if (error) {
+          console.error('❌ Session error:', error.message)
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+          return
+        }
+
+        console.log('📝 Session state:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userId: session?.user?.id,
+          userEmail: session?.user?.email
+        })
 
         setUser(session?.user ?? null)
         
         if (session?.user) {
+          console.log('👤 Fetching user profile...')
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -53,9 +103,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           
           if (profileError) {
             console.error('❌ Profile fetch error:', profileError.message)
-          }
-          
-          if (mounted) {
+          } else {
+            console.log('✅ Profile fetched:', profile)
             setProfile(profile)
           }
         }
@@ -63,6 +112,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         console.error('❌ Session error:', error)
       } finally {
         if (mounted) {
+          console.log('✅ Setting loading to false')
           setLoading(false)
         }
       }
@@ -70,48 +120,34 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     getInitialSession()
 
-    // Listen for auth changes
+    // Listen for auth changes - CRITICAL: No async calls in callback!
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return
+      (event, session) => {
+        console.log('🔄 Auth state changed:', { 
+          event, 
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userId: session?.user?.id
+        })
         
+        if (!mounted) {
+          console.log('⚠️ Component unmounted, skipping auth state update')
+          return
+        }
+        
+        // Immediate sync operations
         setUser(session?.user ?? null)
         
+        // Defer async operations
         if (session?.user) {
-          try {
-            console.log('📝 User metadata:', session.user.user_metadata)
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email!,
-                full_name: session.user.user_metadata.full_name || 
-                          session.user.user_metadata.name || 
-                          session.user.user_metadata.given_name,
-                avatar_url: session.user.user_metadata.avatar_url,
-                updated_at: new Date().toISOString(),
-              })
-              .select()
-              .single()
-
-            if (!error && mounted) {
-              console.log('✅ Profile updated:', profile)
-              setProfile(profile)
-            } else if (error) {
-              console.error('❌ Profile update error:', error.message)
-            }
-          } catch (error) {
-            console.error('❌ Profile error:', error)
-          }
+          setTimeout(() => {
+            handleProfileUpdate(session.user)
+          }, 0)
         } else {
-          if (mounted) {
-            setProfile(null)
-          }
+          setProfile(null)
         }
         
-        if (mounted) {
-          setLoading(false)
-        }
+        setLoading(false)
       }
     )
 
@@ -121,6 +157,17 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       subscription.unsubscribe()
     }
   }, [supabase])
+
+  // Debug log for state changes
+  useEffect(() => {
+    console.log('🔄 Auth state updated:', {
+      hasUser: !!user,
+      hasProfile: !!profile,
+      loading,
+      userId: user?.id,
+      userEmail: user?.email
+    })
+  }, [user, profile, loading])
 
   return (
     <AuthContext.Provider value={{ user, profile, loading }}>
