@@ -43,7 +43,6 @@ export interface Profile {
   email: string
   full_name?: string
   avatar_url?: string
-  company_id?: string
   company_name?: string
   role?: string
   created_at: string

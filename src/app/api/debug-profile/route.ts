@@ -66,19 +66,6 @@ export async function GET() {
       .eq('id', user.id)
       .single()
 
-    // Get company information if profile has company_id
-    let company = null
-    let companyError = null
-    if (profile?.company_id) {
-      const companyResult = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', profile.company_id)
-        .single()
-      company = companyResult.data
-      companyError = companyResult.error
-    }
-
     // Simple debug response
     const debugInfo = {
       timestamp: new Date().toISOString(),
@@ -92,9 +79,6 @@ export async function GET() {
       profile_exists: !!profile,
       profile_data: profile,
       profile_error: profileError?.message,
-      company_exists: !!company,
-      company_data: company,
-      company_error: companyError?.message,
       // Google name analysis
       possible_names: {
         metadata_name: user.user_metadata?.name || 'not found',
