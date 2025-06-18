@@ -12,13 +12,35 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  // Clean up any stale sessions on login page load
+  useEffect(() => {
+    const cleanupSession = async () => {
+      console.log('🧹 Starting session cleanup...')
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('📝 Current session state:', { 
+          hasSession: !!session, 
+          hasUser: !!session?.user,
+          error: error?.message 
+        })
+        
+        if (session) {
+          console.log('👋 Signing out from stale session')
+          await supabase.auth.signOut()
+        }
+      } catch (error) {
+        console.error('❌ Error cleaning up session:', error)
+      }
+    }
+    cleanupSession()
+  }, [supabase])
+
   // Redirect to dashboard if already logged in
   useEffect(() => {
     if (!loading) {
       console.log('📊 Auth state:', { 
         hasUser: !!user, 
-        loading,
-        userId: user?.id
+        loading 
       })
       
       if (user) {
@@ -30,7 +52,6 @@ export default function LoginPage() {
 
   // Show loading state with more information
   if (loading) {
-    console.log('⏳ Showing loading state...')
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -43,7 +64,6 @@ export default function LoginPage() {
 
   // Don't show login form if user is already authenticated
   if (user) {
-    console.log('👤 User already authenticated, showing redirect message')
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -54,7 +74,6 @@ export default function LoginPage() {
     )
   }
 
-  console.log('🎯 Rendering login form')
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
       <div className="w-full max-w-md space-y-8">
