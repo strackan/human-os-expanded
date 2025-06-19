@@ -48,8 +48,6 @@ revoke update on table "public"."profiles" from "service_role";
 
 alter table "public"."profiles" drop constraint "profiles_id_fkey";
 
-drop function if exists "public"."handle_new_user"();
-
 alter table "public"."profiles" drop constraint "profiles_pkey";
 
 drop index if exists "public"."profiles_pkey";
