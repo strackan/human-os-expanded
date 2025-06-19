@@ -2,8 +2,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { useRouter } from 'next/navigation'
 import AuthButton from '@/components/auth/AuthButton'
 import { createClient } from '@/lib/supabase'
 
@@ -12,63 +12,30 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
-  // Clean up any stale sessions on login page load
   useEffect(() => {
-    const cleanupSession = async () => {
-      console.log('🧹 Starting session cleanup...')
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('📝 Current session state:', { 
-          hasSession: !!session, 
-          hasUser: !!session?.user,
-          error: error?.message 
-        })
-        
-        if (session) {
-          console.log('👋 Signing out from stale session')
-          await supabase.auth.signOut()
-        }
-      } catch (error) {
-        console.error('❌ Error cleaning up session:', error)
-      }
+    const checkSession = async () => {
+      console.log('🔍 Login page - checking session...')
+      const { data: { session }, error } = await supabase.auth.getSession()
+      console.log('📝 Login page - session check:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userEmail: session?.user?.email,
+        error: error?.message
+      })
     }
-    cleanupSession()
+    
+    checkSession()
   }, [supabase])
 
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    if (!loading) {
-      console.log('📊 Auth state:', { 
-        hasUser: !!user, 
-        loading 
-      })
-      
-      if (user) {
-        console.log('🔄 Redirecting to dashboard...')
-        router.push('/dashboard')
-      }
-    }
-  }, [user, loading, router])
+  console.log('🔍 Login page render:', { user: !!user, loading, userEmail: user?.email })
 
-  // Show loading state with more information
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4"></div>
           <p className="text-gray-600">Checking authentication status...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Don't show login form if user is already authenticated
-  if (user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Already logged in</h2>
-          <p className="text-gray-600">Redirecting to dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Loading: {loading ? 'true' : 'false'}</p>
         </div>
       </div>
     )
@@ -76,20 +43,29 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            Sign in to Renubu
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Commercial Success Intelligence Platform
-          </p>
-        </div>
-        <div className="mt-8 space-y-6 bg-white py-8 px-6 shadow rounded-lg">
-          <div className="text-center">
+      <div className="text-center">
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          Welcome to Renubu
+        </h1>
+        <p className="text-gray-600 mb-8">
+          Commercial Success Intelligence Platform
+        </p>
+        {user ? (
+          <div>
+            <p className="text-green-600 mb-4">✅ You are logged in as {user.email}</p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md transition-colors"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        ) : (
+          <div>
+            <p className="text-gray-500 mb-4">Please sign in to continue</p>
             <AuthButton />
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

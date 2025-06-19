@@ -38,13 +38,24 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('🔍 Getting initial session...')
         const { data: { session }, error } = await supabase.auth.getSession()
+        
+        console.log('📝 Initial session result:', {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          sessionExpiry: session?.expires_at,
+          currentTime: Math.floor(Date.now() / 1000),
+          error: error?.message
+        })
         
         if (!mounted) return
 
         setUser(session?.user ?? null)
         
         if (session?.user) {
+          console.log('👤 User found, fetching profile...')
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
@@ -53,17 +64,22 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           
           if (profileError) {
             console.error('❌ Profile fetch error:', profileError.message)
+          } else {
+            console.log('✅ Profile fetched:', profile)
           }
           
           if (mounted) {
             setProfile(profile)
           }
+        } else {
+          console.log('👤 No user found in initial session')
         }
       } catch (error) {
         console.error('❌ Session error:', error)
       } finally {
         if (mounted) {
           setLoading(false)
+          console.log('🏁 Initial session loading complete')
         }
       }
     }
@@ -73,6 +89,15 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔄 Auth state change:', {
+          event,
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+          sessionExpiry: session?.expires_at,
+          currentTime: Math.floor(Date.now() / 1000)
+        })
+        
         if (!mounted) return
         
         setUser(session?.user ?? null)
@@ -104,6 +129,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             console.error('❌ Profile error:', error)
           }
         } else {
+          console.log('👤 User signed out, clearing profile')
           if (mounted) {
             setProfile(null)
           }
@@ -111,6 +137,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         
         if (mounted) {
           setLoading(false)
+          console.log('🏁 Auth state change complete')
         }
       }
     )

@@ -15,7 +15,7 @@ export default function AuthButton() {
   const handleSignIn = async () => {
     setLoading(true)
     try {
-      const callbackUrl = `${location.origin}/api/auth`
+      const callbackUrl = `${location.origin}/api/auth/callback`
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

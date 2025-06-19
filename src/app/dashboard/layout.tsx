@@ -1,42 +1,40 @@
 // src/app/dashboard/layout.tsx
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function DashboardLayout({
+import { useAuth } from '@/components/auth/AuthProvider'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
-  
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            try {
-              cookieStore.set(name, value, options)
-            } catch (error) {
-              console.error(`Failed to set cookie ${name}:`, error)
-            }
-          })
-        },
-      },
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && !user) {
+      console.log('🔐 No authenticated user found, redirecting to login')
+      router.push('/login')
     }
-  )
+  }, [user, loading, router])
 
-  const { data: { user }, error } = await supabase.auth.getUser()
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
 
-  // If no user or error, redirect to login
-  if (!user || error) {
-    console.log('🔐 No authenticated user found, redirecting to login')
-    redirect('/login')
+  // Don't render anything if not authenticated
+  if (!user) {
+    return null
   }
 
   console.log('✅ User authenticated:', user.email)
@@ -51,14 +49,12 @@ export default async function DashboardLayout({
             </h1>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">{user.email}</span>
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
-                >
-                  Sign Out
-                </button>
-              </form>
+              <button
+                onClick={() => router.push('/auth/signout')}
+                className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1 rounded"
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </div>

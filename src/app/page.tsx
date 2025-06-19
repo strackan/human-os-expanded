@@ -5,7 +5,6 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Renubu Workflows</h1>
-        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Revenue Architects Card */}
           <Link 
@@ -21,7 +20,6 @@ export default function Home() {
               </p>
             </div>
           </Link>
-          
           {/* AI-Powered Card */}
           <Link 
             href="/ai-powered" 
@@ -36,7 +34,6 @@ export default function Home() {
               </p>
             </div>
           </Link>
-          
           {/* Impact Engineers Card */}
           <Link 
             href="/impact-engineers" 
@@ -51,7 +48,6 @@ export default function Home() {
               </p>
             </div>
           </Link>
-          
           {/* Original Workflow */}
           <Link 
             href="/renewals-hq" 
