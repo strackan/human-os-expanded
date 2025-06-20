@@ -1,0 +1,17 @@
+/* Progress Indicator Styles */
+
+.progress-bar {
+  transition: width 0.5s ease-out;
+}
+
+.progress-bar-fill {
+  height: 0.625rem;
+  border-radius: 9999px;
+  transition: all 0.5s ease-out;
+}
+
+.progress-bar-track {
+  width: 100%;
+  height: 0.625rem;
+  border-radius: 9999px;
+} 

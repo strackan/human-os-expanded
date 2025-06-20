@@ -4,6 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import CustomerChatDialog, { ChatMessage } from "../shared/CustomerChatDialog";
 import { useRouter } from 'next/navigation';
 import { useChatWorkflow } from '../../../hooks/useChatWorkflow';
+import '@/styles/resizable-divider.css';
 
 export type BaseCustomerLayoutProps = {
   customer: {
@@ -68,10 +69,17 @@ const BaseCustomerLayout: React.FC<BaseCustomerLayoutProps> = ({
     }
   }, []);
 
+  // Initialize panel width on mount
+  useEffect(() => {
+    document.documentElement.style.setProperty('--panel-width-left', `${leftWidthPx}px`);
+    document.documentElement.style.setProperty('--panel-width-right', `calc(100% - ${leftWidthPx}px - 1.5rem)`);
+    document.documentElement.style.setProperty('--panel-min-width', '320px');
+  }, [leftWidthPx]);
+
   // Drag handlers for vertical divider
   const startDrag = (e: React.MouseEvent) => {
     isDragging.current = true;
-    document.body.style.cursor = "col-resize";
+    document.body.classList.add('resizing');
     document.addEventListener("mousemove", handleDrag);
     document.addEventListener("mouseup", stopDrag);
   };
@@ -83,11 +91,13 @@ const BaseCustomerLayout: React.FC<BaseCustomerLayoutProps> = ({
     let newWidth = e.clientX - rect.left;
     newWidth = Math.max(320, Math.min(newWidth, rect.width - 320));
     setLeftWidthPx(newWidth);
+    document.documentElement.style.setProperty('--panel-width-left', `${newWidth}px`);
+    document.documentElement.style.setProperty('--panel-width-right', `calc(100% - ${newWidth}px - 1.5rem)`);
   };
 
   const stopDrag = () => {
     isDragging.current = false;
-    document.body.style.cursor = "default";
+    document.body.classList.remove('resizing');
     document.removeEventListener("mousemove", handleDrag);
     document.removeEventListener("mouseup", stopDrag);
   };
@@ -138,22 +148,22 @@ const BaseCustomerLayout: React.FC<BaseCustomerLayoutProps> = ({
       >
         {/* Left Panel */}
         <div 
-          style={{ width: leftWidthPx }}
-          className="flex flex-col gap-6 overflow-hidden"
+          className="resizable-panel-left flex flex-col gap-6 overflow-hidden"
         >
           {children}
         </div>
 
         {/* Vertical Divider */}
         <div
-          className="w-1 bg-gray-200 cursor-col-resize hover:bg-gray-300 transition-colors"
+          className="divider-handle resizable-divider"
           onMouseDown={startDrag}
-        />
+        >
+          <div className="divider-handle-knob"></div>
+        </div>
 
         {/* Right Panel */}
         <div 
-          style={{ width: `calc(100% - ${leftWidthPx}px - 1.5rem)` }}
-          className="flex flex-col gap-6 overflow-hidden"
+          className="resizable-panel-right flex flex-col gap-6 overflow-hidden"
         >
           {mode === 'pre-action' ? (
             <div className="bg-white rounded-xl shadow-lg p-6 flex-1 flex flex-col">

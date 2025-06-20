@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/20/solid';
 import { SparklesIcon, ChartBarIcon, UserGroupIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import '@/styles/progress-indicators.css';
 
 interface ActionType {
   id: string;
@@ -261,9 +262,9 @@ const ScenarioModeling = () => {
                               <h4 className="font-medium text-blue-900">{rec.title}</h4>
                               <p className="text-sm text-blue-700 mt-1">{rec.description}</p>
                               <div className="mt-1 flex items-center">
-                                <div className="h-1.5 w-24 bg-blue-200 rounded-full">
+                                <div className="progress-bar-track bg-blue-200">
                                   <div
-                                    className="h-1.5 bg-blue-600 rounded-full"
+                                    className="progress-bar-fill bg-blue-600 progress-bar"
                                     style={{ width: `${rec.confidence}%` }}
                                   ></div>
                                 </div>

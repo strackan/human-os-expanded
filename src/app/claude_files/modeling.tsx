@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import '@/styles/progress-indicators.css';
 
 interface ScenarioDefinitionProps {
   scenarioName: string;
@@ -77,7 +78,7 @@ const PriceIncreaseScenarioBuilder = () => {
             <div className="relative mt-2">
               <div className="absolute h-1 w-full bg-gray-200 rounded"></div>
               <div 
-                className="absolute h-1 bg-blue-600 rounded transition-all duration-500"
+                className="absolute h-1 bg-blue-600 rounded progress-bar"
                 style={{ width: `${(activeStep - 1) * 33.33}%` }}
               ></div>
             </div>
@@ -565,8 +566,8 @@ const ImpactVisualization: React.FC<ImpactVisualizationProps> = ({ selectedSegme
                   <span className="text-sm text-gray-600">Current ARR</span>
                   <span className="font-medium">$12.4M</span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full">
-                  <div className="h-4 bg-blue-600 rounded-full" style={{ width: '100%' }}></div>
+                <div className="progress-bar-track bg-gray-200">
+                  <div className="progress-bar-fill bg-blue-600 progress-bar" style={{ width: '100%' }}></div>
                 </div>
               </div>
               
@@ -575,8 +576,8 @@ const ImpactVisualization: React.FC<ImpactVisualizationProps> = ({ selectedSegme
                   <span className="text-sm text-gray-600">After Price Increase</span>
                   <span className="font-medium">$13.2M</span>
                 </div>
-                <div className="h-4 bg-gray-200 rounded-full">
-                  <div className="h-4 bg-green-600 rounded-full" style={{ width: '106%' }}></div>
+                <div className="progress-bar-track bg-gray-200">
+                  <div className="progress-bar-fill bg-green-600 progress-bar" style={{ width: '106%' }}></div>
                 </div>
               </div>
             </div>

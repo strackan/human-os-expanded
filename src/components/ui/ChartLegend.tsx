@@ -1,4 +1,5 @@
 import React from 'react';
+import '@/styles/chart-tooltips.css';
 
 interface ChartLegendProps {
   payload?: Array<{
@@ -17,11 +18,11 @@ const ChartLegend: React.FC<ChartLegendProps> = ({ payload, className = '' }) =>
       {payload.map((entry) => (
         <div key={entry.value} className="chart-legend-item flex items-center">
           <span 
-            className="chart-legend-color" 
+            className="chart-legend-dot"
             style={{ background: entry.color }} 
           />
           <span 
-            className="text-xs" 
+            className="chart-legend-label"
             style={{ color: entry.color }}
           >
             {entry.name || entry.value}

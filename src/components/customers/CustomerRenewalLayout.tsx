@@ -5,6 +5,7 @@ import CustomerChatDialog, { ChatMessage } from "./CustomerChatDialog";
 import { useRouter } from 'next/navigation';
 import ConversationalChat from '../../../components/chat/ConversationalChat';
 import { renewalsChatWorkflow } from '../../../components/chat/chatWorkflow';
+import '@/styles/resizable-divider.css';
 
 export type CustomerRenewalLayoutProps = {
   customer: {
@@ -148,10 +149,16 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
     }
   }, []);
 
+  // Initialize panel width on mount
+  useEffect(() => {
+    document.documentElement.style.setProperty('--panel-width-left', `${leftWidthPx}px`);
+    document.documentElement.style.setProperty('--panel-min-width', '320px');
+  }, [leftWidthPx]);
+
   // Drag handlers for vertical divider
   const startDrag = (e: React.MouseEvent) => {
     isDragging.current = true;
-    document.body.style.cursor = "col-resize";
+    document.body.classList.add('resizing');
     document.addEventListener("mousemove", handleDrag);
     document.addEventListener("mouseup", stopDrag);
   };
@@ -162,10 +169,14 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
     let newWidth = e.clientX - rect.left;
     newWidth = Math.max(320, Math.min(newWidth, rect.width - 320));
     setLeftWidthPx(newWidth);
+    
+    // Update CSS custom properties for smooth resizing
+    document.documentElement.style.setProperty('--panel-width-left', `${newWidth}px`);
+    document.documentElement.style.setProperty('--panel-min-width', '320px');
   };
   const stopDrag = () => {
     isDragging.current = false;
-    document.body.style.cursor = "default";
+    document.body.classList.remove('resizing');
     document.removeEventListener("mousemove", handleDrag);
     document.removeEventListener("mouseup", stopDrag);
   };
@@ -355,19 +366,18 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
         <div className="flex w-full" ref={containerRef}>
           {mode === 'pre-action' ? (
             <div className="flex w-full h-[70vh]">
-              <div style={{ width: leftWidthPx, minWidth: 320 }} className="h-full">
+              <div className="resizable-panel-left h-full">
                 <ContextPanel currentStep={step} />
               </div>
               {/* Draggable Divider for pre-action stage */}
               <div
-                className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
-                style={{ marginLeft: '-1px', marginRight: '-1px' }}
+                className="divider-handle resizable-divider"
                 onMouseDown={startDrag}
                 tabIndex={0}
                 aria-label="Resize panel"
                 role="separator"
               >
-                <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-orange-700 group-hover:bg-orange-700 cursor-col-resize"></div>
+                <div className="divider-handle-knob"></div>
               </div>
               {/* Right panel: Q&A Chat and Recommended Action */}
               <div className="flex-1 h-full flex flex-col">
@@ -390,13 +400,10 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
             </div>
           ) : (
             <div className="flex w-full h-[70vh]">
-              <div
-                className="bg-white rounded-2xl shadow-lg flex h-full"
-                style={{ width: leftWidthPx, minWidth: 320, zIndex: 10 }}
-              >
+              <div className="resizable-panel-left bg-white rounded-2xl shadow-lg flex h-full z-10">
                 <div className="flex flex-row h-full w-full">
                   {/* ProgressStepper (collapsible) */}
-                  <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] ${progressCollapsed ? 'w-12' : 'w-2/5'}`} style={{alignItems: 'flex-start', justifyContent: 'flex-start'}}>
+                  <div className={`border-r border-gray-200 flex flex-col items-start justify-end pl-[5px] ${progressCollapsed ? 'w-12' : 'w-2/5'}`}>
                     {/* Collapse/Expand Icon */}
                     <button
                       className="mt-2 mb-4 p-1 rounded hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-orange-500 self-end"
@@ -421,14 +428,13 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
               </div>
               {/* Draggable Divider */}
               <div
-                className="relative w-6 h-[70vh] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
-                style={{ marginLeft: '-1px', marginRight: '-1px' }}
+                className="divider-handle resizable-divider"
                 onMouseDown={startDrag}
                 tabIndex={0}
                 aria-label="Resize panel"
                 role="separator"
               >
-                <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-orange-700 group-hover:bg-orange-700 cursor-col-resize"></div>
+                <div className="divider-handle-knob"></div>
               </div>
               {/* ChatPanel on the right */}
               <div className="flex-1 h-[70vh]">

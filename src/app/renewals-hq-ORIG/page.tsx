@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import ChatModal from '@/components/ChatModal';
 import { Customer, Stage } from '@/types';
+import '@/styles/resizable-divider.css';
 
 const renewalStages = [
   { id: 1, name: 'Planning', status: 'complete' },
@@ -338,7 +339,7 @@ const RenewalsHQPage = () => {
   const [leftPaneWidth, setLeftPaneWidth] = useState(60);
   const [showChat, setShowChat] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const isDragging = useRef(false);
+  const isResizing = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSnooze = () => {
@@ -351,47 +352,43 @@ const RenewalsHQPage = () => {
     });
   };
 
-  const startResize = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    isDragging.current = true;
-    document.body.style.cursor = 'col-resize';
+  useEffect(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setLeftPaneWidth(rect.width / 2);
+    }
+  }, []);
+
+  // Initialize panel width on mount
+  useEffect(() => {
+    document.documentElement.style.setProperty('--panel-width-left', `${leftPaneWidth}%`);
+    document.documentElement.style.setProperty('--panel-width-right', `${100 - leftPaneWidth}%`);
+  }, [leftPaneWidth]);
+
+  const startResize = (e: React.MouseEvent) => {
+    isResizing.current = true;
+    document.body.classList.add('resizing');
     document.addEventListener('mousemove', handleResize);
     document.addEventListener('mouseup', stopResize);
-  }, []);
+  };
 
-  const handleResize = useCallback((e: MouseEvent) => {
-    if (!isDragging.current || !containerRef.current) return;
-
+  const handleResize = (e: MouseEvent) => {
+    if (!isResizing.current || !containerRef.current) return;
     const container = containerRef.current;
-    const containerRect = container.getBoundingClientRect();
+    const rect = container.getBoundingClientRect();
+    const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
+    const clampedWidth = Math.max(30, Math.min(70, newWidth));
+    setLeftPaneWidth(clampedWidth);
+    document.documentElement.style.setProperty('--panel-width-left', `${clampedWidth}%`);
+    document.documentElement.style.setProperty('--panel-width-right', `${100 - clampedWidth}%`);
+  };
 
-    requestAnimationFrame(() => {
-      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      const clampedWidth = Math.min(Math.max(newWidth, 20), 80);
-      setLeftPaneWidth(Math.round(clampedWidth));
-      
-      container.classList.add('resizing');
-    });
-  }, []);
-
-  const stopResize = useCallback(() => {
-    isDragging.current = false;
-    document.body.style.cursor = 'default';
-    
-    if (containerRef.current) {
-      containerRef.current.classList.remove('resizing');
-    }
-    
+  const stopResize = () => {
+    isResizing.current = false;
+    document.body.classList.remove('resizing');
     document.removeEventListener('mousemove', handleResize);
     document.removeEventListener('mouseup', stopResize);
-  }, [handleResize]);
-
-  useEffect(() => {
-    return () => {
-      document.removeEventListener('mousemove', handleResize);
-      document.removeEventListener('mouseup', stopResize);
-    };
-  }, [handleResize, stopResize]);
+  };
 
   const handleStartDiscussion = (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -420,8 +417,7 @@ const RenewalsHQPage = () => {
       >
         {/* Target Accounts Section */}
         <div 
-          className="bg-white rounded-l-lg shadow-md p-6 border border-gray-100 transition-[width] duration-75"
-          style={{ width: `${leftPaneWidth}%` }}
+          className="resizable-panel-left bg-white rounded-l-lg shadow-md p-6 border border-gray-100 transition-[width] duration-75"
         >
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">Target Accounts: Week of May 5, 2025</h2>
           <div className="space-y-6">
@@ -511,21 +507,15 @@ const RenewalsHQPage = () => {
 
         {/* Resize Handle */}
         <div
-          className="w-1 bg-gray-200 hover:bg-blue-500 cursor-col-resize relative group resize-handle transition-colors duration-150"
+          className="divider-handle resizable-divider"
           onMouseDown={startResize}
         >
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-8 bg-gray-200 group-hover:bg-blue-500 rounded opacity-0 group-hover:opacity-100 transition-all duration-150 resize-handle">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-0.5 h-4 bg-gray-400 group-hover:bg-white mx-0.5" />
-              <div className="w-0.5 h-4 bg-gray-400 group-hover:bg-white mx-0.5" />
-            </div>
-          </div>
+          <div className="divider-handle-knob"></div>
         </div>
 
         {/* Activity Feed Section */}
         <div 
-          className="bg-white rounded-r-lg shadow-md p-6 border border-l-0 border-gray-100 transition-[width] duration-75"
-          style={{ width: `${100 - leftPaneWidth}%` }}
+          className="resizable-panel-right bg-white rounded-r-lg shadow-md p-6 border border-l-0 border-gray-100 transition-[width] duration-75"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-semibold text-gray-900">Activity Feed</h2>
@@ -597,108 +587,6 @@ const RenewalsHQPage = () => {
                 <div className="mt-1 flex items-center gap-2">
                   <span className="text-xs text-gray-500">3 hours ago</span>
                   <button className="text-xs text-purple-600 font-medium hover:text-purple-700">View Report</button>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-red-100 text-red-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Dropbox</span> flagged for churn risk
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">5 hours ago</span>
-                  <span className="text-xs text-red-600 font-medium">-$120,000 ARR at risk</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Renewal Alert:</span> Microsoft Azure subscription needs attention
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">6 hours ago</span>
-                  <span className="text-xs text-indigo-600 font-medium">Due in 45 days</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Security Review</span> completed for <span className="font-medium">Salesforce Enterprise</span>
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">8 hours ago</span>
-                  <span className="text-xs text-orange-600 font-medium">All checks passed</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Financial Update:</span> Q2 renewals tracking above forecast
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">10 hours ago</span>
-                  <span className="text-xs text-teal-600 font-medium">+8% vs target</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Quarterly Business Review</span> scheduled with <span className="font-medium">Amazon AWS</span>
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">12 hours ago</span>
-                  <span className="text-xs text-pink-600 font-medium">Jun 15, 2025</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                </svg>
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-900">
-                  <span className="font-medium">Customer Success</span> achieved 95% satisfaction score with <span className="font-medium">Netflix</span>
-                </p>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="text-xs text-gray-500">1 day ago</span>
-                  <span className="text-xs text-emerald-600 font-medium">High performer</span>
                 </div>
               </div>
             </div>

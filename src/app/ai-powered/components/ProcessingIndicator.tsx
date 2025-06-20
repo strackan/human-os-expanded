@@ -1,5 +1,6 @@
 import React from "react";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import '@/styles/progress-indicators.css';
 
 interface ProcessingIndicatorProps {
   title: string;
@@ -16,9 +17,9 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ title, messag
       <h4 className="text-lg font-semibold text-blue-700 mb-2">{title}</h4>
       <p className="text-sm text-blue-600 mb-3">{message}</p>
       {progress !== undefined && progressValueStr !== undefined && (
-        <div className="w-full bg-blue-200 rounded-full h-2.5">
+        <div className="progress-bar-track bg-blue-200">
           <div
-            className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+            className="progress-bar-fill bg-blue-600 progress-bar"
             style={{ width: `${progress}%` }}
             aria-valuenow={progressValueStr}
             aria-valuemin="0"

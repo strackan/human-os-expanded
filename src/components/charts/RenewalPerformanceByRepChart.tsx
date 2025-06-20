@@ -2,6 +2,7 @@
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 import { repPerformanceTrailing4QData } from '@/data/mockReportsData';
+import '@/styles/chart-tooltips.css';
 
 const reps = [
   { key: 'Sarah', color: '#6366f1' },
@@ -13,11 +14,11 @@ const reps = [
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded bg-white/80 backdrop-blur px-2 py-1 text-xs text-gray-900 border border-gray-200" style={{ minWidth: 80, fontSize: 12, pointerEvents: 'none' }}>
+    <div className="chart-tooltip rounded bg-white/80 backdrop-blur px-2 py-1 text-xs text-gray-900 border border-gray-200">
       <div className="font-semibold mb-1">{label}</div>
       {payload.map((entry: any) => (
         <div key={entry.dataKey} className="flex items-center gap-2 mb-0.5">
-          <span style={{ color: entry.color, fontWeight: 600 }}>{entry.name}:</span>
+          <span className="chart-tooltip-label" style={{ color: entry.color }}>{entry.name}:</span>
           <span className="ml-auto">{(entry.value * 100).toFixed(1)}%</span>
         </div>
       ))}
@@ -32,8 +33,8 @@ const TwoColumnLegend = (props: any) => {
     <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 py-2">
       {payload.map((entry: any) => (
         <div key={entry.value} className="flex items-center min-w-[120px]">
-          <span className="inline-block w-3 h-3 rounded mr-2" style={{ background: entry.color }} />
-          <span className="text-xs" style={{ color: entry.color }}>{entry.value}</span>
+          <span className="chart-legend-dot" style={{ background: entry.color }} />
+          <span className="chart-legend-label" style={{ color: entry.color }}>{entry.value}</span>
         </div>
       ))}
     </div>

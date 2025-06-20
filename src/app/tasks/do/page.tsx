@@ -1,8 +1,9 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, HandRaisedIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, HandRaisedIcon, ExclamationTriangleIcon, ClockIcon, CurrencyDollarIcon, BuildingOfficeIcon, UserGroupIcon, ChartBarIcon, DocumentTextIcon, PhoneIcon, EnvelopeIcon, CalendarIcon, ArrowRightIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkflowEngine, Customer, Workflow } from '../../../lib/workflowEngine';
+import '@/styles/resizable-divider.css';
 
 // Component for displaying customer information
 const CustomerCard = ({ customer }: { customer: Customer | null }) => {
@@ -254,6 +255,13 @@ export default function TaskManagementPage() {
     }
   }, [customerId, isLaunchMode]);
 
+  // Initialize panel width on mount
+  useEffect(() => {
+    document.documentElement.style.setProperty('--panel-width-left', `${panelWidth}%`);
+    document.documentElement.style.setProperty('--panel-width-right', `${100 - panelWidth}%`);
+    document.documentElement.style.setProperty('--panel-min-width', '320px');
+  }, [panelWidth]);
+
   const loadCustomerWorkflow = async (customerId: string) => {
     setLoading(true);
     setError(null);
@@ -344,7 +352,7 @@ export default function TaskManagementPage() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
-    document.body.style.cursor = "col-resize";
+    document.body.classList.add('resizing');
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
   };
@@ -357,12 +365,17 @@ export default function TaskManagementPage() {
     
     const rect = container.getBoundingClientRect();
     const newWidth = ((e.clientX - rect.left) / rect.width) * 100;
-    setPanelWidth(Math.max(20, Math.min(80, newWidth)));
+    const clampedWidth = Math.max(20, Math.min(80, newWidth));
+    setPanelWidth(clampedWidth);
+    
+    // Update CSS custom properties for smooth resizing
+    document.documentElement.style.setProperty('--panel-width-left', `${clampedWidth}%`);
+    document.documentElement.style.setProperty('--panel-width-right', `${100 - clampedWidth}%`);
   };
 
   const handleMouseUp = () => {
     isDragging.current = false;
-    document.body.style.cursor = "default";
+    document.body.classList.remove('resizing');
     document.removeEventListener('mousemove', handleMouseMove);
     document.removeEventListener('mouseup', handleMouseUp);
   };
@@ -459,24 +472,23 @@ export default function TaskManagementPage() {
       <div id="task-container" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex h-[calc(100vh-200px)]">
           {/* Customer Panel */}
-          <div style={{ width: `${panelWidth}%` }} className="pr-4">
+          <div className="resizable-panel-left pr-4">
             <CustomerCard customer={currentTask?.customer || null} />
           </div>
 
           {/* Resizable Divider */}
           <div
-            className="relative w-6 h-[calc(100vh-200px)] flex items-center justify-center bg-transparent cursor-col-resize group pointer-events-auto transition-colors duration-150"
-            style={{ marginLeft: '-1px', marginRight: '-1px' }}
+            className="divider-handle resizable-divider"
             onMouseDown={handleMouseDown}
             tabIndex={0}
             aria-label="Resize panel"
             role="separator"
           >
-            <div className="h-6 w-2 relative rounded-full border border-gray-300 bg-gray-100 shadow transition duration-200 group-hover:delay-75 group-hover:border-orange-700 group-hover:bg-orange-700 cursor-col-resize"></div>
+            <div className="divider-handle-knob"></div>
           </div>
 
           {/* Workflow Panel */}
-          <div style={{ width: `${100 - panelWidth}%` }} className="pl-4">
+          <div className="resizable-panel-right pl-4">
             <WorkflowSteps 
               workflow={currentTask?.workflow || null}
               onStepComplete={handleStepComplete}

@@ -19,6 +19,7 @@ import {
   Sparkles,
   Triangle
 } from 'lucide-react';
+import '@/styles/progress-indicators.css';
 
 const ContractsSplitView = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -325,9 +326,9 @@ const ContractsSplitView = () => {
                         <Triangle className="h-4 w-4 mr-1 text-gray-400" />
                         Risk Assessment
                       </h3>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="progress-bar-track bg-gray-200">
                         <div 
-                          className={`h-2 rounded-full ${getRiskColor(selectedContract.riskScore)}`} 
+                          className={`progress-bar-fill ${getRiskColor(selectedContract.riskScore)} progress-bar`} 
                           style={{ width: `${selectedContract.riskScore}%` }}
                         ></div>
                       </div>

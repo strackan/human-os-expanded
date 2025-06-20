@@ -1,0 +1,24 @@
+/* Chart Tooltip and Legend Styles */
+
+.chart-tooltip {
+  min-width: 80px;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.chart-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.chart-legend-label {
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.chart-tooltip-label {
+  font-weight: 600;
+} 
