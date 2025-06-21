@@ -15,7 +15,14 @@ export default function AuthButton() {
   const handleSignIn = async () => {
     setLoading(true)
     try {
-      const callbackUrl = `${location.origin}/api/auth/callback`
+      // Get the next param from the current URL
+      const urlParams = new URLSearchParams(window.location.search)
+      const next = urlParams.get('next') || '/dashboard'
+      
+      // Create the callback URL with the next param
+      const callbackUrl = `${location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`
+      
+      console.log('🔐 Sign in with redirect:', { next, callbackUrl })
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -45,7 +52,7 @@ export default function AuthButton() {
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
-      router.push('/')
+      router.push('/login')
     } catch (error) {
       console.error('❌ Sign out error:', error)
       alert('Error signing out. Please try again.')

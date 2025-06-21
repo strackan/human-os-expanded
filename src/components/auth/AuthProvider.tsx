@@ -10,12 +10,14 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   loading: boolean
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  signOut: async () => {},
 })
 
 export const useAuth = () => {
@@ -26,65 +28,171 @@ export const useAuth = () => {
   return context
 }
 
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+interface AuthProviderProps {
+  children: React.ReactNode
+  initialUser?: User | null
+}
+
+export default function AuthProvider({ children, initialUser }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser || null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(!initialUser) // If we have initial user, don't show loading
   const supabase = createClient()
+
+  const signOut = async () => {
+    try {
+      console.log('🔐 Signing out...')
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      console.log('✅ Sign out complete')
+    } catch (error) {
+      console.error('❌ Sign out error:', error)
+    }
+  }
 
   useEffect(() => {
     let mounted = true
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        console.log('🔍 Getting initial session...')
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        console.log('📝 Initial session result:', {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userEmail: session?.user?.email,
-          sessionExpiry: session?.expires_at,
-          currentTime: Math.floor(Date.now() / 1000),
-          error: error?.message
-        })
-        
-        if (!mounted) return
-
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          console.log('👤 User found, fetching profile...')
+    // If we have an initial user, fetch their profile
+    if (initialUser) {
+      console.log('👤 Using initial user:', initialUser.email)
+      const fetchProfile = async () => {
+        try {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', initialUser.id)
             .single()
-          
-          if (profileError) {
-            console.error('❌ Profile fetch error:', profileError.message)
-          } else {
+          if (!profileError && mounted) {
             console.log('✅ Profile fetched:', profile)
-          }
-          
-          if (mounted) {
             setProfile(profile)
+          } else {
+            console.log('⚠️ Profile error:', profileError?.message)
+            // Create profile if it doesn't exist
+            if (profileError?.code === 'PGRST116') {
+              const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: initialUser.id,
+                  email: initialUser.email!,
+                  full_name: initialUser.user_metadata.full_name || 
+                            initialUser.user_metadata.name || 
+                            initialUser.user_metadata.given_name,
+                  avatar_url: initialUser.user_metadata.avatar_url,
+                  updated_at: new Date().toISOString(),
+                })
+                .select()
+                .single()
+              
+              if (!createError && mounted) {
+                console.log('✅ Profile created:', newProfile)
+                setProfile(newProfile)
+              }
+            }
           }
-        } else {
-          console.log('👤 No user found in initial session')
-        }
-      } catch (error) {
-        console.error('❌ Session error:', error)
-      } finally {
-        if (mounted) {
-          setLoading(false)
-          console.log('🏁 Initial session loading complete')
+        } catch (error) {
+          console.log('⚠️ Profile fetch failed:', error)
+          if (mounted) setProfile(null)
+        } finally {
+          if (mounted) {
+            setLoading(false)
+            console.log('🏁 Initial user loading complete')
+          }
         }
       }
-    }
+      fetchProfile()
+    } else {
+      // Get initial user from server-side session
+      const getInitialUser = async () => {
+        try {
+          console.log('🔍 Getting initial user from server...')
+          
+          // Try both getSession and getUser to ensure we get the user
+          const [sessionResult, userResult] = await Promise.all([
+            supabase.auth.getSession(),
+            supabase.auth.getUser()
+          ])
+          
+          const session = sessionResult.data.session
+          const user = userResult.data.user
+          const sessionError = sessionResult.error
+          const userError = userResult.error
+          
+          console.log('📝 Initial auth results:', {
+            hasSession: !!session,
+            hasUser: !!user,
+            userEmail: user?.email || session?.user?.email,
+            sessionError: sessionError?.message,
+            userError: userError?.message
+          })
+          
+          if (!mounted) return
+          
+          // Use user from either source
+          const currentUser = user || session?.user
+          
+          if (currentUser) {
+            setUser(currentUser)
+            console.log('👤 User found, fetching profile...')
+            try {
+              const { data: profile, error: profileError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single()
+              if (!profileError && mounted) {
+                console.log('✅ Profile fetched:', profile)
+                setProfile(profile)
+              } else {
+                console.log('⚠️ Profile error:', profileError?.message)
+                // Create profile if it doesn't exist
+                if (profileError?.code === 'PGRST116') {
+                  const { data: newProfile, error: createError } = await supabase
+                    .from('profiles')
+                    .insert({
+                      id: currentUser.id,
+                      email: currentUser.email!,
+                      full_name: currentUser.user_metadata.full_name || 
+                                currentUser.user_metadata.name || 
+                                currentUser.user_metadata.given_name,
+                      avatar_url: currentUser.user_metadata.avatar_url,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .select()
+                    .single()
+                  
+                  if (!createError && mounted) {
+                    console.log('✅ Profile created:', newProfile)
+                    setProfile(newProfile)
+                  }
+                }
+              }
+            } catch (error) {
+              console.log('⚠️ Profile fetch failed:', error)
+              if (mounted) setProfile(null)
+            }
+          } else {
+            console.log('👤 No user found in session or user check')
+            setUser(null)
+            setProfile(null)
+          }
+        } catch (error) {
+          console.error('❌ Session check error:', error)
+          if (mounted) {
+            setUser(null)
+            setProfile(null)
+          }
+        } finally {
+          if (mounted) {
+            setLoading(false)
+            console.log('🏁 Initial session loading complete')
+          }
+        }
+      }
 
-    getInitialSession()
+      getInitialUser()
+    }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -93,18 +201,14 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           event,
           hasSession: !!session,
           hasUser: !!session?.user,
-          userEmail: session?.user?.email,
-          sessionExpiry: session?.expires_at,
-          currentTime: Math.floor(Date.now() / 1000)
+          userEmail: session?.user?.email
         })
         
         if (!mounted) return
-        
-        setUser(session?.user ?? null)
-        
         if (session?.user) {
+          setUser(session.user)
+          console.log('👤 User authenticated, updating profile...')
           try {
-            console.log('📝 User metadata:', session.user.user_metadata)
             const { data: profile, error } = await supabase
               .from('profiles')
               .upsert({
@@ -118,27 +222,22 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
               })
               .select()
               .single()
-
             if (!error && mounted) {
               console.log('✅ Profile updated:', profile)
               setProfile(profile)
-            } else if (error) {
-              console.error('❌ Profile update error:', error.message)
+            } else {
+              console.log('⚠️ Profile update error:', error?.message)
             }
           } catch (error) {
-            console.error('❌ Profile error:', error)
+            console.log('⚠️ Profile update failed:', error)
+            if (mounted) setProfile(null)
           }
         } else {
-          console.log('👤 User signed out, clearing profile')
-          if (mounted) {
-            setProfile(null)
-          }
+          console.log('👤 User signed out, clearing state')
+          setUser(null)
+          setProfile(null)
         }
-        
-        if (mounted) {
-          setLoading(false)
-          console.log('🏁 Auth state change complete')
-        }
+        if (mounted) setLoading(false)
       }
     )
 
@@ -147,10 +246,10 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       console.log('🧹 Cleaning up auth subscription')
       subscription.unsubscribe()
     }
-  }, [supabase])
+  }, [supabase, initialUser])
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )
