@@ -24,6 +24,52 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: customerError.message }, { status: 500 })
     }
 
+    // Add sample contract
+    const { data: contract, error: contractError } = await supabase
+      .from('contracts')
+      .insert({
+        customer_id: customer.id,
+        contract_number: 'ACME-2024-001',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        arr: 50000.00,
+        seats: 100,
+        contract_type: 'subscription',
+        status: 'active',
+        auto_renewal: true
+      })
+      .select()
+      .single()
+
+    if (contractError) {
+      return NextResponse.json({ error: contractError.message }, { status: 500 })
+    }
+
+    // Add sample renewal (approaching soon)
+    const today = new Date()
+    const renewalDate = new Date(today)
+    renewalDate.setDate(renewalDate.getDate() + 30) // 30 days from now
+
+    const { data: renewal, error: renewalError } = await supabase
+      .from('renewals')
+      .insert({
+        contract_id: contract.id,
+        customer_id: customer.id,
+        renewal_date: renewalDate.toISOString().split('T')[0],
+        current_arr: 50000.00,
+        proposed_arr: 55000.00,
+        probability: 75,
+        stage: 'negotiation',
+        risk_level: 'medium',
+        expansion_opportunity: 10000.00
+      })
+      .select()
+      .single()
+
+    if (renewalError) {
+      return NextResponse.json({ error: renewalError.message }, { status: 500 })
+    }
+
     // Add sample customer properties
     const { data: properties, error: propertiesError } = await supabase
       .from('customer_properties')
@@ -34,7 +80,9 @@ export async function POST(request: NextRequest) {
         nps_score: 8,
         current_arr: 50000.00,
         expansion_potential: 15000.00,
-        risk_level: 'low'
+        risk_level: 'low',
+        revenue_impact_tier: 3,
+        churn_risk_score: 2
       })
       .select()
       .single()
@@ -43,8 +91,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: propertiesError.message }, { status: 500 })
     }
 
+    // Generate tasks for the renewal
+    const { error: taskGenError } = await supabase.rpc('generate_renewal_tasks', {
+      renewal_uuid: renewal.id
+    })
+
+    if (taskGenError) {
+      return NextResponse.json({ error: taskGenError.message }, { status: 500 })
+    }
+
+    // Update action scores
+    const { error: scoreError } = await supabase.rpc('update_action_scores')
+
+    if (scoreError) {
+      return NextResponse.json({ error: scoreError.message }, { status: 500 })
+    }
+
     // Add sample key dates (some approaching, some not)
-    const today = new Date()
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
     
@@ -100,6 +163,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Sample data added successfully',
       customer,
+      contract,
+      renewal,
       properties,
       keyDates: dates
     })

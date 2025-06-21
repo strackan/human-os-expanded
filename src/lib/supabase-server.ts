@@ -1,5 +1,6 @@
 // src/lib/supabase-server.ts (SERVER ONLY)
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 // Server-side Supabase client for API routes and server components
@@ -25,6 +26,20 @@ export const createServerSupabaseClient = async () => {
           })
         },
       },
+    }
+  )
+}
+
+// Service role client for server-side operations that bypass RLS
+export const createServiceRoleClient = () => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
   )
 }
