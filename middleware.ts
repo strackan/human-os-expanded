@@ -34,9 +34,9 @@ export async function middleware(req: NextRequest) {
   })
 
   // Public routes
-  const publicRoutes = ['/login', '/auth/callback', '/api/auth/callback']
+  const publicRoutes = ['/login', '/auth/callback', '/api/auth/callback', '/test-oauth', '/debug-env']
   const isPublic = publicRoutes.some(route => pathname.startsWith(route))
-  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/public') || pathname === '/favicon.ico'
+  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/public') || pathname === '/favicon.ico' || pathname.startsWith('/logo.png')
 
   // If not authenticated and not public/static, redirect to login
   if (!user && !isPublic && !isStatic) {

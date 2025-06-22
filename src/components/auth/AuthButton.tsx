@@ -13,6 +13,7 @@ export default function AuthButton() {
   const router = useRouter()
 
   const handleSignIn = async () => {
+    console.log('🔐 handleSignIn called')
     setLoading(true)
     try {
       // Get the next param from the current URL
@@ -23,6 +24,8 @@ export default function AuthButton() {
       const callbackUrl = `${location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`
       
       console.log('🔐 Sign in with redirect:', { next, callbackUrl })
+      console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+      console.log('🔐 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20) + '...')
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -35,9 +38,20 @@ export default function AuthButton() {
         }
       })
       
+      console.log('🔐 OAuth response:', { data, error })
+      
       if (error) {
         console.error('❌ Sign in error:', error.message)
         throw error
+      }
+      
+      // Check if we got a URL to redirect to
+      if (data?.url) {
+        console.log('🔗 Redirecting to Google OAuth:', data.url)
+        window.location.href = data.url
+      } else {
+        console.error('❌ No OAuth URL received')
+        throw new Error('No OAuth URL received')
       }
     } catch (error) {
       console.error('❌ Sign in error:', error)
