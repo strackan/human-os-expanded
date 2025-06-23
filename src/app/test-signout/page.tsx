@@ -1,142 +1,115 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { createClient } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
 
-export default function TestSignOutPage() {
+export default function TestSignoutPage() {
   const { user, signOut } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const supabase = createClient()
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [logs, setLogs] = useState<string[]>([])
+  const [signoutCompleted, setSignoutCompleted] = useState(false)
 
-  const testSignOut = async () => {
-    setLoading(true)
-    setMessage('🔄 Testing sign out...')
+  const addLog = (message: string) => {
+    setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
+  }
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    addLog('Starting signout process...')
     
     try {
-      // Test the AuthProvider signOut
-      await signOut()
-      setMessage('✅ AuthProvider signOut completed')
-      
-      // Verify session is cleared
-      setTimeout(async () => {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          setMessage(prev => prev + '\n✅ Session verified as cleared')
-        } else {
-          setMessage(prev => prev + '\n❌ Session still exists')
-        }
-      }, 1000)
-      
+      addLog('Calling signOut function...')
+      await signOut('global')
+      addLog('Signout completed successfully')
+      setSignoutCompleted(true)
     } catch (error) {
-      setMessage(`❌ Sign out failed: ${error}`)
-    } finally {
-      setLoading(false)
+      addLog(`Signout error: ${error}`)
+      setIsSigningOut(false)
     }
   }
 
-  const testDirectSignOut = async () => {
-    setLoading(true)
-    setMessage('🔄 Testing direct Supabase sign out...')
-    
-    try {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        setMessage(`❌ Direct sign out failed: ${error.message}`)
-      } else {
-        setMessage('✅ Direct sign out completed')
+  // Reset signout completed state when user changes
+  useEffect(() => {
+    if (user && signoutCompleted) {
+      setSignoutCompleted(false)
+    }
+  }, [user, signoutCompleted])
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto py-8 px-4">
+        <h1 className="text-2xl font-bold mb-4">Test Signout</h1>
         
-        // Verify session is cleared
-        setTimeout(async () => {
-          const { data: { session } } = await supabase.auth.getSession()
-          if (!session) {
-            setMessage(prev => prev + '\n✅ Session verified as cleared')
-          } else {
-            setMessage(prev => prev + '\n❌ Session still exists')
-          }
-        }, 1000)
-      }
-    } catch (error) {
-      setMessage(`❌ Direct sign out failed: ${error}`)
-    } finally {
-      setLoading(false)
-    }
-  }
+        {signoutCompleted ? (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-medium text-green-800 mb-2">✅ Signout Successful!</h2>
+            <p className="text-green-700 mb-4">
+              You have been successfully signed out. The page detected that you are no longer authenticated.
+            </p>
+            <a href="/signin" className="text-blue-600 hover:underline">Go to signin</a>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+            <h2 className="text-lg font-medium text-yellow-800 mb-2">⚠️ Not Signed In</h2>
+            <p className="text-yellow-700 mb-4">
+              You need to be signed in to test signout functionality.
+            </p>
+            <a href="/signin" className="text-blue-600 hover:underline">Go to signin</a>
+          </div>
+        )}
 
-  const clearCookies = () => {
-    const cookies = document.cookie.split(";")
-    cookies.forEach(cookie => {
-      const eqPos = cookie.indexOf("=")
-      const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim()
-      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/"
-    })
-    setMessage('✅ All cookies cleared')
+        {logs.length > 0 && (
+          <div className="bg-gray-100 rounded-lg p-4">
+            <h2 className="text-lg font-medium mb-4">Signout Logs</h2>
+            <div className="bg-white rounded p-4 max-h-64 overflow-y-auto">
+              {logs.map((log, index) => (
+                <div key={index} className="text-sm font-mono mb-1">
+                  {log}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Sign Out Test</h1>
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-2xl font-bold mb-4">Test Signout</h1>
       
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4">Current State</h2>
-        <div className="bg-white p-4 rounded-lg shadow mb-4">
-          <p><strong>User:</strong> {user ? user.email : 'None'}</p>
-          <p><strong>User ID:</strong> {user?.id || 'None'}</p>
-          <p><strong>Cookies:</strong> {document.cookie.split(';').filter(c => c.trim()).length}</p>
-        </div>
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium mb-4">Current User</h2>
+        <p><strong>Email:</strong> {user.email}</p>
+        <p><strong>ID:</strong> {user.id}</p>
+        <p><strong>Provider:</strong> {user.app_metadata?.provider || 'Unknown'}</p>
       </div>
 
-      <div className="space-y-4 mb-8">
+      <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <h2 className="text-lg font-medium mb-4">Signout Test</h2>
+        <p className="text-gray-600 mb-4">
+          Click the button below to test the signout functionality. You will be immediately signed out and redirected.
+        </p>
         <button
-          onClick={testSignOut}
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded disabled:opacity-50"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded disabled:opacity-50"
         >
-          Test AuthProvider Sign Out
+          {isSigningOut ? 'Signing out...' : 'Test Signout'}
         </button>
-        
-        <button
-          onClick={testDirectSignOut}
-          disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          Test Direct Supabase Sign Out
-        </button>
-        
-        <button
-          onClick={clearCookies}
-          className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-        >
-          Clear All Cookies
-        </button>
-        
-        <a
-          href="/login"
-          className="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded inline-block text-center"
-        >
-          Go to Login Page
-        </a>
       </div>
 
-      {message && (
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="font-semibold mb-2">Results:</h3>
-          <pre className="text-sm whitespace-pre-wrap">{message}</pre>
-        </div>
-      )}
-
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Current Cookies</h2>
-        <div className="bg-white p-4 rounded-lg shadow">
-          {document.cookie ? (
-            document.cookie.split(';').map((cookie, index) => (
-              <p key={index} className="text-sm">
-                <strong>{cookie.split('=')[0]}:</strong> {cookie.split('=')[1]?.substring(0, 20)}...
-              </p>
-            ))
+      <div className="bg-gray-100 rounded-lg p-4">
+        <h2 className="text-lg font-medium mb-4">Logs</h2>
+        <div className="bg-white rounded p-4 max-h-64 overflow-y-auto">
+          {logs.length === 0 ? (
+            <p className="text-gray-500">No logs yet. Click the signout button to start testing.</p>
           ) : (
-            <p className="text-gray-500">No cookies found</p>
+            logs.map((log, index) => (
+              <div key={index} className="text-sm font-mono mb-1">
+                {log}
+              </div>
+            ))
           )}
         </div>
       </div>

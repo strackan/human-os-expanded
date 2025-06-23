@@ -26,7 +26,7 @@ export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   // Define route types
-  const publicRoutes = ['/signin', '/auth/callback', '/clear-cookies.html']
+  const publicRoutes = ['/signin', '/auth/callback', '/clear-cookies.html', '/test-signout']
   const isPublic = publicRoutes.some(route => pathname.startsWith(route))
   
   // Skip auth check for these routes entirely

@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase' // ← Only imports client-side code
-import { User } from '@supabase/supabase-js'
+import { User, Session, AuthError } from '@supabase/supabase-js'
 import { Profile } from '@/lib/supabase'
 
 interface AuthContextType {
@@ -11,6 +11,7 @@ interface AuthContextType {
   profile: Profile | null
   loading: boolean
   signOut: (scope?: 'global' | 'local' | 'others') => Promise<void>
+  refreshSession: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   signOut: async () => {},
+  refreshSession: async () => {},
 })
 
 export const useAuth = () => {
@@ -39,48 +41,133 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
   const [loading, setLoading] = useState(!initialUser) // If we have initial user, don't show loading
   const supabase = createClient()
 
+  const refreshSession = async () => {
+    try {
+      console.log('🔄 Refreshing session...')
+      const { data, error } = await supabase.auth.refreshSession()
+      
+      if (error) {
+        console.error('❌ Session refresh failed:', error)
+        throw error
+      }
+      
+      if (data.session) {
+        console.log('✅ Session refreshed successfully')
+        setUser(data.session.user)
+        await fetchAndUpdateProfile(data.session.user)
+      } else {
+        console.log('⚠️ No session after refresh')
+        setUser(null)
+        setProfile(null)
+      }
+    } catch (error) {
+      console.error('❌ Session refresh error:', error)
+      setUser(null)
+      setProfile(null)
+    }
+  }
+
+  const fetchAndUpdateProfile = async (currentUser: User) => {
+    try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single()
+      
+      if (!profileError && profile) {
+        console.log('✅ Profile fetched:', profile)
+        setProfile(profile)
+      } else {
+        console.log('⚠️ Profile error:', profileError?.message)
+        // Create profile if it doesn't exist
+        if (profileError?.code === 'PGRST116') {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: currentUser.id,
+              email: currentUser.email!,
+              full_name: currentUser.user_metadata.full_name || 
+                        currentUser.user_metadata.name || 
+                        currentUser.user_metadata.given_name,
+              avatar_url: currentUser.user_metadata.avatar_url,
+              updated_at: new Date().toISOString(),
+            })
+            .select()
+            .single()
+          
+          if (!createError && newProfile) {
+            console.log('✅ Profile created:', newProfile)
+            setProfile(newProfile)
+          } else {
+            console.error('❌ Profile creation failed:', createError)
+          }
+        }
+      }
+    } catch (error) {
+      console.error('❌ Profile fetch/update failed:', error)
+      setProfile(null)
+    }
+  }
+
   const signOut = async (scope: 'global' | 'local' | 'others' = 'global') => {
     try {
       console.log('🔐 Signing out...', { scope })
       
-      // Call server-side signout endpoint first
-      const response = await fetch('/auth/signout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ scope }),
-      })
-      
-      if (!response.ok) {
-        console.log('⚠️ Server signout failed:', response.status, response.statusText)
-        const errorText = await response.text()
-        console.log('⚠️ Server signout error details:', errorText)
-      } else {
-        const result = await response.json()
-        console.log('✅ Server signout successful:', result)
-      }
-      
-      // Call client-side signout with scope
-      const { error } = await supabase.auth.signOut({ scope })
-      
-      if (error) {
-        console.error('❌ Client-side signout error:', error)
-        throw error
-      }
-      
-      // Clear local state
+      // Clear local state first
+      console.log('🔐 Clearing local state...')
       setUser(null)
       setProfile(null)
+      console.log('✅ Local state cleared')
+      
+      // Call client-side signout with scope with timeout
+      console.log('🔐 Calling Supabase auth.signOut...')
+      
+      try {
+        const { error } = await supabase.auth.signOut({ scope })
+        
+        if (error) {
+          console.error('❌ Client-side signout error:', error)
+          // Don't throw error, continue with redirect
+        } else {
+          console.log('✅ Supabase signout successful')
+        }
+      } catch (signoutError) {
+        console.warn('⚠️ Supabase signout failed or timed out, continuing with redirect:', signoutError)
+      }
+      
       console.log('✅ Sign out complete')
       
       // Redirect to signin page
+      console.log('🔐 Redirecting to signin page...')
       if (typeof window !== 'undefined') {
-        window.location.href = '/signin'
+        try {
+          window.location.href = '/signin'
+        } catch (redirectError) {
+          console.warn('⚠️ window.location.href failed, trying alternative redirect:', redirectError)
+          // Fallback: try to use Next.js router if available
+          if (typeof window !== 'undefined' && window.history) {
+            window.history.pushState({}, '', '/signin')
+            window.location.reload()
+          }
+        }
       }
     } catch (error) {
       console.error('❌ Sign out error:', error)
-      throw error
+      // Even if there's an error, redirect to signin
+      console.log('🔐 Redirecting to signin page due to error...')
+      if (typeof window !== 'undefined') {
+        try {
+          window.location.href = '/signin'
+        } catch (redirectError) {
+          console.warn('⚠️ window.location.href failed, trying alternative redirect:', redirectError)
+          // Fallback: try to use Next.js router if available
+          if (typeof window !== 'undefined' && window.history) {
+            window.history.pushState({}, '', '/signin')
+            window.location.reload()
+          }
+        }
+      }
     }
   }
 
@@ -92,38 +179,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       console.log('👤 Using initial user:', initialUser.email)
       const fetchProfile = async () => {
         try {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', initialUser.id)
-            .single()
-          if (!profileError && mounted) {
-            console.log('✅ Profile fetched:', profile)
-            setProfile(profile)
-          } else {
-            console.log('⚠️ Profile error:', profileError?.message)
-            // Create profile if it doesn't exist
-            if (profileError?.code === 'PGRST116') {
-              const { data: newProfile, error: createError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: initialUser.id,
-                  email: initialUser.email!,
-                  full_name: initialUser.user_metadata.full_name || 
-                            initialUser.user_metadata.name || 
-                            initialUser.user_metadata.given_name,
-                  avatar_url: initialUser.user_metadata.avatar_url,
-                  updated_at: new Date().toISOString(),
-                })
-                .select()
-                .single()
-              
-              if (!createError && mounted) {
-                console.log('✅ Profile created:', newProfile)
-                setProfile(newProfile)
-              }
-            }
-          }
+          await fetchAndUpdateProfile(initialUser)
         } catch (error) {
           console.log('⚠️ Profile fetch failed:', error)
           if (mounted) setProfile(null)
@@ -169,38 +225,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
             setUser(currentUser)
             console.log('👤 User found, fetching profile...')
             try {
-              const { data: profile, error: profileError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single()
-              if (!profileError && mounted) {
-                console.log('✅ Profile fetched:', profile)
-                setProfile(profile)
-              } else {
-                console.log('⚠️ Profile error:', profileError?.message)
-                // Create profile if it doesn't exist
-                if (profileError?.code === 'PGRST116') {
-                  const { data: newProfile, error: createError } = await supabase
-                    .from('profiles')
-                    .insert({
-                      id: currentUser.id,
-                      email: currentUser.email!,
-                      full_name: currentUser.user_metadata.full_name || 
-                                currentUser.user_metadata.name || 
-                                currentUser.user_metadata.given_name,
-                      avatar_url: currentUser.user_metadata.avatar_url,
-                      updated_at: new Date().toISOString(),
-                    })
-                    .select()
-                    .single()
-                  
-                  if (!createError && mounted) {
-                    console.log('✅ Profile created:', newProfile)
-                    setProfile(newProfile)
-                  }
-                }
-              }
+              await fetchAndUpdateProfile(currentUser)
             } catch (error) {
               console.log('⚠️ Profile fetch failed:', error)
               if (mounted) setProfile(null)
@@ -238,29 +263,12 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
         })
         
         if (!mounted) return
+        
         if (session?.user) {
           setUser(session.user)
           console.log('👤 User authenticated, updating profile...')
           try {
-            const { data: profile, error } = await supabase
-              .from('profiles')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email!,
-                full_name: session.user.user_metadata.full_name || 
-                          session.user.user_metadata.name || 
-                          session.user.user_metadata.given_name,
-                avatar_url: session.user.user_metadata.avatar_url,
-                updated_at: new Date().toISOString(),
-              })
-              .select()
-              .single()
-            if (!error && mounted) {
-              console.log('✅ Profile updated:', profile)
-              setProfile(profile)
-            } else {
-              console.log('⚠️ Profile update error:', error?.message)
-            }
+            await fetchAndUpdateProfile(session.user)
           } catch (error) {
             console.log('⚠️ Profile update failed:', error)
             if (mounted) setProfile(null)
@@ -282,7 +290,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
   }, [supabase, initialUser])
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshSession }}>
       {children}
     </AuthContext.Provider>
   )

@@ -50,6 +50,12 @@ export async function GET(request: NextRequest) {
       return redirectResponse
     } else {
       console.error('❌ Session exchange failed:', error)
+      // Log more details for debugging
+      console.error('❌ Error details:', {
+        message: error.message,
+        status: error.status,
+        name: error.name
+      })
     }
   } else {
     console.error('❌ No authorization code received')

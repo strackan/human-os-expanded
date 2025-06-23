@@ -20,8 +20,9 @@ export const createServerSupabaseClient = async () => {
             try {
               cookieStore.set(name, value, options)
             } catch (error) {
-              // Handle read-only cookie store in some contexts
-              console.error(`Failed to set cookie ${name}:`, error)
+              // Handle read-only cookie store in server components
+              // This is expected in some contexts and should not break the app
+              console.warn(`Cookie ${name} could not be set in this context:`, error)
             }
           })
         },

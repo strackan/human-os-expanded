@@ -13,6 +13,7 @@ import {
 export default function UserAvatarDropdown() {
   const { user, profile, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [isSigningOut, setIsSigningOut] = useState(false)
   const router = useRouter()
 
   const getFirstName = () => {
@@ -72,16 +73,27 @@ export default function UserAvatarDropdown() {
 
   const handleSignOut = async () => {
     console.log('🔐 User avatar dropdown - Sign out clicked')
+    setIsSigningOut(true)
     setIsOpen(false)
     
     try {
-      await signOut('global') // Sign out from all sessions
+      // Call signOut without timeout - let it handle the redirect
+      await signOut('global')
       console.log('✅ User avatar dropdown - Sign out completed')
+      // The signOut function should handle the redirect
     } catch (error) {
       console.error('❌ User avatar dropdown - Sign out error:', error)
-      // Reopen the popover if signout failed
-      setIsOpen(true)
+      // Even if there's an error, try to redirect manually
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin'
+      }
     }
+  }
+
+  const handleSettings = () => {
+    console.log('🔘 Settings button clicked')
+    setIsOpen(false)
+    router.push('/settings')
   }
 
   if (!user) {
@@ -135,11 +147,7 @@ export default function UserAvatarDropdown() {
         </div>
         <div className="py-1">
           <button
-            onClick={() => {
-              console.log('🔘 Settings button clicked')
-              setIsOpen(false)
-              // Add settings navigation here if needed
-            }}
+            onClick={handleSettings}
             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
             tabIndex={0}
           >
@@ -147,15 +155,17 @@ export default function UserAvatarDropdown() {
             Settings
           </button>
           <button
-            onClick={() => {
-              console.log('🔘 Sign out button clicked')
-              handleSignOut()
-            }}
-            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             tabIndex={0}
           >
-            <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3 text-red-400" />
-            Sign out
+            {isSigningOut ? (
+              <div className="animate-spin w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full mr-3"></div>
+            ) : (
+              <ArrowRightOnRectangleIcon className="h-4 w-4 mr-3 text-red-400" />
+            )}
+            {isSigningOut ? 'Signing out...' : 'Sign out'}
           </button>
         </div>
       </PopoverContent>

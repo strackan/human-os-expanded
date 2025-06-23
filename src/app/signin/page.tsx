@@ -6,13 +6,17 @@ import { createClient } from "@/lib/supabase"
 
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   const searchParams = useSearchParams()
   const next = searchParams.get("next")
+  const authError = searchParams.get("error")
 
   async function signInWithGoogle() {
     setIsGoogleLoading(true)
+    setError(null)
+    
     try {
       console.log('🔐 Starting Google OAuth flow...')
       
@@ -22,19 +26,21 @@ export default function SignInPage() {
           redirectTo: `${window.location.origin}/auth/callback${
             next ? `?next=${encodeURIComponent(next)}` : ""
           }`,
-          // No PKCE parameters - using simple OAuth flow
+          // Using simple OAuth flow for local development
         },
       })
 
       if (error) {
         console.error('❌ OAuth error:', error)
+        setError(error.message || 'Failed to start authentication')
         throw error
       }
       
       console.log('✅ OAuth flow initiated successfully')
     } catch (error) {
       console.error('❌ Sign in failed:', error)
-      alert('There was an error logging in with Google. Please try again.')
+      setError('There was an error logging in with Google. Please try again.')
+    } finally {
       setIsGoogleLoading(false)
     }
   }
@@ -51,6 +57,15 @@ export default function SignInPage() {
         
         <div className="space-y-4">
           <p className="text-gray-500">Please sign in to continue</p>
+          
+          {/* Show auth error if present */}
+          {(error || authError) && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+              <p className="text-sm text-red-600">
+                {error || (authError === 'auth_failed' ? 'Authentication failed. Please try again.' : authError)}
+              </p>
+            </div>
+          )}
           
           <button
             type="button"
@@ -72,7 +87,7 @@ export default function SignInPage() {
           </button>
           
           <div className="text-sm text-gray-500">
-            <p>Using the new OAuth flow structure</p>
+            <p>Secure authentication with OAuth flow</p>
             <p>Callback: /auth/callback</p>
           </div>
         </div>
