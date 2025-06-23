@@ -53,7 +53,12 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       })
       
       if (!response.ok) {
-        console.log('⚠️ Server signout failed, trying client-side only')
+        console.log('⚠️ Server signout failed:', response.status, response.statusText)
+        const errorText = await response.text()
+        console.log('⚠️ Server signout error details:', errorText)
+      } else {
+        const result = await response.json()
+        console.log('✅ Server signout successful:', result)
       }
       
       // Call client-side signout with scope
