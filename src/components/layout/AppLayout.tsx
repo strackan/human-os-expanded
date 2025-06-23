@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { UserCircleIcon, Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider'; // ← ADD THIS IMPORT
+import UserAvatarDropdown from './UserAvatarDropdown';
 import {
   Popover,
   PopoverContent,
@@ -23,47 +24,36 @@ export default function AppLayout({ children }: AppLayoutProps) {
   
   // ← ADD THIS: Extract first name from user data
   const getFirstName = () => {
-    console.log('🔍 Getting first name from:', {
-      hasUser: !!user,
-      hasProfile: !!profile,
-      userMetadata: user?.user_metadata,
-      profileData: profile
-    });
-
-    if (loading) return 'User';
+    if (loading) return 'User'
     
     // Try to get name from profile first
     if (profile?.full_name) {
-      const name = profile.full_name.split(' ')[0];
-      console.log('✅ Found name in profile:', name);
-      return name;
+      const name = profile.full_name.split(' ')[0]
+      return name
     }
     
     // Then try user metadata from Google OAuth
     if (user?.user_metadata) {
-      const metadata = user.user_metadata;
+      const metadata = user.user_metadata
       // Try different possible name fields from Google OAuth
       const name = metadata.given_name || 
                   metadata.name?.split(' ')[0] || 
-                  metadata.full_name?.split(' ')[0];
+                  metadata.full_name?.split(' ')[0]
       
       if (name) {
-        console.log('✅ Found name in user metadata:', name);
-        return name;
+        return name
       }
     }
     
     // Fallback to email username if no name found
     if (user?.email) {
-      const emailPrefix = user.email.split('@')[0];
-      const name = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
-      console.log('✅ Using email prefix as name:', name);
-      return name;
+      const emailPrefix = user.email.split('@')[0]
+      const name = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
+      return name
     }
     
-    console.log('⚠️ No name found, using fallback');
-    return 'User';
-  };
+    return 'User'
+  }
 
   const sampleReminders = [
     {
@@ -193,14 +183,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               >
                 <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />
               </button>
-              <button
-                type="button"
-                className="flex items-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="View profile"
-                tabIndex={0}
-              >
-                <UserCircleIcon className="h-8 w-8" aria-hidden="true" />
-              </button>
+              <UserAvatarDropdown />
             </div>
           </div>
         </header>

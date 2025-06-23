@@ -10,7 +10,7 @@ interface AuthContextType {
   user: User | null
   profile: Profile | null
   loading: boolean
-  signOut: () => Promise<void>
+  signOut: (scope?: 'global' | 'local' | 'others') => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -39,15 +39,43 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
   const [loading, setLoading] = useState(!initialUser) // If we have initial user, don't show loading
   const supabase = createClient()
 
-  const signOut = async () => {
+  const signOut = async (scope: 'global' | 'local' | 'others' = 'global') => {
     try {
-      console.log('🔐 Signing out...')
-      await supabase.auth.signOut()
+      console.log('🔐 Signing out...', { scope })
+      
+      // Call server-side signout endpoint first
+      const response = await fetch('/auth/signout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ scope }),
+      })
+      
+      if (!response.ok) {
+        console.log('⚠️ Server signout failed, trying client-side only')
+      }
+      
+      // Call client-side signout with scope
+      const { error } = await supabase.auth.signOut({ scope })
+      
+      if (error) {
+        console.error('❌ Client-side signout error:', error)
+        throw error
+      }
+      
+      // Clear local state
       setUser(null)
       setProfile(null)
       console.log('✅ Sign out complete')
+      
+      // Redirect to signin page
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin'
+      }
     } catch (error) {
       console.error('❌ Sign out error:', error)
+      throw error
     }
   }
 

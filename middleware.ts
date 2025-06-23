@@ -4,6 +4,8 @@ import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 export async function middleware(req: NextRequest) {
+  console.log('🔐 Middleware running for:', req.nextUrl.pathname)
+  
   let response = NextResponse.next()
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,31 +27,24 @@ export async function middleware(req: NextRequest) {
   const { data: { user }, error } = await supabase.auth.getUser()
   const pathname = req.nextUrl.pathname
 
-  console.log('🔐 Middleware - Auth check:', {
-    pathname,
-    hasUser: !!user,
-    userEmail: user?.email,
-    error: error?.message,
-    cookies: req.cookies.getAll().map(c => c.name)
-  })
-
-  // Public routes - updated to include new auth callback route and clear-cookies
-  const publicRoutes = ['/login', '/signin', '/auth/callback', '/api/auth/callback', '/test-oauth', '/test-oauth-simple', '/debug-env', '/clear-cookies.html']
+  // Public routes
+  const publicRoutes = ['/signin', '/auth/callback', '/clear-cookies.html']
   const isPublic = publicRoutes.some(route => pathname.startsWith(route))
-  const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/public') || pathname === '/favicon.ico' || pathname.startsWith('/logo.png')
+  const isStatic = pathname.startsWith('/_next') || pathname === '/favicon.ico' || pathname.startsWith('/logo.png')
+  const isApi = pathname.startsWith('/api/')
 
-  // If not authenticated and not public/static, redirect to signin
-  if (!user && !isPublic && !isStatic) {
-    console.log('🔐 Redirecting to signin - no user')
+  // If not authenticated and not public/static/api, redirect to signin
+  if (!user && !isPublic && !isStatic && !isApi) {
+    console.log('🔐 Redirecting to signin - no user for path:', pathname)
     const redirectUrl = new URL('/signin', req.url)
     redirectUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(redirectUrl)
   }
 
-  // If authenticated and on login, redirect to dashboard or next
-  if (user && pathname === '/login') {
+  // If authenticated and on signin, redirect to dashboard or next
+  if (user && pathname === '/signin') {
     console.log('🔐 Redirecting to dashboard - user already logged in')
-    const next = req.nextUrl.searchParams.get('next') || '/dashboard'
+    const next = req.nextUrl.searchParams.get('next') || '/'
     return NextResponse.redirect(new URL(next, req.url))
   }
 
@@ -60,11 +55,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 }

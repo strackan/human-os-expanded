@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
-import { UserCircleIcon, ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { ArrowRightOnRectangleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
 import {
   Popover,
   PopoverContent,
@@ -12,6 +13,7 @@ import {
 export default function UserAvatarDropdown() {
   const { user, profile, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const router = useRouter()
 
   const getFirstName = () => {
     if (!user) return 'User'
@@ -46,11 +48,19 @@ export default function UserAvatarDropdown() {
     if (!user) return 'U'
     
     if (profile?.full_name) {
-      return profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
+      const names = profile.full_name.split(' ')
+      if (names.length >= 2) {
+        return (names[0][0] + names[1][0]).toUpperCase()
+      }
+      return names[0][0].toUpperCase()
     }
     
     if (user?.user_metadata?.name) {
-      return user.user_metadata.name.split(' ').map(n => n[0]).join('').toUpperCase()
+      const names = user.user_metadata.name.split(' ')
+      if (names.length >= 2) {
+        return (names[0][0] + names[1][0]).toUpperCase()
+      }
+      return names[0][0].toUpperCase()
     }
     
     if (user?.email) {
@@ -62,14 +72,15 @@ export default function UserAvatarDropdown() {
 
   const handleSignOut = async () => {
     console.log('🔐 User avatar dropdown - Sign out clicked')
-    console.log('🔐 User before sign out:', user?.email)
     setIsOpen(false)
     
     try {
-      await signOut()
+      await signOut('global') // Sign out from all sessions
       console.log('✅ User avatar dropdown - Sign out completed')
     } catch (error) {
       console.error('❌ User avatar dropdown - Sign out error:', error)
+      // Reopen the popover if signout failed
+      setIsOpen(true)
     }
   }
 
@@ -82,9 +93,12 @@ export default function UserAvatarDropdown() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="flex items-center space-x-2 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+          className="flex items-center rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
           aria-label="User menu"
           tabIndex={0}
+          onClick={() => {
+            console.log('🔘 Avatar button clicked, current isOpen:', isOpen)
+          }}
         >
           {user.user_metadata?.avatar_url ? (
             <img
@@ -122,6 +136,7 @@ export default function UserAvatarDropdown() {
         <div className="py-1">
           <button
             onClick={() => {
+              console.log('🔘 Settings button clicked')
               setIsOpen(false)
               // Add settings navigation here if needed
             }}
@@ -132,7 +147,10 @@ export default function UserAvatarDropdown() {
             Settings
           </button>
           <button
-            onClick={handleSignOut}
+            onClick={() => {
+              console.log('🔘 Sign out button clicked')
+              handleSignOut()
+            }}
             className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             tabIndex={0}
           >

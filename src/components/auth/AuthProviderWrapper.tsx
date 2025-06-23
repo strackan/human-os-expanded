@@ -10,10 +10,5 @@ export default async function AuthProviderWrapper({
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  console.log('🔐 Server AuthProviderWrapper - User:', {
-    hasUser: !!user,
-    userEmail: user?.email
-  })
-  
   return <AuthProvider initialUser={user}>{children}</AuthProvider>
 } 
