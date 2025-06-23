@@ -20,8 +20,8 @@ export default function AuthButton() {
       const urlParams = new URLSearchParams(window.location.search)
       const next = urlParams.get('next') || '/dashboard'
       
-      // Create the callback URL with the next param
-      const callbackUrl = `${location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`
+      // Create the callback URL with the next param - using the new route structure
+      const callbackUrl = `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
       
       console.log('🔐 Sign in with redirect:', { next, callbackUrl })
       console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
@@ -31,10 +31,7 @@ export default function AuthButton() {
         provider: 'google',
         options: {
           redirectTo: callbackUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'select_account',
-          },
+          // Removed queryParams to avoid PKCE code verifier issues
         }
       })
       

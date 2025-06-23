@@ -33,15 +33,15 @@ export async function middleware(req: NextRequest) {
     cookies: req.cookies.getAll().map(c => c.name)
   })
 
-  // Public routes
-  const publicRoutes = ['/login', '/auth/callback', '/api/auth/callback', '/test-oauth', '/debug-env']
+  // Public routes - updated to include new auth callback route
+  const publicRoutes = ['/login', '/signin', '/auth/callback', '/api/auth/callback', '/test-oauth', '/test-oauth-simple', '/debug-env']
   const isPublic = publicRoutes.some(route => pathname.startsWith(route))
   const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/public') || pathname === '/favicon.ico' || pathname.startsWith('/logo.png')
 
-  // If not authenticated and not public/static, redirect to login
+  // If not authenticated and not public/static, redirect to signin
   if (!user && !isPublic && !isStatic) {
-    console.log('🔐 Redirecting to login - no user')
-    const redirectUrl = new URL('/login', req.url)
+    console.log('🔐 Redirecting to signin - no user')
+    const redirectUrl = new URL('/signin', req.url)
     redirectUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(redirectUrl)
   }
@@ -59,13 +59,12 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
+     * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes (handled separately)
+     * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/|api/).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }

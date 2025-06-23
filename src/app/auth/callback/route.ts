@@ -1,73 +1,38 @@
 // src/app/auth/callback/route.ts
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
-import { cookies } from 'next/headers'
+import { NextResponse } from "next/server"
+import { createClient } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 
-export async function GET(request: NextRequest) {
-  console.log('🔄 Auth callback triggered')
-  
+export async function GET(request: Request) {
+  // Extract search parameters and origin from the request URL
   const { searchParams, origin } = new URL(request.url)
-  const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
-  const error = searchParams.get('error')
-  const errorDescription = searchParams.get('error_description')
 
-  console.log('📝 Callback params:', { 
-    hasCode: !!code, 
-    next,
-    origin,
-    url: request.url,
-    error,
-    errorDescription
-  })
+  // Get the authorization code and the 'next' redirect path
+  const code = searchParams.get("code")
+  const next = searchParams.get("next") ?? "/"
 
-  if (error) {
-    console.error('❌ Auth error received:', { error, errorDescription })
-    return NextResponse.redirect(`${origin}/login?error=${error}`)
-  }
+  console.log('🔄 Auth callback triggered:', { hasCode: !!code, next, origin })
 
   if (code) {
-    console.log('✅ Auth code received, exchanging for session')
-    
-    const cookieStore = await cookies()
-    
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              try {
-                cookieStore.set(name, value, options)
-              } catch (error) {
-                console.error(`Failed to set cookie ${name}:`, error)
-              }
-            })
-          },
-        },
-      }
-    )
+    // Create a Supabase client
+    const cookieStore = cookies()
+    const supabase = createClient(cookieStore)
 
-    const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-    
-    if (!sessionError) {
-      console.log('✅ Session created successfully:', { 
-        user: data?.user?.email,
-        session: !!data?.session
-      })
+    // Exchange the code for a session
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error) {
+      console.log('✅ Session created successfully, redirecting to:', next)
+      // If successful, redirect to the 'next' path or home
       return NextResponse.redirect(`${origin}${next}`)
     } else {
-      console.error('❌ Session exchange failed:', sessionError)
+      console.error('❌ Session exchange failed:', error)
     }
   } else {
-    console.error('❌ No auth code received in callback')
+    console.error('❌ No authorization code received')
   }
 
-  // Return to login with error if something went wrong
-  console.log('🔄 Redirecting to login due to error')
+  // If there's no code or an error occurred, redirect to an error page
+  console.log('🔄 Redirecting to error page')
   return NextResponse.redirect(`${origin}/login?error=auth_failed`)
 }
