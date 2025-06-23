@@ -125,7 +125,7 @@
        renewal_uuid,
        tt.id,
        r.renewal_date - INTERVAL '1 day' * tt.latest_completion_day,
-       tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))
+       tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)
      FROM public.task_templates tt
      CROSS JOIN public.renewals r
      WHERE r.id = renewal_uuid AND tt.is_active = true;
@@ -140,17 +140,17 @@
    CREATE OR REPLACE FUNCTION public.update_action_scores()
    RETURNS VOID AS $$
    BEGIN
-     UPDATE public.renewal_tasks
+     UPDATE public.renewal_tasks rt
      SET 
-       days_to_deadline = tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE)),
-       is_overdue = (tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))) < 0,
+       days_to_deadline = tt.latest_completion_day - (r.renewal_date - CURRENT_DATE),
+       is_overdue = (tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)) < 0,
        action_score = (
          COALESCE(cp.revenue_impact_tier, 1) *
          CASE 
-           WHEN (tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))) < 0 THEN 10
-           WHEN (tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))) <= 1 THEN 9
-           WHEN (tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))) <= 3 THEN 7
-           WHEN (tt.latest_completion_day - EXTRACT(DAY FROM (r.renewal_date - CURRENT_DATE))) <= 7 THEN 5
+           WHEN (tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)) < 0 THEN 10
+           WHEN (tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)) <= 1 THEN 9
+           WHEN (tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)) <= 3 THEN 7
+           WHEN (tt.latest_completion_day - (r.renewal_date - CURRENT_DATE)) <= 7 THEN 5
            ELSE 1
          END *
          COALESCE(cp.churn_risk_score, 1) *
@@ -158,10 +158,10 @@
        ),
        updated_at = NOW()
      FROM public.task_templates tt
-     JOIN public.renewals r ON public.renewal_tasks.renewal_id = r.id
+     JOIN public.renewals r ON rt.renewal_id = r.id
      LEFT JOIN public.customer_properties cp ON r.customer_id = cp.customer_id
-     WHERE public.renewal_tasks.task_template_id = tt.id
-       AND public.renewal_tasks.status = 'pending';
+     WHERE rt.task_template_id = tt.id
+       AND rt.status = 'pending';
        
      UPDATE public.renewals 
      SET last_action_score_update = NOW()

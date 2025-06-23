@@ -33,8 +33,8 @@ export async function middleware(req: NextRequest) {
     cookies: req.cookies.getAll().map(c => c.name)
   })
 
-  // Public routes - updated to include new auth callback route
-  const publicRoutes = ['/login', '/signin', '/auth/callback', '/api/auth/callback', '/test-oauth', '/test-oauth-simple', '/debug-env']
+  // Public routes - updated to include new auth callback route and clear-cookies
+  const publicRoutes = ['/login', '/signin', '/auth/callback', '/api/auth/callback', '/test-oauth', '/test-oauth-simple', '/debug-env', '/clear-cookies.html']
   const isPublic = publicRoutes.some(route => pathname.startsWith(route))
   const isStatic = pathname.startsWith('/_next') || pathname.startsWith('/public') || pathname === '/favicon.ico' || pathname.startsWith('/logo.png')
 

@@ -22,7 +22,8 @@ CREATE TABLE IF NOT EXISTS public.customer_properties (
     
     -- Metadata
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT unique_customer_id UNIQUE (customer_id)
 );
 
 -- Create key_dates table for more flexible date tracking

@@ -303,6 +303,14 @@ export default function TaskManagementPage() {
       }
       
       const data = await response.json();
+      
+      // Handle the case where no tasks are available
+      if (!data.task) {
+        setCurrentTask(null);
+        // You could also set a message here if you want to display it
+        return;
+      }
+      
       setCurrentTask(data.task);
     } catch (err) {
       setError('Failed to load next task');

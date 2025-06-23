@@ -28,9 +28,6 @@ RETURNS TABLE (
   current_arr DECIMAL
 ) AS $$
 BEGIN
-  -- First, update action scores to ensure they're current
-  PERFORM public.update_action_scores();
-  
   -- Return the highest priority pending task with related data
   RETURN QUERY
   SELECT 

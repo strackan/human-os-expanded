@@ -22,6 +22,7 @@ export default function SignInPage() {
           redirectTo: `${window.location.origin}/auth/callback${
             next ? `?next=${encodeURIComponent(next)}` : ""
           }`,
+          // No PKCE parameters - using simple OAuth flow
         },
       })
 

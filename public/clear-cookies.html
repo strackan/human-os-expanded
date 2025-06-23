@@ -1,52 +1,150 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Clear Auth Cookies</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Supabase Auth Cookies</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #c82333;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Clearing Authentication Cookies</h1>
-    <p>This page will clear all authentication-related cookies.</p>
-    <button onclick="clearCookies()">Clear All Cookies</button>
-    <button onclick="clearAuthCookies()">Clear Only Auth Cookies</button>
-    <div id="result"></div>
+    <div class="container">
+        <h1>Clear Supabase Auth Cookies</h1>
+        <p>This page will clear all Supabase authentication cookies that might be causing PKCE issues.</p>
+        
+        <div id="status"></div>
+        
+        <div>
+            <button onclick="clearAllCookies()">Clear All Supabase Cookies</button>
+            <button onclick="clearPKCECookies()">Clear PKCE Cookies Only</button>
+            <button onclick="showCurrentCookies()">Show Current Cookies</button>
+            <button onclick="goToSignIn()">Go to Sign In</button>
+        </div>
+        
+        <div id="output"></div>
+    </div>
 
     <script>
-        function clearCookies() {
-            const cookies = document.cookie.split(";");
+        function clearAllCookies() {
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+            
+            status.innerHTML = '<p class="info">Clearing all Supabase cookies...</p>';
+            
+            // Get all cookies
+            const cookies = document.cookie.split(';');
+            let clearedCount = 0;
+            let clearedCookies = [];
+            
             cookies.forEach(cookie => {
-                const eqPos = cookie.indexOf("=");
-                const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=localhost";
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=127.0.0.1";
-            });
-            document.getElementById('result').innerHTML = '<p style="color: green;">✅ All cookies cleared!</p>';
-        }
-
-        function clearAuthCookies() {
-            const authCookieNames = [
-                'sb-auth-token',
-                'sb-access-token',
-                'sb-refresh-token',
-                'sb-auth-token-code-verifier',
-                'sb-127-auth-token',
-                'sb-127-auth-token-code-verifier',
-                'sb-uuvdjjclwwulvyeboavk-auth-token',
-                'sb-uuvdjjclwwulvyeboavk-auth-token-code-verifier'
-            ];
-            
-            authCookieNames.forEach(name => {
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=localhost";
-                document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=127.0.0.1";
+                const [name] = cookie.trim().split('=');
+                if (name && (name.startsWith('sb-') || name.includes('supabase') || name.includes('auth'))) {
+                    // Clear cookie by setting it to expire in the past
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                    clearedCount++;
+                    clearedCookies.push(name);
+                }
             });
             
-            document.getElementById('result').innerHTML = '<p style="color: green;">✅ Auth cookies cleared!</p>';
+            status.innerHTML = `<p class="success">✅ Cleared ${clearedCount} Supabase cookies!</p>`;
+            output.innerHTML = `<h3>Cleared Cookies:</h3><pre>${clearedCookies.join('\n')}</pre>`;
         }
-
-        // Show current cookies
-        console.log('Current cookies:', document.cookie);
+        
+        function clearPKCECookies() {
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+            
+            status.innerHTML = '<p class="info">Clearing PKCE cookies...</p>';
+            
+            // Get all cookies
+            const cookies = document.cookie.split(';');
+            let clearedCount = 0;
+            let clearedCookies = [];
+            
+            cookies.forEach(cookie => {
+                const [name] = cookie.trim().split('=');
+                if (name && name.includes('code-verifier')) {
+                    // Clear cookie by setting it to expire in the past
+                    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                    clearedCount++;
+                    clearedCookies.push(name);
+                }
+            });
+            
+            status.innerHTML = `<p class="success">✅ Cleared ${clearedCount} PKCE cookies!</p>`;
+            output.innerHTML = `<h3>Cleared PKCE Cookies:</h3><pre>${clearedCookies.join('\n')}</pre>`;
+        }
+        
+        function showCurrentCookies() {
+            const output = document.getElementById('output');
+            const cookies = document.cookie.split(';');
+            let supabaseCookies = [];
+            
+            cookies.forEach(cookie => {
+                const [name] = cookie.trim().split('=');
+                if (name && (name.startsWith('sb-') || name.includes('supabase') || name.includes('auth'))) {
+                    supabaseCookies.push(name);
+                }
+            });
+            
+            if (supabaseCookies.length === 0) {
+                output.innerHTML = '<h3>Current Supabase Cookies:</h3><p class="success">No Supabase cookies found!</p>';
+            } else {
+                output.innerHTML = `<h3>Current Supabase Cookies:</h3><pre>${supabaseCookies.join('\n')}</pre>`;
+            }
+        }
+        
+        function goToSignIn() {
+            window.location.href = '/signin';
+        }
+        
+        // Show current cookies on page load
+        showCurrentCookies();
     </script>
 </body>
 </html>
