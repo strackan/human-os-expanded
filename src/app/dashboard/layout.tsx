@@ -28,9 +28,16 @@ export default function DashboardLayout({
   }, [user, loading, router])
 
   const handleSignOut = async () => {
-    console.log('🔐 Sign out clicked')
-    await signOut()
-    router.push('/login')
+    console.log('🔐 Dashboard layout - Sign out clicked')
+    try {
+      await signOut('global')
+      console.log('✅ Dashboard layout signout completed')
+      // The signOut function handles the redirect automatically
+    } catch (error) {
+      console.error('❌ Dashboard layout signout error:', error)
+      // Fallback redirect on error
+      router.push('/signin')
+    }
   }
 
   // Show loading while checking authentication

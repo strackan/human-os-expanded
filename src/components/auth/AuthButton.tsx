@@ -8,7 +8,7 @@ import { useAuth } from './AuthProvider'
 
 export default function AuthButton() {
   const [loading, setLoading] = useState(false)
-  const { user } = useAuth()
+  const { user, signOut } = useAuth()
   const supabase = createClient()
   const router = useRouter()
 
@@ -61,13 +61,13 @@ export default function AuthButton() {
   const handleSignOut = async () => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      router.push('/login')
+      // Use the new signOut function from AuthProvider
+      await signOut('global')
+      console.log('✅ AuthButton signout completed')
+      // The signOut function handles the redirect automatically
     } catch (error) {
       console.error('❌ Sign out error:', error)
       alert('Error signing out. Please try again.')
-    } finally {
       setLoading(false)
     }
   }

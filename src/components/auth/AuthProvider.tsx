@@ -120,36 +120,51 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       setProfile(null)
       console.log('✅ Local state cleared')
       
-      // Call client-side signout with scope with timeout
+      // Call client-side signout with scope and timeout
       console.log('🔐 Calling Supabase auth.signOut...')
       
       try {
-        const { error } = await supabase.auth.signOut({ scope })
+        // Add a timeout to prevent hanging
+        const signoutPromise = supabase.auth.signOut({ scope })
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Signout timeout')), 3000)
+        )
+        
+        const { error } = await Promise.race([signoutPromise, timeoutPromise]) as any
         
         if (error) {
           console.error('❌ Client-side signout error:', error)
-          // Don't throw error, continue with redirect
+          // Don't throw error, continue with server-side signout
         } else {
           console.log('✅ Supabase signout successful')
         }
       } catch (signoutError) {
-        console.warn('⚠️ Supabase signout failed or timed out, continuing with redirect:', signoutError)
+        console.warn('⚠️ Supabase signout failed or timed out, continuing with server-side signout:', signoutError)
       }
       
-      console.log('✅ Sign out complete')
+      console.log('✅ Client-side sign out complete')
       
-      // Redirect to signin page
-      console.log('🔐 Redirecting to signin page...')
+      // Use form submission to trigger server-side redirect
+      console.log('🔐 Submitting form to server-side signout...')
       if (typeof window !== 'undefined') {
         try {
+          // Create a temporary form to submit to the signout endpoint
+          const form = document.createElement('form')
+          form.method = 'POST'
+          form.action = '/api/auth/signout'
+          form.style.display = 'none'
+          
+          // Add the form to the document and submit it
+          document.body.appendChild(form)
+          form.submit()
+          
+          // The form submission will handle the redirect server-side
+          console.log('✅ Form submission initiated, redirect should happen automatically')
+          
+        } catch (formError) {
+          console.warn('⚠️ Form submission failed, falling back to direct redirect:', formError)
+          // Fallback to direct redirect
           window.location.href = '/signin'
-        } catch (redirectError) {
-          console.warn('⚠️ window.location.href failed, trying alternative redirect:', redirectError)
-          // Fallback: try to use Next.js router if available
-          if (typeof window !== 'undefined' && window.history) {
-            window.history.pushState({}, '', '/signin')
-            window.location.reload()
-          }
         }
       }
     } catch (error) {

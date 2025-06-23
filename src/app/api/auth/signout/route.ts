@@ -27,15 +27,23 @@ export async function POST() {
   )
 
   try {
-    // Sign out from Supabase
-    const { error } = await supabase.auth.signOut()
+    // Sign out from Supabase with timeout
+    const signoutPromise = supabase.auth.signOut()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Server signout timeout')), 5000)
+    )
+    
+    const { error } = await Promise.race([signoutPromise, timeoutPromise]) as any
+    
     if (error) {
       console.error('Sign out error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      // Don't return error, continue with redirect anyway
+    } else {
+      console.log('✅ Server-side Supabase signout successful')
     }
 
-    // Create response that clears all auth cookies
-    const response = NextResponse.json({ success: true })
+    // Create redirect response that clears all auth cookies
+    const response = NextResponse.redirect(new URL('/signin', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'))
     
     // Clear all auth-related cookies
     const allCookies = cookieStore.getAll()
@@ -49,9 +57,13 @@ export async function POST() {
       }
     })
 
+    console.log('✅ Signout completed successfully, redirecting to /signin')
     return response
   } catch (error) {
     console.error('Unexpected error during sign out:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    // Even if there's an error, redirect to signin
+    const response = NextResponse.redirect(new URL('/signin', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'))
+    console.log('✅ Signout failed but redirecting to /signin anyway')
+    return response
   }
 } 

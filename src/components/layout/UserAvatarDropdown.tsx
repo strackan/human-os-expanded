@@ -77,16 +77,19 @@ export default function UserAvatarDropdown() {
     setIsOpen(false)
     
     try {
-      // Call signOut without timeout - let it handle the redirect
+      // Call signOut - this will handle client-side signout and form submission
       await signOut('global')
       console.log('✅ User avatar dropdown - Sign out completed')
-      // The signOut function should handle the redirect
+      // The signOut function handles the form submission and server-side redirect
+      // Keep the loading state active until the page actually redirects
     } catch (error) {
       console.error('❌ User avatar dropdown - Sign out error:', error)
       // Even if there's an error, try to redirect manually
       if (typeof window !== 'undefined') {
         window.location.href = '/signin'
       }
+      // Reset loading state on error
+      setIsSigningOut(false)
     }
   }
 
