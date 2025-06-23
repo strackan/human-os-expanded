@@ -5,6 +5,7 @@ import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } 
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider'; // ← ADD THIS IMPORT
 import UserAvatarDropdown from './UserAvatarDropdown';
+import AuthButton from '@/components/auth/AuthButton';
 import {
   Popover,
   PopoverContent,
@@ -183,7 +184,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               >
                 <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />
               </button>
-              <UserAvatarDropdown />
+              {user ? <UserAvatarDropdown /> : <AuthButton />}
             </div>
           </div>
         </header>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ChatProvider } from "@/context/ChatContext";
+import { DateProvider } from "@/context/DateContext";
 import GlobalChat from "@/components/GlobalChat";
 import AppLayout from "@/components/layout/AppLayout";
 import { PageTransitionProvider } from "../components/layout/PageTransitionContext";
@@ -24,12 +25,14 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProviderWrapper>
           <ChatProvider>
-            <PageTransitionProvider>
-              <AppLayout>
-                {children}
-                <GlobalChat />
-              </AppLayout>
-            </PageTransitionProvider>
+            <DateProvider>
+              <PageTransitionProvider>
+                <AppLayout>
+                  {children}
+                  <GlobalChat />
+                </AppLayout>
+              </PageTransitionProvider>
+            </DateProvider>
           </ChatProvider>
         </AuthProviderWrapper>
       </body>

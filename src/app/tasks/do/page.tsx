@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, HandRaisedIcon, ExclamationTriangleIcon, ClockIcon, CurrencyDollarIcon, BuildingOfficeIcon, UserGroupIcon, ChartBarIcon, DocumentTextIcon, PhoneIcon, EnvelopeIcon, CalendarIcon, ArrowRightIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkflowEngine, Customer, Workflow } from '../../../lib/workflowEngine';
+import { useDateContext } from '../../../context/DateContext';
 import '@/styles/resizable-divider.css';
 
 // Component for displaying customer information
@@ -236,7 +237,12 @@ const WorkflowSteps = ({ workflow, onStepComplete }: { workflow: Workflow | null
 export default function TaskManagementPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [currentTask, setCurrentTask] = useState<{ customer: Customer; workflow: Workflow } | null>(null);
+  const { currentDate, isDateOverridden, clearOverride } = useDateContext();
+  const [currentTask, setCurrentTask] = useState<{
+    customer: Customer | any;
+    workflow: Workflow | null;
+    task: any;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
@@ -253,7 +259,7 @@ export default function TaskManagementPage() {
     } else {
       loadNextTask();
     }
-  }, [customerId, isLaunchMode]);
+  }, [customerId, isLaunchMode, currentDate]);
 
   // Initialize panel width on mount
   useEffect(() => {
@@ -283,7 +289,7 @@ export default function TaskManagementPage() {
       // Generate workflow for this customer
       const workflow = WorkflowEngine.generateWorkflow(customer);
       
-      setCurrentTask({ customer, workflow });
+      setCurrentTask({ customer, workflow, task: null });
     } catch (err) {
       setError('Failed to load customer workflow');
       console.error('Error loading customer workflow:', err);
@@ -295,23 +301,51 @@ export default function TaskManagementPage() {
   const loadNextTask = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/tasks/next');
+      // Build URL with date parameter if overridden
+      let url = '/api/tasks/next';
+      if (isDateOverridden) {
+        const dateString = currentDate.toISOString().slice(0, 10).replace(/-/g, '');
+        url += `?date=${dateString}`;
+      }
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch next task');
       }
-      
+
       const data = await response.json();
-      
-      // Handle the case where no tasks are available
+
       if (!data.task) {
         setCurrentTask(null);
-        // You could also set a message here if you want to display it
         return;
       }
-      
-      setCurrentTask(data.task);
+
+      // Try to fetch the full customer object
+      let customer: Customer | null = null;
+      try {
+        const customerResponse = await fetch('/api/customers');
+        if (customerResponse.ok) {
+          const customerData = await customerResponse.json();
+          customer = customerData.customers.find((c: Customer) => c.id === data.task.customer_id) || null;
+        }
+      } catch (e) {
+        // fallback: no customer
+      }
+
+      // Try to generate a workflow if customer is available
+      let workflow: Workflow | null = null;
+      if (customer) {
+        workflow = WorkflowEngine.generateWorkflow(customer);
+      }
+
+      // Always set currentTask, even if customer/workflow is missing
+      setCurrentTask({
+        customer: customer || data.task, // fallback: use task as customer
+        workflow: workflow || null,
+        task: data.task // pass the raw task for fallback rendering
+      });
     } catch (err) {
       setError('Failed to load next task');
       console.error('Error fetching task:', err);
@@ -435,6 +469,29 @@ export default function TaskManagementPage() {
     );
   }
 
+  // Fallback: if workflow is not available, show a basic task view
+  if (!currentTask.workflow) {
+    const t = currentTask.task || currentTask.customer;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-lg shadow p-8 max-w-lg w-full">
+          <h2 className="text-xl font-bold mb-2">Task: {t.task_name || t.name || 'Unnamed Task'}</h2>
+          <div className="mb-2 text-gray-700">{t.task_description || t.description || 'No description.'}</div>
+          <div className="mb-2"><b>Status:</b> {t.status}</div>
+          <div className="mb-2"><b>Customer:</b> {t.customer_name || t.customer_id}</div>
+          <div className="mb-2"><b>Renewal Date:</b> {t.renewal_date}</div>
+          <div className="mb-2"><b>Phase:</b> {t.phase}</div>
+          <div className="mb-2"><b>Action Score:</b> {t.action_score}</div>
+          <div className="mb-2"><b>Days to Deadline:</b> {t.days_to_deadline}</div>
+          <div className="mb-2"><b>Is Overdue:</b> {t.is_overdue ? 'Yes' : 'No'}</div>
+          <div className="mb-2"><b>Complexity:</b> {t.complexity_score}</div>
+          <div className="mb-2"><b>Current ARR:</b> {t.current_arr}</div>
+          <div className="mt-4 text-xs text-gray-400">(Basic fallback view: workflow not available)</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -444,6 +501,20 @@ export default function TaskManagementPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
               <p className="text-gray-600">Complete your highest priority customer tasks</p>
+              {isDateOverridden && (
+                <div className="mt-2 flex items-center space-x-2">
+                  <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <CalendarIcon className="h-3 w-3 mr-1" />
+                    Testing Date: {currentDate.toLocaleDateString()}
+                  </div>
+                  <button
+                    onClick={clearOverride}
+                    className="text-xs text-gray-500 hover:text-gray-700 underline"
+                  >
+                    Clear Override
+                  </button>
+                </div>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               {isLaunchMode && (
@@ -496,12 +567,14 @@ export default function TaskManagementPage() {
           </div>
 
           {/* Workflow Panel */}
-          <div className="resizable-panel-right pl-4">
-            <WorkflowSteps 
-              workflow={currentTask?.workflow || null}
-              onStepComplete={handleStepComplete}
-            />
-          </div>
+          {currentTask.workflow && (
+            <div className="resizable-panel-right pl-4">
+              <WorkflowSteps 
+                workflow={currentTask.workflow}
+                onStepComplete={handleStepComplete}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
