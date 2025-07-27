@@ -9,22 +9,6 @@ export const AUTH_CONFIG = {
     '/auth/callback', 
     '/auth/signout',
     '/clear-cookies.html',
-    '/test-signout',
-    '/auth-success',
-    '/manual-auth',
-    '/debug-auth-state',
-    '/debug-env',
-    '/api/debug-session', // Debug session route
-    '/test-auth-flow', // Test auth flow page
-    '/test-oauth-setup', // OAuth setup test page
-    '/test-oauth',
-    '/test-oauth-simple',
-    '/test-oauth-debug',
-    '/test-oauth-flow',
-    '/test-pkce',
-    '/test-simple-auth',
-    '/test-auth',
-    '/clear-auth',
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml',
