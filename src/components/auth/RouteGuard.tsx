@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from './AuthProvider'
+import { isPublicRoute } from '@/lib/auth-config'
 
 interface RouteGuardProps {
   children: React.ReactNode
@@ -12,23 +13,17 @@ export default function RouteGuard({ children }: RouteGuardProps) {
   const { user, loading } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  
-  // Define public routes that don't require authentication
-  const publicRoutes = ['/signin', '/auth/callback', '/clear-cookies.html', '/debug-auth-state', '/test-oauth', '/auth-success', '/manual-auth', '/']
-  const isPublicRoute = publicRoutes.some(route => 
-    pathname === route || (route !== '/' && pathname.startsWith(route))
-  )
 
   useEffect(() => {
     console.log('🛡️ RouteGuard check:', { 
       pathname, 
-      isPublicRoute, 
+      isPublicRoute: isPublicRoute(pathname), 
       hasUser: !!user, 
       loading 
     })
 
     // Don't redirect if we're still loading or on a public route
-    if (loading || isPublicRoute) {
+    if (loading || isPublicRoute(pathname)) {
       return
     }
 
@@ -40,19 +35,38 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       return
     }
 
-    console.log('🛡️ User authenticated, allowing access to:', pathname)
-  }, [user, loading, pathname, isPublicRoute, router])
+    // If authenticated and on root page, redirect to dashboard
+    if (user && pathname === '/') {
+      console.log('🛡️ Authenticated user on root, redirecting to dashboard')
+      router.replace('/dashboard')
+      return
+    }
 
-  // Show loading state while checking auth - but only briefly
+    console.log('🛡️ User authenticated, allowing access to:', pathname)
+  }, [user, loading, pathname, router])
+
+  // Show loading state while checking auth
   if (loading) {
     return (
-      <div className="fixed top-0 left-0 w-full h-1 bg-blue-600 animate-pulse z-50"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
     )
   }
 
   // Don't render children if not authenticated and not on public route
-  if (!user && !isPublicRoute) {
-    return null // Don't show anything, just redirect
+  if (!user && !isPublicRoute(pathname)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to sign in...</p>
+        </div>
+      </div>
+    )
   }
 
   // Render children if authenticated or on public route

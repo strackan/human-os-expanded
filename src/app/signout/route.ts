@@ -34,8 +34,15 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ User signed out successfully')
     
-    // Redirect to signin page
-    return NextResponse.redirect(new URL('/signin', request.url))
+    // Create redirect response and copy cookies from the signout response
+    const redirectResponse = NextResponse.redirect(new URL('/signin', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'))
+    
+    // Copy all cookies from the signout response to the redirect response
+    response.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    
+    return redirectResponse
   } catch (error) {
     console.error('❌ Sign out failed:', error)
     return NextResponse.json({ error: 'Sign out failed' }, { status: 500 })

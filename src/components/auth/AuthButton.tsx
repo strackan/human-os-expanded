@@ -20,18 +20,18 @@ export default function AuthButton() {
       const urlParams = new URLSearchParams(window.location.search)
       const next = urlParams.get('next') || '/dashboard'
       
-      // Create the callback URL with the next param - using the new route structure
-      const callbackUrl = `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
+      // Create the redirect URL to our callback route
+      const redirectUrl = `${location.origin}/api/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
       
-      console.log('🔐 Sign in with redirect:', { next, callbackUrl })
+      console.log('🔐 Sign in with redirect:', { next, redirectUrl })
       console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
       console.log('🔐 Supabase Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 20) + '...')
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: callbackUrl,
-          // Removed queryParams to avoid PKCE code verifier issues
+          redirectTo: redirectUrl,
+          // Using simple OAuth flow for local development
         }
       })
       

@@ -26,7 +26,6 @@ export default function SignInPage() {
           redirectTo: `${window.location.origin}/auth/callback${
             next ? `?next=${encodeURIComponent(next)}` : ""
           }`,
-          // Using simple OAuth flow for local development
         },
       })
 

@@ -144,25 +144,27 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       
       console.log('✅ Client-side sign out complete')
       
-      // Use form submission to trigger server-side redirect
-      console.log('🔐 Submitting form to server-side signout...')
+      // Use fetch to trigger server-side signout
+      console.log('🔐 Calling server-side signout...')
       if (typeof window !== 'undefined') {
         try {
-          // Create a temporary form to submit to the signout endpoint
-          const form = document.createElement('form')
-          form.method = 'POST'
-          form.action = '/api/auth/signout'
-          form.style.display = 'none'
+          const response = await fetch('/signout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
           
-          // Add the form to the document and submit it
-          document.body.appendChild(form)
-          form.submit()
+          if (response.ok) {
+            console.log('✅ Server-side signout successful')
+            // The server will handle the redirect
+          } else {
+            console.warn('⚠️ Server-side signout failed, falling back to direct redirect')
+            window.location.href = '/signin'
+          }
           
-          // The form submission will handle the redirect server-side
-          console.log('✅ Form submission initiated, redirect should happen automatically')
-          
-        } catch (formError) {
-          console.warn('⚠️ Form submission failed, falling back to direct redirect:', formError)
+        } catch (fetchError) {
+          console.warn('⚠️ Fetch to server-side signout failed, falling back to direct redirect:', fetchError)
           // Fallback to direct redirect
           window.location.href = '/signin'
         }
@@ -278,6 +280,11 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
         })
         
         if (!mounted) return
+        
+        // Add small delay for session sync after token refresh
+        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+          await new Promise(resolve => setTimeout(resolve, 100))
+        }
         
         if (session?.user) {
           setUser(session.user)

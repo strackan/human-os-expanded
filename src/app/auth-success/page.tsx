@@ -1,77 +1,106 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/auth/AuthProvider'
+import { createClient } from '@/lib/supabase'
 
-export default function AuthSuccess() {
-  const { user, loading } = useAuth()
-  const [clientCheck, setClientCheck] = useState<any>(null)
-  const [cookies, setCookies] = useState<string>('')
+export default function AuthSuccessPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { user, loading, refreshSession } = useAuth()
+  const [isProcessing, setIsProcessing] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [attempts, setAttempts] = useState(0)
+  const supabase = createClient()
 
   useEffect(() => {
-    const checkAuthState = async () => {
-      const supabase = createClient()
-      
-      // Check auth state
-      const userResult = await supabase.auth.getUser()
-      const sessionResult = await supabase.auth.getSession()
-      
-      setClientCheck({
-        user: userResult.data.user?.email,
-        userError: userResult.error?.message,
-        hasSession: !!sessionResult.data.session,
-        sessionError: sessionResult.error?.message
-      })
-      
-      // Get all cookies
-      setCookies(document.cookie)
+    const handleAuthSuccess = async () => {
+      try {
+        console.log('🔄 Auth success page - processing session...', { attempts })
+        
+        // Get the next parameter
+        const next = searchParams.get('next') || '/dashboard'
+        
+        // Force refresh the session
+        console.log('🔄 Forcing session refresh...')
+        await refreshSession()
+        
+        // Wait a bit for the auth state to update
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Check if we have a user now
+        if (user) {
+          console.log('✅ User authenticated, redirecting to:', next)
+          router.replace(next)
+          return
+        }
+        
+        // If no user and we haven't tried too many times, retry
+        if (attempts < 3) {
+          console.log(`🔄 Attempt ${attempts + 1}: No user found, retrying...`)
+          setAttempts(attempts + 1)
+          return
+        }
+        
+        // Try to get the user directly from Supabase
+        console.log('🔄 Checking Supabase session directly...')
+        const { data: { user: directUser }, error: userError } = await supabase.auth.getUser()
+        
+        if (directUser && !userError) {
+          console.log('✅ Direct user check successful, redirecting to:', next)
+          router.replace(next)
+        } else {
+          console.log('❌ No user found after all attempts, redirecting to signin')
+          router.replace('/signin?error=no_user')
+        }
+      } catch (error) {
+        console.error('❌ Auth success page error:', error)
+        setError('Authentication failed')
+        router.replace('/signin?error=auth_failed')
+      } finally {
+        setIsProcessing(false)
+      }
     }
-    
-    checkAuthState()
-  }, [])
+
+    handleAuthSuccess()
+  }, [user, loading, router, searchParams, refreshSession, supabase.auth, attempts])
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Completing authentication...</p>
+          {attempts > 0 && (
+            <p className="text-sm text-gray-500 mt-2">Attempt {attempts}/3</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">❌ {error}</div>
+          <button
+            onClick={() => router.push('/signin')}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Auth Success Debug</h1>
-      
-      <div className="space-y-6">
-        <div className="p-4 border rounded bg-green-50">
-          <h2 className="font-semibold mb-2">AuthProvider State:</h2>
-          <pre className="text-sm">
-            {JSON.stringify({ user: user?.email, loading }, null, 2)}
-          </pre>
-        </div>
-
-        <div className="p-4 border rounded bg-blue-50">
-          <h2 className="font-semibold mb-2">Direct Client Check:</h2>
-          <pre className="text-sm">
-            {JSON.stringify(clientCheck, null, 2)}
-          </pre>
-        </div>
-
-        <div className="p-4 border rounded bg-gray-50">
-          <h2 className="font-semibold mb-2">All Cookies:</h2>
-          <pre className="text-xs break-all">
-            {cookies || 'No cookies'}
-          </pre>
-        </div>
-
-        <div className="flex gap-4">
-          <button 
-            onClick={() => window.location.href = '/tasks/do'}
-            className="px-4 py-2 bg-blue-500 text-white rounded"
-          >
-            Go to Tasks
-          </button>
-          
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-gray-500 text-white rounded"
-          >
-            Refresh
-          </button>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="text-green-600 mb-4">✅ Authentication successful!</div>
+        <p className="text-gray-600">Redirecting...</p>
       </div>
     </div>
   )

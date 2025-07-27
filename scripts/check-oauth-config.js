@@ -2,7 +2,9 @@
 
 /**
  * OAuth Configuration Diagnostic Script
- * This script helps diagnose Google OAuth setup issues
+ * 
+ * This script checks your Google OAuth and Supabase configuration
+ * to identify potential issues with your authentication setup.
  */
 
 const fs = require('fs');
@@ -12,92 +14,116 @@ console.log('🔍 OAuth Configuration Diagnostic\n');
 
 // Check environment variables
 console.log('📋 Environment Variables Check:');
-const envPath = path.join(process.cwd(), '.env.local');
-if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf8');
+const envVars = {
+  'NEXT_PUBLIC_SUPABASE_URL': process.env.NEXT_PUBLIC_SUPABASE_URL,
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  'SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID': process.env.SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID,
+  'SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET': process.env.SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET,
+};
+
+Object.entries(envVars).forEach(([key, value]) => {
+  const status = value ? '✅ Present' : '❌ Missing';
+  const preview = value ? `${value.substring(0, 20)}...` : 'Not set';
+  console.log(`   ${key}: ${status} (${preview})`);
+});
+
+// Check Supabase config
+console.log('\n📋 Supabase Configuration Check:');
+const configPath = path.join(__dirname, '../supabase/config.toml');
+if (fs.existsSync(configPath)) {
+  const config = fs.readFileSync(configPath, 'utf8');
   
-  const requiredVars = [
-    'NEXT_PUBLIC_SUPABASE_URL',
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-    'SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID',
-    'SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET'
+  const checks = [
+    {
+      name: 'Google OAuth enabled',
+      pattern: /\[auth\.external\.google\][\s\S]*?enabled = true/,
+      required: true
+    },
+    {
+      name: 'Google client_id configured',
+      pattern: /client_id = "env\(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID\)"/,
+      required: true
+    },
+    {
+      name: 'Google secret configured',
+      pattern: /secret = "env\(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET\)"/,
+      required: true
+    },
+    {
+      name: 'Redirect URI configured',
+      pattern: /redirect_uri = "http:\/\/127\.0\.0\.1:54321\/auth\/v1\/callback"/,
+      required: true
+    },
+    {
+      name: 'Additional redirect URLs include localhost',
+      pattern: /http:\/\/localhost:3000\/auth\/callback/,
+      required: true
+    }
   ];
-  
-  requiredVars.forEach(varName => {
-    const hasVar = envContent.includes(varName);
-    console.log(`   ${hasVar ? '✅' : '❌'} ${varName}: ${hasVar ? 'Present' : 'Missing'}`);
+
+  checks.forEach(check => {
+    const found = check.pattern.test(config);
+    const status = found ? '✅ Found' : '❌ Missing';
+    console.log(`   ${check.name}: ${status}`);
   });
-  
-  // Check if using local Supabase
-  const isLocal = envContent.includes('127.0.0.1:54321') || envContent.includes('localhost:54321');
-  console.log(`   ${isLocal ? '✅' : '❌'} Local Supabase: ${isLocal ? 'Yes' : 'No'}`);
-  
 } else {
-  console.log('   ❌ .env.local file not found');
+  console.log('   ❌ supabase/config.toml not found');
 }
 
-console.log('\n🔧 Google OAuth Configuration Requirements:');
+// Check callback routes
+console.log('\n📋 Callback Routes Check:');
+const callbackRoutes = [
+  'src/app/auth/callback/route.ts',
+  'src/app/api/auth/callback/route.ts'
+];
 
-console.log('\n1. Google Cloud Console Setup:');
-console.log('   ✅ Go to https://console.cloud.google.com/');
-console.log('   ✅ Select your project');
-console.log('   ✅ Go to APIs & Services > OAuth consent screen');
-console.log('   ✅ Configure external user type');
+callbackRoutes.forEach(route => {
+  const routePath = path.join(__dirname, '..', route);
+  const exists = fs.existsSync(routePath);
+  const status = exists ? '✅ Exists' : '❌ Missing';
+  console.log(`   ${route}: ${status}`);
+});
 
-console.log('\n2. OAuth Credentials Setup:');
-console.log('   ✅ Go to APIs & Services > Credentials');
-console.log('   ✅ Create OAuth 2.0 Client ID (Web application)');
-console.log('   ✅ Add authorized JavaScript origins:');
-console.log('      - http://localhost:3000');
-console.log('      - http://127.0.0.1:3000');
-console.log('   ✅ Add authorized redirect URIs:');
-console.log('      - http://127.0.0.1:54321/auth/v1/callback (REQUIRED for local Supabase)');
-console.log('      - http://localhost:3000/api/auth/callback');
-console.log('      - http://127.0.0.1:3000/api/auth/callback');
+// Google OAuth Console Configuration Guide
+console.log('\n🔧 Google OAuth Console Configuration Required:');
+console.log('\n📋 Authorized JavaScript Origins (add these):');
+console.log('   ✅ http://localhost:3000');
+console.log('   ✅ http://127.0.0.1:3000');
 
-console.log('\n3. Supabase Configuration:');
-console.log('   ✅ Check supabase/config.toml has Google OAuth enabled');
-console.log('   ✅ Verify redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"');
+console.log('\n📋 Authorized Redirect URIs (add these):');
+console.log('   ✅ http://127.0.0.1:54321/auth/v1/callback (REQUIRED for local Supabase)');
+console.log('   ✅ http://localhost:3000/auth/callback (Your app callback)');
+console.log('   ✅ http://127.0.0.1:3000/auth/callback (Your app callback)');
 
-console.log('\n4. Common Issues & Solutions:');
+// Common Issues and Solutions
+console.log('\n🚨 Common Issues and Solutions:');
+console.log('\n1. "redirect_uri_mismatch" error:');
+console.log('   → Ensure ALL redirect URIs are added to Google Console');
+console.log('   → The Supabase local callback is CRITICAL: http://127.0.0.1:54321/auth/v1/callback');
 
-console.log('\n   ❌ "invalid request: both auth code and code verifier should be non-empty"');
-console.log('   ✅ Solution: Remove PKCE parameters (access_type, prompt) from OAuth call');
-console.log('   ✅ Use simple OAuth flow for local development');
+console.log('\n2. "invalid request: both auth code and code verifier should be non-empty":');
+console.log('   → Remove PKCE parameters from OAuth calls for local development');
+console.log('   → Use simple OAuth flow without queryParams');
 
-console.log('\n   ❌ "redirect_uri_mismatch"');
-console.log('   ✅ Solution: Add http://127.0.0.1:54321/auth/v1/callback to Google OAuth redirect URIs');
-console.log('   ✅ Check both JavaScript origins and redirect URIs in Google Console');
+console.log('\n3. Session not persisting after OAuth:');
+console.log('   → Check that callback route properly exchanges code for session');
+console.log('   → Verify middleware is updating session cookies');
 
-console.log('\n   ❌ "Auth session missing"');
-console.log('   ✅ Solution: Ensure Supabase is running locally (supabase status)');
-console.log('   ✅ Clear browser cookies and local storage');
-console.log('   ✅ Restart development server');
+console.log('\n4. OAuth flow not starting:');
+console.log('   → Check that Google OAuth is enabled in Supabase config');
+console.log('   → Verify environment variables are set correctly');
 
-console.log('\n5. Testing Steps:');
-console.log('   ✅ Run: supabase status (should show running)');
-console.log('   ✅ Run: npm run dev (should start on localhost:3000)');
-console.log('   ✅ Visit: http://localhost:3000/test-oauth-simple');
-console.log('   ✅ Test simple OAuth flow without PKCE');
+// Testing Instructions
+console.log('\n🧪 Testing Instructions:');
+console.log('\n1. Start your local Supabase:');
+console.log('   supabase start');
 
-console.log('\n6. Debug Commands:');
-console.log('   🔍 Check Supabase logs: supabase logs');
-console.log('   🔍 Check browser console for errors');
-console.log('   🔍 Clear auth cookies: visit /clear-auth page');
-console.log('   🔍 Test OAuth step by step: visit /test-oauth-debug');
+console.log('\n2. Test the OAuth flow:');
+console.log('   http://localhost:3000/signin');
 
-console.log('\n📝 Next Steps:');
-console.log('1. Verify Google OAuth redirect URIs include: http://127.0.0.1:54321/auth/v1/callback');
-console.log('2. Test simple OAuth flow at: http://localhost:3000/test-oauth-simple');
-console.log('3. If still failing, check browser console and Supabase logs');
-console.log('4. Consider using the simple OAuth flow (without PKCE) for local development');
+console.log('\n3. Check browser console for errors during OAuth flow');
 
-console.log('\n🎯 Quick Fix:');
-console.log('The main issue is likely PKCE parameters. Try the simple OAuth flow:');
-console.log('supabase.auth.signInWithOAuth({');
-console.log('  provider: "google",');
-console.log('  options: {');
-console.log('    redirectTo: "http://127.0.0.1:54321/auth/v1/callback"');
-console.log('    // No queryParams');
-console.log('  }');
-console.log('})'); 
+console.log('\n4. Verify session creation:');
+console.log('   http://localhost:3000/test-auth');
+
+console.log('\n✅ Diagnostic complete!'); 

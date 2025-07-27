@@ -7,6 +7,7 @@ import GlobalChat from "@/components/GlobalChat";
 import AppLayout from "@/components/layout/AppLayout";
 import { PageTransitionProvider } from "../components/layout/PageTransitionContext";
 import AuthProviderWrapper from "@/components/auth/AuthProviderWrapper";
+import RouteGuard from "@/components/auth/RouteGuard";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,16 +25,18 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthProviderWrapper>
-          <ChatProvider>
-            <DateProvider>
-              <PageTransitionProvider>
-                <AppLayout>
-                  {children}
-                  <GlobalChat />
-                </AppLayout>
-              </PageTransitionProvider>
-            </DateProvider>
-          </ChatProvider>
+          <RouteGuard>
+            <ChatProvider>
+              <DateProvider>
+                <PageTransitionProvider>
+                  <AppLayout>
+                    {children}
+                    <GlobalChat />
+                  </AppLayout>
+                </PageTransitionProvider>
+              </DateProvider>
+            </ChatProvider>
+          </RouteGuard>
         </AuthProviderWrapper>
       </body>
     </html>

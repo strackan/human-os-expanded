@@ -1,10 +1,29 @@
+'use client'
+
 import Link from 'next/link';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Renubu Workflows</h1>
+        
+        {/* Show welcome message if user is authenticated */}
+        {user && (
+          <div className="mb-6 text-center">
+            <p className="text-green-600 font-medium">Welcome back, {user.email}!</p>
+            <Link 
+              href="/dashboard" 
+              className="inline-block mt-2 text-blue-600 hover:text-blue-700 underline"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Revenue Architects Card */}
           <Link 
@@ -63,6 +82,18 @@ export default function Home() {
             </div>
           </Link>
         </div>
+        
+        {/* Show sign in link if user is not authenticated */}
+        {!user && (
+          <div className="mt-8 text-center">
+            <Link 
+              href="/signin" 
+              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Sign In to Access Workflows
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );
