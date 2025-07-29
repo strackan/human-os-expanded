@@ -17,7 +17,7 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // ← ADD THIS: Get user data from auth context
