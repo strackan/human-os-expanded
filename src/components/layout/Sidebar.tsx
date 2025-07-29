@@ -11,7 +11,8 @@ import {
   ChevronRightIcon,
   MagnifyingGlassCircleIcon,
   DocumentDuplicateIcon,
-  LightBulbIcon
+  LightBulbIcon,
+  TvIcon
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -29,10 +30,10 @@ interface SidebarProps {
 
 const navigation: NavItem[] = [
   { 
-    name: 'Renewals HQ', 
+    name: 'Home', 
     href: '/', 
     icon: HomeIcon,
-    description: 'View and manage all renewals'
+    description: 'Welcome page'
   },
   { 
     name: 'Insights', 
@@ -57,6 +58,12 @@ const navigation: NavItem[] = [
     href: '/reports', 
     icon: ChartBarIcon,
     description: 'View and generate reports'
+  },
+  { 
+    name: 'Demo', 
+    href: '/demo', 
+    icon: TvIcon,
+    description: 'Demo workflow example'
   },
 ];
 
