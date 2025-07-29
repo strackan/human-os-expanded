@@ -18,7 +18,10 @@ export const createClient = async () => {
             try {
               cookieStore.set(name, value, options)
             } catch (error) {
-              // Handle cookie errors silently
+              // Only log auth-related cookie errors in development
+              if (process.env.NODE_ENV === 'development' && name.includes('auth')) {
+                console.warn(`Cookie ${name} could not be set in this context:`, error instanceof Error ? error.message : String(error))
+              }
             }
           })
         },

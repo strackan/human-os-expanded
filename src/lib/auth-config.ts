@@ -11,9 +11,7 @@ export const AUTH_CONFIG = {
     '/clear-cookies.html',
     '/favicon.ico',
     '/robots.txt',
-    '/sitemap.xml',
-    // Supabase internal callback URLs (for local development)
-    '/auth/v1/callback'
+    '/sitemap.xml'
   ],
 
   // Default redirect paths

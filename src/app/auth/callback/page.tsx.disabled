@@ -1,0 +1,70 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
+
+export default function AuthCallbackPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        console.log('🔄 Handling OAuth callback...')
+        
+        // Get the next parameter from the URL
+        const next = searchParams.get('next') || '/scenarios'
+        console.log('🎯 Redirect target:', next)
+
+        // For implicit flow, the session should be available immediately
+        console.log('🔄 Checking session after OAuth...')
+        
+        // Try to get the session immediately
+        const { data, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ Session check error:', error)
+          router.replace('/signin?error=auth_failed')
+          return
+        }
+        
+        if (data.session?.user) {
+          console.log('✅ Session established:', data.session.user.email)
+          // Redirect to the intended destination
+          console.log('🔄 Redirecting to:', next)
+          router.replace(next)
+        } else {
+          console.log('❌ No session found after OAuth')
+          // Try one more time after a short delay
+          await new Promise(resolve => setTimeout(resolve, 1000))
+          const { data: retryData, error: retryError } = await supabase.auth.getSession()
+          
+          if (retryData.session?.user) {
+            console.log('✅ Session established on retry:', retryData.session.user.email)
+            router.replace(next)
+          } else {
+            console.log('❌ Still no session after retry')
+            router.replace('/signin?error=no_session')
+          }
+        }
+        
+      } catch (error) {
+        console.error('❌ Callback error:', error)
+        router.replace('/signin?error=auth_failed')
+      }
+    }
+
+    handleCallback()
+  }, [router, searchParams, supabase])
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Completing authentication...</p>
+      </div>
+    </div>
+  )
+} 

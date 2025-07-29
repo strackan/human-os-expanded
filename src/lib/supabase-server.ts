@@ -20,9 +20,10 @@ export const createServerSupabaseClient = async () => {
             try {
               cookieStore.set(name, value, options)
             } catch (error) {
-              // Handle read-only cookie store in server components
-              // This is expected in some contexts and should not break the app
-              console.warn(`Cookie ${name} could not be set in this context:`, error)
+              // Only log in development and only for auth-related cookies
+              if (process.env.NODE_ENV === 'development' && name.includes('auth')) {
+                console.warn(`Cookie ${name} could not be set in this context:`, error instanceof Error ? error.message : String(error))
+              }
             }
           })
         },
@@ -47,7 +48,24 @@ export const createServiceRoleClient = () => {
 
 // Helper function to get current user on server
 export const getCurrentUser = async () => {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
-  return { user, error }
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { user }, error } = await supabase.auth.getUser()
+    return { user, error }
+  } catch (error) {
+    console.error('Error getting current user:', error)
+    return { user: null, error }
+  }
+}
+
+// Helper function to get session on server
+export const getSession = async () => {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { session }, error } = await supabase.auth.getSession()
+    return { session, error }
+  } catch (error) {
+    console.error('Error getting session:', error)
+    return { session: null, error }
+  }
 }

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     console.error('❌ Auth error received:', { error, errorDescription })
-    return NextResponse.redirect(`${origin}/login?error=${error}`)
+    return NextResponse.redirect(`${origin}/signin?error=${error}`)
   }
 
   if (code) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     console.error('❌ No auth code received in callback')
   }
 
-  // Return to login with error if something went wrong
-  console.log('🔄 Redirecting to login due to error')
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`)
+  // Return to signin with error if something went wrong
+  console.log('🔄 Redirecting to signin due to error')
+  return NextResponse.redirect(`${origin}/signin?error=auth_failed`)
 } 

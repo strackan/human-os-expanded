@@ -13,11 +13,20 @@ export async function middleware(req: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return req.cookies.getAll() },
+        getAll() { 
+          return req.cookies.getAll() 
+        },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
-            req.cookies.set(name, value)
-            response.cookies.set(name, value, options)
+            try {
+              req.cookies.set(name, value)
+              response.cookies.set(name, value, options)
+            } catch (error) {
+              // Only log auth-related cookie errors in development
+              if (process.env.NODE_ENV === 'development' && name.includes('auth')) {
+                console.warn(`Cookie ${name} could not be set in middleware:`, error instanceof Error ? error.message : String(error))
+              }
+            }
           })
         },
       },
@@ -26,96 +35,39 @@ export async function middleware(req: NextRequest) {
 
   const pathname = req.nextUrl.pathname
   
-  // Handle OAuth callback - check if this is an OAuth callback
-  const hasOAuthParams = req.nextUrl.searchParams.has('error') || 
-                        req.nextUrl.searchParams.has('code') ||
-                        req.nextUrl.searchParams.has('access_token')
-  
-  if (hasOAuthParams) {
-    console.log('🔐 OAuth callback detected, allowing access to:', pathname)
-    // For OAuth callbacks, we need to let the client-side handle the session
-    // Don't check authentication, just allow the request through
-    return response
-  }
-  
-  
-  // If this is a fresh redirect from auth callback, be more lenient
-  const isAuthRedirect = req.headers.get('referer')?.includes('/auth/callback')
-  if (isAuthRedirect) {
-    console.log('🔐 Auth redirect detected, checking cookies more thoroughly')
-    // Check for any Supabase auth cookies
-    const hasAuthCookies = req.cookies.getAll().some(cookie => 
-      cookie.name.startsWith('sb-') || cookie.name.includes('auth')
-    )
-    if (hasAuthCookies) {
-      console.log('🔐 Auth cookies found, allowing access after callback')
-      return response
-    }
-  }
-  
-  // Skip auth check for public routes entirely
+  // Skip auth check for public routes
   if (isPublicRoute(pathname)) {
     console.log('🔐 Public route, skipping auth check:', pathname)
     return response
   }
 
-  // Check if we have auth cookies before doing full session check
-  const authCookies = req.cookies.getAll()
-  const hasSupabaseAuthCookies = authCookies.some(cookie => 
-    cookie.name.startsWith('sb-127-auth-token') || 
-    cookie.name.startsWith('sb-access-token') ||
-    cookie.name.startsWith('sb-refresh-token') ||
-    cookie.name === 'auth-bypass'
-  )
-  
-  // If we have the bypass cookie specifically, allow immediately
-  const hasBypass = authCookies.find(c => c.name === 'auth-bypass')?.value === 'true'
-  if (hasBypass) {
-    console.log('🔐 Auth bypass cookie found, allowing immediate access')
-    response.cookies.delete('auth-bypass')
-    return response
-  }
-  
-  console.log('🔐 Pre-auth check:', { 
-    pathname, 
-    hasSupabaseAuthCookies,
-    hasBypass: hasBypass,
-    cookies: req.cookies.getAll().map(c => ({ name: c.name, value: c.value.substring(0, 20) + '...' }))
-  })
-  
-  // If we have auth cookies, try session check but be lenient
-  if (hasSupabaseAuthCookies) {
-    console.log('🔐 Auth cookies found, attempting session validation...')
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession()
-      
-      if (session?.user && !error) {
-        console.log('🔐 Valid session found for user:', session.user.email)
-        // Handle authenticated redirects
-        if (pathname === '/signin') {
-          const next = req.nextUrl.searchParams.get('next') || '/dashboard'
-          return NextResponse.redirect(new URL(next, req.url))
-        }
-        if (pathname === '/') {
-          return NextResponse.redirect(new URL('/dashboard', req.url))
-        }
-        return response
-      } else {
-        console.log('🔐 Session validation failed but auth cookies present, allowing access temporarily:', error?.message)
-        // Allow access even if session validation fails - cookies might be fresh
-        return response
+  // Check authentication
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (session?.user && !error) {
+      console.log('🔐 Valid session found for user:', session.user.email)
+      // Handle authenticated redirects
+      if (pathname === '/signin') {
+        const next = req.nextUrl.searchParams.get('next') || '/dashboard'
+        return NextResponse.redirect(new URL(next, req.url))
       }
-    } catch (sessionError) {
-      console.log('🔐 Session check error but auth cookies present, allowing access:', sessionError)
+      if (pathname === '/') {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
       return response
+    } else {
+      console.log('🔐 No valid session, redirecting to signin for path:', pathname)
+      const redirectUrl = new URL('/signin', req.url)
+      redirectUrl.searchParams.set('next', pathname)
+      return NextResponse.redirect(redirectUrl)
     }
+  } catch (error) {
+    console.log('🔐 Session check error, redirecting to signin:', error)
+    const redirectUrl = new URL('/signin', req.url)
+    redirectUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(redirectUrl)
   }
-
-  // No auth cookies found, redirect to signin
-  console.log('🔐 No auth cookies found, redirecting to signin for path:', pathname)
-  const redirectUrl = new URL('/signin', req.url)
-  redirectUrl.searchParams.set('next', pathname)
-  return NextResponse.redirect(redirectUrl)
 }
 
 export const config = {

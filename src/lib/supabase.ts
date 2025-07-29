@@ -1,7 +1,7 @@
 // src/lib/supabase.ts (CLIENT ONLY - NO SERVER IMPORTS)
 import { createBrowserClient } from '@supabase/ssr'
 
-// Client-side Supabase client
+// Client-side Supabase client - keep it simple and let Supabase handle cookies
 export const createClient = () => createBrowserClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
