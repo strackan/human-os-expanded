@@ -78,10 +78,9 @@ npm run sync-schema
 ### **For New Workers**
 1. **[NEW WORKER ONBOARDING GUIDE](NEW_WORKER_ONBOARDING.md)** - Start here! Complete guide for new team members
 2. **[AUTHENTICATION_SYSTEM_README.md](AUTHENTICATION_SYSTEM_README.md)** - Complete authentication system details
-3. **[DATABASE_SCHEMA_GUIDE.md](DATABASE_SCHEMA_GUIDE.md)** - Database management and migrations
+3. **[DATABASE_SYSTEM_GUIDE.md](DATABASE_SYSTEM_GUIDE.md)** - Complete database system, schema management, and migrations
 4. **[CUSTOMER_WORKFLOW_SYSTEM_README.md](CUSTOMER_WORKFLOW_SYSTEM_README.md)** - Customer management system
 5. **[TASK_MANAGEMENT_README.md](TASK_MANAGEMENT_README.md)** - Task management implementation
-6. **[SCHEMA_MANAGEMENT_README.md](SCHEMA_MANAGEMENT_README.md)** - Dual schema system explanation
 
 ### **Development Resources**
 - **Next.js Documentation**: https://nextjs.org/docs

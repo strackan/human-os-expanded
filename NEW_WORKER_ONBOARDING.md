@@ -301,10 +301,9 @@ npm install
 
 ### **Must-Read Documents**
 1. **`AUTHENTICATION_SYSTEM_README.md`** - Complete auth system details
-2. **`DATABASE_SCHEMA_GUIDE.md`** - Database management and migrations
+2. **`DATABASE_SYSTEM_GUIDE.md`** - Complete database system, schema management, and migrations
 3. **`CUSTOMER_WORKFLOW_SYSTEM_README.md`** - Customer management system
 4. **`TASK_MANAGEMENT_README.md`** - Task management implementation
-5. **`SCHEMA_MANAGEMENT_README.md`** - Dual schema system explanation
 
 ### **API Documentation**
 - Check `src/app/api/` for endpoint implementations
