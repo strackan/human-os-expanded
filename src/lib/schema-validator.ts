@@ -56,7 +56,7 @@ export class SchemaValidator {
     };
   }
 
-  static validateCustomerForm(data: CustomerFormData): SchemaValidationResult {
+  static validateCustomerForm(data: any): SchemaValidationResult {
     return this.validateCustomer(data);
   }
 
@@ -69,9 +69,7 @@ export interface Customer {
   id: string;
   name: string;
   domain: string;
-  primary_contact_name?: string;
-  primary_contact_email?: string;
-  primary_contact_phone?: string;
+  primary_contact_id?: string;
   current_arr?: number;
   renewal_date?: string;
   assigned_to?: string;

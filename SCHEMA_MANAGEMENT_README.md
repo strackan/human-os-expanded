@@ -1,242 +1,359 @@
-# Schema Management for Renubu
+# Intelligent Schema Management System for Supabase
 
-This document explains the dual schema setup for Renubu, allowing you to maintain both a production-ready complex schema and a simplified MVP schema.
+This document describes the intelligent schema management system that automatically detects schemas, selects appropriate seed files, and manages database differences.
 
-## Schema Overview
+## Overview
 
-### 🏭 **Renubu Production Schema** (`renubu_prod`)
-- **Purpose**: Full-featured production system with advanced workflow management
-- **Complexity**: High - 16 tables with sophisticated relationships
-- **Features**: 
-  - Multi-tenant support with companies
-  - Advanced workflow system with task templates
-  - Action scoring and AI integration
-  - Comprehensive conversation tracking
-  - Date monitoring and alerting
-  - Complex RLS policies
+The system provides three main capabilities:
 
-### 🚀 **Renubu MVP Schema** (`renubu_mvp`)
-- **Purpose**: Simplified schema for rapid MVP development
-- **Complexity**: Low - 6 core tables
-- **Features**:
-  - Basic user management
-  - Simple customer and renewal tracking
-  - Task management
-  - Event tracking
-  - Notes system
-  - Simple RLS policies
+1. **Schema Detection** - Automatically detects which schema is active
+2. **Smart Seed Selection** - Chooses the appropriate seed file based on the active schema
+3. **Diff Management** - Detects and manages schema differences and conflicts
 
-## Schema Comparison
+## Configuration
 
-| Feature | Production Schema | MVP Schema |
-|---------|------------------|------------|
-| **Tables** | 16 tables | 6 tables |
-| **Users** | `profiles` with company support | `users` (simplified) |
-| **Customers** | Complex with properties, dates | Simple with basic fields |
-| **Renewals** | Advanced with AI scoring | Basic with core fields |
-| **Tasks** | Template-based with scoring | Simple with status/priority |
-| **Workflows** | Multi-phase with outcomes | Not implemented |
-| **Conversations** | Full conversation system | Notes system only |
-| **Multi-tenancy** | Full company isolation | Not implemented |
-| **AI Integration** | Risk scoring, recommendations | Not implemented |
+### Enhanced config.toml
 
-## MVP Schema Structure
+The `supabase/config.toml` file has been enhanced with intelligent schema management:
 
-### Core Tables
+```toml
+# Schema-specific configurations
+[db.schemas]
+# MVP Schema Configuration
+[db.schemas.mvp]
+enabled = true
+seed_file = "./seed-mvp.sql"
+migrations = ["20250101000002_create_mvp_schema.sql"]
 
-#### 1. `users` (Simplified Profiles)
-```sql
-- id (UUID, PK) - References auth.users(id)
-- email (TEXT, NOT NULL)
-- full_name (TEXT)
-- avatar_url (TEXT)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
+# Production Schema Configuration  
+[db.schemas.production]
+enabled = false
+seed_file = "./seed.sql"
+migrations = ["20250101000001_migrate_to_prod_schema.sql"]
+
+# Development Schema Configuration
+[db.schemas.development]
+enabled = true
+seed_file = "./seed-mvp.sql"
+migrations = ["20250101000002_create_mvp_schema.sql"]
+
+# Diff detection and management
+[db.diff]
+enabled = true
+auto_generate = true
+output_format = "sql"
+include_schema = true
+include_data = false
+rules = [
+  "ignore_timestamps",
+  "ignore_auto_increment",
+  "preserve_comments"
+]
 ```
 
-#### 2. `customers` (Simplified)
-```sql
-- id (UUID, PK)
-- name (TEXT, NOT NULL)
-- domain (TEXT)
-- industry (TEXT)
-- health_score (INTEGER, DEFAULT 50)
-- primary_contact_name (TEXT)
-- primary_contact_email (TEXT)
-- current_arr (DECIMAL(12,2), DEFAULT 0)
-- renewal_date (DATE)
-- assigned_to (UUID) - References users(id)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
+## Available Scripts
 
-#### 3. `renewals` (Simplified)
-```sql
-- id (UUID, PK)
-- customer_id (UUID) - References customers(id)
-- renewal_date (DATE, NOT NULL)
-- current_arr (DECIMAL(12,2), NOT NULL)
-- proposed_arr (DECIMAL(12,2))
-- probability (INTEGER, DEFAULT 50)
-- stage (TEXT, DEFAULT 'discovery')
-- risk_level (TEXT, DEFAULT 'medium')
-- assigned_to (UUID) - References users(id)
-- notes (TEXT)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
+### 1. Schema Detection (`npm run detect-schema`)
 
-#### 4. `tasks` (Simplified)
-```sql
-- id (UUID, PK)
-- renewal_id (UUID) - References renewals(id)
-- title (TEXT, NOT NULL)
-- description (TEXT)
-- status (TEXT, DEFAULT 'pending')
-- priority (TEXT, DEFAULT 'medium')
-- assigned_to (UUID) - References users(id)
-- due_date (DATE)
-- completed_at (TIMESTAMPTZ)
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
+Analyzes migration files to determine which schema is active and provides recommendations.
 
-#### 5. `events` (Simplified)
-```sql
-- id (UUID, PK)
-- title (TEXT, NOT NULL)
-- description (TEXT)
-- event_type (TEXT, NOT NULL)
-- customer_id (UUID) - References customers(id)
-- user_id (UUID) - References users(id)
-- event_date (TIMESTAMPTZ, NOT NULL)
-- status (TEXT, DEFAULT 'scheduled')
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
+**Features:**
+- Detects MVP, Production, and Development schemas
+- Analyzes migration files for schema indicators
+- Validates seed file existence
+- Provides configuration recommendations
+- Checks for schema differences
 
-#### 6. `notes` (Simple Notes System)
-```sql
-- id (UUID, PK)
-- customer_id (UUID) - References customers(id)
-- renewal_id (UUID) - References renewals(id)
-- user_id (UUID) - References users(id)
-- content (TEXT, NOT NULL)
-- note_type (TEXT, DEFAULT 'general')
-- created_at (TIMESTAMPTZ)
-- updated_at (TIMESTAMPTZ)
-```
-
-## Usage
-
-### Switching Between Schemas
-
-Use the provided utility script to switch between schemas:
-
+**Usage:**
 ```bash
-# Switch to production schema
-node scripts/switch-schema.js prod
-
-# Switch to MVP schema
-node scripts/switch-schema.js mvp
-
-# Show current schema status
-node scripts/switch-schema.js status
+npm run detect-schema
 ```
 
-### Database Access
+**Output Example:**
+```
+🔍 Schema Analysis Results:
+============================
+✅ MVP Schema: ENABLED
+   - Migrations: 3
+   - Seed File: ./seed-mvp.sql
+   - Status: active
 
-Both schemas are accessible through views in the `public` schema:
+📊 Recommended Actions:
+=======================
+1. Use MVP schema with seed-mvp.sql for development
+```
 
-- **Production tables**: `public.profiles`, `public.customers`, etc. (views to `renubu_prod.*`)
-- **MVP tables**: `public.users`, `public.customers`, etc. (views to `renubu_mvp.*`)
+### 2. Smart Seed Selector (`npm run smart-seed`)
 
-### Application Development
+Automatically selects and applies the appropriate seed file based on the detected schema.
 
-For MVP development, focus on these tables:
-- `users` (instead of `profiles`)
-- `customers` (simplified version)
-- `renewals` (simplified version)
-- `tasks` (instead of complex task system)
-- `events` (simplified version)
-- `notes` (instead of conversation system)
+**Features:**
+- Automatically detects current schema
+- Selects appropriate seed file (seed-mvp.sql vs seed.sql)
+- Updates Supabase configuration
+- Validates seed file integrity
+- Provides application guidance
 
-## Migration Strategy
+**Usage:**
+```bash
+npm run smart-seed
+```
 
-### Current State
-1. ✅ Production schema created and populated
-2. ✅ MVP schema created and ready
-3. ✅ Utility scripts for schema management
-4. ✅ Views for backward compatibility
+**Output Example:**
+```
+🧠 Smart Seed File Selector
+============================
 
-### Next Steps
-1. **Choose your development schema**: Decide whether to use MVP or production schema
-2. **Update application code**: Modify your app to use the appropriate table names
-3. **Test thoroughly**: Ensure all functionality works with your chosen schema
-4. **Deploy**: Use the appropriate schema for your deployment
+🔍 Detected Schema: mvp
+📁 Selected Seed File: seed-mvp.sql
+✅ Seed file seed-mvp.sql validated (2.45 KB)
+✅ Updated config.toml to use seed-mvp.sql
+🌱 Applying seed file: seed-mvp.sql
+✅ Supabase is running, seed file will be applied on next reset
+💡 Run "npx supabase db reset" to apply the seed file
+```
 
-## Benefits of This Approach
+### 3. Schema Diff Manager (`npm run schema-diff`)
 
-### ✅ **Preserves Investment**
-- Your complex production schema is preserved
-- All existing data and relationships maintained
-- Can switch back to production schema anytime
+Analyzes schema differences, detects conflicts, and provides resolution recommendations.
 
-### ✅ **Accelerates Development**
-- MVP schema is much simpler to work with
-- Faster development cycles
-- Easier to understand and debug
+**Features:**
+- Detects migration conflicts
+- Identifies schema reference inconsistencies
+- Generates diff reports
+- Provides conflict resolution recommendations
+- Analyzes RLS policy conflicts
 
-### ✅ **Flexible Deployment**
-- Can deploy MVP version for testing
-- Can deploy production version when ready
-- Easy to migrate between versions
+**Usage:**
+```bash
+npm run schema-diff
+```
 
-### ✅ **Risk Mitigation**
-- No risk of losing complex schema
-- Can experiment with MVP without affecting production
-- Easy rollback if needed
+**Output Example:**
+```
+🔍 Schema Diff Manager
+======================
 
-## Recommendations
+🔍 Analyzing current schema state...
+📊 Generating diff report...
+✅ No schema differences detected
 
-### For MVP Development
-1. **Use the MVP schema** for rapid development
-2. **Focus on core functionality**: customers, renewals, tasks, events
-3. **Keep it simple**: Avoid complex workflows initially
-4. **Iterate quickly**: Use the simplified structure to move fast
+💡 Recommendations
+==================
+🔧 General Recommendations:
+1. Always use schema prefixes (e.g., mvp.customers) in migrations
+2. Use IF NOT EXISTS for table and policy creation to avoid conflicts
+3. Test migrations in isolation before applying to production
+4. Use the schema detection tools to ensure correct seed file selection
+5. Run "npx supabase db diff" regularly to track schema changes
+```
 
-### For Production Deployment
-1. **Use the production schema** when ready for full features
-2. **Leverage advanced features**: AI scoring, workflows, conversations
-3. **Implement multi-tenancy**: Use the company isolation features
-4. **Scale with confidence**: Production schema is designed for scale
+### 4. Schema Diff Report (`npm run schema-diff-report`)
+
+Generates a comprehensive JSON report of schema analysis.
+
+**Usage:**
+```bash
+npm run schema-diff-report
+```
+
+**Output:**
+- Saves detailed analysis to `supabase/schema-analysis-report.json`
+- Includes migration conflicts, warnings, and recommendations
+- Provides timestamped analysis for tracking changes
+
+## Best Practices
+
+### 1. Schema References
+
+Always use explicit schema prefixes in migrations:
+
+```sql
+-- ✅ Good: Explicit schema reference
+SELECT * FROM mvp.customers WHERE company_id = $1;
+
+-- ❌ Bad: Implicit schema reference
+SELECT * FROM customers WHERE company_id = $1;
+```
+
+### 2. Table Creation
+
+Use `IF NOT EXISTS` to prevent conflicts:
+
+```sql
+-- ✅ Good: Safe table creation
+CREATE TABLE IF NOT EXISTS mvp.customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL
+);
+
+-- ❌ Bad: May cause conflicts
+CREATE TABLE mvp.customers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL
+);
+```
+
+### 3. RLS Policies
+
+Ensure RLS policies reference the correct schema:
+
+```sql
+-- ✅ Good: Correct schema references
+CREATE POLICY "Company isolation - customers" ON mvp.customers FOR ALL TO authenticated
+USING (
+  company_id IN (
+    SELECT company_id FROM profiles 
+    WHERE id = auth.uid()
+  )
+);
+
+-- ❌ Bad: Wrong schema references
+CREATE POLICY "Company isolation - customers" ON customers FOR ALL TO authenticated
+USING (
+  company_id IN (
+    SELECT company_id FROM profiles 
+    WHERE id = auth.uid()
+  )
+);
+```
+
+### 4. Seed File Management
+
+- Use `seed-mvp.sql` for development and MVP schemas
+- Use `seed.sql` for production schemas
+- Keep seed files in sync with schema changes
+- Test seed files after schema modifications
+
+## Workflow
+
+### Development Workflow
+
+1. **Start Development:**
+   ```bash
+   npm run detect-schema    # Check current schema
+   npm run smart-seed       # Select appropriate seed file
+   npx supabase start       # Start Supabase
+   npx supabase db reset    # Apply migrations and seed
+   ```
+
+2. **Make Schema Changes:**
+   ```bash
+   # Edit migration files
+   npm run schema-diff      # Check for conflicts
+   npx supabase db reset    # Apply changes
+   ```
+
+3. **Validate Changes:**
+   ```bash
+   npm run schema-diff-report  # Generate detailed report
+   npm run detect-schema       # Verify schema state
+   ```
+
+### Production Deployment
+
+1. **Pre-deployment Check:**
+   ```bash
+   npm run schema-diff      # Check for conflicts
+   npm run detect-schema    # Verify schema state
+   ```
+
+2. **Deploy:**
+   ```bash
+   npx supabase db push     # Apply to production
+   ```
+
+3. **Post-deployment Validation:**
+   ```bash
+   npm run schema-diff      # Verify deployment
+   ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Q: How do I know which schema I'm currently using?**
-A: Run `node scripts/switch-schema.js status` to see current schema and table counts.
+1. **Schema Reference Errors:**
+   - Ensure all table references use proper schema prefixes
+   - Check RLS policies for correct schema references
+   - Use the schema detection tools to identify issues
 
-**Q: Can I access both schemas simultaneously?**
-A: Yes, you can query both schemas directly using `renubu_prod.table_name` or `renubu_mvp.table_name`.
+2. **Seed File Mismatches:**
+   - Run `npm run smart-seed` to auto-select correct seed file
+   - Verify seed file content matches current schema
+   - Check config.toml seed file configuration
 
-**Q: What if I need to migrate data between schemas?**
-A: You can write migration scripts to copy data between schemas as needed.
+3. **Migration Conflicts:**
+   - Use `npm run schema-diff` to identify conflicts
+   - Add `IF NOT EXISTS` clauses to prevent conflicts
+   - Consolidate duplicate table or policy definitions
 
-**Q: How do I update my application code?**
-A: Update your database queries to use the appropriate table names for your chosen schema.
+4. **RLS Policy Issues:**
+   - Ensure policies reference correct schema tables
+   - Check for policy name conflicts
+   - Verify policy logic matches table structure
 
-## Schema Migration Commands
-
-To apply the schema changes:
+### Debug Commands
 
 ```bash
-# Apply all migrations (including schema setup)
-npx supabase db reset
+# Check Supabase status
+npx supabase status
 
-# Or apply specific migrations
-npx supabase migration up
+# View database logs
+npx supabase logs
+
+# Check specific service
+npx supabase logs --service db
+
+# Generate diff manually
+npx supabase db diff
+
+# Reset database (use with caution)
+npx supabase db reset
 ```
 
-This setup gives you the flexibility to develop rapidly with a simple schema while preserving your investment in the complex production-ready system. 
+## File Structure
+
+```
+supabase/
+├── config.toml                    # Enhanced configuration
+├── migrations/                    # Migration files
+├── seed-mvp.sql                  # MVP schema seed data
+├── seed.sql                      # Production schema seed data
+└── schema-analysis-report.json   # Generated analysis reports
+
+scripts/
+├── detect-schema.js              # Schema detection tool
+├── smart-seed-selector.js        # Smart seed file selector
+└── schema-diff-manager.js        # Schema diff manager
+```
+
+## Integration with Existing Tools
+
+The schema management system integrates with existing Supabase CLI commands:
+
+- **`npx supabase start`** - Starts Supabase with enhanced configuration
+- **`npx supabase db reset`** - Applies migrations and selected seed file
+- **`npx supabase db diff`** - Generates schema differences
+- **`npx supabase db push`** - Deploys schema changes
+
+## Future Enhancements
+
+- Database connection for real-time schema analysis
+- Automatic migration conflict resolution
+- Schema versioning and rollback capabilities
+- Integration with CI/CD pipelines
+- Real-time schema change notifications
+
+## Support
+
+For issues or questions:
+
+1. Run the diagnostic scripts to identify problems
+2. Check the generated reports for detailed analysis
+3. Review migration files for common issues
+4. Verify configuration file syntax
+5. Check Supabase logs for detailed error information
+
+---
+
+*This system provides intelligent, automated schema management to prevent common database issues and ensure consistent development practices.* 

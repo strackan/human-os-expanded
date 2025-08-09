@@ -87,9 +87,9 @@ const CustomerCard = ({ customer }: { customer: Customer | Record<string, unknow
           </div>
         )}
         
-        {customer.primary_contact_name && (
+        {customer.primary_contact && (
           <div className="text-sm text-gray-500">
-            Contact: {String(customer.primary_contact_name)}
+            Contact: {customer.primary_contact.first_name} {customer.primary_contact.last_name}
           </div>
         )}
       </div>

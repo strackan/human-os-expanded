@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
-import { useAuth } from '@/components/auth/AuthProvider'; // ← ADD THIS IMPORT
+import { useAuth } from '@/components/auth/AuthProvider'; // ADD THIS IMPORT
 import UserAvatarDropdown from './UserAvatarDropdown';
 import AuthButton from '@/components/auth/AuthButton';
 import {
@@ -20,10 +20,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // ← ADD THIS: Get user data from auth context
+  // ADD THIS: Get user data from auth context
   const { user, profile, loading } = useAuth();
   
-  // ← ADD THIS: Extract first name from user data
+  // Extract first name from user data
   const getFirstName = () => {
     if (loading) return 'User'
     
@@ -99,7 +99,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center space-x-6">
-              {/* ← UPDATED: Use dynamic first name */}
+              {/* UPDATED: Use dynamic first name */}
               <h1 className="text-2xl font-semibold text-gray-900">
                 Welcome back, {getFirstName()}
               </h1>

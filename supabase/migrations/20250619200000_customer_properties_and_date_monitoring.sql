@@ -1,7 +1,7 @@
 -- Create customer_properties table for dynamic customer data
 CREATE TABLE IF NOT EXISTS public.customer_properties (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES mvp.customers(id) ON DELETE CASCADE,
     
     -- Usage and performance metrics
     usage_score INTEGER DEFAULT 0,
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.customer_properties (
 -- Create key_dates table for more flexible date tracking
 CREATE TABLE IF NOT EXISTS public.key_dates (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES mvp.customers(id) ON DELETE CASCADE,
     date_type TEXT NOT NULL, -- 'renewal', 'end', 'review', 'expansion', etc.
     date_value DATE NOT NULL,
     description TEXT,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.key_dates (
 -- Create date_monitoring_log table to track when we've checked dates
 CREATE TABLE IF NOT EXISTS public.date_monitoring_log (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES mvp.customers(id) ON DELETE CASCADE,
     key_date_id UUID REFERENCES public.key_dates(id) ON DELETE CASCADE,
     check_date DATE NOT NULL,
     days_until_date INTEGER NOT NULL,

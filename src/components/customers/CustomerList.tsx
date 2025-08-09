@@ -1,221 +1,333 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/ui/Button";
 import {
-  EyeIcon,
   PencilIcon,
   WrenchIcon,
 } from "@heroicons/react/24/outline";
-import { Customer } from "@/data/mockCustomers";
+import { CustomerService } from "../../lib/services/CustomerService";
+import { Customer, CustomerWithContact, CustomerFilters, CustomerSortOptions } from "../../types/customer";
 
-const PAGE_SIZE = 5;
+interface CustomerListProps {
+  searchTerm?: string;
+  onCustomerSelect?: (customer: CustomerWithContact) => void;
+}
 
-export default function CustomerList() {
+export default function CustomerList({ searchTerm = "", onCustomerSelect }: CustomerListProps) {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customers, setCustomers] = useState<CustomerWithContact[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("name");
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCustomers, setTotalCustomers] = useState(0);
+  const [sortField, setSortField] = useState<keyof Customer>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  const customersPerPage = 10;
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      const params = new URLSearchParams({
-        search,
-        sort,
-        order,
-        page: String(page),
-        pageSize: String(PAGE_SIZE),
-      });
-      const res = await fetch(`/api/customers?${params.toString()}`);
-      const data = await res.json();
-      setCustomers(data.customers);
-      setTotalPages(data.totalPages || 1);
-      setLoading(false);
-    };
-    load();
-  }, [search, sort, order, page]);
+    loadCustomers();
+  }, [searchTerm, currentPage, sortField, sortDirection]);
 
-  const handleSort = (field: string) => {
-    if (sort === field) {
-      setOrder(order === "asc" ? "desc" : "asc");
-    } else {
-      setSort(field);
-      setOrder("asc");
+  const loadCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const filters: CustomerFilters = {};
+      if (searchTerm) {
+        filters.search = searchTerm;
+      }
+
+      const sort: CustomerSortOptions = {
+        field: sortField,
+        direction: sortDirection
+      };
+
+      const result = await CustomerService.getCustomers(
+        filters,
+        sort,
+        currentPage,
+        customersPerPage
+      );
+
+      setCustomers(result.customers);
+      setTotalCustomers(result.total);
+    } catch (err) {
+      console.error('Error loading customers:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load customers');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleView = async (id: string) => {
-    await fetch(`/api/customers/${id}`);
+  const handleView = (customer: CustomerWithContact) => {
+    // Convert customer name to URL-friendly format
+    const customerKey = customer.name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+    router.push(`/customers/${customerKey}`);
   };
 
-  const handleEdit = async (id: string) => {
-    await fetch(`/api/customers/${id}`, {
-      method: "PUT",
-      body: JSON.stringify({}),
-    });
+  const handleSort = (field: keyof Customer) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+    setCurrentPage(1);
   };
 
-  const handleManage = async (id: string) => {
-    await fetch(`/api/customers/${id}/manage`, {
-      method: "POST",
-      body: JSON.stringify({ action: "demo" }),
-    });
+  const getHealthColor = (score: number) => {
+    if (score >= 80) return 'bg-green-100 text-green-800';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-          <Button onClick={() => router.push("/customers/manage")}>New Customer</Button>
-        </div>
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
-        <div className="bg-white p-4 rounded-md shadow-sm mb-4">
-          <input
-            type="text"
-            placeholder="Search customers..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          />
-        </div>
-
-        <div className="bg-white rounded-md shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("name")}
-                >
-                  Name
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("current_arr")}
-                >
-                  ARR
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("renewal_date")}
-                >
-                  Next Renewal
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("health_score")}
-                >
-                  Health Score
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("usage")}
-                >
-                  Usage %
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => handleSort("nps_score")}
-                >
-                  NPS
-                </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                    Loading...
-                  </td>
-                </tr>
-              ) : customers.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                    No customers found
-                  </td>
-                </tr>
-              ) : (
-                customers.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-2 whitespace-nowrap">{c.name}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">${c.current_arr.toLocaleString()}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{c.renewal_date}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{c.health_score}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{c.usage}%</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{c.nps_score}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleView(c.id)}
-                          className="text-blue-600 hover:text-blue-800"
-                          aria-label="View"
-                        >
-                          <EyeIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(c.id)}
-                          className="text-green-600 hover:text-green-800"
-                          aria-label="Edit"
-                        >
-                          <PencilIcon className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => handleManage(c.id)}
-                          className="text-gray-600 hover:text-gray-800"
-                          aria-label="Manage"
-                        >
-                          <WrenchIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="flex justify-between items-center mt-4">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={page === 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-gray-700">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={page === totalPages}
-            onClick={() => setPage((p) => p + 1)}
-          >
-            Next
-          </Button>
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-md p-4">
+        <div className="flex">
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error loading customers</h3>
+            <div className="mt-2 text-sm text-red-700">
+              <p>{error}</p>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={loadCustomers}
+                className="bg-red-100 text-red-800 px-3 py-2 rounded-md text-sm font-medium hover:bg-red-200"
+              >
+                Try again
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+    );
+  }
+
+  if (customers.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No customers found.</p>
+      </div>
+    );
+  }
+
+  const totalPages = Math.ceil(totalCustomers / customersPerPage);
+
+  return (
+    <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('name')}
+              >
+                <div className="flex items-center">
+                  Customer Name
+                  {sortField === 'name' && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('industry')}
+              >
+                <div className="flex items-center">
+                  Industry
+                  {sortField === 'industry' && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('health_score')}
+              >
+                <div className="flex items-center">
+                  Health Score
+                  {sortField === 'health_score' && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('current_arr')}
+              >
+                <div className="flex items-center">
+                  ARR
+                  {sortField === 'current_arr' && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th
+                scope="col"
+                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                onClick={() => handleSort('renewal_date')}
+              >
+                <div className="flex items-center">
+                  Renewal Date
+                  {sortField === 'renewal_date' && (
+                    <span className="ml-1">
+                      {sortDirection === 'asc' ? '↑' : '↓'}
+                    </span>
+                  )}
+                </div>
+              </th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Primary Contact
+              </th>
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {customers.map((c) => (
+              <tr key={c.id} className="hover:bg-gray-50">
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <button
+                    onClick={() => handleView(c)}
+                    className="text-blue-600 hover:text-blue-800 hover:underline transition-all duration-200 font-medium"
+                    aria-label={`View ${c.name} details`}
+                  >
+                    {c.name}
+                  </button>
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                  {c.industry}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getHealthColor(c.health_score)}`}>
+                    {c.health_score}/100
+                  </span>
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                  ${c.current_arr ? c.current_arr.toLocaleString() : '0'}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                  {c.renewal_date ? new Date(c.renewal_date).toLocaleDateString() : 'Not set'}
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                  {c.primary_contact 
+                    ? `${c.primary_contact.first_name} ${c.primary_contact.last_name}`
+                    : 'No contact'
+                  }
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => router.push(`/customers/${c.id}/edit`)}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      aria-label={`Edit ${c.name}`}
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => router.push(`/customers/${c.id}/manage`)}
+                      className="text-gray-600 hover:text-gray-900"
+                      aria-label={`Manage ${c.name}`}
+                    >
+                      <WrenchIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div className="flex-1 flex justify-between sm:hidden">
+            <button
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{(currentPage - 1) * customersPerPage + 1}</span> to{" "}
+                <span className="font-medium">
+                  {Math.min(currentPage * customersPerPage, totalCustomers)}
+                </span>{" "}
+                of <span className="font-medium">{totalCustomers}</span> results
+              </p>
+            </div>
+            <div>
+              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                <button
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                      currentPage === page
+                        ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
+                        : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

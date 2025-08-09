@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockCustomers } from '@/data/mockCustomers';
+import { CustomerService } from '@/lib/services/CustomerService';
 
 export async function GET(
   request: NextRequest,
@@ -7,8 +7,8 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const customer = mockCustomers.find(c => c.id === resolvedParams.id);
-    
+    const customer = await CustomerService.getCustomerById(resolvedParams.id);
+
     if (!customer) {
       return NextResponse.json(
         { error: 'Customer not found' },
@@ -31,31 +31,39 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
     const resolvedParams = await params;
-    const customerIndex = mockCustomers.findIndex(c => c.id === resolvedParams.id);
-    
-    if (customerIndex === -1) {
-      return NextResponse.json(
-        { error: 'Customer not found' },
-        { status: 404 }
-      );
-    }
+    const body = await request.json();
 
-    // Update customer with provided fields
-    mockCustomers[customerIndex] = {
-      ...mockCustomers[customerIndex],
-      ...body
-    };
+    const updatedCustomer = await CustomerService.updateCustomer(resolvedParams.id, body);
 
     return NextResponse.json({
-      customer: mockCustomers[customerIndex],
+      customer: updatedCustomer,
       message: 'Customer updated successfully'
     });
   } catch (error) {
     console.error('Error updating customer:', error);
     return NextResponse.json(
       { error: 'Failed to update customer' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const resolvedParams = await params;
+    await CustomerService.deleteCustomer(resolvedParams.id);
+
+    return NextResponse.json({
+      message: 'Customer deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete customer' },
       { status: 500 }
     );
   }

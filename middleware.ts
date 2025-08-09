@@ -8,9 +8,25 @@ export async function middleware(req: NextRequest) {
   console.log('🔐 Middleware running for:', req.nextUrl.pathname)
   
   let response = NextResponse.next()
+  
+  // Check if environment variables are available
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.error('❌ Missing Supabase environment variables in middleware')
+    // For development, allow the request to continue
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ Development mode: allowing request to continue without auth check')
+      return response
+    }
+    // For production, redirect to error page
+    return NextResponse.redirect(new URL('/error', req.url))
+  }
+  
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() { 
@@ -53,7 +69,7 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL(next, req.url))
       }
       if (pathname === '/') {
-        return NextResponse.redirect(new URL('/dashboard', req.url))
+        return response
       }
       return response
     } else {

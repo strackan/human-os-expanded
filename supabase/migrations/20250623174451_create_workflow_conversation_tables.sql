@@ -41,21 +41,12 @@ SET company_id = (SELECT id FROM companies WHERE name = 'Default Company')
 WHERE company_id IS NULL;
 
 -- Step 6: Add company_id to customers (no constraint yet)
-ALTER TABLE customers 
+-- NOTE: MVP customers table doesn't have csm_id, so we'll set all to default company
+ALTER TABLE mvp.customers 
 ADD COLUMN IF NOT EXISTS company_id UUID REFERENCES companies(id);
 
--- Step 7: Populate customers.company_id
-UPDATE customers 
-SET company_id = (
-  SELECT p.company_id 
-  FROM profiles p
-  WHERE p.id = customers.csm_id
-)
-WHERE csm_id IS NOT NULL 
-AND company_id IS NULL;
-
--- Set any remaining NULL to default company  
-UPDATE customers 
+-- Step 7: Set all customers to default company (since no csm_id exists)
+UPDATE mvp.customers 
 SET company_id = (SELECT id FROM companies WHERE name = 'Default Company')
 WHERE company_id IS NULL;
 
@@ -100,8 +91,8 @@ CREATE TABLE conversation_messages (
 -- Step 10: Enable RLS
 ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE renewals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mvp.customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE mvp.renewals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workflow_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversation_messages ENABLE ROW LEVEL SECURITY;
 
@@ -112,13 +103,13 @@ USING (id = (SELECT company_id FROM profiles WHERE id = auth.uid()));
 CREATE POLICY "Company isolation - profiles" ON profiles FOR ALL TO authenticated  
 USING (company_id = (SELECT company_id FROM profiles WHERE id = auth.uid()));
 
-CREATE POLICY "Company isolation - customers" ON customers FOR ALL TO authenticated
+CREATE POLICY "Company isolation - customers" ON mvp.customers FOR ALL TO authenticated
 USING (company_id = (SELECT company_id FROM profiles WHERE id = auth.uid()));
 
-CREATE POLICY "Company isolation - renewals" ON renewals FOR ALL TO authenticated
+CREATE POLICY "Company isolation - renewals" ON mvp.renewals FOR ALL TO authenticated
 USING (
   customer_id IN (
-    SELECT id FROM customers 
+    SELECT id FROM mvp.customers 
     WHERE company_id = (SELECT company_id FROM profiles WHERE id = auth.uid())
   )
 );
@@ -126,8 +117,8 @@ USING (
 CREATE POLICY "Company isolation - conversations" ON workflow_conversations FOR ALL TO authenticated
 USING (
   renewal_id IN (
-    SELECT r.id FROM renewals r
-    JOIN customers c ON r.customer_id = c.id
+    SELECT r.id FROM mvp.renewals r
+    JOIN mvp.customers c ON r.customer_id = c.id
     WHERE c.company_id = (SELECT company_id FROM profiles WHERE id = auth.uid())
   )
 );

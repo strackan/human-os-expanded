@@ -4,6 +4,8 @@
 
 This implementation provides comprehensive authentication protection for all internal pages in the Renubu application. Users who are not authenticated will be automatically redirected to the sign-in page, and upon successful authentication, they will be redirected back to their originally requested page.
 
+> **📋 For complete OAuth setup and configuration details, see [OAUTH_AUTHENTICATION_GUIDE.md](./OAUTH_AUTHENTICATION_GUIDE.md)**
+
 ## 🏗️ **Architecture**
 
 ### **Multi-Layer Protection**

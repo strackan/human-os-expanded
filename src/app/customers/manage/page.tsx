@@ -9,8 +9,14 @@ interface Customer {
   industry: string;
   tier: string;
   health_score: number;
-  primary_contact_name?: string;
-  primary_contact_email?: string;
+  primary_contact?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string;
+    phone?: string;
+    title?: string;
+  };
   renewal_date?: string;
   current_arr?: number;
   risk_level?: string;
@@ -35,8 +41,13 @@ export default function CustomerManagePage() {
     industry: '',
     tier: 'standard',
     health_score: 50,
-    primary_contact_name: '',
-    primary_contact_email: '',
+    primary_contact: {
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      title: ''
+    },
     renewal_date: '',
     current_arr: '',
     risk_level: 'medium'
@@ -115,8 +126,13 @@ export default function CustomerManagePage() {
           industry: '',
           tier: 'standard',
           health_score: 50,
-          primary_contact_name: '',
-          primary_contact_email: '',
+          primary_contact: {
+            first_name: '',
+            last_name: '',
+            email: '',
+            phone: '',
+            title: ''
+          },
           renewal_date: '',
           current_arr: '',
           risk_level: 'medium'
@@ -259,11 +275,26 @@ export default function CustomerManagePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Primary Contact Name</label>
+                  <label className="block text-sm font-medium text-gray-700">Primary Contact First Name</label>
                   <input
                     type="text"
-                    value={formData.primary_contact_name}
-                    onChange={(e) => setFormData({...formData, primary_contact_name: e.target.value})}
+                    value={formData.primary_contact.first_name}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      primary_contact: { ...formData.primary_contact, first_name: e.target.value }
+                    })}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Primary Contact Last Name</label>
+                  <input
+                    type="text"
+                    value={formData.primary_contact.last_name}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      primary_contact: { ...formData.primary_contact, last_name: e.target.value }
+                    })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -271,8 +302,11 @@ export default function CustomerManagePage() {
                   <label className="block text-sm font-medium text-gray-700">Primary Contact Email</label>
                   <input
                     type="email"
-                    value={formData.primary_contact_email}
-                    onChange={(e) => setFormData({...formData, primary_contact_email: e.target.value})}
+                    value={formData.primary_contact.email}
+                    onChange={(e) => setFormData({
+                      ...formData, 
+                      primary_contact: { ...formData.primary_contact, email: e.target.value }
+                    })}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
@@ -334,7 +368,16 @@ export default function CustomerManagePage() {
             <div key={customer.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{customer.name}</h3>
+                  <button
+                    onClick={() => {
+                      const customerKey = customer.name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
+                      router.push(`/customers/${customerKey}`);
+                    }}
+                    className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-all duration-200 cursor-pointer text-left"
+                    aria-label={`View ${customer.name} details`}
+                  >
+                    {customer.name}
+                  </button>
                   <p className="text-sm text-gray-500">{customer.industry}</p>
                 </div>
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(customer.renewal_priority)}`}>
@@ -375,9 +418,9 @@ export default function CustomerManagePage() {
                   </div>
                 )}
 
-                {customer.primary_contact_name && (
+                {customer.primary_contact && (
                   <div className="text-sm text-gray-500">
-                    Contact: {customer.primary_contact_name}
+                    Contact: {customer.primary_contact.first_name} {customer.primary_contact.last_name}
                   </div>
                 )}
               </div>

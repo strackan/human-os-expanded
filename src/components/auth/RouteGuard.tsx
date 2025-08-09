@@ -35,10 +35,9 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       return
     }
 
-    // If authenticated and on root page, redirect to dashboard
+    // If authenticated and on root page, allow access
     if (user && pathname === '/') {
-      console.log('🛡️ Authenticated user on root, redirecting to dashboard')
-      router.replace('/dashboard')
+      console.log('🛡️ Authenticated user on root, allowing access')
       return
     }
 

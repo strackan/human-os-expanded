@@ -4,8 +4,14 @@ export interface Customer {
   industry: string;
   tier: string;
   health_score: number;
-  primary_contact_name?: string;
-  primary_contact_email?: string;
+  primary_contact?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email?: string;
+    phone?: string;
+    title?: string;
+  };
   renewal_date?: string;
   current_arr?: number;
   risk_level?: string;

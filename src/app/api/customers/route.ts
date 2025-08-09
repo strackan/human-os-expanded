@@ -1,44 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockCustomers } from '@/data/mockCustomers';
-import { Customer } from '@/data/mockCustomers';
+import { CustomerService } from '@/lib/services/CustomerService';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const search = (searchParams.get('search') || '').toLowerCase();
+    const search = searchParams.get('search') || '';
     const sort = searchParams.get('sort') || 'name';
     const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
 
-    const filtered = mockCustomers.filter(c =>
-      c.name.toLowerCase().includes(search) ||
-      c.industry.toLowerCase().includes(search)
-    );
-
-    filtered.sort((a: Customer, b: Customer) => {
-      const aVal = (a as any)[sort as keyof Customer];
-      const bVal = (b as any)[sort as keyof Customer];
-      if (aVal === undefined || bVal === undefined) return 0;
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return order === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return order === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      return 0;
-    });
-
-    const total = filtered.length;
-    const start = (page - 1) * pageSize;
-    const paginated = filtered.slice(start, start + pageSize);
+    // Use CustomerService to get customers
+    const filters = search ? { search } : {};
+    const sortOptions = { field: sort as any, direction: order as 'asc' | 'desc' };
+    
+    const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize);
 
     return NextResponse.json({
-      customers: paginated,
+      customers: result.customers,
       page,
       pageSize,
-      count: total,
-      totalPages: Math.ceil(total / pageSize)
+      count: result.total,
+      totalPages: Math.ceil(result.total / pageSize)
     });
   } catch (error) {
     console.error('Error fetching customers:', error);
@@ -61,20 +44,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newCustomer: Customer = {
-      id: `customer-${Date.now()}`, // Generate unique ID
+    // Use CustomerService to create customer
+    const newCustomer = await CustomerService.createCustomer({
       name: body.name,
+      domain: body.domain || '',
       industry: body.industry || '',
-      tier: body.tier || 'standard',
       health_score: body.health_score || 50,
       renewal_date: body.renewal_date || new Date().toISOString().split('T')[0],
       current_arr: body.current_arr ? parseFloat(body.current_arr) : 0,
-      usage: body.usage ? parseFloat(body.usage) : 0,
-      nps_score: body.nps_score ? parseFloat(body.nps_score) : 0
-    };
-
-    // Add to mock data
-    mockCustomers.push(newCustomer);
+      assigned_to: body.assigned_to || null
+    });
 
     return NextResponse.json(
       { customer: newCustomer, message: 'Customer created successfully' },

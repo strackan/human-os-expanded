@@ -1,11 +1,33 @@
 // src/lib/supabase.ts (CLIENT ONLY - NO SERVER IMPORTS)
 import { createBrowserClient } from '@supabase/ssr'
 
-// Client-side Supabase client - keep it simple and let Supabase handle cookies
-export const createClient = () => createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+// Client-side Supabase client with improved cookie and refresh token handling
+export const createClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Missing Supabase environment variables')
+  }
+  
+  return createBrowserClient(
+    supabaseUrl,
+    supabaseAnonKey,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'renubu-web'
+        }
+      }
+    }
+  )
+}
 
 // Basic types for our main entities
 export type Json =
@@ -35,9 +57,7 @@ export interface Customer {
   tier: string
   health_score: number
   nps_score?: number
-  primary_contact_name?: string
-  primary_contact_email?: string
-  primary_contact_phone?: string
+  primary_contact_id?: string
   csm_id?: string
   created_at: string
   updated_at: string

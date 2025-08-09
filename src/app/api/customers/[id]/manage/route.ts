@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockCustomers } from '@/data/mockCustomers';
+import { CustomerService } from '@/lib/services/CustomerService';
 
-export async function POST(
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const body = await request.json();
-    const { action } = body;
     const resolvedParams = await params;
-    
-    const customer = mockCustomers.find(c => c.id === resolvedParams.id);
-    
+    const customer = await CustomerService.getCustomerById(resolvedParams.id);
+
     if (!customer) {
       return NextResponse.json(
         { error: 'Customer not found' },
@@ -19,39 +16,11 @@ export async function POST(
       );
     }
 
-    // Handle different management actions
-    switch (action) {
-      case 'demo':
-        return NextResponse.json({
-          message: 'Demo action executed successfully',
-          customer: customer.name,
-          action: 'demo'
-        });
-      
-      case 'activate':
-        return NextResponse.json({
-          message: 'Customer activated successfully',
-          customer: customer.name,
-          action: 'activate'
-        });
-      
-      case 'deactivate':
-        return NextResponse.json({
-          message: 'Customer deactivated successfully',
-          customer: customer.name,
-          action: 'deactivate'
-        });
-      
-      default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
-    }
+    return NextResponse.json({ customer });
   } catch (error) {
-    console.error('Error managing customer:', error);
+    console.error('Error fetching customer:', error);
     return NextResponse.json(
-      { error: 'Failed to manage customer' },
+      { error: 'Failed to fetch customer' },
       { status: 500 }
     );
   }

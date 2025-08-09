@@ -1,86 +1,67 @@
--- Seed data for testing the task system
+-- Consolidated seed data for public schema (migrated from MVP)
+-- This replaces both the old public seed data and incorporates MVP data
 
--- Add sample customers if they don't exist
-INSERT INTO public.customers (id, name, industry, tier, created_at) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 'Acme Corporation', 'technology', 'enterprise', NOW()),
-('550e8400-e29b-41d4-a716-446655440002', 'Initech', 'software', 'mid-market', NOW()),
-('550e8400-e29b-41d4-a716-446655440003', 'Risky Corp', 'fintech', 'startup', NOW()),
-('550e8400-e29b-41d4-a716-446655440004', 'TechStart Inc', 'saas', 'standard', NOW()),
-('550e8400-e29b-41d4-a716-446655440005', 'Global Solutions', 'consulting', 'enterprise', NOW()),
-('550e8400-e29b-41d4-a716-446655440006', 'StartupXYZ', 'fintech', 'standard', NOW()),
-('550e8400-e29b-41d4-a716-446655440007', 'Nimbus Analytics', 'analytics', 'premium', NOW()),
-('550e8400-e29b-41d4-a716-446655440008', 'Venture Partners', 'finance', 'enterprise', NOW()),
-('550e8400-e29b-41d4-a716-446655440009', 'Horizon Systems', 'healthcare', 'premium', NOW()),
-('550e8400-e29b-41d4-a716-44665544000a', 'Quantum Soft', 'software', 'standard', NOW()),
-('550e8400-e29b-41d4-a716-44665544000b', 'Apex Media', 'media', 'standard', NOW()),
-('550e8400-e29b-41d4-a716-44665544000c', 'Stellar Networks', 'telecom', 'enterprise', NOW()),
-('550e8400-e29b-41d4-a716-44665544000d', 'FusionWare', 'technology', 'premium', NOW()),
-('550e8400-e29b-41d4-a716-44665544000e', 'Dynamic Ventures', 'retail', 'standard', NOW()),
-('550e8400-e29b-41d4-a716-44665544000f', 'Prime Holdings', 'logistics', 'enterprise', NOW()),
-('550e8400-e29b-41d4-a716-446655440010', 'BetaWorks', 'education', 'standard', NOW())
-ON CONFLICT (id) DO NOTHING;
+-- Clear existing data to ensure clean seed
+TRUNCATE TABLE public.notes CASCADE;
+TRUNCATE TABLE public.tasks CASCADE;
+TRUNCATE TABLE public.events CASCADE;
+TRUNCATE TABLE public.renewals CASCADE;
+TRUNCATE TABLE public.contracts CASCADE;
+TRUNCATE TABLE public.alerts CASCADE;
+TRUNCATE TABLE public.contacts CASCADE;
+TRUNCATE TABLE public.customers CASCADE;
 
--- Add sample customer properties
-INSERT INTO public.customer_properties (customer_id, current_arr, revenue_impact_tier, churn_risk_score, health_score) VALUES
-('550e8400-e29b-41d4-a716-446655440001', 500000.00, 5, 2, 85),
-('550e8400-e29b-41d4-a716-446655440002', 250000.00, 4, 3, 70),
-('550e8400-e29b-41d4-a716-446655440003', 75000.00, 2, 5, 45),
-('550e8400-e29b-41d4-a716-446655440004', 120000.00, 3, 3, 72),
-('550e8400-e29b-41d4-a716-446655440005', 750000.00, 5, 1, 92),
-('550e8400-e29b-41d4-a716-446655440006', 85000.00, 2, 6, 35),
-('550e8400-e29b-41d4-a716-446655440007', 210000.00, 3, 3, 67),
-('550e8400-e29b-41d4-a716-446655440008', 540000.00, 4, 2, 78),
-('550e8400-e29b-41d4-a716-446655440009', 305000.00, 3, 4, 55),
-('550e8400-e29b-41d4-a716-44665544000a', 190000.00, 3, 2, 82),
-('550e8400-e29b-41d4-a716-44665544000b', 150000.00, 3, 3, 64),
-('550e8400-e29b-41d4-a716-44665544000c', 620000.00, 5, 1, 88),
-('550e8400-e29b-41d4-a716-44665544000d', 97000.00, 2, 4, 58),
-('550e8400-e29b-41d4-a716-44665544000e', 130000.00, 2, 5, 49),
-('550e8400-e29b-41d4-a716-44665544000f', 410000.00, 4, 2, 83),
-('550e8400-e29b-41d4-a716-446655440010', 110000.00, 2, 4, 61)
-ON CONFLICT (customer_id) DO UPDATE SET
-  current_arr = EXCLUDED.current_arr,
-  revenue_impact_tier = EXCLUDED.revenue_impact_tier,
-  churn_risk_score = EXCLUDED.churn_risk_score,
-  health_score = EXCLUDED.health_score;
+-- Insert customers (migrated from MVP schema with updated structure)
+INSERT INTO public.customers (id, name, domain, industry, health_score, current_arr, renewal_date, assigned_to, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440010', 'ACME Corporation', 'acme.com', 'Technology', 85, 250000, '2024-12-31', NULL, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440011', 'Initech', 'initech.com', 'Financial Services', 72, 180000, '2024-11-15', NULL, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440012', 'Risky Corp', 'riskycorp.com', 'Healthcare', 45, 95000, '2024-10-20', NULL, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440013', 'TechVision', 'techvision.com', 'Manufacturing', 68, 120000, '2024-09-30', NULL, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440014', 'DataOne Solutions', 'dataone.com', 'Technology', 92, 320000, '2024-08-15', NULL, NOW(), NOW());
 
--- Add sample renewals
-INSERT INTO public.renewals (id, customer_id, renewal_date, current_arr, stage, risk_level) VALUES
-('660e8400-e29b-41d4-a716-446655440001', '550e8400-e29b-41d4-a716-446655440001', CURRENT_DATE + INTERVAL '30 days', 500000.00, 'discovery', 'medium'),
-('660e8400-e29b-41d4-a716-446655440002', '550e8400-e29b-41d4-a716-446655440002', CURRENT_DATE + INTERVAL '15 days', 250000.00, 'preparation', 'medium'),
-('660e8400-e29b-41d4-a716-446655440003', '550e8400-e29b-41d4-a716-446655440003', CURRENT_DATE + INTERVAL '5 days', 75000.00, 'outreach', 'high'),
-('660e8400-e29b-41d4-a716-446655440004', '550e8400-e29b-41d4-a716-446655440004', CURRENT_DATE + INTERVAL '80 days', 120000.00, 'planning', 'low'),
-('660e8400-e29b-41d4-a716-446655440005', '550e8400-e29b-41d4-a716-446655440005', CURRENT_DATE + INTERVAL '100 days', 750000.00, 'planning', 'low'),
-('660e8400-e29b-41d4-a716-446655440006', '550e8400-e29b-41d4-a716-446655440006', CURRENT_DATE + INTERVAL '40 days', 85000.00, 'negotiation', 'high'),
-('660e8400-e29b-41d4-a716-446655440007', '550e8400-e29b-41d4-a716-446655440007', CURRENT_DATE + INTERVAL '120 days', 210000.00, 'planning', 'medium'),
-('660e8400-e29b-41d4-a716-446655440008', '550e8400-e29b-41d4-a716-446655440008', CURRENT_DATE + INTERVAL '150 days', 540000.00, 'planning', 'medium'),
-('660e8400-e29b-41d4-a716-446655440009', '550e8400-e29b-41d4-a716-446655440009', CURRENT_DATE + INTERVAL '20 days', 305000.00, 'negotiation', 'high'),
-('660e8400-e29b-41d4-a716-44665544000a', '550e8400-e29b-41d4-a716-44665544000a', CURRENT_DATE + INTERVAL '70 days', 190000.00, 'planning', 'low'),
-('660e8400-e29b-41d4-a716-44665544000b', '550e8400-e29b-41d4-a716-44665544000b', CURRENT_DATE + INTERVAL '60 days', 150000.00, 'preparation', 'medium'),
-('660e8400-e29b-41d4-a716-44665544000c', '550e8400-e29b-41d4-a716-44665544000c', CURRENT_DATE + INTERVAL '90 days', 620000.00, 'planning', 'low'),
-('660e8400-e29b-41d4-a716-44665544000d', '550e8400-e29b-41d4-a716-44665544000d', CURRENT_DATE + INTERVAL '25 days', 97000.00, 'outreach', 'medium'),
-('660e8400-e29b-41d4-a716-44665544000e', '550e8400-e29b-41d4-a716-44665544000e', CURRENT_DATE + INTERVAL '110 days', 130000.00, 'planning', 'medium'),
-('660e8400-e29b-41d4-a716-44665544000f', '550e8400-e29b-41d4-a716-44665544000f', CURRENT_DATE + INTERVAL '130 days', 410000.00, 'planning', 'low'),
-('660e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440010', CURRENT_DATE + INTERVAL '75 days', 110000.00, 'negotiation', 'medium')
-ON CONFLICT (id) DO NOTHING;
+-- Insert contacts (migrated from MVP schema)
+INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, company_id, is_primary, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440101', 'John', 'Smith', 'john.smith@acme.com', '+1-555-0101', 'CTO', '550e8400-e29b-41d4-a716-446655440010', true, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440102', 'Sarah', 'Johnson', 'sarah.johnson@initech.com', '+1-555-0102', 'VP Engineering', '550e8400-e29b-41d4-a716-446655440011', true, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440103', 'Michael', 'Chen', 'michael.chen@riskycorp.com', '+1-555-0103', 'IT Director', '550e8400-e29b-41d4-a716-446655440012', true, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440104', 'Emily', 'Davis', 'emily.davis@techvision.com', '+1-555-0104', 'Operations Manager', '550e8400-e29b-41d4-a716-446655440013', true, NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440105', 'David', 'Wilson', 'david.wilson@dataone.com', '+1-555-0105', 'VP Technology', '550e8400-e29b-41d4-a716-446655440014', true, NOW(), NOW());
 
--- Generate tasks for the renewals
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440001');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440002');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440003');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440004');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440005');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440006');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440007');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440008');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440009');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000a');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000b');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000c');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000d');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000e');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-44665544000f');
-SELECT public.generate_renewal_tasks('660e8400-e29b-41d4-a716-446655440010');
+-- Update customers with primary_contact_id
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440101' WHERE id = '550e8400-e29b-41d4-a716-446655440010';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440102' WHERE id = '550e8400-e29b-41d4-a716-446655440011';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440103' WHERE id = '550e8400-e29b-41d4-a716-446655440012';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440104' WHERE id = '550e8400-e29b-41d4-a716-446655440013';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440105' WHERE id = '550e8400-e29b-41d4-a716-446655440014';
 
--- Update action scores
-SELECT public.update_action_scores(); 
+-- Insert renewals (migrated from MVP schema)
+INSERT INTO public.renewals (id, customer_id, renewal_date, current_arr, proposed_arr, probability, stage, risk_level, assigned_to, notes, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440020', '550e8400-e29b-41d4-a716-446655440010', '2024-12-31', 250000, 275000, 85, 'negotiation', 'low', NULL, 'Customer is very satisfied with current service level. Discussed expansion opportunities for Q2.', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440011', '2024-11-15', 180000, 198000, 70, 'discovery', 'medium', NULL, 'Customer expressed concerns about pricing. Need to prepare competitive analysis.', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440022', '550e8400-e29b-41d4-a716-446655440012', '2024-10-20', 95000, 104500, 40, 'at_risk', 'high', NULL, 'Customer experiencing some challenges with adoption. Recommend additional training.', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440023', '550e8400-e29b-41d4-a716-446655440013', '2024-09-30', 120000, 132000, 60, 'discovery', 'medium', NULL, 'Customer was impressed with new features. Interested in early access program.', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440024', '550e8400-e29b-41d4-a716-446655440014', '2024-08-15', 320000, 352000, 90, 'negotiation', 'low', NULL, 'Customer has ambitious growth plans. Need to align our roadmap with their objectives.', NOW(), NOW());
+
+-- Insert tasks (migrated from MVP schema)
+INSERT INTO public.tasks (id, renewal_id, customer_id, title, description, status, priority, assigned_to, due_date, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440030', '550e8400-e29b-41d4-a716-446655440020', '550e8400-e29b-41d4-a716-446655440010', 'QBR Preparation', 'Prepare quarterly business review materials', 'in_progress', 'high', NULL, NOW() + INTERVAL '7 days', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440031', '550e8400-e29b-41d4-a716-446655440021', '550e8400-e29b-41d4-a716-446655440011', 'Contract Review', 'Review and negotiate renewal terms', 'pending', 'medium', NULL, NOW() + INTERVAL '14 days', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440032', '550e8400-e29b-41d4-a716-446655440022', '550e8400-e29b-41d4-a716-446655440012', 'Risk Assessment', 'Conduct customer health assessment', 'pending', 'high', NULL, NOW() + INTERVAL '3 days', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440033', '550e8400-e29b-41d4-a716-446655440023', '550e8400-e29b-41d4-a716-446655440013', 'Feature Demo', 'Demonstrate new product features', 'completed', 'low', NULL, NOW() - INTERVAL '2 days', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440034', '550e8400-e29b-41d4-a716-446655440024', '550e8400-e29b-41d4-a716-446655440014', 'Success Planning', 'Develop customer success plan', 'in_progress', 'medium', NULL, NOW() + INTERVAL '21 days', NOW(), NOW());
+
+-- Insert events (migrated from MVP schema)
+INSERT INTO public.events (id, title, description, event_type, customer_id, user_id, event_date, status, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440040', 'QBR Meeting', 'Quarterly business review with executive team', 'meeting', '550e8400-e29b-41d4-a716-446655440010', NULL, NOW() + INTERVAL '7 days', 'scheduled', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440041', 'Renewal Discussion', 'Discuss renewal terms and pricing', 'call', '550e8400-e29b-41d4-a716-446655440011', NULL, NOW() + INTERVAL '14 days', 'scheduled', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440042', 'Health Check', 'Customer health assessment meeting', 'meeting', '550e8400-e29b-41d4-a716-446655440012', NULL, NOW() + INTERVAL '3 days', 'scheduled', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440043', 'Product Demo', 'Demonstrate new features and capabilities', 'demo', '550e8400-e29b-41d4-a716-446655440013', NULL, NOW() - INTERVAL '2 days', 'completed', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440044', 'Success Planning', 'Customer success planning workshop', 'workshop', '550e8400-e29b-41d4-a716-446655440014', NULL, NOW() + INTERVAL '21 days', 'scheduled', NOW(), NOW());
+
+-- Insert notes (migrated from MVP schema)
+INSERT INTO public.notes (id, customer_id, renewal_id, user_id, content, note_type, created_at, updated_at) VALUES
+('550e8400-e29b-41d4-a716-446655440050', '550e8400-e29b-41d4-a716-446655440010', '550e8400-e29b-41d4-a716-446655440020', NULL, 'Customer is very satisfied with current service level. Discussed expansion opportunities for Q2.', 'meeting', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440051', '550e8400-e29b-41d4-a716-446655440011', '550e8400-e29b-41d4-a716-446655440021', NULL, 'Customer expressed concerns about pricing. Need to prepare competitive analysis.', 'call', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440052', '550e8400-e29b-41d4-a716-446655440012', '550e8400-e29b-41d4-a716-446655440022', NULL, 'Customer experiencing some challenges with adoption. Recommend additional training.', 'risk', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440053', '550e8400-e29b-41d4-a716-446655440013', '550e8400-e29b-41d4-a716-446655440023', NULL, 'Customer was impressed with new features. Interested in early access program.', 'general', NOW(), NOW()),
+('550e8400-e29b-41d4-a716-446655440054', '550e8400-e29b-41d4-a716-446655440014', '550e8400-e29b-41d4-a716-446655440024', NULL, 'Customer has ambitious growth plans. Need to align our roadmap with their objectives.', 'general', NOW(), NOW()); 

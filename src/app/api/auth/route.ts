@@ -13,15 +13,15 @@ export async function GET(request: Request) {
       
       if (error) {
         console.error('Auth error:', error.message)
-        return NextResponse.redirect(`${requestUrl.origin}/login?error=${error.message}`)
+        return NextResponse.redirect(`${requestUrl.origin}/signin?error=${error.message}`)
       }
 
-      return NextResponse.redirect(`${requestUrl.origin}/dashboard`)
+      return NextResponse.redirect(`${requestUrl.origin}/`)
     } catch (error) {
       console.error('Auth error:', error)
-      return NextResponse.redirect(`${requestUrl.origin}/login?error=Authentication failed`)
+      return NextResponse.redirect(`${requestUrl.origin}/signin?error=Authentication failed`)
     }
   }
 
-  return NextResponse.redirect(`${requestUrl.origin}/login`)
+  return NextResponse.redirect(`${requestUrl.origin}/signin`)
 } 

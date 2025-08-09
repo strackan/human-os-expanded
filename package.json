@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -12,7 +12,11 @@
     "validate-schema": "node scripts/validate-schema.js",
     "clear-auth": "node scripts/clear-auth-cookies.js",
     "check-env": "node scripts/check-env.js",
-    "check-oauth": "node scripts/check-oauth-config.js"
+    "check-oauth": "node scripts/check-oauth-config.js",
+    "detect-schema": "node scripts/detect-schema.js",
+    "smart-seed": "node scripts/smart-seed-selector.js",
+    "schema-diff": "node scripts/schema-diff-manager.js",
+    "schema-diff-report": "node scripts/schema-diff-manager.js --report"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -21,6 +25,7 @@
     "@supabase/supabase-js": "^2.50.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "framer-motion": "^12.9.4",
     "next": "15.3.1",
     "react": "^19.0.0",

@@ -1,8 +1,8 @@
-// src/components/auth/AuthProvider.tsx (rename from vider.tsx)
+// src/components/auth/AuthProvider.tsx
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase' // ← Only imports client-side code
+import { createClient } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 import { Profile } from '@/lib/supabase'
 
@@ -32,14 +32,15 @@ export const useAuth = () => {
 
 interface AuthProviderProps {
   children: React.ReactNode
-  initialUser?: User | null
 }
 
-export default function AuthProvider({ children, initialUser }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(initialUser || null)
+// Create supabase client outside component to prevent infinite re-renders
+const supabase = createClient()
+
+export default function AuthProvider({ children }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
-  const [loading, setLoading] = useState(!initialUser) // If we have initial user, don't show loading
-  const supabase = createClient()
+  const [loading, setLoading] = useState(true)
 
   const refreshSession = async () => {
     try {
@@ -191,83 +192,64 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
   useEffect(() => {
     let mounted = true
 
-    // If we have an initial user, fetch their profile
-    if (initialUser) {
-      console.log('👤 Using initial user:', initialUser.email)
-      const fetchProfile = async () => {
-        try {
-          await fetchAndUpdateProfile(initialUser)
-        } catch (error) {
-          console.log('⚠️ Profile fetch failed:', error)
-          if (mounted) setProfile(null)
-        } finally {
-          if (mounted) {
-            setLoading(false)
-            console.log('🏁 Initial user loading complete')
+    // Get initial user from client-side session
+    const getInitialUser = async () => {
+      try {
+        console.log('🔍 Getting initial user from client...')
+        
+        // Try both getSession and getUser to ensure we get the user
+        const [sessionResult, userResult] = await Promise.all([
+          supabase.auth.getSession(),
+          supabase.auth.getUser()
+        ])
+        
+        const session = sessionResult.data.session
+        const user = userResult.data.user
+        const sessionError = sessionResult.error
+        const userError = userResult.error
+        
+        console.log('📝 Initial auth results:', {
+          hasSession: !!session,
+          hasUser: !!user,
+          userEmail: user?.email || session?.user?.email,
+          sessionError: sessionError?.message,
+          userError: userError?.message
+        })
+        
+        if (!mounted) return
+        
+        // Use user from either source
+        const currentUser = user || session?.user
+        
+        if (currentUser) {
+          setUser(currentUser)
+          console.log('👤 User found, fetching profile...')
+          try {
+            await fetchAndUpdateProfile(currentUser)
+          } catch (error) {
+            console.log('⚠️ Profile fetch failed:', error)
+            if (mounted) setProfile(null)
           }
+        } else {
+          console.log('👤 No user found in session or user check')
+          setUser(null)
+          setProfile(null)
+        }
+      } catch (error) {
+        console.error('❌ Session check error:', error)
+        if (mounted) {
+          setUser(null)
+          setProfile(null)
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false)
+          console.log('🏁 Initial session loading complete')
         }
       }
-      fetchProfile()
-    } else {
-      // Get initial user from server-side session
-      const getInitialUser = async () => {
-        try {
-          console.log('🔍 Getting initial user from server...')
-          
-          // Try both getSession and getUser to ensure we get the user
-          const [sessionResult, userResult] = await Promise.all([
-            supabase.auth.getSession(),
-            supabase.auth.getUser()
-          ])
-          
-          const session = sessionResult.data.session
-          const user = userResult.data.user
-          const sessionError = sessionResult.error
-          const userError = userResult.error
-          
-          console.log('📝 Initial auth results:', {
-            hasSession: !!session,
-            hasUser: !!user,
-            userEmail: user?.email || session?.user?.email,
-            sessionError: sessionError?.message,
-            userError: userError?.message
-          })
-          
-          if (!mounted) return
-          
-          // Use user from either source
-          const currentUser = user || session?.user
-          
-          if (currentUser) {
-            setUser(currentUser)
-            console.log('👤 User found, fetching profile...')
-            try {
-              await fetchAndUpdateProfile(currentUser)
-            } catch (error) {
-              console.log('⚠️ Profile fetch failed:', error)
-              if (mounted) setProfile(null)
-            }
-          } else {
-            console.log('👤 No user found in session or user check')
-            setUser(null)
-            setProfile(null)
-          }
-        } catch (error) {
-          console.error('❌ Session check error:', error)
-          if (mounted) {
-            setUser(null)
-            setProfile(null)
-          }
-        } finally {
-          if (mounted) {
-            setLoading(false)
-            console.log('🏁 Initial session loading complete')
-          }
-        }
-      }
-
-      getInitialUser()
     }
+
+    getInitialUser()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -309,7 +291,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       console.log('🧹 Cleaning up auth subscription')
       subscription.unsubscribe()
     }
-  }, [supabase, initialUser]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, signOut, refreshSession }}>

@@ -4,14 +4,13 @@ import { createClient } from '@/lib/supabase';
 export interface Customer {
   id: string;
   name: string;
-  domain: string;
+  domain?: string;
   industry: string;
-  tier: 'startup' | 'midmarket' | 'enterprise';
   health_score: number;
-  primary_contact_name: string;
-  primary_contact_email: string;
-  csm_id?: string;
-  company_id?: string;
+  current_arr: number;
+  renewal_date?: string;
+  primary_contact_id?: string;
+  assigned_to?: string;
   created_at: string;
   updated_at: string;
   properties?: CustomerProperties;
@@ -46,13 +45,11 @@ export interface RenewalSummary {
 }
 
 export interface CustomerFilters {
-  tier?: string;
   industry?: string;
   health_score_min?: number;
   health_score_max?: number;
   risk_level?: string;
-  csm_id?: string;
-  company_id?: string;
+  assigned_to?: string;
 }
 
 export interface UseCustomersOptions {
@@ -81,7 +78,6 @@ export interface UseCustomersReturn {
   assessRiskLevel: (customerId: string) => Promise<string>;
   stats: {
     total: number;
-    byTier: Record<string, number>;
     byIndustry: Record<string, number>;
     byRiskLevel: Record<string, number>;
     averageHealthScore: number;
@@ -129,9 +125,6 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
         `);
 
       // Apply filters
-      if (filters.tier) {
-        query = query.eq('tier', filters.tier);
-      }
       if (filters.industry) {
         query = query.eq('industry', filters.industry);
       }
@@ -144,11 +137,8 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
       if (filters.risk_level) {
         query = query.eq('properties.risk_level', filters.risk_level);
       }
-      if (filters.csm_id) {
-        query = query.eq('csm_id', filters.csm_id);
-      }
-      if (filters.company_id) {
-        query = query.eq('company_id', filters.company_id);
+      if (filters.assigned_to) {
+        query = query.eq('assigned_to', filters.assigned_to);
       }
 
       // Apply sorting
@@ -400,7 +390,6 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
 
   // Computed stats
   const stats = useMemo(() => {
-    const byTier: Record<string, number> = {};
     const byIndustry: Record<string, number> = {};
     const byRiskLevel: Record<string, number> = {};
     let totalHealthScore = 0;
@@ -408,9 +397,6 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
     let atRiskCustomers = 0;
 
     customers.forEach(customer => {
-      // Count by tier
-      byTier[customer.tier] = (byTier[customer.tier] || 0) + 1;
-      
       // Count by industry
       byIndustry[customer.industry] = (byIndustry[customer.industry] || 0) + 1;
       
@@ -422,7 +408,7 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
       totalHealthScore += customer.health_score;
       
       // Sum ARR
-      totalARR += customer.properties?.current_arr || 0;
+      totalARR += customer.current_arr || 0;
       
       // Count at-risk customers
       if (customer.properties?.risk_level === 'high' || customer.properties?.risk_level === 'critical') {
@@ -432,7 +418,6 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
 
     return {
       total: customers.length,
-      byTier,
       byIndustry,
       byRiskLevel,
       averageHealthScore: customers.length > 0 ? totalHealthScore / customers.length : 0,

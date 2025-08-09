@@ -22,8 +22,8 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!loading && !user) {
-      console.log('🔐 No authenticated user found, redirecting to login')
-      router.push('/login')
+      console.log('🔐 No authenticated user found, redirecting to signin')
+      router.push('/signin')
     }
   }, [user, loading, router])
 

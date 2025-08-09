@@ -1,14 +1,12 @@
-// src/components/auth/AuthProviderWrapper.tsx (SERVER COMPONENT)
-import { createServerSupabaseClient } from '@/lib/supabase-server'
+// src/components/auth/AuthProviderWrapper.tsx (CLIENT COMPONENT)
+'use client'
+
 import AuthProvider from './AuthProvider'
 
-export default async function AuthProviderWrapper({ 
+export default function AuthProviderWrapper({ 
   children 
 }: { 
   children: React.ReactNode 
 }) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  
-  return <AuthProvider initialUser={user}>{children}</AuthProvider>
+  return <AuthProvider>{children}</AuthProvider>
 } 

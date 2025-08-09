@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Customers table
+-- Customers table - COMMENTED OUT to avoid conflicts with MVP schema
+-- We are using mvp.customers instead for now
+/*
 CREATE TABLE IF NOT EXISTS public.customers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
@@ -28,11 +30,12 @@ CREATE TABLE IF NOT EXISTS public.customers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+*/
 
 -- Contracts table
 CREATE TABLE IF NOT EXISTS public.contracts (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES mvp.customers(id) ON DELETE CASCADE,
     contract_number TEXT,
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
@@ -51,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.contracts (
 CREATE TABLE IF NOT EXISTS public.renewals (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     contract_id UUID REFERENCES public.contracts(id) ON DELETE CASCADE,
-    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES mvp.customers(id) ON DELETE CASCADE,
     renewal_date DATE NOT NULL,
     current_arr DECIMAL(12,2) NOT NULL,
     proposed_arr DECIMAL(12,2),
@@ -77,7 +80,7 @@ CREATE TABLE IF NOT EXISTS public.events (
     title TEXT NOT NULL,
     description TEXT,
     event_type TEXT NOT NULL,
-    customer_id UUID REFERENCES public.customers(id),
+    customer_id UUID REFERENCES mvp.customers(id),
     user_id UUID REFERENCES public.profiles(id),
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     status TEXT NOT NULL DEFAULT 'scheduled',
@@ -93,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.alerts (
     message TEXT NOT NULL,
     alert_type TEXT NOT NULL,
     severity TEXT NOT NULL DEFAULT 'medium',
-    customer_id UUID REFERENCES public.customers(id),
+    customer_id UUID REFERENCES mvp.customers(id),
     user_id UUID REFERENCES public.profiles(id),
     is_read BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -102,7 +105,7 @@ CREATE TABLE IF NOT EXISTS public.alerts (
 
 -- Enable RLS on all tables
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY; -- Commented out since we're not creating public.customers
 ALTER TABLE public.contracts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.renewals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
@@ -118,7 +121,8 @@ CREATE POLICY "Users can update their own profile" ON public.profiles
 CREATE POLICY "Users can insert their own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Create RLS policies for customers (all authenticated users can view)
+-- Create RLS policies for customers (all authenticated users can view) - COMMENTED OUT since we're not creating public.customers
+/*
 CREATE POLICY "Authenticated users can view customers" ON public.customers
     FOR SELECT USING (auth.role() = 'authenticated');
 
@@ -127,6 +131,7 @@ CREATE POLICY "Authenticated users can insert customers" ON public.customers
 
 CREATE POLICY "Authenticated users can update customers" ON public.customers
     FOR UPDATE USING (auth.role() = 'authenticated');
+*/
 
 -- Create RLS policies for contracts
 CREATE POLICY "Authenticated users can view contracts" ON public.contracts
