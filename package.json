@@ -6,7 +6,13 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "sync-schema": "node scripts/sync-schema.ts",
+    "validate-schema": "node scripts/validate-schema.js",
+    "clear-auth": "node scripts/clear-auth-cookies.js",
+    "check-env": "node scripts/check-env.js",
+    "check-oauth": "node scripts/check-oauth-config.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
