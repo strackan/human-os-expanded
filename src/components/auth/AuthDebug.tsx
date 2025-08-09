@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 
 export default function AuthDebug() {
-  const [debug, setDebug] = useState<any>({})
+  const [debug, setDebug] = useState<Record<string, unknown>>({})
   const [isVisible, setIsVisible] = useState(false)
   const supabase = createClient()
 
@@ -34,7 +34,7 @@ export default function AuthDebug() {
     // Refresh every 5 seconds
     const interval = setInterval(checkAuth, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [supabase.auth])
 
   if (process.env.NODE_ENV !== 'development') return null
 

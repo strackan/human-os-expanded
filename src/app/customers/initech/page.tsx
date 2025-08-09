@@ -1,26 +1,19 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   CheckCircleIcon,
-  RocketLaunchIcon,
-  PencilIcon,
-  FireIcon,
   PaperAirplaneIcon,
 } from "@heroicons/react/24/outline";
 import ConversationalChat from "../../../../components/chat/ConversationalChat";
 import { initechChatSteps } from '../../../../components/chat/initech/initechChatWorkflow';
 import { useRouter } from 'next/navigation';
 import PageTransition from "../../../components/layout/PageTransition";
-import { initechData } from "../../../data/customers";
-import CustomerRenewalLayout from "../../../components/customers/CustomerRenewalLayout";
-import { CustomerData, ProgressStep } from '../../../types/chat';
-import { defaultChecklistItems, defaultProgressSteps, defaultRecommendedAction } from '../../../config/chatWorkflow';
+import { CustomerData } from '../../../types/chat';
 import '@/styles/resizable-divider.css';
+import { ChatStep } from "../../../types/chat";
 
 // Mock data for Initech
 const initechCustomer: CustomerData = {
@@ -54,29 +47,7 @@ const initechCustomer: CustomerData = {
   ],
 };
 
-const prevCustomer = "Acme Corporation";
-const nextCustomer = "Umbrella Corp.";
 
-const stats = [
-  { label: "Current ARR", value: "$320,000" },
-  { label: "Renewal Date", value: "Sep 30, 2024" },
-  { label: "Usage", value: "88%" },
-  { label: "2Y Avg PI%", value: "4.8%" },
-  { label: "Support Tickets (30d)", value: "5" },
-  { label: "Last Engagement", value: "2 days ago" },
-];
-
-const aiInsights: { category: string; color: 'green' | 'blue' | 'purple' | 'red'; text: string }[] = [
-  { category: "Profit", color: "green", text: "Customer is open to a 3-5% price increase." },
-  { category: "Engagement", color: "blue", text: "Recent support tickets resolved; sentiment neutral." },
-  { category: "Sponsor", color: "purple", text: "VP of IT attended last QBR." },
-  { category: "Risk", color: "red", text: "No open escalations; renewal risk is low." },
-];
-
-const recommendedAction = {
-  label: "Prepare for Renewal",
-  icon: RocketLaunchIcon,
-};
 
 const MiniSparklineChart: React.FC<{ data: number[] }> = ({ data }) => (
   <svg width="60" height="24" viewBox="0 0 60 24" fill="none" className="overflow-visible">
@@ -91,48 +62,7 @@ const MiniSparklineChart: React.FC<{ data: number[] }> = ({ data }) => (
   </svg>
 );
 
-const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex flex-col items-start bg-gray-50 rounded-lg p-4 min-w-[120px] min-h-[64px]">
-    <span className="text-xs text-gray-500 font-medium">{label}</span>
-    <span className="text-lg font-bold text-gray-900 mt-1">{value}</span>
-  </div>
-);
 
-const StageTimeline: React.FC<{ stages: any[] }> = ({ stages }) => (
-  <div className="flex items-center space-x-4 mt-4">
-    {stages.map((stage, idx) => (
-      <div key={stage.id} className="flex flex-col items-center">
-        <div className="flex items-center">
-          {stage.status === "complete" ? (
-            <CheckCircleIcon className="h-6 w-6 text-green-500" />
-          ) : stage.status === "current" ? (
-            <div className="h-6 w-6 rounded-full border-2 border-blue-500 bg-blue-100" />
-          ) : (
-            <div className="h-6 w-6 rounded-full border-2 border-gray-300" />
-          )}
-          {idx < stages.length - 1 && (
-            <div
-              className={`h-0.5 w-8 ${
-                stage.status === "complete" ? "bg-green-500" : "bg-gray-300"
-              }`}
-            />
-          )}
-        </div>
-        <span
-          className={`mt-2 text-sm ${
-            stage.status === "complete"
-              ? "text-green-600"
-              : stage.status === "current"
-              ? "text-blue-600 font-medium"
-              : "text-gray-500"
-          }`}
-        >
-          {stage.name}
-        </span>
-      </div>
-    ))}
-  </div>
-);
 
 const categoryColor = {
   green: "bg-green-100 text-green-700",
@@ -142,60 +72,21 @@ const categoryColor = {
 };
 
 const checklistItems = [
-  "Review account data",
-  "Confirm renewal strategy",
-  "Confirm contacts",
-  "Address risk (if any)",
-  "Send renewal notice",
+  "Initial Contact",
+  "Needs Assessment",
+  "Proposal",
+  "Negotiation",
+  "Close"
 ];
 
-const RenewalChecklist: React.FC<{
-  step: number;
-  answers: string[];
-  onEdit: (stepIdx: number) => void;
-}> = ({ step, answers, onEdit }) => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h4 className="text-lg font-bold mb-2">Preparation Checklist</h4>
-        <ul className="space-y-1">
-          {checklistItems.map((item, idx) => (
-            <li key={item} className="flex items-center gap-2 group">
-              <CheckCircleIcon className={`w-4 h-4 ${answers[idx] !== undefined ? 'text-orange-500' : 'text-gray-300'}`} />
-              <span className="flex-1">{item}</span>
-              <PencilIcon
-                className={`w-4 h-4 ml-1 inline-block align-text-bottom ${answers[idx] !== undefined ? 'text-gray-400 group-hover:text-orange-500 cursor-pointer' : 'text-gray-200 cursor-not-allowed'}`}
-                aria-label="Editable"
-                aria-disabled={answers[idx] === undefined}
-              />
-              {answers[idx] !== undefined && (
-                <span className="text-xs text-gray-500 ml-2">{answers[idx]}</span>
-              )}
-              {answers[idx] !== undefined && (
-                <button
-                  className="ml-2 text-orange-600 text-xs underline opacity-0 group-hover:opacity-100 focus:opacity-100 focus:outline-none"
-                  tabIndex={0}
-                  aria-label={`Edit answer for ${item}`}
-                  onClick={() => onEdit(idx)}
-                  onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onEdit(idx)}
-                >
-                  Edit
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-};
+// RenewalChecklist component removed as it's not currently used
 
-const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
+const ContextPanel: React.FC = () => (
   <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col h-full w-full overflow-hidden">
     <div className="mb-4">
       <h3 className="text-xl font-bold mb-2">Key Metrics</h3>
       <div className="grid grid-cols-2 gap-3 overflow-hidden">
-        {stats.map((stat) => (
+        {initechCustomer.stats.map((stat) => (
           <div className="bg-gray-50 rounded-lg p-2 min-h-0 min-w-0" key={stat.label}>
             <span className="text-xs text-gray-500 font-medium">{stat.label}</span>
             <span className="text-lg font-bold text-gray-900 mt-1 block">{stat.value}</span>
@@ -225,7 +116,6 @@ const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
 );
 
 // Shared chat messages for Initech
-const DATA_REVIEW_MSG = 'Please review the data. Initech has a moderate likelihood of renewal, so I recommend a balanced approach. Shall we proceed with a moderate price increase strategy, or would you prefer a more conservative approach?';
 const DEMO_RESPONSE = 'Thank you for your question! (This is a demo response. In production, this would be answered by AI or support. Would you like to proceed to planning the renewal?)';
 const RENEWAL_STRATEGY_MSG = 'Please review the data. Initech has a moderate likelihood of renewal, so I recommend a balanced approach. <br/><br/>Shall we 1) proceed with a moderate price increase strategy, or would you 2) prefer a more conservative approach?';
 
@@ -393,10 +283,9 @@ const ProgressStepper: React.FC<{ currentStep: number }> = ({ currentStep }) => 
   </div>
 );
 
-const customerName = initechCustomer.name;
-const chatSteps = initechChatSteps.map(step => ({
+const chatSteps: ChatStep[] = initechChatSteps.map(step => ({
   ...step,
-  bot: step.message(customerName),
+  bot: step.message(),
   inputType: 'choiceOrInput' as const,
   onUser: (answer: string) => {
     // Handle user response
@@ -412,109 +301,69 @@ const chatSteps = initechChatSteps.map(step => ({
 
 const InitechPage = () => {
   const router = useRouter();
-  const [showStats, setShowStats] = useState(true);
-  const [leftWidthPx, setLeftWidthPx] = useState(600);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
   const [mode, setMode] = useState<'pre-action' | 'chat'>('pre-action');
-  const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
-  const [input, setInput] = useState('');
-  const [waiting, setWaiting] = useState(false);
-  const [progressCollapsed, setProgressCollapsed] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
-  const [lastContractCheckAnswer, setLastContractCheckAnswer] = useState<string | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [step, setStep] = useState(1);
   const [renewalStep, setRenewalStep] = useState<'strategy' | 'chat'>('strategy');
+  const [answers, setAnswers] = useState<string[]>(['', '']);
+  const [waiting, setWaiting] = useState(false);
+  const [input, setInput] = useState('');
+  const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setLeftWidthPx(rect.width / 2);
-    }
-  }, []);
+  const nextCustomer = 'acme-corporation';
+  const prevCustomer = null;
 
-  // Initialize panel width on mount
-  useEffect(() => {
-    document.documentElement.style.setProperty('--panel-width-left', `${leftWidthPx}px`);
-    document.documentElement.style.setProperty('--panel-min-width', '320px');
-  }, [leftWidthPx]);
-
-  // Drag handlers for vertical divider
   const startDrag = (e: React.MouseEvent) => {
-    isDragging.current = true;
-    document.body.classList.add('resizing');
-    document.addEventListener("mousemove", handleDrag);
-    document.addEventListener("mouseup", stopDrag);
+    e.preventDefault();
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', stopDrag);
   };
 
   const handleDrag = (e: MouseEvent) => {
-    if (!isDragging.current || !containerRef.current) return;
-    const container = containerRef.current;
-    const rect = container.getBoundingClientRect();
-    let newWidth = e.clientX - rect.left;
-    newWidth = Math.max(320, Math.min(newWidth, rect.width - 320));
-    setLeftWidthPx(newWidth);
-    document.documentElement.style.setProperty('--panel-width-left', `${newWidth}px`);
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const newLeftWidth = ((e.clientX - rect.left) / rect.width) * 100;
+      if (newLeftWidth > 20 && newLeftWidth < 80) {
+        containerRef.current.style.setProperty('--left-width', `${newLeftWidth}%`);
+      }
+    }
   };
 
   const stopDrag = () => {
-    isDragging.current = false;
-    document.body.classList.remove('resizing');
-    document.removeEventListener("mousemove", handleDrag);
-    document.removeEventListener("mouseup", stopDrag);
+    document.removeEventListener('mousemove', handleDrag);
+    document.removeEventListener('mouseup', stopDrag);
   };
 
-  // Chat logic (stub, can be expanded as needed)
   const handleChatSubmit = (answer: string) => {
-    if (waiting || !answer.trim()) return;
-    setWaiting(true);
-    setTimeout(() => {
-      setAnswers(prev => {
-        const newAnswers = [...prev];
-        newAnswers[step] = answer;
-        if (step === initechChatSteps.length - 1 && (/send/i.test(answer))) {
-          newAnswers[4] = answer;
-          setProgressCollapsed(true);
-        }
-        return newAnswers;
-      });
-      setWaiting(false);
-      if (step < initechChatSteps.length - 1) {
-        setStep(s => s + 1);
-        setInput('');
-      }
-    }, 800);
-  };
-
-  const handleEdit = (editStep: number) => {
-    setStep(editStep);
-    setAnswers(prev => prev.slice(0, editStep));
-    setInput('');
-    setWaiting(false);
+    setAnswers(prev => {
+      const newAnswers = [...prev];
+      newAnswers[step - 1] = answer;
+      return newAnswers;
+    });
+    
+    if (step < chatSteps.length) {
+      setStep(step + 1);
+    } else {
+      setWaiting(true);
+      setTimeout(() => {
+        setWaiting(false);
+        setStep(1);
+        setAnswers(['', '']);
+      }, 2000);
+    }
   };
 
   const handleInputChange = (val: string) => setInput(val);
 
   const handleMultiStepAdvance = (nextStep: number, updatedAnswers: string[]) => {
-    setAnswers(updatedAnswers);
     setStep(nextStep);
-    setInput('');
-    setWaiting(false);
+    setAnswers(updatedAnswers);
   };
 
   const handleProceedToRenewal = () => {
-    setAnswers(prev => {
-      const newAnswers = [...prev];
-      newAnswers[0] = 'Completed in initial review';
-      return newAnswers;
-    });
-    setStep(1);
     setMode('chat');
-    setRenewalStep('strategy');
-    setMessages([
-      { sender: 'bot', text: initechChatSteps[0].message(initechCustomer.name) }
-    ]);
+    setStep(1);
   };
 
   const handleStrategyAnswered = (answer: string) => {
@@ -528,41 +377,48 @@ const InitechPage = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-50 py-10">
-        <div className="max-w-7xl mx-auto space-y-10">
-          {/* Top Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-4 min-h-[180px]">
-            <div className="flex flex-col md:flex-row md:justify-between gap-4 flex-1">
-              <div className="space-y-2 flex flex-col justify-center h-full">
-                <h2 className="text-3xl font-extrabold text-blue-700 tracking-tight">
-                  {initechCustomer.name}
-                </h2>
-                <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-700 text-base items-center">
-                  <span className="font-medium text-gray-500">Success Likelihood:</span>
-                  <span className="inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold ml-2">Moderate</span>
-                </div>
-              </div>
-              <StageTimeline stages={initechCustomer.stages} />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 md:p-6 lg:p-8">
+        {/* Top Card */}
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">
+                {initechCustomer.name}
+              </h1>
+              <p className="text-sm text-gray-500 mt-1">Customer Management</p>
             </div>
-            {/* Navigation arrows at bottom left and right */}
-            <div className="flex w-full justify-end items-end mt-4">
-              <button
-                className="flex items-center gap-2 text-xs text-gray-500 hover:text-orange-600 focus:outline-none"
-                tabIndex={0}
-                aria-label={`Go to next customer: ${nextCustomer}`}
-                onClick={() => router.push('/customers?customer=umbrella-corp')}
-                onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && router.push('/customers?customer=umbrella-corp')}
-              >
-                <span>Next: {nextCustomer}</span>
-                <ChevronRightIcon className="w-7 h-7 text-gray-300" />
-              </button>
+            <div className="mt-4 md:mt-0 flex space-x-2">
+              {prevCustomer && (
+                <button 
+                  onClick={() => router.push(`/customers/${prevCustomer}`)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  tabIndex={0}
+                  aria-label="Previous Customer"
+                >
+                  <ChevronLeftIcon className="w-5 h-5" />
+                </button>
+              )}
+              {nextCustomer && (
+                <button 
+                  onClick={() => router.push(`/customers/${nextCustomer}`)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  tabIndex={0}
+                  aria-label="Next Customer"
+                >
+                  <ChevronRightIcon className="w-5 h-5" />
+                </button>
+              )}
             </div>
           </div>
+        </div>
+
+        {/* Main Container */}
+        <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
           {/* Main Container: Before chat, show only ContextPanel. After, show resizable split with ProgressStepper and ContextPanel, and ChatPanel on the right. */}
           {mode !== 'chat' ? (
             <div className="flex w-full h-[70vh]" ref={containerRef}>
               <div className="resizable-panel-left h-full">
-                <ContextPanel currentStep={step} />
+                <ContextPanel />
               </div>
               {/* Draggable Divider for pre-action stage */}
               <div
@@ -614,7 +470,7 @@ const InitechPage = () => {
                   </div>
                   {/* ContextPanel (Key Metrics) */}
                   <div className="flex-1 h-full flex flex-col">
-                    <ContextPanel currentStep={step} />
+                    <ContextPanel />
                   </div>
                 </div>
               </div>
@@ -639,14 +495,28 @@ const InitechPage = () => {
                     onSubmit={handleChatSubmit}
                     onInputChange={handleInputChange}
                     input={input}
-                    setPrice={setPrice}
-                    lastContractCheckAnswer={lastContractCheckAnswer}
-                    setLastContractCheckAnswer={setLastContractCheckAnswer}
+                    setPrice={() => {}}
                     onMultiStepAdvance={handleMultiStepAdvance}
                   />
                 </div>
               </div>
             </div>
+          )}
+        </div>
+
+        {/* Navigation at bottom */}
+        <div className="flex w-full justify-end items-end mt-4">
+          {nextCustomer && (
+            <button
+              className="flex items-center gap-2 text-xs text-gray-500 hover:text-orange-600 focus:outline-none"
+              tabIndex={0}
+              aria-label={`Go to next customer: ${nextCustomer}`}
+              onClick={() => router.push(`/customers/${nextCustomer}`)}
+              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && router.push(`/customers/${nextCustomer}`)}
+            >
+              <span>Next: {nextCustomer}</span>
+              <ChevronRightIcon className="w-7 h-7 text-gray-300" />
+            </button>
           )}
         </div>
       </div>

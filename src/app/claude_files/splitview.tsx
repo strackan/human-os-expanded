@@ -1,19 +1,14 @@
 import React, { useState } from 'react';
 import { 
-  FileDown, 
   AlertTriangle, 
   FileCheck, 
   Scale, 
-  DollarSign, 
   Search, 
   User, 
   Calendar, 
   Tag, 
   Clock, 
-  BarChart4, 
-  ChevronRight, 
   FileText, 
-  Megaphone, 
   Eye, 
   Mail,
   Sparkles,
@@ -21,11 +16,37 @@ import {
 } from 'lucide-react';
 import '@/styles/progress-indicators.css';
 
+interface Contract {
+  id: string;
+  customerName: string;
+  status: string;
+  value: string;
+  renewalDate: string;
+  lastModified: string;
+  labels: string[];
+  owner: string;
+  riskScore: number;
+  riskFactors: string[];
+  usage: string;
+  history: Array<{ date: string; action: string; user: string }>;
+}
+
 const ContractsSplitView = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedContract, setSelectedContract] = useState(null);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   
-  const contracts = [
+  // Define StatusIcon at component level
+  const getStatusIcon = (status: string) => {
+    const statusStyles: Record<string, { icon: React.ComponentType<{ className?: string }>; text: string }> = {
+      'Unsigned': { icon: AlertTriangle, text: 'text-yellow-600' },
+      'In Review': { icon: FileCheck, text: 'text-blue-600' },
+      'Signed': { icon: FileCheck, text: 'text-green-600' },
+      'Pending Approval': { icon: Clock, text: 'text-orange-600' }
+    };
+    return statusStyles[status] || statusStyles['Unsigned'];
+  };
+
+  const contracts: Contract[] = [
     {
       id: 'CNT-001',
       customerName: 'Acme Corporation',
@@ -98,67 +119,28 @@ const ContractsSplitView = () => {
       history: [
         { date: '2024-03-01', action: 'Contract created', user: 'Emily Rodriguez' },
         { date: '2024-03-10', action: 'Negotiations', user: 'Emily Rodriguez' },
-        { date: '2024-03-15', action: 'Sent for approval', user: 'Emily Rodriguez' }
-      ]
-    },
-    {
-      id: 'CNT-005',
-      customerName: 'Stark Industries',
-      status: 'Negotiation',
-      value: '$1,200,000',
-      renewalDate: 'Jun 30, 2024',
-      lastModified: '2024-03-14',
-      labels: ['Price Cap', 'Unlimited Liability', 'Custom SLA'],
-      owner: 'Tony Williams',
-      riskScore: 60,
-      riskFactors: ['Unlimited liability clause', 'Price cap limitations', 'Short renewal timeframe'],
-      usage: 'Medium',
-      history: [
-        { date: '2024-02-28', action: 'Contract created', user: 'Tony Williams' },
-        { date: '2024-03-05', action: 'Initial negotiations', user: 'Tony Williams' },
-        { date: '2024-03-10', action: 'Terms review', user: 'Legal Team' },
-        { date: '2024-03-14', action: 'Revised offer sent', user: 'Tony Williams' }
+        { date: '2024-03-15', action: 'Pending approval', user: 'Legal Team' }
       ]
     }
   ];
 
-  const labelColors = {
-    'Unsigned': { bg: 'bg-red-50', text: 'text-red-700' },
-    'Non-Standard Pricing': { bg: 'bg-purple-50', text: 'text-purple-700' },
-    'Unlimited Liability': { bg: 'bg-orange-50', text: 'text-orange-700' },
-    'Price Cap': { bg: 'bg-blue-50', text: 'text-blue-700' },
-    'Custom SLA': { bg: 'bg-teal-50', text: 'text-teal-700' },
-    'Enterprise Terms': { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-    'Multi-Year': { bg: 'bg-green-50', text: 'text-green-700' },
-    'Custom Terms': { bg: 'bg-yellow-50', text: 'text-yellow-700' }
+  const statusStyles: Record<string, { bg: string; text: string; icon: React.ComponentType<{ className?: string }> }> = {
+    'Unsigned': { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: AlertTriangle },
+    'In Review': { bg: 'bg-blue-100', text: 'text-blue-800', icon: FileCheck },
+    'Signed': { bg: 'bg-green-100', text: 'text-green-800', icon: FileCheck },
+    'Pending Approval': { bg: 'bg-orange-100', text: 'text-orange-800', icon: Clock },
+    'Negotiation': { bg: 'bg-purple-100', text: 'text-purple-800', icon: Scale }
   };
 
-  const statusStyles = {
-    'Unsigned': { 
-      bg: 'bg-red-50', 
-      text: 'text-red-700',
-      icon: FileDown
-    },
-    'In Review': { 
-      bg: 'bg-yellow-50', 
-      text: 'text-yellow-700',
-      icon: AlertTriangle
-    },
-    'Signed': { 
-      bg: 'bg-green-50', 
-      text: 'text-green-700',
-      icon: FileCheck
-    },
-    'Pending Approval': { 
-      bg: 'bg-blue-50', 
-      text: 'text-blue-700',
-      icon: Scale
-    },
-    'Negotiation': { 
-      bg: 'bg-purple-50', 
-      text: 'text-purple-700',
-      icon: DollarSign
-    }
+  const labelColors: Record<string, { bg: string; text: string }> = {
+    'Unsigned': { bg: 'bg-yellow-100', text: 'text-yellow-800' },
+    'Non-Standard Pricing': { bg: 'bg-red-100', text: 'text-red-800' },
+    'Price Cap': { bg: 'bg-blue-100', text: 'text-blue-800' },
+    'Unlimited Liability': { bg: 'bg-red-100', text: 'text-red-800' },
+    'Custom SLA': { bg: 'bg-purple-100', text: 'text-purple-800' },
+    'Enterprise Terms': { bg: 'bg-green-100', text: 'text-green-800' },
+    'Multi-Year': { bg: 'bg-indigo-100', text: 'text-indigo-800' },
+    'Custom Terms': { bg: 'bg-orange-100', text: 'text-orange-800' }
   };
 
   const filteredContracts = contracts.filter(contract => {
@@ -167,7 +149,7 @@ const ContractsSplitView = () => {
            contract.owner.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
-  const getRiskColor = (score) => {
+  const getRiskColor = (score: number) => {
     if (score < 30) return 'bg-green-500';
     if (score < 60) return 'bg-yellow-500';
     return 'bg-red-500';
@@ -211,7 +193,6 @@ const ContractsSplitView = () => {
           
           <div className="overflow-y-auto flex-grow">
             {filteredContracts.map((contract) => {
-              const StatusIcon = statusStyles[contract.status].icon;
               const isSelected = selectedContract && selectedContract.id === contract.id;
               
               return (
@@ -226,7 +207,7 @@ const ContractsSplitView = () => {
                       <p className="text-xs text-gray-500">{contract.id}</p>
                     </div>
                     <div className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${statusStyles[contract.status].bg} ${statusStyles[contract.status].text}`}>
-                      <StatusIcon className="mr-1 h-4 w-4" />
+                      {React.createElement(getStatusIcon(contract.status).icon, { className: "mr-1 h-4 w-4" })}
                       {contract.status}
                     </div>
                   </div>
@@ -277,7 +258,7 @@ const ContractsSplitView = () => {
                         <div>
                           <p className="text-xs text-gray-500 mb-1">Status</p>
                           <div className={`text-sm font-medium flex items-center ${statusStyles[selectedContract.status].text}`}>
-                            <StatusIcon className="h-4 w-4 mr-1" />
+                            {React.createElement(getStatusIcon(selectedContract.status).icon, { className: "h-4 w-4 mr-1" })}
                             {selectedContract.status}
                           </div>
                         </div>

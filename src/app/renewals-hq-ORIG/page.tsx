@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   DocumentTextIcon, 
   EnvelopeIcon, 
@@ -9,47 +9,11 @@ import {
   ChevronDownIcon,
   CheckCircleIcon,
   ClockIcon,
-  XMarkIcon,
-  ChatBubbleLeftRightIcon,
-  UserGroupIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import ChatModal from '@/components/ChatModal';
-import { Customer, Stage } from '@/types';
+import { Customer } from '@/types';
 import '@/styles/resizable-divider.css';
-
-const renewalStages = [
-  { id: 1, name: 'Planning', status: 'complete' },
-  { id: 2, name: 'Outreach', status: 'complete' },
-  { id: 3, name: 'Negotiation', status: 'current' },
-  { id: 4, name: 'Approval', status: 'upcoming' },
-  { id: 5, name: 'Closed', status: 'upcoming' },
-] as const;
-
-const snoozeOptions = [
-  { label: '1 hour', value: '1h' },
-  { label: '1 day', value: '1d' },
-  { label: '1 week', value: '1w' },
-  { label: 'Custom', value: 'custom' },
-];
-
-const stages = [
-  { name: 'Planning', count: 2 },
-  { name: 'Outreach', count: 4 },
-  { name: 'Negotiation', count: 3 },
-  { name: 'Signature', count: 3 },
-  { name: 'Invoice', count: 1 },
-  { name: 'Paid', count: 0 },
-];
-
-const timeFrames = [
-  { label: 'Today', count: 1 },
-  { label: '7d', count: 2 },
-  { label: '30d', count: 5 },
-  { label: '60d', count: 3 },
-  { label: '90d', count: 0 },
-  { label: '120d', count: 1 },
-];
 
 const customerRecords: Customer[] = [
   {
@@ -365,7 +329,7 @@ const RenewalsHQPage = () => {
     document.documentElement.style.setProperty('--panel-width-right', `${100 - leftPaneWidth}%`);
   }, [leftPaneWidth]);
 
-  const startResize = (e: React.MouseEvent) => {
+  const startResize = () => {
     isResizing.current = true;
     document.body.classList.add('resizing');
     document.addEventListener('mousemove', handleResize);

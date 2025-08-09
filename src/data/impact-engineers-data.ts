@@ -1,5 +1,3 @@
-import { RocketLaunchIcon } from "@heroicons/react/24/outline";
-
 export const techvisionData = {
   customer: {
     name: "TechVision Inc.",

@@ -3,14 +3,6 @@
 import { ChatStep } from '../../src/types/chat';
 import { createChatWorkflowConfig } from '../../src/config/chatWorkflow';
 
-export interface ChatStep {
-  bot: string | string[];
-  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
-  choices?: string[];
-  progressStep?: number;
-  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string;
-}
-
 // Renewals HQ workflow steps
 const renewalsChatSteps: ChatStep[] = [
   {
@@ -18,7 +10,7 @@ const renewalsChatSteps: ChatStep[] = [
     inputType: 'choice',
     choices: ["Aggressive (recommended)", "Conservative"],
     progressStep: 0, // Move from "Review account data" to "Confirm renewal strategy"
-    onUser: (answer, ctx) => {
+    onUser: (answer) => {
       if (/conservative/i.test(answer)) {
         return "We'll proceed with a more conservative renewal strategy.";
       }
@@ -31,13 +23,12 @@ const renewalsChatSteps: ChatStep[] = [
       "The contract has language that does not allow price increases above 3%. Would you like to: 1) Draft an amendment to increase the price limit, 2) Revert to a 3% price increase, or 3) Come back to this later?"
     ],
     inputType: 'numberOrSkip',
-    onUser: (answer, ctx) => {
+    onUser: (answer) => {
       const trimmed = answer.trim();
       if (trimmed === '1') {
         return "I'll plan to include an amendment in our ongoing strategy. I recommend a 7% price increase as our target. Would you like to proceed with 7%, or enter a different percentage?";
       }
       if (trimmed === '2') {
-        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(3);
         return "Got it. We'll go with a 3% increase for this renewal. I'll make a note to revisit the amendment discussion as a future action.";
       }
       if (trimmed === '3') {
@@ -54,16 +45,14 @@ const renewalsChatSteps: ChatStep[] = [
     bot: "", // Leave bot message empty, since the previous step's reply already contains the question
     inputType: 'numberOrSkip',
     progressStep: 1, // Move from "Confirm renewal strategy" to "Confirm contacts"
-    onUser: (answer, ctx) => {
+    onUser: (answer) => {
       if (!answer.trim()) {
         // Treat empty input as 7
-        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(7);
         return `Great, 7% is a strong, data-backed choice for this renewal.`;
       }
       if (/skip|pass/i.test(answer)) return "No problem, we'll revisit the price increase later.";
       const num = parseFloat(answer);
       if (!isNaN(num)) {
-        if (ctx && typeof ctx.setPrice === 'function') ctx.setPrice(num);
         if (num >= 10) {
           return `You entered ${num}%. This amount needs manager approval. We'll let you know when we hear back (or you can edit the number).`;
         }
@@ -79,7 +68,7 @@ const renewalsChatSteps: ChatStep[] = [
     bot: "Who should be involved in the renewal process? The primary contact is Sarah Johnson, and the executive sponsor is Michael Chen. Should I include anyone else in these upcoming discussions?",
     inputType: 'emailOrSkip',
     progressStep: 2, // Move from "Confirm contacts" to "Address risk"
-    onUser: (answer, ctx) => {
+    onUser: () => {
       return "Got it.";
     },
   },
@@ -87,7 +76,7 @@ const renewalsChatSteps: ChatStep[] = [
     bot: "There's one risk: Feature X usage declined 15% last quarter. Should I set a reminder to schedule a meeting about this?",
     inputType: 'numberOrSkip',
     progressStep: 3, // Move from "Address risk" to "Send renewal notice"
-    onUser: (answer, ctx) => {
+    onUser: (answer) => {
       const trimmed = answer.trim().toLowerCase();
       if (trimmed.includes('yes') || trimmed === '1' || trimmed === 'y' || trimmed === 'schedule') {
         return [
@@ -111,7 +100,7 @@ const renewalsChatSteps: ChatStep[] = [
     inputType: 'choice',
     choices: ["Yes, send now", "No, review first"],
     progressStep: 4, // Final step - "Send renewal notice"
-    onUser: (answer, ctx) => {
+    onUser: (answer) => {
       if (answer.toLowerCase().includes("yes")) {
         return "Great! The renewal notice has been sent.";
       }

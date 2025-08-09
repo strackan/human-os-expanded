@@ -1,14 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronRightIcon } from '@heroicons/react/20/solid';
-import { SparklesIcon, ChartBarIcon, UserGroupIcon, CurrencyDollarIcon, DocumentTextIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ChartBarIcon, CurrencyDollarIcon, DocumentTextIcon, ArrowTrendingUpIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface ActionType {
   id: string;
   name: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   inputType: 'percentage' | 'currency' | 'number';
 }
 

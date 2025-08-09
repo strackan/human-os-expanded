@@ -28,7 +28,6 @@ const CustomerChatDialog: React.FC<CustomerChatDialogProps> = ({
   messages,
   setMessages,
   recommendedAction,
-  workflowSteps,
   onPrepare,
   botIntroMessage = "Please review the information to the left and feel free to ask any questions about this account.",
   inputPlaceholder = "Type your question...",

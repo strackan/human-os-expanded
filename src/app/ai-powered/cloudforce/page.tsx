@@ -67,7 +67,7 @@ const CloudForcePage = () => {
     setActiveWorkflow(null);
   };
 
-  const { customer, stats, aiInsights, aiTasks } = cloudforceData;
+  const { customer, stats, aiInsights } = cloudforceData;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 md:p-6 lg:p-8">

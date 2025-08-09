@@ -1,5 +1,4 @@
 "use client";
-import { acmeCorpData } from "../../../data/customers";
 import CustomerChatDialog, { ChatMessage } from "../../../components/customers/CustomerChatDialog";
 import { useState } from "react";
 import Link from "next/link";

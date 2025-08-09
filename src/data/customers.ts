@@ -1,4 +1,4 @@
-import { HandRaisedIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+// import { Customer } from '@/types';
 
 export interface CustomerRenewalData {
   key: string;

@@ -117,7 +117,7 @@ export default function SignInPage() {
     try {
       console.log('🔐 Starting email signup...')
       
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {

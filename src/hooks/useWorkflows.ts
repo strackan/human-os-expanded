@@ -187,7 +187,7 @@ export const useWorkflows = (options: UseWorkflowsOptions = {}): UseWorkflowsRet
 
       const results = await Promise.all(promises);
       let templateIndex = 0;
-      let instanceIndex = 1;
+      const instanceIndex = 1;
 
       if (includeTemplates) {
         const { data: templateData, error: templateError } = results[templateIndex];

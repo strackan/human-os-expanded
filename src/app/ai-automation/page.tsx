@@ -19,10 +19,10 @@ const miniCharts = [
 ];
 
 const insights = [
-  { category: 'Churn Prediction', color: 'red', text: 'Churn risk reduced by 12% through automated outreach.' },
-  { category: 'Workflow Triggers', color: 'blue', text: 'AI triggered 3 renewal workflows this week.' },
-  { category: 'Efficiency', color: 'green', text: '320 hours saved for CSMs this quarter.' },
-  { category: 'Coverage', color: 'purple', text: 'All key inflection points are now automated.' },
+  { category: 'Churn Prediction', color: 'red' as const, text: 'Churn risk reduced by 12% through automated outreach.' },
+  { category: 'Workflow Triggers', color: 'blue' as const, text: 'AI triggered 3 renewal workflows this week.' },
+  { category: 'Efficiency', color: 'green' as const, text: '320 hours saved for CSMs this quarter.' },
+  { category: 'Coverage', color: 'purple' as const, text: 'All key inflection points are now automated.' },
 ];
 
 const stages = [

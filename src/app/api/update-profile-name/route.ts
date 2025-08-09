@@ -43,7 +43,7 @@ export async function POST() {
     }
 
     // Parse "Justin Strackany" into first and last name
-    const nameParts = fullName.trim().split(' ').filter(part => part.length > 0)
+    const nameParts = fullName.trim().split(' ').filter((part: string) => part.length > 0)
     
     let first_name = null
     let last_name = null

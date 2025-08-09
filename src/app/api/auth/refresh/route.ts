@@ -16,16 +16,16 @@ export async function POST() {
       userError: userError ? String(userError) : null
     })
     
-    if (validation.isValid && validation.user) {
-      console.log('✅ Session is valid for user:', validation.user.email)
+    if (validation.isValid && user) {
+      console.log('✅ Session is valid for user:', user.email)
       
       return NextResponse.json({
         success: true,
         authenticated: true,
         user: {
-          id: validation.user.id,
-          email: validation.user.email,
-          created_at: validation.user.created_at
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at
         },
         session: {
           expires_at: validation.session?.expires_at,

@@ -5,7 +5,7 @@ import {
   CalendarDaysIcon,
   DocumentTextIcon,
 } from "@heroicons/react/24/outline";
-import { WorkflowType } from "../page"; // Adjust path as needed
+import { WorkflowType } from "../cloudforce/page";
 
 interface AIWorkflowActionsProps {
   openWorkflow: (workflowName: WorkflowType) => void;

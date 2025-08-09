@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
 import { 
-  Sparkles, 
-  AlertTriangle, 
-  ShieldCheck, 
-  CheckCircle, 
-  Clock, 
-  Scale, 
-  Activity,
-  Info,
-  Link,
-  DollarSign,
-  ChevronRight,
-  Shield
-} from 'lucide-react';
+  SparklesIcon, 
+  ExclamationTriangleIcon, 
+  CheckCircleIcon, 
+  ClockIcon, 
+  ScaleIcon, 
+  InformationCircleIcon,
+  LinkIcon,
+  CurrencyDollarIcon,
+  ChevronRightIcon,
+  ShieldCheckIcon
+} from '@heroicons/react/24/outline';
 
 const ContractAIAnalysis = () => {
   const [expandedSection, setExpandedSection] = useState('terms');
@@ -24,21 +22,21 @@ const ContractAIAnalysis = () => {
     renewal: 'August 15, 2024',
     terms: [
       { 
-        severity: 'high', 
+        severity: 'high' as const, 
         title: 'Unlimited Liability', 
         description: 'This contract contains unlimited liability provisions that expose your company to significant financial risk.',
         recommendation: 'Negotiate a liability cap not to exceed 12 months of fees paid.',
         location: 'Section 12.3, Page 14'
       },
       { 
-        severity: 'medium', 
+        severity: 'medium' as const, 
         title: 'Early Termination Fee', 
         description: 'Current early termination requires payment of 80% of remaining contract value.',
         recommendation: 'Negotiate a 60% fee with graduated reduction over time.',
         location: 'Section 8.2, Page 9' 
       },
       { 
-        severity: 'low', 
+        severity: 'low' as const, 
         title: 'Auto-Renewal Clause', 
         description: 'Contract auto-renews with 90-day notice period, shorter than your standard 120 days.',
         recommendation: 'Extend notice period to 120 days to align with internal processes.',
@@ -75,7 +73,7 @@ const ContractAIAnalysis = () => {
     ]
   };
   
-  const getSeverityColor = (severity) => {
+  const getSeverityColor = (severity: 'high' | 'medium' | 'low') => {
     switch (severity) {
       case 'high':
         return 'text-red-600 bg-red-50 border-red-200';
@@ -88,16 +86,16 @@ const ContractAIAnalysis = () => {
     }
   };
   
-  const getSeverityIcon = (severity) => {
+  const getSeverityIcon = (severity: 'high' | 'medium' | 'low') => {
     switch (severity) {
       case 'high':
-        return <AlertTriangle className="h-5 w-5" />;
+        return <ExclamationTriangleIcon className="h-5 w-5" />;
       case 'medium':
-        return <Clock className="h-5 w-5" />;
+        return <ClockIcon className="h-5 w-5" />;
       case 'low':
-        return <Info className="h-5 w-5" />;
+        return <InformationCircleIcon className="h-5 w-5" />;
       default:
-        return <CheckCircle className="h-5 w-5" />;
+        return <CheckCircleIcon className="h-5 w-5" />;
     }
   };
   
@@ -109,7 +107,7 @@ const ContractAIAnalysis = () => {
           <h1 className="text-2xl font-semibold text-gray-900">{contractData.name}</h1>
           <div className="flex items-center mt-2 text-sm text-gray-500">
             <span className="inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 mr-3">
-              <AlertTriangle className="mr-1 h-3 w-3" />
+              <ExclamationTriangleIcon className="mr-1 h-3 w-3" />
               {contractData.status}
             </span>
             <span className="mr-3">Value: {contractData.value}</span>
@@ -118,7 +116,7 @@ const ContractAIAnalysis = () => {
         </div>
         <div className="flex items-center">
           <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center">
-            <Sparkles className="h-3.5 w-3.5 mr-1" />
+            <SparklesIcon className="h-3.5 w-3.5 mr-1" />
             AI Analysis
           </span>
         </div>
@@ -128,7 +126,7 @@ const ContractAIAnalysis = () => {
       <div className="my-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
         <div className="flex items-start">
           <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-            <Sparkles className="h-5 w-5 text-blue-600" />
+            <SparklesIcon className="h-5 w-5 text-blue-600" />
           </div>
           <div className="ml-4">
             <h2 className="text-lg font-medium text-blue-900">AI Contract Analysis</h2>
@@ -149,13 +147,13 @@ const ContractAIAnalysis = () => {
             onClick={() => setExpandedSection(expandedSection === 'terms' ? '' : 'terms')}
           >
             <div className="flex items-center">
-              <Scale className="h-5 w-5 text-gray-500 mr-2" />
+              <ScaleIcon className="h-5 w-5 text-gray-500 mr-2" />
               <h3 className="text-lg font-medium text-gray-900">Contract Terms</h3>
               <span className="ml-2 inline-flex items-center rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
                 3 issues
               </span>
             </div>
-            <ChevronRight className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'terms' ? 'rotate-90' : ''}`} />
+            <ChevronRightIcon className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'terms' ? 'rotate-90' : ''}`} />
           </button>
           
           {expandedSection === 'terms' && (
@@ -170,7 +168,7 @@ const ContractAIAnalysis = () => {
                       <h4 className="text-sm font-medium">{term.title}</h4>
                       <p className="mt-1 text-sm text-gray-600">{term.description}</p>
                       <div className="mt-2 text-sm text-gray-500 flex">
-                        <Link className="h-4 w-4 mr-1" />
+                        <LinkIcon className="h-4 w-4 mr-1" />
                         {term.location}
                       </div>
                       <div className="mt-2 pt-2 border-t border-gray-200">
@@ -192,13 +190,13 @@ const ContractAIAnalysis = () => {
             onClick={() => setExpandedSection(expandedSection === 'pricing' ? '' : 'pricing')}
           >
             <div className="flex items-center">
-              <DollarSign className="h-5 w-5 text-gray-500 mr-2" />
+              <CurrencyDollarIcon className="h-5 w-5 text-gray-500 mr-2" />
               <h3 className="text-lg font-medium text-gray-900">Pricing Optimization</h3>
               <span className="ml-2 inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
                 $37,500 opportunity
               </span>
             </div>
-            <ChevronRight className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'pricing' ? 'rotate-90' : ''}`} />
+            <ChevronRightIcon className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'pricing' ? 'rotate-90' : ''}`} />
           </button>
           
           {expandedSection === 'pricing' && (
@@ -207,7 +205,7 @@ const ContractAIAnalysis = () => {
                 <div key={index} className="p-4 rounded-lg border border-green-200 bg-green-50">
                   <div className="flex">
                     <div className="flex-shrink-0 text-green-600">
-                      <DollarSign className="h-5 w-5" />
+                      <CurrencyDollarIcon className="h-5 w-5" />
                     </div>
                     <div className="ml-3">
                       <div className="flex justify-between">
@@ -234,13 +232,13 @@ const ContractAIAnalysis = () => {
             onClick={() => setExpandedSection(expandedSection === 'compliance' ? '' : 'compliance')}
           >
             <div className="flex items-center">
-              <Shield className="h-5 w-5 text-gray-500 mr-2" />
+              <ShieldCheckIcon className="h-5 w-5 text-gray-500 mr-2" />
               <h3 className="text-lg font-medium text-gray-900">Compliance</h3>
               <span className="ml-2 inline-flex items-center rounded-full bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700">
                 1 issue
               </span>
             </div>
-            <ChevronRight className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'compliance' ? 'rotate-90' : ''}`} />
+            <ChevronRightIcon className={`h-5 w-5 text-gray-500 transform ${expandedSection === 'compliance' ? 'rotate-90' : ''}`} />
           </button>
           
           {expandedSection === 'compliance' && (
@@ -250,9 +248,9 @@ const ContractAIAnalysis = () => {
                   <div className="flex">
                     <div className="flex-shrink-0">
                       {item.status === 'Compliant' ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircleIcon className="h-5 w-5 text-green-600" />
                       ) : (
-                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
                       )}
                     </div>
                     <div className="ml-3">

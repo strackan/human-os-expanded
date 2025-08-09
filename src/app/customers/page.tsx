@@ -1,13 +1,5 @@
-"use client";
-import CustomerPageContainer from '@/components/customers/CustomerPageContainer';
-import { redirect, useSearchParams } from 'next/navigation';
+import CustomerList from '@/components/customers/CustomerList';
 
 export default function CustomersPage() {
-  const searchParams = useSearchParams();
-  const customerKey = searchParams.get("customer");
-  if (customerKey) {
-    redirect(`/customers/${customerKey}`);
-  }
-  // Optionally render a default customers list or message
-  return <div>Select a customer</div>;
+  return <CustomerList />;
 } 

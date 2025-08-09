@@ -1,11 +1,11 @@
-import { IconType } from 'react-icons';
+import { ComponentType } from 'react';
 
 export interface ChatStep {
   bot: string | string[];
   inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
   choices?: string[];
   progressStep?: number;
-  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string;
+  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string | string[] | { type: string; text: string; href: string; }[] | (string | { type: string; text: string; href: string; })[];
 }
 
 export interface ProgressStep {
@@ -21,7 +21,7 @@ export interface ChatWorkflowConfig {
   checklistItems: string[];
   recommendedAction: {
     label: string;
-    icon: IconType;
+    icon: ComponentType<Record<string, unknown>>;
   };
 }
 

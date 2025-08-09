@@ -47,7 +47,7 @@ export const renewalsChatSteps: ChatStep[] = [
     inputType: "choiceOrInput",
     choices: ["3%", "4%", "5%", "Other"],
     progressStep: 1, // Move from "Confirm renewal strategy" to "Confirm contacts"
-    onUser: (answer) => {
+    onUser: () => {
       return "Perfect. Now, let's confirm who should be involved in the renewal process.";
     }
   },
@@ -56,7 +56,7 @@ export const renewalsChatSteps: ChatStep[] = [
     inputType: "choiceOrInput",
     choices: ["Primary contact only", "Primary + Executive sponsor", "Full stakeholder list"],
     progressStep: 2, // Move from "Confirm contacts" to "Address risk"
-    onUser: (answer) => {
+    onUser: () => {
       return "Great! Now, let's review any potential risks or concerns...";
     }
   },

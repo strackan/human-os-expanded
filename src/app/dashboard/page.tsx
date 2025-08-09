@@ -8,7 +8,7 @@ export default function DashboardPage() {
             🎉 Authentication Working!
           </h2>
           <p className="text-gray-600">
-            You've successfully accessed the protected dashboard.
+            You&apos;ve successfully accessed the protected dashboard.
           </p>
           <p className="text-sm text-gray-500 mt-2">
             This page is protected by the layout-based auth guard.

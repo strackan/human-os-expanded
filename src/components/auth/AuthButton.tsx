@@ -2,7 +2,6 @@
 'use client'
 
 import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useAuth } from './AuthProvider'
 
@@ -10,7 +9,6 @@ export default function AuthButton() {
   const [loading, setLoading] = useState(false)
   const { user, signOut } = useAuth()
   const supabase = createClient()
-  const router = useRouter()
 
   const handleSignIn = async () => {
     console.log('🔐 handleSignIn called')

@@ -31,7 +31,7 @@ export async function GET() {
     const supabase = createServiceRoleClient()
     
     // Test basic connection
-    const { data, error } = await supabase.from('profiles').select('count').limit(1)
+    const { error } = await supabase.from('profiles').select('count').limit(1)
     
     if (error) {
       status.connection.status = 'Error'
@@ -48,7 +48,7 @@ export async function GET() {
       
       if (dbError) {
         // Fallback to direct query
-        const { data: fallbackData, error: fallbackError } = await supabase
+        const { error: fallbackError } = await supabase
           .from('profiles')
           .select('*')
           .limit(1)
@@ -71,7 +71,7 @@ export async function GET() {
 
     // Test auth configuration
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers()
+      const { error: authError } = await supabase.auth.admin.listUsers()
       
       if (authError) {
         status.auth.status = 'Error'

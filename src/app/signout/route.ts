@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     // Create response object
-    let response = NextResponse.next()
+    const response = NextResponse.next()
     
     // Create Supabase client using the same pattern as middleware
     const supabase = createServerClient(

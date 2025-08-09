@@ -29,11 +29,11 @@ export async function POST() {
   try {
     // Sign out from Supabase with timeout
     const signoutPromise = supabase.auth.signOut()
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise<never>((_, reject) => 
       setTimeout(() => reject(new Error('Server signout timeout')), 5000)
     )
     
-    const { error } = await Promise.race([signoutPromise, timeoutPromise]) as any
+    const { error } = await Promise.race([signoutPromise, timeoutPromise]) as { error: { message?: string } | null }
     
     if (error) {
       console.error('Sign out error:', error)

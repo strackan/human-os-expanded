@@ -8,46 +8,45 @@ export type AIPoweredLayoutProps = {
   customer: {
     name: string;
     arr: string;
-    stages: any[];
+    stages: Array<{
+      id: number;
+      name: string;
+      status: 'complete' | 'current' | 'upcoming';
+    }>;
   };
   stats: { label: string; value: string }[];
   aiInsights: { category: string; color: 'green' | 'blue' | 'purple' | 'red'; text: string }[];
-  miniCharts: { label: string; data: number[] }[];
-  contextByStep: any[][];
-  additionalSteps?: any[];
   aiTasks: { task: string; status: string; timeSaved: string }[];
-  riskLevel: string;
-  riskColor: string;
   chatConfig: {
     recommendedAction: { label: string; icon: string };
     botIntroMessage?: string;
     inputPlaceholder?: string;
   };
-  prevCustomer?: string;
   nextCustomer?: string;
 };
 
-const MiniSparklineChart: React.FC<{ data: number[] }> = ({ data }) => (
-  <svg width="60" height="24" viewBox="0 0 60 24" fill="none" className="overflow-visible">
-    <polyline
-      fill="none"
-      stroke="#3B82F6"
-      strokeWidth="2"
-      points={data
-        .map((d, i) => `${(i / (data.length - 1)) * 58 + 1},${23 - ((d - Math.min(...data)) / (Math.max(...data) - Math.min(...data) || 1)) * 20}`)
-        .join(" ")}
-    />
-  </svg>
-);
+// Unused components - keeping for potential future use
+// const MiniSparklineChart: React.FC<{ data: number[] }> = ({ data }) => (
+//   <svg width="60" height="24" viewBox="0 0 60 24" fill="none" className="overflow-visible">
+//     <polyline
+//       fill="none"
+//       stroke="#3B82F6"
+//       strokeWidth="2"
+//       points={data
+//         .map((d, i) => `${(i / (data.length - 1)) * 58 + 1},${23 - ((d - Math.min(...data)) / (Math.max(...data) - Math.min(...data) || 1)) * 20}`)
+//         .join(" ")}
+//     />
+//   </svg>
+// );
 
-const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="flex flex-col items-start bg-gray-50 rounded-lg p-4 min-w-[120px] min-h-[64px]">
-    <span className="text-xs text-gray-500 font-medium">{label}</span>
-    <span className="text-lg font-bold text-gray-900 mt-1">{value}</span>
-  </div>
-);
+// const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+//   <div className="flex flex-col items-start bg-gray-50 rounded-lg p-4 min-w-[120px] min-h-[64px]">
+//     <span className="text-xs text-gray-500 font-medium">{label}</span>
+//     <span className="text-lg font-bold text-gray-900 mt-1">{value}</span>
+//   </div>
+// );
 
-const StageTimeline: React.FC<{ stages: any[] }> = ({ stages }) => (
+const StageTimeline: React.FC<{ stages: AIPoweredLayoutProps['customer']['stages'] }> = ({ stages }) => (
   <div className="flex items-center space-x-4 mt-4">
     {stages.map((stage, idx) => (
       <div key={stage.id} className="flex flex-col items-center">
@@ -102,14 +101,8 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
   customer,
   stats,
   aiInsights,
-  miniCharts,
-  contextByStep,
-  additionalSteps = [],
   aiTasks,
-  riskLevel,
-  riskColor,
   chatConfig,
-  prevCustomer,
   nextCustomer,
 }) => {
   const router = useRouter();
@@ -118,7 +111,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
   const isDragging = useRef(false);
   const [mode, setMode] = useState<'pre-action' | 'chat'>('pre-action');
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<string[]>([]);
+  // const [answers] = useState<string[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [progressCollapsed, setProgressCollapsed] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState<string | null>(null);
@@ -149,7 +142,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
   }, []);
 
   // Drag handlers for vertical divider
-  const startDrag = (e: React.MouseEvent) => {
+  const startDrag = (_e: React.MouseEvent) => {
     isDragging.current = true;
     document.body.style.cursor = "col-resize";
     document.addEventListener("mousemove", handleDrag);
@@ -223,7 +216,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
                       <p className="font-medium mb-2">AI-Generated Email:</p>
                       <p>Subject: CloudForce Systems - Renewal Information</p>
                       <p className="mt-2">Dear Jordan,</p>
-                      <p className="mt-1">I hope this email finds you well. I wanted to reach out regarding your upcoming renewal on Nov 30, 2024. Based on your current usage of 85%, we're pleased to see your team is getting great value from our platform.</p>
+                      <p className="mt-1">I hope this email finds you well. I wanted to reach out regarding your upcoming renewal on Nov 30, 2024. Based on your current usage of 85%, we&apos;re pleased to see your team is getting great value from our platform.</p>
                       <p className="mt-1">Would you be available next week for a quick call to discuss the renewal process?</p>
                       <p className="mt-1">Best regards,<br/>Your CSM</p>
                       <div className="mt-3 flex justify-end">
@@ -302,7 +295,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
   );
 
   // ContextPanel
-  const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep }) => (
+  const ContextPanel: React.FC<{ currentStep: number }> = ({ currentStep: _currentStep }) => (
     <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col h-full w-full overflow-hidden">
       <div className="mb-4">
         <h3 className="text-xl font-bold mb-2">Key Metrics</h3>

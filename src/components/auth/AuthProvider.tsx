@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase' // ← Only imports client-side code
-import { User, Session, AuthError } from '@supabase/supabase-js'
+import { User } from '@supabase/supabase-js'
 import { Profile } from '@/lib/supabase'
 
 interface AuthContextType {
@@ -130,7 +130,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
           setTimeout(() => reject(new Error('Signout timeout')), 3000)
         )
         
-        const { error } = await Promise.race([signoutPromise, timeoutPromise]) as any
+        const { error } = await Promise.race([signoutPromise, timeoutPromise]) as { error: unknown }
         
         if (error) {
           console.error('❌ Client-side signout error:', error)
@@ -309,7 +309,7 @@ export default function AuthProvider({ children, initialUser }: AuthProviderProp
       console.log('🧹 Cleaning up auth subscription')
       subscription.unsubscribe()
     }
-  }, [supabase, initialUser])
+  }, [supabase, initialUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <AuthContext.Provider value={{ user, profile, loading, signOut, refreshSession }}>

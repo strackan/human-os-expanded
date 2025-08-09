@@ -3,23 +3,16 @@
 import { useState } from 'react';
 import { 
   MagnifyingGlassIcon,
-  ChevronUpDownIcon,
-  FunnelIcon,
   DocumentArrowDownIcon,
   DocumentCheckIcon,
   ExclamationTriangleIcon,
-  ScaleIcon,
   CurrencyDollarIcon,
-  ShieldExclamationIcon,
   SparklesIcon,
-  ChevronRightIcon,
-  LinkIcon,
   UserIcon,
-  CalendarIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
 import type { ForwardRefExoticComponent, SVGProps, RefAttributes } from 'react';
-import AIChatBox from '@/components/AIChatBox';
+
 import { useChat } from '@/context/ChatContext';
 
 type IconType = ForwardRefExoticComponent<Omit<SVGProps<SVGSVGElement>, "ref"> & { title?: string | undefined; titleId?: string | undefined; } & RefAttributes<SVGSVGElement>>;

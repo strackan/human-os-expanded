@@ -21,9 +21,9 @@ const ProcessingIndicator: React.FC<ProcessingIndicatorProps> = ({ title, messag
           <div
             className="progress-bar-fill bg-blue-600 progress-bar"
             style={{ width: `${progress}%` }}
-            aria-valuenow={progressValueStr}
-            aria-valuemin="0"
-            aria-valuemax="100"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
             role="progressbar"
             aria-label={`${title} progress`}
           ></div>

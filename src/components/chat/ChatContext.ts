@@ -30,7 +30,7 @@ export class ChatContext {
     this.userAnswers[currentStep.id] = input;
 
     // Process the response if there's a handler
-    let response = currentStep.handleResponse?.(input);
+    const response = currentStep.handleResponse?.(input);
 
     // Move to the next step
     this.currentStepIndex++;

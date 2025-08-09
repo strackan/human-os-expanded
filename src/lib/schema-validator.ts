@@ -1,7 +1,7 @@
 // Runtime schema validation
 // This ensures our TypeScript types match the actual database schema
 
-import { Customer, CustomerFormData } from '@/types/customer';
+// Removed unused imports
 
 export interface SchemaValidationResult {
   isValid: boolean;

@@ -11,7 +11,7 @@ interface Renewal {
   renewal_date: string;
   status: string;
   created_at: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export default function RenewalsPage() {

@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
-import { montecarlo } from '../montecarlo';
+import React from 'react';
 
 const MonteCarloSimulation = () => {
   // Component implementation will be moved here

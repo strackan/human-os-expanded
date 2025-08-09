@@ -1,6 +1,6 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { WorkflowType } from "../page"; // Adjust path as needed
+import { WorkflowType } from "../cloudforce/page";
 import NegotiationWorkflow from "../workflows/NegotiationWorkflow";
 import EmailWorkflow from "../workflows/EmailWorkflow";
 import MeetingWorkflow from "../workflows/MeetingWorkflow";

@@ -3,7 +3,11 @@ import { useState, useEffect } from "react";
 import AcmePage from "./AcmePage";
 import InitechPage from "./InitechPage";
 
-const customerComponents: Record<string, any> = {
+interface CustomerComponent {
+  onNextCustomer: (customerKey: string) => void;
+}
+
+const customerComponents: Record<string, React.ComponentType<CustomerComponent>> = {
   acme: AcmePage,
   initech: InitechPage,
 };

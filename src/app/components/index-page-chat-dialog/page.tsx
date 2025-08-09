@@ -1,5 +1,4 @@
 "use client";
-import { acmeCorpData } from "../../../data/customers";
 import IndexPageChatDialog, { ChatMessage } from "../../../components/customers/IndexPageChatDialog";
 import { useState } from "react";
 import Link from "next/link";

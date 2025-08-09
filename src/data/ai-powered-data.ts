@@ -67,7 +67,7 @@ export const cloudforceData = {
   chatConfig: {
     recommendedAction: {
       label: "Review AI Work",
-      icon: "RocketLaunchIcon"
+      icon: RocketLaunchIcon
     },
     botIntroMessage: "AI has completed several routine tasks for you. Review the automated work products and approve or edit as needed.",
     inputPlaceholder: "Ask about AI-completed tasks...",

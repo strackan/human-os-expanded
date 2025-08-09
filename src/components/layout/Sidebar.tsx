@@ -5,14 +5,14 @@ import { usePathname } from 'next/navigation';
 import {
   HomeIcon,
   ChartBarIcon,
-  DocumentTextIcon,
   Cog6ToothIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassCircleIcon,
   DocumentDuplicateIcon,
   LightBulbIcon,
-  TvIcon
+  TvIcon,
+  UserGroupIcon
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -29,42 +29,54 @@ interface SidebarProps {
 }
 
 const navigation: NavItem[] = [
-  { 
-    name: 'Home', 
-    href: '/', 
+  {
+    name: 'Home',
+    href: '/',
     icon: HomeIcon,
     description: 'Welcome page'
   },
-  { 
-    name: 'Insights', 
-    href: '/insights', 
+  {
+    name: 'Customers',
+    href: '/customers',
+    icon: UserGroupIcon,
+    description: 'Customer list'
+  },
+  {
+    name: 'Insights',
+    href: '/insights',
     icon: LightBulbIcon,
     description: 'Analytics and business insights'
   },
-  { 
-    name: 'Scenarios', 
-    href: '/scenarios', 
+  {
+    name: 'Scenarios',
+    href: '/scenarios',
     icon: MagnifyingGlassCircleIcon,
     description: 'Create and analyze different scenarios'
   },
-  { 
-    name: 'Contracts', 
-    href: '/contracts', 
+  {
+    name: 'Contracts',
+    href: '/contracts',
     icon: DocumentDuplicateIcon,
     description: 'Manage customer contracts'
   },
-  { 
-    name: 'Reports', 
-    href: '/reports', 
+  {
+    name: 'Reports',
+    href: '/reports',
     icon: ChartBarIcon,
     description: 'View and generate reports'
   },
-  { 
-    name: 'Demo', 
-    href: '/demo', 
+  {
+    name: 'Demo',
+    href: '/demo',
     icon: TvIcon,
-    description: 'Demo workflow example'
+    description: 'Demo and examples'
   },
+  {
+    name: 'Settings',
+    href: '/settings',
+    icon: Cog6ToothIcon,
+    description: 'Application settings'
+  }
 ];
 
 export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {

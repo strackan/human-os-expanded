@@ -28,11 +28,11 @@ export async function GET() {
     })
     
     return NextResponse.json({
-      authenticated: validation.isValid && !!validation.user,
-      user: validation.user ? {
-        id: validation.user.id,
-        email: validation.user.email,
-        created_at: validation.user.created_at
+      authenticated: validation.isValid && !!user,
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        created_at: user.created_at
       } : null,
       session: validation.session ? {
         access_token: validation.session.access_token ? 'present' : 'missing',
@@ -50,7 +50,7 @@ export async function GET() {
         isValid: validation.isValid,
         error: validation.error,
         sessionExists: !!validation.session,
-        userExists: !!validation.user
+        userExists: !!user
       },
       errors: {
         user: userError ? String(userError) : null,

@@ -69,3 +69,58 @@ export const getSession = async () => {
     return { session: null, error }
   }
 }
+
+// Helper function to get current session (alias for getSession)
+export const getCurrentSession = async () => {
+  return getSession()
+}
+
+// Helper function to validate session consistency
+export const validateSessionConsistency = async () => {
+  try {
+    const supabase = await createServerSupabaseClient()
+    const { data: { session }, error } = await supabase.auth.getSession()
+    
+    if (error) {
+      return { isValid: false, error }
+    }
+    
+    if (!session) {
+      return { isValid: false, error: new Error('No session found') }
+    }
+    
+    // Check if session is expired
+    if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
+      return { isValid: false, error: new Error('Session expired') }
+    }
+    
+    return { isValid: true, session }
+  } catch (error) {
+    console.error('Error validating session consistency:', error)
+    return { isValid: false, error }
+  }
+}
+
+// Helper function to check auth cookies
+export const checkAuthCookies = async () => {
+  try {
+    const cookieStore = await cookies()
+    const authCookies = cookieStore.getAll().filter(cookie => 
+      cookie.name.includes('auth') || cookie.name.includes('supabase')
+    )
+    
+    return {
+      hasAuthCookies: authCookies.length > 0,
+      cookieCount: authCookies.length,
+      cookies: authCookies
+    }
+  } catch (error) {
+    console.error('Error checking auth cookies:', error)
+    return {
+      hasAuthCookies: false,
+      cookieCount: 0,
+      cookies: [],
+      error
+    }
+  }
+}

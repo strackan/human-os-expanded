@@ -1,7 +1,6 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
-import '@/styles/progress-indicators.css';
 
 interface ScenarioDefinitionProps {
   scenarioName: string;
@@ -17,21 +16,21 @@ interface PriceActionDesignerProps {
   selectedSegments: string[];
 }
 
-interface ImpactVisualizationProps {
-  selectedSegments: string[];
-}
-
 const PriceIncreaseScenarioBuilder = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [scenarioName, setScenarioName] = useState('Q2 2025 Price Increase Strategy');
-  const [selectedSegments, setSelectedSegments] = useState<string[]>(['Enterprise', 'Mid-Market']);
+  const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
 
   const handleNextStep = () => {
-    setActiveStep(prevStep => Math.min(prevStep + 1, 4));
+    if (activeStep < 4) {
+      setActiveStep(activeStep + 1);
+    }
   };
 
   const handlePrevStep = () => {
-    setActiveStep(prevStep => Math.max(prevStep - 1, 1));
+    if (activeStep > 1) {
+      setActiveStep(activeStep - 1);
+    }
   };
 
   const renderStepContent = () => {
@@ -43,7 +42,7 @@ const PriceIncreaseScenarioBuilder = () => {
       case 3:
         return <PriceActionDesigner selectedSegments={selectedSegments} />;
       case 4:
-        return <ImpactVisualization selectedSegments={selectedSegments} />;
+        return <ImpactVisualization />;
       default:
         return null;
     }
@@ -204,7 +203,7 @@ const ScenarioDefinition: React.FC<ScenarioDefinitionProps> = ({ scenarioName, s
         </div>
         <div>
           <h3 className="text-sm font-medium text-blue-800">AI Suggestion</h3>
-          <p className="text-sm text-blue-700 mt-1">Based on your renewal patterns, we recommend focusing on Enterprise and Mid-Market segments for this quarter's price increase strategy.</p>
+          <p className="text-sm text-blue-700 mt-1">Based on your renewal patterns, we recommend focusing on Enterprise and Mid-Market segments for this quarter&apos;s price increase strategy.</p>
         </div>
       </div>
     </div>
@@ -462,16 +461,16 @@ const PriceActionDesigner: React.FC<PriceActionDesignerProps> = ({ selectedSegme
                 </div>
                 <div className="flex space-x-6">
                   <div className="text-center">
-                    <span className="block text-sm text-gray-600">Revenue Gain</span>
+                    <span className="text-sm text-gray-600">Revenue Gain</span>
                     <span className="text-green-600 font-medium">+ $609K</span>
                   </div>
                   <div className="text-center">
-                    <span className="block text-sm text-gray-600">Estimated Churn</span>
+                    <span className="text-sm text-gray-600">Estimated Churn</span>
                     <span className="text-red-600 font-medium">- 1.2%</span>
                   </div>
                   <div className="text-center">
-                    <span className="block text-sm text-gray-600">Net Impact</span>
-                    <span className="text-green-600 font-medium">+ $581K</span>
+                    <span className="text-sm text-gray-600">Net Impact</span>
+                    <span className="text-green-600 font-medium">+ $602K</span>
                   </div>
                 </div>
               </div>
@@ -483,7 +482,7 @@ const PriceActionDesigner: React.FC<PriceActionDesignerProps> = ({ selectedSegme
           <div className="border border-gray-200 rounded-md overflow-hidden">
             <div className="bg-gray-50 px-4 py-3 flex justify-between items-center">
               <h3 className="font-medium text-gray-800">Mid-Market Segment</h3>
-              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">147 customers • $3.7M ARR</span>
+              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">147 customers • $3.2M ARR</span>
             </div>
             <div className="p-4">
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -549,7 +548,7 @@ const PriceActionDesigner: React.FC<PriceActionDesignerProps> = ({ selectedSegme
   );
 };
 
-const ImpactVisualization: React.FC<ImpactVisualizationProps> = ({ selectedSegments }) => {
+const ImpactVisualization: React.FC = () => {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Review Impact</h2>
@@ -588,4 +587,4 @@ const ImpactVisualization: React.FC<ImpactVisualizationProps> = ({ selectedSegme
   );
 };
 
-export default PriceIncreaseScenarioBuilder;
+export default PriceIncreaseScenarioBuilder; 

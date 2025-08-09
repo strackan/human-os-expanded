@@ -30,8 +30,7 @@ export type CustomerRenewalLayoutProps = {
     label: string;
     data: number[];
   }[];
-  contextByStep: any[][];
-  additionalSteps?: any[];
+  // Removed unused contextByStep and additionalSteps properties
   riskLevel: string;
   riskColor: string;
   chatConfig: {
@@ -64,7 +63,7 @@ const Stat: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   </div>
 );
 
-const StageTimeline: React.FC<{ stages: any[] }> = ({ stages }) => (
+const StageTimeline: React.FC<{ stages: Array<{ id: number; name: string; status: string }> }> = ({ stages }) => (
   <div className="flex items-center space-x-4 mt-4">
     {stages.map((stage, idx) => (
       <div key={stage.id} className="flex flex-col items-center">

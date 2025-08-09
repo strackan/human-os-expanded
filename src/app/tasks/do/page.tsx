@@ -1,13 +1,13 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
-import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, HandRaisedIcon, ExclamationTriangleIcon, ClockIcon, CurrencyDollarIcon, BuildingOfficeIcon, UserGroupIcon, ChartBarIcon, DocumentTextIcon, PhoneIcon, EnvelopeIcon, CalendarIcon, ArrowRightIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, HandRaisedIcon, ExclamationTriangleIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { useRouter, useSearchParams } from 'next/navigation';
 import { WorkflowEngine, Customer, Workflow } from '../../../lib/workflowEngine';
 import { useDateContext } from '../../../context/DateContext';
 import '@/styles/resizable-divider.css';
 
 // Component for displaying customer information
-const CustomerCard = ({ customer }: { customer: Customer | null }) => {
+const CustomerCard = ({ customer }: { customer: Customer | Record<string, unknown> | null }) => {
   // Don't render if customer is not available
   if (!customer) {
     return (
@@ -43,22 +43,22 @@ const CustomerCard = ({ customer }: { customer: Customer | null }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900">{customer.name || 'Unknown Customer'}</h2>
+        <h2 className="text-xl font-semibold text-gray-900">{String(customer.name || 'Unknown Customer')}</h2>
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800`}>
-          {customer.tier || 'standard'}
+          {String(customer.tier || 'standard')}
         </span>
       </div>
       
       <div className="space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Industry:</span>
-          <span className="font-medium">{customer.industry || 'Not specified'}</span>
+          <span className="font-medium">{String(customer.industry || 'Not specified')}</span>
         </div>
         
         <div className="flex justify-between text-sm">
           <span className="text-gray-500">Health Score:</span>
-          <span className={`font-medium ${getHealthColor(customer.health_score || 0)}`}>
-            {customer.health_score || 0}/100
+          <span className={`font-medium ${getHealthColor(Number(customer.health_score) || 0)}`}>
+            {Number(customer.health_score) || 0}/100
           </span>
         </div>
         
@@ -66,7 +66,7 @@ const CustomerCard = ({ customer }: { customer: Customer | null }) => {
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Renewal Date:</span>
             <span className="font-medium">
-              {new Date(customer.renewal_date).toLocaleDateString()}
+              {new Date(String(customer.renewal_date)).toLocaleDateString()}
             </span>
           </div>
         )}
@@ -74,22 +74,22 @@ const CustomerCard = ({ customer }: { customer: Customer | null }) => {
         {customer.current_arr && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Current ARR:</span>
-            <span className="font-medium">${customer.current_arr.toLocaleString()}</span>
+            <span className="font-medium">${Number(customer.current_arr).toLocaleString()}</span>
           </div>
         )}
         
         {customer.risk_level && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Risk Level:</span>
-            <span className={`font-medium ${getRiskColor(customer.risk_level)}`}>
-              {customer.risk_level.charAt(0).toUpperCase() + customer.risk_level.slice(1)}
+            <span className={`font-medium ${getRiskColor(String(customer.risk_level))}`}>
+              {String(customer.risk_level).charAt(0).toUpperCase() + String(customer.risk_level).slice(1)}
             </span>
           </div>
         )}
         
         {customer.primary_contact_name && (
           <div className="text-sm text-gray-500">
-            Contact: {customer.primary_contact_name}
+            Contact: {String(customer.primary_contact_name)}
           </div>
         )}
       </div>
@@ -239,9 +239,9 @@ export default function TaskManagementPage() {
   const searchParams = useSearchParams();
   const { currentDate, isDateOverridden, clearOverride } = useDateContext();
   const [currentTask, setCurrentTask] = useState<{
-    customer: Customer | any;
+    customer: Customer | Record<string, unknown>;
     workflow: Workflow | null;
-    task: any;
+    task: Record<string, unknown>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,7 +259,7 @@ export default function TaskManagementPage() {
     } else {
       loadNextTask();
     }
-  }, [customerId, isLaunchMode, currentDate]);
+  }, [customerId, isLaunchMode, currentDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize panel width on mount
   useEffect(() => {
@@ -289,7 +289,7 @@ export default function TaskManagementPage() {
       // Generate workflow for this customer
       const workflow = WorkflowEngine.generateWorkflow(customer);
       
-      setCurrentTask({ customer, workflow, task: null });
+      setCurrentTask({ customer, workflow, task: {} });
     } catch (err) {
       setError('Failed to load customer workflow');
       console.error('Error loading customer workflow:', err);
@@ -330,7 +330,7 @@ export default function TaskManagementPage() {
           const customerData = await customerResponse.json();
           customer = customerData.customers.find((c: Customer) => c.id === data.task.customer_id) || null;
         }
-      } catch (e) {
+      } catch {
         // fallback: no customer
       }
 
@@ -355,7 +355,7 @@ export default function TaskManagementPage() {
   };
 
   const handleCompleteTask = async () => {
-    if (!currentTask) return;
+    if (!currentTask || !currentTask.workflow) return;
     
     setCompleting(true);
     try {
@@ -380,19 +380,19 @@ export default function TaskManagementPage() {
   };
 
   const handleStepComplete = (stepId: string) => {
-    if (!currentTask) return;
+    if (!currentTask || !currentTask.workflow) return;
     
     const updatedWorkflow = {
       ...currentTask.workflow,
       steps: currentTask.workflow.steps.map(step =>
         step.id === stepId ? { ...step, completed: !step.completed } : step
       )
-    };
+    } as Workflow;
     
     setCurrentTask({ ...currentTask, workflow: updatedWorkflow });
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = () => {
     isDragging.current = true;
     document.body.classList.add('resizing');
     document.addEventListener('mousemove', handleMouseMove);
@@ -475,17 +475,17 @@ export default function TaskManagementPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow p-8 max-w-lg w-full">
-          <h2 className="text-xl font-bold mb-2">Task: {t.task_name || t.name || 'Unnamed Task'}</h2>
-          <div className="mb-2 text-gray-700">{t.task_description || t.description || 'No description.'}</div>
-          <div className="mb-2"><b>Status:</b> {t.status}</div>
-          <div className="mb-2"><b>Customer:</b> {t.customer_name || t.customer_id}</div>
-          <div className="mb-2"><b>Renewal Date:</b> {t.renewal_date}</div>
-          <div className="mb-2"><b>Phase:</b> {t.phase}</div>
-          <div className="mb-2"><b>Action Score:</b> {t.action_score}</div>
-          <div className="mb-2"><b>Days to Deadline:</b> {t.days_to_deadline}</div>
-          <div className="mb-2"><b>Is Overdue:</b> {t.is_overdue ? 'Yes' : 'No'}</div>
-          <div className="mb-2"><b>Complexity:</b> {t.complexity_score}</div>
-          <div className="mb-2"><b>Current ARR:</b> {t.current_arr}</div>
+          <h2 className="text-xl font-bold mb-2">Task: {String(t.task_name || t.name || 'Unnamed Task')}</h2>
+          <div className="mb-2 text-gray-700">{String(t.task_description || t.description || 'No description.')}</div>
+          <div className="mb-2"><b>Status:</b> {String(t.status || 'Unknown')}</div>
+          <div className="mb-2"><b>Customer:</b> {String(t.customer_name || t.customer_id || 'Unknown')}</div>
+          <div className="mb-2"><b>Renewal Date:</b> {String(t.renewal_date || 'Unknown')}</div>
+          <div className="mb-2"><b>Phase:</b> {String(t.phase || 'Unknown')}</div>
+          <div className="mb-2"><b>Action Score:</b> {String(t.action_score || 'Unknown')}</div>
+          <div className="mb-2"><b>Days to Deadline:</b> {String(t.days_to_deadline || 'Unknown')}</div>
+          <div className="mb-2"><b>Is Overdue:</b> {String(t.is_overdue ? 'Yes' : 'No')}</div>
+          <div className="mb-2"><b>Complexity:</b> {String(t.complexity_score || 'Unknown')}</div>
+          <div className="mb-2"><b>Current ARR:</b> {String(t.current_arr || 'Unknown')}</div>
           <div className="mt-4 text-xs text-gray-400">(Basic fallback view: workflow not available)</div>
         </div>
       </div>

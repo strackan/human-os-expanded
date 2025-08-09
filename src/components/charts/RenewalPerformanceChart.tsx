@@ -15,12 +15,30 @@ interface Props {
   data: DataPoint[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    dataKey: string;
+    name: string;
+    value: number | string;
+    color: string;
+  }>;
+  label?: string;
+}
+
+interface LegendProps {
+  payload?: Array<{
+    value: string;
+    color: string;
+  }>;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="chart-tooltip rounded bg-white/80 backdrop-blur px-2 py-1 text-xs text-gray-900 border border-gray-200">
       <div className="font-semibold mb-1">{label}</div>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.dataKey} className="flex items-center gap-2 mb-0.5">
           <span className="chart-tooltip-label" style={{ color: entry.color }}>{entry.name}:</span>
           <span className="ml-auto">{typeof entry.value === 'number' ? entry.value : ''}</span>
@@ -30,12 +48,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const TwoColumnLegend = (props: any) => {
+const TwoColumnLegend = (props: LegendProps) => {
   const { payload } = props;
   if (!payload) return null;
   return (
     <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 py-2">
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.value} className="flex items-center min-w-[120px]">
           <span className="chart-legend-dot" style={{ background: entry.color }} />
           <span className="chart-legend-label" style={{ color: entry.color }}>{entry.value}</span>
@@ -46,7 +64,7 @@ const TwoColumnLegend = (props: any) => {
 };
 
 const RenewalPerformanceChart: React.FC<Props> = ({ data }) => {
-  const [legendPayload, setLegendPayload] = useState<any[]>([]);
+  const [legendPayload, setLegendPayload] = useState<LegendProps['payload']>([]);
 
   return (
     <div className="flex flex-col h-full min-h-[350px]">
@@ -55,9 +73,19 @@ const RenewalPerformanceChart: React.FC<Props> = ({ data }) => {
           <BarChart
             data={data}
             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-            onMouseEnter={({ chartName, payload }: any) => setLegendPayload(payload)}
+            onMouseEnter={() => setLegendPayload([
+              { value: 'Time to Close (days)', color: '#6366f1' },
+              { value: 'Price Increase %', color: '#2563eb' },
+              { value: 'Renewal Rate', color: '#059669' },
+              { value: 'NRG', color: '#f59e42' },
+            ])}
             onMouseLeave={() => setLegendPayload([])}
-            onMouseMove={({ chartName, payload }: any) => setLegendPayload(payload)}
+            onMouseMove={() => setLegendPayload([
+              { value: 'Time to Close (days)', color: '#6366f1' },
+              { value: 'Price Increase %', color: '#2563eb' },
+              { value: 'Renewal Rate', color: '#059669' },
+              { value: 'NRG', color: '#f59e42' },
+            ])}
           >
             <XAxis dataKey="segment" className="text-xs" />
             <YAxis className="text-xs" />

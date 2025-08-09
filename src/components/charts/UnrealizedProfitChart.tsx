@@ -25,8 +25,8 @@ const UnrealizedProfitChart: React.FC<Props> = ({ data }) => {
           <BarChart data={data} margin={{ top: 10, right: 10, left: 10, bottom: 30 }}>
             <XAxis dataKey="quarter" className="text-xs" />
             <YAxis className="text-xs" tickFormatter={v => `$${(v/1000).toFixed(0)}k`} />
-            <Bar dataKey="delta" name="Money Left on the Table" radius={[4, 4, 0, 0]} onClick={(_, idx) => setSelected(data[idx])} cursor="pointer">
-              {data.map((entry, idx) => (
+            <Bar dataKey="delta" name="Money Left on the Table" radius={[4, 4, 0, 0]} onClick={(_, index) => setSelected(data[index])} cursor="pointer">
+              {data.map((entry) => (
                 <Cell key={entry.quarter} fill={selected.quarter === entry.quarter ? '#059669' : '#6366f1'} />
               ))}
             </Bar>

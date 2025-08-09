@@ -1,15 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronRightIcon } from '@heroicons/react/20/solid';
-import { SparklesIcon, ChartBarIcon, UserGroupIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, ChartBarIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
 import '@/styles/progress-indicators.css';
 
 interface ActionType {
   id: string;
   name: string;
   description: string;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   inputType: 'percentage' | 'currency' | 'number';
 }
 
@@ -37,12 +36,35 @@ const AVAILABLE_ACTIONS: ActionType[] = [
   }
 ];
 
+interface AnalysisResults {
+  revenue: {
+    current: number;
+    projected: number;
+    percentageIncrease: number;
+  };
+  churn: {
+    current: number;
+    projected: number;
+    confidence: number;
+  };
+  nps: {
+    current: number;
+    projected: number;
+    confidence: number;
+  };
+  recommendations: Array<{
+    title: string;
+    description: string;
+    confidence: number;
+  }>;
+}
+
 const ScenarioModeling = () => {
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
   const [actionValue, setActionValue] = useState<string>('');
   const [selectedSegments, setSelectedSegments] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<any>(null);
+  const [analysisResults, setAnalysisResults] = useState<AnalysisResults | null>(null);
 
   const handleAnalyze = () => {
     setIsAnalyzing(true);
@@ -255,7 +277,7 @@ const ScenarioModeling = () => {
                     <div className="bg-blue-50 rounded-lg p-6">
                       <h3 className="text-lg font-semibold text-blue-900 mb-4">AI Recommendations</h3>
                       <div className="space-y-4">
-                        {analysisResults.recommendations.map((rec: any, index: number) => (
+                        {analysisResults.recommendations.map((rec, index: number) => (
                           <div key={index} className="flex items-start">
                             <SparklesIcon className="h-5 w-5 text-blue-500 mt-1 mr-3" />
                             <div>

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   }
   
   const cookieStore = await cookies()
-  let response = NextResponse.json({ success: true, message: 'Signed out successfully', scope })
+  const response = NextResponse.json({ success: true, message: 'Signed out successfully', scope })
   
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

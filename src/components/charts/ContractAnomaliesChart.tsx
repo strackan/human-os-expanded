@@ -13,12 +13,30 @@ interface Props {
   data: DataPoint[];
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    dataKey: string;
+    name: string;
+    value: number | string;
+    color: string;
+  }>;
+  label?: string;
+}
+
+interface LegendProps {
+  payload?: Array<{
+    value: string;
+    color: string;
+  }>;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   return (
     <div className="chart-tooltip rounded bg-white/80 backdrop-blur px-2 py-1 text-xs text-gray-900 border border-gray-200">
       <div className="font-semibold mb-1">{label}</div>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.dataKey} className="flex items-center gap-2 mb-0.5">
           <span className="chart-tooltip-label" style={{ color: entry.color }}>{entry.name}:</span>
           <span className="ml-auto">{typeof entry.value === 'number' ? entry.value : ''}</span>
@@ -28,12 +46,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
-const TwoColumnLegend = (props: any) => {
+const TwoColumnLegend = (props: LegendProps) => {
   const { payload } = props;
   if (!payload) return null;
   return (
     <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 py-2">
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.value} className="flex items-center min-w-[120px]">
           <span className="chart-legend-dot" style={{ background: entry.color }} />
           <span className="chart-legend-label" style={{ color: entry.color }}>{entry.value}</span>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChatStep } from "./chatWorkflow";
+import { ChatStep } from "../../src/types/chat";
 
 interface ConversationalChatProps {
   steps: ChatStep[];
@@ -10,8 +10,6 @@ interface ConversationalChatProps {
   onInputChange: (val: string) => void;
   input: string;
   setPrice?: (price: number) => void;
-  lastContractCheckAnswer?: string | null;
-  setLastContractCheckAnswer?: (val: string) => void;
   onMultiStepAdvance: (nextStep: number, updatedAnswers: string[]) => void;
 }
 
@@ -32,11 +30,9 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   onInputChange,
   input,
   setPrice,
-  lastContractCheckAnswer,
-  setLastContractCheckAnswer,
   onMultiStepAdvance,
 }) => {
-  const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([
+  const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string | { type: string; text: string; href: string } }[]>([
     steps && steps.length > 0 && steps[0] && steps[0].bot
       ? { role: 'bot', text: typeof steps[0].bot === 'string' ? steps[0].bot : steps[0].bot[0] }
       : { role: 'bot', text: "Welcome! (No chat steps configured.)" }
@@ -69,7 +65,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   };
 
   useEffect(() => {
-    if (step < localStep) {
+    if (step !== localStep) {
       setHistory(prev => {
         let idx = prev.findIndex(
           (msg, i) => msg.role === 'bot' && (msg.text === (typeof steps[step].bot === 'string' ? steps[step].bot : steps[step].bot[0])) && i > 0
@@ -79,7 +75,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       });
       setLocalStep(step);
     }
-  }, [step]);
+  }, [step, localStep, steps]);
 
   const stakeholderStepIndex = steps.findIndex(s => s.inputType === 'emailOrSkip');
   const contractCheckStepIndex = steps.findIndex(s => Array.isArray(s.bot) && s.bot.some(b => typeof b === 'string' && b.includes('price increase limits')));
@@ -134,7 +130,6 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       } else {
         addBotMessage(botAck);
       }
-      if (setLastContractCheckAnswer) setLastContractCheckAnswer(choice.trim());
       const updatedAnswers = [...answers];
       updatedAnswers[localStep] = choice;
       updatedAnswers[localStep + 1] = '3';
@@ -185,9 +180,6 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     } else {
       addBotMessage(botAck);
     }
-    if (typeof setLastContractCheckAnswer === 'function' && localStep === 1) {
-      setLastContractCheckAnswer(choice.trim());
-    }
     setLocalStep(s => s + 1);
     setTimeout(() => {
       if (localStep + 1 < steps.length) {
@@ -196,7 +188,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
           addBotMessage(nextBot);
         } else if (Array.isArray(nextBot)) {
           let delay = 0;
-          nextBot.forEach((msg, idx) => {
+          nextBot.forEach((msg) => {
             setTimeout(() => {
               addBotMessage(msg);
             }, delay);
@@ -213,9 +205,8 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Debug log for form submission
-    // @ts-ignore
     console.log('DEBUG: handleSubmit called', {
-      eventType: e.nativeEvent?.type,
+      eventType: e.type,
       inputValue: input,
       isStakeholderStep,
       localStep,
@@ -250,12 +241,13 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   };
 
   // Helper to add a bot message with typing effect
-  const addBotMessage = (msg: string) => {
+  const addBotMessage = (msg: string | { type: string; text: string; href: string }) => {
     setIsBotTyping(true);
     setTimeout(() => {
-      setHistory(prev => [...prev, { role: 'bot', text: msg }]);
+      const textToAdd = typeof msg === 'string' ? msg : msg.text;
+      setHistory(prev => [...prev, { role: 'bot', text: textToAdd }]);
       setIsBotTyping(false);
-    }, Math.max(600, Math.min(2000, msg.length * 30)));
+    }, Math.max(600, Math.min(2000, (typeof msg === 'string' ? msg : msg.text).length * 30)));
   };
 
   return (
@@ -277,7 +269,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
             );
           }
           // If it's a link object
-          if (typeof msg.text === 'object' && msg.text.type === 'link') {
+          if (typeof msg.text === 'object' && 'type' in msg.text && msg.text.type === 'link' && 'href' in msg.text && 'text' in msg.text) {
             return (
               <div key={i} className="text-center mt-4">
                 <a
@@ -329,7 +321,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
                 : 'flex gap-2'
             }>
               {currentStep.choices.length === 2
-                ? [...currentStep.choices].reverse().map((choice, idx) => (
+                ? [...currentStep.choices].reverse().map((choice) => (
                     <button
                       key={choice}
                       type="button"

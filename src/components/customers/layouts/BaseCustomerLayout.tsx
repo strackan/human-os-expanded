@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
-import CustomerChatDialog, { ChatMessage } from "../shared/CustomerChatDialog";
+import CustomerChatDialog from "../shared/CustomerChatDialog";
 import { useRouter } from 'next/navigation';
 import { useChatWorkflow } from '../../../hooks/useChatWorkflow';
 import '@/styles/resizable-divider.css';

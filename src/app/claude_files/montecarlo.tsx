@@ -248,7 +248,7 @@ const ParametersTab = () => {
               <div>
                 <h3 className="text-sm font-medium text-blue-800">AI Parameter Suggestion</h3>
                 <p className="text-sm text-blue-700 mt-1">
-                  Based on your historical data, we recommend adding "Feature Usage Rate" as a variable, as it has strong correlation with churn risk during price increases.
+                  Based on your historical data, we recommend adding &quot;Feature Usage Rate&quot; as a variable, as it has strong correlation with churn risk during price increases.
                 </p>
                 <button className="mt-2 text-sm text-blue-800 font-medium hover:text-blue-900">Add Suggested Variable</button>
               </div>

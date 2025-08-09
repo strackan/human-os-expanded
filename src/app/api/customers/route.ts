@@ -1,90 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-interface Customer {
-  id: string;
-  name: string;
-  industry: string;
-  tier: string;
-  health_score: number;
-  primary_contact_name?: string;
-  primary_contact_email?: string;
-  renewal_date?: string;
-  current_arr?: number;
-  risk_level?: string;
-}
-
-// Mock data for development - this will be replaced with database queries
-let mockCustomers: Customer[] = [
-  {
-    id: "customer-1",
-    name: "Acme Corporation",
-    industry: "Technology",
-    tier: "enterprise",
-    health_score: 85,
-    primary_contact_name: "Sarah Johnson",
-    primary_contact_email: "sarah@acme.com",
-    renewal_date: "2024-08-15",
-    current_arr: 450000,
-    risk_level: "low"
-  },
-  {
-    id: "customer-2",
-    name: "RiskyCorp",
-    industry: "Manufacturing",
-    tier: "premium",
-    health_score: 45,
-    primary_contact_name: "John Smith",
-    primary_contact_email: "john@riskycorp.com",
-    renewal_date: "2024-07-30",
-    current_arr: 380000,
-    risk_level: "high"
-  },
-  {
-    id: "customer-3",
-    name: "TechStart Inc",
-    industry: "SaaS",
-    tier: "standard",
-    health_score: 72,
-    primary_contact_name: "Mike Chen",
-    primary_contact_email: "mike@techstart.com",
-    renewal_date: "2024-09-20",
-    current_arr: 120000,
-    risk_level: "medium"
-  },
-  {
-    id: "customer-4",
-    name: "Global Solutions",
-    industry: "Consulting",
-    tier: "enterprise",
-    health_score: 92,
-    primary_contact_name: "Lisa Wang",
-    primary_contact_email: "lisa@globalsolutions.com",
-    renewal_date: "2024-10-05",
-    current_arr: 750000,
-    risk_level: "low"
-  },
-  {
-    id: "customer-5",
-    name: "StartupXYZ",
-    industry: "Fintech",
-    tier: "standard",
-    health_score: 35,
-    primary_contact_name: "Alex Rodriguez",
-    primary_contact_email: "alex@startupxyz.com",
-    renewal_date: "2024-07-15",
-    current_arr: 85000,
-    risk_level: "critical"
-  }
-];
+import { mockCustomers } from '@/data/mockCustomers';
+import { Customer } from '@/data/mockCustomers';
 
 export async function GET(request: NextRequest) {
   try {
-    // In a real implementation, this would query the database
-    // SELECT * FROM customers ORDER BY name
-    
-    return NextResponse.json({ 
-      customers: mockCustomers,
-      count: mockCustomers.length
+    const { searchParams } = new URL(request.url);
+    const search = (searchParams.get('search') || '').toLowerCase();
+    const sort = searchParams.get('sort') || 'name';
+    const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc';
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+
+    const filtered = mockCustomers.filter(c =>
+      c.name.toLowerCase().includes(search) ||
+      c.industry.toLowerCase().includes(search)
+    );
+
+    filtered.sort((a: Customer, b: Customer) => {
+      const aVal = (a as any)[sort as keyof Customer];
+      const bVal = (b as any)[sort as keyof Customer];
+      if (aVal === undefined || bVal === undefined) return 0;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return order === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return order === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      return 0;
+    });
+
+    const total = filtered.length;
+    const start = (page - 1) * pageSize;
+    const paginated = filtered.slice(start, start + pageSize);
+
+    return NextResponse.json({
+      customers: paginated,
+      page,
+      pageSize,
+      count: total,
+      totalPages: Math.ceil(total / pageSize)
     });
   } catch (error) {
     console.error('Error fetching customers:', error);
@@ -98,7 +52,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Validate required fields
     if (!body.name) {
       return NextResponse.json(
@@ -107,29 +61,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // In a real implementation, this would insert into the database
-    // INSERT INTO customers (name, industry, tier, health_score, ...) VALUES (...)
-    
     const newCustomer: Customer = {
       id: `customer-${Date.now()}`, // Generate unique ID
       name: body.name,
       industry: body.industry || '',
       tier: body.tier || 'standard',
       health_score: body.health_score || 50,
-      primary_contact_name: body.primary_contact_name,
-      primary_contact_email: body.primary_contact_email,
-      renewal_date: body.renewal_date,
-      current_arr: body.current_arr ? parseFloat(body.current_arr) : undefined,
-      risk_level: body.risk_level || 'medium'
+      renewal_date: body.renewal_date || new Date().toISOString().split('T')[0],
+      current_arr: body.current_arr ? parseFloat(body.current_arr) : 0,
+      usage: body.usage ? parseFloat(body.usage) : 0,
+      nps_score: body.nps_score ? parseFloat(body.nps_score) : 0
     };
 
     // Add to mock data
     mockCustomers.push(newCustomer);
 
-    return NextResponse.json({ 
-      customer: newCustomer,
-      message: 'Customer created successfully'
-    }, { status: 201 });
+    return NextResponse.json(
+      { customer: newCustomer, message: 'Customer created successfully' },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error creating customer:', error);
     return NextResponse.json(

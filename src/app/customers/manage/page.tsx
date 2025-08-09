@@ -45,7 +45,7 @@ export default function CustomerManagePage() {
   // Load customers on component mount
   useEffect(() => {
     loadCustomers();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filter customers when search date changes
   useEffect(() => {
