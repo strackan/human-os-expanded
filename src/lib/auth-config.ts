@@ -9,6 +9,7 @@ export const AUTH_CONFIG = {
     '/auth/callback', 
     '/auth/signout',
     '/clear-cookies.html',
+    '/debug-auth', // Add debug page
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml'

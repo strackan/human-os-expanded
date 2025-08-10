@@ -331,5 +331,6 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-redirect_uri = "http://localhost:54321/auth/v1/callback"
+# Don't override redirect_uri - let Supabase handle it automatically
+# redirect_uri = ""
 skip_nonce_check = true

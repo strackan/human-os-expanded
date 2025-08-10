@@ -1,5 +1,5 @@
--- Consolidated seed data for public schema (migrated from MVP)
--- This replaces both the old public seed data and incorporates MVP data
+-- Consolidated seed data for public schema
+-- This uses the consolidated public schema with all 15 customers from mockCustomers
 
 -- Clear existing data to ensure clean seed
 TRUNCATE TABLE public.notes CASCADE;
@@ -10,29 +10,127 @@ TRUNCATE TABLE public.contracts CASCADE;
 TRUNCATE TABLE public.alerts CASCADE;
 TRUNCATE TABLE public.contacts CASCADE;
 TRUNCATE TABLE public.customers CASCADE;
+TRUNCATE TABLE public.customer_properties CASCADE;
 
--- Insert customers (migrated from MVP schema with updated structure)
-INSERT INTO public.customers (id, name, domain, industry, health_score, current_arr, renewal_date, assigned_to, created_at, updated_at) VALUES
-('550e8400-e29b-41d4-a716-446655440010', 'ACME Corporation', 'acme.com', 'Technology', 85, 250000, '2024-12-31', NULL, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440011', 'Initech', 'initech.com', 'Financial Services', 72, 180000, '2024-11-15', NULL, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440012', 'Risky Corp', 'riskycorp.com', 'Healthcare', 45, 95000, '2024-10-20', NULL, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440013', 'TechVision', 'techvision.com', 'Manufacturing', 68, 120000, '2024-09-30', NULL, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440014', 'DataOne Solutions', 'dataone.com', 'Technology', 92, 320000, '2024-08-15', NULL, NOW(), NOW());
+-- Insert customers from mockCustomers data into public schema
+INSERT INTO public.customers (id, name, domain, industry, health_score, current_arr, renewal_date, primary_contact_name, primary_contact_email, created_at, updated_at) VALUES
+-- Customer 1: Acme Corporation
+('550e8400-e29b-41d4-a716-446655440001', 'Acme Corporation', 'acmecorp.com', 'Technology', 85, 450000, '2024-08-15', 'John Smith', 'john.smith@acmecorp.com', NOW(), NOW()),
+-- Customer 2: RiskyCorp
+('550e8400-e29b-41d4-a716-446655440002', 'RiskyCorp', 'riskycorp.com', 'Manufacturing', 45, 380000, '2024-07-30', 'Sarah Johnson', 'sarah.johnson@riskycorp.com', NOW(), NOW()),
+-- Customer 3: TechStart Inc
+('550e8400-e29b-41d4-a716-446655440003', 'TechStart Inc', 'techstart.com', 'SaaS', 72, 120000, '2024-09-20', 'Michael Chen', 'michael.chen@techstart.com', NOW(), NOW()),
+-- Customer 4: Global Solutions
+('550e8400-e29b-41d4-a716-446655440004', 'Global Solutions', 'globalsolutions.com', 'Consulting', 92, 750000, '2024-10-05', 'Emily Davis', 'emily.davis@globalsolutions.com', NOW(), NOW()),
+-- Customer 5: StartupXYZ
+('550e8400-e29b-41d4-a716-446655440005', 'StartupXYZ', 'startupxyz.com', 'Fintech', 35, 85000, '2024-07-15', 'David Wilson', 'david.wilson@startupxyz.com', NOW(), NOW()),
+-- Customer 6: Nimbus Analytics
+('550e8400-e29b-41d4-a716-446655440006', 'Nimbus Analytics', 'nimbusanalytics.com', 'Analytics', 67, 210000, '2024-11-12', 'Lisa Rodriguez', 'lisa.rodriguez@nimbusanalytics.com', NOW(), NOW()),
+-- Customer 7: Venture Partners
+('550e8400-e29b-41d4-a716-446655440007', 'Venture Partners', 'venturepartners.com', 'Finance', 78, 540000, '2024-12-01', 'Robert Taylor', 'robert.taylor@venturepartners.com', NOW(), NOW()),
+-- Customer 8: Horizon Systems
+('550e8400-e29b-41d4-a716-446655440008', 'Horizon Systems', 'horizonsystems.com', 'Healthcare', 55, 305000, '2024-06-25', 'Jennifer Brown', 'jennifer.brown@horizonsystems.com', NOW(), NOW()),
+-- Customer 9: Quantum Soft
+('550e8400-e29b-41d4-a716-446655440009', 'Quantum Soft', 'quantumsoft.com', 'Software', 82, 190000, '2024-09-10', 'Mark Anderson', 'mark.anderson@quantumsoft.com', NOW(), NOW()),
+-- Customer 10: Apex Media
+('550e8400-e29b-41d4-a716-446655440010', 'Apex Media', 'apexmedia.com', 'Media', 64, 150000, '2024-08-05', 'Amanda White', 'amanda.white@apexmedia.com', NOW(), NOW()),
+-- Customer 11: Stellar Networks
+('550e8400-e29b-41d4-a716-446655440011', 'Stellar Networks', 'stellarnetworks.com', 'Telecom', 88, 620000, '2024-10-22', 'Chris Martinez', 'chris.martinez@stellarnetworks.com', NOW(), NOW()),
+-- Customer 12: FusionWare
+('550e8400-e29b-41d4-a716-446655440012', 'FusionWare', 'fusionware.com', 'Technology', 58, 97000, '2024-07-08', 'Nicole Garcia', 'nicole.garcia@fusionware.com', NOW(), NOW()),
+-- Customer 13: Dynamic Ventures
+('550e8400-e29b-41d4-a716-446655440013', 'Dynamic Ventures', 'dynamicventures.com', 'Retail', 49, 130000, '2024-11-30', 'Kevin Lee', 'kevin.lee@dynamicventures.com', NOW(), NOW()),
+-- Customer 14: Prime Holdings
+('550e8400-e29b-41d4-a716-446655440014', 'Prime Holdings', 'primeholdings.com', 'Logistics', 83, 410000, '2024-12-15', 'Rachel Kim', 'rachel.kim@primeholdings.com', NOW(), NOW()),
+-- Customer 15: BetaWorks
+('550e8400-e29b-41d4-a716-446655440015', 'BetaWorks', 'betaworks.com', 'Education', 61, 110000, '2024-09-05', 'Thomas Jackson', 'thomas.jackson@betaworks.com', NOW(), NOW());
 
--- Insert contacts (migrated from MVP schema)
+-- Insert customer properties for additional fields (tier, usage, nps_score) from mockCustomers
+INSERT INTO public.customer_properties (customer_id, usage_score, health_score, nps_score, current_arr, created_at, last_updated) VALUES
+-- Customer 1: Acme Corporation (enterprise, usage: 92, nps: 45)
+('550e8400-e29b-41d4-a716-446655440001', 92, 85, 45, 450000, NOW(), NOW()),
+-- Customer 2: RiskyCorp (premium, usage: 65, nps: -10)
+('550e8400-e29b-41d4-a716-446655440002', 65, 45, -10, 380000, NOW(), NOW()),
+-- Customer 3: TechStart Inc (standard, usage: 70, nps: 30)
+('550e8400-e29b-41d4-a716-446655440003', 70, 72, 30, 120000, NOW(), NOW()),
+-- Customer 4: Global Solutions (enterprise, usage: 88, nps: 60)
+('550e8400-e29b-41d4-a716-446655440004', 88, 92, 60, 750000, NOW(), NOW()),
+-- Customer 5: StartupXYZ (standard, usage: 50, nps: -20)
+('550e8400-e29b-41d4-a716-446655440005', 50, 35, -20, 85000, NOW(), NOW()),
+-- Customer 6: Nimbus Analytics (premium, usage: 80, nps: 25)
+('550e8400-e29b-41d4-a716-446655440006', 80, 67, 25, 210000, NOW(), NOW()),
+-- Customer 7: Venture Partners (enterprise, usage: 74, nps: 15)
+('550e8400-e29b-41d4-a716-446655440007', 74, 78, 15, 540000, NOW(), NOW()),
+-- Customer 8: Horizon Systems (premium, usage: 60, nps: 5)
+('550e8400-e29b-41d4-a716-446655440008', 60, 55, 5, 305000, NOW(), NOW()),
+-- Customer 9: Quantum Soft (standard, usage: 85, nps: 40)
+('550e8400-e29b-41d4-a716-446655440009', 85, 82, 40, 190000, NOW(), NOW()),
+-- Customer 10: Apex Media (standard, usage: 77, nps: 20)
+('550e8400-e29b-41d4-a716-446655440010', 77, 64, 20, 150000, NOW(), NOW()),
+-- Customer 11: Stellar Networks (enterprise, usage: 91, nps: 55)
+('550e8400-e29b-41d4-a716-446655440011', 91, 88, 55, 620000, NOW(), NOW()),
+-- Customer 12: FusionWare (premium, usage: 63, nps: 10)
+('550e8400-e29b-41d4-a716-446655440012', 63, 58, 10, 97000, NOW(), NOW()),
+-- Customer 13: Dynamic Ventures (standard, usage: 57, nps: -5)
+('550e8400-e29b-41d4-a716-446655440013', 57, 49, -5, 130000, NOW(), NOW()),
+-- Customer 14: Prime Holdings (enterprise, usage: 86, nps: 35)
+('550e8400-e29b-41d4-a716-446655440014', 86, 83, 35, 410000, NOW(), NOW()),
+-- Customer 15: BetaWorks (standard, usage: 72, nps: 18)
+('550e8400-e29b-41d4-a716-446655440015', 72, 61, 18, 110000, NOW(), NOW());
+
+-- Store tier information in a separate table or as metadata
+-- Note: The tier information (enterprise, premium, standard) could be added to customer_properties 
+-- or stored as a separate field if needed by the application
+
+-- Insert contacts for all 15 customers
 INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, company_id, is_primary, created_at, updated_at) VALUES
-('550e8400-e29b-41d4-a716-446655440101', 'John', 'Smith', 'john.smith@acme.com', '+1-555-0101', 'CTO', '550e8400-e29b-41d4-a716-446655440010', true, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440102', 'Sarah', 'Johnson', 'sarah.johnson@initech.com', '+1-555-0102', 'VP Engineering', '550e8400-e29b-41d4-a716-446655440011', true, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440103', 'Michael', 'Chen', 'michael.chen@riskycorp.com', '+1-555-0103', 'IT Director', '550e8400-e29b-41d4-a716-446655440012', true, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440104', 'Emily', 'Davis', 'emily.davis@techvision.com', '+1-555-0104', 'Operations Manager', '550e8400-e29b-41d4-a716-446655440013', true, NOW(), NOW()),
-('550e8400-e29b-41d4-a716-446655440105', 'David', 'Wilson', 'david.wilson@dataone.com', '+1-555-0105', 'VP Technology', '550e8400-e29b-41d4-a716-446655440014', true, NOW(), NOW());
+-- Contact 1: John Smith - Acme Corporation
+('550e8400-e29b-41d4-a716-446655440101', 'John', 'Smith', 'john.smith@acmecorp.com', '+1-555-0101', 'CTO', '550e8400-e29b-41d4-a716-446655440001', true, NOW(), NOW()),
+-- Contact 2: Sarah Johnson - RiskyCorp
+('550e8400-e29b-41d4-a716-446655440102', 'Sarah', 'Johnson', 'sarah.johnson@riskycorp.com', '+1-555-0102', 'VP Operations', '550e8400-e29b-41d4-a716-446655440002', true, NOW(), NOW()),
+-- Contact 3: Michael Chen - TechStart Inc
+('550e8400-e29b-41d4-a716-446655440103', 'Michael', 'Chen', 'michael.chen@techstart.com', '+1-555-0103', 'Product Manager', '550e8400-e29b-41d4-a716-446655440003', true, NOW(), NOW()),
+-- Contact 4: Emily Davis - Global Solutions
+('550e8400-e29b-41d4-a716-446655440104', 'Emily', 'Davis', 'emily.davis@globalsolutions.com', '+1-555-0104', 'CEO', '550e8400-e29b-41d4-a716-446655440004', true, NOW(), NOW()),
+-- Contact 5: David Wilson - StartupXYZ
+('550e8400-e29b-41d4-a716-446655440105', 'David', 'Wilson', 'david.wilson@startupxyz.com', '+1-555-0105', 'CTO', '550e8400-e29b-41d4-a716-446655440005', true, NOW(), NOW()),
+-- Contact 6: Lisa Rodriguez - Nimbus Analytics
+('550e8400-e29b-41d4-a716-446655440106', 'Lisa', 'Rodriguez', 'lisa.rodriguez@nimbusanalytics.com', '+1-555-0106', 'Head of Analytics', '550e8400-e29b-41d4-a716-446655440006', true, NOW(), NOW()),
+-- Contact 7: Robert Taylor - Venture Partners
+('550e8400-e29b-41d4-a716-446655440107', 'Robert', 'Taylor', 'robert.taylor@venturepartners.com', '+1-555-0107', 'Managing Partner', '550e8400-e29b-41d4-a716-446655440007', true, NOW(), NOW()),
+-- Contact 8: Jennifer Brown - Horizon Systems
+('550e8400-e29b-41d4-a716-446655440108', 'Jennifer', 'Brown', 'jennifer.brown@horizonsystems.com', '+1-555-0108', 'VP Technology', '550e8400-e29b-41d4-a716-446655440008', true, NOW(), NOW()),
+-- Contact 9: Mark Anderson - Quantum Soft
+('550e8400-e29b-41d4-a716-446655440109', 'Mark', 'Anderson', 'mark.anderson@quantumsoft.com', '+1-555-0109', 'Lead Developer', '550e8400-e29b-41d4-a716-446655440009', true, NOW(), NOW()),
+-- Contact 10: Amanda White - Apex Media
+('550e8400-e29b-41d4-a716-446655440110', 'Amanda', 'White', 'amanda.white@apexmedia.com', '+1-555-0110', 'Creative Director', '550e8400-e29b-41d4-a716-446655440010', true, NOW(), NOW()),
+-- Contact 11: Chris Martinez - Stellar Networks
+('550e8400-e29b-41d4-a716-446655440111', 'Chris', 'Martinez', 'chris.martinez@stellarnetworks.com', '+1-555-0111', 'Network Engineer', '550e8400-e29b-41d4-a716-446655440011', true, NOW(), NOW()),
+-- Contact 12: Nicole Garcia - FusionWare
+('550e8400-e29b-41d4-a716-446655440112', 'Nicole', 'Garcia', 'nicole.garcia@fusionware.com', '+1-555-0112', 'Product Owner', '550e8400-e29b-41d4-a716-446655440012', true, NOW(), NOW()),
+-- Contact 13: Kevin Lee - Dynamic Ventures
+('550e8400-e29b-41d4-a716-446655440113', 'Kevin', 'Lee', 'kevin.lee@dynamicventures.com', '+1-555-0113', 'VP Sales', '550e8400-e29b-41d4-a716-446655440013', true, NOW(), NOW()),
+-- Contact 14: Rachel Kim - Prime Holdings
+('550e8400-e29b-41d4-a716-446655440114', 'Rachel', 'Kim', 'rachel.kim@primeholdings.com', '+1-555-0114', 'Operations Director', '550e8400-e29b-41d4-a716-446655440014', true, NOW(), NOW()),
+-- Contact 15: Thomas Jackson - BetaWorks
+('550e8400-e29b-41d4-a716-446655440115', 'Thomas', 'Jackson', 'thomas.jackson@betaworks.com', '+1-555-0115', 'Education Lead', '550e8400-e29b-41d4-a716-446655440015', true, NOW(), NOW());
 
--- Update customers with primary_contact_id
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440101' WHERE id = '550e8400-e29b-41d4-a716-446655440010';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440102' WHERE id = '550e8400-e29b-41d4-a716-446655440011';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440103' WHERE id = '550e8400-e29b-41d4-a716-446655440012';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440104' WHERE id = '550e8400-e29b-41d4-a716-446655440013';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440105' WHERE id = '550e8400-e29b-41d4-a716-446655440014';
+-- Update customers with primary_contact_id for all 15 customers
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440101' WHERE id = '550e8400-e29b-41d4-a716-446655440001';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440102' WHERE id = '550e8400-e29b-41d4-a716-446655440002';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440103' WHERE id = '550e8400-e29b-41d4-a716-446655440003';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440104' WHERE id = '550e8400-e29b-41d4-a716-446655440004';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440105' WHERE id = '550e8400-e29b-41d4-a716-446655440005';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440106' WHERE id = '550e8400-e29b-41d4-a716-446655440006';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440107' WHERE id = '550e8400-e29b-41d4-a716-446655440007';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440108' WHERE id = '550e8400-e29b-41d4-a716-446655440008';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440109' WHERE id = '550e8400-e29b-41d4-a716-446655440009';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440110' WHERE id = '550e8400-e29b-41d4-a716-446655440010';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440111' WHERE id = '550e8400-e29b-41d4-a716-446655440011';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440112' WHERE id = '550e8400-e29b-41d4-a716-446655440012';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440113' WHERE id = '550e8400-e29b-41d4-a716-446655440013';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440114' WHERE id = '550e8400-e29b-41d4-a716-446655440014';
+UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440115' WHERE id = '550e8400-e29b-41d4-a716-446655440015';
 
 -- Insert renewals (migrated from MVP schema)
 INSERT INTO public.renewals (id, customer_id, renewal_date, current_arr, proposed_arr, probability, stage, risk_level, assigned_to, notes, created_at, updated_at) VALUES

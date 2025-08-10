@@ -2,7 +2,7 @@
 
 ## 🎯 **Overview**
 
-This comprehensive guide covers Google OAuth authentication implementation for the Renubu application using Next.js and Supabase. The implementation follows industry best practices and provides a secure, user-friendly authentication experience.
+This comprehensive guide covers the complete authentication system for the Renubu application using Next.js and Supabase. The implementation includes Google OAuth, local email/password authentication, automatic fallback mechanisms, password reset functionality, and smart user account linking. It follows industry best practices and provides a secure, resilient, user-friendly authentication experience.
 
 ## 🏗️ **Architecture**
 
@@ -83,6 +83,17 @@ SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET=your_google_client_secret
 # Application Configuration
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_URL=http://localhost:3000
+
+# Local Authentication Configuration
+NEXT_PUBLIC_LOCAL_AUTH_ENABLED=true
+NEXT_PUBLIC_LOCAL_AUTH_FALLBACK_ENABLED=true
+NEXT_PUBLIC_LOCAL_AUTH_MIN_PASSWORD_LENGTH=8
+
+# Force local auth bypass for testing (optional)
+NEXT_PUBLIC_FORCE_LOCAL_AUTH=true
+
+# Authentication Bypass Flag (Demo Mode - optional)
+NEXT_PUBLIC_AUTH_BYPASS_ENABLED=true
 ```
 
 ### **Getting Local Supabase Credentials**
@@ -103,29 +114,84 @@ NEXT_PUBLIC_URL=http://localhost:3000
 
 The `supabase/config.toml` should have:
 ```toml
+# Google OAuth configuration for local development
 [auth.external.google]
 enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
-redirect_uri = "http://127.0.0.1:54321/auth/v1/callback"
+# Don't override redirect_uri - let Supabase handle it automatically
+# redirect_uri = ""
 skip_nonce_check = true
 
 [auth]
+# Email confirmation is disabled for local development
+enable_confirmations = false
 additional_redirect_urls = [
   "http://127.0.0.1:3000",
   "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:3001/auth/callback",
   "http://localhost:3000",
-  "http://localhost:3000/auth/callback"
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3001",
+  "http://localhost:3001/auth/callback"
 ]
+# Token expiry set to 1 hour for development
+jwt_expiry = 3600
+enable_signup = true
 ```
 
-## 🔄 **Authentication Flow**
+## 🔄 **Authentication System Architecture**
 
-### **1. Sign In Flow**
+### **🔀 Dual Authentication System**
+
+The application now supports both OAuth and local email/password authentication with intelligent fallback mechanisms:
+
+#### **1. Primary Method: Google OAuth**
+- Fast, secure authentication via Google accounts
+- No password management for users
+- Automatic account creation and login
+
+#### **2. Fallback Method: Local Email/Password**
+- Traditional username/password authentication
+- Works when OAuth is unavailable or hanging
+- Supports user registration and login
+- Password reset functionality
+
+#### **3. Hybrid Approach: Account Linking**
+- OAuth users can add password authentication
+- Password users can link Google accounts
+- Smart detection of existing accounts
+- Seamless user experience
+
+### **🧠 Smart User Detection System**
+
+The system intelligently detects user account types:
+
+```typescript
+// User tries to sign up with email that has OAuth account
+if (userExists && hasOAuthOnly) {
+  showMessage: "This account exists with Google sign-in. 
+                Would you like to set up a password for local authentication?"
+}
+
+// User has both OAuth and password
+if (userExists && hasPasswordAuth) {
+  showMessage: "Account exists. Please sign in instead."
+}
+```
+
+## 🔄 **Authentication Flows**
+
+### **1. Primary OAuth Flow (With Fallback)**
 ```
 User visits protected page → Redirected to /signin?next=/intended-page
     ↓
-User clicks "Sign in with Google" → OAuth flow initiated
+User clicks "Sign in with Google" → OAuth health check performed
+    ↓
+If OAuth healthy → Normal OAuth flow initiated
+    ↓
+If OAuth hanging/timeout → Automatic fallback to local auth shown
     ↓
 Google OAuth redirects to Supabase → http://127.0.0.1:54321/auth/v1/callback
     ↓
@@ -134,6 +200,47 @@ Supabase processes OAuth response → Exchanges code for tokens
 Supabase redirects to app callback → http://localhost:3000/auth/callback
     ↓
 App callback creates session → User redirected to intended page or /dashboard
+```
+
+### **2. Local Authentication Flow**
+```
+User visits /signin → Sees dual authentication options
+    ↓
+User enters email/password → Sign in or Sign up selected
+    ↓
+If Sign Up: User detection check performed
+    ↓
+If existing OAuth user → Show password setup option
+    ↓
+If new user → Create account and send confirmation (if enabled)
+    ↓
+If Sign In: Authenticate and redirect to intended page
+```
+
+### **3. Password Reset Flow**
+```
+User clicks "Forgot your password?" → Reset modal shown
+    ↓
+User enters email → Reset link sent to email
+    ↓
+User clicks email link → Redirected to /auth/reset-password
+    ↓
+User enters new password → Password updated in Supabase
+    ↓
+Success message → Redirected to /signin
+```
+
+### **4. OAuth User Password Setup Flow**
+```
+OAuth user tries email signup → System detects existing OAuth account
+    ↓
+User sees: "Account exists with Google. Set up password?" → User clicks "Yes"
+    ↓
+Password setup email sent → User clicks email link
+    ↓
+User redirected to /auth/setup-password → User sets new password
+    ↓
+Account now has both OAuth and password auth → User can use either method
 ```
 
 ### **2. Sign Out Flow**

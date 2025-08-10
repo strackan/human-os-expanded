@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,11 +11,12 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
 
-    // Use CustomerService to get customers
+    // Use CustomerService to get customers with server-side client
+    const supabase = await createServerSupabaseClient();
     const filters = search ? { search } : {};
     const sortOptions = { field: sort as any, direction: order as 'asc' | 'desc' };
     
-    const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize);
+    const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize, supabase);
 
     return NextResponse.json({
       customers: result.customers,
@@ -44,7 +46,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use CustomerService to create customer
+    // Use CustomerService to create customer with server-side client
+    const supabase = await createServerSupabaseClient();
     const newCustomer = await CustomerService.createCustomer({
       name: body.name,
       domain: body.domain || '',
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
       renewal_date: body.renewal_date || new Date().toISOString().split('T')[0],
       current_arr: body.current_arr ? parseFloat(body.current_arr) : 0,
       assigned_to: body.assigned_to || null
-    });
+    }, supabase);
 
     return NextResponse.json(
       { customer: newCustomer, message: 'Customer created successfully' },

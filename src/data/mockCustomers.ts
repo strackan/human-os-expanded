@@ -12,7 +12,7 @@ export interface Customer {
 
 export const mockCustomers: Customer[] = [
   {
-    id: 'customer-1',
+    id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Acme Corporation',
     industry: 'Technology',
     tier: 'enterprise',
@@ -23,7 +23,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 45
   },
   {
-    id: 'customer-2',
+    id: '550e8400-e29b-41d4-a716-446655440002',
     name: 'RiskyCorp',
     industry: 'Manufacturing',
     tier: 'premium',
@@ -34,7 +34,7 @@ export const mockCustomers: Customer[] = [
     nps_score: -10
   },
   {
-    id: 'customer-3',
+    id: '550e8400-e29b-41d4-a716-446655440003',
     name: 'TechStart Inc',
     industry: 'SaaS',
     tier: 'standard',
@@ -45,7 +45,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 30
   },
   {
-    id: 'customer-4',
+    id: '550e8400-e29b-41d4-a716-446655440004',
     name: 'Global Solutions',
     industry: 'Consulting',
     tier: 'enterprise',
@@ -56,7 +56,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 60
   },
   {
-    id: 'customer-5',
+    id: '550e8400-e29b-41d4-a716-446655440005',
     name: 'StartupXYZ',
     industry: 'Fintech',
     tier: 'standard',
@@ -67,7 +67,7 @@ export const mockCustomers: Customer[] = [
     nps_score: -20
   },
   {
-    id: 'customer-6',
+    id: '550e8400-e29b-41d4-a716-446655440006',
     name: 'Nimbus Analytics',
     industry: 'Analytics',
     tier: 'premium',
@@ -78,7 +78,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 25
   },
   {
-    id: 'customer-7',
+    id: '550e8400-e29b-41d4-a716-446655440007',
     name: 'Venture Partners',
     industry: 'Finance',
     tier: 'enterprise',
@@ -89,7 +89,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 15
   },
   {
-    id: 'customer-8',
+    id: '550e8400-e29b-41d4-a716-446655440008',
     name: 'Horizon Systems',
     industry: 'Healthcare',
     tier: 'premium',
@@ -100,7 +100,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 5
   },
   {
-    id: 'customer-9',
+    id: '550e8400-e29b-41d4-a716-446655440009',
     name: 'Quantum Soft',
     industry: 'Software',
     tier: 'standard',
@@ -111,7 +111,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 40
   },
   {
-    id: 'customer-10',
+    id: '550e8400-e29b-41d4-a716-446655440010',
     name: 'Apex Media',
     industry: 'Media',
     tier: 'standard',
@@ -122,7 +122,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 20
   },
   {
-    id: 'customer-11',
+    id: '550e8400-e29b-41d4-a716-446655440011',
     name: 'Stellar Networks',
     industry: 'Telecom',
     tier: 'enterprise',
@@ -133,7 +133,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 55
   },
   {
-    id: 'customer-12',
+    id: '550e8400-e29b-41d4-a716-446655440012',
     name: 'FusionWare',
     industry: 'Technology',
     tier: 'premium',
@@ -144,7 +144,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 10
   },
   {
-    id: 'customer-13',
+    id: '550e8400-e29b-41d4-a716-446655440013',
     name: 'Dynamic Ventures',
     industry: 'Retail',
     tier: 'standard',
@@ -155,7 +155,7 @@ export const mockCustomers: Customer[] = [
     nps_score: -5
   },
   {
-    id: 'customer-14',
+    id: '550e8400-e29b-41d4-a716-446655440014',
     name: 'Prime Holdings',
     industry: 'Logistics',
     tier: 'enterprise',
@@ -166,7 +166,7 @@ export const mockCustomers: Customer[] = [
     nps_score: 35
   },
   {
-    id: 'customer-15',
+    id: '550e8400-e29b-41d4-a716-446655440015',
     name: 'BetaWorks',
     industry: 'Education',
     tier: 'standard',

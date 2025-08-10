@@ -2,27 +2,10 @@
 import React, { useState, useEffect } from "react";
 import { PlusIcon, MagnifyingGlassIcon, CalendarIcon, PlayIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
+import CustomerGrid from "@/components/customers/CustomerGrid";
+import { CustomerWithContact } from "@/types/customer";
 
-interface Customer {
-  id: string;
-  name: string;
-  industry: string;
-  tier: string;
-  health_score: number;
-  primary_contact?: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    email?: string;
-    phone?: string;
-    title?: string;
-  };
-  renewal_date?: string;
-  current_arr?: number;
-  risk_level?: string;
-}
-
-interface CustomerWithRenewal extends Customer {
+interface CustomerWithRenewal extends CustomerWithContact {
   days_until_renewal: number;
   renewal_priority: 'critical' | 'high' | 'medium' | 'low';
 }
@@ -35,7 +18,7 @@ export default function CustomerManagePage() {
   const [searchDate, setSearchDate] = useState('');
   const [filteredCustomers, setFilteredCustomers] = useState<CustomerWithRenewal[]>([]);
   
-  // Form state
+  // Form state and validation
   const [formData, setFormData] = useState({
     name: '',
     industry: '',
@@ -52,6 +35,11 @@ export default function CustomerManagePage() {
     current_arr: '',
     risk_level: 'medium'
   });
+  
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   // Load customers on component mount
   useEffect(() => {
@@ -82,7 +70,7 @@ export default function CustomerManagePage() {
       const response = await fetch('/api/customers');
       if (response.ok) {
         const data = await response.json();
-        const customersWithRenewal = data.customers.map((customer: Customer) => ({
+        const customersWithRenewal = data.customers.map((customer: CustomerWithContact) => ({
           ...customer,
           days_until_renewal: customer.renewal_date 
             ? Math.ceil((new Date(customer.renewal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
@@ -108,8 +96,78 @@ export default function CustomerManagePage() {
     return 'low';
   };
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    // Required fields
+    if (!formData.name.trim()) {
+      errors.name = 'Company name is required';
+    }
+
+    // Health score validation
+    if (formData.health_score < 0 || formData.health_score > 100) {
+      errors.health_score = 'Health score must be between 0 and 100';
+    }
+
+    // Current ARR validation
+    if (formData.current_arr && isNaN(Number(formData.current_arr))) {
+      errors.current_arr = 'Current ARR must be a valid number';
+    }
+
+    // Email validation
+    if (formData.primary_contact.email && !/\S+@\S+\.\S+/.test(formData.primary_contact.email)) {
+      errors.email = 'Please enter a valid email address';
+    }
+
+    // Phone validation (basic)
+    if (formData.primary_contact.phone && !/^[\+]?[1-9][\d]{0,15}$/.test(formData.primary_contact.phone.replace(/[\s\-\(\)]/g, ''))) {
+      errors.phone = 'Please enter a valid phone number';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const clearFormMessages = () => {
+    setSubmitError(null);
+    setSubmitSuccess(null);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      industry: '',
+      tier: 'standard',
+      health_score: 50,
+      primary_contact: {
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        title: ''
+      },
+      renewal_date: '',
+      current_arr: '',
+      risk_level: 'medium'
+    });
+    setFormErrors({});
+    clearFormMessages();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous messages
+    clearFormMessages();
+    
+    // Validate form
+    if (!validateForm()) {
+      setSubmitError('Please fix the errors below');
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
       const response = await fetch('/api/customers', {
         method: 'POST',
@@ -119,51 +177,30 @@ export default function CustomerManagePage() {
         body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        setSubmitSuccess('Customer added successfully!');
+        resetForm();
         setShowAddForm(false);
-        setFormData({
-          name: '',
-          industry: '',
-          tier: 'standard',
-          health_score: 50,
-          primary_contact: {
-            first_name: '',
-            last_name: '',
-            email: '',
-            phone: '',
-            title: ''
-          },
-          renewal_date: '',
-          current_arr: '',
-          risk_level: 'medium'
-        });
         loadCustomers(); // Reload the list
+      } else {
+        setSubmitError(data.error || 'Failed to add customer');
       }
     } catch (error) {
       console.error('Error adding customer:', error);
+      setSubmitError('Network error. Please check your connection and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const launchWorkflow = (customer: CustomerWithRenewal) => {
+  const launchWorkflow = (customer: CustomerWithContact) => {
     // Navigate to the task management page with this customer
     router.push(`/tasks/do?customer=${customer.id}&launch=true`);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'critical': return 'bg-red-100 text-red-800';
-      case 'high': return 'bg-orange-100 text-orange-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
 
   if (loading) {
     return (
@@ -229,18 +266,77 @@ export default function CustomerManagePage() {
         {/* Add Customer Form */}
         {showAddForm && (
           <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Add New Customer</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-medium text-gray-900">Add New Customer</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddForm(false);
+                  resetForm();
+                }}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Success Message */}
+            {submitSuccess && (
+              <div className="mb-4 bg-green-50 border border-green-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-green-800">{submitSuccess}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {submitError && (
+              <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">{submitError}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Company Name</label>
+                  <label className="block text-sm font-medium text-gray-700">Company Name *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({...formData, name: e.target.value});
+                      if (formErrors.name) {
+                        setFormErrors({...formErrors, name: ''});
+                      }
+                    }}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                      formErrors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Enter company name"
                   />
+                  {formErrors.name && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Industry</label>
@@ -270,9 +366,19 @@ export default function CustomerManagePage() {
                     min="0"
                     max="100"
                     value={formData.health_score}
-                    onChange={(e) => setFormData({...formData, health_score: parseInt(e.target.value)})}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({...formData, health_score: parseInt(e.target.value) || 0});
+                      if (formErrors.health_score) {
+                        setFormErrors({...formErrors, health_score: ''});
+                      }
+                    }}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                      formErrors.health_score ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   />
+                  {formErrors.health_score && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.health_score}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Primary Contact First Name</label>
@@ -303,12 +409,23 @@ export default function CustomerManagePage() {
                   <input
                     type="email"
                     value={formData.primary_contact.email}
-                    onChange={(e) => setFormData({
-                      ...formData, 
-                      primary_contact: { ...formData.primary_contact, email: e.target.value }
-                    })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData, 
+                        primary_contact: { ...formData.primary_contact, email: e.target.value }
+                      });
+                      if (formErrors.email) {
+                        setFormErrors({...formErrors, email: ''});
+                      }
+                    }}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                      formErrors.email ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="john.doe@company.com"
                   />
+                  {formErrors.email && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Renewal Date</label>
@@ -325,9 +442,20 @@ export default function CustomerManagePage() {
                     type="number"
                     step="0.01"
                     value={formData.current_arr}
-                    onChange={(e) => setFormData({...formData, current_arr: e.target.value})}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    onChange={(e) => {
+                      setFormData({...formData, current_arr: e.target.value});
+                      if (formErrors.current_arr) {
+                        setFormErrors({...formErrors, current_arr: ''});
+                      }
+                    }}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 ${
+                      formErrors.current_arr ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="0.00"
                   />
+                  {formErrors.current_arr && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.current_arr}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Risk Level</label>
@@ -346,16 +474,31 @@ export default function CustomerManagePage() {
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => {
+                    setShowAddForm(false);
+                    resetForm();
+                  }}
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Add Customer
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Adding...
+                    </>
+                  ) : (
+                    'Add Customer'
+                  )}
                 </button>
               </div>
             </form>
@@ -363,90 +506,15 @@ export default function CustomerManagePage() {
         )}
 
         {/* Customers Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCustomers.map((customer) => (
-            <div key={customer.id} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <button
-                    onClick={() => {
-                      const customerKey = customer.name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
-                      router.push(`/customers/${customerKey}`);
-                    }}
-                    className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-all duration-200 cursor-pointer text-left"
-                    aria-label={`View ${customer.name} details`}
-                  >
-                    {customer.name}
-                  </button>
-                  <p className="text-sm text-gray-500">{customer.industry}</p>
-                </div>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(customer.renewal_priority)}`}>
-                  {customer.renewal_priority}
-                </span>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Health Score:</span>
-                  <span className={`font-medium ${getHealthColor(customer.health_score)}`}>
-                    {customer.health_score}/100
-                  </span>
-                </div>
-
-                {customer.renewal_date && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Renewal Date:</span>
-                    <span className="font-medium">
-                      {new Date(customer.renewal_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-
-                {customer.days_until_renewal !== 999 && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Days Until:</span>
-                    <span className={`font-medium ${customer.days_until_renewal <= 30 ? 'text-red-600' : 'text-gray-900'}`}>
-                      {customer.days_until_renewal} days
-                    </span>
-                  </div>
-                )}
-
-                {customer.current_arr && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Current ARR:</span>
-                    <span className="font-medium">${customer.current_arr.toLocaleString()}</span>
-                  </div>
-                )}
-
-                {customer.primary_contact && (
-                  <div className="text-sm text-gray-500">
-                    Contact: {customer.primary_contact.first_name} {customer.primary_contact.last_name}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => launchWorkflow(customer)}
-                  className="w-full inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                >
-                  <PlayIcon className="h-4 w-4 mr-2" />
-                  Launch Workflow
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {filteredCustomers.length === 0 && (
-          <div className="text-center py-12">
-            <MagnifyingGlassIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No customers found</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {searchDate ? 'Try adjusting your search date.' : 'Get started by adding a new customer.'}
-            </p>
-          </div>
-        )}
+        <CustomerGrid
+          customers={filteredCustomers}
+          loading={loading}
+          variant="default"
+          columns={3}
+          onLaunchWorkflow={launchWorkflow}
+          emptyMessage="No customers found"
+          emptyDescription={searchDate ? 'Try adjusting your search date.' : 'Get started by adding a new customer.'}
+        />
       </div>
     </div>
   );

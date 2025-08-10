@@ -106,6 +106,7 @@ export interface CustomerFilters {
   industry?: string;
   health_score_min?: number;
   health_score_max?: number;
+  current_arr_min?: number;
   renewal_date_from?: string;
   renewal_date_to?: string;
   search?: string;
