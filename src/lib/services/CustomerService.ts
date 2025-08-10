@@ -21,14 +21,14 @@ export class CustomerService {
         .from('customers')
         .select(`
           *,
-          primary_contact:contacts!primary_contact_id (
+          primary_contact:contacts!fk_public_contacts_customer_id (
             id,
             first_name,
             last_name,
             email,
             phone,
             title,
-            company_id,
+            customer_id,
             is_primary,
             created_at,
             updated_at
@@ -73,10 +73,17 @@ export class CustomerService {
       }
 
       // Transform data to match CustomerWithContact interface
-      const customersWithContact: CustomerWithContact[] = (data || []).map(customer => ({
-        ...customer,
-        primary_contact: customer.primary_contact || undefined
-      }));
+      const customersWithContact: CustomerWithContact[] = (data || []).map(customer => {
+        // Filter for primary contact if there are multiple contacts
+        const primaryContact = Array.isArray(customer.primary_contact) 
+          ? customer.primary_contact.find((contact: any) => contact.is_primary) 
+          : customer.primary_contact;
+        
+        return {
+          ...customer,
+          primary_contact: primaryContact || undefined
+        };
+      });
 
       return {
         customers: customersWithContact,
@@ -100,14 +107,14 @@ export class CustomerService {
         .from('customers')
         .select(`
           *,
-          primary_contact:contacts!primary_contact_id (
+          primary_contact:contacts!fk_public_contacts_customer_id (
             id,
             first_name,
             last_name,
             email,
             phone,
             title,
-            company_id,
+            customer_id,
             is_primary,
             created_at,
             updated_at
@@ -125,9 +132,13 @@ export class CustomerService {
       }
 
       // Transform data to match CustomerWithContact interface
+      const primaryContact = Array.isArray(data.primary_contact) 
+        ? data.primary_contact.find((contact: any) => contact.is_primary) 
+        : data.primary_contact;
+      
       const customerWithContact: CustomerWithContact = {
         ...data,
-        primary_contact: data.primary_contact || undefined
+        primary_contact: primaryContact || undefined
       };
 
       return customerWithContact;
@@ -150,14 +161,14 @@ export class CustomerService {
         .from('customers')
         .select(`
           *,
-          primary_contact:contacts!primary_contact_id (
+          primary_contact:contacts!fk_public_contacts_customer_id (
             id,
             first_name,
             last_name,
             email,
             phone,
             title,
-            company_id,
+            customer_id,
             is_primary,
             created_at,
             updated_at
@@ -173,14 +184,14 @@ export class CustomerService {
           .from('customers')
           .select(`
             *,
-            primary_contact:contacts!primary_contact_id (
+            primary_contact:contacts!fk_public_contacts_customer_id (
               id,
               first_name,
               last_name,
               email,
               phone,
               title,
-              company_id,
+              customer_id,
               is_primary,
               created_at,
               updated_at
@@ -209,14 +220,14 @@ export class CustomerService {
                 .from('customers')
                 .select(`
                   *,
-                  primary_contact:contacts!primary_contact_id (
+                  primary_contact:contacts!fk_public_contacts_customer_id (
                     id,
                     first_name,
                     last_name,
                     email,
                     phone,
                     title,
-                    company_id,
+                    customer_id,
                     is_primary,
                     created_at,
                     updated_at

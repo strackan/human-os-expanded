@@ -58,47 +58,52 @@ export default function CustomerList({
 
   const loadCustomers = async () => {
     try {
+      console.log('🔍 CustomerList.loadCustomers called');
       setLoading(true);
       setError(null);
 
-      const filters: CustomerFilters = {};
+      // Build query parameters for API call
+      const params = new URLSearchParams();
       
       // Use either external searchTerm or local search term
       const effectiveSearchTerm = searchTerm || localSearchTerm;
       if (effectiveSearchTerm) {
-        filters.search = effectiveSearchTerm;
+        params.append('search', effectiveSearchTerm);
       }
       
       if (industryFilter) {
-        filters.industry = industryFilter;
+        params.append('industry', industryFilter);
       }
       
       if (healthScoreMin !== '') {
-        filters.health_score_min = Number(healthScoreMin);
+        params.append('healthScoreMin', healthScoreMin.toString());
       }
       
       if (healthScoreMax !== '') {
-        filters.health_score_max = Number(healthScoreMax);
+        params.append('healthScoreMax', healthScoreMax.toString());
       }
       
       if (minARR !== '') {
-        filters.current_arr_min = Number(minARR);
+        params.append('minARR', minARR.toString());
       }
 
-      const sort: CustomerSortOptions = {
-        field: sortField,
-        direction: sortDirection
-      };
+      params.append('sort', sortField);
+      params.append('order', sortDirection);
+      params.append('page', currentPage.toString());
+      params.append('pageSize', customersPerPage.toString());
 
-      const result = await CustomerService.getCustomers(
-        filters,
-        sort,
-        currentPage,
-        customersPerPage
-      );
+      console.log('🔍 CustomerList calling /api/customers');
+      const response = await fetch(`/api/customers?${params.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch customers: ${response.status} ${response.statusText}`);
+      }
 
-      setCustomers(result.customers);
-      setTotalCustomers(result.total);
+      const data = await response.json();
+      
+      console.log('🔍 CustomerList received result:', { customers: data.customers?.length || 0, count: data.count });
+      setCustomers(data.customers || []);
+      setTotalCustomers(data.count || 0);
     } catch (err) {
       console.error('Error loading customers:', err);
       setError(err instanceof Error ? err.message : 'Failed to load customers');

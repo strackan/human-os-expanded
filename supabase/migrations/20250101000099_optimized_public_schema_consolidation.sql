@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS public.contacts (
     email TEXT,
     phone TEXT,
     title TEXT,
-    company_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
+    customer_id UUID REFERENCES public.customers(id) ON DELETE CASCADE,
     is_primary BOOLEAN DEFAULT false,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -207,20 +207,28 @@ CREATE POLICY "Users can insert their own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
 -- All other tables: authenticated users can access (simplified for MVP)
+DROP POLICY IF EXISTS "Authenticated users can access customers" ON public.customers;
 CREATE POLICY "Authenticated users can access customers" ON public.customers
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access contacts" ON public.contacts;
 CREATE POLICY "Authenticated users can access contacts" ON public.contacts
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access contracts" ON public.contracts;
 CREATE POLICY "Authenticated users can access contracts" ON public.contracts
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access renewals" ON public.renewals;
 CREATE POLICY "Authenticated users can access renewals" ON public.renewals
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access tasks" ON public.tasks;
 CREATE POLICY "Authenticated users can access tasks" ON public.tasks
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access events" ON public.events;
 CREATE POLICY "Authenticated users can access events" ON public.events
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access alerts" ON public.alerts;
 CREATE POLICY "Authenticated users can access alerts" ON public.alerts
     FOR ALL USING (auth.role() = 'authenticated');
+DROP POLICY IF EXISTS "Authenticated users can access notes" ON public.notes;
 CREATE POLICY "Authenticated users can access notes" ON public.notes
     FOR ALL USING (auth.role() = 'authenticated');
 
@@ -236,7 +244,7 @@ CREATE INDEX IF NOT EXISTS idx_customers_renewal_date ON public.customers(renewa
 CREATE INDEX IF NOT EXISTS idx_customers_assigned_to ON public.customers(assigned_to);
 
 -- Contacts indexes
-CREATE INDEX IF NOT EXISTS idx_contacts_company_id ON public.contacts(company_id);
+CREATE INDEX IF NOT EXISTS idx_contacts_customer_id ON public.contacts(customer_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_email ON public.contacts(email);
 CREATE INDEX IF NOT EXISTS idx_contacts_is_primary ON public.contacts(is_primary);
 

@@ -50,7 +50,7 @@ BEGIN
     ) THEN
         
         -- Create contacts for existing public customers
-        INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, company_id, is_primary, created_at, updated_at)
+        INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, customer_id, is_primary, created_at, updated_at)
         SELECT 
             gen_random_uuid() as id,
             CASE 
@@ -68,7 +68,7 @@ BEGIN
             COALESCE(primary_contact_email, '') as email,
             NULL as phone,
             'Primary Contact' as title,
-            id as company_id,
+            id as customer_id,
             true as is_primary,
             NOW() as created_at,
             NOW() as updated_at
@@ -80,7 +80,7 @@ BEGIN
         UPDATE public.customers 
         SET primary_contact_id = c.id
         FROM public.contacts c
-        WHERE c.company_id = public.customers.id 
+        WHERE c.customer_id = public.customers.id 
           AND c.is_primary = true
           AND public.customers.primary_contact_id IS NULL;
     END IF;
@@ -133,7 +133,7 @@ BEGIN
         DECLARE
             v_contact_id UUID;
         BEGIN
-            INSERT INTO public.contacts (first_name, last_name, email, phone, title, company_id, is_primary, created_at, updated_at)
+            INSERT INTO public.contacts (first_name, last_name, email, phone, title, customer_id, is_primary, created_at, updated_at)
             VALUES (p_first_name, p_last_name, p_email, p_phone, p_title, p_customer_id, true, NOW(), NOW())
             RETURNING id INTO v_contact_id;
             

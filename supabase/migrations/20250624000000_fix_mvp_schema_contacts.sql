@@ -26,7 +26,7 @@ BEGIN
             email TEXT NOT NULL,
             phone TEXT,
             title TEXT,
-            company_id UUID, -- No foreign key constraint initially
+            customer_id UUID, -- No foreign key constraint initially
             is_primary BOOLEAN DEFAULT false,
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -59,8 +59,8 @@ DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
         ALTER TABLE public.contacts 
-            ADD CONSTRAINT fk_public_contacts_company_id 
-            FOREIGN KEY (company_id) REFERENCES public.customers(id) ON DELETE CASCADE;
+            ADD CONSTRAINT fk_public_contacts_customer_id 
+            FOREIGN KEY (customer_id) REFERENCES public.customers(id) ON DELETE CASCADE;
 
         ALTER TABLE public.customers 
             ADD CONSTRAINT fk_public_customers_primary_contact 
@@ -77,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_mvp_customers_primary_contact ON mvp.customers(pr
 DO $$
 BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'customers') THEN
-        CREATE INDEX IF NOT EXISTS idx_public_contacts_company_id ON public.contacts(company_id);
+        CREATE INDEX IF NOT EXISTS idx_public_contacts_customer_id ON public.contacts(customer_id);
         CREATE INDEX IF NOT EXISTS idx_public_contacts_primary ON public.contacts(is_primary);
         CREATE INDEX IF NOT EXISTS idx_public_customers_primary_contact ON public.customers(primary_contact_id);
     END IF;

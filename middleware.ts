@@ -32,6 +32,13 @@ export async function middleware(req: NextRequest) {
   
   const { pathname } = req.nextUrl
 
+  // Check if authentication bypass is enabled (for demo/testing)
+  const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true'
+  if (authBypassEnabled) {
+    console.log('🔓 Auth bypass enabled, allowing access to:', pathname)
+    return res
+  }
+
   // Check if this is a public route
   if (AUTH_CONFIG.publicRoutes.includes(pathname)) {
     return res
@@ -41,48 +48,40 @@ export async function middleware(req: NextRequest) {
   const localAuthFallbackEnabled = process.env.NEXT_PUBLIC_LOCAL_AUTH_FALLBACK_ENABLED === 'true'
   
   try {
-    // Use getUser() instead of getSession() to prevent hanging - per Supabase docs
-    const userPromise = supabase.auth.getUser()
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('User check timeout')), 3000) // Reduced timeout
-    )
+    // Use getSession() for basic middleware checks to prevent hanging
+    // The client-side will handle proper user validation via API route
+    const { data: { session }, error } = await supabase.auth.getSession()
 
-    const { data: { user }, error } = await Promise.race([userPromise, timeoutPromise]) as any
-
-    if (user && !error) {
-      // User is authenticated, allow access
-      console.log('✅ Authenticated user:', user.email)
+    if (session && !error) {
+      // Basic session exists, allow access
+      console.log('✅ Valid session found for middleware check')
       return res
     } else {
-      // No valid user, check if we should allow local auth fallback
+      // No valid session, check if we should allow local auth fallback
       if (localAuthFallbackEnabled && pathname.startsWith('/auth/')) {
         console.log('🔄 Local auth fallback enabled, allowing auth routes')
         return res
       }
       
+      // For signin page, allow access even without session
+      if (pathname === '/signin') {
+        console.log('🔐 Allowing access to signin page')
+        return res
+      }
+      
       // Redirect to signin
-      console.log('🔐 No valid user, redirecting to signin')
+      console.log('🔐 No valid session, redirecting to signin')
       const redirectUrl = new URL('/signin', req.url)
       redirectUrl.searchParams.set('next', pathname)
       return NextResponse.redirect(redirectUrl)
     }
   } catch (error) {
-    console.log('🔐 User check error or timeout, redirecting to signin:', error)
+    console.log('🔐 Session check error, redirecting to signin:', error)
     
-    // On timeout or error, check if we should allow local auth fallback
-    if (error instanceof Error && error.message.includes('timeout')) {
-      console.warn('⚠️ User check timed out, checking local auth fallback')
-      
-      if (localAuthFallbackEnabled && pathname.startsWith('/auth/')) {
-        console.log('🔄 Local auth fallback enabled, allowing auth routes after timeout')
-        return res
-      }
-      
-      // For other routes, redirect to signin with fallback message
-      const redirectUrl = new URL('/signin', req.url)
-      redirectUrl.searchParams.set('next', pathname)
-      redirectUrl.searchParams.set('error', 'auth_timeout')
-      return NextResponse.redirect(redirectUrl)
+    // Check if we should allow local auth fallback
+    if (localAuthFallbackEnabled && pathname.startsWith('/auth/')) {
+      console.log('🔄 Local auth fallback enabled, allowing auth routes after error')
+      return res
     }
     
     // For other errors, redirect to signin

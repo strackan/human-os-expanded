@@ -19,11 +19,13 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       pathname, 
       isPublicRoute: isPublicRoute(pathname), 
       hasUser: !!user, 
-      loading 
+      loading,
+      userEmail: user?.email
     })
 
     // Don't redirect if we're still loading or on a public route
     if (loading || isPublicRoute(pathname)) {
+      console.log('🛡️ Skipping redirect - loading or public route')
       return
     }
 

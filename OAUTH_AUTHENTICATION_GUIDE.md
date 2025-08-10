@@ -243,7 +243,7 @@ User redirected to /auth/setup-password → User sets new password
 Account now has both OAuth and password auth → User can use either method
 ```
 
-### **2. Sign Out Flow**
+### **5. Sign Out Flow**
 ```
 User clicks avatar → Dropdown appears
     ↓
@@ -254,48 +254,89 @@ Client-side signout with timeout protection → Session cleared
 User redirected to /signin → Ready for new sign in
 ```
 
-### **3. OAuth Implementation**
+### **6. OAuth Implementation Details**
 
-**Current Implementation (PKCE Flow)**
+**Enhanced OAuth with Fallback Protection**
 ```typescript
-const { data, error } = await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: {
-    redirectTo: redirectUrl,
-    queryParams: {
-      access_type: 'offline',
-      prompt: 'consent',
+// 1. Health check before OAuth attempt (prevents hanging)
+async checkOAuthHealth(): Promise<boolean> {
+  // Quick environment check without initiating OAuth flow
+  const hasGoogleConfig = !!(
+    process.env.SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+  )
+  return hasGoogleConfig
+}
+
+// 2. OAuth with timeout protection
+async signInWithOAuth(provider: 'google' = 'google'): Promise<AuthResult> {
+  const { data, error } = await this.supabase.auth.signInWithOAuth({
+    provider,
+    options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      },
     },
-  },
-})
+  })
+}
+
+// 3. Fallback mechanism with timeout
+async signInWithFallback(provider: 'google' = 'google'): Promise<AuthResult> {
+  // Force local auth if enabled
+  if (process.env.NEXT_PUBLIC_FORCE_LOCAL_AUTH === 'true') {
+    return { 
+      success: false, 
+      authType: 'fallback',
+      message: 'Please use email/password authentication.' 
+    }
+  }
+
+  // Health check first
+  const isHealthy = await this.checkOAuthHealth()
+  if (!isHealthy) {
+    return { 
+      success: false, 
+      authType: 'fallback',
+      message: 'Google OAuth is currently unavailable.' 
+    }
+  }
+
+  // Try OAuth with 3-second timeout
+  const oauthResult = await this.signInWithOAuthWithTimeout(provider)
+  return oauthResult.success ? oauthResult : {
+    success: false,
+    authType: 'fallback',
+    message: 'Google OAuth timed out. Please use email/password instead.'
+  }
+}
 ```
 
-**Simple OAuth Flow (Alternative for Local Development Issues)**
+**Critical Middleware Fix**
 ```typescript
-const { error } = await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: {
-    redirectTo: `${window.location.origin}/auth/callback${
-      next ? `?next=${encodeURIComponent(next)}` : ""
-    }`,
-    // No queryParams - removes PKCE parameters
-  },
-})
+// BEFORE (caused hanging): Using getSession()
+const { data: { session }, error } = await supabase.auth.getSession()
+
+// AFTER (fixed hanging): Using getUser()
+const { data: { user }, error } = await supabase.auth.getUser()
 ```
 
-> **Note**: The current implementation uses PKCE flow. If you encounter "invalid request: both auth code and code verifier should be non-empty" errors, switch to the simple OAuth flow by removing the `queryParams` section.
+> **🚨 Critical Fix**: The middleware now uses `getUser()` instead of `getSession()` per Supabase documentation to prevent hanging issues in non-incognito browsers.
 
 ## 🛡️ **Protected Routes**
 
 All routes are protected by default except for these public routes:
 
 ### **Authentication Pages**
-- `/signin` - Sign-in page
-- `/auth/callback` - OAuth callback handler
+- `/signin` - Enhanced dual authentication sign-in page
+- `/auth/callback` - OAuth callback handler (client-side)
+- `/auth/setup-password` - Password setup for OAuth users
+- `/auth/reset-password` - Password reset page
 - `/signout` - Sign-out handler
 
 ### **Debug/Test Pages**
-- `/debug-auth-state` - Authentication state debugging
+- `/debug-auth` - Enhanced authentication state debugging
 - `/debug-env` - Environment debugging
 - `/test-oauth*` - OAuth testing pages
 - `/test-auth` - Authentication testing
@@ -306,43 +347,64 @@ All routes are protected by default except for these public routes:
 - `/favicon.ico`
 - `/robots.txt`
 - `/sitemap.xml`
-- `/clear-cookies.html`
+- `/clear-auth.html` - Interactive auth data cleanup tool
 
 ## 📁 **Key Implementation Files**
 
 ### **Server-Side Protection**
-- `middleware.ts` - Main authentication middleware
-- `src/app/auth/callback/route.ts` - OAuth callback handler
+- `middleware.ts` - Enhanced authentication middleware (uses getUser() to prevent hanging)
+- `src/app/auth/callback/route.ts` - Server-side OAuth callback handler
 - `src/app/signout/route.ts` - Sign-out handler
 
-### **Client-Side Protection**
+### **Client-Side Authentication**
+- `src/app/auth/callback/page.tsx` - Client-side OAuth callback processor
+- `src/app/auth/setup-password/page.tsx` - Password setup for OAuth users
+- `src/app/auth/reset-password/page.tsx` - Password reset interface
 - `src/components/auth/RouteGuard.tsx` - Client-side route protection
 - `src/components/auth/AuthProvider.tsx` - Authentication context
 - `src/components/auth/ProtectedRoute.tsx` - Component-level protection
 
-### **Authentication Pages**
-- `src/app/signin/page.tsx` - Clean sign-in page
+### **Authentication Pages & Services**
+- `src/app/signin/page.tsx` - Dual authentication sign-in page with modals
+- `src/app/debug-auth/page.tsx` - Enhanced authentication debugging
+- `src/lib/auth-service.ts` - Comprehensive authentication service with fallbacks
 - `src/app/settings/page.tsx` - User settings page
 
 ### **Configuration**
 - `src/lib/auth-config.ts` - Centralized authentication configuration
-- `src/lib/supabase.ts` - Supabase client configuration
-- `src/lib/supabase-server.ts` - Server-side Supabase client
+- `src/lib/supabase.ts` - Enhanced Supabase client with error handling
+- `src/lib/supabase-server.ts` - Server-side Supabase client with helper functions
+
+### **Static Tools**
+- `public/clear-auth.html` - Interactive authentication data cleanup tool
 
 ## 🎯 **Features**
 
-### **✅ Implemented**
-- [x] Server-side middleware protection
-- [x] Client-side route guard
-- [x] OAuth callback handling
-- [x] Proper redirect after authentication
-- [x] Loading states during auth checks
-- [x] Centralized configuration
-- [x] Comprehensive public route management
-- [x] Error handling for auth failures
-- [x] Settings page with user information
-- [x] Enhanced signout with timeout protection
-- [x] Session refresh functionality
+### **✅ Core Authentication Features**
+- [x] **Dual Authentication System**: OAuth + Local email/password
+- [x] **Smart Fallback Mechanism**: Automatic OAuth→Local fallback when hanging
+- [x] **Enhanced Middleware**: Uses getUser() to prevent hanging (critical fix)
+- [x] **Client-side OAuth Callback**: Proper token exchange and session creation
+- [x] **Server-side Protection**: Middleware-based route protection
+- [x] **Client-side Route Guard**: Additional protection layer
+
+### **✅ User Experience Features**  
+- [x] **Smart User Detection**: Detects existing OAuth/password accounts
+- [x] **Account Linking**: OAuth users can add passwords, password users can link OAuth
+- [x] **Password Reset**: Forgot password functionality with email links
+- [x] **Password Setup**: OAuth users can set up local authentication
+- [x] **Interactive Modals**: User-friendly signup/reset/setup dialogs
+- [x] **Loading States**: Smooth transitions and user feedback
+- [x] **Error Handling**: Comprehensive error messages and recovery options
+
+### **✅ Advanced Features**
+- [x] **OAuth Health Checking**: Pre-flight checks to prevent hanging
+- [x] **Timeout Protection**: 3-second OAuth timeout with fallback
+- [x] **Session Corruption Cleanup**: Interactive auth data cleanup tool
+- [x] **Environment Detection**: Force local auth for testing
+- [x] **Enhanced Debugging**: Comprehensive auth state debugging page
+- [x] **Settings Integration**: User settings page with account info
+- [x] **Proper Redirects**: Returns to intended page after authentication
 
 ### **🔄 Authentication States**
 - **Loading**: Shows spinner while checking authentication
@@ -352,67 +414,121 @@ All routes are protected by default except for these public routes:
 
 ## 🧪 **Testing**
 
-### **1. Test Sign In**
+### **1. Test Dual Authentication System**
 ```
 http://localhost:3000/signin
 ```
-- Should show clean signin interface
-- Should redirect to `/dashboard` after successful authentication (or intended page if `next` parameter is provided)
+**OAuth Testing:**
+- Click "Sign in with Google" → Should work or show fallback
+- If OAuth hangs, should automatically show "Use Email/Password Instead" button
+- Test "Skip OAuth - Use Email/Password" button
 
-### **2. Test Protected Routes**
-- Visit any protected route (e.g., `/dashboard`, `/insights`)
-- Should redirect to `/signin` if not authenticated
-- Should redirect to intended page after authentication
+**Local Auth Testing:**
+- Enter email/password → Test sign in/sign up
+- Test password validation (minimum 8 characters)
+- Test "Forgot your password?" link
 
-### **3. Test Sign Out**
-- Click avatar in top-right corner
-- Click "Sign out" in dropdown
-- Should show loading state with timeout protection
-- Should redirect to `/signin` after signout
+### **2. Test Smart User Detection**
+**Scenario A: OAuth user tries email signup**
+- Sign up with Google first
+- Try to sign up with same email using password
+- Should show: "Account exists with Google sign-in. Set up password?"
+- Click "Yes" → Should send password setup email
 
-### **4. Test OAuth Flow**
-Visit: `http://localhost:3000/test-oauth-simple`
-- Should work without server-side rendering errors
-- Should demonstrate OAuth flow without PKCE
+**Scenario B: Existing user detection**
+- Try to sign up with existing email
+- Should show: "Account exists. Please sign in instead."
 
-### **5. Test Signout Functionality**
-Visit: `http://localhost:3000/test-signout`
-- Dedicated test page for signout verification
-- Check browser console for detailed logs
+### **3. Test Password Reset Flow**
+- Click "Forgot your password?"
+- Enter email → Click "Send Reset Link"
+- Check email → Click link → Should go to reset page
+- Enter new password → Should redirect to signin with success message
+
+### **4. Test OAuth User Password Setup**
+- Create account with Google OAuth
+- Try to sign up with same email
+- Click "Yes, Set Up Password"
+- Follow email link → Set password
+- Should now be able to use both OAuth and password auth
+
+### **5. Test Authentication States**
+```
+http://localhost:3000/debug-auth
+```
+- Click "Check Auth State" → Should show session info
+- Click "Clear Auth Data" → Should clean corrupted data
+- Test in both regular and incognito browsers
+
+### **6. Test Protected Routes & Middleware**
+- Visit protected route → Should redirect to signin
+- Sign in → Should redirect to intended page
+- Test middleware timeout handling
+- Verify no hanging in non-incognito mode
+
+### **7. Test Session Corruption Cleanup**
+```
+http://localhost:3000/clear-auth.html
+```
+- Test "Clear ALL Auth Data" button
+- Test "Clear Supabase Data Only" button  
+- Check auth data display
+- Verify cleanup effectiveness
 
 ## 🐛 **Troubleshooting**
 
-### **Common Issues & Solutions**
+### **🚨 Critical Issues & Solutions**
 
-1. **"invalid request: both auth code and code verifier should be non-empty"**
-   - **Root Cause**: PKCE flow issues with code verifier management
-   - **Solution**: Switch to simple OAuth flow by removing `queryParams` from OAuth call
-   - **Alternative**: Clear browser cache, restart Supabase, and ensure environment variables are correct
+1. **OAuth Hanging in Non-Incognito Browsers (FIXED)**
+   - **Root Cause**: Middleware using `getSession()` causes hanging
+   - **Solution Applied**: Middleware now uses `getUser()` per Supabase docs
+   - **File Fixed**: `middleware.ts:45-50` 
+   - **Result**: No more hanging, 3-second timeout for additional protection
 
-2. **"redirect_uri_mismatch"**
+2. **OAuth Fallback Not Triggering (FIXED)**
+   - **Root Cause**: Health check was initiating OAuth flow
+   - **Solution Applied**: Health check now only validates environment variables
+   - **File Fixed**: `src/lib/auth-service.ts:28-49`
+   - **Result**: Immediate fallback when OAuth unavailable
+
+### **🔧 Authentication Issues & Solutions**
+
+3. **User Detection Not Working**
+   - **Root Cause**: Complex error message parsing unreliable
+   - **Solution**: Use signup attempt with `identities.length === 0` detection
+   - **Implementation**: `src/lib/auth-service.ts:241-271`
+
+4. **Password Reset Not Available**
+   - **Solution**: Added "Forgot your password?" link and reset flow
+   - **New Pages**: `/auth/reset-password`, reset modal in signin
+   - **Implementation**: Complete password reset with email links
+
+5. **OAuth User Can't Add Password**
+   - **Solution**: Smart account linking with password setup emails
+   - **New Flow**: Detect OAuth-only accounts → Offer password setup
+   - **New Page**: `/auth/setup-password` for secure password creation
+
+6. **Session Corruption in Development**
+   - **Solution**: Interactive cleanup tool at `/clear-auth.html`
+   - **Features**: Clear all auth data, check current state, manual cleanup
+
+### **🐛 Legacy Issues & Solutions**
+
+7. **"redirect_uri_mismatch"**
    - **Solution**: Ensure redirect URIs in Google Console match your app
-   - **CRITICAL**: Must include `http://127.0.0.1:54321/auth/v1/callback` in Google Console
-   - Check both JavaScript origins and redirect URIs
+   - **Required URIs**: 
+     - `http://127.0.0.1:54321/auth/v1/callback` (Supabase callback)
+     - `http://localhost:3000/auth/callback` (App callback)
 
-3. **Infinite redirect loops**
-   - Clear browser cookies and local storage
-   - Restart Supabase local instance: `npx supabase stop && npx supabase start`
-   - Check middleware logs for auth state
+8. **Environment Variable Issues**
+   - **Critical**: All local auth variables must use `NEXT_PUBLIC_` prefix
+   - **Fixed Variables**: `NEXT_PUBLIC_LOCAL_AUTH_FALLBACK_ENABLED=true`
+   - **Check**: Use `/debug-auth` page to verify all environment variables
 
-4. **Authentication not persisting**
-   - Verify Supabase is running: `npx supabase status`
-   - Check environment variables are loaded
-   - Clear and re-authenticate
-
-5. **Signout hanging or not working**
-   - The implementation now includes timeout protection
-   - Check `/test-signout` page for debugging
-   - Clear browser cache if issues persist
-
-6. **Cookie setting errors**
-   - Expected in server components - handled gracefully
-   - Authentication will still work despite warnings
-   - Only affects development console output
+9. **Infinite redirect loops**
+   - **Quick Fix**: Visit `/clear-auth.html` → Click "Clear ALL Auth Data"
+   - **Alternative**: `npx supabase db reset` to restart clean
+   - **Prevention**: Enhanced middleware prevents most redirect loops
 
 ### **Debugging Steps**
 

@@ -1,21 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Extract all possible filter parameters
     const search = searchParams.get('search') || '';
+    const industry = searchParams.get('industry') || '';
+    const healthScoreMin = searchParams.get('healthScoreMin');
+    const healthScoreMax = searchParams.get('healthScoreMax');
+    const minARR = searchParams.get('minARR');
+    
     const sort = searchParams.get('sort') || 'name';
     const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    const pageSize = parseInt(searchParams.get('pageSize') || '25', 10);
 
-    // Use CustomerService to get customers with server-side client
-    const supabase = await createServerSupabaseClient();
-    const filters = search ? { search } : {};
+    // Build comprehensive filters object
+    const filters: any = {};
+    if (search) filters.search = search;
+    if (industry) filters.industry = industry;
+    if (healthScoreMin) filters.health_score_min = Number(healthScoreMin);
+    if (healthScoreMax) filters.health_score_max = Number(healthScoreMax);
+    if (minARR) filters.current_arr_min = Number(minARR);
+
+    // Use service role client since auth bypass is enabled
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+    const supabase = authBypassEnabled ? createServiceRoleClient() : await createServerSupabaseClient();
     const sortOptions = { field: sort as any, direction: order as 'asc' | 'desc' };
     
+    console.log('🔍 API route calling CustomerService with filters:', filters);
+    console.log('🔍 Auth bypass enabled:', authBypassEnabled);
     const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize, supabase);
 
     return NextResponse.json({
@@ -27,8 +44,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching customers:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
+    });
     return NextResponse.json(
-      { error: 'Failed to fetch customers' },
+      { 
+        error: 'Failed to fetch customers', 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }
@@ -46,8 +70,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use CustomerService to create customer with server-side client
-    const supabase = await createServerSupabaseClient();
+    // Use service role client since auth bypass is enabled
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+    const supabase = authBypassEnabled ? createServiceRoleClient() : await createServerSupabaseClient();
     const newCustomer = await CustomerService.createCustomer({
       name: body.name,
       domain: body.domain || '',

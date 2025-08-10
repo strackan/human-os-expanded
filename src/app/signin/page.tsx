@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { authService, type LocalAuthCredentials } from "@/lib/auth-service"
+import PasswordResetModal from "@/components/auth/PasswordResetModal"
 
 export default function SignInPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false)
@@ -19,8 +20,7 @@ export default function SignInPage() {
   const [localAuthEnabled, setLocalAuthEnabled] = useState<boolean>(false)
   const [showPasswordSetup, setShowPasswordSetup] = useState<boolean>(false)
   const [existingOAuthEmail, setExistingOAuthEmail] = useState<string>("")
-  const [showForgotPassword, setShowForgotPassword] = useState<boolean>(false)
-  const [forgotPasswordEmail, setForgotPasswordEmail] = useState<string>("")
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState<boolean>(false)
 
   const searchParams = useSearchParams()
   const next = searchParams.get("next")
@@ -97,6 +97,8 @@ export default function SignInPage() {
     
     try {
       console.log('🔐 Starting local email authentication...')
+      console.log('🔐 Email:', email)
+      console.log('🔐 Password length:', password.length)
       
       const credentials: LocalAuthCredentials = {
         email,
@@ -105,17 +107,27 @@ export default function SignInPage() {
         companyName
       }
       
+      console.log('🔐 Credentials object:', { ...credentials, password: '[HIDDEN]' })
+      
       const result = await authService.signInWithEmail(credentials)
+      
+      console.log('🔐 Sign-in result:', result)
       
       if (result.success && result.user) {
         console.log('✅ Local authentication successful:', result.user.email)
         setMessage('Authentication successful! Redirecting...')
         
+        // Add a longer delay to ensure session is properly established
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
         // Redirect to the next page or dashboard
         const redirectTo = next || '/dashboard'
         console.log('🔄 Redirecting to:', redirectTo)
-        window.location.href = redirectTo
+        
+        // Use window.location.replace to avoid back button issues
+        window.location.replace(redirectTo)
       } else {
+        console.error('❌ Sign-in failed:', result.error)
         setError(result.error || 'Failed to sign in')
       }
       
@@ -165,7 +177,7 @@ export default function SignInPage() {
         setShowPasswordSetup(true)
         setExistingOAuthEmail(email)
         setError(null)
-        setMessage(result.message)
+        setMessage(result.message || 'Account found with Google sign-in. Please set up a password.')
       } else {
         setError(result.error || 'Failed to sign up')
       }
@@ -201,7 +213,7 @@ export default function SignInPage() {
       const result = await authService.sendPasswordSetupEmail(existingOAuthEmail)
       
       if (result.success) {
-        setMessage(result.message)
+        setMessage(result.message || 'Password setup email sent successfully!')
         setShowPasswordSetup(false)
         setError(null)
       } else {
@@ -223,46 +235,13 @@ export default function SignInPage() {
   }
 
   function showForgotPasswordForm() {
-    setShowForgotPassword(true)
-    setForgotPasswordEmail(email) // Pre-fill with current email
+    // Instead of showing email form, directly show the password reset modal
+    setShowPasswordResetModal(true)
     setError(null)
     setMessage(null)
   }
 
-  async function sendPasswordReset() {
-    if (!forgotPasswordEmail) {
-      setError('Please enter your email address')
-      return
-    }
 
-    setIsEmailLoading(true)
-    setError(null)
-    setMessage(null)
-    
-    try {
-      const result = await authService.sendPasswordResetEmail(forgotPasswordEmail)
-      
-      if (result.success) {
-        setMessage(result.message)
-        setShowForgotPassword(false)
-        setError(null)
-      } else {
-        setError(result.error || 'Failed to send reset email')
-      }
-    } catch (error) {
-      console.error('❌ Failed to send password reset email:', error)
-      setError('There was an error sending the reset email. Please try again.')
-    } finally {
-      setIsEmailLoading(false)
-    }
-  }
-
-  function dismissForgotPassword() {
-    setShowForgotPassword(false)
-    setForgotPasswordEmail("")
-    setError(null)
-    setMessage(null)
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -287,7 +266,7 @@ export default function SignInPage() {
           )}
 
           {/* Show success message */}
-          {message && !showPasswordSetup && !showForgotPassword && (
+          {message && !showPasswordSetup && (
             <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-4">
               <p className="text-sm text-green-600">{message}</p>
             </div>
@@ -335,60 +314,7 @@ export default function SignInPage() {
             </div>
           )}
 
-          {/* Forgot Password Modal */}
-          {showForgotPassword && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
-              <h3 className="text-lg font-semibold text-yellow-900 mb-2">Reset Password</h3>
-              <p className="text-sm text-yellow-800 mb-3">
-                Enter your email address and we'll send you a link to reset your password.
-              </p>
-              
-              <div className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={forgotPasswordEmail}
-                  onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-sm"
-                />
-                
-                {error && showForgotPassword && (
-                  <p className="text-sm text-red-600">{error}</p>
-                )}
-                
-                {message && showForgotPassword && (
-                  <p className="text-sm text-green-600">{message}</p>
-                )}
-                
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={sendPasswordReset}
-                    disabled={isEmailLoading || !forgotPasswordEmail}
-                    className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-md transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                  >
-                    {isEmailLoading ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        Send Reset Link
-                      </>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={dismissForgotPassword}
-                    className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md transition-colors text-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+
           
           {/* Google OAuth (Primary method) */}
           <div className="space-y-4">
@@ -562,6 +488,13 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
+
+      {/* Password Reset Modal */}
+      <PasswordResetModal
+        isOpen={showPasswordResetModal}
+        onClose={() => setShowPasswordResetModal(false)}
+        email={email || ""}
+      />
     </div>
   )
 } 

@@ -60,11 +60,18 @@ export const createServiceRoleClient = () => {
   )
 }
 
-// Helper function to get current user on server
+// Helper function to get current user on server with timeout
 export const getCurrentUser = async () => {
   try {
     const supabase = await createServerSupabaseClient()
-    const { data: { user }, error } = await supabase.auth.getUser()
+    
+    // Use Promise.race to prevent hanging
+    const userPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('getUser timeout')), 3000)
+    )
+    
+    const { data: { user }, error } = await Promise.race([userPromise, timeoutPromise]) as any
     return { user, error }
   } catch (error) {
     console.error('Error getting current user:', error)

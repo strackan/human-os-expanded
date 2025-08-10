@@ -8,7 +8,7 @@ export interface Contact {
   email?: string;
   phone?: string;
   title?: string;
-  company_id: string;
+  customer_id: string;
   is_primary: boolean;
   created_at: string;
   updated_at: string;
@@ -22,7 +22,6 @@ export interface Customer {
   health_score: number;
   current_arr: number;
   renewal_date: string;
-  primary_contact_id?: string;
   assigned_to?: string;
   created_at: string;
   updated_at: string;

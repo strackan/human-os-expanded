@@ -196,6 +196,9 @@ export class AuthService {
    */
   async signInWithEmail(credentials: LocalAuthCredentials): Promise<AuthResult> {
     try {
+      console.log('🔐 AuthService: Attempting sign-in with email:', credentials.email)
+      console.log('🔐 AuthService: Password length:', credentials.password.length)
+      
       const { data, error } = await this.supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
@@ -203,6 +206,11 @@ export class AuthService {
 
       if (error) {
         console.error('❌ Local auth error:', error)
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
         return {
           success: false,
           error: error.message,
@@ -436,6 +444,53 @@ export class AuthService {
    */
   getMinPasswordLength(): number {
     return parseInt(process.env.NEXT_PUBLIC_LOCAL_AUTH_MIN_PASSWORD_LENGTH || '8')
+  }
+
+  /**
+   * Update user password (for password reset functionality)
+   */
+  async updatePassword(email: string, newPassword: string): Promise<AuthResult> {
+    try {
+      console.log('🔐 Attempting to update password for:', email)
+      
+      // Call the API endpoint to update the password
+      const response = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          newPassword
+        })
+      })
+
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
+        console.log('✅ Password update successful for:', email)
+        return {
+          success: true,
+          authType: 'local',
+          message: result.message || 'Password updated successfully! You can now sign in with your new password.'
+        }
+      } else {
+        console.error('❌ Password update failed:', result.error)
+        return {
+          success: false,
+          error: result.error || 'Failed to update password',
+          authType: 'local'
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Password update failed:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update password',
+        authType: 'local'
+      }
+    }
   }
 
   /**

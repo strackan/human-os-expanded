@@ -83,7 +83,7 @@ INSERT INTO public.customer_properties (customer_id, usage_score, health_score, 
 -- or stored as a separate field if needed by the application
 
 -- Insert contacts for all 15 customers
-INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, company_id, is_primary, created_at, updated_at) VALUES
+INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, customer_id, is_primary, created_at, updated_at) VALUES
 -- Contact 1: John Smith - Acme Corporation
 ('550e8400-e29b-41d4-a716-446655440101', 'John', 'Smith', 'john.smith@acmecorp.com', '+1-555-0101', 'CTO', '550e8400-e29b-41d4-a716-446655440001', true, NOW(), NOW()),
 -- Contact 2: Sarah Johnson - RiskyCorp
@@ -115,22 +115,8 @@ INSERT INTO public.contacts (id, first_name, last_name, email, phone, title, com
 -- Contact 15: Thomas Jackson - BetaWorks
 ('550e8400-e29b-41d4-a716-446655440115', 'Thomas', 'Jackson', 'thomas.jackson@betaworks.com', '+1-555-0115', 'Education Lead', '550e8400-e29b-41d4-a716-446655440015', true, NOW(), NOW());
 
--- Update customers with primary_contact_id for all 15 customers
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440101' WHERE id = '550e8400-e29b-41d4-a716-446655440001';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440102' WHERE id = '550e8400-e29b-41d4-a716-446655440002';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440103' WHERE id = '550e8400-e29b-41d4-a716-446655440003';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440104' WHERE id = '550e8400-e29b-41d4-a716-446655440004';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440105' WHERE id = '550e8400-e29b-41d4-a716-446655440005';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440106' WHERE id = '550e8400-e29b-41d4-a716-446655440006';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440107' WHERE id = '550e8400-e29b-41d4-a716-446655440007';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440108' WHERE id = '550e8400-e29b-41d4-a716-446655440008';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440109' WHERE id = '550e8400-e29b-41d4-a716-446655440009';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440110' WHERE id = '550e8400-e29b-41d4-a716-446655440010';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440111' WHERE id = '550e8400-e29b-41d4-a716-446655440011';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440112' WHERE id = '550e8400-e29b-41d4-a716-446655440012';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440113' WHERE id = '550e8400-e29b-41d4-a716-446655440013';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440114' WHERE id = '550e8400-e29b-41d4-a716-446655440014';
-UPDATE public.customers SET primary_contact_id = '550e8400-e29b-41d4-a716-446655440115' WHERE id = '550e8400-e29b-41d4-a716-446655440015';
+-- Note: We no longer need to update primary_contact_id since we removed that column
+-- The primary contact relationship is now handled through contacts.is_primary = true
 
 -- Insert renewals (migrated from MVP schema)
 INSERT INTO public.renewals (id, customer_id, renewal_date, current_arr, proposed_arr, probability, stage, risk_level, assigned_to, notes, created_at, updated_at) VALUES

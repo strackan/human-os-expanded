@@ -121,7 +121,7 @@ export default function CustomerPage({ params }: { params: Promise<{ customerKey
         { date: '2024-05-10', event: 'Renewal discussion started', type: 'info' }
       ],
       contacts: [
-        customer.primary_contact,
+        ...(customer.primary_contact ? [customer.primary_contact] : []),
         {
           id: '2',
           first_name: 'Sarah',
@@ -441,40 +441,47 @@ export default function CustomerPage({ params }: { params: Promise<{ customerKey
                 Contacts
               </h3>
               <div className="space-y-4">
-                {sampleData?.contacts.map((contact, index) => (
-                  contact && (
-                    <div key={contact.id || index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
-                              {contact.first_name[0]}{contact.last_name[0]}
-                            </span>
+                {sampleData?.contacts && sampleData.contacts.length > 0 ? (
+                  sampleData.contacts.map((contact, index) => (
+                    contact && (contact.first_name || contact.last_name || contact.email) && (
+                      <div key={contact.id || index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <span className="text-sm font-medium text-blue-600">
+                                {(contact.first_name?.[0] || '') + (contact.last_name?.[0] || '') || '?'}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">
+                              {[contact.first_name, contact.last_name].filter(Boolean).join(' ') || 'Unknown Contact'}
+                              {contact.is_primary && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Primary</span>}
+                            </p>
+                            <p className="text-sm text-gray-500">{contact.title}</p>
                           </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">
-                            {contact.first_name} {contact.last_name}
-                            {contact.is_primary && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Primary</span>}
-                          </p>
-                          <p className="text-sm text-gray-500">{contact.title}</p>
+                        <div className="flex items-center space-x-2">
+                          {contact.email && (
+                            <a href={`mailto:${contact.email}`} className="text-gray-400 hover:text-gray-500">
+                              <EnvelopeIcon className="h-4 w-4" />
+                            </a>
+                          )}
+                          {contact.phone && (
+                            <a href={`tel:${contact.phone}`} className="text-gray-400 hover:text-gray-500">
+                              <PhoneIcon className="h-4 w-4" />
+                            </a>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {contact.email && (
-                          <a href={`mailto:${contact.email}`} className="text-gray-400 hover:text-gray-500">
-                            <EnvelopeIcon className="h-4 w-4" />
-                          </a>
-                        )}
-                        {contact.phone && (
-                          <a href={`tel:${contact.phone}`} className="text-gray-400 hover:text-gray-500">
-                            <PhoneIcon className="h-4 w-4" />
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )
-                ))}
+                    )
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <UserGroupIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>No contacts found for this customer.</p>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -8,8 +8,11 @@ export const AUTH_CONFIG = {
     '/signin',
     '/auth/callback', 
     '/auth/signout',
+    '/auth/reset-password',
+    '/auth/setup-password',
     '/clear-cookies.html',
     '/debug-auth', // Add debug page
+    '/test-auth', // Add test page
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml'

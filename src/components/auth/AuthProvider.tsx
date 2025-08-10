@@ -192,51 +192,55 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     let mounted = true
 
-    // Get initial user from client-side session
+    // Get initial user via auth refresh API to prevent hanging
     const getInitialUser = async () => {
       try {
-        console.log('🔍 Getting initial user from client...')
+        console.log('🔍 Getting initial user via refresh API...')
         
-        // Try both getSession and getUser to ensure we get the user
-        const [sessionResult, userResult] = await Promise.all([
-          supabase.auth.getSession(),
-          supabase.auth.getUser()
-        ])
+        // First check if we have a basic session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        const session = sessionResult.data.session
-        const user = userResult.data.user
-        const sessionError = sessionResult.error
-        const userError = userResult.error
-        
-        console.log('📝 Initial auth results:', {
-          hasSession: !!session,
-          hasUser: !!user,
-          userEmail: user?.email || session?.user?.email,
-          sessionError: sessionError?.message,
-          userError: userError?.message
-        })
-        
-        if (!mounted) return
-        
-        // Use user from either source
-        const currentUser = user || session?.user
-        
-        if (currentUser) {
-          setUser(currentUser)
-          console.log('👤 User found, fetching profile...')
-          try {
-            await fetchAndUpdateProfile(currentUser)
-          } catch (error) {
-            console.log('⚠️ Profile fetch failed:', error)
-            if (mounted) setProfile(null)
+        if (!session || sessionError) {
+          console.log('👤 No session found locally')
+          if (mounted) {
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
           }
-        } else {
-          console.log('👤 No user found in session or user check')
-          setUser(null)
-          setProfile(null)
+          return
+        }
+        
+        // Use the auth refresh API for validated user data
+        try {
+          const response = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          })
+          
+          const data = await response.json()
+          
+          if (!mounted) return
+          
+          if (data.success && data.user) {
+            console.log('✅ User validated via refresh API:', data.user.email)
+            setUser(session.user) // Use session user object for full data
+            await fetchAndUpdateProfile(session.user)
+          } else {
+            console.log('⚠️ Auth refresh failed, but keeping session data:', data.error)
+            // Don't clear user state if refresh fails - keep the session data
+            setUser(session.user)
+            await fetchAndUpdateProfile(session.user)
+          }
+        } catch (fetchError) {
+          console.log('⚠️ Auth refresh API failed, falling back to session:', fetchError)
+          if (mounted) {
+            // Fallback to session data if API fails
+            setUser(session.user)
+            await fetchAndUpdateProfile(session.user)
+          }
         }
       } catch (error) {
-        console.error('❌ Session check error:', error)
+        console.error('❌ Initial auth check error:', error)
         if (mounted) {
           setUser(null)
           setProfile(null)
