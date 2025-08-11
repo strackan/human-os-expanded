@@ -48,9 +48,14 @@ export async function middleware(req: NextRequest) {
   const localAuthFallbackEnabled = process.env.NEXT_PUBLIC_LOCAL_AUTH_FALLBACK_ENABLED === 'true'
   
   try {
-    // Use getSession() for basic middleware checks to prevent hanging
-    // The client-side will handle proper user validation via API route
-    const { data: { session }, error } = await supabase.auth.getSession()
+    // Use a shorter timeout and more aggressive fallback
+    const sessionPromise = supabase.auth.getSession()
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Session check timeout')), 1000) // Reduced from 2s to 1s
+    )
+
+    const result = await Promise.race([sessionPromise, timeoutPromise])
+    const { data: { session }, error } = result as any
 
     if (session && !error) {
       // Basic session exists, allow access
@@ -76,18 +81,12 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl)
     }
   } catch (error) {
-    console.log('🔐 Session check error, redirecting to signin:', error)
+    console.log('🔐 Session check error or timeout, defaulting to permissive access:', error)
     
-    // Check if we should allow local auth fallback
-    if (localAuthFallbackEnabled && pathname.startsWith('/auth/')) {
-      console.log('🔄 Local auth fallback enabled, allowing auth routes after error')
-      return res
-    }
-    
-    // For other errors, redirect to signin
-    const redirectUrl = new URL('/signin', req.url)
-    redirectUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(redirectUrl)
+    // On any error/timeout, be more permissive to prevent hanging
+    // Allow access to most routes and let the client-side handle auth
+    console.log('🔄 Allowing access due to middleware timeout/error - client will handle auth')
+    return res
   }
 }
 
@@ -99,7 +98,9 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public folder
+     * - api routes (handled separately)
+     * - auth routes (to prevent infinite loops)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/|api/|auth/|signin|signout).*)',
   ],
 }

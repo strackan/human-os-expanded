@@ -199,6 +199,19 @@ export class AuthService {
       console.log('🔐 AuthService: Attempting sign-in with email:', credentials.email)
       console.log('🔐 AuthService: Password length:', credentials.password.length)
       
+      // First, check if there's an existing session and clear it if needed
+      try {
+        const { data: { session } } = await this.supabase.auth.getSession()
+        if (session) {
+          console.log('⚠️ Existing session found, clearing before sign-in...')
+          await this.supabase.auth.signOut({ scope: 'local' })
+          // Wait a moment for the signout to complete
+          await new Promise(resolve => setTimeout(resolve, 500))
+        }
+      } catch (sessionError) {
+        console.warn('⚠️ Error checking existing session:', sessionError)
+      }
+      
       const { data, error } = await this.supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
@@ -220,6 +233,19 @@ export class AuthService {
 
       if (data.user) {
         console.log('✅ Local authentication successful:', data.user.email)
+        
+        // Ensure session is properly established by getting the current session
+        try {
+          const { data: sessionData } = await this.supabase.auth.getSession()
+          if (sessionData.session) {
+            console.log('✅ Session confirmed:', sessionData.session.user.email)
+          } else {
+            console.warn('⚠️ No session found after successful login')
+          }
+        } catch (sessionError) {
+          console.warn('⚠️ Could not verify session:', sessionError)
+        }
+        
         return {
           success: true,
           user: data.user,
@@ -444,6 +470,56 @@ export class AuthService {
    */
   getMinPasswordLength(): number {
     return parseInt(process.env.NEXT_PUBLIC_LOCAL_AUTH_MIN_PASSWORD_LENGTH || '8')
+  }
+
+  /**
+   * Check if user is currently authenticated
+   */
+  async isAuthenticated(): Promise<boolean> {
+    try {
+      // Add timeout to prevent hanging
+      const sessionPromise = this.supabase.auth.getSession()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Authentication check timeout')), 3000)
+      )
+      
+      const result = await Promise.race([sessionPromise, timeoutPromise])
+      const { data: { session }, error } = result as any
+      
+      return !!(session && !error)
+    } catch (error) {
+      console.log('⚠️ Authentication check timeout/error:', error)
+      return false
+    }
+  }
+
+  /**
+   * Clear any existing session data to prevent conflicts
+   */
+  async clearSessionData(): Promise<void> {
+    try {
+      // Clear session persistence data
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('renubu_session_backup')
+        localStorage.removeItem('renubu_user_backup')
+        localStorage.removeItem('renubu_session_expiry')
+        
+        // Clear any Supabase auth tokens
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          const projectRef = supabaseUrl.split('//')[1]?.split('.')[0]
+          if (projectRef) {
+            localStorage.removeItem(`sb-${projectRef}-auth-token`)
+          }
+        }
+      }
+      
+      // Clear Supabase session
+      await this.supabase.auth.signOut({ scope: 'local' })
+      console.log('✅ Session data cleared')
+    } catch (error) {
+      console.warn('⚠️ Error clearing session data:', error)
+    }
   }
 
   /**

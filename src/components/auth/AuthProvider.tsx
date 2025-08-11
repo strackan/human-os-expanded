@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { User } from '@supabase/supabase-js'
 import { Profile } from '@/lib/supabase'
+import { SessionPersistence } from '@/lib/session-persistence'
 
 interface AuthContextType {
   user: User | null
@@ -44,8 +45,16 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshSession = async () => {
     try {
-      console.log('🔄 Refreshing session...')
-      const { data, error } = await supabase.auth.refreshSession()
+      console.log('🔄 Refreshing session with timeout...')
+      
+      // Add timeout to prevent hanging
+      const refreshPromise = supabase.auth.refreshSession()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Session refresh timeout')), 5000)
+      )
+      
+      const result = await Promise.race([refreshPromise, timeoutPromise])
+      const { data, error } = result as any
       
       if (error) {
         console.error('❌ Session refresh failed:', error)
@@ -62,7 +71,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setProfile(null)
       }
     } catch (error) {
-      console.error('❌ Session refresh error:', error)
+      console.log('⚠️ Session refresh timeout/error, clearing session:', error)
       setUser(null)
       setProfile(null)
     }
@@ -115,11 +124,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log('🔐 Signing out...', { scope })
       
-      // Clear local state first
-      console.log('🔐 Clearing local state...')
+      // Clear local state and session backup first
+      console.log('🔐 Clearing local state and session backup...')
       setUser(null)
       setProfile(null)
-      console.log('✅ Local state cleared')
+      SessionPersistence.clearSessionData()
+      console.log('✅ Local state and session backup cleared')
       
       // Call client-side signout with scope and timeout
       console.log('🔐 Calling Supabase auth.signOut...')
@@ -195,10 +205,32 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     // Get initial user via auth refresh API to prevent hanging
     const getInitialUser = async () => {
       try {
-        console.log('🔍 Getting initial user via refresh API...')
+        console.log('🔍 Getting initial user with timeout...')
         
-        // First check if we have a basic session
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        // First try to restore from backup if available
+        if (SessionPersistence.isSessionBackupAvailable()) {
+          console.log('🔄 Session backup found, attempting restoration...')
+          const restored = await SessionPersistence.restoreSession(supabase)
+          if (restored) {
+            // Session restored, get the fresh session data
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session && mounted) {
+              setUser(session.user)
+              await fetchAndUpdateProfile(session.user)
+              setLoading(false)
+              return
+            }
+          }
+        }
+        
+        // Add timeout to prevent hanging on getSession
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Initial session check timeout')), 3000)
+        )
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise])
+        const { data: { session }, error: sessionError } = result as any
         
         if (!session || sessionError) {
           console.log('👤 No session found locally')
@@ -210,45 +242,21 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           return
         }
         
-        // Use the auth refresh API for validated user data
-        try {
-          const response = await fetch('/api/auth/refresh', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          })
-          
-          const data = await response.json()
-          
-          if (!mounted) return
-          
-          if (data.success && data.user) {
-            console.log('✅ User validated via refresh API:', data.user.email)
-            setUser(session.user) // Use session user object for full data
-            await fetchAndUpdateProfile(session.user)
-          } else {
-            console.log('⚠️ Auth refresh failed, but keeping session data:', data.error)
-            // Don't clear user state if refresh fails - keep the session data
-            setUser(session.user)
-            await fetchAndUpdateProfile(session.user)
-          }
-        } catch (fetchError) {
-          console.log('⚠️ Auth refresh API failed, falling back to session:', fetchError)
-          if (mounted) {
-            // Fallback to session data if API fails
-            setUser(session.user)
-            await fetchAndUpdateProfile(session.user)
-          }
+        // Save successful session for future restoration
+        SessionPersistence.saveSessionData(session.user, session)
+        
+        // Trust the session data to prevent infinite loops
+        if (mounted) {
+          console.log('✅ Using session data directly to prevent infinite refresh loop')
+          setUser(session.user)
+          await fetchAndUpdateProfile(session.user)
         }
       } catch (error) {
-        console.error('❌ Initial auth check error:', error)
+        console.log('⚠️ Initial auth check timeout/error, allowing unauthenticated access:', error)
         if (mounted) {
           setUser(null)
           setProfile(null)
-        }
-      } finally {
-        if (mounted) {
           setLoading(false)
-          console.log('🏁 Initial session loading complete')
         }
       }
     }

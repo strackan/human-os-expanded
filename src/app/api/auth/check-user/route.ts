@@ -18,10 +18,10 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceRoleClient()
 
     // First, check if the user exists using listUsers
-    const { data: usersData, error: userError } = await supabase.auth.admin.listUsers({ email })
+    const { data: usersData, error: userError } = await supabase.auth.admin.listUsers()
     
-    if (userError || !usersData.users || usersData.users.length === 0) {
-      console.log('❌ API: User not found:', email, userError)
+    if (userError || !usersData.users) {
+      console.log('❌ API: User lookup error:', email, userError)
       return NextResponse.json(
         { 
           exists: false,
@@ -31,7 +31,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const userData = { user: usersData.users[0] }
+    // Filter users by email
+    const matchingUser = usersData.users.find(user => user.email === email)
+    
+    if (!matchingUser) {
+      console.log('❌ API: User not found:', email)
+      return NextResponse.json(
+        { 
+          exists: false,
+          error: 'No account found with this email address' 
+        }, 
+        { status: 404 }
+      )
+    }
+
+    const userData = { user: matchingUser }
     console.log('✅ API: User found:', userData.user.email)
     console.log('✅ API: User ID:', userData.user.id)
     console.log('✅ API: User created at:', userData.user.created_at)

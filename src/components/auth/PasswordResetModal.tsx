@@ -120,7 +120,7 @@ export default function PasswordResetModal({ isOpen, onClose, email = "" }: Pass
           <>
             <div className="mb-4">
               <p className="text-sm text-gray-600 mb-3">
-                Since email verification isn't working yet, you can reset your password directly here.
+                Enter your email and new password to update your account.
               </p>
             </div>
 

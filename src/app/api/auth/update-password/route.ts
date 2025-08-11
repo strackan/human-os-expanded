@@ -23,17 +23,28 @@ export async function POST(request: NextRequest) {
       console.log('🔐 API: Attempting direct password update for:', email)
       
       // First, try to get the user by email using listUsers
-      const { data: usersData, error: userError } = await supabase.auth.admin.listUsers({ email })
+      const { data: usersData, error: userError } = await supabase.auth.admin.listUsers()
       
-      if (userError || !usersData.users || usersData.users.length === 0) {
-        console.log('❌ API: User not found:', email, userError)
+      if (userError || !usersData.users) {
+        console.log('❌ API: User lookup error:', email, userError)
         return NextResponse.json(
           { error: 'No account found with this email address' },
           { status: 404 }
         )
       }
 
-      const userData = { user: usersData.users[0] }
+      // Filter users by email
+      const matchingUser = usersData.users.find(user => user.email === email)
+      
+      if (!matchingUser) {
+        console.log('❌ API: User not found:', email)
+        return NextResponse.json(
+          { error: 'No account found with this email address' },
+          { status: 404 }
+        )
+      }
+
+      const userData = { user: matchingUser }
       console.log('✅ API: User found:', userData.user.email)
 
       // Update the user's password
