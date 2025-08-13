@@ -5,16 +5,21 @@ import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function Workflows() {
   const { user } = useAuth();
+  
+  // Check if DEMO_MODE is enabled
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <h1 className="text-3xl font-bold text-center mb-8 text-gray-800">Renubu Workflows</h1>
         
-        {/* Show welcome message if user is authenticated */}
-        {user && (
+        {/* Show welcome message if user is authenticated or in demo mode */}
+        {(isDemoMode || user) && (
           <div className="mb-6 text-center">
-            <p className="text-green-600 font-medium">Welcome back, {user.email}!</p>
+            <p className="text-green-600 font-medium">
+              {isDemoMode ? 'Demo Mode Active' : `Welcome back, ${user?.email}!`}
+            </p>
             <Link 
               href="/dashboard" 
               className="inline-block mt-2 text-blue-600 hover:text-blue-700 underline"

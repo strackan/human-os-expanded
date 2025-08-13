@@ -32,6 +32,13 @@ export async function middleware(req: NextRequest) {
   
   const { pathname } = req.nextUrl
 
+  // Check if DEMO MODE is enabled - bypasses ALL authentication
+  const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  if (demoMode) {
+    console.log('🎮 DEMO MODE: Authentication bypassed for:', pathname)
+    return res
+  }
+
   // Check if authentication bypass is enabled (for demo/testing)
   const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true'
   if (authBypassEnabled) {
@@ -101,6 +108,6 @@ export const config = {
      * - api routes (handled separately)
      * - auth routes (to prevent infinite loops)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public/|api/|auth/|signin|signout).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public/|api/|auth/|signin|signout|create-user).*)',
   ],
 }

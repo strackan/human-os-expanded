@@ -86,7 +86,7 @@ export default function UserAvatarDropdown() {
       console.error('❌ User avatar dropdown - Sign out error:', error)
       // Even if there's an error, try to redirect manually
       if (typeof window !== 'undefined') {
-        window.location.href = '/signin'
+        window.location.href = `${window.location.origin}/signin`
       }
       // Reset loading state on error
       setIsSigningOut(false)

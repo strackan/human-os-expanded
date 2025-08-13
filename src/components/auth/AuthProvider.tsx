@@ -171,7 +171,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
             // The server will handle the redirect
           } else {
             console.warn('⚠️ Server-side signout failed, falling back to direct redirect')
-            window.location.href = '/signin'
+            window.location.href = `${window.location.origin}/signin`
           }
           
         } catch (fetchError) {
@@ -191,7 +191,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           console.warn('⚠️ window.location.href failed, trying alternative redirect:', redirectError)
           // Fallback: try to use Next.js router if available
           if (typeof window !== 'undefined' && window.history) {
-            window.history.pushState({}, '', '/signin')
+            window.history.pushState({}, '', `${window.location.origin}/signin`)
             window.location.reload()
           }
         }

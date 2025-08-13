@@ -6,6 +6,7 @@ export const AUTH_CONFIG = {
   publicRoutes: [
     '/', // Root landing page
     '/signin',
+    '/create-user', // User creation page
     '/auth/callback', 
     '/auth/signout',
     '/auth/reset-password',

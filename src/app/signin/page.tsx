@@ -29,6 +29,15 @@ export default function SignInPage() {
   const authError = searchParams.get("error")
 
   useEffect(() => {
+    // Check if DEMO_MODE is enabled - if so, redirect immediately
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+    if (isDemoMode) {
+      console.log('🎮 DEMO MODE: Skipping signin, redirecting to:', next || '/dashboard')
+      const redirectTo = next || '/dashboard'
+      router.push(redirectTo)
+      return
+    }
+    
     // Check if local auth is enabled
     setLocalAuthEnabled(authService.isLocalAuthEnabled())
     
@@ -264,6 +273,19 @@ export default function SignInPage() {
   }
 
 
+
+  // If in DEMO_MODE, show loading while redirecting
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  if (isDemoMode) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Demo Mode Active - Redirecting...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">

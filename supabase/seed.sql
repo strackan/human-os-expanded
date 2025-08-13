@@ -1,6 +1,85 @@
 -- Consolidated seed data for public schema
 -- This uses the consolidated public schema with all 15 customers from mockCustomers
 
+-- Create default admin user if not exists
+-- This ensures there's always a way to login locally
+DO $$
+DECLARE
+    admin_user_id UUID;
+BEGIN
+    -- Check if admin user already exists
+    SELECT id INTO admin_user_id FROM auth.users WHERE email = 'admin';
+    
+    IF admin_user_id IS NULL THEN
+        -- Create the admin user with encrypted password
+        INSERT INTO auth.users (
+            id,
+            instance_id,
+            aud,
+            role,
+            email,
+            encrypted_password,
+            email_confirmed_at,
+            raw_app_meta_data,
+            raw_user_meta_data,
+            is_super_admin,
+            created_at,
+            updated_at,
+            confirmation_token,
+            recovery_token
+        ) VALUES (
+            gen_random_uuid(),
+            '00000000-0000-0000-0000-000000000000',
+            'authenticated',
+            'authenticated',
+            'admin',
+            crypt('Renubu123', gen_salt('bf')),
+            NOW(), -- Email is confirmed
+            jsonb_build_object(
+                'provider', 'email',
+                'providers', ARRAY['email']::text[],
+                'auth_type', 'local'
+            ),
+            jsonb_build_object(
+                'email', 'admin',
+                'email_verified', true,
+                'full_name', 'Renubu Admin',
+                'auth_type', 'local'
+            ),
+            false,
+            NOW(),
+            NOW(),
+            '',
+            ''
+        ) RETURNING id INTO admin_user_id;
+        
+        -- Create corresponding profile for admin user
+        INSERT INTO public.profiles (
+            id,
+            email,
+            full_name,
+            auth_type,
+            is_local_user,
+            local_auth_enabled,
+            created_at,
+            updated_at
+        ) VALUES (
+            admin_user_id,
+            'admin',
+            'Renubu Admin',
+            'local',
+            true,
+            true,
+            NOW(),
+            NOW()
+        ) ON CONFLICT (id) DO NOTHING;
+        
+        RAISE NOTICE 'Default admin user created successfully (email: admin, password: Renubu123)';
+    ELSE
+        RAISE NOTICE 'Default admin user already exists';
+    END IF;
+END $$;
+
 -- Clear existing data to ensure clean seed
 TRUNCATE TABLE public.notes CASCADE;
 TRUNCATE TABLE public.tasks CASCADE;

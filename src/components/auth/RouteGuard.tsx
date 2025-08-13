@@ -14,14 +14,24 @@ export default function RouteGuard({ children }: RouteGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
 
+  // Check if DEMO_MODE is enabled
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+
   useEffect(() => {
     console.log('🛡️ RouteGuard check:', { 
       pathname, 
       isPublicRoute: isPublicRoute(pathname), 
       hasUser: !!user, 
       loading,
-      userEmail: user?.email
+      userEmail: user?.email,
+      isDemoMode
     })
+
+    // If DEMO_MODE is enabled, skip all auth checks
+    if (isDemoMode) {
+      console.log('🎮 DEMO MODE: Skipping auth check for:', pathname)
+      return
+    }
 
     // Don't redirect if we're still loading or on a public route
     if (loading || isPublicRoute(pathname)) {
@@ -44,7 +54,12 @@ export default function RouteGuard({ children }: RouteGuardProps) {
     }
 
     console.log('🛡️ User authenticated, allowing access to:', pathname)
-  }, [user, loading, pathname, router])
+  }, [user, loading, pathname, router, isDemoMode])
+
+  // If DEMO_MODE is enabled, always render children
+  if (isDemoMode) {
+    return <>{children}</>
+  }
 
   // Show loading state while checking auth
   if (loading) {

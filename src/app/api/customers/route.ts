@@ -26,13 +26,14 @@ export async function GET(request: NextRequest) {
     if (healthScoreMax) filters.health_score_max = Number(healthScoreMax);
     if (minARR) filters.current_arr_min = Number(minARR);
 
-    // Use service role client since auth bypass is enabled
+    // Use service role client if DEMO_MODE or auth bypass is enabled
+    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = authBypassEnabled ? createServiceRoleClient() : await createServerSupabaseClient();
+    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
     const sortOptions = { field: sort as any, direction: order as 'asc' | 'desc' };
     
     console.log('🔍 API route calling CustomerService with filters:', filters);
-    console.log('🔍 Auth bypass enabled:', authBypassEnabled);
+    console.log('🔍 Demo mode:', demoMode, '| Auth bypass:', authBypassEnabled);
     const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize, supabase);
 
     return NextResponse.json({
@@ -70,9 +71,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use service role client since auth bypass is enabled
+    // Use service role client if DEMO_MODE or auth bypass is enabled
+    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = authBypassEnabled ? createServiceRoleClient() : await createServerSupabaseClient();
+    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
     const newCustomer = await CustomerService.createCustomer({
       name: body.name,
       domain: body.domain || '',
