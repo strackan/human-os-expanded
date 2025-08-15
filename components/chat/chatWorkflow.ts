@@ -12,7 +12,7 @@ const renewalsChatSteps: ChatStep[] = [
     progressStep: 0, // Move from "Review account data" to "Confirm renewal strategy"
     onUser: (answer) => {
       if (/conservative/i.test(answer)) {
-        return "We'll proceed with a more conservative renewal strategy.";
+        return "Got it. I'll proceed with your standard increase of 3%.";
       }
       return "Great, we'll proceed with the recommended aggressive strategy.";
     },
@@ -45,23 +45,62 @@ const renewalsChatSteps: ChatStep[] = [
     bot: "", // Leave bot message empty, since the previous step's reply already contains the question
     inputType: 'numberOrSkip',
     progressStep: 1, // Move from "Confirm renewal strategy" to "Confirm contacts"
-    onUser: (answer) => {
+    pendingConfirmation: false,
+    onUser: (answer, context) => {
+      // Check if we're in a confirmation state
+      if (context?.pendingConfirmation) {
+        if (/yes|y|confirm/i.test(answer)) {
+          const pendingValue = context.pendingValue;
+          if (pendingValue < 3) {
+            return `Understood. We'll proceed with a ${pendingValue}% increase for this renewal.`;
+          } else if (pendingValue > 8) {
+            return `Noted. We'll proceed with a ${pendingValue}% increase for this renewal.`;
+          }
+        } else if (/no|n|cancel/i.test(answer)) {
+          // Re-ask the original question
+          return ["Let's reconsider. I recommend a 7% price increase as our target. Would you like to proceed with 7%, or enter a different percentage?"];
+        }
+        // If neither yes nor no, re-ask confirmation
+        return ["Please confirm: Enter 'Yes' to proceed or 'No' to enter a different percentage."];
+      }
+
       if (!answer.trim()) {
         // Treat empty input as 7
         return `Great, 7% is a strong, data-backed choice for this renewal.`;
       }
       if (/skip|pass/i.test(answer)) return "No problem, we'll revisit the price increase later.";
+      
       const num = parseFloat(answer);
       if (!isNaN(num)) {
+        if (num < 3) {
+          // Store the pending value and ask for confirmation
+          if (context) {
+            context.pendingConfirmation = true;
+            context.pendingValue = num;
+          }
+          return [`You've entered ${num}%. Our analysis suggests this customer could likely accommodate a higher increase. Are you certain you'd like to proceed with ${num}%?`];
+        }
         if (num >= 10) {
+          // High numbers need manager approval (no confirmation dialog)
           return `You entered ${num}%. This amount needs manager approval. We'll let you know when we hear back (or you can edit the number).`;
+        }
+        if (num > 8) {
+          // Numbers between 8 and 10 need confirmation
+          if (context) {
+            context.pendingConfirmation = true;
+            context.pendingValue = num;
+          }
+          return [`You've entered ${num}%. This is a substantial increase that may create friction with the customer based on our data. Are you certain you'd like to proceed with ${num}%?`];
         }
         if (num === 7) {
           return `Great, 7% is a strong, data-backed choice for this renewal.`;
         }
-        return `Noted, we'll propose a ${num}% increase for this renewal.`;
+        if (num >= 3 && num <= 8) {
+          return `Noted, we'll propose a ${num}% increase for this renewal.`;
+        }
       }
-      return "Please enter a number, or type 'Skip'.";
+      // Invalid input - re-ask the question
+      return ["I didn't understand that. Please enter a percentage number (e.g., 7), or type 'Skip' to revisit this later."];
     },
   },
   {
@@ -74,37 +113,35 @@ const renewalsChatSteps: ChatStep[] = [
   },
   {
     bot: "There's one risk: Feature X usage declined 15% last quarter. Should I set a reminder to schedule a meeting about this?",
-    inputType: 'numberOrSkip',
+    inputType: 'choice',
+    choices: ["Yes, schedule meeting", "No, proceed without"],
     progressStep: 3, // Move from "Address risk" to "Send renewal notice"
     onUser: (answer) => {
-      const trimmed = answer.trim().toLowerCase();
-      if (trimmed.includes('yes') || trimmed === '1' || trimmed === 'y' || trimmed === 'schedule') {
+      if (answer.toLowerCase().includes('yes')) {
         return [
           "Okay, I'll remind you to schedule a meeting in a few days.",
-          "You're all set. I'll check back later when it's time to send the notice.",
-          { type: "link", text: "Go to next customer – Initech", href: "/customers/initech" }
+          "You're all set. I'll check back later when it's time to send the renewal notice."
         ];
       }
-      if (trimmed.includes('no') || trimmed === '2' || trimmed === 'n' || trimmed === 'proceed') {
+      if (answer.toLowerCase().includes('no')) {
         return [
-          "Understood. We'll proceed directly with the renewal notice.",
-          "You're all set. I'll check back later when it's time to send the notice.",
-          { type: "link", text: "Go to next customer – Initech", href: "/customers/initech" }
+          "I'll skip the meeting.",
+          "You're all set. I'll check back later when it's time to send the renewal notice."
         ];
       }
-      return "Please enter Yes, No, 1, 2, or type your answer.";
+      return "Please select Yes or No.";
     },
   },
   {
-    bot: "Would you like to send the renewal notice now?",
-    inputType: 'choice',
-    choices: ["Yes, send now", "No, review first"],
+    bot: "", // This step will show the Review/Proceed buttons
+    inputType: 'finalStep',
+    choices: ["Review", "Proceed to next customer"],
     progressStep: 4, // Final step - "Send renewal notice"
     onUser: (answer) => {
-      if (answer.toLowerCase().includes("yes")) {
-        return "Great! The renewal notice has been sent.";
+      if (answer.toLowerCase().includes("review")) {
+        return { type: "review", showSummary: true };
       }
-      return "Understood. Let me know when you're ready to send the notice.";
+      return { type: "proceed", href: "/customers/initech" };
     },
   }
 ];

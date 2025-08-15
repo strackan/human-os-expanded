@@ -364,7 +364,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
         {/* Main Container */}
         <div className="flex w-full" ref={containerRef}>
           {mode === 'pre-action' ? (
-            <div className="flex w-full h-[70vh]">
+            <div className="flex w-full" style={{ height: 'calc(100vh - 385px)', minHeight: '400px' }}>
               <div className="resizable-panel-left h-full">
                 <ContextPanel currentStep={step} />
               </div>
@@ -398,7 +398,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex w-full h-[70vh]">
+            <div className="flex w-full" style={{ height: 'calc(100vh - 385px)', minHeight: '400px' }}>
               <div className="resizable-panel-left bg-white rounded-2xl shadow-lg flex h-full z-10">
                 <div className="flex flex-row h-full w-full">
                   {/* ProgressStepper (collapsible) */}
@@ -436,7 +436,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
                 <div className="divider-handle-knob"></div>
               </div>
               {/* ChatPanel on the right */}
-              <div className="flex-1 h-[70vh]">
+              <div className="flex-1 h-full">
                 <div className="bg-white rounded-2xl shadow-lg p-6 flex flex-col h-full w-full">
                   <ConversationalChat
                     steps={chatSteps}
