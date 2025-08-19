@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renubu Timeline - Fixed Position Experience</title>
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: #f7fafc;
+            overflow-x: hidden;
+        }
+
+        /* Timeline Container with Viewport Fade Overlays */
+        .renubu-timeline {
+            position: relative;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            min-height: 100vh;
+        }
+
+        /* Top and Bottom Viewport Fade Overlays */
+        .renubu-timeline::before,
+        .renubu-timeline::after {
+            content: '';
+            position: fixed;
+            left: 0;
+            right: 0;
+            height: 150px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .renubu-timeline::before {
+            top: 0;
+            background: linear-gradient(180deg, 
+                rgba(26, 54, 93, 1) 0%, 
+                rgba(26, 54, 93, 0.8) 30%, 
+                rgba(26, 54, 93, 0.4) 60%, 
+                transparent 100%);
+        }
+
+        .renubu-timeline::after {
+            bottom: 0;
+            background: linear-gradient(0deg, 
+                rgba(26, 54, 93, 1) 0%, 
+                rgba(26, 54, 93, 0.8) 30%, 
+                rgba(26, 54, 93, 0.4) 60%, 
+                transparent 100%);
+        }
+
+        /* Intro Screen */
+        .renubu-intro {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 2rem;
+        }
+
+        .renubu-intro h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ed8936, #f6ad55);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .renubu-intro p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Fixed Timeline Spine */
+        .renubu-timeline-spine {
+            position: fixed;
+            left: 15%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 10;
+        }
+
+        .renubu-timeline-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(180deg, #ed8936 0%, #f6ad55 100%);
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(237, 137, 54, 0.5);
+        }
+
+        /* Horizontal Progress Bar */
+        .renubu-horizontal-progress {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            max-width: 90vw;
+            height: 20px;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .renubu-horizontal-progress.visible {
+            opacity: 1;
+        }
+
+        .renubu-horizontal-progress-bar {
+            position: relative;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .renubu-progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ed8936, #f6ad55);
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 2px;
+        }
+
+        .renubu-progress-tick {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 1px;
+        }
+
+        .renubu-progress-tick.active {
+            background: #ed8936;
+            height: 16px;
+        }
+
+        /* Timeline Numbers - Scroll with page content */
+        .renubu-timeline-number {
+            position: relative;
+            left: 15%;
+            width: 200px;
+            padding: 2rem 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-align: left;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.3;
+            transform: translateY(20px);
+            z-index: 15;
+        }
+
+        .renubu-timeline-number.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .renubu-timeline-number.fading {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .renubu-timeline-number .timeline-day {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ed8936;
+            display: block;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+            letter-spacing: -0.02em;
+        }
+
+        .renubu-timeline-number .timeline-stage {
+            font-size: 1rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 0.25rem;
+        }
+
+        /* Timeline Sections - Create scroll space */
+        .renubu-timeline-section {
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Fixed Cards - GLUED to center screen */
+        .renubu-fixed-cards {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            max-width: 90vw;
+            min-height: 500px;
+            max-height: 80vh;
+            z-index: 5;
+        }
+
+        /* Individual Card - Fixed position, only opacity changes */
+        .renubu-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            min-height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+
+        .renubu-card.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .renubu-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ed8936, #f6ad55);
+        }
+
+        /* Typography */
+        .renubu-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .renubu-stat {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ed8936;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(237, 137, 54, 0.3);
+        }
+
+        .renubu-insight {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-style: italic;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid #ed8936;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Visual Elements */
+        .renubu-visual {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #1a365d, #2d3748);
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .renubu-visual::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .renubu-timeline-spine {
+                left: 10%;
+            }
+            
+            .renubu-timeline-number {
+                left: 10%;
+                width: 180px;
+            }
+            
+            .renubu-fixed-cards {
+                width: 500px;
+            }
+            
+            .renubu-horizontal-progress {
+                width: 500px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .renubu-timeline-spine {
+                left: 5%;
+            }
+            
+            .renubu-timeline-number {
+                left: 5%;
+                width: 160px;
+                font-size: 1rem;
+            }
+            
+            .renubu-timeline-number .timeline-day {
+                font-size: 2rem;
+            }
+            
+            .renubu-fixed-cards {
+                width: 90vw;
+                padding: 0 1rem;
+            }
+            
+            .renubu-horizontal-progress {
+                width: 90vw;
+            }
+            
+            .renubu-card {
+                padding: 2rem;
+            }
+            
+            .renubu-title {
+                font-size: 2rem;
+            }
+            
+            .renubu-stat {
+                font-size: 2.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .renubu-timeline-spine {
+                display: none;
+            }
+            
+            .renubu-timeline-number {
+                left: 2rem;
+                width: auto;
+            }
+            
+            .renubu-fixed-cards {
+                width: 95vw;
+            }
+            
+            .renubu-timeline-section {
+                height: 80vh;
+                padding: 2rem 0;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus States */
+        .renubu-card:focus-within {
+            outline: 2px solid #ed8936;
+            outline-offset: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="renubu-timeline" id="renubuTimeline">
+        <!-- Intro Screen -->
+        <div class="renubu-intro">
+            <div>
+                <h1>The $50B Renewal Crisis</h1>
+                <p>Scroll to explore the 210-day journey of enterprise software renewals and discover how AI is transforming this broken process.</p>
+            </div>
+        </div>
+
+        <!-- Horizontal Progress Bar -->
+        <div class="renubu-horizontal-progress">
+            <div class="renubu-horizontal-progress-bar" id="horizontalProgress">
+                <div class="renubu-progress-fill" id="progressFill"></div>
+                <div class="renubu-progress-tick" style="left: 0%;" data-index="0"></div>
+                <div class="renubu-progress-tick" style="left: 14.28%;" data-index="1"></div>
+                <div class="renubu-progress-tick" style="left: 28.57%;" data-index="2"></div>
+                <div class="renubu-progress-tick" style="left: 42.86%;" data-index="3"></div>
+                <div class="renubu-progress-tick" style="left: 57.14%;" data-index="4"></div>
+                <div class="renubu-progress-tick" style="left: 71.43%;" data-index="5"></div>
+                <div class="renubu-progress-tick" style="left: 85.71%;" data-index="6"></div>
+                <div class="renubu-progress-tick" style="left: 100%;" data-index="7"></div>
+            </div>
+        </div>
+
+        <!-- Fixed Timeline Spine -->
+        <div class="renubu-timeline-spine">
+        </div>
+
+        <!-- Fixed Cards - GLUED to center screen -->
+        <div class="renubu-fixed-cards">
+            <!-- Day 0: Crisis Begins -->
+            <div class="renubu-card" id="card-0">
+                <div class="renubu-title">Ground Zero: When Renewals Go Wrong</div>
+                <div class="renubu-stat">$50B</div>
+                <div class="renubu-visual">💸</div>
+                <div class="renubu-insight">
+                    "42 steps, 12 departments, 210 days of chaos"
+                </div>
+            </div>
+
+            <!-- Day 30: Planning Stage -->
+            <div class="renubu-card" id="card-1">
+                <div class="renubu-title">The Handoff Hell</div>
+                <div class="renubu-stat">15+</div>
+                <div class="renubu-visual">🔄</div>
+                <div class="renubu-insight">
+                    "Where customer context gets lost"
+                </div>
+            </div>
+
+            <!-- Day 60: Analysis Phase -->
+            <div class="renubu-card" id="card-2">
+                <div class="renubu-title">Death by Spreadsheet</div>
+                <div class="renubu-stat">8-12h</div>
+                <div class="renubu-visual">📊</div>
+                <div class="renubu-insight">
+                    "Strategic minds trapped in administrative tasks"
+                </div>
+            </div>
+
+            <!-- Day 90: Pricing Review -->
+            <div class="renubu-card" id="card-3">
+                <div class="renubu-title">Subjective Pricing Under Pressure</div>
+                <div class="renubu-stat">83%</div>
+                <div class="renubu-visual">💰</div>
+                <div class="renubu-insight">
+                    "Limited information + time pressure = lost revenue"
+                </div>
+            </div>
+
+            <!-- Day 120: Trust Building -->
+            <div class="renubu-card" id="card-4">
+                <div class="renubu-title">The Commercial vs. Advisory Tension</div>
+                <div class="renubu-stat">Dual</div>
+                <div class="renubu-visual">⚖️</div>
+                <div class="renubu-insight">
+                    "Trust suffers when advisors become negotiators"
+                </div>
+            </div>
+
+            <!-- Day 150: Final Countdown -->
+            <div class="renubu-card" id="card-5">
+                <div class="renubu-title">Panic Mode Activated</div>
+                <div class="renubu-stat">30d</div>
+                <div class="renubu-visual">⏰</div>
+                <div class="renubu-insight">
+                    "When planning fails, panic prevails"
+                </div>
+            </div>
+
+            <!-- Day 180: Renewal Day -->
+            <div class="renubu-card" id="card-6">
+                <div class="renubu-title">The Moment of Truth</div>
+                <div class="renubu-stat">0</div>
+                <div class="renubu-visual">🎯</div>
+                <div class="renubu-insight">
+                    "210 days of effort culminates in seconds"
+                </div>
+            </div>
+
+            <!-- Day 210: Future State -->
+            <div class="renubu-card" id="card-7">
+                <div class="renubu-title">AI-Powered Transformation</div>
+                <div class="renubu-stat">50%</div>
+                <div class="renubu-visual">🚀</div>
+                <div class="renubu-insight">
+                    "From chaos to clarity: The future of renewals"
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Sections with Scrolling Numbers -->
+        <!-- Day 0: Crisis Begins -->
+        <div class="renubu-timeline-section" data-index="0">
+                         <div class="renubu-timeline-number" data-index="0">
+                 <span class="timeline-day">Day 0</span>
+                 <span class="timeline-stage">Crisis Begins</span>
+             </div>
+        </div>
+
+        <!-- Day 30: Planning Stage -->
+        <div class="renubu-timeline-section" data-index="1">
+                         <div class="renubu-timeline-number" data-index="1">
+                 <span class="timeline-day">Day 30</span>
+                 <span class="timeline-stage">Planning Stage</span>
+             </div>
+        </div>
+
+        <!-- Day 60: Analysis Phase -->
+        <div class="renubu-timeline-section" data-index="2">
+                         <div class="renubu-timeline-number" data-index="2">
+                 <span class="timeline-day">Day 60</span>
+                 <span class="timeline-stage">Analysis Phase</span>
+             </div>
+        </div>
+
+        <!-- Day 90: Pricing Review -->
+        <div class="renubu-timeline-section" data-index="3">
+                         <div class="renubu-timeline-number" data-index="3">
+                 <span class="timeline-day">Day 90</span>
+                 <span class="timeline-stage">Pricing Review</span>
+             </div>
+        </div>
+
+        <!-- Day 120: Trust Building -->
+        <div class="renubu-timeline-section" data-index="4">
+                         <div class="renubu-timeline-number" data-index="4">
+                 <span class="timeline-day">Day 120</span>
+                 <span class="timeline-stage">Trust Building</span>
+             </div>
+        </div>
+
+        <!-- Day 150: Final Countdown -->
+        <div class="renubu-timeline-section" data-index="5">
+                         <div class="renubu-timeline-number" data-index="5">
+                 <span class="timeline-day">Day 150</span>
+                 <span class="timeline-stage">Final Countdown</span>
+             </div>
+        </div>
+
+        <!-- Day 180: Renewal Day -->
+        <div class="renubu-timeline-section" data-index="6">
+                         <div class="renubu-timeline-number" data-index="6">
+                 <span class="timeline-day">Day 180</span>
+                 <span class="timeline-stage">Renewal Day</span>
+             </div>
+        </div>
+
+        <!-- Day 210: Future State -->
+        <div class="renubu-timeline-section" data-index="7">
+                         <div class="renubu-timeline-number" data-index="7">
+                 <span class="timeline-day">Day 210</span>
+                 <span class="timeline-stage">Future State</span>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        class RenubuFixedTimeline {
+            constructor() {
+                this.currentIndex = -1;
+                this.timelineNumbers = [];
+                this.cards = [];
+                this.sections = [];
+                this.isScrolling = false;
+                
+                this.init();
+            }
+
+            init() {
+                this.setupElements();
+                this.setupIntersectionObserver();
+                this.setupScrollListener();
+            }
+
+            setupElements() {
+                this.timelineNumbers = document.querySelectorAll('.renubu-timeline-number');
+                this.cards = document.querySelectorAll('.renubu-card');
+                this.sections = document.querySelectorAll('.renubu-timeline-section');
+                this.progressTicks = document.querySelectorAll('.renubu-progress-tick');
+                
+                console.log('Timeline initialized with:', {
+                    numbers: this.timelineNumbers.length,
+                    cards: this.cards.length,
+                    sections: this.sections.length
+                });
+            }
+
+            setupIntersectionObserver() {
+                const options = {
+                    root: null,
+                    rootMargin: '0px',
+                    threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const section = entry.target;
+                        const index = parseInt(section.getAttribute('data-index'));
+                        const intersectionRatio = entry.intersectionRatio;
+                        
+                        if (entry.isIntersecting) {
+                            // Calculate position in viewport
+                            const rect = section.getBoundingClientRect();
+                            const viewportHeight = window.innerHeight;
+                            const elementCenter = rect.top + (rect.height / 2);
+                            const viewportCenter = viewportHeight / 2;
+                            const distanceFromCenter = Math.abs(elementCenter - viewportCenter);
+                            const maxDistance = viewportHeight * 0.3; // 30% of viewport height
+                            
+                            // Show number and card together when section is visible and centered
+                            if (intersectionRatio >= 0.3) {
+                                this.showNumber(index);
+                                
+                                // Show card when section is centered (within 30% of center)
+                                if (distanceFromCenter <= maxDistance) {
+                                    this.showCard(index);
+                                } else {
+                                    // Hide card when not centered
+                                    if (this.currentIndex === index) {
+                                        this.hideCard(index);
+                                    }
+                                }
+                            }
+                        } else {
+                            // Hide number when section leaves viewport
+                            this.hideNumber(index);
+                            // Hide card if it was showing
+                            if (this.currentIndex === index) {
+                                this.hideCard(index);
+                            }
+                        }
+                    });
+                }, options);
+
+                this.sections.forEach(section => {
+                    observer.observe(section);
+                });
+            }
+
+            showNumber(index) {
+                const number = this.timelineNumbers[index];
+                if (number) {
+                    number.classList.remove('fading');
+                    number.classList.add('visible');
+                }
+            }
+
+            hideNumber(index) {
+                const number = this.timelineNumbers[index];
+                if (number) {
+                    number.classList.remove('visible');
+                    number.classList.add('fading');
+                }
+            }
+
+            showCard(index) {
+                if (this.currentIndex === index) return;
+                
+                console.log(`Showing card ${index}`);
+                
+                // Hide all cards first
+                this.cards.forEach((card, i) => {
+                    card.classList.remove('visible');
+                });
+                
+                // Show the current card immediately
+                const card = this.cards[index];
+                if (card) {
+                    card.classList.add('visible');
+                    this.currentIndex = index;
+                }
+            }
+
+            hideCard(index) {
+                console.log(`Hiding card ${index}`);
+                const card = this.cards[index];
+                if (card && card.classList.contains('visible')) {
+                    card.classList.remove('visible');
+                    if (this.currentIndex === index) {
+                        this.currentIndex = -1;
+                    }
+                }
+            }
+
+            setupScrollListener() {
+                let ticking = false;
+                
+                const updateProgress = () => {
+                    const scrollTop = window.pageYOffset;
+                    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    const scrollPercent = Math.min((scrollTop / docHeight) * 100, 100);
+                    
+                    // Show progress bar when scrolling past intro (delayed to prevent early movement)
+                    const progressBar = document.querySelector('.renubu-horizontal-progress');
+                    if (scrollTop > window.innerHeight * 1.2) { // Increased from 0.8 to 1.2
+                        progressBar.classList.add('visible');
+                    } else {
+                        progressBar.classList.remove('visible');
+                    }
+                    
+                    // Hide all cards when back at intro screen
+                    if (scrollTop < window.innerHeight * 0.8) { // Increased from 0.5 to 0.8
+                        this.cards.forEach(card => {
+                            card.classList.remove('visible');
+                        });
+                        this.currentIndex = -1;
+                    }
+                    
+                    // Update horizontal progress bar
+                    document.getElementById('progressFill').style.width = `${scrollPercent}%`;
+                    
+                    // Update tick marks
+                    const currentStage = Math.floor((scrollPercent / 100) * 8);
+                    this.progressTicks.forEach((tick, tickIndex) => {
+                        if (tickIndex <= currentStage) {
+                            tick.classList.add('active');
+                        } else {
+                            tick.classList.remove('active');
+                        }
+                    });
+                    
+                    ticking = false;
+                };
+
+                const requestTick = () => {
+                    if (!ticking) {
+                        requestAnimationFrame(updateProgress);
+                        ticking = true;
+                    }
+                };
+
+                window.addEventListener('scroll', requestTick, { passive: true });
+            }
+        }
+
+        // Initialize timeline when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new RenubuFixedTimeline();
+        });
+
+        // Handle reduced motion preference
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.style.setProperty('--transition-duration', '0.01ms');
+        }
+    </script>
+</body>
+</html>

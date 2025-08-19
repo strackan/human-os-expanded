@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renewal Deathmarch - Carousel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        #deathmarch {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .hero-deathmarch {
+            height: 33vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-deathmarch h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(50px);
+            animation: fadeInUp 1s ease-out 0.5s forwards;
+        }
+
+
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .carousel-container {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 67vh;
+            padding: 2rem;
+            padding-bottom: 120px; /* Space for navigation */
+        }
+
+        .carousel-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            min-height: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            position: relative;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: fadeInUp 1s ease-out 1.5s forwards;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .carousel-card.visible {
+            transform: translateX(0);
+            opacity: 1;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .carousel-card.slide-out-right {
+            transform: translateX(100px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .carousel-card.slide-in-left {
+            transform: translateX(-100px);
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .day-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .stage-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            flex: 1;
+        }
+
+        .card-content {
+            margin-bottom: 2rem;
+        }
+
+        .card-content h3 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .card-content p {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+        }
+
+        .nav-deathmarch {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            z-index: 10;
+        }
+
+        .nav-btn-left-deathmarch {
+            left: calc(50% - 400px); /* Offset from card center (card width ~600px + 50px spacing) */
+        }
+
+        .nav-btn-right-deathmarch {
+            right: calc(50% - 400px); /* Offset from card center (card width ~600px + 50px spacing) */
+        }
+
+        .nav-btn-deathmarch {
+            background: none;
+            border: none;
+            color: white;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            min-width: 160px;
+            text-align: center;
+            font-size: 1.2rem;
+            opacity: 0;
+            transform: translateY(30px) scale(1);
+            animation: fadeInUp 1s ease-out 2s forwards;
+        }
+
+        .nav-btn-deathmarch:hover:not(:disabled) {
+            transform: scale(1.1) translateY(0) !important;
+            opacity: 0.8 !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        }
+
+        .nav-btn-deathmarch:disabled {
+            display: none;
+        }
+
+        .nav-btn-deathmarch.fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .nav-btn-deathmarch.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            transition: all 0.6s ease;
+        }
+
+        .nav-btn-deathmarch.visible:hover:not(:disabled) {
+            transform: scale(1.1) translateY(0) !important;
+            opacity: 0.8 !important;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        }
+
+        .nav-btn-deathmarch.fade-out {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .nav-info-deathmarch {
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            line-height: 1.2;
+        }
+
+        .nav-caret-deathmarch {
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .progress-bar {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .nav-btn-left-deathmarch {
+                left: calc(50% - 280px);
+            }
+
+            .nav-btn-right-deathmarch {
+                right: calc(50% - 280px);
+            }
+            
+            .nav-deathmarch {
+                bottom: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .carousel-card {
+                padding: 2rem;
+                margin: 1rem;
+                max-width: 90%;
+                min-height: 350px;
+            }
+
+            .stage-title {
+                font-size: 1.5rem;
+            }
+
+            .nav-btn {
+                padding: 0.8rem;
+                font-size: 1.2rem;
+                min-width: 140px;
+            }
+
+            .progress-bar {
+                width: 250px;
+            }
+
+            .nav-btn-left-deathmarch {
+                left: calc(50% - 400px);
+            }
+
+            .nav-btn-right-deathmarch {
+                right: calc(50% - 400px);
+            }
+
+            .carousel-container {
+                padding-bottom: 100px;
+            }
+
+            .nav-deathmarch {
+                bottom: 0px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .carousel-card {
+                min-height: 300px;
+                padding: 1.5rem;
+            }
+
+            .nav-btn-left-deathmarch {
+                left: 20px;
+            }
+
+            .nav-btn-right-deathmarch {
+                right: 20px;
+            }
+
+            .nav-btn-deathmarch {
+                min-width: 120px;
+                padding: 0.7rem;
+                font-size: 1rem;
+            }
+
+            .carousel-container {
+                padding-bottom: 80px;
+            }
+
+            .nav-deathmarch {
+                bottom: 15px;
+            }
+
+            .hero-deathmarch h1 {
+                font-size: 2.5rem;
+            }
+        }
+</style>
+</head>
+<body>
+    <div id="deathmarch">
+        <div class="hero-deathmarch">
+            <div>
+                <h1>The Renewal Deathmarch</h1>
+            </div>
+        </div>
+
+        <div class="carousel-container" id="carouselContainer">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div class="carousel-card" id="carouselCard">
+            <div class="card-header">
+                <div class="day-badge" id="dayBadge">Welcome</div>
+                <div class="stage-title" id="stageTitle">The Renewal Deathmarch</div>
+            </div>
+            
+            <div class="card-content">
+                <h3 id="cardTitle">Click to explore the 210-day contract renewal journey</h3>
+                <p id="cardDescription">Navigate through each stage of the contract renewal process. From initial contract review to final signature, experience the complete journey of a 210-day renewal cycle.</p>
+                <div class="card-image" id="cardImage">🚀</div>
+            </div>
+        </div>
+
+        <div class="nav-deathmarch nav-btn-left-deathmarch">
+            <button class="nav-btn-deathmarch" id="prevBtn">
+                <span class="nav-caret-deathmarch">‹</span>
+                <span class="nav-info-deathmarch" id="prevInfo"></span>
+            </button>
+        </div>
+
+        <div class="nav-deathmarch nav-btn-right-deathmarch">
+            <button class="nav-btn-deathmarch" id="nextBtn">
+                <span class="nav-info-deathmarch" id="nextInfo"></span>
+                <span class="nav-caret-deathmarch">›</span>
+            </button>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        class CarouselController {
+            constructor() {
+                this.currentIndex = -1; // Start with intro page
+                this.carouselData = [
+                    {
+                        day: 1,
+                        stage: "Contract Initiation",
+                        title: "The Journey Begins",
+                        description: "The renewal deathmarch begins. Initial review of current terms and conditions. Stakeholder alignment meeting scheduled. The clock starts ticking.",
+                        image: "📋"
+                    },
+                    {
+                        day: 30,
+                        stage: "Performance Review",
+                        title: "The Grind Continues",
+                        description: "Comprehensive performance analysis completed. Key metrics evaluated against contract terms. Preliminary recommendations prepared. The grind continues.",
+                        image: "📊"
+                    },
+                    {
+                        day: 60,
+                        stage: "Stakeholder Meeting",
+                        title: "The Marathon Continues",
+                        description: "Formal stakeholder alignment session. Performance review presented. Initial renewal terms discussed and feedback collected. The marathon continues.",
+                        image: "🤝"
+                    },
+                    {
+                        day: 90,
+                        stage: "Draft Proposal",
+                        title: "The End is in Sight",
+                        description: "Renewal proposal draft completed. Terms and conditions updated based on performance and stakeholder feedback. The end is in sight.",
+                        image: "📝"
+                    },
+                    {
+                        day: 120,
+                        stage: "Legal Review",
+                        title: "Almost There",
+                        description: "Legal team review completed. All terms validated for compliance. Risk assessment finalized. Ready for client presentation. Almost there.",
+                        image: "⚖️"
+                    },
+                    {
+                        day: 150,
+                        stage: "Client Presentation",
+                        title: "The Final Push",
+                        description: "Formal presentation to client. Renewal proposal delivered. Key benefits and value propositions highlighted. Client feedback received. The final push.",
+                        image: "💼"
+                    },
+                    {
+                        day: 180,
+                        stage: "Negotiation Phase",
+                        title: "The Finish Line Approaches",
+                        description: "Active negotiation period. Client feedback incorporated. Final terms refined. Agreement in principle reached. The finish line approaches.",
+                        image: "✍️"
+                    },
+                    {
+                        day: 210,
+                        stage: "Contract Signed",
+                        title: "The Deathmarch is Over",
+                        description: "Contract renewal successfully completed. All parties have signed. New terms effective immediately. The deathmarch is finally over.",
+                        image: "✅"
+                    }
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                console.log('Initializing carousel...');
+                this.setupEventListeners();
+                this.updateCarousel();
+                console.log('Carousel initialized');
+            }
+
+            setupEventListeners() {
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', () => {
+                        this.previous();
+                    });
+                }
+
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', () => {
+                        this.next();
+                    });
+                }
+            }
+
+            showCard() {
+                const carouselCard = document.getElementById('carouselCard');
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                
+                if (carouselCard) {
+                    // Clear all animation classes first
+                    carouselCard.classList.remove('slide-out-right', 'slide-in-left', 'visible');
+                    
+                    // Force a reflow to ensure classes are cleared
+                    void carouselCard.offsetWidth;
+                    
+                    // Start with slide-in-left, then transition to visible
+                    carouselCard.classList.add('slide-in-left');
+                    
+                    setTimeout(() => {
+                        carouselCard.classList.remove('slide-in-left');
+                        carouselCard.classList.add('visible');
+                    }, 50);
+                }
+                
+                // Sync navigation button animations with card
+                [prevBtn, nextBtn].forEach((btn, index) => {
+                    if (btn && btn.style.display !== 'none') {
+                        btn.classList.remove('fade-out', 'fade-in', 'visible');
+                        btn.classList.add('fade-in');
+                        setTimeout(() => {
+                            btn.classList.remove('fade-in');
+                            btn.classList.add('visible');
+                        }, 50 + (index * 50)); // Sync with card animation timing
+                    }
+                });
+            }
+
+            hideCard() {
+                const carouselCard = document.getElementById('carouselCard');
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                
+                if (carouselCard) {
+                    carouselCard.classList.remove('visible', 'slide-in-left');
+                    carouselCard.classList.add('slide-out-right');
+                }
+                
+                // Fade out navigation buttons
+                [prevBtn, nextBtn].forEach(btn => {
+                    if (btn && btn.style.display !== 'none') {
+                        btn.classList.remove('visible');
+                        btn.classList.add('fade-out');
+                    }
+                });
+            }
+
+            updateCarousel() {
+                console.log('Updating carousel, currentIndex:', this.currentIndex);
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const prevInfo = document.getElementById('prevInfo');
+                const nextInfo = document.getElementById('nextInfo');
+
+                if (this.currentIndex === -1) {
+                    // Intro page
+                    console.log('Setting intro page content');
+                    document.getElementById('dayBadge').textContent = 'Welcome';
+                    document.getElementById('stageTitle').textContent = 'The Renewal Deathmarch';
+                    document.getElementById('cardTitle').textContent = 'Click to explore the 210-day contract renewal journey';
+                    document.getElementById('cardDescription').textContent = 'Navigate through each stage of the contract renewal process. From initial contract review to final signature, experience the complete journey of a 210-day renewal cycle.';
+                    document.getElementById('cardImage').textContent = '🚀';
+                    
+                    prevBtn.style.display = 'none';
+                    prevInfo.textContent = '';
+                    nextBtn.style.display = 'flex';
+                    nextInfo.textContent = 'Day 1: Contract Initiation';
+                    
+                    // Progress bar at 0%
+                    document.getElementById('progressFill').style.width = '0%';
+                } else {
+                    // Regular timeline page
+                    const data = this.carouselData[this.currentIndex];
+                    
+                    // Update card content
+                    document.getElementById('dayBadge').textContent = `Day ${data.day}`;
+                    document.getElementById('stageTitle').textContent = data.stage;
+                    document.getElementById('cardTitle').textContent = data.title;
+                    document.getElementById('cardDescription').textContent = data.description;
+                    document.getElementById('cardImage').textContent = data.image;
+
+                    // Update navigation
+                    if (this.currentIndex === 0) {
+                        prevBtn.style.display = 'flex';
+                        prevInfo.textContent = 'Welcome';
+                    } else {
+                        prevBtn.style.display = 'flex';
+                        const prevData = this.carouselData[this.currentIndex - 1];
+                        prevInfo.textContent = `Day ${prevData.day}: ${prevData.stage}`;
+                    }
+
+                    if (this.currentIndex === this.carouselData.length - 1) {
+                        nextBtn.style.display = 'none';
+                        nextInfo.textContent = '';
+                    } else {
+                        nextBtn.style.display = 'flex';
+                        const nextData = this.carouselData[this.currentIndex + 1];
+                        nextInfo.textContent = `Day ${nextData.day}: ${nextData.stage}`;
+                    }
+
+                    // Update progress bar
+                    const progress = ((this.currentIndex + 1) / this.carouselData.length) * 100;
+                    document.getElementById('progressFill').style.width = `${progress}%`;
+                }
+            }
+
+            next() {
+                if (this.currentIndex < this.carouselData.length - 1) {
+                    const carouselCard = document.getElementById('carouselCard');
+                    if (carouselCard) {
+                        carouselCard.classList.add('slide-out-right');
+                    }
+                    
+                    setTimeout(() => {
+                        this.currentIndex++;
+                        this.updateCarousel();
+                        this.showCard();
+                    }, 600);
+                }
+            }
+
+            previous() {
+                if (this.currentIndex > -1) {
+                    const carouselCard = document.getElementById('carouselCard');
+                    if (carouselCard) {
+                        carouselCard.classList.add('slide-out-right');
+                    }
+                    
+                    setTimeout(() => {
+                        this.currentIndex--;
+                        this.updateCarousel();
+                        this.showCard();
+                    }, 600);
+                }
+            }
+        }
+
+        // Initialize carousel when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new CarouselController();
+        });
+    </script>
+</body>
+</html> 

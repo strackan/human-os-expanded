@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Renubu Timeline - Launch Page</title>
+    <style>
+        /* Timeline Component Reset - Scoped to timeline container */
+        .timeline-container * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Timeline Component Base Styles */
+        .timeline-container {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #2d3748;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .timeline-container .timeline-page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .timeline-container .timeline-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .timeline-container .timeline-header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1a365d;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ed8936, #f6ad55);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .timeline-container .timeline-header p {
+            font-size: 1.2rem;
+            color: #4a5568;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .timeline-container .timeline-content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .timeline-container .timeline-content-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .timeline-container .timeline-content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .timeline-container .timeline-content-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-container .timeline-content-card p {
+            color: #4a5568;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-container .timeline-launch-section {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .timeline-container .timeline-launch-section h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-container .timeline-launch-section p {
+            font-size: 1.1rem;
+            color: #4a5568;
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .timeline-container .timeline-launch-btn {
+            background: linear-gradient(135deg, #ed8936, #f6ad55);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(237, 137, 54, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timeline-container .timeline-launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(237, 137, 54, 0.4);
+        }
+
+        .timeline-container .timeline-launch-btn:active {
+            transform: translateY(0);
+        }
+
+        .timeline-container .timeline-launch-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .timeline-container .timeline-launch-btn:hover::before {
+            left: 100%;
+        }
+
+        .timeline-container .timeline-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .timeline-container .timeline-feature {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(237, 137, 54, 0.1);
+            border-radius: 12px;
+            border-left: 4px solid #ed8936;
+        }
+
+        .timeline-container .timeline-feature-icon {
+            font-size: 1.5rem;
+            color: #ed8936;
+        }
+
+        .timeline-container .timeline-feature-text {
+            font-weight: 500;
+            color: #1a365d;
+        }
+
+        .timeline-container .timeline-footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem;
+            color: #718096;
+            border-top: 1px solid rgba(113, 128, 150, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .timeline-container .timeline-page-container {
+                padding: 1rem;
+            }
+
+            .timeline-container .timeline-header h1 {
+                font-size: 2.5rem;
+            }
+
+            .timeline-container .timeline-launch-section {
+                padding: 2rem 1rem;
+            }
+
+            .timeline-container .timeline-launch-section h2 {
+                font-size: 2rem;
+            }
+
+            .timeline-container .timeline-content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== TIMELINE MODAL COMPONENT STYLES ===== */
+        
+        /* Modal Styles */
+        .timeline-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .timeline-modal.show {
+            opacity: 1;
+        }
+
+        .timeline-modal-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .timeline-close-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .timeline-close-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+        }
+
+        .timeline-close-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Timeline Container Styles - Modified for Modal */
+        .renubu-timeline {
+            position: relative;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .renubu-timeline.light-mode {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        }
+
+        /* Top and Bottom Viewport Fade Overlays - Dynamic */
+        .renubu-timeline::before,
+        .renubu-timeline::after {
+            content: '';
+            position: fixed;
+            left: 0;
+            right: 0;
+            height: 100px;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .renubu-timeline::before {
+            top: 0;
+            background: linear-gradient(180deg, 
+                rgba(26, 54, 93, 1) 0%, 
+                rgba(26, 54, 93, 0.8) 15%, 
+                rgba(26, 54, 93, 0.4) 40%, 
+                rgba(26, 54, 93, 0.1) 70%, 
+                transparent 100%);
+        }
+
+        .renubu-timeline::after {
+            bottom: 0;
+            background: linear-gradient(0deg, 
+                rgba(26, 54, 93, 1) 0%, 
+                rgba(26, 54, 93, 0.8) 30%, 
+                rgba(26, 54, 93, 0.4) 60%, 
+                transparent 100%);
+        }
+
+        /* Light Mode Overlays */
+        .renubu-timeline.light-mode::before {
+            background: linear-gradient(180deg, 
+                rgba(248, 250, 252, 1) 0%, 
+                rgba(248, 250, 252, 0.8) 15%, 
+                rgba(248, 250, 252, 0.4) 40%, 
+                rgba(248, 250, 252, 0.1) 70%, 
+                transparent 100%);
+        }
+
+        .renubu-timeline.light-mode::after {
+            background: linear-gradient(0deg, 
+                rgba(248, 250, 252, 1) 0%, 
+                rgba(248, 250, 252, 0.8) 30%, 
+                rgba(248, 250, 252, 0.4) 60%, 
+                transparent 100%);
+        }
+
+        /* Intro Screen */
+        .renubu-intro {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 2rem;
+            position: relative;
+            z-index: 30;
+            background: linear-gradient(135deg, #1a365d 0%, #2d3748 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .renubu-intro h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ed8936, #f6ad55);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .renubu-intro p {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Timeline Spine - Dynamic */
+        .renubu-timeline-spine {
+            position: fixed;
+            left: 15%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .renubu-timeline.light-mode .renubu-timeline-spine {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        .renubu-timeline-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(180deg, #ed8936 0%, #f6ad55 100%);
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 20px rgba(237, 137, 54, 0.5);
+        }
+
+        .renubu-timeline.light-mode .renubu-timeline-progress {
+            background: linear-gradient(180deg, #8b5cf6 0%, #a78bfa 100%);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+
+        /* Timeline Markers - Dynamic */
+        .renubu-timeline-marker {
+            position: absolute;
+            left: -8px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 15;
+            opacity: 0.5;
+        }
+
+        .renubu-timeline.light-mode .renubu-timeline-marker {
+            background: rgba(148, 163, 184, 0.2);
+            border-color: rgba(148, 163, 184, 0.4);
+        }
+
+        .renubu-timeline-marker.active {
+            background: #ed8936;
+            border-color: #ed8936;
+            box-shadow: 0 0 30px rgba(237, 137, 54, 0.8);
+            transform: scale(1.5);
+            opacity: 1;
+        }
+
+        .renubu-timeline.light-mode .renubu-timeline-marker.active {
+            background: #8b5cf6;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.6);
+        }
+
+        .renubu-timeline-marker.completed {
+            background: #ed8936;
+            border-color: #ed8936;
+            opacity: 0.8;
+        }
+
+        .renubu-timeline.light-mode .renubu-timeline-marker.completed {
+            background: #8b5cf6;
+            border-color: #8b5cf6;
+        }
+
+        /* Date Labels - Dynamic */
+        .renubu-date-label {
+            position: absolute;
+            left: 30px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .renubu-timeline.light-mode .renubu-date-label {
+            color: rgba(71, 85, 105, 0.8);
+        }
+
+        .renubu-date-label.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Timeline Sections */
+        .renubu-timeline-section {
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Content Area */
+        .renubu-content-area {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            margin-left: 15%;
+            padding: 0 2rem;
+            max-width: 800px;
+            width: 100%;
+            z-index: 5;
+        }
+
+        /* Infographic Cards - Dynamic */
+        .renubu-infographic {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: scale(0.95) translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .renubu-timeline.light-mode .renubu-infographic {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 10px 40px rgba(71, 85, 105, 0.08);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(20px);
+        }
+
+        .renubu-infographic.visible {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .renubu-infographic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ed8936, #f6ad55);
+        }
+
+        .renubu-timeline.light-mode .renubu-infographic::before {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+        }
+
+        /* Typography */
+        .renubu-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .renubu-timeline.light-mode .renubu-title {
+            color: #374151;
+        }
+
+        .renubu-stat {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #ed8936;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 4px rgba(237, 137, 54, 0.3);
+        }
+
+        .renubu-timeline.light-mode .renubu-stat {
+            color: #8b5cf6;
+            text-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+        }
+
+        .renubu-insight {
+            font-size: 1.2rem;
+            color: #4a5568;
+            font-style: italic;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(237, 137, 54, 0.1);
+            border-left: 4px solid #ed8936;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .renubu-timeline.light-mode .renubu-insight {
+            color: #6b7280;
+            background: rgba(139, 92, 246, 0.08);
+            border-left-color: #8b5cf6;
+        }
+
+        /* Visual Elements - Dynamic */
+        .renubu-visual {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #1a365d, #2d3748);
+            border-radius: 12px;
+            margin: 2rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .renubu-timeline.light-mode .renubu-visual {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+
+        .renubu-visual::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Responsive Design for Timeline */
+        @media (max-width: 1024px) {
+            .renubu-timeline-spine {
+                left: 10%;
+            }
+            
+            .renubu-content-area {
+                margin-left: 20%;
+                padding: 0 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .renubu-timeline-spine {
+                left: 5%;
+            }
+            
+            .renubu-content-area {
+                margin-left: 15%;
+                padding: 0 0.5rem;
+            }
+            
+            .renubu-infographic {
+                padding: 2rem;
+            }
+            
+            .renubu-title {
+                font-size: 2rem;
+            }
+            
+            .renubu-stat {
+                font-size: 2.5rem;
+            }
+
+            .renubu-intro h1 {
+                font-size: 3rem;
+            }
+
+            .renubu-intro p {
+                font-size: 1.2rem;
+            }
+
+            .timeline-close-btn {
+                top: 15px;
+                right: 15px;
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .renubu-timeline-spine {
+                display: none;
+            }
+            
+            .renubu-content-area {
+                margin-left: 0;
+                padding: 0 1rem;
+            }
+            
+            .renubu-timeline-section {
+                height: 80vh;
+                padding: 2rem 0;
+            }
+
+            .renubu-intro h1 {
+                font-size: 2.5rem;
+            }
+
+            .renubu-intro p {
+                font-size: 1rem;
+                padding: 0 1rem;
+            }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Focus States */
+        .renubu-infographic:focus-within {
+            outline: 2px solid #ed8936;
+            outline-offset: 8px;
+        }
+
+        /* Prevent body scroll when modal is open */
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* ===== CINEMATIC RENUBU FINAL SECTION ===== */
+        
+        /* Full Bleed Final Section */
+        .renubu-final-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .renubu-final-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: shimmer-final 8s ease-in-out infinite;
+        }
+
+        @keyframes shimmer-final {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Full Bleed Content */
+        .renubu-full-bleed-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            z-index: 10;
+        }
+
+        /* Brand Reveal Container */
+        .renubu-brand-reveal {
+            text-align: center;
+            color: white;
+            max-width: 900px;
+            opacity: 0;
+            transform: translateY(30px) scale(0.95);
+            transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .renubu-brand-reveal.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Logo Container */
+        .renubu-logo-container {
+            margin-bottom: 3rem;
+        }
+
+        .renubu-logo {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            margin-bottom: 1rem;
+            letter-spacing: -0.02em;
+        }
+
+        .renubu-tagline {
+            font-size: 1.5rem;
+            font-weight: 300;
+            opacity: 0.9;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Transformation Text */
+        .renubu-transformation-text {
+            margin-bottom: 4rem;
+        }
+
+        .renubu-transformation-text h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .renubu-transformation-text p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Stats Grid */
+        .renubu-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .renubu-stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .renubu-stat-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Responsive Design for Final Section */
+        @media (max-width: 768px) {
+            .renubu-logo {
+                font-size: 3.5rem;
+            }
+
+            .renubu-tagline {
+                font-size: 1.2rem;
+            }
+
+            .renubu-transformation-text h2 {
+                font-size: 2rem;
+            }
+
+            .renubu-transformation-text p {
+                font-size: 1.1rem;
+            }
+
+            .renubu-stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .renubu-stat-item {
+                padding: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .renubu-logo {
+                font-size: 3rem;
+            }
+
+            .renubu-transformation-text h2 {
+                font-size: 1.8rem;
+            }
+
+            .renubu-transformation-text p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="timeline-container">
+        <div class="timeline-page-container">
+        <div class="timeline-header">
+            <h1>Renubu Timeline Demo</h1>
+            <p>Experience the future of enterprise software renewal visualization in an immersive, interactive timeline.</p>
+        </div>
+
+        <div class="timeline-content-grid">
+            <div class="timeline-content-card">
+                <h3>🎯 Problem Solved</h3>
+                <p>The timeline addresses the critical issue of enterprise software renewals stretching across multiple pages and losing visual context in larger applications.</p>
+            </div>
+            <div class="timeline-content-card">
+                <h3>🚀 Modal Integration</h3>
+                <p>Seamlessly integrated as a modal overlay, preserving the timeline's visual integrity while maintaining the main application's layout and functionality.</p>
+            </div>
+            <div class="timeline-content-card">
+                <h3>📱 Responsive Design</h3>
+                <p>Fully responsive timeline that adapts to different screen sizes, ensuring optimal viewing experience across all devices.</p>
+            </div>
+        </div>
+
+        <div class="timeline-launch-section">
+            <h2>Ready to Explore?</h2>
+            <p>Click the button below to launch the interactive timeline and discover the 210-day journey of enterprise software renewals.</p>
+            
+            <button class="timeline-launch-btn" onclick="openTimelineModal()">
+                🚀 Launch Timeline Experience
+            </button>
+
+            <div class="timeline-features">
+                <div class="timeline-feature">
+                    <span class="timeline-feature-icon">✨</span>
+                    <span class="timeline-feature-text">Smooth Animations</span>
+                </div>
+                <div class="timeline-feature">
+                    <span class="timeline-feature-icon">🎨</span>
+                    <span class="timeline-feature-text">Dynamic Themes</span>
+                </div>
+                <div class="timeline-feature">
+                    <span class="timeline-feature-icon">📊</span>
+                    <span class="timeline-feature-text">Interactive Markers</span>
+                </div>
+                <div class="timeline-feature">
+                    <span class="timeline-feature-icon">🔒</span>
+                    <span class="timeline-feature-text">Modal Isolation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline-footer">
+            <p>Built with modern web technologies • Optimized for performance • Accessible design</p>
+        </div>
+    </div>
+    </div>
+
+    <!-- ===== TIMELINE MODAL COMPONENT ===== -->
+    <div class="timeline-modal" id="timelineModal">
+        <div class="timeline-modal-content">
+            <!-- Close Button -->
+            <button class="timeline-close-btn" id="closeModal" aria-label="Close timeline">
+                ✕
+            </button>
+            
+            <!-- Timeline Content -->
+            <div class="renubu-timeline" id="renubuTimeline">
+                <!-- Intro Screen -->
+                <div class="renubu-intro">
+                    <div>
+                        <h1>The $50B Renewal Crisis</h1>
+                        <p>Scroll to explore the 210-day journey of enterprise software renewals and discover how AI is transforming this broken process.</p>
+                    </div>
+                </div>
+
+                <!-- Timeline Spine -->
+                <div class="renubu-timeline-spine">
+                    <div class="renubu-timeline-progress" id="timelineProgress"></div>
+                    
+                    <!-- Timeline Markers -->
+                    <div class="renubu-timeline-marker" style="top: 12%;" data-index="0"></div>
+                    <div class="renubu-date-label" style="top: 12%;" data-index="0">Day 0: Crisis Begins</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 23%;" data-index="1"></div>
+                    <div class="renubu-date-label" style="top: 23%;" data-index="1">Day 30: Planning Stage</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 34%;" data-index="2"></div>
+                    <div class="renubu-date-label" style="top: 34%;" data-index="2">Day 60: Analysis Phase</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 45%;" data-index="3"></div>
+                    <div class="renubu-date-label" style="top: 45%;" data-index="3">Day 90: Pricing Review</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 56%;" data-index="4"></div>
+                    <div class="renubu-date-label" style="top: 56%;" data-index="4">Day 120: Trust Building</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 67%;" data-index="5"></div>
+                    <div class="renubu-date-label" style="top: 67%;" data-index="5">Day 150: Final Countdown</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 78%;" data-index="6"></div>
+                    <div class="renubu-date-label" style="top: 78%;" data-index="6">Day 180: Renewal Day</div>
+                    
+                    <div class="renubu-timeline-marker" style="top: 89%;" data-index="7"></div>
+                    <div class="renubu-date-label" style="top: 89%;" data-index="7">Day 210: Future State</div>
+                </div>
+
+                <!-- Timeline Sections -->
+                <!-- Day 0: Crisis Begins -->
+                <div class="renubu-timeline-section" data-index="0" data-day="0" data-stage="Crisis Begins">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-0">
+                            <div class="renubu-title">Ground Zero: When Renewals Go Wrong</div>
+                            <div class="renubu-stat">$50B</div>
+                            <div class="renubu-visual">💸</div>
+                            <div class="renubu-insight">
+                                "42 steps, 12 departments, 210 days of chaos"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 30: Planning Stage -->
+                <div class="renubu-timeline-section" data-index="1" data-day="30" data-stage="Planning Stage">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-1">
+                            <div class="renubu-title">The Handoff Hell</div>
+                            <div class="renubu-stat">15+</div>
+                            <div class="renubu-visual">🔄</div>
+                            <div class="renubu-insight">
+                                "Where customer context gets lost"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 60: Analysis Phase -->
+                <div class="renubu-timeline-section" data-index="2" data-day="60" data-stage="Analysis Phase">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-2">
+                            <div class="renubu-title">Death by Spreadsheet</div>
+                            <div class="renubu-stat">8-12h</div>
+                            <div class="renubu-visual">📊</div>
+                            <div class="renubu-insight">
+                                "Strategic minds trapped in administrative tasks"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 90: Pricing Review -->
+                <div class="renubu-timeline-section" data-index="3" data-day="90" data-stage="Pricing Review">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-3">
+                            <div class="renubu-title">Subjective Pricing Under Pressure</div>
+                            <div class="renubu-stat">83%</div>
+                            <div class="renubu-visual">💰</div>
+                            <div class="renubu-insight">
+                                "Limited information + time pressure = lost revenue"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 120: Trust Building -->
+                <div class="renubu-timeline-section" data-index="4" data-day="120" data-stage="Trust Building">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-4">
+                            <div class="renubu-title">The Commercial vs. Advisory Tension</div>
+                            <div class="renubu-stat">Dual</div>
+                            <div class="renubu-visual">⚖️</div>
+                            <div class="renubu-insight">
+                                "Trust suffers when advisors become negotiators"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 150: Final Countdown -->
+                <div class="renubu-timeline-section" data-index="5" data-day="150" data-stage="Final Countdown">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-5">
+                            <div class="renubu-title">Panic Mode Activated</div>
+                            <div class="renubu-stat">30d</div>
+                            <div class="renubu-visual">⏰</div>
+                            <div class="renubu-insight">
+                                "When planning fails, panic prevails"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 180: Renewal Day -->
+                <div class="renubu-timeline-section" data-index="6" data-day="180" data-stage="Renewal Day">
+                    <div class="renubu-content-area">
+                        <div class="renubu-infographic" id="infographic-6">
+                            <div class="renubu-title">The Moment of Truth</div>
+                            <div class="renubu-stat">0</div>
+                            <div class="renubu-visual">🎯</div>
+                            <div class="renubu-insight">
+                                "210 days of effort culminates in seconds"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                                 <!-- Day 210: Future State -->
+                 <div class="renubu-timeline-section renubu-final-section" data-index="7" data-day="210" data-stage="Future State">
+                     <div class="renubu-full-bleed-content">
+                         <div class="renubu-brand-reveal">
+                             <div class="renubu-logo-container">
+                                 <div class="renubu-logo">Renubu</div>
+                                 <div class="renubu-tagline">The Future of Renewals</div>
+                             </div>
+                             <div class="renubu-transformation-text">
+                                 <h2>From Chaos to Clarity</h2>
+                                 <p>AI-powered renewal management that transforms the 210-day crisis into a streamlined, data-driven process.</p>
+                             </div>
+                             <div class="renubu-stats-grid">
+                                 <div class="renubu-stat-item">
+                                     <div class="stat-number">50%</div>
+                                     <div class="stat-label">Faster Renewals</div>
+                                 </div>
+                                 <div class="renubu-stat-item">
+                                     <div class="stat-number">90%</div>
+                                     <div class="stat-label">Reduced Manual Work</div>
+                                 </div>
+                                 <div class="renubu-stat-item">
+                                     <div class="stat-number">$2B+</div>
+                                     <div class="stat-label">Revenue Protected</div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== TIMELINE MODAL COMPONENT JAVASCRIPT =====
+        
+        class RenubuTimelineModal {
+            constructor() {
+                this.modal = document.getElementById('timelineModal');
+                this.closeBtn = document.getElementById('closeModal');
+                this.timeline = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.initTimeline();
+            }
+
+            setupEventListeners() {
+                // Close button click
+                this.closeBtn.addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                // Close on backdrop click
+                this.modal.addEventListener('click', (e) => {
+                    if (e.target === this.modal) {
+                        this.closeModal();
+                    }
+                });
+
+                // Close on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.isOpen()) {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            initTimeline() {
+                this.timeline = new RenubuCombinedTimeline();
+            }
+
+            openModal() {
+                this.modal.style.display = 'block';
+                document.body.classList.add('modal-open');
+                
+                // Trigger animation after display is set
+                setTimeout(() => {
+                    this.modal.classList.add('show');
+                }, 10);
+            }
+
+            closeModal() {
+                this.modal.classList.remove('show');
+                
+                // Wait for animation to complete before hiding
+                setTimeout(() => {
+                    this.modal.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                }, 300);
+            }
+
+            isOpen() {
+                return this.modal.style.display === 'block';
+            }
+        }
+
+        class RenubuCombinedTimeline {
+            constructor() {
+                this.currentIndex = 0;
+                this.sections = [];
+                this.markers = [];
+                this.dateLabels = [];
+                this.infographics = [];
+                this.isScrolling = false;
+                this.thresholds = [0, 0.1, 0.3, 0.5, 0.7, 0.9, 1];
+                
+                this.init();
+            }
+
+            init() {
+                this.setupElements();
+                this.setupIntersectionObserver();
+                this.setupScrollListener();
+                this.updateTimeline(0);
+            }
+
+            setupElements() {
+                // Get timeline elements
+                this.sections = document.querySelectorAll('.renubu-timeline-section');
+                this.markers = document.querySelectorAll('.renubu-timeline-marker');
+                this.dateLabels = document.querySelectorAll('.renubu-date-label');
+                this.infographics = document.querySelectorAll('.renubu-infographic');
+                
+                // Add data attributes for tracking
+                this.sections.forEach((section, index) => {
+                    section.setAttribute('data-index', index);
+                });
+
+                console.log('Timeline initialized with:', {
+                    sections: this.sections.length,
+                    markers: this.markers.length,
+                    labels: this.dateLabels.length,
+                    infographics: this.infographics.length
+                });
+            }
+
+            setupIntersectionObserver() {
+                const modalContent = document.querySelector('.timeline-modal-content');
+                const options = {
+                    root: modalContent,
+                    rootMargin: '-20% 0px -20% 0px',
+                    threshold: [0, 0.3, 0.5, 0.7, 1]
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        const index = parseInt(entry.target.getAttribute('data-index'));
+                        const infographic = document.getElementById(`infographic-${index}`);
+                        const isFinalSection = entry.target.classList.contains('renubu-final-section');
+                        const brandReveal = entry.target.querySelector('.renubu-brand-reveal');
+                        
+                        if (entry.isIntersecting) {
+                            const intersectionRatio = entry.intersectionRatio;
+                            
+                            // Update timeline markers earlier (30% visible) for better sync
+                            if (intersectionRatio >= 0.3) {
+                                this.updateTimeline(index);
+                            }
+                            
+                            // Handle final section specially
+                            if (isFinalSection && intersectionRatio >= 0.5 && brandReveal) {
+                                brandReveal.classList.add('visible');
+                            } else if (isFinalSection && intersectionRatio < 0.5 && brandReveal) {
+                                brandReveal.classList.remove('visible');
+                            }
+                            
+                            // Fade in infographic when section is 50% visible (for non-final sections)
+                            if (!isFinalSection && intersectionRatio >= 0.5 && infographic) {
+                                infographic.classList.add('visible');
+                            } else if (!isFinalSection && intersectionRatio < 0.5 && infographic) {
+                                infographic.classList.remove('visible');
+                            }
+                        } else {
+                            // Remove visibility when section is not intersecting
+                            if (!isFinalSection && infographic) {
+                                infographic.classList.remove('visible');
+                            }
+                            if (isFinalSection && brandReveal) {
+                                brandReveal.classList.remove('visible');
+                            }
+                        }
+                    });
+                }, options);
+
+                this.sections.forEach(section => {
+                    observer.observe(section);
+                });
+            }
+
+            updateTimeline(index) {
+                if (this.currentIndex === index) return;
+                
+                console.log(`Updating timeline to index: ${index}`);
+                this.currentIndex = index;
+                
+                // Update markers
+                this.markers.forEach((marker, markerIndex) => {
+                    if (markerIndex < index) {
+                        marker.classList.add('completed');
+                        marker.classList.remove('active');
+                    } else if (markerIndex === index) {
+                        marker.classList.add('active');
+                        marker.classList.remove('completed');
+                    } else {
+                        marker.classList.remove('active', 'completed');
+                    }
+                });
+
+                // Update date labels - only show if past intro screen
+                const scrollTop = window.pageYOffset;
+                const introHeight = window.innerHeight;
+                
+                this.dateLabels.forEach((label, labelIndex) => {
+                    if (scrollTop > introHeight * 0.8) { // Show labels after intro mostly scrolled
+                        if (labelIndex <= index) {
+                            label.classList.add('visible');
+                        } else {
+                            label.classList.remove('visible');
+                        }
+                    } else {
+                        label.classList.remove('visible');
+                    }
+                });
+            }
+
+            setupScrollListener() {
+                let ticking = false;
+                let hasTransitioned = false;
+                
+                const updateProgress = () => {
+                    const modalContent = document.querySelector('.timeline-modal-content');
+                    const scrollTop = modalContent ? modalContent.scrollTop : window.pageYOffset;
+                    const scrollHeight = modalContent ? modalContent.scrollHeight : document.documentElement.scrollHeight;
+                    const clientHeight = modalContent ? modalContent.clientHeight : window.innerHeight;
+                    const docHeight = scrollHeight - clientHeight;
+                    const scrollPercent = Math.min((scrollTop / docHeight) * 100, 100);
+                    const introHeight = clientHeight;
+                    const timeline = document.getElementById('renubuTimeline');
+                    
+                    // Transition very early in scroll (5% of intro height)
+                    const shouldTransition = scrollTop > introHeight * 0.05;
+                    
+                    if (shouldTransition && !hasTransitioned) {
+                        timeline.classList.add('light-mode');
+                        hasTransitioned = true;
+                    } else if (!shouldTransition && hasTransitioned) {
+                        timeline.classList.remove('light-mode');
+                        hasTransitioned = false;
+                    }
+                    
+                    // Update progress bar
+                    const progressBar = document.getElementById('timelineProgress');
+                    if (progressBar) {
+                        progressBar.style.height = `${scrollPercent}%`;
+                    }
+                    
+                    // Update labels visibility based on scroll position
+                    this.dateLabels.forEach((label, labelIndex) => {
+                        if (scrollTop > introHeight * 0.8) { // Show labels after intro mostly scrolled
+                            if (labelIndex <= this.currentIndex) {
+                                label.classList.add('visible');
+                            }
+                        } else {
+                            label.classList.remove('visible');
+                        }
+                    });
+                    
+                    ticking = false;
+                };
+
+                const requestTick = () => {
+                    if (!ticking) {
+                        requestAnimationFrame(updateProgress);
+                        ticking = true;
+                    }
+                };
+
+                // Listen to modal content scroll instead of window scroll
+                const modalContent = document.querySelector('.timeline-modal-content');
+                if (modalContent) {
+                    modalContent.addEventListener('scroll', requestTick, { passive: true });
+                } else {
+                    window.addEventListener('scroll', requestTick, { passive: true });
+                }
+            }
+        }
+
+        // Initialize modal when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.timelineModal = new RenubuTimelineModal();
+        });
+
+        // Handle reduced motion preference
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.style.setProperty('--transition-duration', '0.01ms');
+        }
+
+        // Global function to open modal (for external use)
+        function openTimelineModal() {
+            if (window.timelineModal) {
+                window.timelineModal.openModal();
+            }
+        }
+    </script>
+</body>
+</html>
