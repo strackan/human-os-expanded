@@ -33,7 +33,7 @@ BEGIN
             'authenticated',
             'authenticated',
             'admin',
-            crypt('Renubu123', gen_salt('bf')),
+            crypt('Renubu123', gen_salt('bf', 10)),
             NOW(), -- Email is confirmed
             jsonb_build_object(
                 'provider', 'email',
