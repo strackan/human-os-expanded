@@ -14,6 +14,7 @@ import {
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import { CustomerWithContact } from "../../types/customer";
+import { URL_PATTERNS } from "../../lib/constants";
 
 interface CustomerCardProps {
   customer: CustomerWithContact;
@@ -55,8 +56,8 @@ export default function CustomerCard({
   };
 
   const handleDefaultView = () => {
-    const customerKey = customer.name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
-    router.push(`/customers/${customerKey}`);
+    // Use Salesforce-style URL pattern with customer ID
+    router.push(URL_PATTERNS.VIEW_CUSTOMER(customer.id));
   };
 
   const handleDefaultEdit = () => {

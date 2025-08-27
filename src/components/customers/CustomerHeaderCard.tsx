@@ -2,6 +2,7 @@
 import React from "react";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
+import { URL_PATTERNS } from '../../lib/constants';
 
 export interface CustomerStage {
   id: number;
@@ -91,8 +92,20 @@ const CustomerHeaderCard: React.FC<CustomerHeaderCardProps> = ({
             className="flex items-center gap-2 text-xs text-gray-500 hover:text-blue-600 focus:outline-none"
             tabIndex={0}
             aria-label={`Go to next customer: ${nextCustomerOverride || nextCustomer}`}
-            onClick={() => router.push(`/customers/${(nextCustomerOverride || nextCustomer)?.toLowerCase().replace(/ /g, '-')}`)}
-            onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && router.push(`/customers/${(nextCustomerOverride || nextCustomer)?.toLowerCase().replace(/ /g, '-')}`)}
+                         onClick={() => {
+               const customerId = nextCustomerOverride || nextCustomer;
+               if (customerId) {
+                 router.push(URL_PATTERNS.VIEW_CUSTOMER(customerId));
+               }
+             }}
+             onKeyDown={e => {
+               if (e.key === 'Enter' || e.key === ' ') {
+                 const customerId = nextCustomerOverride || nextCustomer;
+                 if (customerId) {
+                   router.push(URL_PATTERNS.VIEW_CUSTOMER(customerId));
+                 }
+               }
+             }}
           >
             <span>Next: {nextCustomerOverride || nextCustomer}</span>
             <ChevronRightIcon className="w-7 h-7 text-gray-300" />

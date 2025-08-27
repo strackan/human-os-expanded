@@ -12,6 +12,7 @@ import { initechChatSteps } from '../../../../components/chat/initech/initechCha
 import { useRouter } from 'next/navigation';
 import PageTransition from "../../../components/layout/PageTransition";
 import { CustomerData } from '../../../types/chat';
+import { URL_PATTERNS } from '../../../lib/constants';
 import '@/styles/resizable-divider.css';
 import { ChatStep } from "../../../types/chat";
 
@@ -388,26 +389,26 @@ const InitechPage = () => {
               <p className="text-sm text-gray-500 mt-1">Customer Management</p>
             </div>
             <div className="mt-4 md:mt-0 flex space-x-2">
-              {prevCustomer && (
-                <button 
-                  onClick={() => router.push(`/customers/${prevCustomer}`)}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  tabIndex={0}
-                  aria-label="Previous Customer"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" />
-                </button>
-              )}
-              {nextCustomer && (
-                <button 
-                  onClick={() => router.push(`/customers/${nextCustomer}`)}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  tabIndex={0}
-                  aria-label="Next Customer"
-                >
-                  <ChevronRightIcon className="w-5 h-5" />
-                </button>
-              )}
+                             {prevCustomer && (
+                 <button 
+                   onClick={() => router.push(URL_PATTERNS.VIEW_CUSTOMER(prevCustomer))}
+                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   tabIndex={0}
+                   aria-label="Previous Customer"
+                 >
+                   <ChevronLeftIcon className="w-5 h-5" />
+                 </button>
+               )}
+               {nextCustomer && (
+                 <button 
+                   onClick={() => router.push(URL_PATTERNS.VIEW_CUSTOMER(nextCustomer))}
+                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                   tabIndex={0}
+                   aria-label="Next Customer"
+                 >
+                   <ChevronRightIcon className="w-5 h-5" />
+                 </button>
+               )}
             </div>
           </div>
         </div>
@@ -511,8 +512,8 @@ const InitechPage = () => {
               className="flex items-center gap-2 text-xs text-gray-500 hover:text-orange-600 focus:outline-none"
               tabIndex={0}
               aria-label={`Go to next customer: ${nextCustomer}`}
-              onClick={() => router.push(`/customers/${nextCustomer}`)}
-              onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && router.push(`/customers/${nextCustomer}`)}
+                             onClick={() => router.push(URL_PATTERNS.VIEW_CUSTOMER(nextCustomer))}
+               onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && router.push(URL_PATTERNS.VIEW_CUSTOMER(nextCustomer))}
             >
               <span>Next: {nextCustomer}</span>
               <ChevronRightIcon className="w-7 h-7 text-gray-300" />

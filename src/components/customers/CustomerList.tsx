@@ -13,6 +13,7 @@ import {
 import { CustomerService } from "../../lib/services/CustomerService";
 import { Customer, CustomerWithContact, CustomerFilters, CustomerSortOptions } from "../../types/customer";
 import EditableCell from "../common/EditableCell";
+import { URL_PATTERNS } from "../../lib/constants";
 
 interface CustomerListProps {
   searchTerm?: string;
@@ -113,9 +114,8 @@ export default function CustomerList({
   };
 
   const handleView = (customer: CustomerWithContact) => {
-    // Convert customer name to URL-friendly format
-    const customerKey = customer.name.toLowerCase().replace(/ /g, '-').replace(/[^a-z0-9-]/g, '');
-    router.push(`/customers/${customerKey}`);
+    // Use Salesforce-style URL pattern with customer ID
+    router.push(URL_PATTERNS.VIEW_CUSTOMER(customer.id));
   };
 
   const handleSort = (field: keyof Customer) => {

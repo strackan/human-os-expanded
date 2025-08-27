@@ -91,38 +91,55 @@ TRUNCATE TABLE public.contacts CASCADE;
 TRUNCATE TABLE public.customers CASCADE;
 TRUNCATE TABLE public.customer_properties CASCADE;
 
--- Insert customers from mockCustomers data into public schema
+-- Insert customers from mockCustomers data into public schema with dynamic renewal dates
+-- Renewal dates are calculated to be within 15-150 days of current date for realistic workflow scenarios
+-- This provides a good cross-sampling of urgency levels: urgent (15-30), warning (31-90), good (91-150)
 INSERT INTO public.customers (id, name, domain, industry, health_score, current_arr, renewal_date, created_at, updated_at) VALUES
--- Customer 1: Acme Corporation
-('550e8400-e29b-41d4-a716-446655440001', 'Acme Corporation', 'acmecorp.com', 'Technology', 85, 450000, '2024-08-15', NOW(), NOW()),
--- Customer 2: RiskyCorp
-('550e8400-e29b-41d4-a716-446655440002', 'RiskyCorp', 'riskycorp.com', 'Manufacturing', 45, 380000, '2024-07-30', NOW(), NOW()),
--- Customer 3: TechStart Inc
-('550e8400-e29b-41d4-a716-446655440003', 'TechStart Inc', 'techstart.com', 'SaaS', 72, 120000, '2024-09-20', NOW(), NOW()),
--- Customer 4: Global Solutions
-('550e8400-e29b-41d4-a716-446655440004', 'Global Solutions', 'globalsolutions.com', 'Consulting', 92, 750000, '2024-10-05', NOW(), NOW()),
--- Customer 5: StartupXYZ
-('550e8400-e29b-41d4-a716-446655440005', 'StartupXYZ', 'startupxyz.com', 'Fintech', 35, 85000, '2024-07-15', NOW(), NOW()),
--- Customer 6: Nimbus Analytics
-('550e8400-e29b-41d4-a716-446655440006', 'Nimbus Analytics', 'nimbusanalytics.com', 'Analytics', 67, 210000, '2024-11-12', NOW(), NOW()),
--- Customer 7: Venture Partners
-('550e8400-e29b-41d4-a716-446655440007', 'Venture Partners', 'venturepartners.com', 'Finance', 78, 540000, '2024-12-01', NOW(), NOW()),
--- Customer 8: Horizon Systems
-('550e8400-e29b-41d4-a716-446655440008', 'Horizon Systems', 'horizonsystems.com', 'Healthcare', 55, 305000, '2024-06-25', NOW(), NOW()),
--- Customer 9: Quantum Soft
-('550e8400-e29b-41d4-a716-446655440009', 'Quantum Soft', 'quantumsoft.com', 'Software', 82, 190000, '2024-09-10', NOW(), NOW()),
--- Customer 10: Apex Media
-('550e8400-e29b-41d4-a716-446655440010', 'Apex Media', 'apexmedia.com', 'Media', 64, 150000, '2024-08-05', NOW(), NOW()),
--- Customer 11: Stellar Networks
-('550e8400-e29b-41d4-a716-446655440011', 'Stellar Networks', 'stellarnetworks.com', 'Telecom', 88, 620000, '2024-10-22', NOW(), NOW()),
--- Customer 12: FusionWare
-('550e8400-e29b-41d4-a716-446655440012', 'FusionWare', 'fusionware.com', 'Technology', 58, 97000, '2024-07-08', NOW(), NOW()),
--- Customer 13: Dynamic Ventures
-('550e8400-e29b-41d4-a716-446655440013', 'Dynamic Ventures', 'dynamicventures.com', 'Retail', 49, 130000, '2024-11-30', NOW(), NOW()),
--- Customer 14: Prime Holdings
-('550e8400-e29b-41d4-a716-446655440014', 'Prime Holdings', 'primeholdings.com', 'Logistics', 83, 410000, '2024-12-15', NOW(), NOW()),
--- Customer 15: BetaWorks
-('550e8400-e29b-41d4-a716-446655440015', 'BetaWorks', 'betaworks.com', 'Education', 61, 110000, '2024-09-05', NOW(), NOW());
+-- Customer 1: Acme Corporation - Renewal in ~2 months (75 days)
+('550e8400-e29b-41d4-a716-446655440001', 'Acme Corporation', 'acmecorp.com', 'Technology', 85, 450000, 
+ CURRENT_DATE + INTERVAL '75 days', NOW(), NOW()),
+-- Customer 2: RiskyCorp - Renewal in ~1 month (25 days) - urgent
+('550e8400-e29b-41d4-a716-446655440002', 'RiskyCorp', 'riskycorp.com', 'Manufacturing', 45, 380000, 
+ CURRENT_DATE + INTERVAL '25 days', NOW(), NOW()),
+-- Customer 3: TechStart Inc - Renewal in ~3 months (95 days)
+('550e8400-e29b-41d4-a716-446655440003', 'TechStart Inc', 'techstart.com', 'SaaS', 72, 120000, 
+ CURRENT_DATE + INTERVAL '95 days', NOW(), NOW()),
+-- Customer 4: Global Solutions - Renewal in ~4 months (125 days)
+('550e8400-e29b-41d4-a716-446655440004', 'Global Solutions', 'globalsolutions.com', 'Consulting', 92, 750000, 
+ CURRENT_DATE + INTERVAL '125 days', NOW(), NOW()),
+-- Customer 5: StartupXYZ - Renewal in ~1 month (18 days) - urgent
+('550e8400-e29b-41d4-a716-446655440005', 'StartupXYZ', 'startupxyz.com', 'Fintech', 35, 85000, 
+ CURRENT_DATE + INTERVAL '18 days', NOW(), NOW()),
+-- Customer 6: Nimbus Analytics - Renewal in ~5 months (155 days)
+('550e8400-e29b-41d4-a716-446655440006', 'Nimbus Analytics', 'nimbusanalytics.com', 'Analytics', 67, 210000, 
+ CURRENT_DATE + INTERVAL '155 days', NOW(), NOW()),
+-- Customer 7: Venture Partners - Renewal in ~6 months (185 days)
+('550e8400-e29b-41d4-a716-446655440007', 'Venture Partners', 'venturepartners.com', 'Finance', 78, 540000, 
+ CURRENT_DATE + INTERVAL '185 days', NOW(), NOW()),
+-- Customer 8: Horizon Systems - Renewal in ~2 weeks (12 days) - very urgent
+('550e8400-e29b-41d4-a716-446655440008', 'Horizon Systems', 'horizonsystems.com', 'Healthcare', 55, 305000, 
+ CURRENT_DATE + INTERVAL '12 days', NOW(), NOW()),
+-- Customer 9: Quantum Soft - Renewal in ~3 months (85 days)
+('550e8400-e29b-41d4-a716-446655440009', 'Quantum Soft', 'quantumsoft.com', 'Software', 82, 190000, 
+ CURRENT_DATE + INTERVAL '85 days', NOW(), NOW()),
+-- Customer 10: Apex Media - Renewal in ~2 months (65 days)
+('550e8400-e29b-41d4-a716-446655440010', 'Apex Media', 'apexmedia.com', 'Media', 64, 150000, 
+ CURRENT_DATE + INTERVAL '65 days', NOW(), NOW()),
+-- Customer 11: Stellar Networks - Renewal in ~4 months (135 days)
+('550e8400-e29b-41d4-a716-446655440011', 'Stellar Networks', 'stellarnetworks.com', 'Telecom', 88, 620000, 
+ CURRENT_DATE + INTERVAL '135 days', NOW(), NOW()),
+-- Customer 12: FusionWare - Renewal in ~1 month (22 days) - urgent
+('550e8400-e29b-41d4-a716-446655440012', 'FusionWare', 'fusionware.com', 'Technology', 58, 97000, 
+ CURRENT_DATE + INTERVAL '22 days', NOW(), NOW()),
+-- Customer 13: Dynamic Ventures - Renewal in ~5 months (165 days)
+('550e8400-e29b-41d4-a716-446655440013', 'Dynamic Ventures', 'dynamicventures.com', 'Retail', 49, 130000, 
+ CURRENT_DATE + INTERVAL '165 days', NOW(), NOW()),
+-- Customer 14: Prime Holdings - Renewal in ~6 months (195 days)
+('550e8400-e29b-41d4-a716-446655440014', 'Prime Holdings', 'primeholdings.com', 'Logistics', 83, 410000, 
+ CURRENT_DATE + INTERVAL '195 days', NOW(), NOW()),
+-- Customer 15: BetaWorks - Renewal in ~3 months (105 days)
+('550e8400-e29b-41d4-a716-446655440015', 'BetaWorks', 'betaworks.com', 'Education', 61, 110000, 
+ CURRENT_DATE + INTERVAL '105 days', NOW(), NOW());
 
 -- Insert customer properties for additional fields (tier, usage, nps_score) from mockCustomers
 INSERT INTO public.customer_properties (customer_id, usage_score, health_score, nps_score, current_arr, created_at, last_updated) VALUES

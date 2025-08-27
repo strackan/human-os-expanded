@@ -98,10 +98,10 @@ export class CustomerService {
   /**
    * Get a single customer by ID with related data
    */
-  static async getCustomerById(id: string): Promise<CustomerWithContact | null> {
+  static async getCustomerById(id: string, supabaseClient?: SupabaseClient): Promise<CustomerWithContact | null> {
     try {
-      // Use the authenticated client from the AuthProvider
-      const supabase = createClient();
+      // Use provided client or create a new one
+      const supabase = supabaseClient || createClient();
       
       const { data, error } = await supabase
         .from('customers')
@@ -374,10 +374,10 @@ export class CustomerService {
   /**
    * Update an existing customer
    */
-  static async updateCustomer(id: string, updates: Partial<Customer>): Promise<Customer> {
+  static async updateCustomer(id: string, updates: Partial<Customer>, supabaseClient?: SupabaseClient): Promise<Customer> {
     try {
-      // Use the authenticated client from the AuthProvider
-      const supabase = createClient();
+      // Use provided client or create a new one
+      const supabase = supabaseClient || createClient();
       
       // If name is being updated, check for slug conflicts
       if (updates.name) {
@@ -415,10 +415,10 @@ export class CustomerService {
   /**
    * Delete a customer
    */
-  static async deleteCustomer(id: string): Promise<void> {
+  static async deleteCustomer(id: string, supabaseClient?: SupabaseClient): Promise<void> {
     try {
-      // Use the authenticated client from the AuthProvider
-      const supabase = createClient();
+      // Use provided client or create a new one
+      const supabase = supabaseClient || createClient();
       
       const { error } = await supabase
         .from('customers')
