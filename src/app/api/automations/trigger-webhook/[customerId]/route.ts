@@ -40,10 +40,10 @@ function getUrgencyInfo(urgencyLevel: number) {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { customerId: string } }
+  { params }: { params: Promise<{ customerId: string }> }
 ) {
   try {
-    const { customerId } = params
+    const { customerId } = await params
     const supabase = await createClient()
     
     // Get the specific customer from the database
@@ -80,16 +80,16 @@ export async function POST(
     const urgencyInfo = getUrgencyInfo(renewalTimeUrgency)
     const todayDate = new Date().toISOString().split('T')[0]
     
-    // Create payload with specific customer data
+    // Create payload with specific customer data - matching original format exactly
     const payload = {
-      // Real customer data
+      // Original fields (matching the HTML version)
       customer_id: customer.id,
       customer_name: customer.name,
       renewal_date: customer.renewal_date,
       triggered_at: new Date().toISOString(),
       source: "renubu_manual_trigger",
       
-      // Calculated fields
+      // Calculated fields (matching the HTML version)
       today_date: todayDate,
       days_until_renewal: daysUntilRenewal,
       renewal_time_urgency: renewalTimeUrgency,
@@ -98,6 +98,10 @@ export async function POST(
       urgency_description: urgencyInfo.description,
       calculated_at: new Date().toISOString()
     }
+    
+    // Debug log the complete payload (matching original)
+    console.log('Complete payload being created:', JSON.stringify(payload, null, 2))
+    console.log('Payload field count:', Object.keys(payload).length)
     
     // Send to Active Pieces webhook
     try {
@@ -111,13 +115,24 @@ export async function POST(
         body: JSON.stringify(payload)
       })
       
-      const responseText = await webhookResponse.text()
+      let responseText = ''
+      let responseData = null
+      
+      try {
+        responseText = await webhookResponse.text()
+        if (responseText) {
+          responseData = JSON.parse(responseText)
+        }
+      } catch (parseError) {
+        console.log('Response is not valid JSON:', responseText)
+        responseData = { raw_response: responseText }
+      }
       
       return NextResponse.json({
         success: webhookResponse.ok,
         payload,
         webhook_status: webhookResponse.status,
-        webhook_response: responseText,
+        webhook_response: responseData || responseText,
         customer_source: 'specific_customer'
       })
       
