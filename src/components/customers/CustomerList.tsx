@@ -9,6 +9,7 @@ import {
   MagnifyingGlassIcon,
   FunnelIcon,
   ArrowDownTrayIcon,
+  BoltIcon,
 } from "@heroicons/react/24/outline";
 import { CustomerService } from "../../lib/services/CustomerService";
 import { Customer, CustomerWithContact, CustomerFilters, CustomerSortOptions } from "../../types/customer";
@@ -52,6 +53,7 @@ export default function CustomerList({
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
   const [selectedCustomers, setSelectedCustomers] = useState<Set<string>>(new Set());
   const [customersPerPage, setCustomersPerPage] = useState(25);
+  const [triggeringWebhook, setTriggeringWebhook] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadCustomers();
@@ -215,6 +217,42 @@ export default function CustomerList({
   const validateARR = (value: string | number): boolean => {
     const numValue = Number(value);
     return numValue >= 0;
+  };
+
+  const handleTriggerWebhook = async (customer: CustomerWithContact) => {
+    if (!customer.renewal_date) {
+      alert('Customer must have a renewal date to trigger webhook');
+      return;
+    }
+
+    const customerId = customer.id;
+    setTriggeringWebhook(prev => new Set(prev.add(customerId)));
+
+    try {
+      const response = await fetch(`/api/automations/trigger-webhook/${customerId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert(`✅ Webhook triggered successfully for ${customer.name}!\n\nUrgency: ${result.payload.urgency_label}\nDays until renewal: ${result.payload.days_until_renewal}`);
+      } else {
+        alert(`❌ Failed to trigger webhook for ${customer.name}:\n${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error triggering webhook:', error);
+      alert(`❌ Failed to trigger webhook for ${customer.name}:\nNetwork error`);
+    } finally {
+      setTriggeringWebhook(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(customerId);
+        return newSet;
+      });
+    }
   };
 
   if (loading) {
@@ -568,6 +606,19 @@ export default function CustomerList({
                       aria-label={`Manage ${c.name}`}
                     >
                       <WrenchIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleTriggerWebhook(c)}
+                      disabled={triggeringWebhook.has(c.id) || !c.renewal_date}
+                      className={`${
+                        c.renewal_date 
+                          ? 'text-blue-600 hover:text-blue-900' 
+                          : 'text-gray-400 cursor-not-allowed'
+                      } ${triggeringWebhook.has(c.id) ? 'animate-spin' : ''}`}
+                      aria-label={`Trigger webhook for ${c.name}`}
+                      title={c.renewal_date ? 'Send to Active Pieces' : 'Requires renewal date'}
+                    >
+                      <BoltIcon className="h-4 w-4" />
                     </button>
                   </div>
                 </td>
