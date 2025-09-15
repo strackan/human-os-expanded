@@ -139,7 +139,7 @@ export default function PricingRecommendation() {
                 
                 <h4 className="text-sm font-semibold text-gray-900 mb-2">Recommended Next Step:</h4>
                 <p className="text-sm text-gray-700 mb-4">
-                  Resolving the support risk should increase expansion confidence. You should schedule a meeting with this customer to check in on support satisfaction before discussing price.
+                  Engage with customer to resolve support risk to improve expansion confidence.
                 </p>
               </div>
 
