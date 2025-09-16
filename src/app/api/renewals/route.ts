@@ -1,94 +1,72 @@
-// src/app/api/renewals/test/route.ts
+// /src/app/api/renewals/route.ts - FIXED VERSION using SSR
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createClient as createSupabaseJsClient } from '@supabase/supabase-js'
-import { createServerClient as createSSRClient } from '@supabase/ssr'
 
-function makeDevServiceClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const service = process.env.SUPABASE_SERVICE_ROLE_KEY!
-  if (!url || !service) {
-    throw new Error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
-  }
-  return createSupabaseJsClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } })
-}
-
-async function makeProdSSRClient() {
-  const cookieStore = await cookies()
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  return createSSRClient(url, anon, {
-    cookies: {
-      getAll: () => cookieStore.getAll(),
-      setAll: (list) => { try { list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} },
-    },
-  })
-}
-
-export async function POST() {
+export async function GET() {
   try {
-    const supabase = process.env.NODE_ENV === 'development'
-      ? makeDevServiceClient()
-      : await makeProdSSRClient()
+    const cookieStore = await cookies()
+    
+    // Use the same SSR approach as your frontend
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            } catch {
+              // Can be ignored for route handlers
+            }
+          },
+        },
+      }
+    )
 
-    // 1) Use *existing* customer if present, otherwise create a minimal one
-    let { data: anyCustomer } = await supabase.from('customers').select('id').limit(1).maybeSingle()
-    if (!anyCustomer) {
-      const { data: created, error: createCustErr } = await supabase
-        .from('customers')
-        .insert({ name: 'Test Customer', domain: 'testcustomer.com' })
-        .select()
-        .single()
-      if (createCustErr) return NextResponse.json({ step: 'create_customer', ...createCustErr }, { status: 500 })
-      anyCustomer = { id: created.id }
+    // Check authentication
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
-    const customerId = anyCustomer.id
 
-    // 2) Create a contract (per your schema)
-    const start = new Date()
-    const end = new Date(start.getTime() + 365 * 24 * 3600 * 1000)
-    const { data: contract, error: contractError } = await supabase
-      .from('contracts')
-      .insert({
-        customer_id: customerId,
-        contract_number: `TEST-${Date.now()}`,
-        start_date: start.toISOString().slice(0,10),
-        end_date: end.toISOString().slice(0,10),
-        arr: 50000,
-        seats: 100,
-        contract_type: 'subscription',
-        status: 'active',
-        auto_renewal: true,
-      })
-      .select()
-      .single()
-    if (contractError) return NextResponse.json({ step: 'insert_contract', ...contractError }, { status: 500 })
-
-    // 3) Create a renewal 30 days out
-    const renewalDate = new Date()
-    renewalDate.setDate(renewalDate.getDate() + 30)
-    const { data: renewal, error: renewalError } = await supabase
+    // Get renewals for the authenticated user's company
+    const { data, error } = await supabase
       .from('renewals')
-      .insert({
-        contract_id: contract.id,
-        customer_id: customerId,
-        renewal_date: renewalDate.toISOString().slice(0,10),
-        current_arr: 50000,
-        proposed_arr: 55000,
-        probability: 75,
-        stage: 'negotiation',
-        risk_level: 'medium',
-        expansion_opportunity: 10000,
-        // if assigned_to is NOT NULL in your schema, set it here to your user id
-        // assigned_to: '<<some-user-uuid>>'
-      })
-      .select()
-      .single()
-    if (renewalError) return NextResponse.json({ step: 'insert_renewal', ...renewalError }, { status: 500 })
-
-    return NextResponse.json({ contract, renewal })
-  } catch (e) {
-    console.error('Error creating test renewal:', e)
-    return NextResponse.json({ error: 'Failed to create test renewal', details: (e as any)?.message || String(e) }, { status: 500 })
+      .select(`
+        *,
+        customers (
+          name,
+          industry,
+          health_score
+        ),
+        contracts (
+          contract_number,
+          arr
+        )
+      `)
+    
+    if (error) {
+      console.error('Supabase error:', error)
+      throw error
+    }
+    
+    return NextResponse.json(data || [])
+  } catch (error: unknown) {
+    console.error('API error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
+}
+
+// temporary shim: if anything issues POST, reuse GET so you don't get 405s
+export async function POST(request: Request) {
+  // @ts-ignore reuse GET implementation
+  return GET();
 }
