@@ -90,6 +90,18 @@ export const componentRegistry: ComponentItem[] = [
     label: 'Task Mode - Basic Interface',
     category: 'Workflows'
   },
+  {
+    name: 'TaskMode',
+    path: '@/components/artifacts/workflows/TaskMode',
+    label: 'Task Mode - Standard Interface',
+    category: 'Workflows'
+  },
+  {
+    name: 'TaskModeAdvanced',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Task Mode - Advanced Interface',
+    category: 'Workflows'
+  },
 ];
 
 export default componentRegistry;

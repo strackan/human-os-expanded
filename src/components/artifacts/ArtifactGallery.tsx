@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
 
@@ -32,6 +32,8 @@ export default function ArtifactGallery() {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [isCopying, setIsCopying] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     const cats = componentRegistry.reduce((acc, item) => {
@@ -92,6 +94,12 @@ export default function ArtifactGallery() {
             case 'TaskModeBasic':
               module = await import('./workflows/TaskModeBasic');
               break;
+              case 'TaskMode':
+              module = await import('./workflows/TaskMode');
+              break;
+              case 'TaskModeAdvanced':
+              module = await import('./workflows/TaskModeAdvanced');
+              break;
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);
           }
@@ -123,7 +131,7 @@ export default function ArtifactGallery() {
         // Try using screen capture API first
         try {
           const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: { mediaSource: 'screen' }
+            video: true
           });
           
           const video = document.createElement('video');
@@ -242,6 +250,35 @@ export default function ArtifactGallery() {
       };
     }
   }, [isResizing, resizeStart]);
+
+  const copyComponentCode = async () => {
+    if (!selectedComponent) return;
+
+    setIsCopying(true);
+    setCopySuccess(false);
+
+    try {
+      // Fetch the component source code
+      const response = await fetch(`/api/component-source?path=${encodeURIComponent(selectedComponent.path)}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch component source');
+      }
+
+      const sourceCode = await response.text();
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(sourceCode);
+      
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Error copying component code:', error);
+      alert('Failed to copy component code. Please try again.');
+    }
+
+    setIsCopying(false);
+  };
 
   const createArtifact = async () => {
     if (!newArtifact.name || !newArtifact.label || !newArtifact.code) {
@@ -510,6 +547,23 @@ Code to copy:`;
                   ) : (
                     <Maximize2 className="w-5 h-5 text-gray-600" />
                   )}
+                </button>
+                <button
+                  onClick={copyComponentCode}
+                  disabled={isCopying}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    copySuccess 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : 'bg-gray-600 text-white hover:bg-gray-700'
+                  } disabled:opacity-50`}
+                  title="Copy component source code"
+                >
+                  {copySuccess ? (
+                    <Check className="w-5 h-5" />
+                  ) : (
+                    <Copy className="w-5 h-5" />
+                  )}
+                  {isCopying ? 'Copying...' : copySuccess ? 'Copied!' : 'Copy Code'}
                 </button>
                 <button
                   onClick={captureScreenshot}
