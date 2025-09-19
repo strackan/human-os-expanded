@@ -13,6 +13,9 @@ export default function DashboardLayout({
   const { user, loading, signOut } = useAuth()
   const router = useRouter()
 
+  // 🧐 Start timing layout render
+  console.time('🧐 [LAYOUT] Render time')
+
   console.log('🔐 Dashboard Layout - Auth state:', {
     hasUser: !!user,
     userEmail: user?.email,
@@ -21,6 +24,8 @@ export default function DashboardLayout({
   })
 
   useEffect(() => {
+    console.timeEnd('🧐 [LAYOUT] Render time') // log how long first mount took
+
     if (!loading && !user) {
       console.log('🔐 No authenticated user found, redirecting to signin')
       router.push('/signin')
@@ -32,15 +37,12 @@ export default function DashboardLayout({
     try {
       await signOut('global')
       console.log('✅ Dashboard layout signout completed')
-      // The signOut function handles the redirect automatically
     } catch (error) {
       console.error('❌ Dashboard layout signout error:', error)
-      // Fallback redirect on error
       router.push('/signin')
     }
   }
 
-  // Show loading while checking authentication
   if (loading) {
     console.log('🔐 Dashboard Layout - Showing loading state')
     return (
@@ -54,7 +56,6 @@ export default function DashboardLayout({
     )
   }
 
-  // Don't render anything if not authenticated
   if (!user) {
     console.log('🔐 Dashboard Layout - No user, returning null')
     return null
