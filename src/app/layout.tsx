@@ -25,20 +25,20 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-      +        <AuthProvider>
-+          <RouteGuard>
-+            <ChatProvider>
-+              <DateProvider>
-+                <PageTransitionProvider>
-+                  <AppLayout>
-+                    {children}
-+                    <GlobalChat />
-+                  </AppLayout>
-+                </PageTransitionProvider>
-+              </DateProvider>
-+            </ChatProvider>
-+          </RouteGuard>
-+        </AuthProvider>
+              <AuthProvider>
+          <RouteGuard>
+            <ChatProvider>
+              <DateProvider>
+                <PageTransitionProvider>
+                  <AppLayout>
+                    {children}
+                    <GlobalChat />
+                  </AppLayout>
+                </PageTransitionProvider>
+              </DateProvider>
+            </ChatProvider>
+          </RouteGuard>
+        </AuthProvider>
       </body>
     </html>
   );
