@@ -1,4 +1,3 @@
-// src/components/auth/RouteGuard.tsx
 'use client'
 
 import { useEffect } from 'react'
@@ -18,9 +17,6 @@ export default function RouteGuard({ children }: RouteGuardProps) {
   // Check if DEMO_MODE is enabled
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
-  // Start timer when RouteGuard runs
-  console.time(`🧐 [ROUTE GUARD] ${pathname} check`)
-
   useEffect(() => {
     console.log('🛡️ RouteGuard check:', { 
       pathname, 
@@ -31,12 +27,16 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       isDemoMode
     })
 
-    // End timer once effect runs
-    console.timeEnd(`🧐 [ROUTE GUARD] ${pathname} check`)
-
     // If DEMO_MODE is enabled, skip all auth checks
     if (isDemoMode) {
       console.log('🎮 DEMO MODE: Skipping auth check for:', pathname)
+      return
+    }
+
+    // 🆕 Fix: redirect signed-in users away from /signin
+    if (user && pathname === '/signin') {
+      console.log('🛡️ Signed in user stuck on /signin, redirecting to /dashboard')
+      router.replace('/dashboard')
       return
     }
 

@@ -44,36 +44,43 @@ export default function SignInPage() {
 
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    const start = performance.now() 
-  
+    
     try {
-      setIsLoading(true)
-      setError(null)
-  
+      const start = performance.now()
       console.log("🧐 [EMAIL LOGIN] Starting sign-in at", new Date().toISOString())
   
+      setIsLoading(true)
+      setError(null)
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
   
-      console.log("🧐 [EMAIL LOGIN] Supabase response in", (performance.now() - start).toFixed(2), "ms")
+      const mid = performance.now()
+      console.log(`🧐 [EMAIL LOGIN] Supabase response in ${(mid - start).toFixed(2)} ms`)
   
       if (error) throw error
   
-      const beforeNav = performance.now()
-      await router.push(next)
-      await router.refresh()
-      console.log("🧐 [EMAIL LOGIN] Navigation took", (performance.now() - beforeNav).toFixed(2), "ms")
+      // 🚫 Commented out direct navigation — let RouteGuard handle it
+      // router.push(next)
+      // router.refresh()
+      // setTimeout(() => {
+      //   console.log("🧐 [EMAIL LOGIN] 1s after router.push, current user:", supabase.auth.getSession())
+      // }, 1000)
+
+      console.log(`🧐 [EMAIL LOGIN] Sign-in complete, waiting for RouteGuard to redirect`)
+  
+      const end = performance.now()
+      console.log(`🧐 [EMAIL LOGIN] Total flow took ${(end - start).toFixed(2)} ms`)
+      
     } catch (error: any) {
-      console.error('🧐 [EMAIL LOGIN] Error:', error)
+      console.error('Email sign in error:', error)
       setError(error.message || 'Failed to sign in')
     } finally {
-      console.log("🧐 [EMAIL LOGIN] Total flow took", (performance.now() - start).toFixed(2), "ms")
       setIsLoading(false)
     }
   }
-  
 
   const signUp = async () => {
     try {
@@ -130,6 +137,7 @@ export default function SignInPage() {
     }
   }
 
+  // ✅ UI restored
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
@@ -246,3 +254,4 @@ export default function SignInPage() {
     </div>
   )
 }
+
