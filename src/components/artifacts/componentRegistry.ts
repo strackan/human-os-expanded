@@ -102,6 +102,18 @@ export const componentRegistry: ComponentItem[] = [
     label: 'Task Mode - Advanced Interface',
     category: 'Workflows'
   },
+  {
+    name: 'TaskModeCustom',
+    path: '@/components/artifacts/workflows/TaskModeCustom',
+    label: 'Task Mode - Custom',
+    category: 'Workflows'
+  },
+  {
+    name: 'ChatQuote',
+    path: '@/components/artifacts/chat/ChatQuote',
+    label: 'User Chat with Quote Generation',
+    category: 'Chat'
+  },
 ];
 
 export default componentRegistry;

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
 
@@ -91,6 +91,9 @@ export default function ArtifactGallery() {
             case 'ChatTemplate':
               module = await import('./chat/ChatTemplate');
               break;
+              case 'ChatQuote':
+              module = await import('./chat/ChatQuote');
+              break;
             case 'TaskModeBasic':
               module = await import('./workflows/TaskModeBasic');
               break;
@@ -99,6 +102,9 @@ export default function ArtifactGallery() {
               break;
               case 'TaskModeAdvanced':
               module = await import('./workflows/TaskModeAdvanced');
+              break;
+              case 'TaskModeCustom':
+              module = await import('./workflows/TaskModeCustom');
               break;
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);
@@ -278,6 +284,28 @@ export default function ArtifactGallery() {
     }
 
     setIsCopying(false);
+  };
+
+  const openComponentInNewTab = () => {
+    if (!selectedComponent) return;
+
+    // For workflow components, open the entire workflow in clean view
+    if (selectedComponent.category === 'Workflows') {
+      // Map component names to config names
+      const configMap: Record<string, string> = {
+        'TaskModeCustom': 'bluebird-planning',
+        'TaskModeGallery': 'acme',
+        // Add other mappings as needed
+      };
+
+      const configName = configMap[selectedComponent.name] || 'bluebird-planning';
+      const url = `/standalone-viewer?config=${configName}`;
+      window.open(url, '_blank', 'width=1400,height=900');
+    } else {
+      // For other components, use the component viewer
+      const url = `/standalone-component?name=${encodeURIComponent(selectedComponent.name)}&path=${encodeURIComponent(selectedComponent.path)}`;
+      window.open(url, '_blank', 'width=1200,height=800');
+    }
   };
 
   const createArtifact = async () => {
@@ -572,6 +600,14 @@ Code to copy:`;
                 >
                   <Camera className="w-5 h-5" />
                   {isCapturing ? 'Capturing...' : 'Screenshot'}
+                </button>
+                <button
+                  onClick={openComponentInNewTab}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  title="Open component in new tab"
+                >
+                  <ExternalLink className="w-5 h-5" />
+                  Open in New Tab
                 </button>
               </div>
             )}

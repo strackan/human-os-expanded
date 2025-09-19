@@ -9,14 +9,6 @@ export default function GlobalChat() {
 
   return (
     <>
-      {/* Chat Toggle Button */}
-      <button
-        onClick={toggleChat}
-        className="fixed bottom-4 right-4 bg-blue-500 text-white rounded-full p-3 shadow-lg hover:bg-blue-600 transition-colors z-50"
-        aria-label="Toggle AI Chat"
-      >
-        <SparklesIcon className="h-6 w-6" />
-      </button>
 
       {/* Chat Window */}
       {isChatOpen && (
