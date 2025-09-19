@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { X } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
 import ChatInterface from './components/ChatInterface';
@@ -8,9 +9,18 @@ import { WorkflowConfig } from './config/WorkflowConfig';
 interface DirectWorkflowViewProps {
   config: WorkflowConfig;
   configName?: string;
+  onNextCustomer?: () => void;
+  groupProgress?: string;
+  onClose?: () => void;
 }
 
-const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({ config, configName = 'default' }) => {
+const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
+  config,
+  configName = 'default',
+  onNextCustomer,
+  groupProgress,
+  onClose
+}) => {
   // Layout states
   const [dividerPosition, setDividerPosition] = useState(50);
   const [chatWidth, setChatWidth] = useState(50);
@@ -77,16 +87,33 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({ config, configN
     <div className="w-full h-full flex flex-col overflow-hidden bg-white">
       {/* HEADER */}
       <div className="bg-gray-50 border-b border-gray-200 px-6 py-6 flex justify-between items-center" style={{ flexShrink: 0 }}>
-        <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
+          {groupProgress && (
+            <p className="text-sm text-gray-600">Demo Progress: {groupProgress}</p>
+          )}
+        </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
             <h2 className="text-lg font-semibold text-gray-800">{config.customer.name}</h2>
-            {config.customer.nextCustomer && (
-              <button className="text-xs text-blue-500 hover:text-blue-600 transition-colors">
-                Next Customer - {config.customer.nextCustomer}
+            {(onNextCustomer || config.customer.nextCustomer) && (
+              <button
+                onClick={onNextCustomer || (() => {})}
+                className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
+              >
+                {onNextCustomer ? 'Next Customer' : `Next Customer - ${config.customer.nextCustomer}`}
               </button>
             )}
           </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+              title="Close (ESC)"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          )}
         </div>
       </div>
 

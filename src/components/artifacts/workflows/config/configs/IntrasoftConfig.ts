@@ -71,8 +71,12 @@ export const intrasoftConfig: WorkflowConfig = {
       title: 'API Calls',
       showReferenceLine: true,
       referenceLineLabel: 'Current Tier Limit',
+      referenceLineHeight: 80,
       data: [15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125],
-      upliftPercentage: 67,
+      chartContextLabel: '↗ +67% API usage growth',
+      chartContextColor: 'text-green-600',
+      chartMin: 0,
+      chartMax: 150,
       dataColors: { threshold: 18, belowColor: 'bg-blue-500', aboveColor: 'bg-green-500' }
     },
     userLicenses: {
@@ -80,8 +84,11 @@ export const intrasoftConfig: WorkflowConfig = {
       showReferenceLine: false,
       referenceLineLabel: '',
       data: [45, 47, 48, 50, 52, 55, 58, 60, 62, 65, 68, 70, 72, 75, 78, 80, 82, 85, 88, 90],
-      spikePercentage: 89,
-      color: 'blue'
+      chartContextLabel: '↗ +89% user growth',
+      chartContextColor: 'text-blue-600',
+      chartMin: 40,
+      chartMax: 100,
+      dataColors: { threshold: 15, belowColor: 'bg-blue-500', aboveColor: 'bg-green-500' }
     },
     renewalInsights: {
       renewalStage: 'Negotiation',

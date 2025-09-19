@@ -114,6 +114,12 @@ export const componentRegistry: ComponentItem[] = [
     label: 'User Chat with Quote Generation',
     category: 'Chat'
   },
+  {
+    name: 'CSMDashboard',
+    path: '@/components/artifacts/dashboards/CSMDashboard',
+    label: 'CSM Dashboard with Task Mode',
+    category: 'Dashboards'
+  },
 ];
 
 export default componentRegistry;

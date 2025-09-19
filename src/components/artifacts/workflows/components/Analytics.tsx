@@ -118,8 +118,8 @@ const Analytics: React.FC<AnalyticsProps> = ({ config, className = '' }) => {
             chartMin={usageTrend.chartMin}
             chartMax={usageTrend.chartMax}
           />
-          <div className={`text-xs ${usageTrend.chartContextColor} font-medium flex-shrink-0`}>
-            {usageTrend.chartContextLabel.includes(';') ? (
+          <div className={`text-xs ${usageTrend.chartContextColor || 'text-gray-600'} font-medium flex-shrink-0`}>
+            {usageTrend.chartContextLabel && usageTrend.chartContextLabel.includes(';') ? (
               <div className="space-y-0.5">
                 {usageTrend.chartContextLabel.split(';').map((item, i) => (
                   <div key={i} className="flex items-start">
@@ -129,7 +129,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ config, className = '' }) => {
                 ))}
               </div>
             ) : (
-              usageTrend.chartContextLabel
+              usageTrend.chartContextLabel || 'No context available'
             )}
           </div>
         </div>

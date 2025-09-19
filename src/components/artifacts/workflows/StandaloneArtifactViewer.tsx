@@ -3,6 +3,7 @@ import DirectWorkflowView from './DirectWorkflowView';
 import { acmeCorpConfig, intrasoftConfig } from './config/configs';
 import { bluebirdMemorialPlanningConfig } from './config/configs/BluebirdMemorialConfig-Planning';
 import { WorkflowConfig } from './config/WorkflowConfig';
+import { getTemplateGroup, getNextTemplateInGroup, isLastTemplateInGroup } from './config/templateGroups';
 
 // Config mapping for easy lookup
 const configMap: Record<string, WorkflowConfig> = {
@@ -18,29 +19,105 @@ const configNames: Record<string, string> = {
   'bluebird-planning': 'bluebird-planning',
 };
 
-const StandaloneArtifactViewer: React.FC = () => {
+interface StandaloneArtifactViewerProps {
+  configName?: string;
+  groupId?: string;
+  groupIndex?: number;
+  onClose?: () => void;
+}
+
+const StandaloneArtifactViewer: React.FC<StandaloneArtifactViewerProps> = ({
+  configName: propConfigName,
+  groupId: propGroupId,
+  groupIndex: propGroupIndex,
+  onClose
+}) => {
   const [config, setConfig] = useState<WorkflowConfig | null>(null);
   const [configName, setConfigName] = useState<string>('');
+  const [groupId, setGroupId] = useState<string>('');
+  const [groupIndex, setGroupIndex] = useState<number>(0);
+  const [isGroupMode, setIsGroupMode] = useState<boolean>(false);
+
+  const handleNextCustomer = () => {
+    if (!isGroupMode) return;
+
+    const nextTemplate = getNextTemplateInGroup(groupId, groupIndex);
+    if (nextTemplate) {
+      // Navigate to next template in the group
+      const newIndex = groupIndex + 1;
+      const newUrl = `${window.location.pathname}?group=${groupId}&index=${newIndex}`;
+      window.history.pushState({}, '', newUrl);
+
+      // Update state
+      setGroupIndex(newIndex);
+      setConfigName(nextTemplate);
+
+      // Load the new config
+      if (configMap[nextTemplate]) {
+        setConfig(configMap[nextTemplate]);
+        document.title = `${configMap[nextTemplate].customer.name} - Workflow (${newIndex + 1} of ${getTemplateGroup(groupId)?.templates.length || 1})`;
+      }
+    } else {
+      // Show completion message
+      alert("That's it for now! You've completed the demo sequence.");
+    }
+  };
 
   useEffect(() => {
-    // Get config from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const configParam = urlParams.get('config');
-    const artifactParam = urlParams.get('artifact');
+    // Check if props are provided first, otherwise fall back to URL parameters
+    let configParam = propConfigName;
+    let groupParam = propGroupId;
+    let indexParam = propGroupIndex?.toString();
 
-    if (configParam && configMap[configParam]) {
+    // If no props provided, get from URL parameters
+    if (!configParam && !groupParam) {
+      const urlParams = new URLSearchParams(window.location.search);
+      configParam = urlParams.get('config');
+      groupParam = urlParams.get('group');
+      indexParam = urlParams.get('index');
+    }
+
+    if (groupParam) {
+      // Group mode
+      const group = getTemplateGroup(groupParam);
+      if (group && group.templates.length > 0) {
+        const index = parseInt(indexParam || '0', 10);
+        const templateName = group.templates[index] || group.templates[0];
+
+        setIsGroupMode(true);
+        setGroupId(groupParam);
+        setGroupIndex(index);
+        setConfigName(templateName);
+
+        if (configMap[templateName]) {
+          setConfig(configMap[templateName]);
+          document.title = `${configMap[templateName].customer.name} - Workflow (${index + 1} of ${group.templates.length})`;
+        } else {
+          // Fallback if template not found
+          setConfig(bluebirdMemorialPlanningConfig);
+          setConfigName('bluebird-planning');
+          document.title = 'Workflow Viewer';
+        }
+      } else {
+        // Group not found, fallback to default
+        setConfig(bluebirdMemorialPlanningConfig);
+        setConfigName('bluebird-planning');
+        document.title = 'Workflow Viewer';
+      }
+    } else if (configParam && configMap[configParam]) {
+      // Single config mode
+      setIsGroupMode(false);
       setConfig(configMap[configParam]);
       setConfigName(configParam);
-
-      // Update document title
       document.title = `${configMap[configParam].customer.name} - Workflow`;
     } else {
       // Default to Bluebird if no config specified
+      setIsGroupMode(false);
       setConfig(bluebirdMemorialPlanningConfig);
       setConfigName('bluebird-planning');
       document.title = 'Workflow Viewer';
     }
-  }, []);
+  }, [propConfigName, propGroupId, propGroupIndex]);
 
   if (!config) {
     return (
@@ -55,10 +132,12 @@ const StandaloneArtifactViewer: React.FC = () => {
 
   return (
     <>
-
       <DirectWorkflowView
         config={config}
         configName={configName}
+        onNextCustomer={isGroupMode ? handleNextCustomer : undefined}
+        groupProgress={isGroupMode ? `${groupIndex + 1} of ${getTemplateGroup(groupId)?.templates.length || 1}` : undefined}
+        onClose={onClose}
       />
     </>
   );

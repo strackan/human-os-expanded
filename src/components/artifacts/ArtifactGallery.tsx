@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
+import TemplateGroupManager from './workflows/components/TemplateGroupManager';
 
 export default function ArtifactGallery() {
+  const [activeTab, setActiveTab] = useState<'gallery' | 'groups'>('gallery');
   const [selectedComponent, setSelectedComponent] = useState<ComponentItem | null>(null);
   const [LoadedComponent, setLoadedComponent] = useState<React.ComponentType | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -93,6 +95,9 @@ export default function ArtifactGallery() {
               break;
               case 'ChatQuote':
               module = await import('./chat/ChatQuote');
+              break;
+            case 'CSMDashboard':
+              module = await import('./dashboards/CSMDashboard');
               break;
             case 'TaskModeBasic':
               module = await import('./workflows/TaskModeBasic');
@@ -477,10 +482,10 @@ Code to copy:`;
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h1 className={`font-semibold text-lg text-gray-900 ${sidebarCollapsed ? 'hidden' : 'block'}`}>
-              Artifact Gallery
+              {activeTab === 'gallery' ? 'Artifact Gallery' : 'Template Groups'}
             </h1>
             <div className="flex items-center gap-2">
-              {!sidebarCollapsed && (
+              {!sidebarCollapsed && activeTab === 'gallery' && (
                 <button
                   onClick={() => setShowAddModal(true)}
                   className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
@@ -497,10 +502,36 @@ Code to copy:`;
               </button>
             </div>
           </div>
+
+          {!sidebarCollapsed && (
+            <div className="flex mt-3 border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'gallery'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Gallery
+              </button>
+              <button
+                onClick={() => setActiveTab('groups')}
+                className={`flex-1 px-3 py-2 text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                  activeTab === 'groups'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                Demo Groups
+              </button>
+            </div>
+          )}
         </div>
         
         <div className="flex-1 overflow-y-auto p-4">
-          {!sidebarCollapsed && (
+          {!sidebarCollapsed && activeTab === 'gallery' && (
             <div className="space-y-2">
               {Object.entries(groupedComponents).map(([category, items]) => (
                 <div key={category}>
@@ -516,7 +547,7 @@ Code to copy:`;
                     <Folder className="w-4 h-4 text-blue-500" />
                     {category}
                   </button>
-                  
+
                   {categories[category] && (
                     <div className="ml-4 mt-1 space-y-1">
                       {items.map((item) => (
@@ -544,122 +575,130 @@ Code to copy:`;
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              {selectedComponent ? (
-                <>
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedComponent.label}</h2>
-                  <div className="flex items-center gap-4 mt-1">
-                    <p className="text-sm text-gray-500">{selectedComponent.path}</p>
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                      {previewWidth}px wide
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <h2 className="text-xl font-semibold text-gray-900">Select a component to preview</h2>
-              )}
-            </div>
-            
-            {selectedComponent && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Toggle fullscreen"
-                >
-                  {isFullscreen ? (
-                    <Minimize2 className="w-5 h-5 text-gray-600" />
+        {activeTab === 'gallery' ? (
+          <>
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  {selectedComponent ? (
+                    <>
+                      <h2 className="text-xl font-semibold text-gray-900">{selectedComponent.label}</h2>
+                      <div className="flex items-center gap-4 mt-1">
+                        <p className="text-sm text-gray-500">{selectedComponent.path}</p>
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                          {previewWidth}px wide
+                        </span>
+                      </div>
+                    </>
                   ) : (
-                    <Maximize2 className="w-5 h-5 text-gray-600" />
+                    <h2 className="text-xl font-semibold text-gray-900">Select a component to preview</h2>
                   )}
-                </button>
-                <button
-                  onClick={copyComponentCode}
-                  disabled={isCopying}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    copySuccess 
-                      ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-gray-600 text-white hover:bg-gray-700'
-                  } disabled:opacity-50`}
-                  title="Copy component source code"
-                >
-                  {copySuccess ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <Copy className="w-5 h-5" />
-                  )}
-                  {isCopying ? 'Copying...' : copySuccess ? 'Copied!' : 'Copy Code'}
-                </button>
-                <button
-                  onClick={captureScreenshot}
-                  disabled={isCapturing}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                >
-                  <Camera className="w-5 h-5" />
-                  {isCapturing ? 'Capturing...' : 'Screenshot'}
-                </button>
-                <button
-                  onClick={openComponentInNewTab}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  title="Open component in new tab"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  Open in New Tab
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+                </div>
 
-        {/* Preview Area */}
-        <div className={`flex-1 overflow-auto ${isFullscreen ? 'p-0' : 'p-6'} flex`}>
-          <div className="flex-1 flex justify-center">
-            <div className="relative flex">
-              <div
-                ref={previewRef}
-                id="artifact-preview"
-                style={{ width: `${previewWidth}px` }}
-                className={`${
-                  isFullscreen 
-                    ? 'min-h-full' 
-                    : 'bg-white rounded-lg shadow-sm border border-gray-200 min-h-full'
-                } transition-all duration-200`}
-              >
-            {selectedComponent && LoadedComponent ? (
-              <Suspense fallback={
-                <div className="flex items-center justify-center h-64">
-                  <div className="text-gray-500">Loading component...</div>
-                </div>
-              }>
-                <LoadedComponent />
-              </Suspense>
-            ) : (
-              <div className="flex items-center justify-center h-64 text-gray-400">
-                <div className="text-center">
-                  <FileCode2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg">No component selected</p>
-                  <p className="text-sm mt-2">Choose a component from the sidebar to preview</p>
-                </div>
+                {selectedComponent && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setIsFullscreen(!isFullscreen)}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      title="Toggle fullscreen"
+                    >
+                      {isFullscreen ? (
+                        <Minimize2 className="w-5 h-5 text-gray-600" />
+                      ) : (
+                        <Maximize2 className="w-5 h-5 text-gray-600" />
+                      )}
+                    </button>
+                    <button
+                      onClick={copyComponentCode}
+                      disabled={isCopying}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                        copySuccess
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-gray-600 text-white hover:bg-gray-700'
+                      } disabled:opacity-50`}
+                      title="Copy component source code"
+                    >
+                      {copySuccess ? (
+                        <Check className="w-5 h-5" />
+                      ) : (
+                        <Copy className="w-5 h-5" />
+                      )}
+                      {isCopying ? 'Copying...' : copySuccess ? 'Copied!' : 'Copy Code'}
+                    </button>
+                    <button
+                      onClick={captureScreenshot}
+                      disabled={isCapturing}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    >
+                      <Camera className="w-5 h-5" />
+                      {isCapturing ? 'Capturing...' : 'Screenshot'}
+                    </button>
+                    <button
+                      onClick={openComponentInNewTab}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                      title="Open component in new tab"
+                    >
+                      <ExternalLink className="w-5 h-5" />
+                      Open in New Tab
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-              </div>
-              
-              {/* Resize Handle */}
-              {!isFullscreen && (
-                <div
-                  className="w-3 bg-gray-100 hover:bg-gray-200 cursor-col-resize flex items-center justify-center border-r border-gray-300 transition-colors"
-                  onMouseDown={handleResizeStart}
-                  title="Drag to resize preview width"
-                >
-                  <GripVertical className="w-3 h-3 text-gray-400" />
-                </div>
-              )}
             </div>
+
+            {/* Preview Area */}
+            <div className={`flex-1 overflow-auto ${isFullscreen ? 'p-0' : 'p-6'} flex`}>
+              <div className="flex-1 flex justify-center">
+                <div className="relative flex">
+                  <div
+                    ref={previewRef}
+                    id="artifact-preview"
+                    style={{ width: `${previewWidth}px` }}
+                    className={`${
+                      isFullscreen
+                        ? 'min-h-full'
+                        : 'bg-white rounded-lg shadow-sm border border-gray-200 min-h-full'
+                    } transition-all duration-200`}
+                  >
+                {selectedComponent && LoadedComponent ? (
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-gray-500">Loading component...</div>
+                    </div>
+                  }>
+                    <LoadedComponent />
+                  </Suspense>
+                ) : (
+                  <div className="flex items-center justify-center h-64 text-gray-400">
+                    <div className="text-center">
+                      <FileCode2 className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">No component selected</p>
+                      <p className="text-sm mt-2">Choose a component from the sidebar to preview</p>
+                    </div>
+                  </div>
+                )}
+                  </div>
+
+                  {/* Resize Handle */}
+                  {!isFullscreen && (
+                    <div
+                      className="w-3 bg-gray-100 hover:bg-gray-200 cursor-col-resize flex items-center justify-center border-r border-gray-300 transition-colors"
+                      onMouseDown={handleResizeStart}
+                      title="Drag to resize preview width"
+                    >
+                      <GripVertical className="w-3 h-3 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="p-6 flex-1 overflow-auto">
+            <TemplateGroupManager />
           </div>
-        </div>
+        )}
       </div>
 
       {/* Crop Modal */}
