@@ -1,84 +1,78 @@
+// src/components/auth/AuthProvider.tsx
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
-  user: User | null
+  user: any
   loading: boolean
-  signOut: () => Promise<void>
+  signOut: (scope?: 'local' | 'global') => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  signOut: async () => {},
-})
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: React.ReactNode
-}
-
-export default function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    const getUser = async () => {
+    console.time('🧐 [AUTH] Session init')
+
+    const getSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        console.log('🧐 [AUTH] Fetching current session…')
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession()
+
+        if (error) {
+          console.error('❌ [AUTH] Error fetching session:', error)
+        } else {
+          console.log('✅ [AUTH] Session fetched:', {
+            hasUser: !!session?.user,
+            userEmail: session?.user?.email,
+          })
+        }
+
         setUser(session?.user ?? null)
-      } catch (error) {
-        console.error('Error loading user:', error)
-        setUser(null)
+      } catch (err) {
+        console.error('❌ [AUTH] Unexpected error:', err)
       } finally {
         setLoading(false)
+        console.timeEnd('🧐 [AUTH] Session init')
       }
     }
 
-    getUser()
+    getSession()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    // Subscribe to auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('🛡️ [AUTH] State change event:', event, {
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
+        })
         setUser(session?.user ?? null)
         setLoading(false)
-
-        // Handle sign in/out events
-        if (event === 'SIGNED_IN') {
-          router.refresh()
-        } else if (event === 'SIGNED_OUT') {
-          router.push('/signin')
-        }
       }
     )
 
     return () => {
-      subscription.unsubscribe()
+      listener.subscription.unsubscribe()
     }
-  }, [supabase, router])
+  }, [supabase])
 
-  const signOut = async () => {
-    try {
-      setLoading(true)
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      router.push('/signin')
-    } catch (error) {
-      console.error('Error signing out:', error)
-    } finally {
-      setLoading(false)
+  const signOut = async (scope: 'local' | 'global' = 'local') => {
+    console.log(`🔐 [AUTH] Signing out (${scope})…`)
+    const { error } = await supabase.auth.signOut({ scope })
+    if (error) {
+      console.error('❌ [AUTH] Signout error:', error)
+    } else {
+      console.log('✅ [AUTH] Signed out successfully')
+      setUser(null)
     }
   }
 
@@ -87,4 +81,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </AuthContext.Provider>
   )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
 }
