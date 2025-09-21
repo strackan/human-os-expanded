@@ -17,7 +17,10 @@ export default function Home() {
     if (isDemoMode) {
       router.push('/workflows');
     } else if (user) {
-      router.push('/workflows');
+      router.push('/dashboard');
+    } else {
+      // Redirect unauthenticated users to the hero page
+      router.push('/hero');
     }
   }, [isDemoMode, user, router]);
 
@@ -38,14 +41,14 @@ export default function Home() {
         ) : (
           <div className="space-y-4">
             <p className="text-gray-600 mb-6">
-              Sign in to access your customer renewal workflows and insights.
+              Redirecting to our beautiful landing page...
             </p>
-            <Link 
-              href="/signin" 
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Sign In
-            </Link>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              If you're not redirected automatically, <Link href="/hero" className="text-blue-600 hover:underline">click here</Link>
+            </p>
           </div>
         )}
       </div>
