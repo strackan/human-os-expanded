@@ -1,7 +1,11 @@
 export { acmeCorpConfig } from './AcmeCorpConfig';
 export { intrasoftConfig } from './IntrasoftConfig';
+export { bluebirdMemorialPlanningConfig } from './BluebirdMemorialConfig-Planning';
 
-// Add more configs as you create them:
-// export { techFlowConfig } from './TechFlowConfig';
-// export { startupXConfig } from './StartupXConfig';
-// export { enterpriseYConfig } from './EnterpriseYConfig';
+// Demo-VIP Template Group Configs
+export { priceIncreaseFlatConfig } from './PriceIncreaseFlatConfig';
+export { strategicEngagementConfig } from './StrategicEngagementConfig';
+export { quoteArtifactConfig } from './QuoteArtifactConfig';
+export { contractAnalysisConfig } from './ContractAnalysisConfig';
+export { strategicPlanningConfig } from './StrategicPlanningConfig';
+export { priceOptimizationConfig } from './PriceOptimizationConfig';

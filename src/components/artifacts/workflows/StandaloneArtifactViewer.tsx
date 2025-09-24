@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import DirectWorkflowView from './DirectWorkflowView';
-import { acmeCorpConfig, intrasoftConfig } from './config/configs';
-import { bluebirdMemorialPlanningConfig } from './config/configs/BluebirdMemorialConfig-Planning';
+import { 
+  acmeCorpConfig, 
+  intrasoftConfig,
+  bluebirdMemorialPlanningConfig,
+  priceIncreaseFlatConfig,
+  strategicEngagementConfig,
+  quoteArtifactConfig,
+  contractAnalysisConfig,
+  strategicPlanningConfig,
+  priceOptimizationConfig
+} from './config/configs';
 import { WorkflowConfig } from './config/WorkflowConfig';
 import { getTemplateGroup, getNextTemplateInGroup, isLastTemplateInGroup } from './config/templateGroups';
 
@@ -10,6 +19,12 @@ const configMap: Record<string, WorkflowConfig> = {
   'acme': acmeCorpConfig,
   'intrasoft': intrasoftConfig,
   'bluebird-planning': bluebirdMemorialPlanningConfig,
+  'price-increase-flat': priceIncreaseFlatConfig,
+  'strategic-engagement': strategicEngagementConfig,
+  'quote-artifact': quoteArtifactConfig,
+  'contract-analysis': contractAnalysisConfig,
+  'strategic-planning': strategicPlanningConfig,
+  'price-optimization': priceOptimizationConfig,
 };
 
 // Config name mapping for proper display
@@ -17,6 +32,12 @@ const configNames: Record<string, string> = {
   'acme': 'acme',
   'intrasoft': 'intrasoft',
   'bluebird-planning': 'bluebird-planning',
+  'price-increase-flat': 'price-increase-flat',
+  'strategic-engagement': 'strategic-engagement',
+  'quote-artifact': 'quote-artifact',
+  'contract-analysis': 'contract-analysis',
+  'strategic-planning': 'strategic-planning',
+  'price-optimization': 'price-optimization',
 };
 
 interface StandaloneArtifactViewerProps {

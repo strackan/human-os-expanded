@@ -22,6 +22,20 @@ export const templateGroups: Record<string, TemplateGroup> = {
     description: 'Enterprise customer workflow demonstration',
     templates: ['acme', 'intrasoft'],
     tags: ['enterprise', 'b2b', 'demo']
+  },
+  'demo-VIP': {
+    id: 'demo-VIP',
+    name: 'VIP Demo Suite',
+    description: 'Comprehensive demo showcasing all workflow capabilities',
+    templates: [
+      'price-increase-flat',
+      'strategic-engagement', 
+      'quote-artifact',
+      'contract-analysis',
+      'strategic-planning',
+      'price-optimization'
+    ],
+    tags: ['demo', 'vip', 'comprehensive', 'workflow']
   }
 };
 
@@ -29,7 +43,13 @@ export const templateGroups: Record<string, TemplateGroup> = {
 export const availableConfigs = [
   'bluebird-planning',
   'acme',
-  'intrasoft'
+  'intrasoft',
+  'price-increase-flat',
+  'strategic-engagement',
+  'quote-artifact',
+  'contract-analysis',
+  'strategic-planning',
+  'price-optimization'
 ];
 
 // Helper functions

@@ -23,6 +23,24 @@ const dashboardData = {
       trend: '+2.1%',
       status: 'good'
     },
+    arr: {
+      current: '$2.4M',
+      target: '$2.2M',
+      trend: '+9.1%',
+      status: 'good'
+    },
+    customers: {
+      current: 1847,
+      target: 1800,
+      trend: '+2.6%',
+      status: 'good'
+    },
+    healthScore: {
+      current: 78,
+      target: 80,
+      trend: '-2.5%',
+      status: 'warning'
+    },
     adoption: {
       current: 63,
       target: 72,
@@ -45,27 +63,30 @@ const dashboardData = {
   upcomingTasks: [
     {
       id: 1,
+      title: 'Renewal Process',
       customer: 'Bluebird Memorial Hospital',
-      type: 'renewal',
-      priority: 'high',
+      type: 'renewal' as const,
+      priority: 'high' as const,
       dueDate: '2025-01-22',
-      status: 'pending'
+      status: 'pending' as const
     },
     {
       id: 2,
+      title: 'Expansion Opportunity',
       customer: 'Acme Corp Inc.',
-      type: 'expansion',
-      priority: 'high',
+      type: 'expansion' as const,
+      priority: 'high' as const,
       dueDate: '2025-01-25',
-      status: 'pending'
+      status: 'pending' as const
     },
     {
       id: 3,
+      title: 'Health Check',
       customer: 'Intrasoft Solutions',
-      type: 'health_check',
-      priority: 'critical',
+      type: 'health_check' as const,
+      priority: 'high' as const,
       dueDate: '2025-01-20',
-      status: 'in_progress'
+      status: 'in_progress' as const
     }
   ],
   recentUpdates: {
@@ -75,16 +96,16 @@ const dashboardData = {
         customer: 'TechCorp Solutions',
         update: 'Increased usage of advanced analytics features by 45% this month',
         time: '2 hours ago',
-        type: 'success',
-        priority: 'medium'
+        type: 'success' as const,
+        priority: 'medium' as const
       },
       {
         id: '2',
         customer: 'DataFlow Inc.',
         update: 'Decreased platform engagement - down 23% from last month',
         time: '4 hours ago',
-        type: 'warning',
-        priority: 'high'
+        type: 'warning' as const,
+        priority: 'high' as const
       }
     ],
     sentiment: [
@@ -93,16 +114,16 @@ const dashboardData = {
         customer: 'CloudTech Systems',
         update: 'Positive feedback on new dashboard features in quarterly review',
         time: '1 hour ago',
-        type: 'success',
-        priority: 'low'
+        type: 'success' as const,
+        priority: 'low' as const
       },
       {
         id: '4',
         customer: 'SecureNet Corp',
         update: 'Expressed concerns about data security in latest support ticket',
         time: '3 hours ago',
-        type: 'error',
-        priority: 'high'
+        type: 'error' as const,
+        priority: 'high' as const
       }
     ],
     market: [
@@ -111,16 +132,16 @@ const dashboardData = {
         customer: 'GlobalTech Industries',
         update: 'Company announced major expansion into European markets',
         time: '6 hours ago',
-        type: 'info',
-        priority: 'medium'
+        type: 'info' as const,
+        priority: 'medium' as const
       },
       {
         id: '6',
         customer: 'InnovateLab',
         update: 'Received Series B funding round of $50M',
         time: '8 hours ago',
-        type: 'success',
-        priority: 'low'
+        type: 'success' as const,
+        priority: 'low' as const
       }
     ],
     commercial: [
@@ -129,16 +150,16 @@ const dashboardData = {
         customer: 'Enterprise Solutions Ltd',
         update: 'Contract renewal opportunity - potential 40% expansion',
         time: '5 hours ago',
-        type: 'success',
-        priority: 'high'
+        type: 'success' as const,
+        priority: 'high' as const
       },
       {
         id: '8',
         customer: 'StartupHub',
         update: 'Budget cuts announced - reviewing all software subscriptions',
         time: '7 hours ago',
-        type: 'warning',
-        priority: 'critical'
+        type: 'warning' as const,
+        priority: 'high' as const
       }
     ],
     conversation: [
@@ -147,16 +168,16 @@ const dashboardData = {
         customer: 'DataViz Corp',
         update: 'Interested in discussing custom reporting features for Q2',
         time: '1 hour ago',
-        type: 'info',
-        priority: 'medium'
+        type: 'info' as const,
+        priority: 'medium' as const
       },
       {
         id: '10',
         customer: 'Analytics Plus',
         update: 'Requesting demo of new AI-powered insights module',
         time: '2 hours ago',
-        type: 'info',
-        priority: 'low'
+        type: 'info' as const,
+        priority: 'low' as const
       }
     ]
   },
@@ -344,16 +365,47 @@ const CSMDashboard: React.FC = () => {
     if (typeof window === 'undefined') return;
     
     const urlParams = new URLSearchParams(window.location.search);
-    const templateGroupId = urlParams.get('templateGroupId');
+    const templateGroupId = urlParams.get('templateGroupId') || urlParams.get('templateGroup');
     const templateId = urlParams.get('templateId');
     const template = urlParams.get('template');
 
-    if (templateGroupId) {
-      setDefaultLaunchConfig({ type: 'group', id: templateGroupId });
-    } else if (templateId) {
-      setDefaultLaunchConfig({ type: 'template', id: templateId });
-    } else if (template) {
-      setDefaultLaunchConfig({ type: 'template', id: template });
+    // Check sessionStorage as fallback
+    let sessionParams = null;
+    try {
+      const storedParams = sessionStorage.getItem('auth_redirect_params');
+      if (storedParams) {
+        sessionParams = JSON.parse(storedParams);
+      }
+    } catch (error) {
+      console.error("Error reading sessionStorage:", error);
+    }
+
+    // Use URL parameters first, then fall back to sessionStorage
+    const finalTemplateGroupId = templateGroupId || sessionParams?.templateGroup || sessionParams?.templateGroupId;
+    const finalTemplateId = templateId || sessionParams?.templateId;
+    const finalTemplate = template || sessionParams?.template;
+
+    if (finalTemplateGroupId) {
+      setDefaultLaunchConfig({ type: 'group', id: finalTemplateGroupId });
+      
+      // Clear sessionStorage after successful use
+      if (sessionParams) {
+        sessionStorage.removeItem('auth_redirect_params');
+      }
+    } else if (finalTemplateId) {
+      setDefaultLaunchConfig({ type: 'template', id: finalTemplateId });
+      
+      // Clear sessionStorage after successful use
+      if (sessionParams) {
+        sessionStorage.removeItem('auth_redirect_params');
+      }
+    } else if (finalTemplate) {
+      setDefaultLaunchConfig({ type: 'template', id: finalTemplate });
+      
+      // Clear sessionStorage after successful use
+      if (sessionParams) {
+        sessionStorage.removeItem('auth_redirect_params');
+      }
     }
   }, []);
 
@@ -538,7 +590,6 @@ const CSMDashboard: React.FC = () => {
               />
             ) : (
               <StandaloneArtifactViewer
-                templateId={modalConfig.id}
                 configName={modalConfig.id}
                 onClose={handleCloseModal}
               />
