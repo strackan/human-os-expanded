@@ -14,6 +14,7 @@ export default function UserAvatarDropdown() {
   const { user, profile, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [avatarError, setAvatarError] = useState(false)
   const router = useRouter()
 
   const getFirstName = () => {
@@ -99,6 +100,11 @@ export default function UserAvatarDropdown() {
     router.push('/settings')
   }
 
+  const handleAvatarError = () => {
+    console.log('🖼️ Avatar image failed to load, falling back to initials')
+    setAvatarError(true)
+  }
+
   if (!user) {
     return null
   }
@@ -115,11 +121,12 @@ export default function UserAvatarDropdown() {
             console.log('🔘 Avatar button clicked, current isOpen:', isOpen)
           }}
         >
-          {user.user_metadata?.avatar_url ? (
+          {user.user_metadata?.avatar_url && !avatarError ? (
             <img
               src={user.user_metadata.avatar_url}
               alt={`${getFirstName()}'s avatar`}
               className="h-8 w-8 rounded-full object-cover"
+              onError={handleAvatarError}
             />
           ) : (
             <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
@@ -131,11 +138,12 @@ export default function UserAvatarDropdown() {
       <PopoverContent className="w-56 p-0 z-50" align="end">
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            {user.user_metadata?.avatar_url ? (
+            {user.user_metadata?.avatar_url && !avatarError ? (
               <img
                 src={user.user_metadata.avatar_url}
                 alt={`${getFirstName()}'s avatar`}
                 className="h-10 w-10 rounded-full object-cover"
+                onError={handleAvatarError}
               />
             ) : (
               <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">

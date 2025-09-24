@@ -33,6 +33,13 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       return
     }
 
+    // 🆕 Fix: redirect signed-in users away from /signin
+    if (user && pathname === '/signin') {
+      console.log('🛡️ Signed in user stuck on /signin, redirecting to /dashboard')
+      router.replace('/dashboard')
+      return
+    }
+
     // Don't redirect if we're still loading or on a public route
     if (loading || isPublicRoute(pathname)) {
       console.log('🛡️ Skipping redirect - loading or public route')
@@ -41,8 +48,28 @@ export default function RouteGuard({ children }: RouteGuardProps) {
 
     // If no user and not on a public route, redirect to signin
     if (!user) {
-      console.log('🛡️ No user found, redirecting to signin from:', pathname)
-      const redirectUrl = `/signin?next=${encodeURIComponent(pathname)}`
+      // Preserve templateGroup parameters in the redirect
+      const urlParams = new URLSearchParams(window.location.search)
+      const templateGroup = urlParams.get('templateGroup')
+      const templateGroupId = urlParams.get('templateGroupId')
+      const templateId = urlParams.get('templateId')
+      const template = urlParams.get('template')
+      
+      let redirectUrl = `/signin?next=${encodeURIComponent(pathname)}`
+      
+      if (templateGroup) {
+        redirectUrl += `&templateGroup=${encodeURIComponent(templateGroup)}`
+      }
+      if (templateGroupId) {
+        redirectUrl += `&templateGroupId=${encodeURIComponent(templateGroupId)}`
+      }
+      if (templateId) {
+        redirectUrl += `&templateId=${encodeURIComponent(templateId)}`
+      }
+      if (template) {
+        redirectUrl += `&template=${encodeURIComponent(template)}`
+      }
+      
       router.replace(redirectUrl) // Use replace to avoid back button issues
       return
     }

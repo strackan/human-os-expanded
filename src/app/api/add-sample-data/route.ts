@@ -12,10 +12,10 @@ export async function POST() {
         name: 'Acme Corporation',
         domain: 'acme.com',
         industry: 'Technology',
-        tier: 'enterprise',
+        // tier: 'enterprise',
         health_score: 75,
-        primary_contact_name: 'John Smith',
-        primary_contact_email: 'john.smith@acme.com'
+        // primary_contact_name: 'John Smith',
+        // primary_contact_email: 'john.smith@acme.com'
       })
       .select()
       .single()

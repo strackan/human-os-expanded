@@ -1,67 +1,71 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase';
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createClient as createSupabaseJsClient } from '@supabase/supabase-js'
+import { createServerClient as createSSRClient } from '@supabase/ssr'
+
+function makeDevServiceClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  return createSupabaseJsClient(url, service, { auth: { autoRefreshToken: false, persistSession: false } })
+}
+async function makeProdSSRClient() {
+  const cookieStore = await cookies()
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  return createSSRClient(url, anon, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (list) => { try { list.forEach(({ name, value, options }) => cookieStore.set(name, value, options)) } catch {} },
+    },
+  })
+}
 
 export async function POST() {
   try {
-    console.log('Starting test renewal creation...');
-    const supabase = createClient();
+    const supabase = process.env.NODE_ENV === 'development' ? makeDevServiceClient() : await makeProdSSRClient()
 
-    // Get a random customer from the customers table
-    console.log('Fetching a random customer...');
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('id, name')
-      .limit(1)
-      .single();
-
-    if (customerError) {
-      console.error('Error finding customer:', customerError);
-      throw customerError;
+    // Use existing “Test Customer” (avoid UNIQUE(name) collisions)
+    const { data: c1 } = await supabase.from('customers').select('id').eq('name','Test Customer').maybeSingle()
+    let customerId = c1?.id as string | undefined
+    if (!customerId) {
+      const { data: created, error: createCustErr } = await supabase
+        .from('customers')
+        .upsert({ name: 'Test Customer', domain: 'testcustomer.com' }, { onConflict: 'name' })
+        .select().single()
+      if (createCustErr) return NextResponse.json({ step:'create_customer', ...createCustErr }, { status: 500 })
+      customerId = created.id
     }
 
-    if (!customer) {
-      console.error('No customers found');
-      throw new Error('No customers found');
-    }
+    // Create a contract
+    const start = new Date(), end = new Date(start.getTime() + 365*24*3600*1000)
+    const { data: contract, error: contractError } = await supabase
+      .from('contracts')
+      .insert({
+        customer_id: customerId,
+        contract_number: `TEST-${Date.now()}`, // if UNIQUE, this ensures uniqueness
+        start_date: start.toISOString().slice(0,10),
+        end_date: end.toISOString().slice(0,10),
+        arr: 50000, seats: 100, contract_type: 'subscription', status: 'active', auto_renewal: true,
+      })
+      .select().single()
+    if (contractError) return NextResponse.json({ step:'insert_contract', ...contractError }, { status: 500 })
 
-    console.log('Found customer:', customer);
-
-    // Create a test renewal for the customer
-    console.log('Creating renewal for customer:', customer.id);
+    // Create a renewal in 30 days
+    const renewalDate = new Date(); renewalDate.setDate(renewalDate.getDate() + 30)
     const { data: renewal, error: renewalError } = await supabase
       .from('renewals')
       .insert({
-        customer_id: customer.id,
-        product_name: 'Enterprise License',
-        current_value: 50000,
-        renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        status: 'active',
-        metadata: { 
-          test: true,
-          product_type: 'Software License',
-          seats: 100,
-          term_length: 'Annual'
-        }
+        contract_id: contract.id,
+        customer_id: customerId,
+        renewal_date: renewalDate.toISOString().slice(0,10),
+        current_arr: 50000, proposed_arr: 55000, probability: 75,
+        stage: 'negotiation', risk_level: 'medium', expansion_opportunity: 10000,
       })
-      .select()
-      .single();
+      .select().single()
+    if (renewalError) return NextResponse.json({ step:'insert_renewal', ...renewalError }, { status: 500 })
 
-    if (renewalError) {
-      console.error('Error creating renewal:', renewalError);
-      throw renewalError;
-    }
-
-    console.log('Successfully created renewal:', renewal);
-    return NextResponse.json(renewal);
-  } catch (error) {
-    console.error('Detailed error creating test renewal:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to create test renewal', 
-        details: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ contract, renewal })
+  } catch (e) {
+    return NextResponse.json({ error:'Failed to create test renewal', details: (e as any)?.message || String(e) }, { status: 500 })
   }
-} 
+}

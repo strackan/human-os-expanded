@@ -64,3 +64,9 @@ export async function GET() {
     return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
+
+// temporary shim: if anything issues POST, reuse GET so you don't get 405s
+export async function POST(request: Request) {
+  // @ts-ignore reuse GET implementation
+  return GET();
+}
