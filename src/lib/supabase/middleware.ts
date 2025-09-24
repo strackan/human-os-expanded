@@ -53,7 +53,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthRoute && !isCallbackRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/login-success'
     return NextResponse.redirect(url)
   }
 
