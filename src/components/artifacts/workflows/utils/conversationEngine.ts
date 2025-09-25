@@ -20,6 +20,7 @@ export interface ConversationResponse {
   buttons?: DynamicChatButton[];
   actions?: ConversationAction[];
   nextBranch?: string;
+  delay?: number; // Delay in seconds before showing the response
 }
 
 export class ConversationEngine {
@@ -156,7 +157,8 @@ export class ConversationEngine {
 
       const actions = this.processActions(nextBranch);
 
-      if (this.onAction && actions.length > 0) {
+      // Only process actions immediately if there's no delay
+      if (this.onAction && actions.length > 0 && !nextBranch.delay) {
         actions.forEach(action => this.onAction!(action));
       }
 
@@ -164,7 +166,8 @@ export class ConversationEngine {
         text: nextBranch.response,
         buttons: nextBranch.buttons,
         actions,
-        nextBranch: nextBranchName
+        nextBranch: nextBranchName,
+        delay: nextBranch.delay
       };
     }
 

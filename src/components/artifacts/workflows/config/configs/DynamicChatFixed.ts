@@ -122,8 +122,6 @@ export const dynamicChatAI: WorkflowConfig = {
       branches: {
         'expansion': {
           response: "Excellent choice! Based on their growth trajectory, I recommend a multi-year expansion deal. Let me prepare an analysis for you.",
-          actions: ['showArtifact'],
-          artifactId: 'license-analysis',
           buttons: [
             { label: 'Draft email', value: 'draft-email' },
             { label: 'Schedule meeting', value: 'schedule' },
@@ -157,7 +155,8 @@ export const dynamicChatAI: WorkflowConfig = {
           response: "No problem! I'll check back in a week. Is there anything else you'd like to work on today?"
         },
         'email-flow': {
-          response: "I've drafted an expansion proposal email for Michael Roberts.",
+          response: "Working On It",
+          delay: 3000,
           actions: ['showArtifact'],
           artifactId: 'email-draft'
         },

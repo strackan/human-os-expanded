@@ -227,25 +227,59 @@ const ChatInterface = React.forwardRef<{
       setTimeout(() => {
         const response = conversationEngine.processUserInput(buttonValue);
         
-        // Add the agent's response message
-        setMessages(prev => [...prev, {
-          id: Date.now() + 1,
-          text: response.text,
-          sender: 'ai',
-          timestamp: new Date(),
-          type: response.buttons ? 'buttons' : 'text',
-          buttons: response.buttons
-        }]);
-        
-        // Process any actions from the response
-        if (response.actions && onArtifactAction) {
-          console.log('ChatInterface: Processing actions from response:', response.actions);
-          response.actions.forEach(action => {
-            console.log('ChatInterface: Calling onArtifactAction with:', action);
-            onArtifactAction(action);
-          });
+        // If there's a delay, show loading animation first
+        if (response.delay && response.delay > 0) {
+          // Show loading message immediately
+          const loadingMessageId = Date.now() + 1;
+          setMessages(prev => [...prev, {
+            id: loadingMessageId,
+            text: response.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: 'loading'
+          }]);
+          
+          // After delay, replace with final message and process actions
+          setTimeout(() => {
+            setMessages(prev => prev.map(msg => 
+              msg.id === loadingMessageId 
+                ? {
+                    ...msg,
+                    text: response.text,
+                    type: response.buttons ? 'buttons' : 'text',
+                    buttons: response.buttons
+                  }
+                : msg
+            ));
+            
+            // Process any actions from the response AFTER the delay
+            if (response.actions && onArtifactAction) {
+              console.log('ChatInterface: Processing actions from response after delay:', response.actions);
+              response.actions.forEach(action => {
+                console.log('ChatInterface: Calling onArtifactAction with:', action);
+                onArtifactAction(action);
+              });
+            }
+          }, response.delay);
         } else {
-          console.log('ChatInterface: No actions to process or no onArtifactAction callback');
+          // No delay, show message immediately
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            text: response.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: response.buttons ? 'buttons' : 'text',
+            buttons: response.buttons
+          }]);
+          
+          // Process any actions from the response immediately
+          if (response.actions && onArtifactAction) {
+            console.log('ChatInterface: Processing actions from response:', response.actions);
+            response.actions.forEach(action => {
+              console.log('ChatInterface: Calling onArtifactAction with:', action);
+              onArtifactAction(action);
+            });
+          }
         }
       }, 500);
     } else {
@@ -379,6 +413,11 @@ const ChatInterface = React.forwardRef<{
                   <p className="whitespace-pre-wrap">
                     {message.sender === 'ai' && typingMessages.has(message.id as number) ? (
                       <TypingAnimation text={message.text} messageId={message.id as number} speed={15} />
+                    ) : message.type === 'loading' ? (
+                      <div className="flex items-center space-x-2">
+                        <span>{message.text}</span>
+                        <span className="animate-spin text-lg">*</span>
+                      </div>
                     ) : (
                       message.text
                     )}
@@ -391,21 +430,7 @@ const ChatInterface = React.forwardRef<{
                           key={index}
                           onClick={() => {
                             console.log('Button clicked:', button.label, 'value:', button.value);
-                            
-                            // Working message is now handled by showArtifact action
-                            
                             handleButtonClick(button.value, button.label);
-                            
-                            // Direct trigger for draft-email button
-                            if (button.value === 'draft-email' && onArtifactAction) {
-                              console.log('Direct trigger: showArtifact for exec-email');
-                              setTimeout(() => {
-                                onArtifactAction({
-                                  type: 'showArtifact',
-                                  payload: { artifactId: 'exec-email' }
-                                });
-                              }, 100);
-                            }
                           }}
                           data-action={button.value}
                           data-label={button.label}

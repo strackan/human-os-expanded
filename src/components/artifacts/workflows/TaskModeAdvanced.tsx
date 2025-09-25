@@ -157,16 +157,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     } else if (action.type === 'showArtifact') {
       console.log('TaskModeAdvanced: Processing showArtifact for:', action.payload?.artifactId);
       
-      // Show loading animation for 3 seconds
-      if (chatInterfaceRef.current) {
-        chatInterfaceRef.current.showWorkingMessage();
-        
-        // Hide loading animation after 3 seconds
-        setTimeout(() => {
-          if (chatInterfaceRef.current) {
-            chatInterfaceRef.current.hideWorkingMessage();
-          }
-        }, 3000);
+      // Open the artifact and enable split mode
+      if (action.payload?.artifactId) {
+        setVisibleArtifacts(new Set([action.payload.artifactId]));
+        openArtifact();
+        setIsStatsVisible(false); // Hide stats to give artifact full right side
       }
     } else if (action.type === 'removeArtifact') {
       console.log('TaskModeAdvanced: Processing removeArtifact for:', action.payload?.artifactId);
