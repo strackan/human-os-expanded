@@ -44,9 +44,43 @@ export interface AnalyticsConfig {
   };
 }
 
+export interface DynamicChatButton {
+  label: string;
+  value: string;
+  'label-background'?: string;
+  'label-text'?: string;
+}
+
+export interface DynamicChatBranch {
+  response: string;
+  defaultMessage?: string;
+  actions?: Array<'launch-artifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat'>;
+  artifactId?: string;
+  buttons?: DynamicChatButton[];
+  nextBranches?: {
+    [userResponse: string]: string;
+  };
+}
+
+export interface DynamicChatFlow {
+  startsWith: 'ai' | 'user';
+  defaultMessage?: string;
+  initialMessage?: {
+    text: string;
+    buttons?: DynamicChatButton[];
+  };
+  userTriggers?: {
+    [pattern: string]: string;
+  };
+  branches: {
+    [branchName: string]: DynamicChatBranch;
+  };
+}
+
 export interface ChatConfig {
   placeholder: string;
   aiGreeting: string;
+  mode?: 'preload' | 'dynamic';
   conversationSeed?: Array<{
     sender?: 'ai' | 'user';
     text: string;
@@ -59,6 +93,7 @@ export interface ChatConfig {
     }>;
     timestamp?: string | Date;
   }>;
+  dynamicFlow?: DynamicChatFlow;
   features: {
     attachments: boolean;
     voiceRecording: boolean;
@@ -192,7 +227,8 @@ export const defaultWorkflowConfig: WorkflowConfig = {
       showReferenceLine: true,
       referenceLineLabel: 'License Cost',
       data: [2, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 9, 11, 13, 15, 14, 16, 18, 20, 22, 21, 23, 25],
-      upliftPercentage: 45,
+      chartContextLabel: '↗ +45% uplift',
+      chartContextColor: 'text-green-600',
       dataColors: {
         threshold: 15,
         belowColor: 'bg-blue-500',
@@ -204,8 +240,9 @@ export const defaultWorkflowConfig: WorkflowConfig = {
       showReferenceLine: true,
       referenceLineLabel: 'License Cost',
       data: [8, 9, 8, 9, 10, 9, 8, 9, 10, 9, 8, 9, 10, 11, 12, 20, 21, 22, 21, 20, 22, 21, 23, 22, 24, 23, 25, 24, 26, 25, 27, 26, 28, 27, 29, 28, 30, 29, 31, 30],
-      spikePercentage: 120,
-      color: 'purple'
+      chartContextLabel: '↗ +120% spike',
+      chartContextColor: 'text-purple-600',
+      dataColors: { threshold: 15, belowColor: 'bg-purple-500', aboveColor: 'bg-green-500' }
     },
     renewalInsights: {
       renewalStage: 'Planning',

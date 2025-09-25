@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import WorkflowWrapper from './WorkflowWrapper';
+import { TaskModeModal } from './TaskModeAdvanced';
 import { WorkflowConfig } from './config/WorkflowConfig';
 
 // Import your custom configs here
 // Change this import to whatever config you're actively working on
-import { bluebirdMemorialPlanningConfig } from './config/configs/BluebirdMemorialConfig-Planning';
+import { dynamicChatExampleConfig } from './config/configs/DynamicChatExampleConfig';
 
 // ACTIVE CONFIG - Change this line to point to your current config
-const ACTIVE_CONFIG: WorkflowConfig = bluebirdMemorialPlanningConfig;
+const ACTIVE_CONFIG: WorkflowConfig = dynamicChatExampleConfig;
 // Example: const ACTIVE_CONFIG = blueBirdMemorialPlanningConfig;
 
 const TaskModeCustom = () => {
@@ -15,12 +15,14 @@ const TaskModeCustom = () => {
 
   return (
     <>
-      <WorkflowWrapper
-        config={ACTIVE_CONFIG}
-        configName="bluebird-planning"
-        startingWith="ai"
-        artifactVisible={true}
-        autoOpen={isModalOpen}
+      <TaskModeModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        workflowConfig={ACTIVE_CONFIG}
+        workflowConfigName="dynamic-chat-example"
+        showArtifact={false} // Start without artifacts visible
+        artifact_visible={true} // Artifacts available when opened
+        starting_with="ai"
       />
       {!isModalOpen && (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">

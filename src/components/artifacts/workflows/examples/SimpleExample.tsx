@@ -1,5 +1,5 @@
 import React from 'react';
-import WorkflowWrapper from '../WorkflowWrapper';
+import { TaskModeModal } from '../TaskModeAdvanced';
 import { WorkflowConfig } from '../config/WorkflowConfig';
 
 // Example: Create a custom config for a specific scenario
@@ -93,11 +93,15 @@ const urgentRenewalConversation = [
 
 const SimpleExample = () => {
   return (
-    <WorkflowWrapper
-      config={customConfig}
+    <TaskModeModal
+      isOpen={true}
+      onClose={() => {}}
+      workflowConfig={customConfig}
+      workflowConfigName="simple-example"
       conversationSeed={urgentRenewalConversation}
-      startingWith="ai"
-      artifactVisible={true}
+      starting_with="ai"
+      showArtifact={false}
+      artifact_visible={true}
     />
   );
 };

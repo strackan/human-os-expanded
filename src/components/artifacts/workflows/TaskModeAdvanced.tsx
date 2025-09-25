@@ -1,30 +1,84 @@
-import React, { useState, useRef } from 'react';
+/**
+ * TaskModeModal Component with Enhanced Artifact Control
+ * 
+ * Features:
+ * - showArtifact prop: Controls initial artifact visibility (default: true)
+ * - openArtifact(): Programmatically opens split mode and shows artifacts
+ * - closeArtifact(): Programmatically closes artifacts and exits split mode
+ * - toggleSplitMode(): Toggles between split and full-width chat modes
+ * - Fixed "Exit Split" button functionality
+ * - inline prop: Renders inline instead of as modal overlay
+ * 
+ * Usage:
+ * ```tsx
+ * const taskModeRef = useRef<TaskModeModalRef>(null);
+ * 
+ * // Control artifacts programmatically
+ * taskModeRef.current?.openArtifact();
+ * taskModeRef.current?.closeArtifact();
+ * taskModeRef.current?.toggleSplitMode();
+ * 
+ * // As modal overlay
+ * <TaskModeModal
+ *   ref={taskModeRef}
+ *   isOpen={isOpen}
+ *   showArtifact={false} // Start without artifacts
+ *   onClose={onClose}
+ * />
+ * 
+ * // As inline component
+ * <TaskModeModal
+ *   ref={taskModeRef}
+ *   isOpen={isOpen}
+ *   inline={true} // Renders inline instead of as modal
+ *   onClose={onClose}
+ * />
+ * ```
+ */
+
+import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
 import ChatInterface from './components/ChatInterface';
 import ArtifactsPanel from './components/ArtifactsPanel';
 import { WorkflowConfig, defaultWorkflowConfig } from './config/WorkflowConfig';
+import { ConversationAction } from './utils/conversationEngine';
 
 interface TaskModeModalProps {
   isOpen: boolean;
   onClose: () => void;
   artifact_visible?: boolean;
+  showArtifact?: boolean; // New prop to control initial artifact visibility
   conversationSeed?: any[] | null;
   starting_with?: "ai" | "user";
   workflowConfig?: WorkflowConfig;
   workflowConfigName?: string;
+  onNextCustomer?: () => void;
+  groupProgress?: string;
+  inline?: boolean; // New prop to render inline instead of as modal
 }
 
-const TaskModeModal: React.FC<TaskModeModalProps> = ({
+// Interface for exposed methods
+export interface TaskModeModalRef {
+  openArtifact: () => void;
+  closeArtifact: () => void;
+  toggleSplitMode: () => void;
+}
+
+const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   isOpen,
   onClose,
   artifact_visible = false,
+  showArtifact = true, // Default to true for backward compatibility
   conversationSeed = null,
   starting_with = "ai",
   workflowConfig = defaultWorkflowConfig,
-  workflowConfigName = "default"
-}) => {
+  workflowConfigName = "default",
+  onNextCustomer,
+  groupProgress,
+  inline = false
+}, ref) => {
   // Use configuration with overrides
   const config: WorkflowConfig = {
     ...workflowConfig,
@@ -34,7 +88,7 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
     },
     layout: {
       ...workflowConfig.layout,
-      splitModeDefault: artifact_visible
+      splitModeDefault: showArtifact ? artifact_visible : false
     }
   };
 
@@ -46,13 +100,28 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
   const [isSplitMode, setIsSplitMode] = useState(config.layout.splitModeDefault);
   const [chatWidth, setChatWidth] = useState(config.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
+  const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
 
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // New artifact control methods
+  const openArtifact = () => {
+    setIsSplitMode(true);
+    setChatWidth(50);
+  };
+
+  const closeArtifact = () => {
+    setIsSplitMode(false);
+    setVisibleArtifacts(new Set());
+  };
+
   const toggleSplitMode = () => {
-    setIsSplitMode(!isSplitMode);
-    if (!isSplitMode) {
-      setChatWidth(50);
+    if (isSplitMode) {
+      // Use closeArtifact method when exiting split mode
+      closeArtifact();
+    } else {
+      // Use openArtifact method when entering split mode
+      openArtifact();
     }
   };
 
@@ -60,6 +129,19 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
     console.log('Toggling stats visibility from:', isStatsVisible, 'to:', !isStatsVisible);
     setIsStatsVisible(!isStatsVisible);
   };
+
+  const handleArtifactAction = (action: ConversationAction) => {
+    if (action.type === 'launch-artifact' && action.payload?.artifactId) {
+      setVisibleArtifacts(prev => new Set(prev).add(action.payload.artifactId));
+    }
+  };
+
+  // Expose methods to parent components
+  useImperativeHandle(ref, () => ({
+    openArtifact,
+    closeArtifact,
+    toggleSplitMode
+  }), []);
 
   // External modal resize functionality
   const startModalResize = (e: React.MouseEvent, direction: string) => {
@@ -182,11 +264,14 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div
-      ref={modalRef}
-      className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 flex flex-col z-50"
-      style={{
+  // Render inline or as modal based on inline prop
+  const containerClasses = inline 
+    ? "w-full h-full bg-white flex flex-col"
+    : "fixed bg-white rounded-lg shadow-2xl border border-gray-300 flex flex-col z-50";
+  
+  const containerStyles = inline 
+    ? {}
+    : {
         top: '50px',
         left: '50px',
         width: '1200px',
@@ -195,11 +280,18 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
         minHeight: '300px',
         maxWidth: '95vw',
         maxHeight: '95vh'
-      }}
+      };
+
+  return (
+    <div
+      ref={modalRef}
+      className={containerClasses}
+      style={containerStyles}
     >
-      {/* EXTERNAL RESIZE HANDLES */}
-      
-      {/* Corner Handles */}
+      {/* EXTERNAL RESIZE HANDLES - Only show when not inline */}
+      {!inline && (
+        <>
+          {/* Corner Handles */}
       <div
         className="absolute -top-1 -left-1 w-5 h-5 cursor-nw-resize opacity-0 hover:opacity-100 transition-opacity z-50"
         onMouseDown={(e) => startModalResize(e, 'top-left')}
@@ -254,13 +346,17 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
       >
         <div className="absolute right-1 top-1/2 transform -translate-y-1/2 w-0.5 h-6 bg-blue-600"></div>
       </div>
+        </>
+      )}
 
       {/* HEADER */}
       <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex justify-between items-center flex-shrink-0">
         <div className="flex items-center space-x-3">
           <div>
             <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
-            <p className="text-sm text-gray-600">Demo Progress: 1 of 6</p>
+            {groupProgress && (
+              <p className="text-sm text-gray-600">Demo Progress: {groupProgress}</p>
+            )}
           </div>
           <button
             onClick={toggleStatsVisibility}
@@ -280,9 +376,14 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
         <div className="flex items-center space-x-4">
           <div className="text-right">
             <h2 className="text-lg font-semibold text-gray-800">{config.customer.name}</h2>
-            <button className="text-xs text-blue-500 hover:text-blue-600 transition-colors">
-              Next Customer - {config.customer.nextCustomer}
-            </button>
+            {(onNextCustomer || config.customer.nextCustomer) && (
+              <button
+                onClick={onNextCustomer}
+                className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
+              >
+                Next Customer - {config.customer.nextCustomer || 'Next'}
+              </button>
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <button
@@ -348,6 +449,7 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
             onToggleSplitMode={toggleSplitMode}
             startingWith={starting_with as "ai" | "user"}
             className="flex-1 overflow-hidden"
+            onArtifactAction={handleArtifactAction}
           />
         </div>
 
@@ -372,17 +474,21 @@ const TaskModeModal: React.FC<TaskModeModalProps> = ({
               config={config.artifacts}
               workflowConfigName={workflowConfigName}
               className="h-full overflow-hidden"
+              visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}
             />
           </div>
         )}
       </div>
     </div>
   );
-};
+});
+
+TaskModeModal.displayName = 'TaskModeModal';
 
 // Minimal demo wrapper to show the component
 const Demo = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
+  const taskModeRef = useRef<TaskModeModalRef>(null);
 
   const exampleConversationSeed = [
     {
@@ -469,21 +575,31 @@ const Demo = () => {
   return (
     <>
       <TaskModeModal
+        ref={taskModeRef}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         artifact_visible={true}
+        showArtifact={false} // Start without artifacts visible
         conversationSeed={exampleConversationSeed as any[]}
         starting_with="ai"
         workflowConfig={defaultWorkflowConfig}
       />
       {!isModalOpen && (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            Reopen Task Mode
-          </button>
+          <div className="flex flex-col space-y-4">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Reopen Task Mode
+            </button>
+            <div className="text-center text-sm text-gray-600">
+              <p>Demo: TaskModeModal with new artifact control methods</p>
+              <p>• showArtifact=false: Chat stretches full width initially</p>
+              <p>• openArtifact(): Opens split mode with artifacts</p>
+              <p>• closeArtifact(): Closes artifacts and exits split</p>
+            </div>
+          </div>
         </div>
       )}
     </>

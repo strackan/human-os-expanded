@@ -29,13 +29,20 @@ export const templateGroups: Record<string, TemplateGroup> = {
     description: 'Comprehensive demo showcasing all workflow capabilities',
     templates: [
       'price-increase-flat',
-      'strategic-engagement', 
+      'strategic-engagement',
       'quote-artifact',
       'contract-analysis',
       'strategic-planning',
       'price-optimization'
     ],
     tags: ['demo', 'vip', 'comprehensive', 'workflow']
+  },
+  'dynamic-chat-demo': {
+    id: 'dynamic-chat-demo',
+    name: 'Dynamic Chat Demo',
+    description: 'Demonstrates the new dynamic conversation flow with conditional branching and artifact launching',
+    templates: ['dynamic-ai', 'dynamic-user', 'simple-dynamic'],
+    tags: ['demo', 'dynamic', 'chat', 'conversation', 'interactive']
   }
 };
 
@@ -49,7 +56,10 @@ export const availableConfigs = [
   'quote-artifact',
   'contract-analysis',
   'strategic-planning',
-  'price-optimization'
+  'price-optimization',
+  'simple-dynamic',
+  'dynamic-ai',
+  'dynamic-user'
 ];
 
 // Helper functions

@@ -85,18 +85,6 @@ export const componentRegistry: ComponentItem[] = [
     category: 'Chat'
   },
   {
-    name: 'TaskModeBasic',
-    path: '@/components/artifacts/workflows/TaskModeBasic',
-    label: 'Task Mode - Basic Interface',
-    category: 'Workflows'
-  },
-  {
-    name: 'TaskMode',
-    path: '@/components/artifacts/workflows/TaskMode',
-    label: 'Task Mode - Standard Interface',
-    category: 'Workflows'
-  },
-  {
     name: 'TaskModeAdvanced',
     path: '@/components/artifacts/workflows/TaskModeAdvanced',
     label: 'Task Mode - Advanced Interface',

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Mic, Square, MoreHorizontal, Brush, Edit, Zap } from 'lucide-react';
 import { ChatConfig } from '../config/WorkflowConfig';
+import { ConversationEngine, ConversationAction } from '../utils/conversationEngine';
 
 interface Message {
   id: string | number;
@@ -23,6 +24,7 @@ interface ChatInterfaceProps {
   onToggleSplitMode: () => void;
   className?: string;
   startingWith?: 'ai' | 'user';
+  onArtifactAction?: (action: ConversationAction) => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -30,15 +32,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   isSplitMode,
   onToggleSplitMode,
   className = '',
-  startingWith = 'ai'
+  startingWith = 'ai',
+  onArtifactAction
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
+  const [conversationEngine, setConversationEngine] = useState<ConversationEngine | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const generateInitialMessages = (): Message[] => {
+    if (config.mode === 'dynamic' && config.dynamicFlow) {
+      return [];
+    }
+
     if (!config.conversationSeed || !Array.isArray(config.conversationSeed)) return [];
 
     return config.conversationSeed.map((seedMessage, index) => {
@@ -61,6 +69,31 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const [messages, setMessages] = useState<Message[]>(generateInitialMessages());
+
+  useEffect(() => {
+    if (config.mode === 'dynamic' && config.dynamicFlow) {
+      const engine = new ConversationEngine(config.dynamicFlow, (action) => {
+        if (onArtifactAction) {
+          onArtifactAction(action);
+        }
+      });
+      setConversationEngine(engine);
+
+      const initialMessage = engine.getInitialMessage();
+      if (initialMessage && messages.length === 0) { // Only add initial message if no messages exist
+        setTimeout(() => {
+          setMessages([{
+            id: Date.now(),
+            text: initialMessage.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: initialMessage.buttons ? 'buttons' : 'text',
+            buttons: initialMessage.buttons
+          }]);
+        }, 500);
+      }
+    }
+  }, [config.mode, config.dynamicFlow]); // Remove onArtifactAction from dependencies
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -90,16 +123,32 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         sender: 'user',
         timestamp: new Date()
       }]);
+
+      const userInput = inputValue;
       setInputValue('');
 
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now() + 1,
-          text: config.aiGreeting,
-          sender: 'ai',
-          timestamp: new Date()
-        }]);
-      }, 1000);
+      if (config.mode === 'dynamic' && conversationEngine) {
+        setTimeout(() => {
+          const response = conversationEngine.processUserInput(userInput);
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            text: response.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: response.buttons ? 'buttons' : 'text',
+            buttons: response.buttons
+          }]);
+        }, 500);
+      } else {
+        setTimeout(() => {
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            text: config.aiGreeting,
+            sender: 'ai',
+            timestamp: new Date()
+          }]);
+        }, 1000);
+      }
     }
   };
 
@@ -118,14 +167,28 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: new Date()
     }]);
 
-    setTimeout(() => {
-      setMessages(prev => [...prev, {
-        id: Date.now() + 1,
-        text: `I understand you selected "${buttonLabel}". How can I help you further?`,
-        sender: 'ai',
-        timestamp: new Date()
-      }]);
-    }, 500);
+    if (config.mode === 'dynamic' && conversationEngine) {
+      setTimeout(() => {
+        const response = conversationEngine.processUserInput(buttonValue);
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: response.text,
+          sender: 'ai',
+          timestamp: new Date(),
+          type: response.buttons ? 'buttons' : 'text',
+          buttons: response.buttons
+        }]);
+      }, 500);
+    } else {
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: `I understand you selected "${buttonLabel}". How can I help you further?`,
+          sender: 'ai',
+          timestamp: new Date()
+        }]);
+      }, 500);
+    }
   };
 
   const handleYesClick = () => {
@@ -186,13 +249,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                  className={`${message.sender === 'user' ? 'max-w-[80%]' : 'w-[80%]'} rounded-lg px-4 py-2 ${
                     message.sender === 'user'
                       ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-800 border'
+                      : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{message.text}</p>

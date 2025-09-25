@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import WorkflowWrapper from './WorkflowWrapper';
+import { TaskModeModal } from './TaskModeAdvanced';
 import { acmeCorpConfig, intrasoftConfig } from './config/configs';
 
 type WorkflowVariant = 'acme' | 'intrasoft' | null;
@@ -70,11 +70,15 @@ const TaskModeGallery = () => {
           >
             ← Back to Gallery
           </button>
-          <WorkflowWrapper
-            config={variant.config}
+          <TaskModeModal
+            isOpen={true}
+            onClose={() => setSelectedVariant(null)}
+            workflowConfig={variant.config}
+            workflowConfigName={variant.id}
             conversationSeed={variant.conversationSeed}
-            startingWith="ai"
-            artifactVisible={true}
+            starting_with="ai"
+            showArtifact={false}
+            artifact_visible={true}
           />
         </div>
       );

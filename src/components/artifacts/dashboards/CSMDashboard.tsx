@@ -3,11 +3,44 @@
 import React, { useState, useEffect } from 'react';
 import { Play } from 'lucide-react';
 import { resolveTemplateName } from '../workflows/utils/templateLauncher';
-import StandaloneArtifactViewer from '../workflows/StandaloneArtifactViewer';
+import { TaskModeModal } from '../workflows/TaskModeAdvanced';
+import { WorkflowConfig } from '../workflows/config/WorkflowConfig';
+import {
+  acmeCorpConfig,
+  intrasoftConfig,
+  bluebirdMemorialPlanningConfig,
+  priceIncreaseFlatConfig,
+  strategicEngagementConfig,
+  quoteArtifactConfig,
+  contractAnalysisConfig,
+  strategicPlanningConfig,
+  priceOptimizationConfig,
+  simpleDynamicConfig,
+  dynamicChatAI,
+  dynamicChatUser,
+  dynamicChatExampleConfig
+} from '../workflows/config/configs';
 import Metrics from './Metrics';
 import PriorityTasks from './PriorityTasks';
 import RecentUpdates from './RecentUpdates';
 import Reporting from './Reporting';
+
+// Config mapping for easy lookup
+const configMap: Record<string, WorkflowConfig> = {
+  'acme': acmeCorpConfig,
+  'intrasoft': intrasoftConfig,
+  'bluebird-planning': bluebirdMemorialPlanningConfig,
+  'price-increase-flat': priceIncreaseFlatConfig,
+  'strategic-engagement': strategicEngagementConfig,
+  'quote-artifact': quoteArtifactConfig,
+  'contract-analysis': contractAnalysisConfig,
+  'strategic-planning': strategicPlanningConfig,
+  'price-optimization': priceOptimizationConfig,
+  'simple-dynamic': simpleDynamicConfig,
+  'dynamic-ai': dynamicChatAI,
+  'dynamic-user': dynamicChatUser,
+  'dynamic-chat-example': dynamicChatExampleConfig,
+};
 
 // Sample data - in a real app this would come from your backend
 const dashboardData = {
@@ -569,31 +602,40 @@ const CSMDashboard: React.FC = () => {
         onGoToReports={handleGoToReports}
       />
 
-      {/* Task Mode Modal */}
+      {/* Task Mode Modal Overlay */}
       {showTaskModal && modalConfig && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-90 z-50"
-          style={{ paddingTop: '80px', paddingBottom: '80px' }}
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center"
+          style={{ padding: '40px' }}
           onClick={handleCloseModal}
         >
           <div
-            className="bg-white rounded-lg shadow-xl mx-auto h-full overflow-hidden"
+            className="bg-white rounded-lg shadow-2xl mx-auto overflow-hidden"
             style={{
+              width: '95vw',
+              height: '90vh',
               maxWidth: '1400px',
-              width: '90vw'
+              maxHeight: '900px'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {modalConfig.type === 'group' ? (
-              <StandaloneArtifactViewer
-                groupId={modalConfig.id}
-                groupIndex={modalConfig.groupIndex || 0}
-                onClose={handleCloseModal}
-              />
+              <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
+                <div>
+                  <p>Group mode not yet implemented in consolidated system</p>
+                  <p>Group ID: {modalConfig.id}</p>
+                  <p>Index: {modalConfig.groupIndex || 0}</p>
+                </div>
+              </div>
             ) : (
-              <StandaloneArtifactViewer
-                configName={modalConfig.id}
+              <TaskModeModal
+                isOpen={true}
                 onClose={handleCloseModal}
+                workflowConfig={configMap[modalConfig.id]}
+                workflowConfigName={modalConfig.id}
+                showArtifact={false} // Start without artifacts visible
+                artifact_visible={true} // Artifacts available when opened
+                inline={true} // Use inline mode but within the modal container
               />
             )}
           </div>
