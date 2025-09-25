@@ -111,11 +111,17 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, className = '',
   const visibleSections = config.sections.filter(s => s.visible);
 
   return (
-    <div className={`flex flex-col bg-gray-50 overflow-hidden ${className}`}>
+    <div className={`bg-gray-50 h-full ${className}`}>
       <div className="p-4 border-b border-gray-200 bg-white">
         <h3 className="font-semibold text-gray-800">Artifacts</h3>
       </div>
-      <div className="flex-1 p-6 overflow-y-auto text-gray-700">
+      <div 
+        className="p-6 text-gray-700" 
+        style={{ 
+          height: 'calc(100% - 60px)',
+          overflowY: 'scroll'
+        }}
+      >
         <div className="space-y-8">
           {visibleSections.map((section) => {
             switch (section.type) {

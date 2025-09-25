@@ -1,11 +1,22 @@
 import React, { useState, useRef } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
 import ChatInterface from './components/ChatInterface';
 import ArtifactsPanel from './components/ArtifactsPanel';
 import { WorkflowConfig, defaultWorkflowConfig } from './config/WorkflowConfig';
 
-const TaskModeModal = ({
+interface TaskModeModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  artifact_visible?: boolean;
+  conversationSeed?: any[] | null;
+  starting_with?: "ai" | "user";
+  workflowConfig?: WorkflowConfig;
+  workflowConfigName?: string;
+}
+
+const TaskModeModal: React.FC<TaskModeModalProps> = ({
   isOpen,
   onClose,
   artifact_visible = false,
@@ -34,6 +45,7 @@ const TaskModeModal = ({
   const [dividerPosition, setDividerPosition] = useState(config.layout.dividerPosition);
   const [isSplitMode, setIsSplitMode] = useState(config.layout.splitModeDefault);
   const [chatWidth, setChatWidth] = useState(config.layout.chatWidth);
+  const [isStatsVisible, setIsStatsVisible] = useState(true);
 
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -44,43 +56,48 @@ const TaskModeModal = ({
     }
   };
 
+  const toggleStatsVisibility = () => {
+    console.log('Toggling stats visibility from:', isStatsVisible, 'to:', !isStatsVisible);
+    setIsStatsVisible(!isStatsVisible);
+  };
+
   // External modal resize functionality
-  const startModalResize = (e, direction) => {
+  const startModalResize = (e: React.MouseEvent, direction: string) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const startX = e.clientX;
     const startY = e.clientY;
-    const startDimensions = { ...modalDimensions };
+    const modalRect = modalRef.current?.getBoundingClientRect();
+    if (!modalRect) return;
 
-    const handleMouseMove = (moveEvent) => {
+    const startWidth = modalRect.width;
+    const startHeight = modalRect.height;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaY = moveEvent.clientY - startY;
-      
-      let newDimensions = { ...startDimensions };
-      const deltaWidthPercent = (deltaX / window.innerWidth) * 100;
-      const deltaHeightPercent = (deltaY / window.innerHeight) * 100;
-      
+
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+
       if (direction.includes('right')) {
-        newDimensions.width = Math.max(30, Math.min(95, startDimensions.width + deltaWidthPercent));
+        newWidth = Math.max(400, Math.min(window.innerWidth * 0.95, startWidth + deltaX));
       }
       if (direction.includes('left')) {
-        const newWidth = Math.max(30, Math.min(95, startDimensions.width - deltaWidthPercent));
-        const widthChange = newWidth - startDimensions.width;
-        newDimensions.width = newWidth;
-        newDimensions.left = Math.max(0, Math.min(65, startDimensions.left - widthChange));
+        newWidth = Math.max(400, Math.min(window.innerWidth * 0.95, startWidth - deltaX));
       }
       if (direction.includes('bottom')) {
-        newDimensions.height = Math.max(30, Math.min(95, startDimensions.height + deltaHeightPercent));
+        newHeight = Math.max(300, Math.min(window.innerHeight - 160, startHeight + deltaY));
       }
       if (direction.includes('top')) {
-        const newHeight = Math.max(30, Math.min(95, startDimensions.height - deltaHeightPercent));
-        const heightChange = newHeight - startDimensions.height;
-        newDimensions.height = newHeight;
-        newDimensions.top = Math.max(0, Math.min(65, startDimensions.top - heightChange));
+        newHeight = Math.max(300, Math.min(window.innerHeight - 160, startHeight - deltaY));
       }
-      
-      setModalDimensions(newDimensions);
+
+      if (modalRef.current) {
+        modalRef.current.style.width = `${newWidth}px`;
+        modalRef.current.style.height = `${newHeight}px`;
+      }
     };
 
     const handleMouseUp = () => {
@@ -103,17 +120,18 @@ const TaskModeModal = ({
   };
 
   // Horizontal divider resize
-  const startHorizontalDividerResize = (e) => {
+  const startHorizontalDividerResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     const startY = e.clientY;
-    const modalRect = modalRef.current.getBoundingClientRect();
+    const modalRect = modalRef.current?.getBoundingClientRect();
+    if (!modalRect) return;
     const startPosition = dividerPosition;
 
-    const handleMouseMove = (moveEvent) => {
+    const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
-      const modalHeight = modalRect.height - 60;
+      const modalHeight = modalRect.height - 60; // Account for header height
       const deltaPercent = (deltaY / modalHeight) * 100;
       const newPosition = Math.max(25, Math.min(75, startPosition + deltaPercent));
       setDividerPosition(newPosition);
@@ -133,15 +151,16 @@ const TaskModeModal = ({
   };
 
   // Vertical divider resize
-  const startVerticalDividerResize = (e) => {
+  const startVerticalDividerResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     const startX = e.clientX;
-    const modalRect = modalRef.current.getBoundingClientRect();
+    const modalRect = modalRef.current?.getBoundingClientRect();
+    if (!modalRect) return;
     const startWidth = chatWidth;
 
-    const handleMouseMove = (moveEvent) => {
+    const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaX = moveEvent.clientX - startX;
       const deltaPercent = (deltaX / modalRect.width) * 100;
       const newWidth = Math.max(25, Math.min(75, startWidth + deltaPercent));
@@ -164,16 +183,18 @@ const TaskModeModal = ({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       ref={modalRef}
-      className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 flex flex-col overflow-hidden z-50"
+      className="fixed bg-white rounded-lg shadow-2xl border border-gray-300 flex flex-col z-50"
       style={{
-        top: `${modalDimensions.top}vh`,
-        left: `${modalDimensions.left}vw`,
-        width: `${modalDimensions.width}vw`,
-        height: `${modalDimensions.height}vh`,
+        top: '50px',
+        left: '50px',
+        width: '1200px',
+        height: '800px',
         minWidth: '400px',
-        minHeight: '300px'
+        minHeight: '300px',
+        maxWidth: '95vw',
+        maxHeight: '95vh'
       }}
     >
       {/* EXTERNAL RESIZE HANDLES */}
@@ -235,8 +256,27 @@ const TaskModeModal = ({
       </div>
 
       {/* HEADER */}
-      <div className="bg-gray-50 border-b border-gray-200 px-6 py-6 flex justify-between items-center" style={{ flexShrink: 0 }}>
-        <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
+      <div className="bg-gray-50 border-b border-gray-200 px-6 py-4 flex justify-between items-center flex-shrink-0">
+        <div className="flex items-center space-x-3">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
+            <p className="text-sm text-gray-600">Demo Progress: 1 of 6</p>
+          </div>
+          <button
+            onClick={toggleStatsVisibility}
+            className="flex items-center space-x-2 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border border-blue-200 rounded-md transition-all duration-200 shadow-sm"
+            title={isStatsVisible ? "Hide stats section" : "Show stats section"}
+          >
+            {isStatsVisible ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+            <span className="text-xs font-medium">
+              {isStatsVisible ? 'Hide Stats' : 'Show Stats'}
+            </span>
+          </button>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="text-right">
             <h2 className="text-lg font-semibold text-gray-800">{config.customer.name}</h2>
@@ -257,10 +297,16 @@ const TaskModeModal = ({
 
       {/* DATA AREA */}
       <div
-        className="bg-gray-50 p-4 overflow-hidden border-b border-gray-200"
-        style={{ height: `${dividerPosition}%` }}
+        className={`bg-gray-50 border-b border-gray-200 flex-shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
+          isStatsVisible ? 'opacity-100' : 'opacity-0 max-h-0'
+        }`}
+        style={{ 
+          maxHeight: isStatsVisible ? '250px' : '0px',
+          minHeight: isStatsVisible ? '150px' : '0px',
+          padding: isStatsVisible ? '1rem' : '0rem'
+        }}
       >
-        <div className="h-full flex space-x-4">
+        <div className="flex space-x-4">
           {/* Left Side - Customer Overview */}
           <CustomerOverview config={config.customerOverview} />
 
@@ -269,26 +315,28 @@ const TaskModeModal = ({
         </div>
       </div>
 
-      {/* HORIZONTAL DIVIDER */}
-      <div 
-        className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300 transition-colors"
-        style={{ height: '6px', flexShrink: 0 }}
-        onMouseDown={startHorizontalDividerResize}
-      >
-        <div className="flex flex-col space-y-px">
-          <div className="w-8 h-px bg-gray-500"></div>
-          <div className="w-8 h-px bg-gray-500"></div>
+      {/* HORIZONTAL DIVIDER - Only visible when stats are shown */}
+      {isStatsVisible && (
+        <div
+          className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300 transition-all duration-500 ease-in-out flex-shrink-0"
+          style={{ height: '6px' }}
+          onMouseDown={startHorizontalDividerResize}
+        >
+          <div className="flex flex-col space-y-px">
+            <div className="w-8 h-px bg-gray-500"></div>
+            <div className="w-8 h-px bg-gray-500"></div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* CHAT AND ARTIFACTS AREA */}
       <div
-        className="flex bg-white overflow-hidden"
-        style={{ height: `${100 - dividerPosition}%` }}
+        className="flex bg-white flex-1 overflow-hidden"
+        style={{ minHeight: 0 }}
       >
         {/* CHAT CONTAINER */}
         <div
-          className="flex flex-col overflow-hidden"
+          className="flex flex-col h-full overflow-hidden"
           style={{
             width: isSplitMode ? `${chatWidth}%` : '100%',
             borderRight: isSplitMode ? '1px solid #e5e7eb' : 'none'
@@ -298,8 +346,8 @@ const TaskModeModal = ({
             config={config.chat}
             isSplitMode={isSplitMode}
             onToggleSplitMode={toggleSplitMode}
-            startingWith={starting_with}
-            className="flex-1"
+            startingWith={starting_with as "ai" | "user"}
+            className="flex-1 overflow-hidden"
           />
         </div>
 
@@ -319,11 +367,11 @@ const TaskModeModal = ({
 
         {/* ARTIFACTS CONTAINER - Only in split mode */}
         {isSplitMode && (
-          <div style={{ width: `${100 - chatWidth}%` }}>
+          <div className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
             <ArtifactsPanel
               config={config.artifacts}
               workflowConfigName={workflowConfigName}
-              className="h-full"
+              className="h-full overflow-hidden"
             />
           </div>
         )}
@@ -424,7 +472,7 @@ const Demo = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         artifact_visible={true}
-        conversationSeed={exampleConversationSeed}
+        conversationSeed={exampleConversationSeed as any[]}
         starting_with="ai"
         workflowConfig={defaultWorkflowConfig}
       />

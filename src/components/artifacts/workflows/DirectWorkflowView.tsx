@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
 import ChatInterface from './components/ChatInterface';
@@ -24,6 +24,17 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
   // Layout states
   const [dividerPosition, setDividerPosition] = useState(50);
   const [chatWidth, setChatWidth] = useState(50);
+  const [isStatsVisible, setIsStatsVisible] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const toggleStatsVisibility = () => {
+    setIsTransitioning(true);
+    setIsStatsVisible(!isStatsVisible);
+    // Remove transition class after animation completes
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, 500);
+  };
 
   // Horizontal divider resize
   const startHorizontalDividerResize = (e: React.MouseEvent) => {
@@ -86,23 +97,42 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-white">
       {/* HEADER */}
-      <div className="bg-gray-50 border-b border-gray-200 px-6 py-6 flex justify-between items-center" style={{ flexShrink: 0 }}>
-        <div>
-          <h2 className="text-lg font-semibold text-gray-800">Task Mode</h2>
+      <div className="bg-gray-50 border-b border-gray-200 px-6 flex justify-between items-start" style={{ flexShrink: 0, height: '80px', paddingTop: '16px', paddingBottom: '16px' }}>
+        <div className="flex flex-col justify-start">
+          <h2 className="text-lg font-semibold text-gray-800 leading-tight">Task Mode</h2>
           {groupProgress && (
-            <p className="text-sm text-gray-600">Demo Progress: {groupProgress}</p>
+            <div className="relative">
+              <p className="text-sm text-gray-600 leading-tight" style={{ lineHeight: '1.2' }}>Demo Progress: {groupProgress}</p>
+              <button
+                onClick={toggleStatsVisibility}
+                className="absolute -right-6 top-0 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-all duration-200"
+                title={isStatsVisible ? "Hide stats section" : "Show stats section"}
+              >
+                <ChevronDown 
+                  className="w-4 h-4 transition-transform duration-200" 
+                  style={{ transform: isStatsVisible ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                />
+              </button>
+            </div>
           )}
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-right">
-            <h2 className="text-lg font-semibold text-gray-800">{config.customer.name}</h2>
+        <div className="flex items-start space-x-4">
+          <div className="text-right flex flex-col justify-start">
+            <h2 className="text-lg font-semibold text-gray-800 leading-tight">{config.customer.name}</h2>
             {(onNextCustomer || config.customer.nextCustomer) && (
               <button
                 onClick={onNextCustomer || (() => {})}
-                className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
+                className="text-xs text-blue-500 hover:text-blue-600 transition-colors leading-tight"
+                style={{ lineHeight: '1.2' }}
               >
-                {onNextCustomer ? 'Next Customer' : `Next Customer - ${config.customer.nextCustomer}`}
+                Next Customer - {config.customer.nextCustomer || 'Next'}
               </button>
+            )}
+            {/* Renewal Stage - Only visible when stats are collapsed */}
+            {!isStatsVisible && (
+              <span className="text-xs text-gray-600 leading-tight" style={{ fontSize: '0.9rem', lineHeight: '1.2' }}>
+                Renewal Stage: Price Increase
+              </span>
             )}
           </div>
           {onClose && (
@@ -119,8 +149,15 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
 
       {/* DATA AREA - Top portion */}
       <div
-        className="bg-gray-50 p-4 overflow-hidden border-b border-gray-200"
-        style={{ height: `${dividerPosition}%` }}
+        className={`bg-gray-50 overflow-hidden border-b border-gray-200 ${
+          isTransitioning ? 'transition-all duration-500 ease-in-out' : ''
+        } ${
+          isStatsVisible ? 'opacity-100' : 'opacity-0 max-h-0'
+        }`}
+        style={{ 
+          height: isStatsVisible ? `${dividerPosition}%` : '0px',
+          padding: isStatsVisible ? '1rem' : '0rem'
+        }}
       >
         <div className="h-full flex space-x-4">
           {/* Left Side - Customer Overview */}
@@ -131,22 +168,24 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
         </div>
       </div>
 
-      {/* HORIZONTAL DIVIDER */}
-      <div
-        className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300 transition-colors"
-        style={{ height: '6px', flexShrink: 0 }}
-        onMouseDown={startHorizontalDividerResize}
-      >
-        <div className="flex flex-col space-y-px">
-          <div className="w-8 h-px bg-gray-500"></div>
-          <div className="w-8 h-px bg-gray-500"></div>
+      {/* HORIZONTAL DIVIDER - Only visible when stats are shown */}
+      {isStatsVisible && (
+        <div
+          className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300"
+          style={{ height: '6px', flexShrink: 0 }}
+          onMouseDown={startHorizontalDividerResize}
+        >
+          <div className="flex flex-col space-y-px">
+            <div className="w-8 h-px bg-gray-500"></div>
+            <div className="w-8 h-px bg-gray-500"></div>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* CHAT AND ARTIFACTS AREA - Bottom 50% */}
+      {/* CHAT AND ARTIFACTS AREA - Bottom portion */}
       <div
-        className="flex bg-white overflow-hidden"
-        style={{ height: `${100 - dividerPosition}%` }}
+        className="flex bg-white overflow-hidden flex-1"
+        style={{ minHeight: 0 }}
       >
         {/* CHAT CONTAINER */}
         <div
@@ -178,11 +217,11 @@ const DirectWorkflowView: React.FC<DirectWorkflowViewProps> = ({
         </div>
 
         {/* ARTIFACTS CONTAINER */}
-        <div style={{ width: `${100 - chatWidth}%` }}>
+        <div className="flex-1 overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
           <ArtifactsPanel
             config={config.artifacts}
             workflowConfigName={configName}
-            className="h-full"
+            className="h-full overflow-hidden"
           />
         </div>
       </div>

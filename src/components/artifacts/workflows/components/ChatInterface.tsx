@@ -167,8 +167,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const toggleButtonMode = () => setShowButtons(!showButtons);
 
   return (
-    <div className={`flex flex-col overflow-hidden ${className}`}>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className={`h-full flex flex-col ${className}`}>
+      <div
+        className="flex-1 p-4 space-y-4 overflow-y-auto"
+        style={{ minHeight: 0 }}
+      >
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 flex items-center justify-center h-full">
             <div className="text-center">
@@ -230,7 +233,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
       </div>
 
-      <div className="border-t border-gray-200 p-4 bg-white" style={{ flexShrink: 0 }}>
+      <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
         <div className="flex items-end space-x-2">
           {config.features.attachments && (
             <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
