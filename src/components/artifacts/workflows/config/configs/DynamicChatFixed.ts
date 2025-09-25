@@ -122,7 +122,7 @@ export const dynamicChatAI: WorkflowConfig = {
       branches: {
         'expansion': {
           response: "Excellent choice! Based on their growth trajectory, I recommend a multi-year expansion deal. Let me prepare an analysis for you.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'license-analysis',
           buttons: [
             { label: 'Draft email', value: 'draft-email' },
@@ -137,7 +137,7 @@ export const dynamicChatAI: WorkflowConfig = {
         },
         'usage': {
           response: "Let me analyze their usage patterns for you. They're currently at 85% of their license capacity with consistent growth.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'usage-analysis'
         },
         'renewal': {
@@ -158,12 +158,12 @@ export const dynamicChatAI: WorkflowConfig = {
         },
         'email-flow': {
           response: "I've drafted an expansion proposal email for Michael Roberts.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'email-draft'
         },
         'early-renewal': {
           response: "Great strategy! I'll create an early renewal offer with a 15% discount.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'renewal-offer'
         }
       },
@@ -350,12 +350,12 @@ export const dynamicChatUser: WorkflowConfig = {
         },
         'pricing-display': {
           response: "I'll prepare a detailed pricing analysis for UserFirst Inc.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'pricing-analysis'
         },
         'usage-analysis': {
           response: "Analyzing UserFirst Inc.'s usage patterns now. They're at 80% capacity with consistent growth.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'usage-report'
         },
         'escalation-details': {
@@ -371,7 +371,7 @@ export const dynamicChatUser: WorkflowConfig = {
         },
         'response-draft': {
           response: "I've prepared a response addressing the API rate limit concerns with proposed solutions.",
-          actions: ['launch-artifact'],
+          actions: ['showArtifact'],
           artifactId: 'escalation-response'
         }
       },

@@ -36,7 +36,7 @@
  * ```
  */
 
-import React, { useState, useRef, useImperativeHandle, forwardRef } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
@@ -57,6 +57,8 @@ interface TaskModeModalProps {
   onNextCustomer?: () => void;
   groupProgress?: string;
   inline?: boolean; // New prop to render inline instead of as modal
+  onShowWorkingMessage?: () => void; // Callback to show "Working On It" message
+  onHideWorkingMessage?: () => void; // Callback to hide "Working On It" message
 }
 
 // Interface for exposed methods
@@ -77,7 +79,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   workflowConfigName = "default",
   onNextCustomer,
   groupProgress,
-  inline = false
+  inline = false,
+  onShowWorkingMessage,
+  onHideWorkingMessage
 }, ref) => {
   // Use configuration with overrides
   const config: WorkflowConfig = {
@@ -92,6 +96,8 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     }
   };
 
+  // Initialize with config defaults
+
   // Modal dimensions and position
   const [modalDimensions, setModalDimensions] = useState(config.layout.modalDimensions);
 
@@ -103,6 +109,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
 
   const modalRef = useRef<HTMLDivElement>(null);
+  const chatInterfaceRef = useRef<{
+    showWorkingMessage: () => void;
+    hideWorkingMessage: () => void;
+    getMessages?: () => any[];
+    getCurrentInput?: () => string;
+    restoreState?: (messages: any[], inputValue: string) => void;
+  }>(null);
+
+  // Simple close handler
+  const handleClose = () => {
+    onClose();
+  };
 
   // New artifact control methods
   const openArtifact = () => {
@@ -131,8 +149,41 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   };
 
   const handleArtifactAction = (action: ConversationAction) => {
+    console.log('TaskModeAdvanced: Received action:', action);
+    
     if (action.type === 'launch-artifact' && action.payload?.artifactId) {
+      console.log('TaskModeAdvanced: Processing launch-artifact for:', action.payload.artifactId);
       setVisibleArtifacts(prev => new Set(prev).add(action.payload.artifactId));
+    } else if (action.type === 'showArtifact') {
+      console.log('TaskModeAdvanced: Processing showArtifact for:', action.payload?.artifactId);
+      
+      // Show loading animation for 3 seconds
+      if (chatInterfaceRef.current) {
+        chatInterfaceRef.current.showWorkingMessage();
+        
+        // Hide loading animation after 3 seconds
+        setTimeout(() => {
+          if (chatInterfaceRef.current) {
+            chatInterfaceRef.current.hideWorkingMessage();
+          }
+        }, 3000);
+      }
+    } else if (action.type === 'removeArtifact') {
+      console.log('TaskModeAdvanced: Processing removeArtifact for:', action.payload?.artifactId);
+      // Remove the artifact if specified
+      if (action.payload?.artifactId) {
+        setVisibleArtifacts(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(action.payload.artifactId);
+          return newSet;
+        });
+        // If no artifacts are visible, close the artifact panel
+        if (visibleArtifacts.size <= 1) {
+          closeArtifact();
+        }
+      }
+    } else {
+      console.log('TaskModeAdvanced: Unknown action type:', action.type);
     }
   };
 
@@ -262,7 +313,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  if (!isOpen) return null;
+  // Always render to preserve state - visibility controlled by parent
 
   // Render inline or as modal based on inline prop
   const containerClasses = inline 
@@ -387,7 +438,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           </div>
           <div className="flex items-center space-x-2">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-500 hover:text-gray-700 text-xl font-bold ml-4"
             >
               ×
@@ -450,6 +501,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
             startingWith={starting_with as "ai" | "user"}
             className="flex-1 overflow-hidden"
             onArtifactAction={handleArtifactAction}
+            workingMessageRef={chatInterfaceRef}
           />
         </div>
 

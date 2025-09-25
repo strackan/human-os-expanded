@@ -420,21 +420,21 @@ const CSMDashboard: React.FC = () => {
 
     if (finalTemplateGroupId) {
       setDefaultLaunchConfig({ type: 'group', id: finalTemplateGroupId });
-      
+
       // Clear sessionStorage after successful use
       if (sessionParams) {
         sessionStorage.removeItem('auth_redirect_params');
       }
     } else if (finalTemplateId) {
       setDefaultLaunchConfig({ type: 'template', id: finalTemplateId });
-      
+
       // Clear sessionStorage after successful use
       if (sessionParams) {
         sessionStorage.removeItem('auth_redirect_params');
       }
     } else if (finalTemplate) {
       setDefaultLaunchConfig({ type: 'template', id: finalTemplate });
-      
+
       // Clear sessionStorage after successful use
       if (sessionParams) {
         sessionStorage.removeItem('auth_redirect_params');
@@ -445,72 +445,68 @@ const CSMDashboard: React.FC = () => {
   const handleLaunchTaskMode = (taskId?: number) => {
     setLaunchingTask(taskId || 0);
 
-    let configToUse: { type: 'group' | 'template'; id: string; groupIndex?: number };
-    
-    // Priority order: templateGroupId → templateId → customer name matching → fallback
-    
-    if (taskId) {
-      // Launch specific task - check for task-specific overrides first
-      const task = dashboardData.upcomingTasks.find(t => t.id === taskId);
-      
-      // 1. Check for templateGroupId override (highest priority)
-      if (defaultLaunchConfig?.type === 'group') {
-        configToUse = { 
-          type: 'group', 
-          id: defaultLaunchConfig.id,
-          groupIndex: 0
-        };
-      }
-      // 2. Check for templateId override (second priority)
-      else if (defaultLaunchConfig?.type === 'template') {
-        configToUse = { 
-          type: 'template', 
-          id: defaultLaunchConfig.id
-        };
-      }
-      // 3. Customer name matching (third priority)
-      else if (task) {
-        let groupId = 'healthcare-demo'; // default fallback
-        if (task.customer.includes('Acme') || task.customer.includes('Intrasoft')) {
-          groupId = 'enterprise-demo';
+    // Only set modalConfig if it's not already set (first time)
+    if (!modalConfig) {
+      let configToUse: { type: 'group' | 'template'; id: string; groupIndex?: number };
+
+      if (taskId) {
+        // Launch specific task - check for task-specific overrides first
+        const task = dashboardData.upcomingTasks.find(t => t.id === taskId);
+
+        if (defaultLaunchConfig?.type === 'group') {
+          configToUse = {
+            type: 'group',
+            id: defaultLaunchConfig.id,
+            groupIndex: 0
+          };
         }
-        configToUse = { type: 'group', id: groupId, groupIndex: 0 };
+        else if (defaultLaunchConfig?.type === 'template') {
+          configToUse = {
+            type: 'template',
+            id: defaultLaunchConfig.id
+          };
+        }
+        else if (task) {
+          let groupId = 'healthcare-demo';
+          if (task.customer.includes('Acme') || task.customer.includes('Intrasoft')) {
+            groupId = 'enterprise-demo';
+          }
+          configToUse = { type: 'group', id: groupId, groupIndex: 0 };
+        }
+        else {
+          configToUse = { type: 'group', id: 'healthcare-demo', groupIndex: 0 };
+        }
+      } else {
+        // Launch general task mode (no specific task)
+        if (defaultLaunchConfig?.type === 'group') {
+          configToUse = {
+            type: 'group',
+            id: defaultLaunchConfig.id,
+            groupIndex: 0
+          };
+        }
+        else if (defaultLaunchConfig?.type === 'template') {
+          configToUse = {
+            type: 'template',
+            id: defaultLaunchConfig.id
+          };
+        }
+        else {
+          configToUse = { type: 'group', id: 'healthcare-demo', groupIndex: 0 };
+        }
       }
-      // 4. Final fallback
-      else {
-        configToUse = { type: 'group', id: 'healthcare-demo', groupIndex: 0 };
-      }
-    } else {
-      // Launch general task mode (no specific task)
-      // 1. Check for templateGroupId override (highest priority)
-      if (defaultLaunchConfig?.type === 'group') {
-        configToUse = { 
-          type: 'group', 
-          id: defaultLaunchConfig.id,
-          groupIndex: 0
-        };
-      }
-      // 2. Check for templateId override (second priority)
-      else if (defaultLaunchConfig?.type === 'template') {
-        configToUse = { 
-          type: 'template', 
-          id: defaultLaunchConfig.id
-        };
-      }
-      // 3. Final fallback
-      else {
-        configToUse = { type: 'group', id: 'healthcare-demo', groupIndex: 0 };
-      }
+
+      setModalConfig(configToUse);
     }
 
-    setModalConfig(configToUse);
+    // Just show the modal
     setShowTaskModal(true);
     setTimeout(() => setLaunchingTask(null), 500);
   };
 
   const handleCloseModal = () => {
     setShowTaskModal(false);
-    setModalConfig(null);
+    // Keep modalConfig to preserve component state - don't set to null
   };
 
   const handleContextualHelp = (update: any) => {
@@ -602,13 +598,16 @@ const CSMDashboard: React.FC = () => {
         onGoToReports={handleGoToReports}
       />
 
-      {/* Task Mode Modal Overlay */}
-      {showTaskModal && modalConfig && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center"
-          style={{ padding: '40px' }}
-          onClick={handleCloseModal}
-        >
+      {/* Task Mode Modal Overlay - Always rendered, controlled by opacity */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center transition-opacity duration-200"
+        style={{
+          padding: '40px',
+          opacity: showTaskModal ? 1 : 0,
+          pointerEvents: showTaskModal ? 'auto' : 'none'
+        }}
+        onClick={handleCloseModal}
+      >
           <div
             className="bg-white rounded-lg shadow-2xl mx-auto overflow-hidden"
             style={{
@@ -619,7 +618,7 @@ const CSMDashboard: React.FC = () => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {modalConfig.type === 'group' ? (
+            {(modalConfig?.type === 'group') ? (
               <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
                 <div>
                   <p>Group mode not yet implemented in consolidated system</p>
@@ -629,18 +628,17 @@ const CSMDashboard: React.FC = () => {
               </div>
             ) : (
               <TaskModeModal
-                isOpen={true}
+                isOpen={showTaskModal}
                 onClose={handleCloseModal}
-                workflowConfig={configMap[modalConfig.id]}
-                workflowConfigName={modalConfig.id}
+                workflowConfig={configMap[modalConfig?.id || defaultLaunchConfig?.id || 'dynamic-ai']}
+                workflowConfigName={modalConfig?.id || defaultLaunchConfig?.id || 'dynamic-ai'}
                 showArtifact={false} // Start without artifacts visible
                 artifact_visible={true} // Artifacts available when opened
                 inline={true} // Use inline mode but within the modal container
               />
             )}
-          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

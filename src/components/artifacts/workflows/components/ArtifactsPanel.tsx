@@ -25,7 +25,7 @@
  * ```
  */
 
-import React, { useState, useImperativeHandle } from 'react';
+import React, { useState, useImperativeHandle, useEffect } from 'react';
 import { ArtifactsConfig } from '../config/WorkflowConfig';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 
@@ -46,6 +46,29 @@ interface SideMenuState {
   isVisible: boolean;
   isCollapsed: boolean;
 }
+
+// Typing animation component for artifact content
+const TypingText = ({ text, speed = 10 }: { text: string; speed?: number }) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeout);
+    }
+  }, [currentIndex, text, speed]);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setCurrentIndex(0);
+  }, [text]);
+
+  return <span>{displayedText}</span>;
+};
 
 const LicenseAnalysisSection = ({ content }: { content: any }) => (
   <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -79,52 +102,58 @@ const LicenseAnalysisSection = ({ content }: { content: any }) => (
   </div>
 );
 
-const EmailDraftSection = ({ content }: { content: any }) => (
-  <div className="bg-white rounded-lg border border-gray-200 p-6">
-    <div className="flex items-center justify-between mb-6">
-      <h3 className="font-semibold text-gray-800 text-lg">Draft Email</h3>
-      <div className="flex space-x-2">
-        <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
-          Edit
-        </button>
-        <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
-          Send
-        </button>
-      </div>
-    </div>
+const EmailDraftSection = ({ content }: { content: any }) => {
+  const [showContent, setShowContent] = useState(false);
 
-    <div className="space-y-4 text-sm">
-      <div className="grid grid-cols-3 gap-4 text-xs text-gray-500 border-b border-gray-100 pb-4">
-        <div>
-          <span className="block font-medium">To:</span>
-          <span>{content.to}</span>
-        </div>
-        <div>
-          <span className="block font-medium">Subject:</span>
-          <span>{content.subject}</span>
-        </div>
-        <div>
-          <span className="block font-medium">Priority:</span>
-          <span>{content.priority}</span>
+  useEffect(() => {
+    // Show content with typing animation after a short delay
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="font-semibold text-gray-800 text-lg">Draft Email</h3>
+        <div className="flex space-x-2">
+          <button className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors">
+            Edit
+          </button>
+          <button className="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors">
+            Send
+          </button>
         </div>
       </div>
 
-      <div className="space-y-4 leading-relaxed">
-        {content.body.map((paragraph: string, i: number) => {
-          if (paragraph.includes('\n')) {
-            const [text, signature] = paragraph.split('\n');
-            return (
-              <div key={i} className="mt-6 pt-4 border-t border-gray-100">
-                <p className="text-gray-600">{text}<br/>{signature}</p>
-              </div>
-            );
-          }
-          return <p key={i}>{paragraph}</p>;
-        })}
+      <div className="space-y-4 text-sm">
+        <div className="grid grid-cols-3 gap-4 text-xs text-gray-500 border-b border-gray-100 pb-4">
+          <div>
+            <span className="block font-medium">To:</span>
+            <span>{showContent ? <TypingText text={content.to} speed={13} /> : ''}</span>
+          </div>
+          <div>
+            <span className="block font-medium">Subject:</span>
+            <span>{showContent ? <TypingText text={content.subject} speed={13} /> : ''}</span>
+          </div>
+          <div>
+            <span className="block font-medium">Priority:</span>
+            <span>{showContent ? <TypingText text={content.priority || 'Normal'} speed={13} /> : ''}</span>
+          </div>
+        </div>
+
+        <div className="space-y-4 leading-relaxed">
+          {showContent && content.body && (
+            <div className="text-gray-600">
+              <TypingText text={content.body} speed={10} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const HtmlSection = ({ section }: { section: any }) => (
   <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

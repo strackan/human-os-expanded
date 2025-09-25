@@ -165,9 +165,9 @@ export const dynamicChatExampleConfig: WorkflowConfig = {
           response: "No problem! I'll check back in a week. Is there anything else you'd like to work on today?"
         },
         'email-flow': {
-          response: "I've drafted an expansion proposal email for Michael Roberts. The draft is now available in the artifacts panel.",
-          actions: ['launch-artifact'],
-          artifactId: 'email-draft',
+          response: "I've drafted an expansion email for Michael Roberts.",
+          actions: ['showArtifact'],
+          artifactId: 'exec-email',
           defaultMessage: "Great! I'll prepare that email for you."
         },
         'meeting-flow': {
@@ -215,7 +215,35 @@ export const dynamicChatExampleConfig: WorkflowConfig = {
     }
   },
   artifacts: {
-    sections: []
+    sections: [
+      {
+        id: 'exec-email',
+        title: 'Executive Email Draft',
+        type: 'email-draft',
+        visible: true,
+        content: {
+          to: 'michael.roberts@dynamiccorp.com',
+          subject: 'Expansion Opportunity - Dynamic Corp',
+          body: `Hi Michael,
+
+I hope this email finds you well. I wanted to reach out regarding your upcoming renewal and the exciting growth we've observed in your usage of our platform.
+
+Based on our analysis, Dynamic Corp has shown remarkable growth with a 65% increase in usage year-to-date. This growth trajectory suggests you're getting tremendous value from our solution, and we'd love to explore how we can support your continued expansion.
+
+Given your current usage patterns and the approaching renewal date, I'd like to propose a few options:
+
+1. **Multi-year expansion deal** - Lock in current pricing with volume discounts
+2. **Additional user licenses** - Scale with your team growth
+3. **Premium features** - Unlock advanced capabilities for your growing needs
+
+Would you be available for a brief call next week to discuss these opportunities? I'm confident we can structure something that supports your growth while providing excellent value.
+
+Best regards,
+Justin Strackany
+Customer Success Manager`
+        }
+      }
+    ]
   }
 };
 

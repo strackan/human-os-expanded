@@ -54,7 +54,7 @@ export interface DynamicChatButton {
 export interface DynamicChatBranch {
   response: string;
   defaultMessage?: string;
-  actions?: Array<'launch-artifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat'>;
   artifactId?: string;
   buttons?: DynamicChatButton[];
   nextBranches?: {

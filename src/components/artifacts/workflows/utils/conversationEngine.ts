@@ -11,7 +11,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat';
   payload?: any;
 }
 
@@ -88,6 +88,24 @@ export class ConversationEngine {
             payload: { artifactId: branch.artifactId }
           });
           this.state.artifacts.add(branch.artifactId);
+        } else if (action === 'showArtifact') {
+          actions.push({
+            type: 'showArtifact',
+            payload: { artifactId: branch.artifactId }
+          });
+          // Also add the artifact if specified
+          if (branch.artifactId) {
+            this.state.artifacts.add(branch.artifactId);
+          }
+        } else if (action === 'removeArtifact') {
+          actions.push({
+            type: 'removeArtifact',
+            payload: { artifactId: branch.artifactId }
+          });
+          // Remove the artifact if specified
+          if (branch.artifactId) {
+            this.state.artifacts.delete(branch.artifactId);
+          }
         } else {
           actions.push({ type: action });
         }

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useImperativeHandle } from 'react';
 import { Send, Paperclip, Mic, Square, MoreHorizontal, Brush, Edit, Zap } from 'lucide-react';
 import { ChatConfig } from '../config/WorkflowConfig';
 import { ConversationEngine, ConversationAction } from '../utils/conversationEngine';
@@ -25,23 +25,28 @@ interface ChatInterfaceProps {
   className?: string;
   startingWith?: 'ai' | 'user';
   onArtifactAction?: (action: ConversationAction) => void;
+  workingMessageRef?: React.RefObject<{
+    showWorkingMessage: () => void;
+    hideWorkingMessage: () => void;
+  } | null>;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({
+const ChatInterface = React.forwardRef<{
+  getMessages: () => Message[];
+  getCurrentInput: () => string;
+  restoreState: (messages: Message[], inputValue: string) => void;
+  showWorkingMessage: () => void;
+  hideWorkingMessage: () => void;
+}, ChatInterfaceProps>(({
   config,
   isSplitMode,
   onToggleSplitMode,
   className = '',
   startingWith = 'ai',
-  onArtifactAction
-}) => {
-  const [inputValue, setInputValue] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [showButtons, setShowButtons] = useState(false);
-  const [conversationEngine, setConversationEngine] = useState<ConversationEngine | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
+  onArtifactAction,
+  workingMessageRef
+}, ref) => {
+  // Generate initial messages from config (no auto-save - state preserved by keeping component mounted)
   const generateInitialMessages = (): Message[] => {
     if (config.mode === 'dynamic' && config.dynamicFlow) {
       return [];
@@ -68,7 +73,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     });
   };
 
+  // Initialize state early so it's available for useImperativeHandle
   const [messages, setMessages] = useState<Message[]>(generateInitialMessages());
+  const [inputValue, setInputValue] = useState('');
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
+  const [conversationEngine, setConversationEngine] = useState<ConversationEngine | null>(null);
+  const [isWorkingOnIt, setIsWorkingOnIt] = useState(false);
+  const [typingMessages, setTypingMessages] = useState<Set<number>>(new Set());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Working message control functions
+  const showWorkingMessage = () => {
+    setIsWorkingOnIt(true);
+  };
+
+  const hideWorkingMessage = () => {
+    setIsWorkingOnIt(false);
+  };
+
+  // Expose functions to parent components
+  useImperativeHandle(ref, () => ({
+    getMessages: () => messages,
+    getCurrentInput: () => inputValue,
+    restoreState: (newMessages: Message[], newInputValue: string) => {
+      setMessages(newMessages);
+      setInputValue(newInputValue);
+    },
+    showWorkingMessage,
+    hideWorkingMessage
+  }), [messages, inputValue]);
+
+  // Also expose working message functions to workingMessageRef for backward compatibility
+  useImperativeHandle(workingMessageRef, () => ({
+    showWorkingMessage,
+    hideWorkingMessage
+  }), []);
 
   useEffect(() => {
     if (config.mode === 'dynamic' && config.dynamicFlow) {
@@ -130,6 +172,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (config.mode === 'dynamic' && conversationEngine) {
         setTimeout(() => {
           const response = conversationEngine.processUserInput(userInput);
+          
+          // Typing animation will be triggered automatically by the TypingAnimation component
+          
           setMessages(prev => [...prev, {
             id: Date.now() + 1,
             text: response.text,
@@ -138,6 +183,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             type: response.buttons ? 'buttons' : 'text',
             buttons: response.buttons
           }]);
+          
+          // Process any actions from the response
+          if (response.actions && onArtifactAction) {
+            console.log('ChatInterface: Processing actions from text input response:', response.actions);
+            response.actions.forEach(action => {
+              console.log('ChatInterface: Calling onArtifactAction with:', action);
+              onArtifactAction(action);
+            });
+          } else {
+            console.log('ChatInterface: No actions to process from text input or no onArtifactAction callback');
+          }
         }, 500);
       } else {
         setTimeout(() => {
@@ -170,6 +226,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (config.mode === 'dynamic' && conversationEngine) {
       setTimeout(() => {
         const response = conversationEngine.processUserInput(buttonValue);
+        
+        // Add the agent's response message
         setMessages(prev => [...prev, {
           id: Date.now() + 1,
           text: response.text,
@@ -178,6 +236,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           type: response.buttons ? 'buttons' : 'text',
           buttons: response.buttons
         }]);
+        
+        // Process any actions from the response
+        if (response.actions && onArtifactAction) {
+          console.log('ChatInterface: Processing actions from response:', response.actions);
+          response.actions.forEach(action => {
+            console.log('ChatInterface: Calling onArtifactAction with:', action);
+            onArtifactAction(action);
+          });
+        } else {
+          console.log('ChatInterface: No actions to process or no onArtifactAction callback');
+        }
       }, 500);
     } else {
       setTimeout(() => {
@@ -229,6 +298,46 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const toggleButtonMode = () => setShowButtons(!showButtons);
 
+  // Typing animation component
+  const TypingAnimation = ({ text, messageId, speed = 20 }: { text: string; messageId: number; speed?: number }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+      if (currentIndex < text.length) {
+        const timeout = setTimeout(() => {
+          setDisplayedText(prev => prev + text[currentIndex]);
+          setCurrentIndex(prev => prev + 1);
+        }, speed);
+        return () => clearTimeout(timeout);
+      } else {
+        // Remove this message from typing set when done
+        setTypingMessages(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(messageId);
+          return newSet;
+        });
+      }
+    }, [currentIndex, text, speed, messageId]);
+
+    useEffect(() => {
+      setDisplayedText('');
+      setCurrentIndex(0);
+      // Add this message to typing set when starting
+      setTypingMessages(prev => new Set(prev).add(messageId));
+    }, [text, messageId]);
+
+    return <span>{displayedText}</span>;
+  };
+
+  // Simple twirling asterisk loading animation
+  const LoadingAnimation = () => (
+    <div className="flex items-center space-x-2">
+      <span>Working On It</span>
+      <span className="animate-spin text-lg">*</span>
+    </div>
+  );
+
   return (
     <div className={`h-full flex flex-col ${className}`}>
       <div
@@ -246,6 +355,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         ) : (
           <>
+            {/* Show loading state when working on artifact */}
+            {isWorkingOnIt && (
+              <div className="flex justify-center">
+                <div className="w-[80%] rounded-lg px-4 py-2 bg-gray-100 text-gray-800">
+                  <LoadingAnimation />
+                </div>
+              </div>
+            )}
+            
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -258,14 +376,39 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">{message.text}</p>
+                  <p className="whitespace-pre-wrap">
+                    {message.sender === 'ai' && typingMessages.has(message.id as number) ? (
+                      <TypingAnimation text={message.text} messageId={message.id as number} speed={15} />
+                    ) : (
+                      message.text
+                    )}
+                  </p>
 
                   {message.type === 'buttons' && message.buttons && (
                     <div className={`mt-3 ${message['button-pos'] === 'column' ? 'space-y-2' : 'flex gap-2 flex-wrap'}`}>
                       {message.buttons.map((button, index) => (
                         <button
                           key={index}
-                          onClick={() => handleButtonClick(button.value, button.label)}
+                          onClick={() => {
+                            console.log('Button clicked:', button.label, 'value:', button.value);
+                            
+                            // Working message is now handled by showArtifact action
+                            
+                            handleButtonClick(button.value, button.label);
+                            
+                            // Direct trigger for draft-email button
+                            if (button.value === 'draft-email' && onArtifactAction) {
+                              console.log('Direct trigger: showArtifact for exec-email');
+                              setTimeout(() => {
+                                onArtifactAction({
+                                  type: 'showArtifact',
+                                  payload: { artifactId: 'exec-email' }
+                                });
+                              }, 100);
+                            }
+                          }}
+                          data-action={button.value}
+                          data-label={button.label}
                           className={`text-center px-3 py-2 rounded transition-colors border ${
                             message['button-pos'] === 'column' ? 'block w-full text-left' : 'flex-1 min-w-0'
                           }`}
@@ -407,6 +550,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ChatInterface.displayName = 'ChatInterface';
 
 export default ChatInterface;
