@@ -28,6 +28,7 @@
 import React, { useState, useImperativeHandle, useEffect } from 'react';
 import { ArtifactsConfig } from '../config/WorkflowConfig';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import EmailComposer from './EmailComposer';
 
 interface ArtifactsPanelProps {
   config: ArtifactsConfig;
@@ -365,6 +366,15 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, className = '',
                   return <LicenseAnalysisSection key={section.id} content={section.content} />;
                 case 'email-draft':
                   return <EmailDraftSection key={section.id} content={section.content} />;
+                case 'email':
+                  return (
+                    <EmailComposer 
+                      key={section.id} 
+                      content={section.content} 
+                      editable={section.editable !== false} // Default to true for email type
+                      typingSpeed={8}
+                    />
+                  );
                 case 'html':
                   return <HtmlSection key={section.id} section={section} />;
                 case 'custom':

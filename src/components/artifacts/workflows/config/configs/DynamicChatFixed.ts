@@ -156,9 +156,32 @@ export const dynamicChatAI: WorkflowConfig = {
         },
         'email-flow': {
           response: "Working On It",
-          delay: 3000,
-          actions: ['showArtifact'],
-          artifactId: 'email-draft'
+          delay: 3000, // Delay to allow typing animation to complete
+          actions: ['showArtifact', 'nextChat'],
+          artifactId: 'email-draft',
+          nextBranches: {
+            'auto-followup': 'email-complete'
+          }
+        },
+        'email-complete': {
+          response: "Okay, I've drafted the email to Michael Roberts with a request to meet. Feel free to edit and send directly in the composer. After you process the email, I'll summarize everything we've done and next steps. Sound good?",
+          predelay: 4500,
+          buttons: [
+            { label: 'Yes', value: 'email-confirmation' },
+            { label: 'Something Else', value: 'alternative-options' }
+          ]
+        },
+        'email-confirmation': {
+          response: "Perfect! Once you've sent the email, I'll prepare a follow-up summary with our next steps and any additional recommendations for the Dynamic Corp account."
+        },
+        'alternative-options': {
+          response: "No problem! What would you like to focus on instead?",
+          buttons: [
+            { label: 'Review expansion options', value: 'expansion' },
+            { label: 'Analyze usage patterns', value: 'usage' },
+            { label: 'Prepare renewal offer', value: 'renewal' },
+            { label: 'Something else', value: 'help-flow' }
+          ]
         },
         'early-renewal': {
           response: "Great strategy! I'll create an early renewal offer with a 15% discount.",
@@ -171,7 +194,8 @@ export const dynamicChatAI: WorkflowConfig = {
         ".*renewal.*": "renewal",
         ".*expand.*|.*expansion.*": "expansion",
         ".*usage.*|.*analyze.*": "usage",
-        ".*email.*|.*draft.*": "email-flow"
+        ".*email.*|.*draft.*": "email-flow",
+        ".*auto-followup.*": "email-complete"
       }
     },
     features: {
@@ -198,20 +222,30 @@ export const dynamicChatAI: WorkflowConfig = {
       },
       {
         id: 'email-draft',
-        title: 'Draft Email',
-        type: 'email-draft',
+        title: 'Email Composer',
+        type: 'email',
         visible: false,
+        editable: true,
         content: {
-          to: 'Michael Roberts',
-          subject: 'Dynamic Corp - Expansion Opportunity Discussion',
-          priority: 'High',
-          body: [
-            'Hi Michael,',
-            'I hope you\'re doing well! I\'ve been reviewing Dynamic Corp\'s usage patterns and I\'m impressed by your 65% growth this year.',
-            'Given your expansion into APAC and recent funding, I\'d love to discuss how we can support your continued growth with a strategic renewal package.',
-            'Are you available for a brief call next week?',
-            'Best regards,\\nJustin'
-          ]
+          to: 'michael.roberts@dynamiccorp.com',
+          subject: 'Dynamic Corp - Expansion Opportunity & Strategic Renewal Discussion',
+          body: `Hi Michael,
+
+I hope this email finds you well! I've been reviewing Dynamic Corp's impressive performance metrics, and I'm excited about the 65% growth you've achieved this year. Your expansion into APAC and the recent Series C funding announcement clearly demonstrate Dynamic Corp's trajectory toward becoming a market leader.
+
+Given your current usage patterns and the approaching renewal date, I'd love to discuss how we can support your continued growth with a strategic renewal package that aligns with your expansion goals.
+
+I'm proposing a multi-year expansion deal that would:
+• Provide capacity for your anticipated growth
+• Include priority support for your APAC operations
+• Offer significant cost savings through our enterprise pricing
+
+Are you available for a brief call next week to explore how we can structure this to support Dynamic Corp's continued success?
+
+Best regards,
+Justin
+
+P.S. I've also prepared some usage analytics that I think you'll find valuable for your planning discussions.`
         }
       }
     ]
@@ -407,20 +441,36 @@ export const dynamicChatUser: WorkflowConfig = {
       },
       {
         id: 'escalation-response',
-        title: 'Escalation Response',
-        type: 'email-draft',
+        title: 'Email Composer',
+        type: 'email',
         visible: false,
+        editable: true,
         content: {
-          to: 'Emily Zhang',
-          subject: 'Re: API Rate Limit Issues - Solution Proposal',
-          priority: 'High',
-          body: [
-            'Hi Emily,',
-            'Thank you for reporting the API rate limit issues. I\'ve reviewed your usage patterns and identified the root cause.',
-            'I\'m proposing two immediate solutions:\\n1. Temporary rate limit increase while we optimize\\n2. Implementation of request batching to reduce API calls',
-            'I\'ll schedule a call with our technical team to implement these changes this week.',
-            'Best regards,\\nSupport Team'
-          ]
+          to: 'emily.zhang@userfirst.com',
+          subject: 'Re: API Rate Limit Issues - Solution Proposal & Implementation Plan',
+          body: `Hi Emily,
+
+Thank you for bringing the API rate limit issues to our attention. I've conducted a thorough review of UserFirst Inc.'s usage patterns and identified the root cause of the intermittent throttling during peak hours.
+
+I'm pleased to propose two immediate solutions:
+
+1. **Temporary Rate Limit Increase**: We'll implement a 40% increase in your current rate limits while we optimize your API usage patterns.
+
+2. **Request Batching Implementation**: Our technical team will work with yours to implement intelligent request batching, which should reduce your API calls by approximately 60% while maintaining functionality.
+
+I've scheduled a technical consultation with our API optimization team for this Thursday at 2 PM PST. This will include:
+• Detailed analysis of your current API usage patterns
+• Implementation timeline for the proposed solutions
+• Best practices for optimizing future API interactions
+
+I'm confident these changes will resolve the throttling issues and improve your overall API experience significantly.
+
+Please let me know if Thursday works for your team, or if you'd prefer an alternative time.
+
+Best regards,
+Technical Support Team
+
+P.S. I've attached a preliminary usage analysis that shows the specific patterns causing the rate limit triggers.`
         }
       }
     ]

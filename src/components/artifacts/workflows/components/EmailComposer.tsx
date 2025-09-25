@@ -1,0 +1,357 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Mail, Save, Send, Bold, Italic, Underline } from 'lucide-react';
+
+interface EmailContent {
+  to: string;
+  subject: string;
+  body: string;
+}
+
+interface EmailComposerProps {
+  content: EmailContent;
+  editable?: boolean;
+  typingSpeed?: number;
+  onContentChange?: (content: EmailContent) => void;
+}
+
+// Rich text editor toolbar component
+const RichTextToolbar = ({ 
+  onFormat, 
+  isVisible 
+}: { 
+  onFormat: (format: string) => void; 
+  isVisible: boolean;
+}) => {
+  if (!isVisible) return null;
+
+  return (
+    <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50">
+      <button
+        onClick={() => onFormat('bold')}
+        className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+        title="Bold"
+        type="button"
+      >
+        <Bold size={14} />
+      </button>
+      <button
+        onClick={() => onFormat('italic')}
+        className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+        title="Italic"
+        type="button"
+      >
+        <Italic size={14} />
+      </button>
+      <button
+        onClick={() => onFormat('underline')}
+        className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+        title="Underline"
+        type="button"
+      >
+        <Underline size={14} />
+      </button>
+    </div>
+  );
+};
+
+// Typing animation component for email content
+const TypingText = ({ 
+  text, 
+  speed = 10, 
+  onComplete 
+}: { 
+  text: string; 
+  speed?: number; 
+  onComplete?: () => void;
+}) => {
+  const [displayedText, setDisplayedText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayedText(prev => prev + text[currentIndex]);
+        setCurrentIndex(prev => prev + 1);
+      }, speed);
+      return () => clearTimeout(timeout);
+    } else if (currentIndex === text.length && onComplete) {
+      onComplete();
+    }
+  }, [currentIndex, text, speed, onComplete]);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setCurrentIndex(0);
+  }, [text]);
+
+  return <span>{displayedText}</span>;
+};
+
+// Enhanced typing animation that types all content sequentially
+const SequentialTypingAnimation = ({ 
+  content, 
+  speed = 8, 
+  onComplete 
+}: { 
+  content: EmailContent; 
+  speed?: number; 
+  onComplete?: () => void;
+}) => {
+  const [currentField, setCurrentField] = useState<'to' | 'subject' | 'body' | 'complete'>('to');
+  const [toText, setToText] = useState('');
+  const [subjectText, setSubjectText] = useState('');
+  const [bodyText, setBodyText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const fields = ['to', 'subject', 'body'] as const;
+    const fieldValues = {
+      to: content.to,
+      subject: content.subject,
+      body: content.body
+    };
+
+    if (currentField !== 'complete') {
+      const currentFieldValue = fieldValues[currentField];
+      
+      if (currentIndex < currentFieldValue.length) {
+        const timeout = setTimeout(() => {
+          const newChar = currentFieldValue[currentIndex];
+          
+          switch (currentField) {
+            case 'to':
+              setToText(prev => prev + newChar);
+              break;
+            case 'subject':
+              setSubjectText(prev => prev + newChar);
+              break;
+            case 'body':
+              setBodyText(prev => prev + newChar);
+              break;
+          }
+          
+          setCurrentIndex(prev => prev + 1);
+        }, speed);
+        
+        return () => clearTimeout(timeout);
+      } else {
+        // Move to next field
+        const currentFieldIndex = fields.indexOf(currentField);
+        if (currentFieldIndex < fields.length - 1) {
+          setCurrentField(fields[currentFieldIndex + 1]);
+          setCurrentIndex(0);
+        } else {
+          setCurrentField('complete');
+          onComplete?.();
+        }
+      }
+    }
+  }, [currentField, currentIndex, content, speed, onComplete]);
+
+  return {
+    to: toText,
+    subject: subjectText,
+    body: bodyText,
+    isComplete: currentField === 'complete'
+  };
+};
+
+const EmailComposer: React.FC<EmailComposerProps> = ({
+  content,
+  editable = true,
+  typingSpeed = 8,
+  onContentChange
+}) => {
+  const [emailContent, setEmailContent] = useState<EmailContent>(content);
+  const [emailSent, setEmailSent] = useState(false);
+  const [showTypingAnimation, setShowTypingAnimation] = useState(true);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [showToolbar, setShowToolbar] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+  const typingAnimation = SequentialTypingAnimation({
+    content,
+    speed: typingSpeed,
+    onComplete: () => {
+      setShowTypingAnimation(false);
+      setIsTypingComplete(true);
+    }
+  });
+
+  // Use typing animation content if animation is active, otherwise use current content
+  const displayContent = showTypingAnimation ? {
+    to: typingAnimation.to,
+    subject: typingAnimation.subject,
+    body: typingAnimation.body
+  } : emailContent;
+
+  const handleEmailFieldChange = (field: keyof EmailContent, value: string) => {
+    if (!editable) return;
+    
+    const newContent = { ...emailContent, [field]: value };
+    setEmailContent(newContent);
+    onContentChange?.(newContent);
+  };
+
+  const handleEmailBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!editable) return;
+    handleEmailFieldChange('body', e.target.value);
+  };
+
+  const handleSaveDraft = () => {
+    console.log('Saving draft:', emailContent);
+    // Implement save functionality
+  };
+
+  const handleSendEmail = () => {
+    setEmailSent(true);
+    console.log('Sending email:', emailContent);
+    // Implement send functionality
+  };
+
+  const handleRichTextFormat = (format: string) => {
+    if (!bodyRef.current || !editable) return;
+    
+    const textarea = bodyRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = emailContent.body.substring(start, end);
+    
+    let formattedText = '';
+    switch (format) {
+      case 'bold':
+        formattedText = `**${selectedText}**`;
+        break;
+      case 'italic':
+        formattedText = `*${selectedText}*`;
+        break;
+      case 'underline':
+        formattedText = `__${selectedText}__`;
+        break;
+      default:
+        formattedText = selectedText;
+    }
+    
+    const newBody = emailContent.body.substring(0, start) + formattedText + emailContent.body.substring(end);
+    handleEmailFieldChange('body', newBody);
+    
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
+    }, 0);
+  };
+
+  const handleBodyFocus = () => {
+    if (editable && isTypingComplete) {
+      setShowToolbar(true);
+    }
+  };
+
+  const handleBodyBlur = () => {
+    // Delay hiding toolbar to allow clicking on toolbar buttons
+    setTimeout(() => setShowToolbar(false), 200);
+  };
+
+  return (
+    <div className={`bg-white border border-gray-300 rounded-lg shadow-lg transition-all duration-300 ${emailSent ? 'opacity-30' : 'opacity-100'}`}>
+      {/* Header */}
+      <div className="bg-gray-50 border-b border-gray-300 px-4 py-3 rounded-t-lg">
+        <div className="flex items-center gap-2">
+          <Mail size={18} className="text-gray-600" />
+          <span className="font-medium text-gray-900">Compose Email</span>
+        </div>
+      </div>
+      
+      {/* Rich Text Toolbar */}
+      <RichTextToolbar onFormat={handleRichTextFormat} isVisible={showToolbar} />
+      
+      <div className="p-4 space-y-3">
+        {/* To Field */}
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 w-12">To:</label>
+          {editable && isTypingComplete ? (
+            <input
+              type="email"
+              value={emailContent.to}
+              onChange={(e) => handleEmailFieldChange('to', e.target.value)}
+              className="flex-1 p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          ) : (
+            <div className="flex-1 p-2 text-sm text-gray-900">
+              {displayContent.to}
+            </div>
+          )}
+        </div>
+
+        {/* Subject Field */}
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 w-12">Subject:</label>
+          {editable && isTypingComplete ? (
+            <input
+              type="text"
+              value={emailContent.subject}
+              onChange={(e) => handleEmailFieldChange('subject', e.target.value)}
+              className="flex-1 p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          ) : (
+            <div className="flex-1 p-2 text-sm text-gray-900">
+              {displayContent.subject}
+            </div>
+          )}
+        </div>
+
+        {/* Email Body */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700">Message:</label>
+          {editable && isTypingComplete ? (
+            <textarea
+              ref={bodyRef}
+              value={emailContent.body}
+              onChange={handleEmailBodyChange}
+              onFocus={handleBodyFocus}
+              onBlur={handleBodyBlur}
+              className="w-full p-3 border border-gray-300 rounded text-sm resize-y h-80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+              style={{ lineHeight: '1.5' }}
+              placeholder="Type your message here..."
+            />
+          ) : (
+            <div className="w-full p-3 border border-gray-300 rounded text-sm h-80 font-mono overflow-y-auto" style={{ lineHeight: '1.5' }}>
+              <div className="text-gray-900 whitespace-pre-wrap">
+                {displayContent.body}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Email Actions */}
+        {isTypingComplete && (
+          <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+            <div className="text-xs text-gray-500">
+              This email will be sent from your connected email account
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSaveDraft}
+                disabled={!editable}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Save size={16} />
+                Save Draft
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={!editable}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <Send size={16} />
+                Send Email
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default EmailComposer;

@@ -98,7 +98,8 @@ export const simpleDynamicConfig: WorkflowConfig = {
         text: "Hello! I can help with your account. What would you like to do?",
         buttons: [
           { label: 'View Analysis', value: 'analysis' },
-          { label: 'Draft Email', value: 'email' }
+          { label: 'Draft Email', value: 'email' },
+          { label: 'Compose Email', value: 'compose-email' }
         ]
       },
       branches: {
@@ -111,6 +112,11 @@ export const simpleDynamicConfig: WorkflowConfig = {
           response: "I'll draft an email for you.",
           actions: ['launch-artifact'],
           artifactId: 'email-draft'
+        },
+        'compose-email': {
+          response: "I'll open the email composer for you.",
+          actions: ['launch-artifact'],
+          artifactId: 'email-composer'
         }
       }
     },
@@ -146,6 +152,27 @@ export const simpleDynamicConfig: WorkflowConfig = {
           subject: 'Account Review',
           priority: 'Normal',
           body: ['Hello!', 'This is a test email.', 'Best regards']
+        }
+      },
+      {
+        id: 'email-composer',
+        title: 'Email Composer',
+        type: 'email',
+        visible: false,
+        editable: true,
+        content: {
+          to: 'eric.estrada@techflowindustries.com',
+          subject: 'TechFlow Industries - Renewal Planning & Important Updates',
+          body: `Hi Eric,
+
+I hope this email finds you well. I wanted to reach out regarding your upcoming renewal date of April 1st for TechFlow Industries. As we approach this important milestone, I'd like to discuss some updates and coordinate our planning for the upcoming period.
+
+I'm pleased to inform you that we've implemented several enhancements to our platform that I believe will bring significant value to your team. However, I also need to let you know about a 3% price increase that will take effect with your renewal, bringing your annual investment from $12,500 to $12,875. This adjustment reflects our continued commitment to enhancing the platform's capabilities and ensuring the highest level of service.
+
+Given your executive engagement and leadership at TechFlow, I'd love to schedule a renewal planning discussion to review these updates, address any questions you may have, and explore opportunities for maximizing your team's success with our platform.
+
+Best regards,
+Justin`
         }
       }
     ]

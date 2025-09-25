@@ -11,7 +11,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat';
   payload?: any;
 }
 
@@ -21,6 +21,7 @@ export interface ConversationResponse {
   actions?: ConversationAction[];
   nextBranch?: string;
   delay?: number; // Delay in seconds before showing the response
+  predelay?: number; // Delay in seconds before this branch can be triggered
 }
 
 export class ConversationEngine {
@@ -167,7 +168,8 @@ export class ConversationEngine {
         buttons: nextBranch.buttons,
         actions,
         nextBranch: nextBranchName,
-        delay: nextBranch.delay
+        delay: nextBranch.delay,
+        predelay: nextBranch.predelay
       };
     }
 

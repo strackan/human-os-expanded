@@ -8,7 +8,7 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
-  type?: 'text' | 'buttons';
+  type?: 'text' | 'buttons' | 'loading';
   buttons?: Array<{
     label: string;
     value: string;
@@ -187,7 +187,7 @@ const ChatInterface = React.forwardRef<{
           // Process any actions from the response
           if (response.actions && onArtifactAction) {
             console.log('ChatInterface: Processing actions from text input response:', response.actions);
-            response.actions.forEach(action => {
+            response.actions.forEach((action: ConversationAction) => {
               console.log('ChatInterface: Calling onArtifactAction with:', action);
               onArtifactAction(action);
             });
@@ -215,6 +215,7 @@ const ChatInterface = React.forwardRef<{
     }
   };
 
+
   const handleButtonClick = (buttonValue: string, buttonLabel: string) => {
     setMessages(prev => [...prev, {
       id: Date.now(),
@@ -227,8 +228,39 @@ const ChatInterface = React.forwardRef<{
       setTimeout(() => {
         const response = conversationEngine.processUserInput(buttonValue);
         
-        // If there's a delay, show loading animation first
-        if (response.delay && response.delay > 0) {
+        // Handle predelay - wait before showing the response
+        if (response.predelay && response.predelay > 0) {
+          // Wait for predelay, then show the response
+          setTimeout(() => {
+            showResponse(response, onArtifactAction);
+          }, response.predelay);
+        } else {
+          // No predelay, show response immediately
+          showResponse(response, onArtifactAction);
+        }
+      }, 500);
+    } else {
+      setTimeout(() => {
+        setMessages(prev => [...prev, {
+          id: Date.now() + 1,
+          text: buttonLabel,
+          sender: 'user',
+          timestamp: new Date()
+        }]);
+        
+        setMessages(prev => [...prev, {
+          id: Date.now() + 2,
+          text: config.aiGreeting,
+          sender: 'ai',
+          timestamp: new Date()
+        }]);
+      }, 500);
+    }
+  };
+
+  const showResponse = (response: any, onArtifactAction?: (action: any) => void) => {
+    // If there's a delay, show loading animation first
+    if (response.delay && response.delay > 0) {
           // Show loading message immediately
           const loadingMessageId = Date.now() + 1;
           setMessages(prev => [...prev, {
@@ -255,9 +287,26 @@ const ChatInterface = React.forwardRef<{
             // Process any actions from the response AFTER the delay
             if (response.actions && onArtifactAction) {
               console.log('ChatInterface: Processing actions from response after delay:', response.actions);
-              response.actions.forEach(action => {
+              response.actions.forEach((action: ConversationAction) => {
                 console.log('ChatInterface: Calling onArtifactAction with:', action);
                 onArtifactAction(action);
+                
+                // Handle nextChat action - automatically trigger next branch
+                if (action.type === 'nextChat' && response.nextBranch) {
+                  setTimeout(() => {
+                    console.log('ChatInterface: Auto-triggering next branch:', response.nextBranch);
+                    const nextResponse = conversationEngine?.processUserInput('auto-followup');
+                    if (nextResponse) {
+                      if (nextResponse.predelay && nextResponse.predelay > 0) {
+                        setTimeout(() => {
+                          showResponse(nextResponse, onArtifactAction);
+                        }, nextResponse.predelay);
+                      } else {
+                        showResponse(nextResponse, onArtifactAction);
+                      }
+                    }
+                  }, 100); // Small delay to ensure other actions complete first
+                }
               });
             }
           }, response.delay);
@@ -274,24 +323,30 @@ const ChatInterface = React.forwardRef<{
           
           // Process any actions from the response immediately
           if (response.actions && onArtifactAction) {
-            console.log('ChatInterface: Processing actions from response:', response.actions);
-            response.actions.forEach(action => {
+            console.log('ChatInterface: Processing actions from response immediately:', response.actions);
+            response.actions.forEach((action: ConversationAction) => {
               console.log('ChatInterface: Calling onArtifactAction with:', action);
               onArtifactAction(action);
+              
+              // Handle nextChat action - automatically trigger next branch
+              if (action.type === 'nextChat' && response.nextBranch) {
+                setTimeout(() => {
+                  console.log('ChatInterface: Auto-triggering next branch:', response.nextBranch);
+                  const nextResponse = conversationEngine?.processUserInput('auto-followup');
+                  if (nextResponse) {
+                    if (nextResponse.predelay && nextResponse.predelay > 0) {
+                      setTimeout(() => {
+                        showResponse(nextResponse, onArtifactAction);
+                      }, nextResponse.predelay);
+                    } else {
+                      showResponse(nextResponse, onArtifactAction);
+                    }
+                  }
+                }, 100); // Small delay to ensure other actions complete first
+              }
             });
           }
         }
-      }, 500);
-    } else {
-      setTimeout(() => {
-        setMessages(prev => [...prev, {
-          id: Date.now() + 1,
-          text: `I understand you selected "${buttonLabel}". How can I help you further?`,
-          sender: 'ai',
-          timestamp: new Date()
-        }]);
-      }, 500);
-    }
   };
 
   const handleYesClick = () => {

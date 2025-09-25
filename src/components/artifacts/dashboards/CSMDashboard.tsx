@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play } from 'lucide-react';
 import { resolveTemplateName } from '../workflows/utils/templateLauncher';
+import { getTemplateGroup } from '../workflows/config/templateGroups';
 import { TaskModeModal } from '../workflows/TaskModeAdvanced';
 import { WorkflowConfig } from '../workflows/config/WorkflowConfig';
 import {
@@ -619,13 +620,52 @@ const CSMDashboard: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {(modalConfig?.type === 'group') ? (
-              <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
-                <div>
-                  <p>Group mode not yet implemented in consolidated system</p>
-                  <p>Group ID: {modalConfig.id}</p>
-                  <p>Index: {modalConfig.groupIndex || 0}</p>
-                </div>
-              </div>
+              (() => {
+                // Get the template group
+                const group = getTemplateGroup(modalConfig.id);
+                const groupIndex = modalConfig.groupIndex || 0;
+                
+                if (!group || !group.templates[groupIndex]) {
+                  return (
+                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
+                      <div>
+                        <p>Template group not found</p>
+                        <p>Group ID: {modalConfig.id}</p>
+                        <p>Index: {groupIndex}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Get the current template from the group
+                const currentTemplateId = group.templates[groupIndex];
+                const currentConfig = configMap[currentTemplateId];
+                
+                if (!currentConfig) {
+                  return (
+                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
+                      <div>
+                        <p>Template not found in config map</p>
+                        <p>Template ID: {currentTemplateId}</p>
+                        <p>Group: {group.name}</p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                // Render the current template from the group
+                return (
+                  <TaskModeModal
+                    isOpen={showTaskModal}
+                    onClose={handleCloseModal}
+                    workflowConfig={currentConfig}
+                    workflowConfigName={currentTemplateId}
+                    showArtifact={false} // Start without artifacts visible
+                    artifact_visible={true} // Artifacts available when opened
+                    inline={true} // Use inline mode but within the modal container
+                  />
+                );
+              })()
             ) : (
               <TaskModeModal
                 isOpen={showTaskModal}
