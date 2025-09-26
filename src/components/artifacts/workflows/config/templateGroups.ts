@@ -43,6 +43,13 @@ export const templateGroups: Record<string, TemplateGroup> = {
     description: 'Demonstrates the new dynamic conversation flow with conditional branching and artifact launching',
     templates: ['dynamic-ai', 'dynamic-user', 'simple-dynamic'],
     tags: ['demo', 'dynamic', 'chat', 'conversation', 'interactive']
+  },
+  'demo-v1': {
+    id: 'demo-v1',
+    name: 'Demo V1',
+    description: 'Combined demo: Bluebird Memorial traditional mode followed by dynamic AI slide-based mode',
+    templates: ['bluebird-planning', 'dynamic-ai'],
+    tags: ['demo', 'v1', 'combined', 'traditional', 'dynamic']
   }
 };
 

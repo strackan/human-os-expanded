@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect, useImperativeHandle } from 'react';
 import { Send, Paperclip, Mic, Square, MoreHorizontal, Brush, Edit, Zap } from 'lucide-react';
-import { ChatConfig } from '../config/WorkflowConfig';
+import { ChatConfig, WorkflowConfig } from '../config/WorkflowConfig';
 import { ConversationEngine, ConversationAction } from '../utils/conversationEngine';
+import { VariableContext } from '../utils/variableSubstitution';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface Message {
   id: string | number;
@@ -25,11 +27,13 @@ interface ChatInterfaceProps {
   className?: string;
   startingWith?: 'ai' | 'user';
   onArtifactAction?: (action: ConversationAction) => void;
+  onGotoSlide?: (slideNumber: number) => void;
   workingMessageRef?: React.RefObject<{
     showWorkingMessage: () => void;
     hideWorkingMessage: () => void;
   } | null>;
   sidePanelConfig?: any; // Add side panel config for progress navigation
+  workflowConfig?: WorkflowConfig; // Add workflow config for variable context
 }
 
 const ChatInterface = React.forwardRef<{
@@ -38,6 +42,7 @@ const ChatInterface = React.forwardRef<{
   restoreState: (messages: Message[], inputValue: string) => void;
   showWorkingMessage: () => void;
   hideWorkingMessage: () => void;
+  resetChat: () => void;
 }, ChatInterfaceProps>(({
   config,
   isSplitMode,
@@ -45,8 +50,11 @@ const ChatInterface = React.forwardRef<{
   className = '',
   startingWith = 'ai',
   onArtifactAction,
-  workingMessageRef
+  onGotoSlide,
+  workingMessageRef,
+  workflowConfig
 }, ref) => {
+  const { user } = useAuth();
   // Generate initial messages from config (no auto-save - state preserved by keeping component mounted)
   const generateInitialMessages = (): Message[] => {
     if (config.mode === 'dynamic' && config.dynamicFlow) {
@@ -96,6 +104,42 @@ const ChatInterface = React.forwardRef<{
   };
 
   // Expose functions to parent components
+  const resetChat = () => {
+    console.log('ChatInterface: Resetting chat to initial state');
+    // Reset conversation engine
+    if (conversationEngine) {
+      conversationEngine.reset();
+    }
+    
+    // Clear messages and reset to initial state
+    setMessages([]);
+    setInputValue('');
+    
+    // Reinitialize with initial message based on config type
+    if (config.mode === 'dynamic' && config.dynamicFlow && conversationEngine) {
+      // Dynamic flow - get initial message from engine
+      const initialMessage = conversationEngine.getInitialMessage();
+      if (initialMessage) {
+        setTimeout(() => {
+          setMessages([{
+            id: Date.now(),
+            text: initialMessage.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: initialMessage.buttons ? 'buttons' : 'text',
+            buttons: initialMessage.buttons
+          }]);
+        }, 100);
+      }
+    } else if (config.conversationSeed && config.conversationSeed.length > 0) {
+      // Static conversation seed - regenerate initial messages
+      const initialMessages = generateInitialMessages();
+      setTimeout(() => {
+        setMessages(initialMessages);
+      }, 100);
+    }
+  };
+
   useImperativeHandle(ref, () => ({
     getMessages: () => messages,
     getCurrentInput: () => inputValue,
@@ -104,22 +148,36 @@ const ChatInterface = React.forwardRef<{
       setInputValue(newInputValue);
     },
     showWorkingMessage,
-    hideWorkingMessage
-  }), [messages, inputValue]);
+    hideWorkingMessage,
+    resetChat
+  }), [messages, inputValue, conversationEngine, config]);
 
   // Also expose working message functions to workingMessageRef for backward compatibility
   useImperativeHandle(workingMessageRef, () => ({
     showWorkingMessage,
-    hideWorkingMessage
-  }), []);
+    hideWorkingMessage,
+    resetChat
+  }), [resetChat]);
 
   useEffect(() => {
     if (config.mode === 'dynamic' && config.dynamicFlow) {
+      // Create variable context from user and workflow config
+      const variableContext: VariableContext = {
+        user: user,
+        customer: workflowConfig ? {
+          name: workflowConfig.customer.name,
+          primaryContact: workflowConfig.customerOverview?.metrics?.primaryContact,
+          arr: workflowConfig.customerOverview?.metrics?.arr,
+          renewalDate: workflowConfig.customerOverview?.metrics?.renewalDate,
+          ...workflowConfig.customerOverview
+        } : undefined
+      };
+
       const engine = new ConversationEngine(config.dynamicFlow, (action) => {
         if (onArtifactAction) {
           onArtifactAction(action);
         }
-      });
+      }, variableContext);
       setConversationEngine(engine);
 
       const initialMessage = engine.getInitialMessage();
@@ -136,7 +194,7 @@ const ChatInterface = React.forwardRef<{
         }, 500);
       }
     }
-  }, [config.mode, config.dynamicFlow]); // Remove onArtifactAction from dependencies
+  }, [config.mode, config.dynamicFlow, user, workflowConfig]); // Add user and workflowConfig dependencies
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -466,7 +524,7 @@ const ChatInterface = React.forwardRef<{
                       : 'bg-gray-100 text-gray-800'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap">
+                  <div className="whitespace-pre-wrap">
                     {message.sender === 'ai' && typingMessages.has(message.id as number) ? (
                       <TypingAnimation text={message.text} messageId={message.id as number} speed={15} />
                     ) : message.type === 'loading' ? (
@@ -477,10 +535,10 @@ const ChatInterface = React.forwardRef<{
                     ) : (
                       message.text
                     )}
-                  </p>
+                  </div>
 
                   {message.type === 'buttons' && message.buttons && (
-                    <div className={`mt-3 ${message['button-pos'] === 'column' ? 'space-y-2' : 'flex gap-2 flex-wrap'}`}>
+                    <div className={`mt-3 flex justify-center ${message['button-pos'] === 'column' ? 'flex-col space-y-2' : 'flex-row gap-2 flex-wrap'}`}>
                       {message.buttons.map((button, index) => (
                         <button
                           key={index}
@@ -490,8 +548,8 @@ const ChatInterface = React.forwardRef<{
                           }}
                           data-action={button.value}
                           data-label={button.label}
-                          className={`text-center px-3 py-2 rounded transition-colors border ${
-                            message['button-pos'] === 'column' ? 'block w-full text-left' : 'flex-1 min-w-0'
+                          className={`text-center px-4 py-2 rounded-lg transition-colors border font-medium ${
+                            message['button-pos'] === 'column' ? 'block w-full text-left' : 'flex-1 min-w-0 max-w-xs'
                           }`}
                           style={{
                             backgroundColor: button['label-background'] || '#f3f4f6',

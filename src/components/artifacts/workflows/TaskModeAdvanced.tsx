@@ -55,6 +55,7 @@ interface TaskModeModalProps {
   workflowConfig?: WorkflowConfig;
   workflowConfigName?: string;
   onNextCustomer?: () => void;
+  nextCustomerName?: string; // Next customer name for template groups
   groupProgress?: string;
   inline?: boolean; // New prop to render inline instead of as modal
   onShowWorkingMessage?: () => void; // Callback to show "Working On It" message
@@ -66,6 +67,7 @@ export interface TaskModeModalRef {
   openArtifact: () => void;
   closeArtifact: () => void;
   toggleSplitMode: () => void;
+  resetToInitialState: () => void;
 }
 
 const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
@@ -78,6 +80,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   workflowConfig = defaultWorkflowConfig,
   workflowConfigName = "default",
   onNextCustomer,
+  nextCustomerName,
   groupProgress,
   inline = false,
   onShowWorkingMessage,
@@ -89,25 +92,72 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     chat: {
       ...workflowConfig.chat,
       conversationSeed: conversationSeed || workflowConfig.chat.conversationSeed
-    },
-    layout: {
-      ...workflowConfig.layout,
-      splitModeDefault: showArtifact ? artifact_visible : workflowConfig.layout.splitModeDefault
     }
   };
 
   // Initialize with config defaults
 
   // Modal dimensions and position
-  const [modalDimensions, setModalDimensions] = useState(config.layout.modalDimensions);
+  const [modalDimensions, setModalDimensions] = useState(workflowConfig.layout.modalDimensions);
 
   // Layout states
-  const [statsHeight, setStatsHeight] = useState(config.layout.statsHeight || 50); // Default 50% for stats
-  const [isSplitMode, setIsSplitMode] = useState(config.layout.splitModeDefault);
-  const [chatWidth, setChatWidth] = useState(config.layout.chatWidth);
+  const [statsHeight, setStatsHeight] = useState(workflowConfig.layout.statsHeight || 50); // Default 50% for stats
+  const [isSplitMode, setIsSplitMode] = useState(workflowConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
+  const [chatWidth, setChatWidth] = useState(workflowConfig.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0); // Track current slide
+
+  // Reset split mode when template changes
+  React.useEffect(() => {
+    setIsSplitMode(workflowConfig.layout.splitModeDefault || false);
+    setVisibleArtifacts(new Set()); // Also clear any visible artifacts
+  }, [workflowConfigName, workflowConfig.layout.splitModeDefault]);
+
+  // Determine if we're using slides or traditional config
+  // Only use slides if explicitly set or if slides array exists
+  const isSlideBased = config.slides && config.slides.length > 0;
+  const currentConfig = isSlideBased ? config.slides![currentSlideIndex] : config;
+  
+  console.log('TaskModeAdvanced: Config analysis:', {
+    isSlideBased,
+    currentSlideIndex,
+    totalSlides: config.slides?.length || 0,
+    currentSlideTitle: isSlideBased ? config.slides![currentSlideIndex]?.title : 'N/A',
+    hasInitialMessage: isSlideBased ? !!config.slides![currentSlideIndex]?.chat?.initialMessage : !!config.chat?.dynamicFlow,
+    hasDynamicFlow: !!config.chat?.dynamicFlow,
+    hasConversationSeed: !!config.chat?.conversationSeed,
+    currentSlideChat: isSlideBased ? config.slides![currentSlideIndex]?.chat : null,
+    mainChatConfig: config.chat
+  });
+  
+  // Create proper ChatConfig from slide config or use main config
+  const currentChatConfig = isSlideBased ? {
+    ...config.chat,
+    mode: 'dynamic', // Ensure slide-based configs are treated as dynamic
+    dynamicFlow: {
+      startsWith: 'ai',
+      defaultMessage: config.chat.dynamicFlow?.defaultMessage || "I understand you'd like to discuss something else. How can I help?",
+      initialMessage: currentConfig.chat.initialMessage,
+      branches: currentConfig.chat.branches || {},
+      userTriggers: currentConfig.chat.userTriggers || {}
+    }
+  } : config.chat;
+  
+  console.log('TaskModeAdvanced: Final currentChatConfig:', {
+    mode: currentChatConfig.mode,
+    hasDynamicFlow: !!currentChatConfig.dynamicFlow,
+    hasInitialMessage: !!currentChatConfig.initialMessage,
+    initialMessageText: currentChatConfig.initialMessage?.text
+  });
+  
+  const currentArtifactsConfig = isSlideBased
+    ? (currentConfig.artifacts || config.artifacts)
+    : config.artifacts;
+  // For now, use the main config's sidePanel for slide-based workflows
+  // TODO: Implement proper slide-specific sidePanel configuration
+  const currentSidePanelConfig = config.sidePanel;
 
   const modalRef = useRef<HTMLDivElement>(null);
   const chatInterfaceRef = useRef<{
@@ -116,6 +166,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     getMessages?: () => any[];
     getCurrentInput?: () => string;
     restoreState?: (messages: any[], inputValue: string) => void;
+    resetChat?: () => void;
   }>(null);
 
   // Simple close handler
@@ -178,6 +229,28 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           closeArtifact();
         }
       }
+    } else if (action.type === 'exitTaskMode') {
+      console.log('TaskModeAdvanced: Processing exitTaskMode action');
+      // Close the modal and reset state
+      onClose();
+    } else if (action.type === 'nextCustomer') {
+      console.log('TaskModeAdvanced: Processing nextCustomer action');
+      // Trigger next customer functionality if provided, otherwise just close
+      if (onNextCustomer) {
+        onNextCustomer();
+      } else {
+        onClose();
+      }
+    } else if (action.type === 'resetChat') {
+      console.log('TaskModeAdvanced: Processing resetChat action');
+      // Reset the chat interface to initial state
+      if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+        chatInterfaceRef.current.resetChat();
+      }
+    } else if (action.type === 'resetToInitialState') {
+      console.log('TaskModeAdvanced: Processing resetToInitialState action');
+      // Reset everything to initial state - simulate browser refresh
+      resetToInitialState();
     } else {
       console.log('TaskModeAdvanced: Unknown action type:', action.type);
     }
@@ -195,12 +268,52 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     }
   };
 
+  const handleGotoSlide = (slideNumber: number) => {
+    console.log('TaskModeAdvanced: gotoSlide called with:', slideNumber);
+    if (isSlideBased && config.slides) {
+      const targetIndex = slideNumber - 1; // Convert 1-based to 0-based
+      if (targetIndex >= 0 && targetIndex < config.slides.length) {
+        setCurrentSlideIndex(targetIndex);
+        console.log('Navigated to slide:', targetIndex, config.slides[targetIndex].title);
+      } else {
+        console.warn('Invalid slide number:', slideNumber);
+      }
+    }
+  };
+
+  // Reset to initial state method
+  const resetToInitialState = () => {
+    console.log('TaskModeAdvanced: Resetting to initial state');
+    // Reset all component state to initial values
+    setStatsHeight(config.layout.statsHeight || 50);
+    setIsSplitMode(config.layout.splitModeDefault);
+    setChatWidth(config.layout.chatWidth);
+    setIsStatsVisible(true);
+    setVisibleArtifacts(new Set());
+    setIsDragging(false);
+    setCurrentSlideIndex(0);
+    
+    // Reset modal dimensions to initial values
+    setModalDimensions(config.layout.modalDimensions);
+    
+    // Show the modal again (in case it was hidden)
+    if (modalRef.current) {
+      modalRef.current.style.display = 'block';
+    }
+    
+    // Reset the chat interface - this will handle both dynamic and static configs
+    if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+      chatInterfaceRef.current.resetChat();
+    }
+  };
+
   // Expose methods to parent components
   useImperativeHandle(ref, () => ({
     openArtifact,
     closeArtifact,
-    toggleSplitMode
-  }), []);
+    toggleSplitMode,
+    resetToInitialState
+  }), [config]);
 
   // External modal resize functionality
   const startModalResize = (e: React.MouseEvent, direction: string) => {
@@ -440,7 +553,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
                 onClick={onNextCustomer}
                 className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
               >
-                Next Customer - {config.customer.nextCustomer || 'Next'}
+                Next Customer - {nextCustomerName || config.customer.nextCustomer || 'Next'}
               </button>
             )}
           </div>
@@ -512,13 +625,16 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           }}
         >
           <ChatInterface
-            config={config.chat}
+            key={workflowConfigName} // Force remount when template changes
+            config={currentChatConfig}
             isSplitMode={isSplitMode}
             onToggleSplitMode={toggleSplitMode}
             startingWith={starting_with as "ai" | "user"}
             className="flex-1 overflow-hidden"
             onArtifactAction={handleArtifactAction}
+            onGotoSlide={handleGotoSlide}
             workingMessageRef={chatInterfaceRef}
+            workflowConfig={config}
           />
         </div>
 
@@ -540,8 +656,8 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         {(isSplitMode || visibleArtifacts.size > 0) && (
           <div className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
             <ArtifactsPanel
-              config={config.artifacts}
-              sidePanelConfig={config.sidePanel}
+              config={currentArtifactsConfig}
+              sidePanelConfig={currentSidePanelConfig}
               workflowConfigName={workflowConfigName}
               className="h-full overflow-hidden"
               visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}

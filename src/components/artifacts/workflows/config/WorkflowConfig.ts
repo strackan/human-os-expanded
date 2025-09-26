@@ -56,7 +56,7 @@ export interface DynamicChatBranch {
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState'>;
   artifactId?: string;
   buttons?: DynamicChatButton[];
   nextBranches?: {
@@ -70,6 +70,9 @@ export interface DynamicChatFlow {
   initialMessage?: {
     text: string;
     buttons?: DynamicChatButton[];
+    nextBranches?: {
+      [userResponse: string]: string;
+    };
   };
   userTriggers?: {
     [pattern: string]: string;
@@ -90,6 +93,9 @@ export interface WorkflowSlide {
     initialMessage?: {
       text: string;
       buttons?: DynamicChatButton[];
+      nextBranches?: {
+        [userResponse: string]: string;
+      };
     };
     branches: {
       [branchName: string]: DynamicChatBranch;
@@ -239,6 +245,12 @@ export interface WorkflowConfig {
   artifacts: ArtifactsConfig;
   sidePanel?: SidePanelConfig;
   slides?: WorkflowSlide[]; // Optional slides for slide-based presentation
+  // Variable substitution context - will be populated at runtime
+  _variableContext?: {
+    user?: any;
+    customer?: any;
+    [key: string]: any;
+  };
 }
 
 export const defaultWorkflowConfig: WorkflowConfig = {

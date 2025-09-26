@@ -11,13 +11,17 @@ export const dynamicChatSlides: WorkflowSlide[] = [
     stepMapping: 'initial-contact',
     chat: {
       initialMessage: {
-        text: "Hi Justin! I've noticed Dynamic Corp is experiencing significant growth with 65% increased usage YTD. Their renewal is in 90 days. How would you like to approach this opportunity?",
+        text: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>. ",
         buttons: [
-          { label: 'Review expansion options', value: 'expansion' },
-          { label: 'Analyze usage patterns', value: 'usage' },
-          { label: 'Prepare renewal offer', value: 'renewal' },
-          { label: 'Skip for now', value: 'skip' }
-        ]
+          { label: 'Start Planning', value: 'plan' },
+          { label: 'Snooze', value: 'snooze' },
+          { label: 'Skip this workflow', value: 'skip' }
+        ],
+        nextBranches: {
+          'plan': 'expansion',
+          'snooze': 'snooze',
+          'skip': 'skip'
+        }
       },
       branches: {
         'expansion': {
@@ -51,8 +55,59 @@ export const dynamicChatSlides: WorkflowSlide[] = [
             'standard': 'standard-renewal'
           }
         },
+        'snooze': {
+          response: "No problem! I'll check back in a couple days. Let me reset this workflow for you.",
+          actions: ['resetToInitialState']
+        },
         'skip': {
-          response: "No problem! I'll check back in a week. Is there anything else you'd like to work on today?"
+          response: "Okay, I'll check in next time they come up on my radar. Shall we move on to the next customer?",
+          buttons: [
+            { label: 'Exit', value: 'exit', 'label-background': 'bg-gray-300', 'label-text': 'text-gray-700' },
+            { label: 'Yes', value: 'next-customer', 'label-background': 'bg-green-500', 'label-text': 'text-white' }
+          ],
+          nextBranches: {
+            'exit': 'exit-task-mode',
+            'next-customer': 'next-customer-action'
+          }
+        },
+        'exit-task-mode': {
+          response: "Task mode closed. You can reopen it anytime from the dashboard.",
+          actions: ['exitTaskMode']
+        },
+        'next-customer-action': {
+          response: "Moving to the next customer...",
+          actions: ['nextCustomer']
+        },
+        'email-flow': {
+          response: "Working On It",
+          delay: 3000,
+          actions: ['showArtifact', 'nextChat'],
+          artifactId: 'email-draft',
+          nextBranches: {
+            'auto-followup': 'email-complete'
+          }
+        },
+        'email-complete': {
+          response: "Okay, I've drafted the email to Michael Roberts with a request to meet. Feel free to edit and send directly in the composer. After you process the email, I'll summarize everything we've done and next steps. Sound good?",
+          predelay: 4500,
+          buttons: [
+            { label: 'Yes', value: 'email-confirmation' },
+            { label: 'Something Else', value: 'alternative-options' }
+          ]
+        },
+        'email-confirmation': {
+          response: "Perfect! I've created a comprehensive workflow summary with our progress, action items, and next steps for the Dynamic Corp account.",
+          actions: ['showArtifact'],
+          artifactId: 'workflow-summary'
+        },
+        'alternative-options': {
+          response: "No problem! What would you like to focus on instead?",
+          buttons: [
+            { label: 'Review expansion options', value: 'expansion' },
+            { label: 'Analyze usage patterns', value: 'usage' },
+            { label: 'Prepare renewal offer', value: 'renewal' },
+            { label: 'Something else', value: 'free-chat' }
+          ]
         }
       },
       userTriggers: {
@@ -76,6 +131,76 @@ export const dynamicChatSlides: WorkflowSlide[] = [
             anticipatedRenewal: { tokens: 150000, unitPrice: 7.25, total: 1087500 },
             earlyDiscount: { percentage: 15, total: 924375 },
             multiYearDiscount: { percentage: 25, total: 815625 }
+          }
+        },
+        {
+          id: 'email-draft',
+          title: 'Email Composer',
+          type: 'email',
+          visible: false,
+          editable: true,
+          content: {
+            to: 'michael.roberts@dynamiccorp.com',
+            subject: 'Dynamic Corp - Expansion Opportunity & Strategic Renewal Discussion',
+            body: `Hi Michael,
+
+I hope this email finds you well! I've been reviewing Dynamic Corp's impressive performance metrics, and I'm excited about the 65% growth you've achieved this year. Your expansion into APAC and the recent Series C funding announcement clearly demonstrate Dynamic Corp's trajectory toward becoming a market leader.
+
+Given your current usage patterns and the approaching renewal date, I'd love to discuss how we can support your continued growth with a strategic renewal package that aligns with your expansion goals.
+
+I'm proposing a multi-year expansion deal that would:
+• Provide capacity for your anticipated growth
+• Include priority support for your APAC operations
+• Offer significant cost savings through our enterprise pricing
+
+Are you available for a brief call next week to explore how we can structure this to support Dynamic Corp's continued success?
+
+Best regards,
+{{user.first}}
+
+P.S. I've also prepared some usage analytics that I think you'll find valuable for your planning discussions.`
+          }
+        },
+        {
+          id: 'workflow-summary',
+          title: 'Workflow Summary',
+          type: 'workflow-summary',
+          visible: false,
+          content: {
+            customerName: 'Dynamic Corp',
+            currentStage: 'Needs Assessment',
+            progressPercentage: 50,
+            completedActions: [
+              'Initial customer contact established',
+              'Growth analysis completed (65% YoY growth)',
+              'Expansion opportunity identified',
+              'Email drafted to Michael Roberts (CTO)'
+            ],
+            pendingActions: [
+              'Schedule follow-up meeting with Michael Roberts',
+              'Prepare detailed expansion proposal',
+              'Coordinate with technical team for APAC support details',
+              'Review Series C funding impact on pricing'
+            ],
+            nextSteps: [
+              'Wait for response to initial email (2-3 days)',
+              'Prepare comprehensive renewal package',
+              'Schedule technical consultation for APAC expansion',
+              'Draft multi-year contract terms'
+            ],
+            keyMetrics: {
+              currentARR: '$725,000',
+              projectedARR: '$1,087,500',
+              growthRate: '65%',
+              riskScore: '2.1/10',
+              renewalDate: 'Feb 28, 2026'
+            },
+            recommendations: [
+              'Prioritize multi-year deal to lock in growth',
+              'Leverage APAC expansion for premium pricing',
+              'Use Series C funding as negotiation point',
+              'Offer priority support as differentiator'
+            ]
           }
         }
       ]
@@ -136,7 +261,7 @@ export const dynamicChatSlides: WorkflowSlide[] = [
     stepMapping: 'needs-assessment',
     chat: {
       initialMessage: {
-        text: "Great! I've prepared an analysis of Dynamic Corp's expansion opportunities. Based on their 65% growth and Series C funding, they're prime candidates for a multi-year expansion deal.",
+        text: "Great! I've prepared an analysis of {{customer.name}}'s expansion opportunities. Based on their 65% growth and Series C funding, they're prime candidates for a multi-year expansion deal.",
         buttons: [
           { label: 'Draft email', value: 'draft-email' },
           { label: 'Schedule meeting', value: 'schedule' },
@@ -211,7 +336,7 @@ I'm proposing a multi-year expansion deal that would:
 Are you available for a brief call next week to explore how we can structure this to support Dynamic Corp's continued success?
 
 Best regards,
-Justin
+{{user.first}}
 
 P.S. I've also prepared some usage analytics that I think you'll find valuable for your planning discussions.`
           }
@@ -319,7 +444,7 @@ export const dynamicChatAI: WorkflowConfig = {
     modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
     dividerPosition: 50,
     chatWidth: 50,
-    splitModeDefault: true
+    splitModeDefault: false
   },
   customerOverview: {
     metrics: {
@@ -421,16 +546,20 @@ export const dynamicChatAI: WorkflowConfig = {
       startsWith: 'ai',
       defaultMessage: "I'm sorry, I didn't understand that. Could you try again or select one of the available options?",
       initialMessage: {
-        text: "Hi Justin! I've noticed Dynamic Corp is experiencing significant growth with 65% increased usage YTD. Their renewal is in 90 days. How would you like to approach this opportunity?",
+        text: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>. ",
         buttons: [
-          { label: 'Review expansion options', value: 'expansion' },
-          { label: 'Analyze usage patterns', value: 'usage' },
-          { label: 'Prepare renewal offer', value: 'renewal' },
-          { label: 'Skip for now', value: 'skip' }
-        ]
+          { label: 'Start Planning', value: 'planning' },
+          { label: 'Snooze', value: 'snooze' },
+          { label: 'Skip This Workflow', value: 'skip' }
+        ],
+        nextBranches: {
+          'planning': 'planning',
+          'snooze': 'snooze',
+          'skip': 'skip'
+        }
       },
       branches: {
-        'expansion': {
+        'planning': {
           response: "Excellent choice! Based on their growth trajectory, I recommend a multi-year expansion deal. Let me prepare an analysis for you.",
           buttons: [
             { label: 'Draft email', value: 'draft-email' },
@@ -443,26 +572,28 @@ export const dynamicChatAI: WorkflowConfig = {
             'details': 'detail-view'
           }
         },
-        'usage': {
-          response: "Let me analyze their usage patterns for you. They're currently at 85% of their license capacity with consistent growth.",
-          actions: ['showArtifact'],
-          artifactId: 'usage-analysis'
-        },
-        'renewal': {
-          response: "I'll help you prepare a compelling renewal offer. Which approach would you prefer?",
+        'skip': {
+          response: "Okay, I\'ll check in next time they come up on my radar. Shall we move on to the next customer?",
           buttons: [
-            { label: 'Early renewal discount', value: 'early' },
-            { label: 'Multi-year package', value: 'multi-year' },
-            { label: 'Standard renewal', value: 'standard' }
+            { label: 'Exit', value: 'exit', 'label-background': 'bg-gray-300', 'label-text': 'text-gray-700' },
+            { label: 'Yes', value: 'next-customer', 'label-background': 'bg-green-500', 'label-text': 'text-white' }
           ],
           nextBranches: {
-            'early': 'early-renewal',
-            'multi-year': 'multi-year-deal',
-            'standard': 'standard-renewal'
+            'exit': 'exit-task-mode',
+            'next-customer': 'next-customer-action'
           }
         },
-        'skip': {
-          response: "No problem! I'll check back in a week. Is there anything else you'd like to work on today?"
+        'snooze': {
+          response: "No problem! I'll check back in a couple days. Let me reset this workflow for you.",
+          actions: ['resetToInitialState']
+        },
+        'exit-task-mode': {
+          response: "Task mode closed. You can reopen it anytime from the dashboard.",
+          actions: ['exitTaskMode']
+        },
+        'next-customer-action': {
+          response: "Moving to the next customer...",
+          actions: ['nextCustomer']
         },
         'email-flow': {
           response: "Working On It",
@@ -559,7 +690,7 @@ I'm proposing a multi-year expansion deal that would:
 Are you available for a brief call next week to explore how we can structure this to support Dynamic Corp's continued success?
 
 Best regards,
-Justin
+{{user.first}}
 
 P.S. I've also prepared some usage analytics that I think you'll find valuable for your planning discussions.`
         }

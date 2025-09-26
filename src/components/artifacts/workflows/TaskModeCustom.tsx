@@ -4,11 +4,11 @@ import { WorkflowConfig } from './config/WorkflowConfig';
 
 // Import your custom configs here
 // Change this import to whatever config you're actively working on
-import { dynamicChatAI } from './config/configs/DynamicChatFixed';
+import { bluebirdMemorialPlanningConfig } from './config/configs/BluebirdMemorialConfig-Planning';
 
 // ACTIVE CONFIG - Change this line to point to your current config
-const ACTIVE_CONFIG: WorkflowConfig = dynamicChatAI;
-// Example: const ACTIVE_CONFIG = blueBirdMemorialPlanningConfig;
+const ACTIVE_CONFIG: WorkflowConfig = bluebirdMemorialPlanningConfig;
+// Example: const ACTIVE_CONFIG = dynamicChatAI;
 
 const TaskModeCustom = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -19,7 +19,7 @@ const TaskModeCustom = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         workflowConfig={ACTIVE_CONFIG}
-        workflowConfigName="dynamic-chat-fixed"
+        workflowConfigName="bluebird-memorial-planning"
         showArtifact={false} // Start without artifacts visible
         artifact_visible={true} // Artifacts available when opened
         starting_with="ai"

@@ -511,6 +511,27 @@ const CSMDashboard: React.FC = () => {
     // Keep modalConfig to preserve component state - don't set to null
   };
 
+  const handleNextCustomer = () => {
+    if (modalConfig?.type === 'group') {
+      const group = getTemplateGroup(modalConfig.id);
+      const currentIndex = modalConfig.groupIndex || 0;
+
+      if (group && currentIndex < group.templates.length - 1) {
+        // Move to next template in the group
+        setModalConfig({
+          ...modalConfig,
+          groupIndex: currentIndex + 1
+        });
+      } else {
+        // At the end of the group, close modal
+        handleCloseModal();
+      }
+    } else {
+      // Not in a group, just close
+      handleCloseModal();
+    }
+  };
+
   // Check if we should show a slide-based workflow
   const getCurrentConfigId = () => modalConfig?.id || defaultLaunchConfig?.id;
   const currentConfigId = getCurrentConfigId();
@@ -659,6 +680,17 @@ const CSMDashboard: React.FC = () => {
                   );
                 }
                 
+                // Calculate group progress
+                const groupProgress = `Customer ${groupIndex + 1} of ${group.templates.length}`;
+
+                // Get next customer name from next template in group (if exists)
+                let nextCustomerName: string | undefined;
+                if (groupIndex < group.templates.length - 1) {
+                  const nextTemplateId = group.templates[groupIndex + 1];
+                  const nextConfig = configMap[nextTemplateId];
+                  nextCustomerName = nextConfig?.customer.name;
+                }
+
                 // Render the current template from the group
                 return (
                   <TaskModeModal
@@ -666,22 +698,42 @@ const CSMDashboard: React.FC = () => {
                     onClose={handleCloseModal}
                     workflowConfig={currentConfig}
                     workflowConfigName={currentTemplateId}
+                    inline={true} // Use inline mode but within the modal container
+                    onNextCustomer={handleNextCustomer}
+                    nextCustomerName={nextCustomerName}
+                    groupProgress={groupProgress}
+                  />
+                );
+              })()
+            ) : (
+              (() => {
+                // Determine which config to use for non-group templates
+                const configId = modalConfig?.id || defaultLaunchConfig?.id;
+                const selectedConfig = configId ? configMap[configId] : null;
+
+                if (!selectedConfig) {
+                  return (
+                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
+                      <div>
+                        <p>Configuration not found</p>
+                        <p>Config ID: {configId || 'none'}</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <TaskModeModal
+                    isOpen={showTaskModal}
+                    onClose={handleCloseModal}
+                    workflowConfig={selectedConfig}
+                    workflowConfigName={configId}
                     showArtifact={false} // Start without artifacts visible
                     artifact_visible={true} // Artifacts available when opened
                     inline={true} // Use inline mode but within the modal container
                   />
                 );
               })()
-            ) : (
-              <TaskModeModal
-                isOpen={showTaskModal}
-                onClose={handleCloseModal}
-                workflowConfig={configMap[modalConfig?.id || defaultLaunchConfig?.id || 'dynamic-ai']}
-                workflowConfigName={modalConfig?.id || defaultLaunchConfig?.id || 'dynamic-ai'}
-                showArtifact={false} // Start without artifacts visible
-                artifact_visible={true} // Artifacts available when opened
-                inline={true} // Use inline mode but within the modal container
-              />
             )}
         </div>
       </div>

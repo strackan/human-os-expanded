@@ -1,4 +1,5 @@
 import { DynamicChatFlow, DynamicChatBranch, DynamicChatButton } from '../config/WorkflowConfig';
+import { substituteVariablesWithMappings, VariableContext } from './variableSubstitution';
 
 export interface ConversationState {
   currentBranch: string | null;
@@ -11,7 +12,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState';
   payload?: any;
 }
 
@@ -28,10 +29,12 @@ export class ConversationEngine {
   private flow: DynamicChatFlow;
   private state: ConversationState;
   private onAction?: (action: ConversationAction) => void;
+  private variableContext: VariableContext;
 
-  constructor(flow: DynamicChatFlow, onAction?: (action: ConversationAction) => void) {
+  constructor(flow: DynamicChatFlow, onAction?: (action: ConversationAction) => void, variableContext?: VariableContext) {
     this.flow = flow;
     this.onAction = onAction;
+    this.variableContext = variableContext || {};
     this.state = {
       currentBranch: null,
       history: [],
@@ -46,8 +49,11 @@ export class ConversationEngine {
 
     if (this.flow.initialMessage) {
       return {
-        text: this.flow.initialMessage.text,
-        buttons: this.flow.initialMessage.buttons
+        text: substituteVariablesWithMappings(this.flow.initialMessage.text, this.variableContext),
+        buttons: this.flow.initialMessage.buttons?.map(button => ({
+          ...button,
+          label: substituteVariablesWithMappings(button.label, this.variableContext)
+        }))
       };
     }
 
@@ -56,10 +62,11 @@ export class ConversationEngine {
 
   private getCurrentDefaultMessage(currentBranch?: DynamicChatBranch): string {
     if (currentBranch?.defaultMessage) {
-      return currentBranch.defaultMessage;
+      return substituteVariablesWithMappings(currentBranch.defaultMessage, this.variableContext);
     }
 
-    return this.flow.defaultMessage || "I'm sorry, I didn't understand that. Could you try again?";
+    const defaultMessage = this.flow.defaultMessage || "I'm sorry, I didn't understand that. Could you try again?";
+    return substituteVariablesWithMappings(defaultMessage, this.variableContext);
   }
 
   private findMatchingTrigger(userInput: string): string | null {
@@ -142,6 +149,24 @@ export class ConversationEngine {
       }
     }
 
+    // Handle initial message nextBranches when no current branch
+    if (!isExactMatch && !this.state.currentBranch && this.flow.initialMessage?.nextBranches) {
+      nextBranchName = this.flow.initialMessage.nextBranches[userInput] || null;
+      isExactMatch = !!nextBranchName;
+
+      if (!isExactMatch && this.flow.initialMessage.buttons) {
+        const matchedButton = this.flow.initialMessage.buttons.find(
+          btn => btn.label.toLowerCase() === userInput.toLowerCase() ||
+                 btn.value.toLowerCase() === userInput.toLowerCase()
+        );
+        if (matchedButton) {
+          nextBranchName = this.flow.initialMessage.nextBranches[matchedButton.value] ||
+                          this.flow.initialMessage.nextBranches[matchedButton.label];
+          isExactMatch = !!nextBranchName;
+        }
+      }
+    }
+
     if (!isExactMatch && !this.state.currentBranch) {
       nextBranchName = this.findMatchingTrigger(userInput);
     }
@@ -164,8 +189,11 @@ export class ConversationEngine {
       }
 
       return {
-        text: nextBranch.response,
-        buttons: nextBranch.buttons,
+        text: substituteVariablesWithMappings(nextBranch.response, this.variableContext),
+        buttons: nextBranch.buttons?.map(button => ({
+          ...button,
+          label: substituteVariablesWithMappings(button.label, this.variableContext)
+        })),
         actions,
         nextBranch: nextBranchName,
         delay: nextBranch.delay,
@@ -177,7 +205,10 @@ export class ConversationEngine {
 
     return {
       text: defaultMessage,
-      buttons: currentBranchData?.buttons
+      buttons: currentBranchData?.buttons?.map(button => ({
+        ...button,
+        label: substituteVariablesWithMappings(button.label, this.variableContext)
+      }))
     };
   }
 
@@ -195,5 +226,22 @@ export class ConversationEngine {
 
   isWaitingForUser(): boolean {
     return this.flow.startsWith === 'user' && this.state.currentBranch === null;
+  }
+
+  updateVariableContext(context: VariableContext): void {
+    this.variableContext = { ...this.variableContext, ...context };
+  }
+
+  getVariableContext(): VariableContext {
+    return { ...this.variableContext };
+  }
+
+  resetChat(): void {
+    this.reset();
+    // Reset to initial state and get the initial message
+    const initialMessage = this.getInitialMessage();
+    if (initialMessage) {
+      // This will be handled by the ChatInterface when it processes the resetChat action
+    }
   }
 }
