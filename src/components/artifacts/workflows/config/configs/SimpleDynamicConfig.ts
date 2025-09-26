@@ -176,5 +176,40 @@ Justin`
         }
       }
     ]
+  },
+  sidePanel: {
+    enabled: true,
+    title: {
+      text: "TechFlow Industries Engagement",
+      subtitle: "Renewal Planning Workflow",
+      icon: "🏢"
+    },
+    steps: [
+      {
+        id: "analysis",
+        title: "License Analysis",
+        description: "Review current usage and identify opportunities",
+        status: "completed",
+        workflowBranch: "analysis",
+        icon: "📊"
+      },
+      {
+        id: "email-compose",
+        title: "Email Composition",
+        description: "Draft renewal communication",
+        status: "in-progress",
+        workflowBranch: "compose-email",
+        icon: "✉️"
+      }
+    ],
+    progressMeter: {
+      currentStep: 2,
+      totalSteps: 2,
+      progressPercentage: 100,
+      showPercentage: true,
+      showStepNumbers: true
+    },
+    showProgressMeter: true,
+    showSteps: true
   }
 };

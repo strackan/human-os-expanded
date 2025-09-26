@@ -43,6 +43,7 @@ const configMap: Record<string, WorkflowConfig> = {
   'dynamic-chat-example': dynamicChatExampleConfig,
 };
 
+
 // Sample data - in a real app this would come from your backend
 const dashboardData = {
   rep: {
@@ -510,6 +511,11 @@ const CSMDashboard: React.FC = () => {
     // Keep modalConfig to preserve component state - don't set to null
   };
 
+  // Check if we should show a slide-based workflow
+  const getCurrentConfigId = () => modalConfig?.id || defaultLaunchConfig?.id;
+  const currentConfigId = getCurrentConfigId();
+  const currentConfig = currentConfigId ? configMap[currentConfigId] : null;
+
   const handleContextualHelp = (update: any) => {
     // TODO: Implement contextual chat functionality
     // This could launch a chat interface with context about the specific update
@@ -612,10 +618,10 @@ const CSMDashboard: React.FC = () => {
           <div
             className="bg-white rounded-lg shadow-2xl mx-auto overflow-hidden"
             style={{
-              width: '95vw',
-              height: '90vh',
-              maxWidth: '1400px',
-              maxHeight: '900px'
+              width: currentConfig?.layout?.modalDimensions?.width ? `${currentConfig.layout.modalDimensions.width}vw` : '80vw',
+              height: currentConfig?.layout?.modalDimensions?.height ? `${currentConfig.layout.modalDimensions.height}vh` : '80vh',
+              minWidth: '400px',
+              minHeight: '300px'
             }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -29,6 +29,7 @@ interface ChatInterfaceProps {
     showWorkingMessage: () => void;
     hideWorkingMessage: () => void;
   } | null>;
+  sidePanelConfig?: any; // Add side panel config for progress navigation
 }
 
 const ChatInterface = React.forwardRef<{

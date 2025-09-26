@@ -26,16 +26,18 @@
  */
 
 import React, { useState, useImperativeHandle, useEffect } from 'react';
-import { ArtifactsConfig } from '../config/WorkflowConfig';
+import { ArtifactsConfig, SidePanelConfig } from '../config/WorkflowConfig';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import EmailComposer from './EmailComposer';
 
 interface ArtifactsPanelProps {
   config: ArtifactsConfig;
+  sidePanelConfig?: SidePanelConfig; // Add sidePanel configuration
   className?: string;
   workflowConfigName?: string; // Add this to identify which config is being used
   visibleArtifacts?: Set<string>; // For dynamic mode - controls which artifacts are visible
   onSideMenuToggle?: (isVisible: boolean) => void; // Callback for side menu state changes
+  onStepClick?: (stepId: string, workflowBranch: string) => void; // Callback for step clicks
   sideMenuRef?: React.RefObject<{
     showSideMenu: () => void;
     removeSideMenu: () => void;
@@ -168,6 +170,131 @@ const HtmlSection = ({ section }: { section: any }) => (
   </div>
 );
 
+const WorkflowSummarySection = ({ content }: { content: any }) => (
+  <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="flex items-center justify-between mb-6">
+      <h3 className="font-semibold text-gray-800 text-lg">Workflow Summary</h3>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm text-gray-500">{content.customerName}</span>
+        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+      </div>
+    </div>
+
+    {/* Progress Overview */}
+    <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-medium text-blue-800">Current Stage</span>
+        <span className="text-sm text-blue-600">{content.currentStage}</span>
+      </div>
+      <div className="w-full bg-blue-200 rounded-full h-2">
+        <div 
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+          style={{ width: `${content.progressPercentage}%` }}
+        ></div>
+      </div>
+      <div className="text-xs text-blue-600 mt-1">{content.progressPercentage}% Complete</div>
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Left Column */}
+      <div className="space-y-6">
+        {/* Completed Actions */}
+        <div>
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+            <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+            Completed Actions
+          </h4>
+          <ul className="space-y-2">
+            {content.completedActions.map((action: string, index: number) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start">
+                <span className="text-green-500 mr-2 mt-1">✓</span>
+                {action}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Pending Actions */}
+        <div>
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+            <span className="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+            Pending Actions
+          </h4>
+          <ul className="space-y-2">
+            {content.pendingActions.map((action: string, index: number) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start">
+                <span className="text-orange-500 mr-2 mt-1">○</span>
+                {action}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Right Column */}
+      <div className="space-y-6">
+        {/* Next Steps */}
+        <div>
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+            <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+            Next Steps
+          </h4>
+          <ul className="space-y-2">
+            {content.nextSteps.map((step: string, index: number) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start">
+                <span className="text-blue-500 mr-2 mt-1">→</span>
+                {step}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Key Metrics */}
+        <div>
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+            <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+            Key Metrics
+          </h4>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="p-2 bg-gray-50 rounded">
+              <div className="text-gray-500">Current ARR</div>
+              <div className="font-medium text-gray-800">{content.keyMetrics.currentARR}</div>
+            </div>
+            <div className="p-2 bg-gray-50 rounded">
+              <div className="text-gray-500">Projected ARR</div>
+              <div className="font-medium text-gray-800">{content.keyMetrics.projectedARR}</div>
+            </div>
+            <div className="p-2 bg-gray-50 rounded">
+              <div className="text-gray-500">Growth Rate</div>
+              <div className="font-medium text-green-600">{content.keyMetrics.growthRate}</div>
+            </div>
+            <div className="p-2 bg-gray-50 rounded">
+              <div className="text-gray-500">Risk Score</div>
+              <div className="font-medium text-green-600">{content.keyMetrics.riskScore}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recommendations */}
+        <div>
+          <h4 className="font-medium text-gray-800 mb-3 flex items-center">
+            <span className="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
+            Recommendations
+          </h4>
+          <ul className="space-y-2">
+            {content.recommendations.map((rec: string, index: number) => (
+              <li key={index} className="text-sm text-gray-600 flex items-start">
+                <span className="text-indigo-500 mr-2 mt-1">💡</span>
+                {rec}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const CustomSection = ({ section }: { section: any }) => (
   <div className="bg-white rounded-lg border border-gray-200 p-6">
     <h3 className="font-semibold text-gray-800 mb-6 text-lg">{section.title}</h3>
@@ -183,18 +310,31 @@ interface SideMenuProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
   onRemove: () => void;
+  sidePanelConfig?: SidePanelConfig;
+  width?: number;
+  onStepClick?: (stepId: string, workflowBranch: string) => void;
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove, sidePanelConfig, width = 280, onStepClick }) => {
   if (!isVisible) return null;
 
   return (
     <div 
-      className={`bg-white border-l border-gray-200 shadow-lg transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-12' : 'w-48'
-      }`}
-      style={{ height: '100%' }}
+      className="fixed top-0 right-0 z-50 transition-all duration-300 ease-in-out"
+      style={{ 
+        height: '100vh',
+        width: isCollapsed ? '48px' : `${width}px`,
+        transform: isVisible ? 'translateX(0)' : 'translateX(100%)'
+      }}
     >
+      {/* Sidebar Content */}
+      <div 
+        className="bg-white border-l border-gray-200 shadow-lg h-full"
+        style={{ 
+          height: '100%',
+          width: '100%'
+        }}
+      >
       {/* Side Menu Header */}
       <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
         {!isCollapsed && (
@@ -240,42 +380,132 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
 
       {/* Side Menu Content */}
       {!isCollapsed && (
-        <div className="p-4 space-y-4">
-          <div className="text-sm text-gray-600">
-            <h5 className="font-medium text-gray-800 mb-2">Placeholder Content</h5>
-            <p className="text-xs text-gray-500 mb-3">
-              This is placeholder content for the side menu. You can add any functionality here.
-            </p>
-            
-            <div className="space-y-2">
-              <div className="p-2 bg-blue-50 rounded border border-blue-200">
-                <p className="text-xs font-medium text-blue-800">Feature 1</p>
-                <p className="text-xs text-blue-600">Description of feature</p>
+        <div className="flex flex-col h-full">
+          {/* Fixed Header */}
+          <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
+            {sidePanelConfig ? (
+              <div>
+                <div className="flex items-center space-x-2 mb-1">
+                  {sidePanelConfig.title.icon && (
+                    <span className="text-lg">{sidePanelConfig.title.icon}</span>
+                  )}
+                  <h5 className="font-semibold text-gray-800 text-sm">{sidePanelConfig.title.text}</h5>
+                </div>
+                {sidePanelConfig.title.subtitle && (
+                  <p className="text-xs text-gray-500">{sidePanelConfig.title.subtitle}</p>
+                )}
               </div>
-              
-              <div className="p-2 bg-green-50 rounded border border-green-200">
-                <p className="text-xs font-medium text-green-800">Feature 2</p>
-                <p className="text-xs text-green-600">Another feature description</p>
+            ) : (
+              <div>
+                <h5 className="font-semibold text-gray-800 text-sm">Process Steps</h5>
+                <p className="text-xs text-gray-500">No configuration available</p>
               </div>
-              
-              <div className="p-2 bg-purple-50 rounded border border-purple-200">
-                <p className="text-xs font-medium text-purple-800">Feature 3</p>
-                <p className="text-xs text-purple-600">Third feature description</p>
+            )}
+          </div>
+
+          {/* Scrollable Content - Steps only */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {sidePanelConfig && sidePanelConfig.showSteps && (
+              <div className="space-y-2">
+                {sidePanelConfig.steps.map((step, index) => (
+                  <div 
+                    key={step.id}
+                    onClick={() => onStepClick?.(step.id, step.workflowBranch)}
+                    className={`p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-md ${
+                      step.status === 'completed' 
+                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' 
+                        : step.status === 'in-progress'
+                        ? 'bg-blue-50 border-blue-300 hover:bg-blue-100'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
+                    title={`Click to navigate to ${step.title}`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                        step.status === 'completed' 
+                          ? 'bg-green-500 text-white' 
+                          : step.status === 'in-progress'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-gray-600'
+                      }`}>
+                        {step.status === 'completed' ? (
+                          <span className="text-xs">✓</span>
+                        ) : (
+                          <span>{index + 1}</span>
+                        )}
+                      </div>
+                      {step.icon && <span className="text-base">{step.icon}</span>}
+                      <div className="flex-1">
+                        <p className={`text-sm font-medium ${
+                          step.status === 'completed' 
+                            ? 'text-green-800' 
+                            : step.status === 'in-progress'
+                            ? 'text-blue-800'
+                            : 'text-gray-700'
+                        }`}>
+                          {step.title}
+                        </p>
+                        {step.description && (
+                          <p className={`text-xs ${
+                            step.status === 'completed' 
+                              ? 'text-green-600' 
+                              : step.status === 'in-progress'
+                              ? 'text-blue-600'
+                              : 'text-gray-500'
+                          }`}>
+                            {step.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sticky Progress Meter Footer */}
+          {sidePanelConfig && sidePanelConfig.showProgressMeter && (
+            <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-medium text-gray-700">Progress</span>
+                  {sidePanelConfig.progressMeter.showPercentage && (
+                    <span className="text-xs text-gray-500">
+                      {sidePanelConfig.progressMeter.progressPercentage}%
+                    </span>
+                  )}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${sidePanelConfig.progressMeter.progressPercentage}%` }}
+                  ></div>
+                </div>
+                {sidePanelConfig.progressMeter.showStepNumbers && (
+                  <div className="text-xs text-gray-500">
+                    {sidePanelConfig.progressMeter.currentStep} of {sidePanelConfig.progressMeter.totalSteps} completed
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
+      </div>
     </div>
   );
 };
 
-const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, sideMenuRef }) => {
+const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, onStepClick, sideMenuRef }) => {
   // Side menu state
   const [sideMenuState, setSideMenuState] = useState<SideMenuState>({
     isVisible: false,
     isCollapsed: false
   });
+  
+  // Fixed sidebar width - no resizing
+  const sidebarWidth = 320; // Fixed width for better UX
 
   const visibleSections = config.sections.filter(s => {
     // If visibleArtifacts is provided (dynamic mode), use it to filter
@@ -344,47 +574,67 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, className = '',
         </div>
       </div>
       <div className="flex h-full" style={{ height: 'calc(100% - 60px)' }}>
-        <div
-          className="p-6 text-gray-700 flex-1"
-          style={{
-            overflowY: 'scroll'
-          }}
-        >
-          {visibleSections.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-gray-400">
-              <div className="text-center">
-                <div className="text-4xl mb-2">📄</div>
-                <p>No artifacts yet</p>
-                <p className="text-sm mt-2">Artifacts will appear here as you interact</p>
+        <div className="flex flex-col flex-1">
+          {/* Scrollable Artifacts Content */}
+          <div
+            className="p-6 text-gray-700 flex-1 overflow-y-auto"
+          >
+            {visibleSections.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-gray-400">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📄</div>
+                  <p>No artifacts yet</p>
+                  <p className="text-sm mt-2">Artifacts will appear here as you interact</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {visibleSections.map((section) => {
+                switch (section.type) {
+                  case 'license-analysis':
+                    return <LicenseAnalysisSection key={section.id} content={section.content} />;
+                  case 'email-draft':
+                    return <EmailDraftSection key={section.id} content={section.content} />;
+                  case 'email':
+                    return (
+                      <EmailComposer 
+                        key={section.id} 
+                        content={section.content} 
+                        editable={section.editable !== false} // Default to true for email type
+                        typingSpeed={8}
+                      />
+                    );
+                  case 'workflow-summary':
+                    return <WorkflowSummarySection key={section.id} content={section.content} />;
+                  case 'html':
+                    return <HtmlSection key={section.id} section={section} />;
+                  case 'custom':
+                    return <CustomSection key={section.id} section={section} />;
+                  default:
+                    return null;
+                }
+              })}
+              </div>
+            )}
+          </div>
+
+          {/* Sticky Progress Meter Footer for Main Content */}
+          <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-700">Planning Stage</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: '20%' }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500">
+                Step 1 of 6
               </div>
             </div>
-          ) : (
-            <div className="space-y-8">
-              {visibleSections.map((section) => {
-              switch (section.type) {
-                case 'license-analysis':
-                  return <LicenseAnalysisSection key={section.id} content={section.content} />;
-                case 'email-draft':
-                  return <EmailDraftSection key={section.id} content={section.content} />;
-                case 'email':
-                  return (
-                    <EmailComposer 
-                      key={section.id} 
-                      content={section.content} 
-                      editable={section.editable !== false} // Default to true for email type
-                      typingSpeed={8}
-                    />
-                  );
-                case 'html':
-                  return <HtmlSection key={section.id} section={section} />;
-                case 'custom':
-                  return <CustomSection key={section.id} section={section} />;
-                default:
-                  return null;
-              }
-            })}
-            </div>
-          )}
+          </div>
         </div>
         
         {/* Side Menu */}
@@ -393,6 +643,9 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, className = '',
           isCollapsed={sideMenuState.isCollapsed}
           onToggleCollapse={toggleSideMenu}
           onRemove={removeSideMenu}
+          sidePanelConfig={sidePanelConfig}
+          width={sidebarWidth}
+          onStepClick={onStepClick}
         />
       </div>
     </div>

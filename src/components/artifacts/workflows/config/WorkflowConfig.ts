@@ -79,6 +79,61 @@ export interface DynamicChatFlow {
   };
 }
 
+export interface WorkflowSlide {
+  id: string;
+  slideNumber: number;
+  title: string;
+  description: string;
+  label: string; // Human-readable label for progress steps (e.g., "Initial Contact", "Needs Assessment")
+  stepMapping: string; // Maps to sidePanel step ID
+  chat: {
+    initialMessage?: {
+      text: string;
+      buttons?: DynamicChatButton[];
+    };
+    branches: {
+      [branchName: string]: DynamicChatBranch;
+    };
+    userTriggers?: {
+      [pattern: string]: string;
+    };
+    defaultMessage?: string;
+  };
+  artifacts: {
+    sections: Array<{
+      id: string;
+      title: string;
+      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary';
+      visible: boolean;
+      editable?: boolean;
+      content?: any;
+      htmlContent?: string;
+      styles?: string;
+    }>;
+  };
+  sidePanel?: {
+    enabled: boolean;
+    title: {
+      text: string;
+      subtitle: string;
+      icon: string;
+    };
+    steps: Array<{
+      id: string;
+      title: string;
+      description: string;
+      status: 'pending' | 'in-progress' | 'completed';
+      workflowBranch: string;
+      icon: string;
+    }>;
+  };
+  onComplete?: {
+    nextSlide?: number;
+    actions?: string[];
+    updateProgress?: boolean;
+  };
+}
+
 export interface ChatConfig {
   placeholder: string;
   aiGreeting: string;
@@ -109,7 +164,7 @@ export interface ArtifactsConfig {
   sections: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary';
     visible: boolean;
     editable?: boolean;
     content?: any;
@@ -131,6 +186,36 @@ export interface CustomerOverviewConfig {
   };
 }
 
+export interface SidePanelStep {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'pending' | 'in-progress' | 'completed' | 'skipped';
+  workflowBranch?: string; // Maps to a workflow branch for step progression
+  icon?: string; // Optional icon identifier
+}
+
+export interface SidePanelProgressMeter {
+  currentStep: number;
+  totalSteps: number;
+  progressPercentage: number;
+  showPercentage?: boolean;
+  showStepNumbers?: boolean;
+}
+
+export interface SidePanelConfig {
+  enabled: boolean;
+  title: {
+    text: string;
+    subtitle?: string;
+    icon?: string;
+  };
+  steps: SidePanelStep[];
+  progressMeter: SidePanelProgressMeter;
+  showProgressMeter?: boolean;
+  showSteps?: boolean;
+}
+
 export interface WorkflowConfig {
   customer: {
     name: string;
@@ -146,11 +231,14 @@ export interface WorkflowConfig {
     dividerPosition: number;
     chatWidth: number;
     splitModeDefault: boolean;
+    statsHeight?: number; // Percentage of height for stats section (default: 50)
   };
   customerOverview: CustomerOverviewConfig;
   analytics: AnalyticsConfig;
   chat: ChatConfig;
   artifacts: ArtifactsConfig;
+  sidePanel?: SidePanelConfig;
+  slides?: WorkflowSlide[]; // Optional slides for slide-based presentation
 }
 
 export const defaultWorkflowConfig: WorkflowConfig = {
@@ -167,7 +255,8 @@ export const defaultWorkflowConfig: WorkflowConfig = {
     },
     dividerPosition: 50,
     chatWidth: 50,
-    splitModeDefault: false
+    splitModeDefault: false,
+    statsHeight: 50 // Default 50/50 ratio for stats and chat areas
   },
   customerOverview: {
     metrics: {

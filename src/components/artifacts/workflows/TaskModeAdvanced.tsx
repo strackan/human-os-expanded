@@ -92,7 +92,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     },
     layout: {
       ...workflowConfig.layout,
-      splitModeDefault: showArtifact ? artifact_visible : false
+      splitModeDefault: showArtifact ? artifact_visible : workflowConfig.layout.splitModeDefault
     }
   };
 
@@ -102,11 +102,12 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const [modalDimensions, setModalDimensions] = useState(config.layout.modalDimensions);
 
   // Layout states
-  const [dividerPosition, setDividerPosition] = useState(config.layout.dividerPosition);
+  const [statsHeight, setStatsHeight] = useState(config.layout.statsHeight || 50); // Default 50% for stats
   const [isSplitMode, setIsSplitMode] = useState(config.layout.splitModeDefault);
   const [chatWidth, setChatWidth] = useState(config.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
+  const [isDragging, setIsDragging] = useState(false); // Track dragging state
 
   const modalRef = useRef<HTMLDivElement>(null);
   const chatInterfaceRef = useRef<{
@@ -182,6 +183,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     }
   };
 
+  const handleStepClick = (stepId: string, workflowBranch: string) => {
+    console.log('TaskModeAdvanced: Step clicked:', stepId, 'branch:', workflowBranch);
+    
+    // Trigger the chat to navigate to the specific workflow branch
+    if (chatInterfaceRef.current && workflowBranch) {
+      // We'll need to add a method to the chat interface to handle branch navigation
+      // For now, we can trigger it through the conversation engine
+      console.log('Navigating to workflow branch:', workflowBranch);
+      // This would need to be implemented in the ChatInterface component
+    }
+  };
+
   // Expose methods to parent components
   useImperativeHandle(ref, () => ({
     openArtifact,
@@ -251,18 +264,19 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const startHorizontalDividerResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
+    setIsDragging(true); // Start dragging
     const startY = e.clientY;
     const modalRect = modalRef.current?.getBoundingClientRect();
     if (!modalRect) return;
-    const startPosition = dividerPosition;
+    const startStatsHeight = statsHeight;
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
       const deltaY = moveEvent.clientY - startY;
       const modalHeight = modalRect.height - 60; // Account for header height
       const deltaPercent = (deltaY / modalHeight) * 100;
-      const newPosition = Math.max(25, Math.min(75, startPosition + deltaPercent));
-      setDividerPosition(newPosition);
+      const newStatsHeight = Math.max(15, Math.min(60, startStatsHeight + deltaPercent));
+      setStatsHeight(newStatsHeight);
     };
 
     const handleMouseUp = () => {
@@ -270,6 +284,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       document.removeEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
+      setIsDragging(false); // End dragging
     };
 
     document.body.style.cursor = 'ns-resize';
@@ -278,7 +293,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Vertical divider resize
+  // Vertical divider resize - using same pattern as horizontal divider
   const startVerticalDividerResize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -317,15 +332,13 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   
   const containerStyles = inline 
     ? {}
-    : {
+    :       {
         top: '50px',
         left: '50px',
-        width: '1200px',
-        height: '800px',
+        width: '80vw',
+        height: '80vh',
         minWidth: '400px',
-        minHeight: '300px',
-        maxWidth: '95vw',
-        maxHeight: '95vh'
+        minHeight: '300px'
       };
 
   return (
@@ -444,12 +457,15 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
       {/* DATA AREA */}
       <div
-        className={`bg-gray-50 border-b border-gray-200 flex-shrink-0 overflow-hidden transition-all duration-500 ease-in-out ${
-          isStatsVisible ? 'opacity-100' : 'opacity-0 max-h-0'
+        className={`bg-gray-50 border-b border-gray-200 flex-shrink-0 overflow-hidden ${
+          isStatsVisible ? 'opacity-100' : 'opacity-0'
+        } ${
+          isDragging ? '' : 'transition-all duration-500 ease-in-out'
         }`}
-        style={{ 
-          maxHeight: isStatsVisible ? '250px' : '0px',
-          minHeight: isStatsVisible ? '150px' : '0px',
+        style={{
+          height: isStatsVisible ? `calc(${statsHeight}% - 2rem)` : '0px',
+          minHeight: isStatsVisible ? '100px' : '0px',
+          maxHeight: isStatsVisible ? '60%' : '0px',
           padding: isStatsVisible ? '1rem' : '0rem'
         }}
       >
@@ -465,7 +481,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       {/* HORIZONTAL DIVIDER - Only visible when stats are shown */}
       {isStatsVisible && (
         <div
-          className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300 transition-all duration-500 ease-in-out flex-shrink-0"
+          className="bg-gray-200 border-y border-gray-300 cursor-ns-resize flex items-center justify-center hover:bg-gray-300 transition-colors duration-200 flex-shrink-0"
           style={{ height: '6px' }}
           onMouseDown={startHorizontalDividerResize}
         >
@@ -478,15 +494,21 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
       {/* CHAT AND ARTIFACTS AREA */}
       <div
-        className="flex bg-white flex-1 overflow-hidden"
-        style={{ minHeight: 0 }}
+        className={`flex bg-white overflow-hidden ${
+          isDragging ? '' : 'transition-all duration-500 ease-in-out'
+        }`}
+        style={{
+          minHeight: 0,
+          height: isStatsVisible ? `calc(100% - ${statsHeight}% - 6px + 2rem)` : '100%',
+          flexGrow: 1
+        }}
       >
         {/* CHAT CONTAINER */}
         <div
           className="flex flex-col h-full overflow-hidden"
           style={{
-            width: isSplitMode ? `${chatWidth}%` : '100%',
-            borderRight: isSplitMode ? '1px solid #e5e7eb' : 'none'
+            width: (isSplitMode || visibleArtifacts.size > 0) ? `${chatWidth}%` : '100%',
+            borderRight: (isSplitMode || visibleArtifacts.size > 0) ? '1px solid #e5e7eb' : 'none'
           }}
         >
           <ChatInterface
@@ -500,28 +522,30 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           />
         </div>
 
-        {/* VERTICAL DIVIDER - Only in split mode */}
-        {isSplitMode && (
+        {/* VERTICAL DIVIDER - Show when there are visible artifacts */}
+        {(isSplitMode || visibleArtifacts.size > 0) && (
           <div 
-            className="w-2 bg-gray-200 cursor-ew-resize hover:bg-gray-300 transition-colors flex items-center justify-center"
+            className="bg-gray-200 border-x border-gray-300 cursor-ew-resize flex items-center justify-center hover:bg-gray-300 transition-all duration-500 ease-in-out flex-shrink-0"
+            style={{ width: '6px' }}
             onMouseDown={startVerticalDividerResize}
           >
-            <div className="flex flex-col space-y-1">
-              <div className="w-px h-3 bg-gray-500"></div>
-              <div className="w-px h-3 bg-gray-500"></div>
-              <div className="w-px h-3 bg-gray-500"></div>
+            <div className="flex flex-col space-y-px">
+              <div className="w-px h-8 bg-gray-500"></div>
+              <div className="w-px h-8 bg-gray-500"></div>
             </div>
           </div>
         )}
 
-        {/* ARTIFACTS CONTAINER - Only in split mode */}
-        {isSplitMode && (
+        {/* ARTIFACTS CONTAINER - Show when there are visible artifacts */}
+        {(isSplitMode || visibleArtifacts.size > 0) && (
           <div className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
             <ArtifactsPanel
               config={config.artifacts}
+              sidePanelConfig={config.sidePanel}
               workflowConfigName={workflowConfigName}
               className="h-full overflow-hidden"
               visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}
+              onStepClick={handleStepClick}
             />
           </div>
         )}
