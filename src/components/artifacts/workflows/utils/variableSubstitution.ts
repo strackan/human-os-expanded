@@ -1,4 +1,5 @@
 import { User } from '@supabase/supabase-js';
+import { getChartTemplate } from '../config/chartTemplates';
 
 export interface VariableContext {
   user?: User | null;
@@ -121,22 +122,41 @@ export const VARIABLE_MAPPINGS = {
 } as const;
 
 /**
- * Enhanced substitution that also handles predefined mappings
+ * Enhanced substitution that also handles predefined mappings and chart templates
  */
 export function substituteVariablesWithMappings(text: string, context: VariableContext): string {
   if (!text || typeof text !== 'string') {
     return text;
   }
 
-  // First, expand any shortcut variables
-  let expandedText = text;
-  Object.entries(VARIABLE_MAPPINGS).forEach(([shortcut, fullPath]) => {
-    const regex = new RegExp(`\\{\\{${shortcut}\\}\\}`, 'g');
-    expandedText = expandedText.replace(regex, `{{${fullPath}}}`);
+  // First, handle chart template variables
+  let result = text.replace(/\{\{chart\.(\w+)\.(\w+)(?:\.(\w+))?\}\}/g, (match, chartType, trend, property) => {
+    try {
+      const chartTemplate = getChartTemplate(
+        chartType as any,
+        trend as 'falling' | 'flat' | 'rising'
+      );
+      
+      if (property) {
+        return chartTemplate[property] || '';
+      }
+      
+      // Return the entire chart template as JSON string
+      return JSON.stringify(chartTemplate);
+    } catch (error) {
+      console.warn(`Failed to resolve chart template: ${match}`, error);
+      return match;
+    }
   });
 
-  // Then perform normal substitution
-  return substituteVariables(expandedText, context);
+  // Then, expand any shortcut variables
+  Object.entries(VARIABLE_MAPPINGS).forEach(([shortcut, fullPath]) => {
+    const regex = new RegExp(`\\{\\{${shortcut}\\}\\}`, 'g');
+    result = result.replace(regex, `{{${fullPath}}}`);
+  });
+
+  // Finally, perform normal substitution
+  return substituteVariables(result, context);
 }
 
 /**

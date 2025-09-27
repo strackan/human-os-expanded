@@ -6,7 +6,7 @@ export const dynamicChatExampleConfig: WorkflowConfig = {
     nextCustomer: 'Acme Corp Inc.'
   },
   layout: {
-    modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
+    modalDimensions: { width: 80, height: 90, top: 10, left: 10 },
     dividerPosition: 50,
     chatWidth: 50,
     splitModeDefault: false // Set to false to start without artifacts visible
@@ -253,7 +253,7 @@ export const userInitiatedDynamicConfig: WorkflowConfig = {
     nextCustomer: 'Dynamic Corp'
   },
   layout: {
-    modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
+    modalDimensions: { width: 80, height: 90, top: 10, left: 10 },
     dividerPosition: 50,
     chatWidth: 50,
     splitModeDefault: true

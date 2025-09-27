@@ -49,47 +49,13 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
         status: 'orange',
         sublabel: '24 open roles on LinkedIn; Strong champion engagement'
       },
-      yoyGrowth: {
-        label: 'YoY Growth',
-        value: '+1.2%',
-        status: 'orange',
-        sparkData: [3, 4, 3, 5, 4, 3, 3.5],
-        sublabel: 'Annual'
-      },
-      lastMonth: {
-        label: 'Last Month',
-        value: '+0.2%',
-        status: 'orange',
-        sparkData: [3, 3, 3, 3.2, 3.6, 2.7, 3.1],
-        sublabel: 'Flat'
-      }
+      yoyGrowth: '{{chart.yoyGrowth.flat}}',
+      lastMonth: '{{chart.lastMonth.flat}}'
     }
   },
   analytics: {
-    usageTrend: {
-      title: 'Weekly Users',
-      showReferenceLine: true,
-      referenceLineLabel: 'Uplift Threshold',
-      referenceLineHeight: 10,
-      data: [3, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8, 7, 7, 8, 7, 7, 7, 6, 5, 6, 4],
-      chartContextLabel: 'Stagnant usage in first year. Needs onboarding attention',   // Complete control over the text
-      chartContextColor: 'text-orange-600',
-      chartMin: 0,        // Add this line
-      chartMax: 15,       // Add this line
-      dataColors: { threshold: 5, belowColor: 'bg-orange-600', aboveColor: 'bg-green-500' }
-    },
-    userLicenses: {
-      title: 'License Usage',
-      showReferenceLine: true,
-      referenceLineLabel: 'License Limit',
-      referenceLineHeight: 10,
-      data: [1, 1, 1, 1, 0, 1, 1, 2, 2, 3, 2, 3, 4, 4, 3, 4,4, 5, 4, 3, 1, 2, 4, 3, 3, 4, 6, 5, 5, 6, 4, 2, 5, 7, 4, 3, 6, 7, 2, 4],
-      chartContextLabel: 'License consumption is low compared to total users',   // Complete control over the text
-      chartContextColor: 'text-yellow-600',
-      chartMin: 0,        // Add this line
-      chartMax: 15,       // Add this line
-      dataColors: { threshold: 5, belowColor: 'bg-yellow-600', aboveColor: 'bg-green-500' }
-    },
+    usageTrend: '{{chart.usageTrend.falling}}',
+    userLicenses: '{{chart.userLicenses.falling}}',
     renewalInsights: {
       renewalStage: 'Planning',
       confidence: 72,
@@ -103,11 +69,11 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
   },
   chat: {
     placeholder: 'Feel free to ask any questions here...',
-    aiGreeting: "Good morning, Angela! Bluebird Memorial Hospital's 90-day autorenewal is next week. It's time to prepare our strategy and deliver the renewal notification. Shall we get started? ",
+    aiGreeting: "Good morning, {{user.first}}! {{customer.name}}'s 90-day autorenewal is next week. Their YoY growth is {{chart.yoyGrowth.flat.trendValue}} and usage trend shows {{chart.usageTrend.falling.chartContextLabel}}. It's time to prepare our strategy and deliver the renewal notification. Shall we get started?",
     conversationSeed: [
       {
         sender: 'ai',
-        text: 'Good morning, Angela! Bluebird Memorial Hospital\'s 90-day autorenewal is next week. It\'s time to prepare our strategy and deliver the renewal notification. Shall we get started?',
+        text: 'Good morning, {{user.first}}! {{customer.name}}\'s 90-day autorenewal is next week. Their YoY growth is {{chart.yoyGrowth.flat.trendValue}} and usage trend shows {{chart.usageTrend.falling.chartContextLabel}}. It\'s time to prepare our strategy and deliver the renewal notification. Shall we get started?',
         type: 'buttons',
         buttons: [
           { label: 'Skip', value: 'skip', 'label-background': '#ef4444', 'label-text': '#ffffff' },
@@ -121,7 +87,7 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
       },
       {
         sender: 'ai',
-        text: 'Perfect. Given Bluebird Memorial\'s above-average ARR and current risk factors, I recommend a conservative strategy with little to no increase. How shall we proceed?',
+        text: 'Perfect. Given {{customer.name}}\'s above-average ARR and current risk factors, I recommend a conservative strategy with little to no increase. How shall we proceed?',
         type: 'buttons',
         buttons: [
           { label: 'Other', value: 'no', 'label-background': '#7c7c7c', 'label-text': '#ffffff' },

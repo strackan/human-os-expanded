@@ -42,8 +42,11 @@ import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
 import ChatInterface from './components/ChatInterface';
 import ArtifactsPanel from './components/ArtifactsPanel';
+import FinalSlide from './components/FinalSlide';
 import { WorkflowConfig, defaultWorkflowConfig } from './config/WorkflowConfig';
 import { ConversationAction } from './utils/conversationEngine';
+import { isLastTemplateInGroup } from './config/templateGroups';
+import { getChartTemplate } from './config/chartTemplates';
 
 interface TaskModeModalProps {
   isOpen: boolean;
@@ -60,6 +63,8 @@ interface TaskModeModalProps {
   inline?: boolean; // New prop to render inline instead of as modal
   onShowWorkingMessage?: () => void; // Callback to show "Working On It" message
   onHideWorkingMessage?: () => void; // Callback to hide "Working On It" message
+  templateGroupId?: string; // Template group ID for checking if this is the last template
+  currentTemplateIndex?: number; // Current template index in the group
 }
 
 // Interface for exposed methods
@@ -84,7 +89,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   groupProgress,
   inline = false,
   onShowWorkingMessage,
-  onHideWorkingMessage
+  onHideWorkingMessage,
+  templateGroupId,
+  currentTemplateIndex = 0
 }, ref) => {
   // Use configuration with overrides
   const config: WorkflowConfig = {
@@ -101,13 +108,14 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const [modalDimensions, setModalDimensions] = useState(workflowConfig.layout.modalDimensions);
 
   // Layout states
-  const [statsHeight, setStatsHeight] = useState(workflowConfig.layout.statsHeight || 50); // Default 50% for stats
+  const [statsHeight, setStatsHeight] = useState(workflowConfig.layout.statsHeight || 45.3); // Default 45.3% for stats
   const [isSplitMode, setIsSplitMode] = useState(workflowConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
   const [chatWidth, setChatWidth] = useState(workflowConfig.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0); // Track current slide
+  const [showFinalSlide, setShowFinalSlide] = useState(false); // Track final slide state
 
   // Reset split mode when template changes
   React.useEffect(() => {
@@ -231,10 +239,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       }
     } else if (action.type === 'exitTaskMode') {
       console.log('TaskModeAdvanced: Processing exitTaskMode action');
-      // Close the modal and reset state
+      // For snooze/skip actions, use display:none to completely reset content
+      if (modalRef.current) {
+        modalRef.current.style.display = 'none';
+      }
+      // Also call onClose to trigger any parent component cleanup
       onClose();
     } else if (action.type === 'nextCustomer') {
       console.log('TaskModeAdvanced: Processing nextCustomer action');
+      // For snooze/skip actions, use display:none to completely reset content
+      if (modalRef.current) {
+        modalRef.current.style.display = 'none';
+      }
       // Trigger next customer functionality if provided, otherwise just close
       if (onNextCustomer) {
         onNextCustomer();
@@ -249,8 +265,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       }
     } else if (action.type === 'resetToInitialState') {
       console.log('TaskModeAdvanced: Processing resetToInitialState action');
-      // Reset everything to initial state - simulate browser refresh
-      resetToInitialState();
+      // Check if this is the last template in a group
+      if (templateGroupId && isLastTemplateInGroup(templateGroupId, currentTemplateIndex)) {
+        console.log('TaskModeAdvanced: Last template in group, showing final slide instead of reset');
+        setShowFinalSlide(true);
+      } else {
+        // Reset everything to initial state - simulate browser refresh
+        resetToInitialState();
+      }
+    } else if (action.type === 'showFinalSlide') {
+      console.log('TaskModeAdvanced: Processing showFinalSlide action');
+      // Show the final slide
+      setShowFinalSlide(true);
     } else {
       console.log('TaskModeAdvanced: Unknown action type:', action.type);
     }
@@ -281,6 +307,56 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     }
   };
 
+  // Resolve analytics config template variables
+  const resolveAnalyticsConfig = (analyticsConfig: any) => {
+    const resolved = { ...analyticsConfig };
+    
+    // Resolve usageTrend if it's a template variable
+    if (typeof resolved.usageTrend === 'string' && resolved.usageTrend.startsWith('{{chart.')) {
+      const match = resolved.usageTrend.match(/\{\{chart\.(\w+)\.(\w+)\}\}/);
+      if (match) {
+        const [, chartType, trend] = match;
+        resolved.usageTrend = getChartTemplate(chartType as any, trend as 'falling' | 'flat' | 'rising');
+      }
+    }
+    
+    // Resolve userLicenses if it's a template variable
+    if (typeof resolved.userLicenses === 'string' && resolved.userLicenses.startsWith('{{chart.')) {
+      const match = resolved.userLicenses.match(/\{\{chart\.(\w+)\.(\w+)\}\}/);
+      if (match) {
+        const [, chartType, trend] = match;
+        resolved.userLicenses = getChartTemplate(chartType as any, trend as 'falling' | 'flat' | 'rising');
+      }
+    }
+    
+    return resolved;
+  };
+
+  // Resolve customer overview config template variables
+  const resolveCustomerOverviewConfig = (customerOverviewConfig: any) => {
+    const resolved = { ...customerOverviewConfig };
+    
+    // Resolve yoyGrowth if it's a template variable
+    if (typeof resolved.metrics?.yoyGrowth === 'string' && resolved.metrics.yoyGrowth.startsWith('{{chart.')) {
+      const match = resolved.metrics.yoyGrowth.match(/\{\{chart\.(\w+)\.(\w+)\}\}/);
+      if (match) {
+        const [, chartType, trend] = match;
+        resolved.metrics.yoyGrowth = getChartTemplate(chartType as any, trend as 'falling' | 'flat' | 'rising');
+      }
+    }
+    
+    // Resolve lastMonth if it's a template variable
+    if (typeof resolved.metrics?.lastMonth === 'string' && resolved.metrics.lastMonth.startsWith('{{chart.')) {
+      const match = resolved.metrics.lastMonth.match(/\{\{chart\.(\w+)\.(\w+)\}\}/);
+      if (match) {
+        const [, chartType, trend] = match;
+        resolved.metrics.lastMonth = getChartTemplate(chartType as any, trend as 'falling' | 'flat' | 'rising');
+      }
+    }
+    
+    return resolved;
+  };
+
   // Reset to initial state method
   const resetToInitialState = () => {
     console.log('TaskModeAdvanced: Resetting to initial state');
@@ -292,6 +368,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     setVisibleArtifacts(new Set());
     setIsDragging(false);
     setCurrentSlideIndex(0);
+    setShowFinalSlide(false); // Reset final slide state
     
     // Reset modal dimensions to initial values
     setModalDimensions(config.layout.modalDimensions);
@@ -437,6 +514,12 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   };
 
   // Always render to preserve state - visibility controlled by parent
+  // Reset display style when modal is reopened
+  useEffect(() => {
+    if (isOpen && modalRef.current) {
+      modalRef.current.style.display = 'block';
+    }
+  }, [isOpen]);
 
   // Render inline or as modal based on inline prop
   const containerClasses = inline 
@@ -449,10 +532,20 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         top: '50px',
         left: '50px',
         width: '80vw',
-        height: '80vh',
+        height: '90vh',
         minWidth: '400px',
-        minHeight: '300px'
+        minHeight: '400px'
       };
+
+  // Show final slide if requested
+  if (showFinalSlide) {
+    return (
+      <FinalSlide 
+        onClose={onClose}
+        message="That's all for today!"
+      />
+    );
+  }
 
   return (
     <div
@@ -550,10 +643,20 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
             <h2 className="text-lg font-semibold text-gray-800">{config.customer.name}</h2>
             {(onNextCustomer || config.customer.nextCustomer) && (
               <button
-                onClick={onNextCustomer}
+                onClick={() => {
+                  // Check if this is the last template in a group
+                  if (templateGroupId && isLastTemplateInGroup(templateGroupId, currentTemplateIndex)) {
+                    setShowFinalSlide(true);
+                  } else if (onNextCustomer) {
+                    onNextCustomer();
+                  }
+                }}
                 className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
               >
-                Next Customer - {nextCustomerName || config.customer.nextCustomer || 'Next'}
+                {templateGroupId && isLastTemplateInGroup(templateGroupId, currentTemplateIndex) 
+                  ? "That's all for today!" 
+                  : `Next Customer - ${nextCustomerName || config.customer.nextCustomer || 'Next'}`
+                }
               </button>
             )}
           </div>
@@ -576,18 +679,19 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           isDragging ? '' : 'transition-all duration-500 ease-in-out'
         }`}
         style={{
-          height: isStatsVisible ? `calc(${statsHeight}% - 2rem)` : '0px',
+          height: isStatsVisible ? `${statsHeight}%` : '0px',
           minHeight: isStatsVisible ? '100px' : '0px',
           maxHeight: isStatsVisible ? '60%' : '0px',
-          padding: isStatsVisible ? '1rem' : '0rem'
+          padding: isStatsVisible ? '1rem' : '0rem',
+          boxSizing: 'border-box'
         }}
       >
         <div className="flex space-x-4">
           {/* Left Side - Customer Overview */}
-          <CustomerOverview config={config.customerOverview} />
+          <CustomerOverview config={resolveCustomerOverviewConfig(config.customerOverview)} />
 
           {/* Right Side - Analytics Quadrants */}
-          <Analytics config={config.analytics} />
+          <Analytics config={resolveAnalyticsConfig(config.analytics)} />
         </div>
       </div>
 
@@ -612,7 +716,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         }`}
         style={{
           minHeight: 0,
-          height: isStatsVisible ? `calc(100% - ${statsHeight}% - 6px + 2rem)` : '100%',
+          height: isStatsVisible ? `calc(100% - ${statsHeight}% - 6px)` : '100%',
           flexGrow: 1
         }}
       >

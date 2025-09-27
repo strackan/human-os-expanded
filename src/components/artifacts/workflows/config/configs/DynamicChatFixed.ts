@@ -55,21 +55,8 @@ export const dynamicChatSlides: WorkflowSlide[] = [
             'standard': 'standard-renewal'
           }
         },
-        'snooze': {
-          response: "No problem! I'll check back in a couple days. Let me reset this workflow for you.",
-          actions: ['resetToInitialState']
-        },
-        'skip': {
-          response: "Okay, I'll check in next time they come up on my radar. Shall we move on to the next customer?",
-          buttons: [
-            { label: 'Exit', value: 'exit', 'label-background': 'bg-gray-300', 'label-text': 'text-gray-700' },
-            { label: 'Yes', value: 'next-customer', 'label-background': 'bg-green-500', 'label-text': 'text-white' }
-          ],
-          nextBranches: {
-            'exit': 'exit-task-mode',
-            'next-customer': 'next-customer-action'
-          }
-        },
+        'snooze': { subflow: 'common.snooze' },
+        'skip': { subflow: 'common.skip' },
         'exit-task-mode': {
           response: "Task mode closed. You can reopen it anytime from the dashboard.",
           actions: ['exitTaskMode']
@@ -502,30 +489,8 @@ export const dynamicChatAI: WorkflowConfig = {
     }
   },
   analytics: {
-    usageTrend: {
-      title: 'Usage Trend',
-      showReferenceLine: true,
-      referenceLineLabel: 'License Limit',
-      referenceLineHeight: 20,
-      data: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28],
-      chartContextLabel: '↗ +65% growth trajectory',
-      chartContextColor: 'text-green-600',
-      chartMin: 0,
-      chartMax: 35,
-      dataColors: { threshold: 20, belowColor: 'bg-blue-500', aboveColor: 'bg-green-500' }
-    },
-    userLicenses: {
-      title: 'User Licenses',
-      showReferenceLine: true,
-      referenceLineLabel: 'Current Plan',
-      referenceLineHeight: 25,
-      data: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38],
-      chartContextLabel: '↗ Approaching limit',
-      chartContextColor: 'text-orange-600',
-      chartMin: 0,
-      chartMax: 40,
-      dataColors: { threshold: 25, belowColor: 'bg-blue-500', aboveColor: 'bg-orange-500' }
-    },
+    usageTrend: '{{chart.usageTrend.rising}}',
+    userLicenses: '{{chart.userLicenses.rising}}',
     renewalInsights: {
       renewalStage: 'Negotiation',
       confidence: 92,
@@ -572,21 +537,8 @@ export const dynamicChatAI: WorkflowConfig = {
             'details': 'detail-view'
           }
         },
-        'skip': {
-          response: "Okay, I\'ll check in next time they come up on my radar. Shall we move on to the next customer?",
-          buttons: [
-            { label: 'Exit', value: 'exit', 'label-background': 'bg-gray-300', 'label-text': 'text-gray-700' },
-            { label: 'Yes', value: 'next-customer', 'label-background': 'bg-green-500', 'label-text': 'text-white' }
-          ],
-          nextBranches: {
-            'exit': 'exit-task-mode',
-            'next-customer': 'next-customer-action'
-          }
-        },
-        'snooze': {
-          response: "No problem! I'll check back in a couple days. Let me reset this workflow for you.",
-          actions: ['resetToInitialState']
-        },
+        'skip': { subflow: 'common.skip' },
+        'snooze': { subflow: 'common.snooze' },
         'exit-task-mode': {
           response: "Task mode closed. You can reopen it anytime from the dashboard.",
           actions: ['exitTaskMode']
@@ -855,30 +807,8 @@ export const dynamicChatUser: WorkflowConfig = {
     }
   },
   analytics: {
-    usageTrend: {
-      title: 'Usage Trend',
-      showReferenceLine: true,
-      referenceLineLabel: 'License Limit',
-      referenceLineHeight: 15,
-      data: [8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 16, 16, 17, 17, 18, 18, 19],
-      chartContextLabel: 'Steady growth pattern',
-      chartContextColor: 'text-blue-600',
-      chartMin: 0,
-      chartMax: 25,
-      dataColors: { threshold: 15, belowColor: 'bg-blue-500', aboveColor: 'bg-orange-500' }
-    },
-    userLicenses: {
-      title: 'User Licenses',
-      showReferenceLine: true,
-      referenceLineLabel: 'Current Plan',
-      referenceLineHeight: 20,
-      data: [18, 18, 18, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 22, 22, 22, 23, 23, 23, 24, 24, 24, 25, 25],
-      chartContextLabel: 'Approaching capacity',
-      chartContextColor: 'text-orange-600',
-      chartMin: 0,
-      chartMax: 30,
-      dataColors: { threshold: 20, belowColor: 'bg-blue-500', aboveColor: 'bg-orange-500' }
-    },
+    usageTrend: '{{chart.usageTrend.rising}}',
+    userLicenses: '{{chart.userLicenses.rising}}',
     renewalInsights: {
       renewalStage: 'Early Planning',
       confidence: 75,

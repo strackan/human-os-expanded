@@ -1,5 +1,6 @@
 import { DynamicChatFlow, DynamicChatBranch, DynamicChatButton } from '../config/WorkflowConfig';
 import { substituteVariablesWithMappings, VariableContext } from './variableSubstitution';
+import { resolveSubflow, isSubflowReference, SubflowReference } from '../config/subflows';
 
 export interface ConversationState {
   currentBranch: string | null;
@@ -12,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide';
   payload?: any;
 }
 
@@ -32,7 +33,7 @@ export class ConversationEngine {
   private variableContext: VariableContext;
 
   constructor(flow: DynamicChatFlow, onAction?: (action: ConversationAction) => void, variableContext?: VariableContext) {
-    this.flow = flow;
+    this.flow = this.resolveSubflowsInFlow(flow);
     this.onAction = onAction;
     this.variableContext = variableContext || {};
     this.state = {
@@ -40,6 +41,39 @@ export class ConversationEngine {
       history: [],
       artifacts: new Set()
     };
+  }
+
+  private resolveSubflowsInFlow(flow: DynamicChatFlow): DynamicChatFlow {
+    const resolvedFlow = { ...flow };
+    const resolvedBranches: { [key: string]: DynamicChatBranch } = {};
+
+    // Process each branch and resolve subflow references
+    for (const [branchName, branchValue] of Object.entries(flow.branches)) {
+      if (isSubflowReference(branchValue)) {
+        // Resolve the subflow reference
+        const subflowResult = resolveSubflow(branchValue as SubflowReference);
+        if (subflowResult) {
+          // Replace the subflow reference with the actual branch
+          resolvedBranches[branchName] = subflowResult.branch;
+
+          // Add any additional branches that the subflow needs
+          Object.assign(resolvedBranches, subflowResult.additionalBranches);
+        } else {
+          console.error(`Failed to resolve subflow: ${(branchValue as SubflowReference).subflow}`);
+          // Fallback to a default error branch
+          resolvedBranches[branchName] = {
+            response: "I'm sorry, there was an error processing your request. Please try again.",
+            buttons: [{ label: 'Ok', value: 'ok' }]
+          };
+        }
+      } else {
+        // Keep the branch as-is
+        resolvedBranches[branchName] = branchValue as DynamicChatBranch;
+      }
+    }
+
+    resolvedFlow.branches = resolvedBranches;
+    return resolvedFlow;
   }
 
   getInitialMessage(): ConversationResponse | null {

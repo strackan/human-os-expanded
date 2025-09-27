@@ -108,6 +108,12 @@ export const componentRegistry: ComponentItem[] = [
     label: 'CSM Dashboard with Task Mode',
     category: 'Dashboards'
   },
+  {
+    name: 'RenewalChatWorkflow',
+    path: '@/components/artifacts/RenewalChatWorkflow',
+    label: 'Renewal Chat Workflow',
+    category: 'Workflows'
+  },
 ];
 
 export default componentRegistry;

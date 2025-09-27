@@ -5,7 +5,7 @@ export const testDynamicConfig: WorkflowConfig = {
     name: 'Test Corp'
   },
   layout: {
-    modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
+    modalDimensions: { width: 80, height: 90, top: 10, left: 10 },
     dividerPosition: 50,
     chatWidth: 50,
     splitModeDefault: true

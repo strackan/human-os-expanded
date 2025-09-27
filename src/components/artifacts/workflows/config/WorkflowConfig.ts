@@ -8,6 +8,9 @@ export interface CustomerMetric {
   sparkData?: number[];
 }
 
+// Support for template variables in metrics
+export type CustomerMetricOrTemplate = CustomerMetric | string;
+
 export interface AnalyticsConfig {
   usageTrend: {
     title: string;
@@ -44,6 +47,13 @@ export interface AnalyticsConfig {
   };
 }
 
+// Support for template variables in analytics
+export type AnalyticsConfigOrTemplate = {
+  usageTrend: AnalyticsConfig['usageTrend'] | string;
+  userLicenses: AnalyticsConfig['userLicenses'] | string;
+  renewalInsights: AnalyticsConfig['renewalInsights'];
+};
+
 export interface DynamicChatButton {
   label: string;
   value: string;
@@ -56,7 +66,7 @@ export interface DynamicChatBranch {
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide'>;
   artifactId?: string;
   buttons?: DynamicChatButton[];
   nextBranches?: {
@@ -78,7 +88,7 @@ export interface DynamicChatFlow {
     [pattern: string]: string;
   };
   branches: {
-    [branchName: string]: DynamicChatBranch;
+    [branchName: string]: DynamicChatBranch | { subflow: string; parameters?: { [key: string]: any } };
   };
 }
 
@@ -187,8 +197,8 @@ export interface CustomerOverviewConfig {
     primaryContact: CustomerMetric & { role?: string };
     riskScore: CustomerMetric;
     growthScore: CustomerMetric;
-    yoyGrowth: CustomerMetric;
-    lastMonth: CustomerMetric;
+    yoyGrowth: CustomerMetricOrTemplate;
+    lastMonth: CustomerMetricOrTemplate;
   };
 }
 
@@ -237,10 +247,10 @@ export interface WorkflowConfig {
     dividerPosition: number;
     chatWidth: number;
     splitModeDefault: boolean;
-    statsHeight?: number; // Percentage of height for stats section (default: 50)
+    statsHeight?: number; // Percentage of height for stats section (default: 45.3)
   };
   customerOverview: CustomerOverviewConfig;
-  analytics: AnalyticsConfig;
+  analytics: AnalyticsConfigOrTemplate;
   chat: ChatConfig;
   artifacts: ArtifactsConfig;
   sidePanel?: SidePanelConfig;
@@ -261,14 +271,14 @@ export const defaultWorkflowConfig: WorkflowConfig = {
   layout: {
     modalDimensions: {
       width: 80,
-      height: 80,
+      height: 90,
       top: 10,
       left: 10
     },
     dividerPosition: 50,
     chatWidth: 50,
     splitModeDefault: false,
-    statsHeight: 50 // Default 50/50 ratio for stats and chat areas
+    statsHeight: 45.3 // Default 45.3% for stats section
   },
   customerOverview: {
     metrics: {

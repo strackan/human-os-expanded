@@ -513,10 +513,10 @@ const ChatInterface = React.forwardRef<{
             )}
             
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
-              >
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
+                >
                 <div
                   className={`${message.sender === 'user' ? 'max-w-[80%]' : 'w-[80%]'} rounded-lg px-4 py-2 ${
                     message.sender === 'user'
@@ -533,7 +533,7 @@ const ChatInterface = React.forwardRef<{
                         <span className="animate-spin text-lg">*</span>
                       </div>
                     ) : (
-                      message.text
+                      <span dangerouslySetInnerHTML={{ __html: message.text }} />
                     )}
                   </div>
 
@@ -578,7 +578,7 @@ const ChatInterface = React.forwardRef<{
         )}
       </div>
 
-      <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0">
+      <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0" style={{ height: '220px' }}>
         <div className="flex items-end space-x-2">
           {config.features.attachments && (
             <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">

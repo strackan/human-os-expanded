@@ -2,6 +2,7 @@
 import TaskModeCustom from './workflows/TaskModeCustom';
 import TaskModeGallery from './workflows/TaskModeGallery';
 import PricingRecommendation from './pricing/PricingRecommendation';
+import RenewalChatWorkflow from './RenewalChatWorkflow';
 
 // TODO: Add other imports as they are confirmed to exist
 // import PriceRecommendationFlat from './pricing/PriceRecommendationFlat';
@@ -11,6 +12,7 @@ export const componentMap: Record<string, React.ComponentType> = {
   'TaskModeCustom': TaskModeCustom,
   'TaskModeGallery': TaskModeGallery,
   'PricingRecommendation': PricingRecommendation,
+  'RenewalChatWorkflow': RenewalChatWorkflow,
   // TODO: Add other mappings as components are confirmed to exist
 };
 
