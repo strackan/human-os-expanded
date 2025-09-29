@@ -19,7 +19,15 @@ import {
   simpleDynamicConfig,
   dynamicChatAI,
   dynamicChatUser,
-  dynamicChatExampleConfig
+  dynamicChatExampleConfig,
+  dynamicClone,
+  // Artifact Showcase Demo Configs
+  planningChecklistDemoConfig,
+  contractDemoConfig,
+  contactStrategyDemoConfig,
+  planSummaryDemoConfig,
+  pricingAnalysisDemoConfig,
+  allArtifactsMasterDemo
 } from '../workflows/config/configs';
 import Metrics from './Metrics';
 import PriorityTasks from './PriorityTasks';
@@ -41,6 +49,14 @@ const configMap: Record<string, WorkflowConfig> = {
   'dynamic-ai': dynamicChatAI,
   'dynamic-user': dynamicChatUser,
   'dynamic-chat-example': dynamicChatExampleConfig,
+  'dynamic-ai-clone': dynamicClone,
+  // Artifact Showcase Demo Configs
+  'planning-checklist-demo': planningChecklistDemoConfig,
+  'contract-demo': contractDemoConfig,
+  'contact-strategy-demo': contactStrategyDemoConfig,
+  'plan-summary-demo': planSummaryDemoConfig,
+  'pricing-analysis-demo': pricingAnalysisDemoConfig,
+  'all-artifacts-master-demo': allArtifactsMasterDemo,
 };
 
 

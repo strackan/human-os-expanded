@@ -197,13 +197,310 @@ export const createHtmlArtifact = (config: HtmlArtifactConfig) => {
 };
 
 /**
+ * Planning Checklist Artifact Template
+ *
+ * The planning-checklist type provides an interactive checklist for workflow planning with:
+ * - Header with title and description
+ * - Interactive checkboxes for task items
+ * - Progress tracking
+ * - Action buttons: "Let's Do It!", "Not Yet", "Go Back"
+ * - Visual feedback for completion status
+ *
+ * Styling:
+ * - Container: White background with gray border, rounded corners, shadow
+ * - Header: Gray background with checklist icon
+ * - Items: Hover effects, checkmark animations, strikethrough for completed
+ * - Progress: Visual progress bar showing completion percentage
+ * - Actions: Primary blue button for "Let's Do It!", secondary gray buttons
+ *
+ * @example
+ * ```typescript
+ * const planningArtifact = createPlanningChecklistArtifact({
+ *   id: 'renewal-planning',
+ *   title: 'Renewal Planning Checklist',
+ *   description: "Let's review what we need to accomplish:",
+ *   items: [
+ *     { id: 'review-contract', label: 'Review contract terms', completed: false },
+ *     { id: 'set-price', label: 'Set target price', completed: false }
+ *   ],
+ *   visible: true
+ * });
+ * ```
+ */
+export interface PlanningChecklistArtifactConfig {
+  id: string;
+  title: string;
+  description?: string;
+  items: Array<{
+    id: string;
+    label: string;
+    completed?: boolean;
+  }>;
+  showActions?: boolean;
+  visible?: boolean;
+}
+
+export const createPlanningChecklistArtifact = (config: PlanningChecklistArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'planning-checklist' as const,
+    visible: config.visible ?? false,
+    content: {
+      description: config.description || "Let's review what we need to accomplish:",
+      items: config.items.map(item => ({
+        id: item.id,
+        label: item.label,
+        completed: item.completed ?? false
+      })),
+      showActions: config.showActions ?? true
+    }
+  };
+};
+
+/**
+ * Pricing Analysis Artifact Template
+ *
+ * The pricing-analysis type provides a comprehensive pricing strategy analysis with:
+ * - Current pricing metrics and ARR
+ * - Comparative analysis across similar customers
+ * - Price per unit calculations
+ * - Usage metrics and growth trends
+ * - Risk factors for expansion
+ * - Opportunities for growth
+ * - AI-powered recommendation with supporting rationale
+ * - Interactive action buttons for decision making
+ *
+ * Styling:
+ * - Container: White background with gray border, rounded corners, shadow
+ * - Header: Gradient blue background with pricing icon
+ * - Metrics: Key pricing indicators in cards
+ * - Analysis: Visual percentile indicator and comparison charts
+ * - Recommendations: Highlighted section with action buttons
+ *
+ * @example
+ * ```typescript
+ * const pricingArtifact = createPricingAnalysisArtifact({
+ *   id: 'pricing-strategy',
+ *   title: 'Q4 Pricing Analysis',
+ *   customerName: 'TechCorp Solutions',
+ *   currentPrice: 84000,
+ *   currentARR: 84000,
+ *   pricePerUnit: 350,
+ *   unitType: 'seat/month',
+ *   comparativeAnalysis: {
+ *     averagePrice: 380,
+ *     percentile: 35,
+ *     similarCustomerCount: 47
+ *   },
+ *   recommendation: {
+ *     priceIncrease: 8,
+ *     newAnnualPrice: 90720
+ *   },
+ *   visible: true
+ * });
+ * ```
+ */
+export interface PricingAnalysisArtifactConfig {
+  id: string;
+  title: string;
+  customerName?: string;
+  currentPrice?: number;
+  currentARR?: number;
+  pricePerUnit?: number;
+  unitType?: string;
+  comparativeAnalysis?: {
+    averagePrice?: number;
+    percentile?: number;
+    similarCustomerCount?: number;
+  };
+  usageMetrics?: {
+    currentUsage?: number;
+    usageGrowth?: number;
+    usageEfficiency?: number;
+  };
+  riskFactors?: Array<{
+    title: string;
+    description: string;
+    impact: 'high' | 'medium' | 'low';
+  }>;
+  opportunities?: Array<{
+    title: string;
+    description: string;
+    potential: 'high' | 'medium' | 'low';
+  }>;
+  recommendation?: {
+    priceIncrease?: number;
+    newAnnualPrice?: number;
+    reasons?: string[];
+  };
+  visible?: boolean;
+}
+
+export const createPricingAnalysisArtifact = (config: PricingAnalysisArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'pricing-analysis' as const,
+    visible: config.visible ?? false,
+    data: {
+      customerName: config.customerName,
+      currentPrice: config.currentPrice,
+      currentARR: config.currentARR,
+      pricePerUnit: config.pricePerUnit,
+      unitType: config.unitType,
+      comparativeAnalysis: config.comparativeAnalysis,
+      usageMetrics: config.usageMetrics,
+      riskFactors: config.riskFactors,
+      opportunities: config.opportunities,
+      recommendation: config.recommendation
+    }
+  };
+};
+
+/**
+ * Contract Artifact Template
+ *
+ * The contract type provides a comprehensive contract overview with:
+ * - Contract value and renewal date
+ * - Signer base amount
+ * - Pricing calculation breakdown
+ * - Business impacting terms organized by category
+ * - Risk level indicators
+ * - View PDF functionality
+ *
+ * Styling:
+ * - Container: White background with gray border, rounded corners, shadow
+ * - Header: Gradient blue background with contract icon
+ * - Metrics: Key values displayed prominently
+ * - Terms: Color-coded by risk level (red for unsigned, amber for non-standard, etc.)
+ * - Actions: View PDF button for document access
+ *
+ * @example
+ * ```typescript
+ * const contractArtifact = createContractArtifact({
+ *   id: 'customer-contract',
+ *   title: 'Enterprise Agreement',
+ *   contractId: 'CNT-2024-001',
+ *   customerName: 'Acme Corp',
+ *   contractValue: 250000,
+ *   renewalDate: 'June 30, 2025',
+ *   signerBaseAmount: 200000,
+ *   businessTerms: {
+ *     unsigned: ['Liability amendment pending'],
+ *     nonStandardPricing: ['Custom enterprise pricing tier']
+ *   },
+ *   visible: true
+ * });
+ * ```
+ */
+export interface ContractArtifactConfig {
+  id: string;
+  title: string;
+  contractId?: string;
+  customerName?: string;
+  contractValue?: number;
+  renewalDate?: string;
+  signerBaseAmount?: number;
+  pricingCalculation?: {
+    basePrice?: number;
+    volumeDiscount?: number;
+    additionalServices?: number;
+    totalPrice?: number;
+  };
+  businessTerms?: {
+    unsigned?: string[];
+    nonStandardRenewal?: string[];
+    nonStandardPricing?: string[];
+    pricingCaps?: string[];
+    otherTerms?: string[];
+  };
+  riskLevel?: 'low' | 'medium' | 'high';
+  lastUpdated?: string;
+  visible?: boolean;
+}
+
+export const createContractArtifact = (config: ContractArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'contract' as const,
+    visible: config.visible ?? false,
+    data: {
+      contractId: config.contractId,
+      customerName: config.customerName,
+      contractValue: config.contractValue,
+      renewalDate: config.renewalDate,
+      signerBaseAmount: config.signerBaseAmount,
+      pricingCalculation: config.pricingCalculation,
+      businessTerms: config.businessTerms,
+      riskLevel: config.riskLevel,
+      lastUpdated: config.lastUpdated
+    }
+  };
+};
+
+/**
+ * Pre-defined Planning Checklist Templates
+ */
+export const PLANNING_CHECKLIST_TEMPLATES = {
+  renewal: (customItems?: Array<{ id: string; label: string; completed?: boolean }>) =>
+    createPlanningChecklistArtifact({
+      id: 'renewal-planning',
+      title: 'Renewal Planning Checklist',
+      description: "Let's review what we need to accomplish:",
+      items: customItems || [
+        { id: 'review-contract', label: 'Review the contract terms', completed: false },
+        { id: 'set-target-price', label: 'Set our target price', completed: false },
+        { id: 'establish-pricing', label: 'Establish our initial pricing strategy', completed: false },
+        { id: 'confirm-contacts', label: 'Confirm our contacts', completed: false },
+        { id: 'send-notice', label: 'Send out the renewal notice', completed: false }
+      ],
+      visible: true
+    }),
+
+  onboarding: (customItems?: Array<{ id: string; label: string; completed?: boolean }>) =>
+    createPlanningChecklistArtifact({
+      id: 'onboarding-planning',
+      title: 'Customer Onboarding Checklist',
+      description: "Let's ensure a smooth onboarding process:",
+      items: customItems || [
+        { id: 'welcome-call', label: 'Schedule welcome call', completed: false },
+        { id: 'setup-account', label: 'Set up customer account', completed: false },
+        { id: 'training-materials', label: 'Send training materials', completed: false },
+        { id: 'assign-csm', label: 'Assign customer success manager', completed: false },
+        { id: 'first-checkin', label: 'Schedule first check-in', completed: false }
+      ],
+      visible: true
+    }),
+
+  expansion: (customItems?: Array<{ id: string; label: string; completed?: boolean }>) =>
+    createPlanningChecklistArtifact({
+      id: 'expansion-planning',
+      title: 'Account Expansion Checklist',
+      description: "Let's plan the expansion opportunity:",
+      items: customItems || [
+        { id: 'analyze-usage', label: 'Analyze current usage patterns', completed: false },
+        { id: 'identify-stakeholders', label: 'Identify expansion stakeholders', completed: false },
+        { id: 'create-proposal', label: 'Create expansion proposal', completed: false },
+        { id: 'schedule-meeting', label: 'Schedule presentation meeting', completed: false },
+        { id: 'follow-up-plan', label: 'Create follow-up plan', completed: false }
+      ],
+      visible: true
+    })
+};
+
+/**
  * Helper function to create multiple artifacts at once
  */
 export const createArtifactSection = (artifacts: Array<ReturnType<
   typeof createEmailArtifact |
   typeof createLicenseAnalysisArtifact |
   typeof createWorkflowSummaryArtifact |
-  typeof createHtmlArtifact
+  typeof createHtmlArtifact |
+  typeof createPlanningChecklistArtifact |
+  typeof createPricingAnalysisArtifact |
+  typeof createContractArtifact
 >>) => {
   return {
     sections: artifacts

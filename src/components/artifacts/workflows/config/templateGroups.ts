@@ -50,6 +50,20 @@ export const templateGroups: Record<string, TemplateGroup> = {
     description: 'Combined demo: Bluebird Memorial traditional mode followed by dynamic AI slide-based mode',
     templates: ['bluebird-planning', 'dynamic-ai'],
     tags: ['demo', 'v1', 'combined', 'traditional', 'dynamic']
+  },
+  'artifact-showcase-suite': {
+    id: 'artifact-showcase-suite',
+    name: 'Artifact Showcase Suite',
+    description: 'Comprehensive demos showcasing all artifact types and their integration in real-world workflows',
+    templates: [
+      'all-artifacts-master-demo',
+      'planning-checklist-demo',
+      'contact-strategy-demo',
+      'contract-demo',
+      'pricing-analysis-demo',
+      'plan-summary-demo'
+    ],
+    tags: ['artifacts', 'showcase', 'comprehensive', 'training', 'demo']
   }
 };
 
@@ -66,7 +80,14 @@ export const availableConfigs = [
   'price-optimization',
   'simple-dynamic',
   'dynamic-ai',
-  'dynamic-user'
+  'dynamic-user',
+  // Artifact Showcase Demos
+  'planning-checklist-demo',
+  'contract-demo',
+  'contact-strategy-demo',
+  'plan-summary-demo',
+  'pricing-analysis-demo',
+  'all-artifacts-master-demo'
 ];
 
 // Helper functions

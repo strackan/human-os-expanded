@@ -82,7 +82,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   showArtifact = true, // Default to true for backward compatibility
   conversationSeed = null,
   starting_with = "ai",
-  workflowConfig = defaultWorkflowConfig,
+  workflowConfig,
   workflowConfigName = "default",
   onNextCustomer,
   nextCustomerName,
@@ -93,24 +93,33 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   templateGroupId,
   currentTemplateIndex = 0
 }, ref) => {
-  // Use configuration with overrides
+  // Debug: Log what config we received
+  console.log('TaskModeAdvanced received:', {
+    workflowConfigName,
+    customerName: workflowConfig?.customer?.name,
+    configPassed: !!workflowConfig,
+    isDefault: workflowConfig === defaultWorkflowConfig
+  });
+
+  // Use configuration with overrides - ensure we have a config
+  const baseConfig = workflowConfig || defaultWorkflowConfig;
   const config: WorkflowConfig = {
-    ...workflowConfig,
+    ...baseConfig,
     chat: {
-      ...workflowConfig.chat,
-      conversationSeed: conversationSeed || workflowConfig.chat.conversationSeed
+      ...baseConfig.chat,
+      conversationSeed: conversationSeed || baseConfig.chat.conversationSeed
     }
   };
 
   // Initialize with config defaults
 
   // Modal dimensions and position
-  const [modalDimensions, setModalDimensions] = useState(workflowConfig.layout.modalDimensions);
+  const [modalDimensions, setModalDimensions] = useState(baseConfig.layout.modalDimensions);
 
   // Layout states
-  const [statsHeight, setStatsHeight] = useState(workflowConfig.layout.statsHeight || 45.3); // Default 45.3% for stats
-  const [isSplitMode, setIsSplitMode] = useState(workflowConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
-  const [chatWidth, setChatWidth] = useState(workflowConfig.layout.chatWidth);
+  const [statsHeight, setStatsHeight] = useState(baseConfig.layout.statsHeight || 45.3); // Default 45.3% for stats
+  const [isSplitMode, setIsSplitMode] = useState(baseConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
+  const [chatWidth, setChatWidth] = useState(baseConfig.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
@@ -119,9 +128,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
   // Reset split mode when template changes
   React.useEffect(() => {
-    setIsSplitMode(workflowConfig.layout.splitModeDefault || false);
+    setIsSplitMode(baseConfig.layout.splitModeDefault || false);
     setVisibleArtifacts(new Set()); // Also clear any visible artifacts
-  }, [workflowConfigName, workflowConfig.layout.splitModeDefault]);
+  }, [workflowConfigName, baseConfig.layout.splitModeDefault]);
 
   // Determine if we're using slides or traditional config
   // Only use slides if explicitly set or if slides array exists
@@ -237,6 +246,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           closeArtifact();
         }
       }
+    } else if (action.type === 'showMenu') {
+      console.log('TaskModeAdvanced: Processing showMenu action');
+      // Enable split mode and show the menu/artifacts panel
+      openArtifact();
+      setIsStatsVisible(true); // Show stats for menu display
     } else if (action.type === 'exitTaskMode') {
       console.log('TaskModeAdvanced: Processing exitTaskMode action');
       // For snooze/skip actions, use display:none to completely reset content
@@ -531,10 +545,10 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     :       {
         top: '50px',
         left: '50px',
-        width: '80vw',
+        width: '90vw',
         height: '90vh',
         minWidth: '400px',
-        minHeight: '400px'
+        minHeight: '500px'
       };
 
   // Show final slide if requested
@@ -653,8 +667,8 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
                 }}
                 className="text-xs text-blue-500 hover:text-blue-600 transition-colors"
               >
-                {templateGroupId && isLastTemplateInGroup(templateGroupId, currentTemplateIndex) 
-                  ? "That's all for today!" 
+                {templateGroupId && isLastTemplateInGroup(templateGroupId, currentTemplateIndex)
+                  ? "That's all for today!"
                   : `Next Customer - ${nextCustomerName || config.customer.nextCustomer || 'Next'}`
                 }
               </button>
@@ -680,13 +694,13 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         }`}
         style={{
           height: isStatsVisible ? `${statsHeight}%` : '0px',
-          minHeight: isStatsVisible ? '100px' : '0px',
-          maxHeight: isStatsVisible ? '60%' : '0px',
+          minHeight: isStatsVisible ? '120px' : '0px',
+          maxHeight: isStatsVisible ? '50%' : '0px',
           padding: isStatsVisible ? '1rem' : '0rem',
           boxSizing: 'border-box'
         }}
       >
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 h-full">
           {/* Left Side - Customer Overview */}
           <CustomerOverview config={resolveCustomerOverviewConfig(config.customerOverview)} />
 
@@ -709,18 +723,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         </div>
       )}
 
-      {/* CHAT AND ARTIFACTS AREA */}
+      {/* BODY AREA - Chat messages and artifacts */}
       <div
         className={`flex bg-white overflow-hidden ${
           isDragging ? '' : 'transition-all duration-500 ease-in-out'
         }`}
         style={{
-          minHeight: 0,
-          height: isStatsVisible ? `calc(100% - ${statsHeight}% - 6px)` : '100%',
-          flexGrow: 1
+          minHeight: '300px',
+          height: isStatsVisible ? 'calc(100% - 80px - ' + statsHeight + '% - 6px)' : 'calc(100% - 80px)',
+          maxHeight: isStatsVisible ? 'calc(100% - 80px - ' + statsHeight + '% - 6px)' : 'calc(100% - 80px)'
         }}
       >
-        {/* CHAT CONTAINER */}
+        {/* CHAT MESSAGES CONTAINER */}
         <div
           className="flex flex-col h-full overflow-hidden"
           style={{
@@ -734,7 +748,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
             isSplitMode={isSplitMode}
             onToggleSplitMode={toggleSplitMode}
             startingWith={starting_with as "ai" | "user"}
-            className="flex-1 overflow-hidden"
+            className="h-full overflow-hidden"
             onArtifactAction={handleArtifactAction}
             onGotoSlide={handleGotoSlide}
             workingMessageRef={chatInterfaceRef}
@@ -744,7 +758,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
         {/* VERTICAL DIVIDER - Show when there are visible artifacts */}
         {(isSplitMode || visibleArtifacts.size > 0) && (
-          <div 
+          <div
             className="bg-gray-200 border-x border-gray-300 cursor-ew-resize flex items-center justify-center hover:bg-gray-300 transition-all duration-500 ease-in-out flex-shrink-0"
             style={{ width: '6px' }}
             onMouseDown={startVerticalDividerResize}
@@ -770,6 +784,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
           </div>
         )}
       </div>
+
     </div>
   );
 });
@@ -780,6 +795,10 @@ TaskModeModal.displayName = 'TaskModeModal';
 const Demo = () => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const taskModeRef = useRef<TaskModeModalRef>(null);
+
+  // Detect if we're in gallery context by checking if we're in a constrained container
+  const isInGallery = typeof window !== 'undefined' &&
+    window.location.pathname.includes('/artifacts/gallery');
 
   const exampleConversationSeed = [
     {
@@ -874,8 +893,9 @@ const Demo = () => {
         conversationSeed={exampleConversationSeed as any[]}
         starting_with="ai"
         workflowConfig={defaultWorkflowConfig}
+        inline={isInGallery} // Render inline when in gallery
       />
-      {!isModalOpen && (
+      {!isModalOpen && !isInGallery && (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
           <div className="flex flex-col space-y-4">
             <button

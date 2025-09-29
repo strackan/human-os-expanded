@@ -9,7 +9,8 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
     modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
     dividerPosition: 50,
     chatWidth: 50,
-    splitModeDefault: true
+    splitModeDefault: false,
+    statsHeight: 50
   },
   customerOverview: {
     metrics: {
@@ -68,77 +69,141 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
     }
   },
   chat: {
-    placeholder: 'Feel free to ask any questions here...',
-    aiGreeting: "Good morning, {{user.first}}! {{customer.name}}'s 90-day autorenewal is next week. Their YoY growth is {{chart.yoyGrowth.flat.trendValue}} and usage trend shows {{chart.usageTrend.falling.chartContextLabel}}. It's time to prepare our strategy and deliver the renewal notification. Shall we get started?",
-    conversationSeed: [
-      {
-        sender: 'ai',
-        text: 'Good morning, {{user.first}}! {{customer.name}}\'s 90-day autorenewal is next week. Their YoY growth is {{chart.yoyGrowth.flat.trendValue}} and usage trend shows {{chart.usageTrend.falling.chartContextLabel}}. It\'s time to prepare our strategy and deliver the renewal notification. Shall we get started?',
-        type: 'buttons',
+    placeholder: 'Ask about renewal strategy, contract terms, or pricing...',
+    aiGreeting: "Welcome to Bluebird Memorial Hospital's renewal planning workflow. I'm here to help you develop the optimal renewal strategy.",
+    mode: 'dynamic',
+    dynamicFlow: {
+      startsWith: 'ai',
+      defaultMessage: "I'm sorry, I didn't understand that. Please try one of the available options or ask about the renewal process.",
+      initialMessage: {
+        text: "Good morning! **Bluebird Memorial Hospital's** 90-day autorenewal is next week. Their YoY growth is **+1.2%** (flat) and usage trend shows **declining usage over 6 months**. It's time to prepare our strategy and deliver the renewal notification.\n\nShall we get started?",
         buttons: [
-          { label: 'Skip', value: 'skip', 'label-background': '#ef4444', 'label-text': '#ffffff' },
-          { label: 'Snooze', value: 'different', 'label-background': '#f59e0b', 'label-text': '#ffffff' },
-          { label: 'Let\s Do It!', value: 'proceed', 'label-background': '#10b981', 'label-text': '#ffffff' }
-        ]
+          { label: 'Skip', value: 'skip', 'label-background': 'bg-red-100', 'label-text': 'text-red-800' },
+          { label: 'Snooze', value: 'snooze', 'label-background': 'bg-orange-100', 'label-text': 'text-orange-800' },
+          { label: 'Let\'s Do It!', value: 'proceed', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+        ],
+        nextBranches: {
+          'skip': 'skip',
+          'snooze': 'snooze',
+          'proceed': 'strategy-selection'
+        }
       },
-      {
-        sender: 'user',
-        text: 'Let\'s Do It!'
-      },
-      {
-        sender: 'ai',
-        text: 'Perfect. Given {{customer.name}}\'s above-average ARR and current risk factors, I recommend a conservative strategy with little to no increase. How shall we proceed?',
-        type: 'buttons',
-        buttons: [
-          { label: 'Other', value: 'no', 'label-background': '#7c7c7c', 'label-text': '#ffffff' },
-          { label: 'Conservative', value: 'yes', 'label-background': '#10b981', 'label-text': '#ffffff' }
-        ]
-      },
-      {
-        sender: 'user',
-        text: 'Conservative'
-      },
-      {
-        sender: 'ai',
-        text: 'Great, we\'ll proceed with the conservative strategy.',
-      },
-      {
-        sender: 'ai',
-        text: 'Checking contract for business impact...',
-      },
-      {
-        sender: 'ai',
-        text: 'The contract has language that does not allow price increases above 2% unless approved in writing. I recommend proceeding with a 2% price increase, as amending the contract increases risk significantly. Would you like to proceed with 2%, or enter a different percentage?',
-      },
-      {
-        sender: 'user',
-        text: '2%'
-      },
-      {
-        sender: 'ai',
-        text: 'Noted. I\'ve created an editable quote in a new window reflecting the updated pricing. Please review it, make any changes, and let me know when you\'e ready to send.',
-      },
-      {
-        sender: 'user',
-        text: 'This looks good. Can you send it to Joe Devine and cc me?'
-      },
-      {
-        sender: 'ai',
-        text: 'On it!'
-      },
-      {
-        sender: 'ai',
-        text: 'Okay, I\'ve sent it to Joe Devine and cc\'d you using your standard email template. I\'ll check in next week to see how it went and we can set our next steps to reduce risk with this account prior to renewal.',
-      },
-      {
-        sender: 'user',
-        text: 'Thank you!'
-      },
-    ],
+      branches: {
+        'strategy-selection': {
+          response: "Perfect. Given **Bluebird Memorial Hospital's** above-average ARR ($124,500) and current risk factors, I recommend a conservative strategy with little to no increase. How shall we proceed?",
+          delay: 1,
+          buttons: [
+            { label: 'Other approach', value: 'other', 'label-background': 'bg-gray-100', 'label-text': 'text-gray-800' },
+            { label: 'Conservative strategy', value: 'conservative', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+          ],
+          nextBranches: {
+            'other': 'other-approach',
+            'conservative': 'conservative-strategy'
+          }
+        },
+        'conservative-strategy': {
+          response: "Great, we'll proceed with the conservative strategy.",
+          delay: 1,
+          followUp: {
+            text: "Checking contract for business impact...",
+            delay: 2
+          },
+          buttons: [
+            { label: 'Continue', value: 'check-contract', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ],
+          nextBranches: {
+            'check-contract': 'contract-analysis'
+          }
+        },
+        'contract-analysis': {
+          response: "The contract has language that does not allow price increases above 2% unless approved in writing. I recommend proceeding with a 2% price increase, as amending the contract increases risk significantly.\n\nWould you like to proceed with 2%, or enter a different percentage?",
+          delay: 1,
+          buttons: [
+            { label: '2% increase', value: '2-percent', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' },
+            { label: 'Different amount', value: 'custom', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ],
+          nextBranches: {
+            '2-percent': 'generate-quote',
+            'custom': 'custom-amount'
+          }
+        },
+        'generate-quote': {
+          response: "Noted. I've created an editable quote reflecting the updated 2% pricing. Please review it, make any changes, and let me know when you're ready to send.",
+          delay: 1,
+          actions: ['showArtifact', 'showMenu'],
+          artifactId: 'renewal-quote',
+          buttons: [
+            { label: 'Looks good, send it', value: 'send-quote', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' },
+            { label: 'Need to modify', value: 'modify-quote', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ],
+          nextBranches: {
+            'send-quote': 'send-quote',
+            'modify-quote': 'modify-quote'
+          }
+        },
+        'send-quote': {
+          response: "On it! I've sent the quote to **Joe Devine** and cc'd you using your standard email template.",
+          delay: 1,
+          followUp: {
+            text: "I'll check in next week to see how it went and we can set our next steps to reduce risk with this account prior to renewal.",
+            delay: 2
+          },
+          buttons: [
+            { label: 'Perfect, thank you!', value: 'complete', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' },
+            { label: 'Set follow-up reminder', value: 'reminder', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ],
+          nextBranches: {
+            'complete': 'workflow-complete',
+            'reminder': 'set-reminder'
+          }
+        },
+        'modify-quote': {
+          response: "No problem! The quote is editable - you can click on any field to modify it. When you're satisfied with the changes, let me know and I'll send it out.",
+          delay: 1,
+          buttons: [
+            { label: 'Ready to send now', value: 'send-quote', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+          ],
+          nextBranches: {
+            'send-quote': 'send-quote'
+          }
+        },
+        'workflow-complete': {
+          response: "Excellent! The renewal workflow for **Bluebird Memorial Hospital** is complete. The quote has been sent and follow-up is scheduled. You're all set for this renewal cycle.",
+          delay: 1,
+          buttons: [
+            { label: 'Next customer', value: 'next-customer-action', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ]
+        },
+        'other-approach': {
+          response: "I understand you'd like to explore a different approach. What strategy would you prefer for Bluebird Memorial Hospital's renewal?",
+          delay: 1,
+          buttons: [
+            { label: 'Aggressive pricing', value: 'aggressive', 'label-background': 'bg-red-100', 'label-text': 'text-red-800' },
+            { label: 'Value-based approach', value: 'value-based', 'label-background': 'bg-purple-100', 'label-text': 'text-purple-800' },
+            { label: 'Go back to conservative', value: 'conservative', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+          ],
+          nextBranches: {
+            'aggressive': 'aggressive-strategy',
+            'value-based': 'value-strategy',
+            'conservative': 'conservative-strategy'
+          }
+        },
+        'skip': { subflow: 'common.skip' },
+        'snooze': { subflow: 'common.snooze' },
+        'exit-task-mode': {
+          response: "Task mode closed. You can reopen it anytime from the dashboard.",
+          actions: ['exitTaskMode']
+        },
+        'next-customer-action': {
+          response: "Moving to the next customer...",
+          actions: ['nextCustomer']
+        }
+      }
+    },
     features: {
-      attachments: true,
-      voiceRecording: true,
-      designMode: true,
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
       editMode: true,
       artifactsToggle: true
     }
@@ -148,149 +213,131 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
       {
         id: 'renewal-quote',
         title: 'Renewal Quote',
-        type: 'html',
-        visible: true,
-        htmlContent: `
-          <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <!-- Quote Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-t-lg">
-              <div class="flex justify-between items-start">
-                <div>
-                  <div class="flex items-center space-x-3 mb-2">
-                    <div class="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                      <span class="text-blue-600 font-bold text-lg">R</span>
-                    </div>
-                    <span class="text-2xl font-bold">Renubu</span>
-                  </div>
-                  <p class="text-blue-100 text-sm">Enterprise Software Solutions</p>
-                </div>
-                <div class="text-right">
-                  <h1 class="text-3xl font-bold mb-1">RENEWAL QUOTE</h1>
-                  <p class="text-blue-100 text-sm">Q-2025-0924</p>
-                  <p class="text-blue-100 text-xs mt-1">September 17, 2025</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Company and Customer Details -->
-            <div class="p-6 border-b border-gray-100">
-              <div class="grid grid-cols-2 gap-8">
-                <!-- From Section -->
-                <div>
-                  <h3 class="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">From</h3>
-                  <div class="space-y-1 text-sm">
-                    <p class="font-medium">Renubu Technologies Inc.</p>
-                    <p>1247 Innovation Drive, Suite 400</p>
-                    <p>San Francisco, CA 94105</p>
-                    <p>Email: renewals@renubu.com</p>
-                  </div>
-                </div>
-
-                <!-- To Section -->
-                <div>
-                  <h3 class="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wide">To</h3>
-                  <div class="space-y-1 text-sm">
-                    <p class="font-medium">Joe Devine, CTO</p>
-                    <p>Bluebird Memorial Hospital</p>
-                    <p>1542 Medical Center Drive</p>
-                    <p>Portland, OR 97205</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Line Items -->
-            <div class="p-6">
-              <h3 class="font-semibold text-gray-800 mb-4">Renewal Details</h3>
-
-              <div class="overflow-hidden rounded-lg border border-gray-200">
-                <table class="w-full">
-                  <thead class="bg-gray-50">
-                    <tr>
-                      <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                      <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Current Rate</th>
-                      <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white divide-y divide-gray-200">
-                    <tr>
-                      <td class="px-4 py-2">
-                        <div>
-                          <p class="font-medium text-gray-900">Renubu Platform License</p>
-                          <p class="text-sm text-gray-500">Healthcare workflow optimization platform</p>
-                        </div>
-                      </td>
-                      <td class="px-4 py-2 text-center text-sm text-gray-900">12 months</td>
-                      <td class="px-4 py-2 text-right text-sm text-gray-900">$150.00/license</td>
-                      <td class="px-4 py-2 text-right text-sm font-medium text-gray-900">$124,500.00</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Totals -->
-              <div class="mt-6 flex justify-end">
-                <div class="w-80">
-                  <div class="border border-gray-200 rounded-lg bg-gray-50 p-4">
-                    <div class="space-y-2">
-                      <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Current Year Total:</span>
-                        <span class="text-gray-900">$124,500.00</span>
-                      </div>
-                      <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">2% Annual Increase:</span>
-                        <span class="text-gray-900">$2,490.00</span>
-                      </div>
-                      <div class="border-t border-gray-300 pt-2">
-                        <div class="flex justify-between text-lg font-bold">
-                          <span class="text-gray-900">Renewal Total:</span>
-                          <span class="text-blue-600">$126,990.00</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Terms -->
-            <div class="px-6 pb-6">
-              <div>
-                <h4 class="font-semibold text-gray-800 mb-3">Terms & Conditions</h4>
-                <div class="text-sm text-gray-600 space-y-1">
-                  <p>• Renewal effective January 18, 2026</p>
-                  <p>• 2% annual increase per contract terms (Section 4.2)</p>
-                  <p>• Payment due within 30 days of renewal date</p>
-                  <p>• This renewal is bound by the existing License Agreement</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Signature Section -->
-            <div class="px-6 py-4 bg-gray-50 rounded-b-lg border-t border-gray-100">
-              <div class="grid grid-cols-2 gap-8">
-                <div>
-                  <p class="text-sm text-gray-600 mb-4">Please sign and return this quote to proceed:</p>
-                  <div class="border-b border-gray-400 w-64 mb-2"></div>
-                  <p class="text-xs text-gray-500">Customer Signature</p>
-                </div>
-                <div>
-                  <p class="text-sm text-gray-600 mb-4">Date:</p>
-                  <div class="border-b border-gray-400 w-32 mb-2"></div>
-                  <p class="text-xs text-gray-500">Date</p>
-                </div>
-              </div>
-
-              <div class="mt-6 pt-4 border-t border-gray-200">
-                <p class="text-xs text-gray-500 text-center">
-                  Thank you for your continued partnership with Renubu. We look forward to supporting Bluebird Memorial Hospital's continued success.
-                </p>
-              </div>
-            </div>
-          </div>
-        `
+        type: 'quote',
+        visible: false,
+        data: {
+          quoteNumber: 'Q-2025-0924',
+          quoteDate: 'September 17, 2025',
+          customerName: 'Bluebird Memorial Hospital',
+          customerContact: {
+            name: 'Joe Devine',
+            title: 'CTO',
+            email: 'joe.devine@bluebirdmemorial.org'
+          },
+          customerAddress: {
+            company: 'Bluebird Memorial Hospital',
+            street: '1542 Medical Center Drive',
+            city: 'Portland',
+            state: 'OR',
+            zip: '97205'
+          },
+          companyInfo: {
+            name: 'Renubu Technologies Inc.',
+            address: {
+              street: '1247 Innovation Drive, Suite 400',
+              city: 'San Francisco',
+              state: 'CA',
+              zip: '94105'
+            },
+            email: 'renewals@renubu.com'
+          },
+          lineItems: [
+            {
+              id: 'platform-license',
+              product: 'Renubu Platform License',
+              description: 'Healthcare workflow optimization platform',
+              period: '12 months',
+              rate: 150,
+              quantity: 830,
+              total: 124500
+            }
+          ],
+          summary: {
+            subtotal: 124500,
+            increase: {
+              percentage: 2,
+              amount: 2490,
+              description: '2% Annual Increase'
+            },
+            total: 126990
+          },
+          terms: [
+            'Renewal effective January 18, 2026',
+            '2% annual increase per contract terms (Section 4.2)',
+            'Payment due within 30 days of renewal date',
+            'This renewal is bound by the existing License Agreement'
+          ],
+          effectiveDate: 'January 18, 2026',
+          notes: 'Thank you for your continued partnership with Renubu. We look forward to supporting Bluebird Memorial Hospital\'s continued success.'
+        }
       }
     ]
+  },
+  sidePanel: {
+    enabled: true,
+    title: {
+      text: "Renewal Planning Workflow",
+      subtitle: "Bluebird Memorial Hospital",
+      icon: "🏥"
+    },
+    steps: [
+      {
+        id: "initial-assessment",
+        title: "Initial Assessment",
+        description: "Review customer metrics and risk factors",
+        status: "completed",
+        workflowBranch: "initial",
+        icon: "📊"
+      },
+      {
+        id: "strategy-selection",
+        title: "Strategy Selection",
+        description: "Choose appropriate renewal approach",
+        status: "in-progress",
+        workflowBranch: "strategy-selection",
+        icon: "🎯"
+      },
+      {
+        id: "contract-review",
+        title: "Contract Review",
+        description: "Analyze contract terms and constraints",
+        status: "pending",
+        workflowBranch: "contract-analysis",
+        icon: "📋"
+      },
+      {
+        id: "quote-generation",
+        title: "Quote Generation",
+        description: "Create and customize renewal quote",
+        status: "pending",
+        workflowBranch: "generate-quote",
+        icon: "💰"
+      },
+      {
+        id: "quote-delivery",
+        title: "Quote Delivery",
+        description: "Send quote to customer",
+        status: "pending",
+        workflowBranch: "send-quote",
+        icon: "📧"
+      },
+      {
+        id: "follow-up",
+        title: "Follow-up Planning",
+        description: "Schedule next steps and monitoring",
+        status: "pending",
+        workflowBranch: "workflow-complete",
+        icon: "⏰"
+      }
+    ],
+    progressMeter: {
+      currentStep: 2,
+      totalSteps: 6,
+      progressPercentage: 33,
+      showPercentage: true,
+      showStepNumbers: true
+    },
+    showProgressMeter: true,
+    showSteps: true
   }
 };

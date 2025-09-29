@@ -10,26 +10,48 @@ import { bluebirdMemorialPlanningConfig } from './config/configs/BluebirdMemoria
 const ACTIVE_CONFIG: WorkflowConfig = bluebirdMemorialPlanningConfig;
 // Example: const ACTIVE_CONFIG = dynamicChatAI;
 
-const TaskModeCustom = () => {
-  const [isModalOpen, setIsModalOpen] = useState(true);
+interface TaskModeCustomProps {
+  inline?: boolean;
+  isOpen?: boolean;
+  workflowConfig?: WorkflowConfig;
+  workflowConfigName?: string;
+  onClose?: () => void;
+}
+
+const TaskModeCustom: React.FC<TaskModeCustomProps> = ({
+  inline = false,
+  isOpen = true,
+  workflowConfig = ACTIVE_CONFIG,
+  workflowConfigName = "bluebird-memorial-planning",
+  onClose = () => {}
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(isOpen);
+
+  // Detect if we're in gallery context
+  const isInGallery = typeof window !== 'undefined' &&
+    window.location.pathname.includes('/artifacts/gallery');
 
   return (
     <>
       <TaskModeModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        workflowConfig={ACTIVE_CONFIG}
-        workflowConfigName="bluebird-memorial-planning"
+        onClose={() => {
+          setIsModalOpen(false);
+          onClose();
+        }}
+        workflowConfig={workflowConfig}
+        workflowConfigName={workflowConfigName}
         showArtifact={false} // Start without artifacts visible
         artifact_visible={true} // Artifacts available when opened
         starting_with="ai"
+        inline={inline || isInGallery}
       />
-      {!isModalOpen && (
+      {!isModalOpen && !inline && !isInGallery && (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">Custom Task Mode</h2>
             <p className="text-gray-600 mb-4">
-              Currently using: {ACTIVE_CONFIG.customer.name}
+              Currently using: {workflowConfig.customer.name}
             </p>
             <button
               onClick={() => setIsModalOpen(true)}

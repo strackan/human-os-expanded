@@ -114,6 +114,79 @@ export const componentRegistry: ComponentItem[] = [
     label: 'Renewal Chat Workflow',
     category: 'Workflows'
   },
+  {
+    name: 'PlanningChecklistArtifact',
+    path: '@/components/artifacts/PlanningChecklistArtifact',
+    label: 'Planning Checklist',
+    category: 'Workflows'
+  },
+  {
+    name: 'ContractArtifact',
+    path: '@/components/artifacts/ContractArtifact',
+    label: 'Contract Overview',
+    category: 'Contracts'
+  },
+  {
+    name: 'PricingAnalysisArtifact',
+    path: '@/components/artifacts/PricingAnalysisArtifact',
+    label: 'Pricing Analysis',
+    category: 'Pricing'
+  },
+  {
+    name: 'ContactStrategyArtifact',
+    path: '@/components/artifacts/ContactStrategyArtifact',
+    label: 'Contact Strategy',
+    category: 'Strategy'
+  },
+  {
+    name: 'PlanSummaryArtifact',
+    path: '@/components/artifacts/PlanSummaryArtifact',
+    label: 'Plan Summary',
+    category: 'Workflows'
+  },
+  {
+    name: 'PlanningChecklistEnhancedArtifact',
+    path: '@/components/artifacts/PlanningChecklistEnhancedArtifact',
+    label: 'Enhanced Planning Checklist',
+    category: 'Workflows'
+  },
+  // Artifact Showcase Demos
+  {
+    name: 'PlanningChecklistDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Planning Checklist Demo',
+    category: 'Artifact Demos'
+  },
+  {
+    name: 'ContactStrategyDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Contact Strategy Demo',
+    category: 'Artifact Demos'
+  },
+  {
+    name: 'ContractOverviewDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Contract Overview Demo',
+    category: 'Artifact Demos'
+  },
+  {
+    name: 'PricingAnalysisDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Pricing Analysis Demo',
+    category: 'Artifact Demos'
+  },
+  {
+    name: 'PlanSummaryDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Plan Summary Demo',
+    category: 'Artifact Demos'
+  },
+  {
+    name: 'AllArtifactsMasterDemo',
+    path: '@/components/artifacts/workflows/TaskModeAdvanced',
+    label: 'Complete Workflow Demo (All Artifacts)',
+    category: 'Artifact Demos'
+  },
 ];
 
 export default componentRegistry;

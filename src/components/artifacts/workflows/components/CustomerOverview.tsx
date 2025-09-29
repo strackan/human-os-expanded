@@ -7,6 +7,16 @@ interface CustomerOverviewProps {
 }
 
 const MetricCard = ({ metric }: { metric: CustomerMetric }) => {
+  // Add null check for metric
+  if (!metric) {
+    return (
+      <div className="bg-gray-50 rounded-lg p-3 flex flex-col justify-between">
+        <span className="text-xs text-gray-400">No data</span>
+        <span className="text-sm font-medium text-gray-400">--</span>
+      </div>
+    );
+  }
+
   const getStatusColor = (status?: string) => {
     switch (status) {
       case 'green': return 'text-green-500';

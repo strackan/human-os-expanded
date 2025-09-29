@@ -12,7 +12,9 @@ import {
   DocumentDuplicateIcon,
   LightBulbIcon,
   TvIcon,
-  UserGroupIcon
+  UserGroupIcon,
+  PhotoIcon,
+  CubeIcon
 } from '@heroicons/react/24/outline';
 import Image from 'next/image';
 
@@ -70,6 +72,18 @@ const navigation: NavItem[] = [
     href: '/demo',
     icon: TvIcon,
     description: 'Demo and examples'
+  },
+  {
+    name: 'Artifacts Gallery',
+    href: '/artifacts/gallery',
+    icon: PhotoIcon,
+    description: 'Browse artifacts in gallery view'
+  },
+  {
+    name: 'Artifacts Library',
+    href: '/artifacts',
+    icon: CubeIcon,
+    description: 'Complete artifacts library with configs'
   },
   {
     name: 'Settings',

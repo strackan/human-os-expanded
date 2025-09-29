@@ -13,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu';
   payload?: any;
 }
 
@@ -149,6 +149,11 @@ export class ConversationEngine {
           if (branch.artifactId) {
             this.state.artifacts.delete(branch.artifactId);
           }
+        } else if (action === 'showMenu') {
+          actions.push({
+            type: 'showMenu',
+            payload: {}
+          });
         } else {
           actions.push({ type: action });
         }

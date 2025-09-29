@@ -5,6 +5,14 @@ import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimi
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
 import TemplateGroupManager from './workflows/components/TemplateGroupManager';
+import {
+  planningChecklistDemoConfig,
+  contactStrategyDemoConfig,
+  contractDemoConfig,
+  pricingAnalysisDemoConfig,
+  planSummaryDemoConfig,
+  allArtifactsMasterDemo
+} from './workflows/config/configs';
 
 export default function ArtifactGallery() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'groups'>('gallery');
@@ -99,17 +107,54 @@ export default function ArtifactGallery() {
             case 'CSMDashboard':
               module = await import('./dashboards/CSMDashboard');
               break;
-            case 'TaskModeBasic':
-              module = await import('./workflows/TaskModeBasic');
-              break;
-              case 'TaskMode':
-              module = await import('./workflows/TaskMode');
-              break;
               case 'TaskModeAdvanced':
               module = await import('./workflows/TaskModeAdvanced');
               break;
               case 'TaskModeCustom':
               module = await import('./workflows/TaskModeCustom');
+              break;
+            case 'TaskModeGallery':
+              module = await import('./workflows/TaskModeGallery');
+              break;
+            case 'RenewalChatWorkflow':
+              module = await import('./RenewalChatWorkflow');
+              break;
+            case 'PlanningChecklistArtifact':
+              module = await import('./PlanningChecklistArtifact');
+              break;
+            case 'ContractArtifact':
+              module = await import('./ContractArtifact');
+              break;
+            case 'PricingAnalysisArtifact':
+              module = await import('./PricingAnalysisArtifact');
+              break;
+            case 'ContactStrategyArtifact':
+              module = await import('./ContactStrategyArtifact');
+              break;
+            case 'PlanSummaryArtifact':
+              module = await import('./PlanSummaryArtifact');
+              break;
+            case 'PlanningChecklistEnhancedArtifact':
+              module = await import('./PlanningChecklistEnhancedArtifact');
+              break;
+            // Demo components use specific wrappers
+            case 'PlanningChecklistDemo':
+              module = await import('./demos/PlanningChecklistDemoGallery');
+              break;
+            case 'ContactStrategyDemo':
+              module = await import('./demos/ContactStrategyDemoGallery');
+              break;
+            case 'ContractOverviewDemo':
+              module = await import('./demos/ContractOverviewDemoGallery');
+              break;
+            case 'PricingAnalysisDemo':
+              module = await import('./demos/PricingAnalysisDemoGallery');
+              break;
+            case 'PlanSummaryDemo':
+              module = await import('./demos/PlanSummaryDemoGallery');
+              break;
+            case 'AllArtifactsMasterDemo':
+              module = await import('./demos/AllArtifactsMasterDemoGallery');
               break;
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);
@@ -295,12 +340,19 @@ export default function ArtifactGallery() {
     if (!selectedComponent) return;
 
     // For workflow components, open the entire workflow in clean view
-    if (selectedComponent.category === 'Workflows') {
+    if (selectedComponent.category === 'Workflows' || selectedComponent.category === 'Artifact Demos') {
       // Map component names to config names
       const configMap: Record<string, string> = {
         'TaskModeCustom': 'bluebird-planning',
         'TaskModeGallery': 'acme',
-        // Add other mappings as needed
+        'TaskModeAdvanced': 'bluebird-planning',
+        // Artifact Demo mappings
+        'PlanningChecklistDemo': 'planning-checklist-demo',
+        'ContactStrategyDemo': 'contact-strategy-demo',
+        'ContractOverviewDemo': 'contract-demo',
+        'PricingAnalysisDemo': 'pricing-analysis-demo',
+        'PlanSummaryDemo': 'plan-summary-demo',
+        'AllArtifactsMasterDemo': 'all-artifacts-master-demo',
       };
 
       const configName = configMap[selectedComponent.name] || 'bluebird-planning';
@@ -552,10 +604,10 @@ Code to copy:`;
                     <div className="ml-4 mt-1 space-y-1">
                       {items.map((item) => (
                         <button
-                          key={item.path}
+                          key={`${item.path}-${item.name}`}
                           onClick={() => setSelectedComponent(item)}
                           className={`flex items-center gap-2 w-full p-2 pl-4 hover:bg-blue-50 rounded-lg transition-colors text-sm ${
-                            selectedComponent?.path === item.path
+                            selectedComponent?.path === item.path && selectedComponent?.name === item.name
                               ? 'bg-blue-100 text-blue-700'
                               : 'text-gray-600'
                           }`}

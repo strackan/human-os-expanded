@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Save, Send, Bold, Italic, Underline, CheckCircle, X } from 'lucide-react';
+import { useTypingAnimation } from '../../../../hooks/useTypingAnimation';
 
 interface EmailContent {
   to: string;
@@ -13,6 +14,12 @@ interface EmailComposerProps {
   typingSpeed?: number;
   onContentChange?: (content: EmailContent) => void;
 }
+
+// Email validation utility
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email.trim());
+};
 
 // Toast notification component
 interface ToastProps {
@@ -127,74 +134,6 @@ const TypingText = ({
   return <span>{displayedText}</span>;
 };
 
-// Enhanced typing animation that types all content sequentially
-const SequentialTypingAnimation = ({ 
-  content, 
-  speed = 8, 
-  onComplete 
-}: { 
-  content: EmailContent; 
-  speed?: number; 
-  onComplete?: () => void;
-}) => {
-  const [currentField, setCurrentField] = useState<'to' | 'subject' | 'body' | 'complete'>('to');
-  const [toText, setToText] = useState('');
-  const [subjectText, setSubjectText] = useState('');
-  const [bodyText, setBodyText] = useState('');
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    const fields = ['to', 'subject', 'body'] as const;
-    const fieldValues = {
-      to: content.to,
-      subject: content.subject,
-      body: content.body
-    };
-
-    if (currentField !== 'complete') {
-      const currentFieldValue = fieldValues[currentField];
-      
-      if (currentIndex < currentFieldValue.length) {
-        const timeout = setTimeout(() => {
-          const newChar = currentFieldValue[currentIndex];
-          
-          switch (currentField) {
-            case 'to':
-              setToText(prev => prev + newChar);
-              break;
-            case 'subject':
-              setSubjectText(prev => prev + newChar);
-              break;
-            case 'body':
-              setBodyText(prev => prev + newChar);
-              break;
-          }
-          
-          setCurrentIndex(prev => prev + 1);
-        }, speed);
-        
-        return () => clearTimeout(timeout);
-      } else {
-        // Move to next field
-        const currentFieldIndex = fields.indexOf(currentField);
-        if (currentFieldIndex < fields.length - 1) {
-          setCurrentField(fields[currentFieldIndex + 1]);
-          setCurrentIndex(0);
-        } else {
-          setCurrentField('complete');
-          onComplete?.();
-        }
-      }
-    }
-  }, [currentField, currentIndex, content, speed, onComplete]);
-
-  return {
-    to: toText,
-    subject: subjectText,
-    body: bodyText,
-    isComplete: currentField === 'complete'
-  };
-};
 
 const EmailComposer: React.FC<EmailComposerProps> = ({
   content,
@@ -210,8 +149,11 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<'success' | 'info'>('success');
   const [showToast, setShowToast] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [isValidatingEmail, setIsValidatingEmail] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
-  const typingAnimation = SequentialTypingAnimation({
+
+  const typingAnimation = useTypingAnimation({
     content,
     speed: typingSpeed,
     onComplete: () => {
@@ -229,7 +171,22 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
 
   const handleEmailFieldChange = (field: keyof EmailContent, value: string) => {
     if (!editable) return;
-    
+
+    // Validate email field
+    if (field === 'to') {
+      setIsValidatingEmail(true);
+
+      // Clear previous error
+      setEmailError('');
+
+      // Validate if not empty
+      if (value.trim() && !isValidEmail(value)) {
+        setEmailError('Please enter a valid email address');
+      }
+
+      setIsValidatingEmail(false);
+    }
+
     const newContent = { ...emailContent, [field]: value };
     setEmailContent(newContent);
     onContentChange?.(newContent);
@@ -249,6 +206,30 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
   };
 
   const handleSendEmail = () => {
+    // Validate email before sending
+    if (!isValidEmail(emailContent.to)) {
+      setEmailError('Please enter a valid email address before sending');
+      setToastMessage('Please fix email validation errors before sending');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+
+    // Validate required fields
+    if (!emailContent.subject.trim()) {
+      setToastMessage('Please enter a subject before sending');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+
+    if (!emailContent.body.trim()) {
+      setToastMessage('Please enter a message before sending');
+      setToastType('info');
+      setShowToast(true);
+      return;
+    }
+
     setEmailSent(true);
     console.log('Sending email:', emailContent);
     setToastMessage('Email sent successfully!');
@@ -329,18 +310,31 @@ const EmailComposer: React.FC<EmailComposerProps> = ({
       
       <div className="p-4 space-y-3">
         {/* To Field */}
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 w-12">To:</label>
-          {editable && isTypingComplete ? (
-            <input
-              type="email"
-              value={emailContent.to}
-              onChange={(e) => handleEmailFieldChange('to', e.target.value)}
-              className="flex-1 p-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          ) : (
-            <div className="flex-1 p-2 text-sm text-gray-900">
-              {displayContent.to}
+        <div className="space-y-1">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 w-12">To:</label>
+            {editable && isTypingComplete ? (
+              <input
+                type="email"
+                value={emailContent.to}
+                onChange={(e) => handleEmailFieldChange('to', e.target.value)}
+                className={`flex-1 p-2 border rounded text-sm focus:outline-none focus:ring-2 transition-colors ${
+                  emailError
+                    ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                    : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                }`}
+                placeholder="recipient@example.com"
+              />
+            ) : (
+              <div className="flex-1 p-2 text-sm text-gray-900">
+                {displayContent.to}
+              </div>
+            )}
+          </div>
+          {emailError && (
+            <div className="ml-15 text-xs text-red-600 flex items-center gap-1">
+              <span>⚠️</span>
+              <span>{emailError}</span>
             </div>
           )}
         </div>

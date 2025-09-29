@@ -66,7 +66,7 @@ export interface DynamicChatBranch {
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu'>;
   artifactId?: string;
   buttons?: DynamicChatButton[];
   nextBranches?: {
@@ -119,7 +119,7 @@ export interface WorkflowSlide {
     sections: Array<{
       id: string;
       title: string;
-      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary';
+      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced';
       visible: boolean;
       editable?: boolean;
       content?: any;
@@ -180,7 +180,7 @@ export interface ArtifactsConfig {
   sections: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced';
     visible: boolean;
     editable?: boolean;
     content?: any;

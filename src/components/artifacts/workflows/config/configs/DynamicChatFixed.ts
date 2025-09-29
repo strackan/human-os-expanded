@@ -25,16 +25,18 @@ export const dynamicChatSlides: WorkflowSlide[] = [
       },
       branches: {
         'expansion': {
-          response: "Excellent choice! Based on their growth trajectory, I recommend a multi-year expansion deal. Let me prepare an analysis for you.",
+          response: "Great! Let's review what we need to accomplish for the renewal planning:",
+          actions: ['showArtifact'],
+          artifactId: 'planning-checklist-renewal',
           buttons: [
-            { label: 'Draft email', value: 'draft-email' },
-            { label: 'Schedule meeting', value: 'schedule' },
-            { label: 'View details', value: 'details' }
+            { label: 'Let\'s Do It!', value: 'proceed-with-plan' },
+            { label: 'Not Yet', value: 'not-ready' },
+            { label: 'Go Back', value: 'back-to-start' }
           ],
           nextBranches: {
-            'draft-email': 'email-flow',
-            'schedule': 'meeting-flow',
-            'details': 'detail-view'
+            'proceed-with-plan': 'email-flow',
+            'not-ready': 'not-ready-flow',
+            'back-to-start': 'back-to-initial'
           }
         },
         'usage': {
@@ -95,6 +97,26 @@ export const dynamicChatSlides: WorkflowSlide[] = [
             { label: 'Prepare renewal offer', value: 'renewal' },
             { label: 'Something else', value: 'free-chat' }
           ]
+        },
+        'not-ready-flow': {
+          response: "No problem! Take your time to review the checklist. When you're ready to proceed, just let me know.",
+          buttons: [
+            { label: 'I\'m ready now', value: 'proceed-with-plan' },
+            { label: 'Go back to start', value: 'back-to-initial' }
+          ]
+        },
+        'back-to-initial': {
+          response: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>.",
+          buttons: [
+            { label: 'Start Planning', value: 'plan' },
+            { label: 'Snooze', value: 'snooze' },
+            { label: 'Skip this workflow', value: 'skip' }
+          ],
+          nextBranches: {
+            'plan': 'expansion',
+            'snooze': 'snooze',
+            'skip': 'skip'
+          }
         }
       },
       userTriggers: {
@@ -108,6 +130,24 @@ export const dynamicChatSlides: WorkflowSlide[] = [
     },
     artifacts: {
       sections: [
+        {
+          id: 'planning-checklist-renewal',
+          title: 'Renewal Planning Checklist',
+          type: 'planning-checklist',
+          visible: false,
+          content: {
+            description: "Let's systematically prepare for Dynamic Corp's renewal:",
+            items: [
+              { id: 'start-planning', label: 'Start planning', completed: true },
+              { id: 'review-contract', label: 'Review contract', completed: false },
+              { id: 'set-price', label: 'Set price', completed: false },
+              { id: 'confirm-contacts', label: 'Confirm contacts', completed: false },
+              { id: 'send-renewal-notice', label: 'Send renewal notice', completed: false },
+              { id: 'review-action-items', label: 'Review action items', completed: false }
+            ],
+            showActions: true
+          }
+        },
         {
           id: 'license-analysis',
           title: 'License Analysis',
@@ -525,16 +565,18 @@ export const dynamicChatAI: WorkflowConfig = {
       },
       branches: {
         'planning': {
-          response: "Excellent choice! Based on their growth trajectory, I recommend a multi-year expansion deal. Let me prepare an analysis for you.",
+          response: "Great! Let's review what we need to accomplish for the renewal planning:",
+          actions: ['showArtifact'],
+          artifactId: 'planning-checklist-renewal',
           buttons: [
-            { label: 'Draft email', value: 'draft-email' },
-            { label: 'Schedule meeting', value: 'schedule' },
-            { label: 'View details', value: 'details' }
+            { label: 'Let\'s Do It!', value: 'proceed-with-plan' },
+            { label: 'Not Yet', value: 'not-ready' },
+            { label: 'Go Back', value: 'back-to-start' }
           ],
           nextBranches: {
-            'draft-email': 'email-flow',
-            'schedule': 'meeting-flow',
-            'details': 'detail-view'
+            'proceed-with-plan': 'email-flow',
+            'not-ready': 'not-ready-flow',
+            'back-to-start': 'back-to-initial'
           }
         },
         'skip': { subflow: 'common.skip' },
@@ -580,6 +622,26 @@ export const dynamicChatAI: WorkflowConfig = {
         },
         'free-chat': {
           response: "I'm here to help! Feel free to ask me anything about Dynamic Corp's account, renewal strategy, or any other questions you might have. What would you like to know?"
+        },
+        'not-ready-flow': {
+          response: "No problem! Take your time to review the checklist. When you're ready to proceed, just let me know.",
+          buttons: [
+            { label: 'I\'m ready now', value: 'proceed-with-plan' },
+            { label: 'Go back to start', value: 'back-to-initial' }
+          ]
+        },
+        'back-to-initial': {
+          response: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>.",
+          buttons: [
+            { label: 'Start Planning', value: 'planning' },
+            { label: 'Snooze', value: 'snooze' },
+            { label: 'Skip this workflow', value: 'skip' }
+          ],
+          nextBranches: {
+            'planning': 'planning',
+            'snooze': 'snooze',
+            'skip': 'skip'
+          }
         },
         'early-renewal': {
           response: "Great strategy! I'll create an early renewal offer with a 15% discount.",
@@ -688,54 +750,88 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
             'Offer priority support as differentiator'
           ]
         }
+      },
+      {
+        id: 'planning-checklist-renewal',
+        title: 'Renewal Planning Checklist',
+        type: 'planning-checklist',
+        visible: false,
+        content: {
+          description: "Let's systematically prepare for Dynamic Corp's renewal:",
+          items: [
+            { id: 'start-planning', label: 'Start planning', completed: true },
+            { id: 'review-contract', label: 'Review contract', completed: false },
+            { id: 'set-price', label: 'Set price', completed: false },
+            { id: 'confirm-contacts', label: 'Confirm contacts', completed: false },
+            { id: 'send-renewal-notice', label: 'Send renewal notice', completed: false },
+            { id: 'review-action-items', label: 'Review action items', completed: false }
+          ],
+          showActions: true
+        }
       }
     ]
   },
   sidePanel: {
     enabled: true,
     title: {
-      text: "Customer Engagement Workflow",
+      text: "Renewal Planning Workflow",
       subtitle: "Dynamic Corp Account",
       icon: "📋"
     },
     steps: [
       {
-        id: "initial-contact",
-        title: "Initial Contact",
-        description: "Establish communication with customer",
+        id: "start-planning",
+        title: "Start Planning",
+        description: "Begin renewal planning process",
         status: "completed",
-        workflowBranch: "initial",
-        icon: "📞"
+        workflowBranch: "planning",
+        icon: "🚀"
       },
       {
-        id: "needs-assessment",
-        title: "Needs Assessment",
-        description: "Analyze customer requirements and growth opportunities",
+        id: "review-contract",
+        title: "Review Contract",
+        description: "Analyze current contract terms and conditions",
         status: "in-progress",
-        workflowBranch: "expansion",
-        icon: "🔍"
+        workflowBranch: "planning",
+        icon: "📋"
       },
       {
-        id: "proposal-draft",
-        title: "Proposal Draft",
-        description: "Create tailored proposal based on analysis",
+        id: "set-price",
+        title: "Set Price",
+        description: "Determine renewal pricing strategy",
+        status: "pending",
+        workflowBranch: "planning",
+        icon: "💰"
+      },
+      {
+        id: "confirm-contacts",
+        title: "Confirm Contacts",
+        description: "Verify decision makers and stakeholders",
+        status: "pending",
+        workflowBranch: "planning",
+        icon: "👥"
+      },
+      {
+        id: "send-renewal-notice",
+        title: "Send Renewal Notice",
+        description: "Initiate formal renewal communication",
         status: "pending",
         workflowBranch: "email-flow",
-        icon: "📝"
+        icon: "📧"
       },
       {
-        id: "follow-up",
-        title: "Follow-up",
-        description: "Schedule meeting and next steps",
+        id: "review-action-items",
+        title: "Review Action Items",
+        description: "Finalize and track next steps",
         status: "pending",
         workflowBranch: "email-complete",
-        icon: "📅"
+        icon: "✅"
       }
     ],
     progressMeter: {
       currentStep: 2,
-      totalSteps: 4,
-      progressPercentage: 50,
+      totalSteps: 6, // Must match steps array length above (6 steps)
+      progressPercentage: 33, // Math.floor((currentStep/totalSteps) * 100) = Math.floor((2/6) * 100) = 33
       showPercentage: true,
       showStepNumbers: true
     },

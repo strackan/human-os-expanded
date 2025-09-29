@@ -25,10 +25,18 @@
  * ```
  */
 
-import React, { useState, useImperativeHandle, useEffect } from 'react';
+import React, { useState, useImperativeHandle, useEffect, useMemo } from 'react';
 import { ArtifactsConfig, SidePanelConfig } from '../config/WorkflowConfig';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import EmailComposer from './EmailComposer';
+import PlanningChecklistArtifact, { ChecklistItem } from '../../PlanningChecklistArtifact';
+import PlanningChecklistEnhancedArtifact from '../../PlanningChecklistEnhancedArtifact';
+import PricingAnalysisArtifact from '../../PricingAnalysisArtifact';
+import ContractArtifact from '../../ContractArtifact';
+import ContactStrategyArtifact from '../../ContactStrategyArtifact';
+import PlanSummaryArtifact from '../../PlanSummaryArtifact';
+import DocumentArtifact from '../../DocumentArtifact';
+import QuoteArtifact from '../../QuoteArtifact';
 
 interface ArtifactsPanelProps {
   config: ArtifactsConfig;
@@ -38,6 +46,8 @@ interface ArtifactsPanelProps {
   visibleArtifacts?: Set<string>; // For dynamic mode - controls which artifacts are visible
   onSideMenuToggle?: (isVisible: boolean) => void; // Callback for side menu state changes
   onStepClick?: (stepId: string, workflowBranch: string) => void; // Callback for step clicks
+  onChapterNavigation?: (chapterNumber: number) => void; // Callback for chapter navigation
+  onToggleStatsVisibility?: () => void; // Function to toggle stats visibility (Hide Stats functionality)
   sideMenuRef?: React.RefObject<{
     showSideMenu: () => void;
     removeSideMenu: () => void;
@@ -313,46 +323,46 @@ interface SideMenuProps {
   sidePanelConfig?: SidePanelConfig;
   width?: number;
   onStepClick?: (stepId: string, workflowBranch: string) => void;
+  checklistItems?: ChecklistItem[]; // Add checklist items
+  onChecklistItemClick?: (itemId: string, index: number) => void; // Add click handler for checklist items
+  isActive?: boolean; // Track if side menu is active (enabled after planning)
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove, sidePanelConfig, width = 280, onStepClick }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove, sidePanelConfig, width = 240, onStepClick, checklistItems, onChecklistItemClick, isActive = false }) => {
   if (!isVisible) return null;
 
   return (
-    <div 
-      className="fixed top-0 right-0 z-50 transition-all duration-300 ease-in-out"
-      style={{ 
-        height: '100vh',
+    <div
+      className="absolute top-0 -right-px z-40 transition-all duration-500 ease-in-out"
+      style={{
+        height: '100%',
         width: isCollapsed ? '48px' : `${width}px`,
         transform: isVisible ? 'translateX(0)' : 'translateX(100%)'
       }}
     >
       {/* Sidebar Content */}
-      <div 
-        className="bg-white border-l border-gray-200 shadow-lg h-full"
-        style={{ 
+      <div
+        className="bg-white border border-gray-200 rounded-r-lg shadow-xl h-full overflow-hidden"
+        style={{
           height: '100%',
           width: '100%'
         }}
       >
       {/* Side Menu Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gray-50">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
         {!isCollapsed && (
-          <h4 className="text-sm font-medium text-gray-700">Side Menu</h4>
+          <h4 className="text-sm font-medium text-gray-700">Workflow Steps</h4>
         )}
         <div className="flex items-center space-x-1">
           <button
-            onClick={onToggleCollapse}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onToggleCollapse();
-              }
-            }}
-            className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1"
-            title={isCollapsed ? "Expand menu" : "Collapse menu"}
-            tabIndex={0}
-            aria-label={isCollapsed ? "Expand menu" : "Collapse menu"}
+            onClick={isActive ? onToggleCollapse : undefined}
+            disabled={!isActive}
+            className={`p-1 transition-colors ${
+              isActive
+                ? 'text-green-500 hover:text-green-600 cursor-pointer'
+                : 'text-gray-300 cursor-not-allowed'
+            }`}
+            title={isActive ? (isCollapsed ? "Expand menu" : "Collapse menu") : "Planning required to enable"}
           >
             {isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -403,9 +413,49 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
             )}
           </div>
 
-          {/* Scrollable Content - Steps only */}
+          {/* Scrollable Content - Steps or Checklist Items */}
           <div className="flex-1 overflow-y-auto p-4">
-            {sidePanelConfig && sidePanelConfig.showSteps && (
+            {/* Show checklist items if available, otherwise show steps */}
+            {checklistItems && checklistItems.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 mb-3">Click any item to navigate to that chapter:</p>
+                {checklistItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    onClick={() => onChecklistItemClick?.(item.id, index)}
+                    className={`p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-md ${
+                      item.completed
+                        ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                    }`}
+                    title={`Click to navigate to: ${item.label}`}
+                  >
+                    <div className="flex items-start space-x-3">
+                      <div className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        item.completed
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-300 text-gray-600'
+                      }`}>
+                        {item.completed ? (
+                          <span className="text-xs">✓</span>
+                        ) : (
+                          <span className="text-xs font-medium">{index + 1}</span>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className={`text-sm ${
+                          item.completed
+                            ? 'text-green-800 line-through'
+                            : 'text-gray-700'
+                        }`}>
+                          {item.label}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : sidePanelConfig && sidePanelConfig.showSteps && (
               <div className="space-y-2">
                 {sidePanelConfig.steps.map((step, index) => (
                   <div 
@@ -497,24 +547,59 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
   );
 };
 
-const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, onStepClick, sideMenuRef }) => {
+const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, onStepClick, onChapterNavigation, onToggleStatsVisibility, sideMenuRef }) => {
   // Side menu state
   const [sideMenuState, setSideMenuState] = useState<SideMenuState>({
     isVisible: false,
     isCollapsed: false
   });
-  
-  // Fixed sidebar width - no resizing
-  const sidebarWidth = 320; // Fixed width for better UX
 
-  const visibleSections = config.sections.filter(s => {
-    // If visibleArtifacts is provided (dynamic mode), use it to filter
-    if (visibleArtifacts !== undefined) {
-      return visibleArtifacts.has(s.id);
+  // State for checklist items
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
+
+  // State for side menu active status (enabled after planning)
+  const [isSideMenuActive, setIsSideMenuActive] = useState<boolean>(false);
+
+  // Fixed sidebar width - no resizing
+  const sidebarWidth = 240; // Fixed width for better UX
+
+  const visibleSections = useMemo(() => {
+    return config.sections.filter(s => {
+      // If visibleArtifacts is provided (dynamic mode), use it to filter
+      if (visibleArtifacts !== undefined) {
+        return visibleArtifacts.has(s.id);
+      }
+      // Otherwise, use the default visibility from config
+      return s.visible;
+    });
+  }, [config.sections, visibleArtifacts]);
+
+  // Extract checklist items from visible sections
+  useEffect(() => {
+    const checklistSection = visibleSections.find(s =>
+      s.type === 'planning-checklist' || s.type === 'planning-checklist-enhanced'
+    );
+
+    if (checklistSection && checklistSection.content?.items) {
+      setChecklistItems(checklistSection.content.items);
+    } else {
+      setChecklistItems([]);
     }
-    // Otherwise, use the default visibility from config
-    return s.visible;
-  });
+  }, [visibleSections]);
+
+  // Handle checklist item clicks in side menu
+  const handleChecklistItemClick = (itemId: string, index: number) => {
+    // Scroll to the checklist artifact in the main panel
+    const checklistElement = document.querySelector(`[data-checklist-item="${itemId}"]`);
+    if (checklistElement) {
+      checklistElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    // If there's an onChapterNavigation callback, use it
+    if (onChapterNavigation) {
+      onChapterNavigation(index + 1); // Convert to 1-based chapter number
+    }
+  };
 
   // Side menu methods
   const showSideMenu = () => {
@@ -535,7 +620,15 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
     onSideMenuToggle?.(false);
   };
 
-  const toggleSideMenu = () => {
+  const toggleSideMenuVisibility = () => {
+    setSideMenuState(prev => ({
+      ...prev,
+      isVisible: !prev.isVisible
+    }));
+    onSideMenuToggle?.(!sideMenuState.isVisible);
+  };
+
+  const toggleSideMenuCollapse = () => {
     setSideMenuState(prev => ({
       ...prev,
       isCollapsed: !prev.isCollapsed
@@ -546,38 +639,33 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
   useImperativeHandle(sideMenuRef, () => ({
     showSideMenu,
     removeSideMenu,
-    toggleSideMenu
+    toggleSideMenu: toggleSideMenuVisibility
   }), []);
 
+
   return (
-    <div className={`bg-gray-50 h-full ${className}`}>
+    <div className={`bg-gray-50 h-full relative ${className}`}>
       <div className="p-4 border-b border-gray-200 bg-white flex items-center justify-between">
         <h3 className="font-semibold text-gray-800">Artifacts</h3>
         <div className="flex items-center space-x-2">
-          {!sideMenuState.isVisible && (
           <button
-            onClick={showSideMenu}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                showSideMenu();
-              }
-            }}
-            className="px-3 py-1.5 text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 border border-blue-200 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            title="Show side menu"
-            tabIndex={0}
-            aria-label="Show side menu"
+            onClick={toggleSideMenuVisibility}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+            title={sideMenuState.isVisible ? "Hide workflow steps" : "Show workflow steps"}
+            aria-label={sideMenuState.isVisible ? "Hide workflow steps" : "Show workflow steps"}
           >
-            Show Menu
+            <ChevronRight
+              className={`w-4 h-4 transition-transform duration-300 ${sideMenuState.isVisible ? 'rotate-180' : ''}`}
+            />
           </button>
-          )}
         </div>
       </div>
       <div className="flex h-full" style={{ height: 'calc(100% - 60px)' }}>
         <div className="flex flex-col flex-1">
           {/* Scrollable Artifacts Content */}
           <div
-            className="p-6 text-gray-700 flex-1 overflow-y-auto"
+            className="p-6 text-gray-700 overflow-y-auto"
+            style={{ paddingBottom: '100px' }} // Make room for the fixed footer
           >
             {visibleSections.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
@@ -606,6 +694,99 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                     );
                   case 'workflow-summary':
                     return <WorkflowSummarySection key={section.id} content={section.content} />;
+                  case 'planning-checklist':
+                    return (
+                      <PlanningChecklistArtifact
+                        key={section.id}
+                        title={section.content?.description || "Let's review what we need to accomplish:"}
+                        items={section.content?.items || []}
+                        showActions={section.content?.showActions !== false}
+                        onItemToggle={(itemId, completed) => {
+                          // Update local checklist state when items are toggled
+                          setChecklistItems(prev =>
+                            prev.map(item =>
+                              item.id === itemId ? { ...item, completed } : item
+                            )
+                          );
+                        }}
+                        onLetsDoIt={() => {
+                          // Show side menu in collapsed state when planning is agreed to
+                          setSideMenuState({
+                            isVisible: true,
+                            isCollapsed: true
+                          });
+                          setIsSideMenuActive(true);
+                          onSideMenuToggle?.(true);
+                        }}
+                      />
+                    );
+                  case 'planning-checklist-enhanced':
+                    return (
+                      <PlanningChecklistEnhancedArtifact
+                        key={section.id}
+                        title={section.content?.title || section.content?.description || "Let's review what we need to accomplish:"}
+                        subtitle={section.content?.subtitle || "Click any item to navigate to that section of the plan"}
+                        items={section.content?.items || []}
+                        onChapterNavigation={onChapterNavigation}
+                        showActions={section.content?.showActions !== false}
+                        enableAnimations={section.content?.enableAnimations !== false}
+                        theme={section.content?.theme || 'professional'}
+                      />
+                    );
+                  case 'pricing-analysis':
+                    return (
+                      <PricingAnalysisArtifact
+                        key={section.id}
+                        data={section.data || section.content}
+                        isLoading={section.isLoading}
+                      />
+                    );
+                  case 'contract':
+                    return (
+                      <ContractArtifact
+                        key={section.id}
+                        data={section.data || section.content}
+                        isLoading={section.isLoading}
+                        error={section.error}
+                      />
+                    );
+                  case 'document':
+                    return (
+                      <DocumentArtifact
+                        key={section.id}
+                        data={section.data || section.content}
+                        readOnly={section.readOnly === true}
+                        title={section.title || 'Document'}
+                        onFieldChange={(field, value) => {
+                          console.log('Document field changed:', field, value);
+                        }}
+                      />
+                    );
+                  case 'contact-strategy':
+                    return (
+                      <ContactStrategyArtifact
+                        key={section.id}
+                        {...section.content}
+                      />
+                    );
+                  case 'plan-summary':
+                    return (
+                      <PlanSummaryArtifact
+                        key={section.id}
+                        {...section.content}
+                      />
+                    );
+                  case 'quote':
+                    return (
+                      <QuoteArtifact
+                        key={section.id}
+                        data={section.data || section.content}
+                        readOnly={section.readOnly === true}
+                        onFieldChange={(field, value) => {
+                          console.log('Quote field changed:', field, value);
+                        }}
+                      />
+                    );
                   case 'html':
                     return <HtmlSection key={section.id} section={section} />;
                   case 'custom':
@@ -618,14 +799,14 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
             )}
           </div>
 
-          {/* Sticky Progress Meter Footer for Main Content */}
-          <div className="p-4 border-t border-gray-200 bg-white flex-shrink-0">
+          {/* Fixed Progress Meter Footer for Main Content */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
             <div className="bg-gray-50 rounded-lg p-3">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-medium text-gray-700">Planning Stage</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: '20%' }}
                 ></div>
@@ -636,16 +817,19 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
             </div>
           </div>
         </div>
-        
+
         {/* Side Menu */}
         <SideMenu
           isVisible={sideMenuState.isVisible}
           isCollapsed={sideMenuState.isCollapsed}
-          onToggleCollapse={toggleSideMenu}
+          onToggleCollapse={toggleSideMenuCollapse}
           onRemove={removeSideMenu}
           sidePanelConfig={sidePanelConfig}
           width={sidebarWidth}
           onStepClick={onStepClick}
+          checklistItems={checklistItems}
+          onChecklistItemClick={handleChecklistItemClick}
+          isActive={isSideMenuActive}
         />
       </div>
     </div>

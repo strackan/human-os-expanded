@@ -6,6 +6,7 @@ export { bluebirdMemorialPlanningConfig } from './BluebirdMemorialConfig-Plannin
 export { simpleDynamicConfig } from './SimpleDynamicConfig';
 export { dynamicChatAI, dynamicChatUser } from './DynamicChatFixed';
 export { dynamicChatExampleConfig } from './DynamicChatExampleConfig';
+export { dynamicClone } from './DynamicClone';
 
 // Demo-VIP Template Group Configs
 export { priceIncreaseFlatConfig } from './PriceIncreaseFlatConfig';
@@ -14,3 +15,13 @@ export { quoteArtifactConfig } from './QuoteArtifactConfig';
 export { contractAnalysisConfig } from './ContractAnalysisConfig';
 export { strategicPlanningConfig } from './StrategicPlanningConfig';
 export { priceOptimizationConfig } from './PriceOptimizationConfig';
+export { contactStrategyConfig } from './ContactStrategyConfig';
+
+// Artifact Showcase Demo Configs
+export { planningChecklistDemoConfig } from './PlanningChecklistDemoConfig';
+export { planningChecklistWorkingDemo } from './PlanningChecklistWorkingDemo';
+export { contractDemoConfig } from './ContractDemoConfig';
+export { contactStrategyDemoConfig } from './ContactStrategyDemoConfig';
+export { planSummaryDemoConfig } from './PlanSummaryDemoConfig';
+export { pricingAnalysisDemoConfig } from './PricingAnalysisDemoConfig';
+export { allArtifactsMasterDemo } from './AllArtifactsMasterDemo';

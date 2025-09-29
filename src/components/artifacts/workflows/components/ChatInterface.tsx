@@ -487,10 +487,16 @@ const ChatInterface = React.forwardRef<{
   );
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
+    <div className={`h-full relative ${className}`}>
       <div
-        className="flex-1 p-4 space-y-4 overflow-y-auto"
-        style={{ minHeight: 0 }}
+        className="p-4 space-y-4 overflow-y-auto absolute"
+        style={{
+          minHeight: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: '140px' // Make room for 140px footer
+        }}
       >
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 flex items-center justify-center h-full">
@@ -578,7 +584,10 @@ const ChatInterface = React.forwardRef<{
         )}
       </div>
 
-      <div className="border-t border-gray-200 p-4 bg-white flex-shrink-0" style={{ height: '220px' }}>
+      <div
+        className="absolute bottom-0 left-0 right-0 border-t border-gray-200 p-4 bg-white"
+        style={{ height: '140px', minHeight: '140px', maxHeight: '140px' }}
+      >
         <div className="flex items-end space-x-2">
           {config.features.attachments && (
             <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
@@ -610,7 +619,7 @@ const ChatInterface = React.forwardRef<{
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder={config.placeholder}
-                  className="w-full resize-none border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[48px] max-h-[150px]"
+                  className="w-full resize-none border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[48px] max-h-[120px]"
                   rows={1}
                 />
                 <button
