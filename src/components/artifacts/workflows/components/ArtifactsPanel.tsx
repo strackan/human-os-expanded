@@ -636,7 +636,7 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
           {/* Scrollable Artifacts Content */}
           <div
             className="p-6 text-gray-700 overflow-y-auto"
-            style={{ paddingBottom: '100px' }} // Make room for the fixed footer
+            style={{ paddingBottom: '140px' }} // Make room for the fixed footer (increased for better scrolling)
           >
             {visibleSections.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-400">
@@ -682,23 +682,31 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                         }}
                         onLetsDoIt={() => {
                           console.log('Planning Checklist: Let\'s Do It clicked!');
-                          // Mark "start-planning" as completed (user committed to the plan)
+                          // Mark "start-planning" as completed in local state
                           setChecklistItems(prev =>
                             prev.map(item =>
                               item.id === 'start-planning' ? { ...item, completed: true } : item
                             )
                           );
-                          // Show contract artifact (this will replace the planning checklist)
+                          // Trigger all actions needed to transition to contract view
                           if (onArtifactButtonClick) {
-                            // Advance to next slide
-                            onArtifactButtonClick({ type: 'nextSlide' });
-                            // Show the contract artifact (replaces current artifacts)
+                            // 1. Complete the step (this updates the shared completedSteps state)
+                            onArtifactButtonClick({
+                              type: 'completeStep',
+                              payload: { stepId: 'start-planning' }
+                            });
+                            // 2. Show the contract artifact
                             onArtifactButtonClick({
                               type: 'showArtifact',
                               payload: { artifactId: 'enterprise-contract' }
                             });
-                            // Show the side menu
+                            // 3. Show the side menu
                             onArtifactButtonClick({ type: 'showMenu' });
+                            // 4. Navigate to the conversation branch to show AI response
+                            onArtifactButtonClick({
+                              type: 'navigateToBranch',
+                              payload: { branchId: 'contract-planning' }
+                            });
                           }
                         }}
                         onNotYet={() => {

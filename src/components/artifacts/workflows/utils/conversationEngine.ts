@@ -262,6 +262,57 @@ export class ConversationEngine {
     };
   }
 
+  processBranch(branchId: string): ConversationResponse | null {
+    console.log('ConversationEngine: Processing branch directly:', branchId);
+
+    const branch = this.flow.branches[branchId];
+    if (!branch) {
+      console.error('ConversationEngine: Branch not found:', branchId);
+      return null;
+    }
+
+    // Check if it's a subflow reference
+    if (isSubflowReference(branch)) {
+      const resolved = resolveSubflow(branch);
+      if (!resolved) {
+        console.error('ConversationEngine: Could not resolve subflow:', branch.subflow);
+        return null;
+      }
+      // Add the additional branches from the subflow to the flow
+      Object.assign(this.flow.branches, resolved.additionalBranches);
+      return this.processBranch(branchId); // Recursively process the resolved branch
+    }
+
+    const nextBranch = branch as DynamicChatBranch;
+
+    // Update state
+    this.state.history.push({
+      branch: branchId,
+      userInput: '[direct-navigation]',
+      timestamp: new Date()
+    });
+    this.state.currentBranch = branchId;
+
+    const actions = this.processActions(nextBranch);
+
+    // Process actions immediately if there's no delay
+    if (this.onAction && actions.length > 0 && !nextBranch.delay) {
+      actions.forEach(action => this.onAction!(action));
+    }
+
+    return {
+      text: substituteVariablesWithMappings(nextBranch.response, this.variableContext),
+      buttons: nextBranch.buttons?.map(button => ({
+        ...button,
+        label: substituteVariablesWithMappings(button.label, this.variableContext)
+      })),
+      actions,
+      nextBranch: branchId,
+      delay: nextBranch.delay,
+      predelay: nextBranch.predelay
+    };
+  }
+
   reset(): void {
     this.state = {
       currentBranch: null,

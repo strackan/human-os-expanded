@@ -68,21 +68,6 @@ const PlanningChecklistArtifact: React.FC<PlanningChecklistProps> = ({
           })}
         </ul>
 
-        {/* Progress Bar */}
-        {items.length > 0 && (
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between text-xs font-medium text-gray-600 mb-2">
-              <span>Progress</span>
-              <span className="text-blue-600">{completedCount} of {items.length} completed</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(completedCount / items.length) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
 
         {showActions && (
           <div className="flex gap-2 pt-4">

@@ -43,6 +43,7 @@ const ChatInterface = React.forwardRef<{
   showWorkingMessage: () => void;
   hideWorkingMessage: () => void;
   resetChat: () => void;
+  navigateToBranch: (branchId: string) => void;
 }, ChatInterfaceProps>(({
   config,
   isSplitMode,
@@ -149,8 +150,17 @@ const ChatInterface = React.forwardRef<{
     },
     showWorkingMessage,
     hideWorkingMessage,
-    resetChat
-  }), [messages, inputValue, conversationEngine, config]);
+    resetChat,
+    navigateToBranch: (branchId: string) => {
+      console.log('ChatInterface: Navigating to branch:', branchId);
+      if (conversationEngine) {
+        const response = conversationEngine.processBranch(branchId);
+        if (response) {
+          showResponse(response, onArtifactAction);
+        }
+      }
+    }
+  }), [messages, inputValue, conversationEngine, config, onArtifactAction]);
 
   // Also expose working message functions to workingMessageRef for backward compatibility
   useImperativeHandle(workingMessageRef, () => ({

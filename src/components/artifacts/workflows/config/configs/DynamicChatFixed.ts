@@ -14,7 +14,7 @@ export const dynamicChatSlides: WorkflowSlide[] = [
       initialMessage: {
         text: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>. ",
         buttons: [
-          { label: 'Start Planning', value: 'plan', completeStep: 'initial-contact' } as any,
+          { label: 'Start Planning', value: 'plan', completeStep: 'start-planning' } as any,
           { label: 'Snooze', value: 'snooze' },
           { label: 'Skip this workflow', value: 'skip' }
         ],
@@ -372,12 +372,13 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
       ],
       showSteps: true,
       showProgressMeter: false
-    },
-    onComplete: {
-      nextSlide: 2,
-      updateProgress: true
     }
-  },
+    // Removed onComplete - this is now a single-slide workflow for testing
+  }
+];
+
+// OLD SLIDE 2 - Commented out for single-slide testing. Will use this when we build multi-slide workflows.
+/*
   {
     id: 'needs-assessment',
     slideNumber: 2,
@@ -559,7 +560,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
       updateProgress: true
     }
   }
-];
+*/
 
 // Legacy configuration for backward compatibility
 export const dynamicChatAI: WorkflowConfig = {

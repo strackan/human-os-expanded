@@ -194,11 +194,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     : config.sidePanel;
 
   // Calculate progress percentage based on:
-  // - Single slide (slides.length === 1): Based on completed steps
+  // - Single slide (slides.length === 1): Based on current step (cap at 100% when all steps complete)
   // - Multiple slides (slides.length > 1): Based on current slide number
   const progressPercentage = isSlideBased && config.slides
     ? (config.slides.length === 1 && currentSidePanelConfig?.steps
-        ? (completedSteps.size / currentSidePanelConfig.steps.length) * 100
+        ? (Math.min(completedSteps.size + 1, currentSidePanelConfig.steps.length) / currentSidePanelConfig.steps.length) * 100
         : ((currentSlideIndex + 1) / config.slides.length) * 100)
     : 0;
 
@@ -399,6 +399,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       // The chat interface will navigate to the next step in the conversation flow
       // No state changes needed here - just log for debugging
       console.log('Next step navigation triggered (handled by chat interface)');
+    } else if (action.type === 'navigateToBranch') {
+      console.log('TaskModeAdvanced: Processing navigateToBranch action for:', action.payload?.branchId);
+      // Navigate to a specific conversation branch
+      if (action.payload?.branchId && chatInterfaceRef.current) {
+        // @ts-ignore - navigateToBranch might not be in the type definition yet
+        if (chatInterfaceRef.current.navigateToBranch) {
+          // @ts-ignore
+          chatInterfaceRef.current.navigateToBranch(action.payload.branchId);
+        } else {
+          console.warn('navigateToBranch method not available on chat interface');
+        }
+      }
     } else {
       console.log('TaskModeAdvanced: Unknown action type:', action.type);
     }
