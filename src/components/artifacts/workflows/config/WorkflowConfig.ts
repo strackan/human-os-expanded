@@ -66,7 +66,7 @@ export interface DynamicChatBranch {
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'nextStep'>;
   artifactId?: string;
   buttons?: DynamicChatButton[];
   nextBranches?: {
@@ -99,6 +99,7 @@ export interface WorkflowSlide {
   description: string;
   label: string; // Human-readable label for progress steps (e.g., "Initial Contact", "Needs Assessment")
   stepMapping: string; // Maps to sidePanel step ID
+  showSideMenu?: boolean; // Auto-open side menu when entering this slide
   chat: {
     initialMessage?: {
       text: string;
@@ -119,12 +120,16 @@ export interface WorkflowSlide {
     sections: Array<{
       id: string;
       title: string;
-      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced';
+      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote';
       visible: boolean;
       editable?: boolean;
       content?: any;
+      data?: any;
       htmlContent?: string;
       styles?: string;
+      isLoading?: boolean;
+      error?: string;
+      readOnly?: boolean;
     }>;
   };
   sidePanel?: {
@@ -142,6 +147,9 @@ export interface WorkflowSlide {
       workflowBranch: string;
       icon: string;
     }>;
+    progressMeter?: SidePanelProgressMeter;
+    showProgressMeter?: boolean;
+    showSteps?: boolean;
   };
   onComplete?: {
     nextSlide?: number;
@@ -180,12 +188,16 @@ export interface ArtifactsConfig {
   sections: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote';
     visible: boolean;
     editable?: boolean;
     content?: any;
+    data?: any;
     htmlContent?: string;
     styles?: string;
+    isLoading?: boolean;
+    error?: string;
+    readOnly?: boolean;
   }>;
 }
 

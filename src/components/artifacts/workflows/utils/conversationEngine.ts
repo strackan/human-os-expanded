@@ -13,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'advanceWithoutComplete' | 'resetWorkflow' | 'nextStep';
   payload?: any;
 }
 
@@ -170,6 +170,7 @@ export class ConversationEngine {
 
     let nextBranchName: string | null = null;
     let isExactMatch = false;
+    let clickedButton: DynamicChatButton | null = null;
 
     if (currentBranchData?.nextBranches) {
       nextBranchName = currentBranchData.nextBranches[userInput] || null;
@@ -181,6 +182,7 @@ export class ConversationEngine {
                  btn.value.toLowerCase() === userInput.toLowerCase()
         );
         if (matchedButton) {
+          clickedButton = matchedButton;
           nextBranchName = currentBranchData.nextBranches[matchedButton.value] ||
                           currentBranchData.nextBranches[matchedButton.label];
           isExactMatch = !!nextBranchName;
@@ -199,6 +201,7 @@ export class ConversationEngine {
                  btn.value.toLowerCase() === userInput.toLowerCase()
         );
         if (matchedButton) {
+          clickedButton = matchedButton;
           nextBranchName = this.flow.initialMessage.nextBranches[matchedButton.value] ||
                           this.flow.initialMessage.nextBranches[matchedButton.label];
           isExactMatch = !!nextBranchName;
@@ -221,6 +224,14 @@ export class ConversationEngine {
       this.state.currentBranch = nextBranchName;
 
       const actions = this.processActions(nextBranch);
+
+      // Check if the clicked button has a completeStep property
+      if (clickedButton && (clickedButton as any).completeStep) {
+        actions.push({
+          type: 'completeStep',
+          payload: { stepId: (clickedButton as any).completeStep }
+        });
+      }
 
       // Only process actions immediately if there's no delay
       if (this.onAction && actions.length > 0 && !nextBranch.delay) {

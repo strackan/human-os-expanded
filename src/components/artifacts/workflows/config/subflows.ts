@@ -32,8 +32,8 @@ export const subflows: { [subflowId: string]: SubflowDefinition } = {
     },
     followUpBranches: {
       'snooze-continue': {
-        response: "Moving to the next customer...",
-        actions: ['nextCustomer']
+        response: "Moving to the next workflow...",
+        actions: ['advanceWithoutComplete']
       },
       'snooze-exit': {
         response: "Task mode closed. You can reopen it anytime from the dashboard.",
@@ -59,13 +59,67 @@ export const subflows: { [subflowId: string]: SubflowDefinition } = {
     },
     followUpBranches: {
       'skip-yes': {
-        response: "Moving to the next customer...",
-        actions: ['nextCustomer']
+        response: "Moving to the next workflow...",
+        actions: ['advanceWithoutComplete']
       },
       'skip-no-thanks': {
         response: "Task mode closed. You can reopen it anytime from the dashboard.",
         actions: ['exitTaskMode']
       }
+    }
+  },
+
+  'common.notYet': {
+    id: 'common.notYet',
+    name: 'Not Yet Workflow',
+    description: 'Standard "Not Yet" behavior - asks for concerns, acknowledges, then offers next customer or continue',
+    branch: {
+      response: "No problem. Anything in particular you're concerned about?",
+      delay: 1,
+      buttons: [
+        { label: 'Just need more time', value: 'need-more-time' },
+        { label: 'Have questions about approach', value: 'questions-approach' },
+        { label: 'Something else', value: 'something-else' }
+      ],
+      nextBranches: {
+        'need-more-time': 'not-yet-acknowledge',
+        'questions-approach': 'not-yet-acknowledge',
+        'something-else': 'not-yet-acknowledge'
+      }
+    },
+    followUpBranches: {
+      'not-yet-acknowledge': {
+        response: "That's a good point. Let's move on to the next customer and we can come back to this a little later. Sound good?",
+        delay: 1,
+        buttons: [
+          { label: 'Next Customer', value: 'next-customer-action', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' },
+          { label: 'Continue Plan', value: 'continue-plan', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+        ],
+        nextBranches: {
+          'next-customer-action': 'not-yet-next-customer',
+          'continue-plan': 'not-yet-continue'
+        }
+      },
+      'not-yet-next-customer': {
+        response: "Moving to the next workflow...",
+        actions: ['advanceWithoutComplete']
+      },
+      'not-yet-continue': {
+        response: "Great! Let's proceed with the plan.",
+        delay: 1,
+        actions: ['nextSlide']
+      }
+    }
+  },
+
+  'common.letsDoIt': {
+    id: 'common.letsDoIt',
+    name: 'Let\'s Do It Workflow',
+    description: 'Standard "Let\'s Do It" behavior - proceeds to next slide/phase with side menu expansion',
+    branch: {
+      response: "Perfect! Let's get started.",
+      delay: 1,
+      actions: ['nextSlide', 'showMenu']
     }
   },
 

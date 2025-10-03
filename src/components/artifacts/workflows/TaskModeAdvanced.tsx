@@ -125,12 +125,27 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0); // Track current slide
   const [showFinalSlide, setShowFinalSlide] = useState(false); // Track final slide state
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set()); // Track completed steps
+  const [isSideMenuVisible, setIsSideMenuVisible] = useState(false); // Track side menu visibility
 
   // Reset split mode when template changes
   React.useEffect(() => {
     setIsSplitMode(baseConfig.layout.splitModeDefault || false);
     setVisibleArtifacts(new Set()); // Also clear any visible artifacts
   }, [workflowConfigName, baseConfig.layout.splitModeDefault]);
+
+  // Adjust chat width when side menu visibility changes to maintain equal widths
+  React.useEffect(() => {
+    if (isSideMenuVisible) {
+      // Side menu is visible, adjust chat width to compensate
+      // The side menu takes 240px, so we need to reduce the chat percentage
+      // to maintain equal widths between chat and artifacts
+      setChatWidth(45); // Reduce from 50% to 45% to compensate for side menu
+    } else {
+      // Side menu is hidden, restore original chat width
+      setChatWidth(baseConfig.layout.chatWidth);
+    }
+  }, [isSideMenuVisible, baseConfig.layout.chatWidth]);
 
   // Determine if we're using slides or traditional config
   // Only use slides if explicitly set or if slides array exists
@@ -172,9 +187,20 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const currentArtifactsConfig = isSlideBased
     ? (currentConfig.artifacts || config.artifacts)
     : config.artifacts;
-  // For now, use the main config's sidePanel for slide-based workflows
-  // TODO: Implement proper slide-specific sidePanel configuration
-  const currentSidePanelConfig = config.sidePanel;
+
+  // Use slide-specific sidePanel if available, otherwise use main config's sidePanel
+  const currentSidePanelConfig = isSlideBased && currentConfig.sidePanel
+    ? currentConfig.sidePanel
+    : config.sidePanel;
+
+  // Calculate progress percentage based on:
+  // - Single slide (slides.length === 1): Based on completed steps
+  // - Multiple slides (slides.length > 1): Based on current slide number
+  const progressPercentage = isSlideBased && config.slides
+    ? (config.slides.length === 1 && currentSidePanelConfig?.steps
+        ? (completedSteps.size / currentSidePanelConfig.steps.length) * 100
+        : ((currentSlideIndex + 1) / config.slides.length) * 100)
+    : 0;
 
   const modalRef = useRef<HTMLDivElement>(null);
   const chatInterfaceRef = useRef<{
@@ -184,6 +210,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     getCurrentInput?: () => string;
     restoreState?: (messages: any[], inputValue: string) => void;
     resetChat?: () => void;
+  }>(null);
+  const sideMenuRef = useRef<{
+    showSideMenu: () => void;
+    removeSideMenu: () => void;
+    toggleSideMenu: () => void;
   }>(null);
 
   // Simple close handler
@@ -250,7 +281,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       console.log('TaskModeAdvanced: Processing showMenu action');
       // Enable split mode and show the menu/artifacts panel
       openArtifact();
-      setIsStatsVisible(true); // Show stats for menu display
+      setIsStatsVisible(false); // Hide stats when showing menu
+      // Open the side menu within ArtifactsPanel
+      if (sideMenuRef.current) {
+        sideMenuRef.current.showSideMenu();
+      }
     } else if (action.type === 'exitTaskMode') {
       console.log('TaskModeAdvanced: Processing exitTaskMode action');
       // For snooze/skip actions, use display:none to completely reset content
@@ -291,6 +326,79 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       console.log('TaskModeAdvanced: Processing showFinalSlide action');
       // Show the final slide
       setShowFinalSlide(true);
+    } else if (action.type === 'nextSlide') {
+      console.log('TaskModeAdvanced: Processing nextSlide action');
+      // Advance to next slide if using slide-based config
+      if (isSlideBased && config.slides) {
+        const nextIndex = currentSlideIndex + 1;
+        if (nextIndex < config.slides.length) {
+          setCurrentSlideIndex(nextIndex);
+          console.log('Advanced to slide:', nextIndex, config.slides[nextIndex].title);
+          // Also show the side menu when advancing
+          openArtifact();
+          setIsStatsVisible(false);
+        } else {
+          console.log('Already at last slide');
+        }
+      } else {
+        console.log('Not using slide-based config, nextSlide has no effect');
+      }
+    } else if (action.type === 'completeStep') {
+      console.log('TaskModeAdvanced: Processing completeStep action for:', action.payload?.stepId);
+      // Mark step as completed
+      if (action.payload?.stepId) {
+        handleStepComplete(action.payload.stepId);
+      }
+    } else if (action.type === 'advanceWithoutComplete') {
+      console.log('TaskModeAdvanced: Processing advanceWithoutComplete action - smart progression');
+      // Smart progression: step → slide → customer (without marking complete)
+      if (isSlideBased && config.slides) {
+        const nextSlideIndex = currentSlideIndex + 1;
+        if (nextSlideIndex < config.slides.length) {
+          // Advance to next slide
+          console.log('Smart progression: Advancing to next slide:', nextSlideIndex);
+          setCurrentSlideIndex(nextSlideIndex);
+          openArtifact();
+          setIsStatsVisible(false);
+        } else {
+          // At last slide, advance to next customer
+          console.log('Smart progression: At last slide, advancing to next customer');
+          if (modalRef.current) {
+            modalRef.current.style.display = 'none';
+          }
+          if (onNextCustomer) {
+            onNextCustomer();
+          } else {
+            onClose();
+          }
+        }
+      } else {
+        // Non-slide based, just advance to next customer
+        console.log('Smart progression: Non-slide based, advancing to next customer');
+        if (modalRef.current) {
+          modalRef.current.style.display = 'none';
+        }
+        if (onNextCustomer) {
+          onNextCustomer();
+        } else {
+          onClose();
+        }
+      }
+    } else if (action.type === 'resetWorkflow') {
+      console.log('TaskModeAdvanced: Processing resetWorkflow action');
+      // Clear completed steps and reset to first slide
+      setCompletedSteps(new Set());
+      setCurrentSlideIndex(0);
+      // Reset the chat interface
+      if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+        chatInterfaceRef.current.resetChat();
+      }
+    } else if (action.type === 'nextStep') {
+      console.log('TaskModeAdvanced: Processing nextStep action');
+      // This action is primarily handled by the chat interface
+      // The chat interface will navigate to the next step in the conversation flow
+      // No state changes needed here - just log for debugging
+      console.log('Next step navigation triggered (handled by chat interface)');
     } else {
       console.log('TaskModeAdvanced: Unknown action type:', action.type);
     }
@@ -298,7 +406,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
   const handleStepClick = (stepId: string, workflowBranch: string) => {
     console.log('TaskModeAdvanced: Step clicked:', stepId, 'branch:', workflowBranch);
-    
+
     // Trigger the chat to navigate to the specific workflow branch
     if (chatInterfaceRef.current && workflowBranch) {
       // We'll need to add a method to the chat interface to handle branch navigation
@@ -306,6 +414,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       console.log('Navigating to workflow branch:', workflowBranch);
       // This would need to be implemented in the ChatInterface component
     }
+  };
+
+  const handleStepComplete = (stepId: string) => {
+    console.log('TaskModeAdvanced: Completing step:', stepId);
+    setCompletedSteps(prev => new Set(prev).add(stepId));
   };
 
   const handleGotoSlide = (slideNumber: number) => {
@@ -536,19 +649,26 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   }, [isOpen]);
 
   // Render inline or as modal based on inline prop
-  const containerClasses = inline 
+  const containerClasses = inline
     ? "w-full h-full bg-white flex flex-col"
     : "fixed bg-white rounded-lg shadow-2xl border border-gray-300 flex flex-col z-50";
-  
-  const containerStyles = inline 
+
+  // Calculate modal width and positioning based on side menu visibility
+  const sideMenuWidth = 240;
+  const baseModalWidth = 90; // 90vw
+  const additionalWidth = isSideMenuVisible ? sideMenuWidth : 0;
+
+  const containerStyles = inline
     ? {}
-    :       {
+    : {
         top: '50px',
-        left: '50px',
-        width: '90vw',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: `calc(${baseModalWidth}vw + ${additionalWidth}px)`,
         height: '90vh',
         minWidth: '400px',
-        minHeight: '500px'
+        minHeight: '500px',
+        transition: 'width 300ms ease-in-out'
       };
 
   // Show final slide if requested
@@ -780,6 +900,15 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
               className="h-full overflow-hidden"
               visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}
               onStepClick={handleStepClick}
+              onArtifactButtonClick={handleArtifactAction}
+              completedSteps={completedSteps}
+              progressPercentage={progressPercentage}
+              currentSlideIndex={currentSlideIndex}
+              totalSlides={isSlideBased && config.slides ? config.slides.length : undefined}
+              currentStepNumber={completedSteps.size + 1}
+              totalSteps={currentSidePanelConfig?.steps?.length}
+              onSideMenuToggle={(isVisible) => setIsSideMenuVisible(isVisible)}
+              sideMenuRef={sideMenuRef}
             />
           </div>
         )}

@@ -5,15 +5,16 @@ export const dynamicChatSlides: WorkflowSlide[] = [
   {
     id: 'initial-contact',
     slideNumber: 1,
-    title: 'Initial Contact',
-    description: 'Establish communication with customer',
-    label: 'Initial Contact',
+    title: 'Renewals',
+    description: 'Customer renewal workflow',
+    label: 'Renewals',
     stepMapping: 'initial-contact',
+    showSideMenu: false, // Side menu will be triggered by artifact action
     chat: {
       initialMessage: {
         text: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>. ",
         buttons: [
-          { label: 'Start Planning', value: 'plan' },
+          { label: 'Start Planning', value: 'plan', completeStep: 'initial-contact' } as any,
           { label: 'Snooze', value: 'snooze' },
           { label: 'Skip this workflow', value: 'skip' }
         ],
@@ -27,16 +28,56 @@ export const dynamicChatSlides: WorkflowSlide[] = [
         'expansion': {
           response: "Great! Let's review what we need to accomplish for the renewal planning:",
           actions: ['showArtifact'],
-          artifactId: 'planning-checklist-renewal',
+          artifactId: 'planning-checklist-renewal'
+        },
+        'contract-planning': {
+          response: "Perfect! Let's dive into the contract details to inform our renewal strategy.",
+          delay: 1,
+          actions: ['showArtifact', 'showMenu'],
+          artifactId: 'enterprise-contract',
           buttons: [
-            { label: 'Let\'s Do It!', value: 'proceed-with-plan' },
-            { label: 'Not Yet', value: 'not-ready' },
-            { label: 'Go Back', value: 'back-to-start' }
+            { label: 'Review contract terms', value: 'review-terms', completeStep: 'review-contract' } as any,
+            { label: 'Continue to email', value: 'email-flow' }
           ],
           nextBranches: {
-            'proceed-with-plan': 'email-flow',
-            'not-ready': 'not-ready-flow',
-            'back-to-start': 'back-to-initial'
+            'review-terms': 'contract-review',
+            'email-flow': 'email-flow'
+          }
+        },
+        'contract-review': {
+          response: "The contract shows: 8% price cap, 60-day notice, multi-year discounts available. Ready for the renewal email?",
+          delay: 1,
+          buttons: [
+            { label: 'Yes, draft email', value: 'email-flow', completeStep: 'set-price' } as any,
+            { label: 'Review more', value: 'contract-planning' }
+          ],
+          nextBranches: {
+            'email-flow': 'email-flow',
+            'contract-planning': 'contract-planning'
+          }
+        },
+        'not-ready-concern': {
+          response: "No problem. Anything in particular you're concerned about?",
+          delay: 1,
+          buttons: [
+            { label: 'Need more time', value: 'concern-ack' },
+            { label: 'Questions about approach', value: 'concern-ack' },
+            { label: 'Something else', value: 'concern-ack' }
+          ],
+          nextBranches: {
+            'concern-ack': 'concern-acknowledge'
+          }
+        },
+        'concern-acknowledge': {
+          response: "That's a good point. Let's move on to the next customer and we can come back to this a little later. Sound good?",
+          delay: 1,
+          buttons: [
+            { label: 'Next Customer', value: 'next-customer-action' },
+            { label: 'Continue Plan', value: 'contract-planning' }
+          ],
+          nextBranches: {
+            'next-customer-action': 'next-customer-action',
+            'contract-planning': 'contract-planning'
           }
         },
         'usage': {
@@ -138,7 +179,7 @@ export const dynamicChatSlides: WorkflowSlide[] = [
           content: {
             description: "Let's systematically prepare for Dynamic Corp's renewal:",
             items: [
-              { id: 'start-planning', label: 'Start planning', completed: true },
+              { id: 'start-planning', label: 'Start planning', completed: false },
               { id: 'review-contract', label: 'Review contract', completed: false },
               { id: 'set-price', label: 'Set price', completed: false },
               { id: 'confirm-contacts', label: 'Confirm contacts', completed: false },
@@ -146,6 +187,46 @@ export const dynamicChatSlides: WorkflowSlide[] = [
               { id: 'review-action-items', label: 'Review action items', completed: false }
             ],
             showActions: true
+          }
+        },
+        {
+          id: 'enterprise-contract',
+          title: 'Contract Review',
+          type: 'contract',
+          visible: false,
+          data: {
+            contractId: 'DYN-2024-0512',
+            customerName: 'Dynamic Corp',
+            contractValue: 725000,
+            renewalDate: 'February 28, 2026',
+            signerBaseAmount: 725000,
+            pricingCalculation: {
+              basePrice: 725000,
+              volumeDiscount: 0,
+              additionalServices: 0,
+              totalPrice: 725000
+            },
+            businessTerms: {
+              unsigned: [],
+              nonStandardRenewal: [
+                'Standard 12-month renewal cycle',
+                'Automatic renewal with 60-day notice'
+              ],
+              nonStandardPricing: [
+                'Multi-year discount available (10% for 2-year, 20% for 3-year)',
+                'Volume pricing tiers unlock at 150,000+ licenses'
+              ],
+              pricingCaps: [
+                'Annual price increases capped at 8% maximum'
+              ],
+              otherTerms: [
+                'Standard support with 24-hour response SLA',
+                'Quarterly business reviews included',
+                'API access with standard rate limits'
+              ]
+            },
+            riskLevel: 'low',
+            lastUpdated: 'January 15, 2025'
           }
         },
         {
@@ -235,44 +316,62 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     sidePanel: {
       enabled: true,
       title: {
-        text: "Customer Engagement Workflow",
-        subtitle: "Dynamic Corp Account",
+        text: "Renewal Planning",
+        subtitle: "Dynamic Corp - 6 Steps",
         icon: "📋"
       },
       steps: [
         {
-          id: "initial-contact",
-          title: "Initial Contact",
-          description: "Establish communication with customer",
-          status: "completed",
-          workflowBranch: "initial",
-          icon: "📞"
+          id: "start-planning",
+          title: "Start Planning",
+          description: "Begin renewal planning process",
+          status: "pending",
+          workflowBranch: "planning",
+          icon: "🚀"
         },
         {
-          id: "needs-assessment",
-          title: "Needs Assessment",
-          description: "Analyze customer requirements and growth opportunities",
-          status: "in-progress",
-          workflowBranch: "expansion",
-          icon: "🔍"
+          id: "review-contract",
+          title: "Review Contract",
+          description: "Analyze current contract terms and conditions",
+          status: "pending",
+          workflowBranch: "contract-planning-phase",
+          icon: "📋"
         },
         {
-          id: "proposal-draft",
-          title: "Proposal Draft",
-          description: "Create tailored proposal based on analysis",
+          id: "set-price",
+          title: "Set Price",
+          description: "Determine renewal pricing strategy",
+          status: "pending",
+          workflowBranch: "contract-details",
+          icon: "💰"
+        },
+        {
+          id: "confirm-contacts",
+          title: "Confirm Contacts",
+          description: "Verify decision makers and stakeholders",
           status: "pending",
           workflowBranch: "email-flow",
-          icon: "📝"
+          icon: "👥"
         },
         {
-          id: "follow-up",
-          title: "Follow-up",
-          description: "Schedule meeting and next steps",
+          id: "send-renewal-notice",
+          title: "Send Renewal Notice",
+          description: "Initiate formal renewal communication",
+          status: "pending",
+          workflowBranch: "email-flow",
+          icon: "📧"
+        },
+        {
+          id: "review-action-items",
+          title: "Review Action Items",
+          description: "Finalize and track next steps",
           status: "pending",
           workflowBranch: "email-complete",
-          icon: "📅"
+          icon: "✅"
         }
-      ]
+      ],
+      showSteps: true,
+      showProgressMeter: false
     },
     onComplete: {
       nextSlide: 2,
@@ -286,11 +385,12 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     description: 'Analyze customer requirements and growth opportunities',
     label: 'Needs Assessment',
     stepMapping: 'needs-assessment',
+    showSideMenu: true, // Auto-open when entering this slide
     chat: {
       initialMessage: {
         text: "Great! I've prepared an analysis of {{customer.name}}'s expansion opportunities. Based on their 65% growth and Series C funding, they're prime candidates for a multi-year expansion deal.",
         buttons: [
-          { label: 'Draft email', value: 'draft-email' },
+          { label: 'Draft email', value: 'draft-email', completeStep: 'needs-assessment' } as any,
           { label: 'Schedule meeting', value: 'schedule' },
           { label: 'View detailed analysis', value: 'analysis' }
         ]
@@ -569,14 +669,66 @@ export const dynamicChatAI: WorkflowConfig = {
           actions: ['showArtifact'],
           artifactId: 'planning-checklist-renewal',
           buttons: [
-            { label: 'Let\'s Do It!', value: 'proceed-with-plan' },
-            { label: 'Not Yet', value: 'not-ready' },
+            { label: 'Let\'s Do It!', value: 'letsDoIt' },
+            { label: 'Not Yet', value: 'notYet' },
             { label: 'Go Back', value: 'back-to-start' }
           ],
           nextBranches: {
-            'proceed-with-plan': 'email-flow',
-            'not-ready': 'not-ready-flow',
+            'letsDoIt': 'contract-planning-phase',
+            'notYet': 'notYet',
             'back-to-start': 'back-to-initial'
+          }
+        },
+        'notYet': {
+          response: "No problem. Anything in particular you're concerned about?",
+          delay: 1,
+          buttons: [
+            { label: 'Just need more time', value: 'need-more-time' },
+            { label: 'Have questions about approach', value: 'questions-approach' },
+            { label: 'Something else', value: 'something-else' }
+          ],
+          nextBranches: {
+            'need-more-time': 'acknowledge-concern',
+            'questions-approach': 'acknowledge-concern',
+            'something-else': 'acknowledge-concern'
+          }
+        },
+        'acknowledge-concern': {
+          response: "That's a good point. Let's move on to the next customer and we can come back to this a little later. Sound good?",
+          delay: 1,
+          buttons: [
+            { label: 'Next Customer', value: 'next-customer-action', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' },
+            { label: 'Continue Plan', value: 'continue-plan', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+          ],
+          nextBranches: {
+            'next-customer-action': 'next-customer-action',
+            'continue-plan': 'contract-planning-phase'
+          }
+        },
+        'contract-planning-phase': {
+          response: "Perfect! Let's dive into the contract details to inform our renewal strategy.",
+          delay: 1,
+          actions: ['showArtifact', 'showMenu'],
+          artifactId: 'enterprise-contract',
+          buttons: [
+            { label: 'Review contract terms', value: 'review-contract', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' },
+            { label: 'Continue to email', value: 'email-flow', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' }
+          ],
+          nextBranches: {
+            'review-contract': 'contract-details',
+            'email-flow': 'email-flow'
+          }
+        },
+        'contract-details': {
+          response: "The contract shows important considerations:\n\n• Annual price increases capped at 8%\n• 90-day notice required for non-renewal\n• Multi-year discount options available\n• Custom renewal cycle terms\n\nReady to proceed with the renewal email?",
+          delay: 1,
+          buttons: [
+            { label: 'Yes, draft the email', value: 'email-flow', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' },
+            { label: 'Review more details', value: 'contract-planning-phase', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
+          ],
+          nextBranches: {
+            'email-flow': 'email-flow',
+            'contract-planning-phase': 'contract-planning-phase'
           }
         },
         'skip': { subflow: 'common.skip' },
@@ -622,13 +774,6 @@ export const dynamicChatAI: WorkflowConfig = {
         },
         'free-chat': {
           response: "I'm here to help! Feel free to ask me anything about Dynamic Corp's account, renewal strategy, or any other questions you might have. What would you like to know?"
-        },
-        'not-ready-flow': {
-          response: "No problem! Take your time to review the checklist. When you're ready to proceed, just let me know.",
-          buttons: [
-            { label: 'I\'m ready now', value: 'proceed-with-plan' },
-            { label: 'Go back to start', value: 'back-to-initial' }
-          ]
         },
         'back-to-initial': {
           response: "Hi {{user.first}}! {{customer.name}}'s renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall me make a plan? It should take about <b>7 minutes</b>.",
@@ -768,6 +913,46 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           ],
           showActions: true
         }
+      },
+      {
+        id: 'enterprise-contract',
+        title: 'Contract Overview',
+        type: 'contract',
+        visible: false,
+        data: {
+          contractId: 'DYN-2024-0512',
+          customerName: 'Dynamic Corp',
+          contractValue: 725000,
+          renewalDate: 'February 28, 2026',
+          signerBaseAmount: 725000,
+          pricingCalculation: {
+            basePrice: 725000,
+            volumeDiscount: 0,
+            additionalServices: 0,
+            totalPrice: 725000
+          },
+          businessTerms: {
+            unsigned: [],
+            nonStandardRenewal: [
+              'Standard 12-month renewal cycle',
+              'Automatic renewal with 60-day notice'
+            ],
+            nonStandardPricing: [
+              'Multi-year discount available (10% for 2-year, 20% for 3-year)',
+              'Volume pricing tiers unlock at 150,000+ licenses'
+            ],
+            pricingCaps: [
+              'Annual price increases capped at 8% maximum'
+            ],
+            otherTerms: [
+              'Standard support with 24-hour response SLA',
+              'Quarterly business reviews included',
+              'API access with standard rate limits'
+            ]
+          },
+          riskLevel: 'low',
+          lastUpdated: 'January 15, 2025'
+        }
       }
     ]
   },
@@ -792,7 +977,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
         title: "Review Contract",
         description: "Analyze current contract terms and conditions",
         status: "in-progress",
-        workflowBranch: "planning",
+        workflowBranch: "contract-planning-phase",
         icon: "📋"
       },
       {
@@ -800,7 +985,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
         title: "Set Price",
         description: "Determine renewal pricing strategy",
         status: "pending",
-        workflowBranch: "planning",
+        workflowBranch: "contract-details",
         icon: "💰"
       },
       {
@@ -808,7 +993,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
         title: "Confirm Contacts",
         description: "Verify decision makers and stakeholders",
         status: "pending",
-        workflowBranch: "planning",
+        workflowBranch: "email-flow",
         icon: "👥"
       },
       {

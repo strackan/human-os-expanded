@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { CheckSquare, Square } from 'lucide-react';
+import React from 'react';
+import { CheckSquare } from 'lucide-react';
 
 export interface ChecklistItem {
   id: string;
@@ -28,120 +28,83 @@ const PlanningChecklistArtifact: React.FC<PlanningChecklistProps> = ({
   onGoBack,
   showActions = true
 }) => {
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(
-    new Set((items || []).filter(item => item.completed).map(item => item.id))
-  );
-
-  const handleToggle = (itemId: string) => {
-    const newCheckedItems = new Set(checkedItems);
-    const isChecked = newCheckedItems.has(itemId);
-
-    if (isChecked) {
-      newCheckedItems.delete(itemId);
-    } else {
-      newCheckedItems.add(itemId);
-    }
-
-    setCheckedItems(newCheckedItems);
-    onItemToggle?.(itemId, !isChecked);
-  };
-
-  const allItemsCompleted = items.length > 0 && items.every(item => checkedItems.has(item.id));
+  // Static display - no interactive state management
+  const completedCount = items.filter(item => item.completed).length;
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg shadow-lg">
-      <div className="bg-gray-50 border-b border-gray-300 px-6 py-4 rounded-t-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <CheckSquare size={20} className="text-blue-600" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Planning Checklist</h3>
-            <p className="text-sm text-gray-600">{title}</p>
-          </div>
-        </div>
+    <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+      {/* Header with gradient */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3">
+        <h3 className="text-base font-semibold text-white">Planning Checklist</h3>
+        <p className="text-xs text-blue-100 mt-0.5">{title}</p>
       </div>
 
-      <div className="p-6">
-        <div className="space-y-3 mb-6">
-          {items.map((item) => {
-            const isChecked = checkedItems.has(item.id);
+      {/* Content */}
+      <div className="p-5">
+        <ul className="space-y-3 mb-5">
+          {items.map((item, index) => {
             return (
-              <div
+              <li
                 key={item.id}
                 data-checklist-item={item.id}
-                className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                onClick={() => handleToggle(item.id)}
+                className="flex items-start gap-3 group"
               >
-                {isChecked ? (
-                  <CheckSquare size={20} className="text-green-600 flex-shrink-0" />
-                ) : (
-                  <Square size={20} className="text-gray-400 flex-shrink-0" />
-                )}
-                <span className={`text-sm ${isChecked ? 'text-green-800 line-through' : 'text-gray-800'}`}>
+                <div className={`flex-shrink-0 w-6 h-6 rounded flex items-center justify-center text-xs font-semibold transition-all ${
+                  item.completed
+                    ? 'bg-green-100 text-green-700 ring-2 ring-green-200'
+                    : 'bg-blue-50 text-blue-700 ring-1 ring-blue-200'
+                }`}>
+                  {item.completed ? '✓' : index + 1}
+                </div>
+                <span className={`text-sm leading-6 transition-all ${
+                  item.completed
+                    ? 'text-gray-500 line-through'
+                    : 'text-gray-800 font-medium'
+                }`}>
                   {item.label}
                 </span>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
+        {/* Progress Bar */}
         {items.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between text-sm text-gray-600 mb-2">
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center justify-between text-xs font-medium text-gray-600 mb-2">
               <span>Progress</span>
-              <span>{checkedItems.size} of {items.length} completed</span>
+              <span className="text-blue-600">{completedCount} of {items.length} completed</span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${(checkedItems.size / items.length) * 100}%` }}
+                className="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${(completedCount / items.length) * 100}%` }}
               />
             </div>
           </div>
         )}
 
         {showActions && (
-          <>
-            <div className="border-t border-gray-200 pt-4 mb-4">
-              <p className="text-lg font-medium text-gray-900 mb-2">Ready To Get Started?</p>
-              <p className="text-sm text-gray-600">
-                {allItemsCompleted
-                  ? "Great! All items are complete. Ready to proceed?"
-                  : "You can proceed now or complete the checklist items first."
-                }
-              </p>
-            </div>
-
-            <div className="flex gap-3 flex-wrap">
-              <button
-                onClick={onLetsDoIt}
-                className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                  allItemsCompleted
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Let's Do It!
-              </button>
-
-              <button
-                onClick={onNotYet}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Not Yet
-              </button>
-
-              {onGoBack && (
-                <button
-                  onClick={onGoBack}
-                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Go Back
-                </button>
-              )}
-            </div>
-          </>
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={onLetsDoIt}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium py-2.5 px-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm hover:shadow-md"
+            >
+              Let's Do It!
+            </button>
+            <button
+              onClick={onNotYet}
+              className="flex-1 bg-white text-gray-700 text-sm font-medium py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all"
+            >
+              Not Yet
+            </button>
+            <button
+              onClick={onGoBack}
+              className="flex-1 bg-white text-gray-700 text-sm font-medium py-2.5 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all"
+            >
+              Go Back
+            </button>
+          </div>
         )}
       </div>
     </div>

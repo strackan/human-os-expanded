@@ -160,6 +160,13 @@ const ChatInterface = React.forwardRef<{
   }), [resetChat]);
 
   useEffect(() => {
+    console.log('ChatInterface: Initializing with config:', {
+      mode: config.mode,
+      hasDynamicFlow: !!config.dynamicFlow,
+      hasUser: !!user,
+      customerName: workflowConfig?.customer?.name
+    });
+
     if (config.mode === 'dynamic' && config.dynamicFlow) {
       // Create variable context from user and workflow config
       const variableContext: VariableContext = {
@@ -173,7 +180,9 @@ const ChatInterface = React.forwardRef<{
         } : undefined
       };
 
+      console.log('ChatInterface: Creating ConversationEngine with variableContext:', variableContext);
       const engine = new ConversationEngine(config.dynamicFlow, (action) => {
+        console.log('ChatInterface: Action callback triggered:', action);
         if (onArtifactAction) {
           onArtifactAction(action);
         }
@@ -181,8 +190,10 @@ const ChatInterface = React.forwardRef<{
       setConversationEngine(engine);
 
       const initialMessage = engine.getInitialMessage();
+      console.log('ChatInterface: Initial message from engine:', initialMessage);
       if (initialMessage && messages.length === 0) { // Only add initial message if no messages exist
         setTimeout(() => {
+          console.log('ChatInterface: Setting initial message with buttons:', initialMessage.buttons);
           setMessages([{
             id: Date.now(),
             text: initialMessage.text,
@@ -545,27 +556,32 @@ const ChatInterface = React.forwardRef<{
 
                   {message.type === 'buttons' && message.buttons && (
                     <div className={`mt-3 flex justify-center ${message['button-pos'] === 'column' ? 'flex-col space-y-2' : 'flex-row gap-2 flex-wrap'}`}>
-                      {message.buttons.map((button, index) => (
+                      {message.buttons.map((button, index) => {
+                        console.log('Rendering button:', button.label, 'value:', button.value);
+                        return (
                         <button
                           key={index}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
                             console.log('Button clicked:', button.label, 'value:', button.value);
                             handleButtonClick(button.value, button.label);
                           }}
                           data-action={button.value}
                           data-label={button.label}
-                          className={`text-center px-4 py-2 rounded-lg transition-colors border font-medium ${
+                          className={`text-center px-4 py-2 rounded-lg transition-colors border font-medium cursor-pointer ${
                             message['button-pos'] === 'column' ? 'block w-full text-left' : 'flex-1 min-w-0 max-w-xs'
                           }`}
                           style={{
                             backgroundColor: button['label-background'] || '#f3f4f6',
                             color: button['label-text'] || '#374151',
-                            borderColor: button['label-background'] || '#d1d5db'
+                            borderColor: button['label-background'] || '#d1d5db',
+                            pointerEvents: 'auto'
                           }}
                         >
                           {button.label}
                         </button>
-                      ))}
+                      )})}
                     </div>
                   )}
 

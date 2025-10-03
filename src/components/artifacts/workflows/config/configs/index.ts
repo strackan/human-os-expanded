@@ -21,6 +21,7 @@ export { contactStrategyConfig } from './ContactStrategyConfig';
 export { planningChecklistDemoConfig } from './PlanningChecklistDemoConfig';
 export { planningChecklistWorkingDemo } from './PlanningChecklistWorkingDemo';
 export { contractDemoConfig } from './ContractDemoConfig';
+export { contractDemoStandaloneConfig } from './ContractDemoStandalone';
 export { contactStrategyDemoConfig } from './ContactStrategyDemoConfig';
 export { planSummaryDemoConfig } from './PlanSummaryDemoConfig';
 export { pricingAnalysisDemoConfig } from './PricingAnalysisDemoConfig';

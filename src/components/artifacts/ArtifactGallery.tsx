@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink, Settings } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink, Settings, Menu } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
 import TemplateGroupManager from './workflows/components/TemplateGroupManager';
@@ -287,7 +287,7 @@ export default function ArtifactGallery() {
   const handleResizeMove = (e: MouseEvent) => {
     if (!isResizing) return;
     const deltaX = e.clientX - resizeStart.x;
-    const newWidth = Math.max(300, Math.min(1400, resizeStart.width + deltaX));
+    const newWidth = Math.max(300, resizeStart.width + deltaX);
     setPreviewWidth(newWidth);
   };
 
@@ -306,6 +306,19 @@ export default function ArtifactGallery() {
       };
     }
   }, [isResizing, resizeStart]);
+
+  // Handle escape key for fullscreen
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleEscape);
+      return () => document.removeEventListener('keydown', handleEscape);
+    }
+  }, [isFullscreen]);
 
   const copyComponentCode = async () => {
     if (!selectedComponent) return;
@@ -528,9 +541,10 @@ Code to copy:`;
   }, {} as Record<string, ComponentItem[]>);
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={`flex h-screen bg-gray-50 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
       {/* Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 transition-all duration-300 flex flex-col`}>
+      {!isFullscreen && (
+        <div className={`${sidebarCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 transition-all duration-300 flex flex-col`}>
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h1 className={`font-semibold text-lg text-gray-900 ${sidebarCollapsed ? 'hidden' : 'block'}`}>
@@ -624,14 +638,16 @@ Code to copy:`;
           )}
         </div>
       </div>
+      )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={`flex-1 flex flex-col ${isFullscreen ? 'w-full' : ''}`}>
         {activeTab === 'gallery' ? (
           <>
             {/* Header */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-              <div className="flex items-center justify-between">
+            {!isFullscreen && (
+              <div className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="flex items-center justify-between">
                 <div>
                   {selectedComponent ? (
                     <>
@@ -696,23 +712,37 @@ Code to copy:`;
                     </button>
                   </div>
                 )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Preview Area */}
-            <div className={`flex-1 overflow-auto ${isFullscreen ? 'p-0' : 'p-6'} flex`}>
-              <div className="flex-1 flex justify-center">
-                <div className="relative flex">
+            <div className={`flex-1 overflow-auto ${isFullscreen ? 'p-0 w-screen h-screen' : 'p-6'} flex`}>
+              <div className={`flex-1 flex ${isFullscreen ? '' : 'justify-center'}`}>
+                <div className={`relative flex ${isFullscreen ? 'w-full' : ''}`}>
                   <div
                     ref={previewRef}
                     id="artifact-preview"
-                    style={{ width: `${previewWidth}px` }}
+                    style={{ width: isFullscreen ? '100%' : `${previewWidth}px` }}
                     className={`${
                       isFullscreen
-                        ? 'min-h-full'
+                        ? 'h-full flex-1'
                         : 'bg-white rounded-lg shadow-sm border border-gray-200 min-h-full'
-                    } transition-all duration-200`}
+                    }`}
                   >
+                {/* Floating Fullscreen Toggle in Fullscreen Mode */}
+                {isFullscreen && (
+                  <div className="absolute top-4 right-4 z-10">
+                    <button
+                      onClick={() => setIsFullscreen(false)}
+                      className="p-2 bg-white shadow-lg rounded-lg hover:bg-gray-100"
+                      title="Exit Fullscreen (Esc)"
+                    >
+                      <Minimize2 className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                )}
+
                 {selectedComponent && LoadedComponent ? (
                   <Suspense fallback={
                     <div className="flex items-center justify-center h-64">

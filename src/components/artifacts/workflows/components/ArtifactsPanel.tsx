@@ -27,7 +27,7 @@
 
 import React, { useState, useImperativeHandle, useEffect, useMemo } from 'react';
 import { ArtifactsConfig, SidePanelConfig } from '../config/WorkflowConfig';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, CheckSquare, Square } from 'lucide-react';
 import EmailComposer from './EmailComposer';
 import PlanningChecklistArtifact, { ChecklistItem } from '../../PlanningChecklistArtifact';
 import PlanningChecklistEnhancedArtifact from '../../PlanningChecklistEnhancedArtifact';
@@ -48,11 +48,18 @@ interface ArtifactsPanelProps {
   onStepClick?: (stepId: string, workflowBranch: string) => void; // Callback for step clicks
   onChapterNavigation?: (chapterNumber: number) => void; // Callback for chapter navigation
   onToggleStatsVisibility?: () => void; // Function to toggle stats visibility (Hide Stats functionality)
+  onArtifactButtonClick?: (action: any) => void; // Callback for artifact button clicks (Let's Do It, Not Yet, etc.)
   sideMenuRef?: React.RefObject<{
     showSideMenu: () => void;
     removeSideMenu: () => void;
     toggleSideMenu: () => void;
   }>; // Ref to expose side menu methods to parent components
+  completedSteps?: Set<string>; // Shared state for completed steps
+  progressPercentage?: number; // Progress percentage based on slide number
+  currentSlideIndex?: number; // Current slide index for progress tracking
+  totalSlides?: number; // Total number of slides in the workflow
+  currentStepNumber?: number; // Current step number (for single-slide workflows)
+  totalSteps?: number; // Total number of steps (for single-slide workflows)
 }
 
 interface SideMenuState {
@@ -326,32 +333,28 @@ interface SideMenuProps {
   checklistItems?: ChecklistItem[]; // Add checklist items
   onChecklistItemClick?: (itemId: string, index: number) => void; // Add click handler for checklist items
   isActive?: boolean; // Track if side menu is active (enabled after planning)
+  completedSteps?: Set<string>; // Shared state for completed steps
+  progressPercentage?: number; // Progress percentage based on slide number
+  currentSlideIndex?: number; // Current slide index for progress tracking
+  totalSlides?: number; // Total number of slides in the workflow
 }
 
-const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove, sidePanelConfig, width = 240, onStepClick, checklistItems, onChecklistItemClick, isActive = false }) => {
+const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCollapse, onRemove, sidePanelConfig, width = 240, onStepClick, checklistItems, onChecklistItemClick, isActive = false, completedSteps, progressPercentage, currentSlideIndex, totalSlides }) => {
   if (!isVisible) return null;
 
   return (
     <div
-      className="absolute top-0 -right-px z-40 transition-all duration-500 ease-in-out"
+      className="flex-shrink-0 transition-all duration-300 ease-in-out border-l border-gray-200"
       style={{
-        height: '100%',
-        width: isCollapsed ? '48px' : `${width}px`,
-        transform: isVisible ? 'translateX(0)' : 'translateX(100%)'
+        width: isCollapsed ? '48px' : `${width}px`
       }}
     >
       {/* Sidebar Content */}
-      <div
-        className="bg-white border border-gray-200 rounded-r-lg shadow-xl h-full overflow-hidden"
-        style={{
-          height: '100%',
-          width: '100%'
-        }}
-      >
+      <div className="bg-white h-full overflow-hidden">
       {/* Side Menu Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-white">
         {!isCollapsed && (
-          <h4 className="text-sm font-medium text-gray-700">Workflow Steps</h4>
+          <h4 className="text-sm font-semibold text-gray-800">Workflow Steps</h4>
         )}
         <div className="flex items-center space-x-1">
           <button
@@ -359,7 +362,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
             disabled={!isActive}
             className={`p-1 transition-colors ${
               isActive
-                ? 'text-green-500 hover:text-green-600 cursor-pointer'
+                ? 'text-gray-600 hover:text-gray-800 cursor-pointer'
                 : 'text-gray-300 cursor-not-allowed'
             }`}
             title={isActive ? (isCollapsed ? "Expand menu" : "Collapse menu") : "Planning required to enable"}
@@ -378,7 +381,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
                 onRemove();
               }
             }}
-            className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
+            className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1"
             title="Close menu"
             tabIndex={0}
             aria-label="Close side menu"
@@ -395,20 +398,15 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
           <div className="p-4 border-b border-gray-200 bg-white flex-shrink-0">
             {sidePanelConfig ? (
               <div>
-                <div className="flex items-center space-x-2 mb-1">
-                  {sidePanelConfig.title.icon && (
-                    <span className="text-lg">{sidePanelConfig.title.icon}</span>
-                  )}
-                  <h5 className="font-semibold text-gray-800 text-sm">{sidePanelConfig.title.text}</h5>
-                </div>
+                <h5 className="font-semibold text-gray-800 text-sm">{sidePanelConfig.title.text}</h5>
                 {sidePanelConfig.title.subtitle && (
-                  <p className="text-xs text-gray-500">{sidePanelConfig.title.subtitle}</p>
+                  <p className="text-xs text-gray-500 mt-1">{sidePanelConfig.title.subtitle}</p>
                 )}
               </div>
             ) : (
               <div>
                 <h5 className="font-semibold text-gray-800 text-sm">Process Steps</h5>
-                <p className="text-xs text-gray-500">No configuration available</p>
+                <p className="text-xs text-gray-500 mt-1">No configuration available</p>
               </div>
             )}
           </div>
@@ -456,61 +454,34 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
                 ))}
               </div>
             ) : sidePanelConfig && sidePanelConfig.showSteps && (
-              <div className="space-y-2">
-                {sidePanelConfig.steps.map((step, index) => (
-                  <div 
-                    key={step.id}
-                    onClick={() => onStepClick?.(step.id, step.workflowBranch)}
-                    className={`p-3 rounded-lg border transition-colors cursor-pointer hover:shadow-md ${
-                      step.status === 'completed' 
-                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' 
-                        : step.status === 'in-progress'
-                        ? 'bg-blue-50 border-blue-300 hover:bg-blue-100'
-                        : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                    }`}
-                    title={`Click to navigate to ${step.title}`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                        step.status === 'completed' 
-                          ? 'bg-green-500 text-white' 
-                          : step.status === 'in-progress'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-gray-300 text-gray-600'
+              <ul className="space-y-2">
+                {sidePanelConfig.steps.map((step, index) => {
+                  const isCompleted = completedSteps?.has(step.id) || step.status === 'completed';
+                  const isActive = currentSlideIndex === index && !isCompleted;
+
+                  return (
+                    <li
+                      key={step.id}
+                      onClick={() => onStepClick?.(step.id, step.workflowBranch)}
+                      className={`flex items-center gap-3 py-1.5 px-2 cursor-pointer rounded transition-colors ${
+                        isActive ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+                      }`}
+                      title={`Click to navigate to ${step.title}`}
+                    >
+                      {isCompleted ? (
+                        <CheckSquare size={18} className="text-green-600 flex-shrink-0" />
+                      ) : (
+                        <Square size={18} className="text-gray-400 flex-shrink-0" />
+                      )}
+                      <span className={`text-sm ${
+                        isCompleted ? 'text-gray-500 line-through' : isActive ? 'text-blue-800 font-medium' : 'text-gray-800'
                       }`}>
-                        {step.status === 'completed' ? (
-                          <span className="text-xs">✓</span>
-                        ) : (
-                          <span>{index + 1}</span>
-                        )}
-                      </div>
-                      {step.icon && <span className="text-base">{step.icon}</span>}
-                      <div className="flex-1">
-                        <p className={`text-sm font-medium ${
-                          step.status === 'completed' 
-                            ? 'text-green-800' 
-                            : step.status === 'in-progress'
-                            ? 'text-blue-800'
-                            : 'text-gray-700'
-                        }`}>
-                          {step.title}
-                        </p>
-                        {step.description && (
-                          <p className={`text-xs ${
-                            step.status === 'completed' 
-                              ? 'text-green-600' 
-                              : step.status === 'in-progress'
-                              ? 'text-blue-600'
-                              : 'text-gray-500'
-                          }`}>
-                            {step.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        {step.title}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
 
@@ -522,19 +493,19 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
                   <span className="text-xs font-medium text-gray-700">Progress</span>
                   {sidePanelConfig.progressMeter.showPercentage && (
                     <span className="text-xs text-gray-500">
-                      {sidePanelConfig.progressMeter.progressPercentage}%
+                      {progressPercentage !== undefined ? Math.round(progressPercentage) : sidePanelConfig.progressMeter.progressPercentage}%
                     </span>
                   )}
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-                  <div 
+                  <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${sidePanelConfig.progressMeter.progressPercentage}%` }}
+                    style={{ width: `${progressPercentage !== undefined ? progressPercentage : sidePanelConfig.progressMeter.progressPercentage}%` }}
                   ></div>
                 </div>
                 {sidePanelConfig.progressMeter.showStepNumbers && (
                   <div className="text-xs text-gray-500">
-                    {sidePanelConfig.progressMeter.currentStep} of {sidePanelConfig.progressMeter.totalSteps} completed
+                    {currentSlideIndex !== undefined ? currentSlideIndex + 1 : sidePanelConfig.progressMeter.currentStep} of {totalSlides !== undefined ? totalSlides : sidePanelConfig.progressMeter.totalSteps} completed
                   </div>
                 )}
               </div>
@@ -547,7 +518,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
   );
 };
 
-const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, onStepClick, onChapterNavigation, onToggleStatsVisibility, sideMenuRef }) => {
+const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig, className = '', workflowConfigName = 'bluebird-planning', visibleArtifacts, onSideMenuToggle, onStepClick, onChapterNavigation, onToggleStatsVisibility, onArtifactButtonClick, sideMenuRef, completedSteps, progressPercentage, currentSlideIndex, totalSlides, currentStepNumber, totalSteps }) => {
   // Side menu state
   const [sideMenuState, setSideMenuState] = useState<SideMenuState>({
     isVisible: false,
@@ -710,13 +681,33 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                           );
                         }}
                         onLetsDoIt={() => {
-                          // Show side menu in collapsed state when planning is agreed to
-                          setSideMenuState({
-                            isVisible: true,
-                            isCollapsed: true
-                          });
-                          setIsSideMenuActive(true);
-                          onSideMenuToggle?.(true);
+                          console.log('Planning Checklist: Let\'s Do It clicked!');
+                          // Mark "start-planning" as completed (user committed to the plan)
+                          setChecklistItems(prev =>
+                            prev.map(item =>
+                              item.id === 'start-planning' ? { ...item, completed: true } : item
+                            )
+                          );
+                          // Show contract artifact (this will replace the planning checklist)
+                          if (onArtifactButtonClick) {
+                            // Advance to next slide
+                            onArtifactButtonClick({ type: 'nextSlide' });
+                            // Show the contract artifact (replaces current artifacts)
+                            onArtifactButtonClick({
+                              type: 'showArtifact',
+                              payload: { artifactId: 'enterprise-contract' }
+                            });
+                            // Show the side menu
+                            onArtifactButtonClick({ type: 'showMenu' });
+                          }
+                        }}
+                        onNotYet={() => {
+                          console.log('Planning Checklist: Not Yet clicked - showing concern dialog');
+                          // For "Not Yet", we could show a dialog or trigger nextCustomer
+                          // For now, just log it - you can add custom behavior here
+                          if (onArtifactButtonClick) {
+                            onArtifactButtonClick({ type: 'nextCustomer' });
+                          }
                         }}
                       />
                     );
@@ -808,11 +799,16 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: '20%' }}
+                  style={{ width: `${progressPercentage !== undefined ? progressPercentage : 20}%` }}
                 ></div>
               </div>
               <div className="text-xs text-gray-500">
-                Step 1 of 6
+                {/* Show steps for single-slide workflows, show slides for multi-slide workflows */}
+                {totalSlides === 1 ? (
+                  <>Step {currentStepNumber || 1} of {totalSteps || 6}</>
+                ) : (
+                  <>Workflow {(currentSlideIndex !== undefined ? currentSlideIndex + 1 : 1)} of {totalSlides || 1}</>
+                )}
               </div>
             </div>
           </div>
@@ -830,6 +826,10 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
           checklistItems={checklistItems}
           onChecklistItemClick={handleChecklistItemClick}
           isActive={isSideMenuActive}
+          completedSteps={completedSteps}
+          progressPercentage={progressPercentage}
+          currentSlideIndex={currentSlideIndex}
+          totalSlides={totalSlides}
         />
       </div>
     </div>
