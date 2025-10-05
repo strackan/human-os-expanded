@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Calendar, Clock, AlertTriangle, CheckCircle, Play } from 'lucide-react';
+import { uiText } from '@/config/uiText';
 
 interface Task {
   id: number;
@@ -51,8 +52,8 @@ const PriorityTasks: React.FC<PriorityTasksProps> = ({ data, onLaunchTaskMode, l
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-gray-900">Priority Tasks</h2>
-        <span className="text-sm text-gray-500">{data.length} tasks</span>
+        <h2 className="text-lg font-semibold text-gray-900">{uiText.dashboard.priorityTasks.title}</h2>
+        <span className="text-sm text-gray-500">{data.length} {uiText.dashboard.priorityTasks.subtitle}</span>
       </div>
       
       <div className="space-y-4">
@@ -106,7 +107,7 @@ const PriorityTasks: React.FC<PriorityTasksProps> = ({ data, onLaunchTaskMode, l
       {data.length === 0 && (
         <div className="text-center py-8">
           <CheckCircle className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 text-sm">No priority tasks at this time</p>
+          <p className="text-gray-500 text-sm">{uiText.dashboard.priorityTasks.emptyState}</p>
         </div>
       )}
     </div>

@@ -100,6 +100,8 @@ export interface WorkflowSlide {
   label: string; // Human-readable label for progress steps (e.g., "Initial Contact", "Needs Assessment")
   stepMapping: string; // Maps to sidePanel step ID
   showSideMenu?: boolean; // Auto-open side menu when entering this slide
+  customerOverview?: CustomerOverviewConfig; // Optional override for top-left section (sticky across subsequent slides)
+  analytics?: AnalyticsConfigOrTemplate; // Optional override for top-right section (sticky across subsequent slides)
   chat: {
     initialMessage?: {
       text: string;

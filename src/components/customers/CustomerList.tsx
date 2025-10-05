@@ -299,12 +299,12 @@ export default function CustomerList({
 
 
   return (
-    <div className="space-y-4">
+    <div id="customer-list-container" className="space-y-4">
       {/* Enhanced Header with Search, Filters, and Actions */}
       <div className="bg-white shadow-sm rounded-lg p-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {/* Search Bar with Advanced Filters Link */}
-          <div className="flex-1 max-w-md">
+          <div id="customer-search-bar" className="flex-1 max-w-md">
             <div className="relative">
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
@@ -337,6 +337,7 @@ export default function CustomerList({
 
             {showExportButton && (
               <button
+                id="export-button"
                 onClick={handleExportCustomers}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
@@ -347,6 +348,7 @@ export default function CustomerList({
 
             {showAddButton && (
               <button
+                id="add-customer-button"
                 onClick={onAddCustomer || (() => router.push('/customers/manage'))}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
@@ -359,8 +361,8 @@ export default function CustomerList({
 
         {/* Advanced Filters Panel */}
         {showFiltersPanel && showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div id="customer-filters-panel" className="mt-4 pt-4 border-t border-gray-200">
+            <div className="filters-grid">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Industry</label>
                 <input
@@ -440,7 +442,7 @@ export default function CustomerList({
       {/* Customer Table */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table id="customer-table" className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
               <th scope="col" className="relative w-12 px-6 sm:w-16 sm:px-8">
@@ -629,7 +631,7 @@ export default function CustomerList({
         </div>
 
         {/* Table Footer with Pagination - Always show when there are customers */}
-        <div className="bg-white border-t border-gray-200 px-4 py-3 sm:px-6">
+        <div id="pagination-controls" className="bg-white border-t border-gray-200 px-4 py-3 sm:px-6">
           {/* Mobile view */}
           <div className="flex flex-col space-y-3 sm:hidden">
             <div className="flex items-center justify-between">

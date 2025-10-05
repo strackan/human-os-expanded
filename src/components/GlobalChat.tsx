@@ -12,7 +12,7 @@ export default function GlobalChat() {
 
       {/* Chat Window */}
       {isChatOpen && (
-        <div className="fixed bottom-20 right-4 w-96 h-[600px] z-50">
+        <div id="global-chat-window">
           <div className="w-full h-full bg-white rounded-lg shadow-xl border border-gray-200 flex flex-col overflow-hidden">
             <AIChatBox
               isOpen={true}

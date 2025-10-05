@@ -6,7 +6,6 @@ import {
   HomeIcon,
   ChartBarIcon,
   Cog6ToothIcon,
-  ChevronLeftIcon,
   ChevronRightIcon,
   MagnifyingGlassCircleIcon,
   DocumentDuplicateIcon,
@@ -97,21 +96,21 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside 
-      className={`fixed left-0 top-0 h-screen bg-[#2D2A53] transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}
+    <aside
+      id="global-sidebar"
+      data-collapsed={isCollapsed}
+      className="fixed left-0 top-0 h-screen bg-[#2D2A53]"
       role="navigation"
       aria-label="Main navigation"
     >
       <div className="flex h-full flex-col justify-between p-4">
         <div>
           {/* Logo/Brand */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="sidebar-logo-container mb-8 flex items-center justify-between">
             <div className={`overflow-hidden transition-all duration-300 ${
               isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
             }`}>
-              <Link 
+              <Link
                 href="/"
                 className="whitespace-nowrap hover:text-blue-200 transition-colors flex items-center"
                 aria-label="Renubu home"
@@ -127,28 +126,29 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               </Link>
             </div>
             <button
+              id="sidebar-toggle"
               onClick={() => onToggle(!isCollapsed)}
               className="rounded-lg p-2 text-gray-400 hover:bg-[#3D3A63] hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] transition-colors"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               aria-expanded={!isCollapsed}
               tabIndex={0}
             >
-              {isCollapsed ? (
-                <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-              )}
+              <ChevronRightIcon
+                className={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-90'}`}
+                aria-hidden="true"
+              />
             </button>
           </div>
 
           {/* Navigation Items */}
-          <nav className="space-y-1">
+          <nav id="sidebar-nav" className="space-y-1">
             <ul role="list" className="space-y-1">
               {navigation.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.name}>
                     <Link
+                      id={`nav-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
                       href={item.href}
                       className={`group relative flex h-11 items-center rounded-lg px-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] ${
                         isActive

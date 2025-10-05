@@ -85,15 +85,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div id="app-layout-container" className="min-h-screen bg-gray-50">
       <Sidebar isCollapsed={isCollapsed} onToggle={setIsCollapsed} />
-      <main 
-        className={`transition-all duration-300 ${isCollapsed ? 'pl-16' : 'pl-64'}`}
+      <main
+        id="main-content-area"
+        data-sidebar-collapsed={isCollapsed}
+        className="transition-all duration-300"
         role="main"
         aria-label="Main content"
       >
         {/* Header */}
-        <header 
+        <header
+          id="global-header"
           className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/75"
           role="banner"
         >
@@ -118,6 +121,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <Popover>
                 <PopoverTrigger asChild>
                   <button
+                    id="reminder-button"
                     type="button"
                     className="rounded-lg p-2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
                     aria-label="Reminders"
@@ -159,9 +163,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   </div>
                 </PopoverContent>
               </Popover>
-              <form 
-                className="relative" 
-                role="search" 
+              <form
+                className="relative"
+                role="search"
                 aria-label="Search"
                 onSubmit={(e) => e.preventDefault()}
               >
@@ -169,6 +173,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 </span>
                 <input
+                  id="search-input"
                   type="search"
                   className="block w-48 rounded-lg border border-gray-300 bg-gray-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                   placeholder="Search..."
@@ -177,6 +182,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 />
               </form>
               <button
+                id="settings-button"
                 type="button"
                 className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="View settings"

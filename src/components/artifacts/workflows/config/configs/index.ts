@@ -5,6 +5,7 @@ export { bluebirdMemorialPlanningConfig } from './BluebirdMemorialConfig-Plannin
 // Dynamic Chat Examples
 export { simpleDynamicConfig } from './SimpleDynamicConfig';
 export { dynamicChatAI, dynamicChatUser } from './DynamicChatFixed';
+export { dynamicChatAITemplated } from './DynamicChatFixedTemplated';
 export { dynamicChatExampleConfig } from './DynamicChatExampleConfig';
 export { dynamicClone } from './DynamicClone';
 

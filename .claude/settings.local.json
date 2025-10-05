@@ -8,5 +8,6 @@
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "outputStyle": "tdd-ui-checkpoints"
 }

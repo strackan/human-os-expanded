@@ -1,5 +1,7 @@
 "use client";
 
+console.log('🟠 PlanningChecklistArtifact LOADED - Build timestamp:', new Date().toISOString());
+
 import React from 'react';
 import { CheckSquare } from 'lucide-react';
 

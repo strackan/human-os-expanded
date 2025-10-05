@@ -45,15 +45,41 @@ export const dynamicChatSlides: WorkflowSlide[] = [
           }
         },
         'contract-review': {
-          response: "The contract shows: 8% price cap, 60-day notice, multi-year discounts available. Ready for the renewal email?",
+          response: "The contract shows: 8% price cap, 60-day notice, multi-year discounts available. Ready to review pricing?",
           delay: 1,
           buttons: [
-            { label: 'Yes, draft email', value: 'email-flow', completeStep: 'set-price' } as any,
+            { label: 'Review pricing', value: 'pricing-analysis', completeStep: 'review-contract' } as any,
             { label: 'Review more', value: 'contract-planning' }
           ],
           nextBranches: {
-            'email-flow': 'email-flow',
+            'pricing-analysis': 'pricing-analysis',
             'contract-planning': 'contract-planning'
+          }
+        },
+        'pricing-analysis': {
+          response: "Let me analyze the optimal pricing strategy for this renewal based on market data and usage patterns.",
+          delay: 1,
+          actions: ['showArtifact', 'showMenu'],
+          artifactId: 'pricing-analysis-renewal',
+          buttons: [
+            { label: 'Accept recommendation', value: 'confirm-contacts', completeStep: 'set-price' } as any,
+            { label: 'Review alternatives', value: 'pricing-analysis' }
+          ],
+          nextBranches: {
+            'confirm-contacts': 'confirm-contacts',
+            'pricing-analysis': 'pricing-analysis'
+          }
+        },
+        'confirm-contacts': {
+          response: "Great! Now let's confirm the key stakeholders for this renewal. I've identified Michael Roberts (CTO) as the primary contact. Should we proceed with drafting the renewal notice?",
+          delay: 1,
+          buttons: [
+            { label: 'Yes, draft email', value: 'email-flow', completeStep: 'confirm-contacts' } as any,
+            { label: 'Review contacts', value: 'confirm-contacts' }
+          ],
+          nextBranches: {
+            'email-flow': 'email-flow',
+            'confirm-contacts': 'confirm-contacts'
           }
         },
         'not-ready-concern': {
@@ -121,7 +147,7 @@ export const dynamicChatSlides: WorkflowSlide[] = [
           response: "Okay, I've drafted the email to Michael Roberts with a request to meet. Feel free to edit and send directly in the composer. After you process the email, I'll summarize everything we've done and next steps. Sound good?",
           predelay: 4500,
           buttons: [
-            { label: 'Yes', value: 'email-confirmation' },
+            { label: 'Yes', value: 'email-confirmation', completeStep: 'send-renewal-notice' } as any,
             { label: 'Something Else', value: 'alternative-options' }
           ]
         },
@@ -242,6 +268,70 @@ export const dynamicChatSlides: WorkflowSlide[] = [
           }
         },
         {
+          id: 'pricing-analysis-renewal',
+          title: 'Pricing Strategy Analysis',
+          type: 'pricing-analysis',
+          visible: false,
+          content: {
+            title: 'Renewal Pricing Analysis',
+            customerName: 'Dynamic Corp',
+            currentPrice: 725000,
+            currentARR: 725000,
+            pricePerUnit: 7.25,
+            unitType: 'seat/month',
+            comparativeAnalysis: {
+              averagePrice: 8.50,
+              percentile: 35,
+              similarCustomerCount: 47
+            },
+            usageMetrics: {
+              currentUsage: 87,
+              usageGrowth: 23,
+              usageEfficiency: 92
+            },
+            riskFactors: [
+              {
+                title: 'Price Cap Constraint',
+                description: '8% maximum price increase specified in current contract',
+                impact: 'medium'
+              },
+              {
+                title: 'Competitive Pressure',
+                description: 'Competitors offering aggressive pricing in the market',
+                impact: 'medium'
+              }
+            ],
+            opportunities: [
+              {
+                title: 'High Usage Growth',
+                description: '23% increase in platform usage over last quarter',
+                potential: 'high'
+              },
+              {
+                title: 'APAC Expansion',
+                description: 'Customer expanding operations to new geographic region',
+                potential: 'high'
+              },
+              {
+                title: 'Series C Funding',
+                description: 'Recent funding round provides budget flexibility',
+                potential: 'high'
+              }
+            ],
+            recommendation: {
+              priceIncrease: 8,
+              newAnnualPrice: 783000,
+              reasons: [
+                'Usage metrics show 87% platform utilization, well above the 60% average',
+                'Current pricing at 35th percentile presents optimization opportunity',
+                'APAC expansion justifies premium support and infrastructure pricing',
+                'Series C funding indicates strong financial position for investment',
+                '8% increase maximizes value while respecting contractual price cap'
+              ]
+            }
+          }
+        },
+        {
           id: 'email-draft',
           title: 'Email Composer',
           type: 'email',
@@ -326,7 +416,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           title: "Start Planning",
           description: "Begin renewal planning process",
           status: "pending",
-          workflowBranch: "planning",
+          workflowBranch: "expansion",
           icon: "🚀"
         },
         {
@@ -334,7 +424,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           title: "Review Contract",
           description: "Analyze current contract terms and conditions",
           status: "pending",
-          workflowBranch: "contract-planning-phase",
+          workflowBranch: "contract-planning",
           icon: "📋"
         },
         {
@@ -342,7 +432,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           title: "Set Price",
           description: "Determine renewal pricing strategy",
           status: "pending",
-          workflowBranch: "contract-details",
+          workflowBranch: "pricing-analysis",
           icon: "💰"
         },
         {
@@ -350,7 +440,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           title: "Confirm Contacts",
           description: "Verify decision makers and stakeholders",
           status: "pending",
-          workflowBranch: "email-flow",
+          workflowBranch: "confirm-contacts",
           icon: "👥"
         },
         {
@@ -373,12 +463,8 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
       showSteps: true,
       showProgressMeter: false
     }
-    // Removed onComplete - this is now a single-slide workflow for testing
-  }
-];
-
-// OLD SLIDE 2 - Commented out for single-slide testing. Will use this when we build multi-slide workflows.
-/*
+  },
+  // SLIDE 2 - Multi-slide workflow testing
   {
     id: 'needs-assessment',
     slideNumber: 2,
@@ -386,7 +472,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     description: 'Analyze customer requirements and growth opportunities',
     label: 'Needs Assessment',
     stepMapping: 'needs-assessment',
-    showSideMenu: true, // Auto-open when entering this slide
+    showSideMenu: false, // Side menu closed by default when entering this slide
     chat: {
       initialMessage: {
         text: "Great! I've prepared an analysis of {{customer.name}}'s expansion opportunities. Based on their 65% growth and Series C funding, they're prime candidates for a multi-year expansion deal.",
@@ -554,13 +640,9 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
           icon: "📅"
         }
       ]
-    },
-    onComplete: {
-      nextSlide: 3,
-      updateProgress: true
     }
   }
-*/
+];
 
 // Legacy configuration for backward compatibility
 export const dynamicChatAI: WorkflowConfig = {
@@ -957,74 +1039,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
       }
     ]
   },
-  sidePanel: {
-    enabled: true,
-    title: {
-      text: "Renewal Planning Workflow",
-      subtitle: "Dynamic Corp Account",
-      icon: "📋"
-    },
-    steps: [
-      {
-        id: "start-planning",
-        title: "Start Planning",
-        description: "Begin renewal planning process",
-        status: "completed",
-        workflowBranch: "planning",
-        icon: "🚀"
-      },
-      {
-        id: "review-contract",
-        title: "Review Contract",
-        description: "Analyze current contract terms and conditions",
-        status: "in-progress",
-        workflowBranch: "contract-planning-phase",
-        icon: "📋"
-      },
-      {
-        id: "set-price",
-        title: "Set Price",
-        description: "Determine renewal pricing strategy",
-        status: "pending",
-        workflowBranch: "contract-details",
-        icon: "💰"
-      },
-      {
-        id: "confirm-contacts",
-        title: "Confirm Contacts",
-        description: "Verify decision makers and stakeholders",
-        status: "pending",
-        workflowBranch: "email-flow",
-        icon: "👥"
-      },
-      {
-        id: "send-renewal-notice",
-        title: "Send Renewal Notice",
-        description: "Initiate formal renewal communication",
-        status: "pending",
-        workflowBranch: "email-flow",
-        icon: "📧"
-      },
-      {
-        id: "review-action-items",
-        title: "Review Action Items",
-        description: "Finalize and track next steps",
-        status: "pending",
-        workflowBranch: "email-complete",
-        icon: "✅"
-      }
-    ],
-    progressMeter: {
-      currentStep: 2,
-      totalSteps: 6, // Must match steps array length above (6 steps)
-      progressPercentage: 33, // Math.floor((currentStep/totalSteps) * 100) = Math.floor((2/6) * 100) = 33
-      showPercentage: true,
-      showStepNumbers: true
-    },
-    showProgressMeter: true,
-    showSteps: true
-  },
-  // Use the slide structure - with just one slide, behavior is identical to traditional
+  // Slide-based workflow - sidePanels are defined within each slide
   slides: dynamicChatSlides
 };
 
@@ -1229,57 +1244,6 @@ P.S. I've attached a preliminary usage analysis that shows the specific patterns
       }
     ]
   },
-  sidePanel: {
-    enabled: true,
-    title: {
-      text: "Customer Engagement Workflow",
-      subtitle: "Dynamic Corp Account",
-      icon: "📋"
-    },
-    steps: [
-      {
-        id: "initial-contact",
-        title: "Initial Contact",
-        description: "Establish communication with customer",
-        status: "completed",
-        workflowBranch: "initial",
-        icon: "📞"
-      },
-      {
-        id: "needs-assessment",
-        title: "Needs Assessment",
-        description: "Analyze customer requirements and growth opportunities",
-        status: "in-progress",
-        workflowBranch: "expansion",
-        icon: "🔍"
-      },
-      {
-        id: "proposal-draft",
-        title: "Proposal Draft",
-        description: "Create tailored proposal based on analysis",
-        status: "pending",
-        workflowBranch: "email-flow",
-        icon: "📝"
-      },
-      {
-        id: "follow-up",
-        title: "Follow-up",
-        description: "Schedule meeting and next steps",
-        status: "pending",
-        workflowBranch: "email-complete",
-        icon: "📅"
-      }
-    ],
-    progressMeter: {
-      currentStep: 2,
-      totalSteps: 4,
-      progressPercentage: 50,
-      showPercentage: true,
-      showStepNumbers: true
-    },
-    showProgressMeter: true,
-    showSteps: true
-  },
-  // Use the slide structure - with just one slide, behavior is identical to traditional
+  // Slide-based workflow - sidePanels are defined within each slide
   slides: dynamicChatSlides
 };

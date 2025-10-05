@@ -441,6 +441,324 @@ export const createContractArtifact = (config: ContractArtifactConfig) => {
 };
 
 /**
+ * Contact Strategy Artifact Template
+ *
+ * The contact-strategy type provides stakeholder analysis and engagement planning with:
+ * - Primary and secondary contact identification
+ * - Stakeholder influence mapping
+ * - Communication cadence recommendations
+ * - Engagement timeline
+ * - Key talking points for each stakeholder
+ *
+ * Styling:
+ * - Container: White background with gray border, rounded corners, shadow
+ * - Header: Gradient blue background with contacts icon
+ * - Stakeholders: Cards with role, influence level, and engagement strategy
+ * - Timeline: Visual timeline showing planned touchpoints
+ *
+ * @example
+ * ```typescript
+ * const contactStrategyArtifact = createContactStrategyArtifact({
+ *   id: 'renewal-contacts',
+ *   title: 'Stakeholder Engagement Strategy',
+ *   primaryContact: {
+ *     name: 'Sarah Chen',
+ *     role: 'VP Operations',
+ *     influenceLevel: 'high',
+ *     engagement: 'weekly'
+ *   },
+ *   stakeholders: [
+ *     { name: 'John Doe', role: 'CFO', influenceLevel: 'high', priority: 1 }
+ *   ],
+ *   visible: true
+ * });
+ * ```
+ */
+export interface ContactStrategyArtifactConfig {
+  id: string;
+  title: string;
+  primaryContact?: {
+    name: string;
+    role: string;
+    email?: string;
+    phone?: string;
+    influenceLevel?: 'high' | 'medium' | 'low';
+    engagement?: string;
+  };
+  stakeholders?: Array<{
+    name: string;
+    role: string;
+    email?: string;
+    influenceLevel: 'high' | 'medium' | 'low';
+    priority: number;
+    talkingPoints?: string[];
+    nextAction?: string;
+  }>;
+  timeline?: Array<{
+    date: string;
+    contact: string;
+    action: string;
+    status?: 'completed' | 'planned' | 'overdue';
+  }>;
+  strategy?: string;
+  visible?: boolean;
+}
+
+export const createContactStrategyArtifact = (config: ContactStrategyArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'contact-strategy' as const,
+    visible: config.visible ?? false,
+    data: {
+      primaryContact: config.primaryContact,
+      stakeholders: config.stakeholders || [],
+      timeline: config.timeline || [],
+      strategy: config.strategy
+    }
+  };
+};
+
+/**
+ * Plan Summary Artifact Template
+ *
+ * The plan-summary type provides a comprehensive overview of the complete plan with:
+ * - Executive summary
+ * - Key objectives and goals
+ * - Action items with owners and deadlines
+ * - Success metrics
+ * - Risk mitigation strategies
+ * - Next steps and timeline
+ *
+ * Styling:
+ * - Container: White background with gray border, rounded corners, shadow
+ * - Header: Gradient purple background with summary icon
+ * - Sections: Organized cards for each plan component
+ * - Action Items: Interactive checklist with status indicators
+ *
+ * @example
+ * ```typescript
+ * const planSummaryArtifact = createPlanSummaryArtifact({
+ *   id: 'renewal-plan',
+ *   title: 'Q4 Renewal Plan Summary',
+ *   executiveSummary: 'Comprehensive renewal strategy...',
+ *   objectives: ['Increase ARR by 20%', 'Secure multi-year commitment'],
+ *   actionItems: [
+ *     { task: 'Send proposal', owner: 'John', deadline: '2024-12-15', status: 'pending' }
+ *   ],
+ *   visible: true
+ * });
+ * ```
+ */
+export interface PlanSummaryArtifactConfig {
+  id: string;
+  title: string;
+  executiveSummary?: string;
+  objectives?: string[];
+  actionItems?: Array<{
+    task: string;
+    owner?: string;
+    deadline?: string;
+    status: 'completed' | 'in-progress' | 'pending' | 'blocked';
+    priority?: 'high' | 'medium' | 'low';
+  }>;
+  successMetrics?: Array<{
+    metric: string;
+    target: string;
+    current?: string;
+  }>;
+  risks?: Array<{
+    risk: string;
+    mitigation: string;
+    severity?: 'high' | 'medium' | 'low';
+  }>;
+  timeline?: Array<{
+    phase: string;
+    startDate: string;
+    endDate: string;
+    milestones?: string[];
+  }>;
+  visible?: boolean;
+}
+
+export const createPlanSummaryArtifact = (config: PlanSummaryArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'plan-summary' as const,
+    visible: config.visible ?? false,
+    content: {
+      executiveSummary: config.executiveSummary,
+      objectives: config.objectives || [],
+      actionItems: config.actionItems || [],
+      successMetrics: config.successMetrics || [],
+      risks: config.risks || [],
+      timeline: config.timeline || []
+    }
+  };
+};
+
+/**
+ * Quote Artifact Template
+ *
+ * The quote type provides a professional quote/proposal document with:
+ * - Line items with descriptions and pricing
+ * - Subtotal, discounts, taxes, and total
+ * - Terms and conditions
+ * - Validity period
+ * - Approval workflow
+ *
+ * Styling:
+ * - Container: White background with professional styling
+ * - Header: Company branding area
+ * - Line Items: Table format with clear pricing
+ * - Total: Highlighted final amount
+ * - Actions: Generate PDF, Send, Edit buttons
+ *
+ * @example
+ * ```typescript
+ * const quoteArtifact = createQuoteArtifact({
+ *   id: 'renewal-quote',
+ *   title: 'Renewal Quote',
+ *   quoteNumber: 'Q-2024-001',
+ *   customerName: 'Acme Corp',
+ *   lineItems: [
+ *     { description: 'Enterprise License', quantity: 100, unitPrice: 50, total: 5000 }
+ *   ],
+ *   validUntil: '2024-12-31',
+ *   visible: true
+ * });
+ * ```
+ */
+export interface QuoteArtifactConfig {
+  id: string;
+  title: string;
+  quoteNumber?: string;
+  customerName?: string;
+  customerContact?: string;
+  issueDate?: string;
+  validUntil?: string;
+  lineItems: Array<{
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    discount?: number;
+  }>;
+  subtotal?: number;
+  discountAmount?: number;
+  discountPercentage?: number;
+  taxRate?: number;
+  taxAmount?: number;
+  total?: number;
+  terms?: string;
+  notes?: string;
+  visible?: boolean;
+}
+
+export const createQuoteArtifact = (config: QuoteArtifactConfig) => {
+  // Calculate totals if not provided
+  const subtotal = config.subtotal ?? config.lineItems.reduce((sum, item) => sum + item.total, 0);
+  const discountAmount = config.discountAmount ?? (config.discountPercentage ? subtotal * (config.discountPercentage / 100) : 0);
+  const afterDiscount = subtotal - discountAmount;
+  const taxAmount = config.taxAmount ?? (config.taxRate ? afterDiscount * (config.taxRate / 100) : 0);
+  const total = config.total ?? (afterDiscount + taxAmount);
+
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'quote' as const,
+    visible: config.visible ?? false,
+    data: {
+      quoteNumber: config.quoteNumber,
+      customerName: config.customerName,
+      customerContact: config.customerContact,
+      issueDate: config.issueDate || new Date().toISOString().split('T')[0],
+      validUntil: config.validUntil,
+      lineItems: config.lineItems,
+      subtotal,
+      discountAmount,
+      discountPercentage: config.discountPercentage,
+      taxRate: config.taxRate,
+      taxAmount,
+      total,
+      terms: config.terms,
+      notes: config.notes
+    }
+  };
+};
+
+/**
+ * Document Artifact Template
+ *
+ * The document type provides a general-purpose document viewer/editor with:
+ * - Rich text content
+ * - Section headings
+ * - Formatted text with markdown support
+ * - Attachments or embedded media
+ * - Version history
+ *
+ * Styling:
+ * - Container: White background, document-like appearance
+ * - Content: Clean typography, proper spacing
+ * - Sections: Clear hierarchy with headings
+ * - Actions: Download, Share, Edit buttons
+ *
+ * @example
+ * ```typescript
+ * const documentArtifact = createDocumentArtifact({
+ *   id: 'proposal-doc',
+ *   title: 'Renewal Proposal',
+ *   sections: [
+ *     { heading: 'Overview', content: 'This proposal outlines...' },
+ *     { heading: 'Pricing', content: 'Our pricing structure...' }
+ *   ],
+ *   visible: true
+ * });
+ * ```
+ */
+export interface DocumentArtifactConfig {
+  id: string;
+  title: string;
+  documentType?: string;
+  version?: string;
+  lastModified?: string;
+  author?: string;
+  sections?: Array<{
+    heading: string;
+    content: string;
+    level?: 1 | 2 | 3;
+  }>;
+  content?: string; // Raw content if not using sections
+  attachments?: Array<{
+    name: string;
+    url: string;
+    type: string;
+  }>;
+  editable?: boolean;
+  visible?: boolean;
+}
+
+export const createDocumentArtifact = (config: DocumentArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'document' as const,
+    visible: config.visible ?? false,
+    editable: config.editable ?? false,
+    content: {
+      documentType: config.documentType,
+      version: config.version || '1.0',
+      lastModified: config.lastModified || new Date().toISOString(),
+      author: config.author,
+      sections: config.sections || [],
+      content: config.content,
+      attachments: config.attachments || []
+    }
+  };
+};
+
+/**
  * Pre-defined Planning Checklist Templates
  */
 export const PLANNING_CHECKLIST_TEMPLATES = {
@@ -500,7 +818,11 @@ export const createArtifactSection = (artifacts: Array<ReturnType<
   typeof createHtmlArtifact |
   typeof createPlanningChecklistArtifact |
   typeof createPricingAnalysisArtifact |
-  typeof createContractArtifact
+  typeof createContractArtifact |
+  typeof createContactStrategyArtifact |
+  typeof createPlanSummaryArtifact |
+  typeof createQuoteArtifact |
+  typeof createDocumentArtifact
 >>) => {
   return {
     sections: artifacts

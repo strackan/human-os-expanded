@@ -1,0 +1,546 @@
+/**
+ * Layout CSS Module
+ * Centralized styles and CSS variables for all layout components
+ * Eliminates inline styles and magic numbers across the application
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (VARIABLES)
+   ============================================ */
+
+:root {
+  /* Global Sidebar */
+  --sidebar-width-collapsed: 64px;
+  --sidebar-width-expanded: 256px;
+  --sidebar-bg-color: #2D2A53;
+  --sidebar-hover-bg: #3D3A63;
+  --sidebar-transition: all 300ms ease-in-out;
+
+  /* Global Header */
+  --header-height: 64px;
+  --header-bg: rgba(255, 255, 255, 0.95);
+
+  /* Task Mode Dimensions */
+  --task-header-height: 80px;
+  --task-footer-height: 140px;
+  --task-divider-width: 6px;
+  --task-stats-height-default: 45.3%;
+  --task-stats-min-height: 120px;
+  --task-stats-max-height: 50%;
+  --task-side-menu-width: 240px;
+  --task-modal-min-width: 400px;
+  --task-modal-min-height: 500px;
+
+  /* Global Chat */
+  --chat-width: 384px;
+  --chat-height: 600px;
+  --chat-bottom-offset: 80px;
+  --chat-right-offset: 16px;
+
+  /* Customer List */
+  --customer-search-max-width: 448px;
+  --customer-table-cell-padding-x: 16px;
+  --customer-table-cell-padding-y: 8px;
+
+  /* Common Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* Z-index layers */
+  --z-sidebar: 30;
+  --z-header: 40;
+  --z-chat: 50;
+  --z-modal: 50;
+}
+
+/* ============================================
+   GLOBAL LAYOUT COMPONENTS
+   ============================================ */
+
+/* App Layout Container */
+#app-layout-container {
+  min-height: 100vh;
+  background-color: rgb(249 250 251);
+}
+
+/* Main Content Area */
+#main-content-area {
+  transition: var(--sidebar-transition);
+}
+
+#main-content-area[data-sidebar-collapsed="true"] {
+  padding-left: var(--sidebar-width-collapsed);
+}
+
+#main-content-area[data-sidebar-collapsed="false"] {
+  padding-left: var(--sidebar-width-expanded);
+}
+
+/* Global Header */
+#global-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  height: var(--header-height);
+  border-bottom: 1px solid rgb(229 231 235);
+  background: var(--header-bg);
+  backdrop-filter: blur(8px);
+}
+
+/* Global Sidebar */
+#global-sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  background-color: var(--sidebar-bg-color);
+  transition: var(--sidebar-transition);
+  z-index: var(--z-sidebar);
+}
+
+#global-sidebar[data-collapsed="true"] {
+  width: var(--sidebar-width-collapsed);
+}
+
+#global-sidebar[data-collapsed="false"] {
+  width: var(--sidebar-width-expanded);
+}
+
+.sidebar-logo-container {
+  overflow: hidden;
+  transition: var(--sidebar-transition);
+  min-height: 155px;
+}
+
+.sidebar-logo-container[data-collapsed="true"] {
+  width: 0;
+  opacity: 0;
+}
+
+.sidebar-logo-container[data-collapsed="false"] {
+  width: 160px;
+  opacity: 1;
+}
+
+/* Sidebar Navigation */
+.nav-item {
+  position: relative;
+  display: flex;
+  height: 44px;
+  align-items: center;
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: var(--transition-normal);
+}
+
+.nav-item-label {
+  position: absolute;
+  left: 36px;
+  overflow: hidden;
+  transition: var(--sidebar-transition);
+}
+
+.nav-item-label[data-collapsed="true"] {
+  width: 0;
+  opacity: 0;
+}
+
+.nav-item-label[data-collapsed="false"] {
+  width: 160px;
+  opacity: 1;
+}
+
+.nav-item-active {
+  background-color: var(--sidebar-hover-bg);
+  color: white;
+}
+
+.nav-item-inactive {
+  color: rgb(209 213 219);
+}
+
+.nav-item-inactive:hover {
+  background-color: var(--sidebar-hover-bg);
+  color: white;
+}
+
+/* Global Chat Window */
+#global-chat-window {
+  position: fixed;
+  bottom: var(--chat-bottom-offset);
+  right: var(--chat-right-offset);
+  width: var(--chat-width);
+  height: var(--chat-height);
+  z-index: var(--z-chat);
+}
+
+/* ============================================
+   TASK MODE COMPONENTS
+   ============================================ */
+
+/* Task Mode Container */
+.task-mode-modal-positioned {
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: var(--task-modal-min-width);
+  min-height: var(--task-modal-min-height);
+  transition: width var(--transition-normal);
+}
+
+/* Modal Resize Edge Handles */
+.resize-edge-horizontal {
+  left: 20px;
+  right: 20px;
+}
+
+.resize-edge-vertical {
+  top: 20px;
+  bottom: 20px;
+}
+
+/* Note: Dynamic dimensions (stats height, chat width, split mode) still use inline styles */
+
+/* Task Mode Header */
+/* Note: Inline styles still control layout - to be migrated later */
+
+/* Task Mode Stats Section */
+/* Note: Inline styles still control dimensions - to be migrated later */
+
+/* Task Mode Body */
+/* Note: Inline styles still control dimensions - to be migrated later */
+
+/* Task Mode Chat Container */
+/* Note: Inline styles still control dimensions - to be migrated later */
+
+/* Task Mode Artifacts Container */
+/* Note: Inline styles still control dimensions - to be migrated later */
+
+/* ============================================
+   DIVIDERS (Resizable)
+   ============================================ */
+
+.divider-horizontal {
+  background-color: rgb(229 231 235);
+  border-top: 1px solid rgb(209 213 219);
+  border-bottom: 1px solid rgb(209 213 219);
+  cursor: ns-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 200ms ease-in-out;
+  flex-shrink: 0;
+  height: var(--task-divider-width);
+}
+
+.divider-horizontal:hover {
+  background-color: rgb(209 213 219);
+}
+
+.divider-vertical {
+  background-color: rgb(229 231 235);
+  border-left: 1px solid rgb(209 213 219);
+  border-right: 1px solid rgb(209 213 219);
+  cursor: ew-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-slow);
+  flex-shrink: 0;
+  width: var(--task-divider-width);
+}
+
+.divider-vertical:hover {
+  background-color: rgb(209 213 219);
+}
+
+.divider-handle {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.divider-handle-horizontal {
+  width: 32px;
+  height: 1px;
+  background-color: rgb(107 114 128);
+}
+
+.divider-handle-vertical {
+  width: 1px;
+  height: 32px;
+  background-color: rgb(107 114 128);
+}
+
+/* ============================================
+   CHAT INTERFACE COMPONENTS
+   ============================================ */
+
+#chat-container {
+  height: 100%;
+  position: relative;
+}
+
+#chat-messages-container {
+  padding: 1rem;
+  gap: 1rem;
+  overflow-y: auto;
+  position: absolute;
+  min-height: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: var(--task-footer-height);
+  scroll-behavior: smooth;
+}
+
+#chat-input-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgb(229 231 235);
+  padding: 1rem;
+  background-color: white;
+  height: var(--task-footer-height);
+  min-height: var(--task-footer-height);
+  max-height: var(--task-footer-height);
+}
+
+/* Chat Separator (for slide transitions) */
+.chat-separator {
+  display: flex;
+  justify-content: center;
+}
+
+.chat-separator-text {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.chat-separator-whitespace {
+  /* Height is now set dynamically via inline style based on actual container height */
+  /* This creates scroll space within the chat only, not affecting artifacts */
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   ARTIFACTS PANEL COMPONENTS
+   ============================================ */
+
+#artifacts-container {
+  background-color: rgb(249 250 251);
+  height: 100%;
+  position: relative;
+}
+
+#artifacts-header {
+  padding: 1rem;
+  border-bottom: 1px solid rgb(229 231 235);
+  background-color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#artifacts-content {
+  padding: 1.5rem;
+  color: rgb(55 65 81);
+  overflow-y: auto;
+  padding-bottom: 140px; /* Make room for fixed footer */
+}
+
+#artifacts-body {
+  height: calc(100% - 60px);
+}
+
+#artifacts-side-menu {
+  flex-shrink: 0;
+  transition: var(--sidebar-transition);
+  border-left: 1px solid rgb(229 231 235);
+}
+
+#artifacts-side-menu[data-collapsed="true"] {
+  width: 48px;
+}
+
+#artifacts-side-menu[data-collapsed="false"] {
+  width: var(--task-side-menu-width);
+}
+
+#artifacts-progress-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  border-top: 1px solid rgb(229 231 235);
+  background-color: white;
+  z-index: 10;
+}
+
+/* ============================================
+   CUSTOMER LIST COMPONENTS
+   ============================================ */
+
+#customer-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+#customer-search-bar {
+  flex: 1;
+  max-width: var(--customer-search-max-width);
+}
+
+#customer-filters-panel {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgb(229 231 235);
+}
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .filters-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+#customer-table {
+  min-width: 100%;
+}
+
+.customer-table-cell {
+  padding: var(--customer-table-cell-padding-y) var(--customer-table-cell-padding-x);
+  white-space: nowrap;
+}
+
+#pagination-controls {
+  background-color: white;
+  border-top: 1px solid rgb(229 231 235);
+  padding: 0.75rem 1rem;
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.transition-fast {
+  transition: var(--transition-fast);
+}
+
+.transition-normal {
+  transition: var(--transition-normal);
+}
+
+.transition-slow {
+  transition: var(--transition-slow);
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgb(17 24 39 / 0.3);
+  transition: opacity 200ms ease-in-out;
+  z-index: calc(var(--z-modal) - 1);
+}
+
+/* Modal Panel */
+.modal-panel {
+  position: relative;
+  z-index: var(--z-modal);
+  width: 100%;
+  max-width: 48rem;
+  border-radius: 8px;
+  background-color: white;
+  padding: 2rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+/* Progress Bar */
+.progress-bar-container {
+  width: 100%;
+  background-color: rgb(229 231 235);
+  border-radius: 9999px;
+  height: 8px;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  background-color: rgb(37 99 235);
+  height: 8px;
+  border-radius: 9999px;
+  transition: width 300ms ease-in-out;
+}
+
+/* Resize Handles for External Modal */
+.resize-handle {
+  position: absolute;
+  opacity: 0;
+  transition: opacity 200ms ease-in-out;
+  z-index: 50;
+}
+
+.resize-handle:hover {
+  opacity: 1;
+}
+
+.resize-handle-corner {
+  width: 20px;
+  height: 20px;
+  background-color: rgb(59 130 246);
+  border-radius: 0 0 4px 0;
+}
+
+.resize-handle-edge {
+  background-color: rgb(59 130 246);
+  transition: opacity 200ms ease-in-out;
+}
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width-expanded: 224px;
+    --customer-search-max-width: 100%;
+    --task-stats-height-default: 35%;
+  }
+
+  #global-chat-window {
+    width: calc(100vw - 32px);
+    height: 500px;
+    bottom: 60px;
+    right: 16px;
+    left: 16px;
+  }
+}
