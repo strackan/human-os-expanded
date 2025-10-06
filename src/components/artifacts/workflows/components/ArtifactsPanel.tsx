@@ -351,46 +351,6 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
     >
       {/* Sidebar Content */}
       <div className="bg-white h-full overflow-hidden">
-      {/* Side Menu Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200 bg-white">
-        {!isCollapsed && (
-          <h4 className="text-sm font-semibold text-gray-800">Workflow Steps</h4>
-        )}
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={isActive ? onToggleCollapse : undefined}
-            disabled={!isActive}
-            className={`p-1 transition-colors ${
-              isActive
-                ? 'text-gray-600 hover:text-gray-800 cursor-pointer'
-                : 'text-gray-300 cursor-not-allowed'
-            }`}
-            title={isActive ? (isCollapsed ? "Expand menu" : "Collapse menu") : "Planning required to enable"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
-          <button
-            onClick={onRemove}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onRemove();
-              }
-            }}
-            className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1"
-            title="Close menu"
-            tabIndex={0}
-            aria-label="Close side menu"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
       {/* Side Menu Content */}
       {!isCollapsed && (
         <div className="flex flex-col h-full">
@@ -457,14 +417,18 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
               <ul className="space-y-2">
                 {sidePanelConfig.steps.map((step, index) => {
                   const isCompleted = completedSteps?.has(step.id) || step.status === 'completed';
-                  const isActive = currentSlideIndex === index && !isCompleted;
+                  // Active step is the first uncompleted step
+                  const firstUncompletedIndex = sidePanelConfig.steps.findIndex(s =>
+                    !completedSteps?.has(s.id) && s.status !== 'completed'
+                  );
+                  const isActive = index === firstUncompletedIndex;
 
                   return (
                     <li
                       key={step.id}
                       onClick={() => onStepClick?.(step.id, step.workflowBranch)}
                       className={`flex items-center gap-3 py-1.5 px-2 cursor-pointer rounded transition-colors ${
-                        isActive ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+                        isActive ? 'bg-blue-100 hover:bg-blue-200' : 'hover:bg-gray-50'
                       }`}
                       title={`Click to navigate to ${step.title}`}
                     >
@@ -811,12 +775,8 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                 ></div>
               </div>
               <div className="text-xs text-gray-500">
-                {/* Show steps for single-slide workflows, show slides for multi-slide workflows */}
-                {totalSlides === 1 ? (
-                  <>Step {currentStepNumber || 1} of {totalSteps || 6}</>
-                ) : (
-                  <>Workflow {(currentSlideIndex !== undefined ? currentSlideIndex + 1 : 1)} of {totalSlides || 1}</>
-                )}
+                {/* Always show workflow-based progress (1 slide = 1 workflow) */}
+                <>Workflow {(currentSlideIndex !== undefined ? currentSlideIndex + 1 : 1)} of {totalSlides || 1}</>
               </div>
             </div>
           </div>
