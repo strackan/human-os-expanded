@@ -158,10 +158,11 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   // Adjust chat width when side menu visibility changes to maintain equal widths
   React.useEffect(() => {
     if (isSideMenuVisible) {
-      // Side menu is visible, adjust chat width to compensate
-      // The side menu takes 240px, so we need to reduce the chat percentage
-      // to maintain equal widths between chat and artifacts
-      setChatWidth(45); // Reduce from 50% to 45% to compensate for side menu
+      // Side menu is visible (240px), calculate chat width so that:
+      // Chat width = (100% - 240px) / 2
+      // We'll handle this with calc() in the render instead of percentage
+      // Set a marker value that we'll detect in the render
+      setChatWidth(-1); // Special value to trigger calc() usage
     } else {
       // Side menu is hidden, restore original chat width
       setChatWidth(loadedConfig.layout.chatWidth);
@@ -194,6 +195,8 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     getCurrentInput?: () => string;
     restoreState?: (messages: any[], inputValue: string) => void;
     resetChat?: () => void;
+    navigateToBranch?: (branchId: string) => void;
+    addSeparator?: (stepTitle: string) => void;
   }>(null);
   const sideMenuRef = useRef<{
     showSideMenu: () => void;
@@ -293,7 +296,10 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       setIsStatsVisible(false); // Hide stats when showing menu
       // Open the side menu within ArtifactsPanel
       if (sideMenuRef.current) {
+        console.log('TaskModeAdvanced: Calling showSideMenu on sideMenuRef');
         sideMenuRef.current.showSideMenu();
+      } else {
+        console.warn('TaskModeAdvanced: sideMenuRef.current is null, cannot show side menu');
       }
     } else if (action.type === 'exitTaskMode') {
       console.log('TaskModeAdvanced: Processing exitTaskMode action');
@@ -383,13 +389,18 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       console.log('TaskModeAdvanced: Processing navigateToBranch action for:', action.payload?.branchId);
       // Navigate to a specific conversation branch
       if (action.payload?.branchId && chatInterfaceRef.current) {
-        // @ts-ignore - navigateToBranch might not be in the type definition yet
-        if (chatInterfaceRef.current.navigateToBranch) {
-          // @ts-ignore
-          chatInterfaceRef.current.navigateToBranch(action.payload.branchId);
-        } else {
-          console.warn('navigateToBranch method not available on chat interface');
-        }
+        const attemptNavigation = (retries = 0) => {
+          if (chatInterfaceRef.current?.navigateToBranch) {
+            console.log('TaskModeAdvanced: navigateToBranch available, calling it');
+            chatInterfaceRef.current.navigateToBranch(action.payload.branchId);
+          } else if (retries < 5) {
+            console.log(`TaskModeAdvanced: navigateToBranch not ready, retry ${retries + 1}/5`);
+            setTimeout(() => attemptNavigation(retries + 1), 100);
+          } else {
+            console.error('TaskModeAdvanced: navigateToBranch method not available after 5 retries');
+          }
+        };
+        attemptNavigation();
       }
     } else {
       console.log('TaskModeAdvanced: Unknown action type:', action.type);
@@ -851,11 +862,14 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         <div
           className="flex flex-col h-full overflow-hidden"
           style={{
-            width: (isSplitMode || visibleArtifacts.size > 0) ? `${chatWidth}%` : '100%',
+            width: (isSplitMode || visibleArtifacts.size > 0)
+              ? (chatWidth === -1 ? 'calc((100% - 240px) / 2)' : `${chatWidth}%`)
+              : '100%',
             borderRight: (isSplitMode || visibleArtifacts.size > 0) ? '1px solid #e5e7eb' : 'none'
           }}
         >
           <ChatInterface
+            ref={chatInterfaceRef}
             key={workflowConfigName} // Force remount when template changes
             config={config.chat}
             isSplitMode={isSplitMode}
@@ -863,7 +877,6 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
             startingWith={starting_with as "ai" | "user"}
             className="h-full overflow-hidden"
             onArtifactAction={handleArtifactAction}
-            workingMessageRef={chatInterfaceRef}
             workflowConfig={config}
             sidePanelConfig={currentSidePanelConfig}
             currentStepNumber={currentStepNumber}
@@ -886,7 +899,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
 
         {/* ARTIFACTS CONTAINER - Show when there are visible artifacts */}
         {(isSplitMode || visibleArtifacts.size > 0) && (
-          <div className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
+          <div className="h-full overflow-hidden" style={{
+            width: chatWidth === -1 ? 'calc((100% + 240px) / 2)' : `${100 - chatWidth}%`
+          }}>
             <ArtifactsPanel
               config={currentArtifactsConfig}
               sidePanelConfig={currentSidePanelConfig}

@@ -664,11 +664,14 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                             });
                             // 3. Show the side menu
                             onArtifactButtonClick({ type: 'showMenu' });
-                            // 4. Navigate to the conversation branch to show AI response
-                            onArtifactButtonClick({
-                              type: 'navigateToBranch',
-                              payload: { branchId: 'contract-planning' }
-                            });
+                            // 4. Navigate to the conversation branch to show AI response (with delay to ensure refs are ready)
+                            setTimeout(() => {
+                              console.log('ArtifactsPanel: Triggering navigateToBranch after delay');
+                              onArtifactButtonClick({
+                                type: 'navigateToBranch',
+                                payload: { branchId: 'contract-planning' }
+                              });
+                            }, 300); // Increased delay to ensure chat interface is fully mounted
                           }
                         }}
                         onNotYet={() => {

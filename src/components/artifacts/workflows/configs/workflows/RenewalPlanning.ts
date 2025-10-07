@@ -176,7 +176,6 @@ export const renewalPlanningWorkflow: WorkflowConfig = {
   },
   chat: {
     placeholder: 'Type your question or select an option...',
-    aiGreeting: "I'm here to help with your renewal strategy.",
     mode: 'dynamic',
     features: {
       attachments: false,
@@ -225,16 +224,30 @@ export const renewalPlanningWorkflow: WorkflowConfig = {
         // ============================================
         // STEP 2: REVIEW CONTRACT (✅ IMPLEMENTED)
         // ============================================
-        // Note: contract-planning is now handled by confirm-planning above
-        // Keeping this for backwards compatibility or alternative flows
-        'contract-planning': createContractReviewBranch({
-          artifactId: 'enterprise-contract',
-          showMenu: true,
-          reviewLabel: 'Review contract terms',
-          reviewBranch: 'contract-review',
-          continueLabel: 'Continue to email',
-          continueBranch: 'email-flow'
-        }),
+        'contract-planning': {
+          response: "Perfect! Let's dive into the contract details to inform our renewal strategy.",
+          delay: 1,
+          actions: ['enterStep'], // Only enterStep; artifact and menu already shown by artifact button
+          stepNumber: 2, // Enter Step 2
+          buttons: [
+            {
+              label: 'Review contract terms',
+              value: 'review-contract',
+              'label-background': 'bg-blue-100',
+              'label-text': 'text-blue-800'
+            },
+            {
+              label: 'Continue to email',
+              value: 'continue-flow',
+              'label-background': 'bg-green-100',
+              'label-text': 'text-green-800'
+            }
+          ],
+          nextBranches: {
+            'review-contract': 'contract-review',
+            'continue-flow': 'email-flow'
+          }
+        },
         'contract-review': createContractDetailsBranch({
           highlights: [
             '8% price cap',

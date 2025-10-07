@@ -162,11 +162,19 @@ const ChatInterface = React.forwardRef<{
     resetChat,
     navigateToBranch: (branchId: string) => {
       console.log('ChatInterface: Navigating to branch:', branchId);
+      console.log('ChatInterface: conversationEngine available?', !!conversationEngine);
       if (conversationEngine) {
+        console.log('ChatInterface: Processing branch with conversationEngine');
         const response = conversationEngine.processBranch(branchId);
+        console.log('ChatInterface: Branch response:', response);
         if (response) {
+          console.log('ChatInterface: Calling showResponse with:', { text: response.text, hasButtons: !!response.buttons, actions: response.actions });
           showResponse(response, onArtifactAction);
+        } else {
+          console.error('ChatInterface: No response from processBranch for branchId:', branchId);
         }
+      } else {
+        console.error('ChatInterface: conversationEngine not available for navigateToBranch');
       }
     },
     addSeparator: (stepTitle: string) => {
@@ -247,16 +255,22 @@ const ChatInterface = React.forwardRef<{
       if (initialMessage && !initialMessageShownRef.current) {
         console.log('ChatInterface: Showing initialMessage for first time (Step 0)');
         initialMessageShownRef.current = true;
-        // Add initial message
+        // Add initial message only if messages array is empty (prevents duplication on remount)
         setTimeout(() => {
-          setMessages([{
-            id: Date.now(),
-            text: initialMessage.text,
-            sender: 'ai',
-            timestamp: new Date(),
-            type: initialMessage.buttons ? 'buttons' : 'text',
-            buttons: initialMessage.buttons
-          }]);
+          setMessages(prev => {
+            // Only add if messages array is still empty
+            if (prev.length === 0) {
+              return [{
+                id: Date.now(),
+                text: initialMessage.text,
+                sender: 'ai',
+                timestamp: new Date(),
+                type: initialMessage.buttons ? 'buttons' : 'text',
+                buttons: initialMessage.buttons
+              }];
+            }
+            return prev;
+          });
         }, 500);
       } else if (!initialMessage && !initialMessageShownRef.current && sidePanelConfig?.steps?.[0]) {
         // No initialMessage (Step 0) - auto-advance to Step 1's branch
@@ -373,7 +387,7 @@ const ChatInterface = React.forwardRef<{
       // Wait for predelay, then show the response
       setTimeout(() => {
         showResponse(response, onArtifactAction);
-      }, response.predelay);
+      }, response.predelay * 1000); // Convert seconds to milliseconds
     } else {
       // No predelay, show response immediately
       showResponse(response, onArtifactAction);
@@ -452,9 +466,18 @@ const ChatInterface = React.forwardRef<{
   };
 
   const showResponse = (response: any, onArtifactAction?: (action: any) => void) => {
+    // Process enterStep actions FIRST, before showing any messages
+    if (response.actions && onArtifactAction) {
+      const enterStepActions = response.actions.filter((action: ConversationAction) => action.type === 'enterStep');
+      enterStepActions.forEach((action: ConversationAction) => {
+        console.log('ChatInterface: Processing enterStep BEFORE message:', action);
+        onArtifactAction(action);
+      });
+    }
+
     // If there's a delay, show loading animation first
     if (response.delay && response.delay > 0) {
-          // Show loading message immediately
+          // Show loading message immediately (after enterStep has added separator)
           const loadingMessageId = Date.now() + 1;
           setMessages(prev => [...prev, {
             id: loadingMessageId,
@@ -463,11 +486,11 @@ const ChatInterface = React.forwardRef<{
             timestamp: new Date(),
             type: 'loading'
           }]);
-          
-          // After delay, replace with final message and process actions
+
+          // After delay, replace with final message and process remaining actions
           setTimeout(() => {
-            setMessages(prev => prev.map(msg => 
-              msg.id === loadingMessageId 
+            setMessages(prev => prev.map(msg =>
+              msg.id === loadingMessageId
                 ? {
                     ...msg,
                     text: response.text,
@@ -476,14 +499,54 @@ const ChatInterface = React.forwardRef<{
                   }
                 : msg
             ));
-            
-            // Process any actions from the response AFTER the delay
+
+            // Process remaining actions (excluding enterStep which was already processed)
             if (response.actions && onArtifactAction) {
-              console.log('ChatInterface: Processing actions from response after delay:', response.actions);
+              console.log('ChatInterface: Processing remaining actions after delay:', response.actions);
               response.actions.forEach((action: ConversationAction) => {
+                if (action.type !== 'enterStep') { // Skip enterStep, already processed
+                  console.log('ChatInterface: Calling onArtifactAction with:', action);
+                  onArtifactAction(action);
+
+                  // Handle nextChat action - automatically trigger next branch
+                  if (action.type === 'nextChat' && response.nextBranch) {
+                    setTimeout(() => {
+                      console.log('ChatInterface: Auto-triggering next branch:', response.nextBranch);
+                      const nextResponse = conversationEngine?.processUserInput('auto-followup');
+                      if (nextResponse) {
+                        if (nextResponse.predelay && nextResponse.predelay > 0) {
+                          setTimeout(() => {
+                            showResponse(nextResponse, onArtifactAction);
+                          }, nextResponse.predelay * 1000); // Convert seconds to milliseconds
+                        } else {
+                          showResponse(nextResponse, onArtifactAction);
+                        }
+                      }
+                    }, 100); // Small delay to ensure other actions complete first
+                  }
+                }
+              });
+            }
+          }, response.delay * 1000); // Convert seconds to milliseconds
+        } else {
+          // No delay, show message immediately (after enterStep has added separator)
+          setMessages(prev => [...prev, {
+            id: Date.now() + 1,
+            text: response.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            type: response.buttons ? 'buttons' : 'text',
+            buttons: response.buttons
+          }]);
+
+          // Process remaining actions (excluding enterStep which was already processed)
+          if (response.actions && onArtifactAction) {
+            console.log('ChatInterface: Processing remaining actions immediately:', response.actions);
+            response.actions.forEach((action: ConversationAction) => {
+              if (action.type !== 'enterStep') { // Skip enterStep, already processed
                 console.log('ChatInterface: Calling onArtifactAction with:', action);
                 onArtifactAction(action);
-                
+
                 // Handle nextChat action - automatically trigger next branch
                 if (action.type === 'nextChat' && response.nextBranch) {
                   setTimeout(() => {
@@ -493,49 +556,13 @@ const ChatInterface = React.forwardRef<{
                       if (nextResponse.predelay && nextResponse.predelay > 0) {
                         setTimeout(() => {
                           showResponse(nextResponse, onArtifactAction);
-                        }, nextResponse.predelay);
+                        }, nextResponse.predelay * 1000); // Convert seconds to milliseconds
                       } else {
                         showResponse(nextResponse, onArtifactAction);
                       }
                     }
                   }, 100); // Small delay to ensure other actions complete first
                 }
-              });
-            }
-          }, response.delay);
-        } else {
-          // No delay, show message immediately
-          setMessages(prev => [...prev, {
-            id: Date.now() + 1,
-            text: response.text,
-            sender: 'ai',
-            timestamp: new Date(),
-            type: response.buttons ? 'buttons' : 'text',
-            buttons: response.buttons
-          }]);
-          
-          // Process any actions from the response immediately
-          if (response.actions && onArtifactAction) {
-            console.log('ChatInterface: Processing actions from response immediately:', response.actions);
-            response.actions.forEach((action: ConversationAction) => {
-              console.log('ChatInterface: Calling onArtifactAction with:', action);
-              onArtifactAction(action);
-              
-              // Handle nextChat action - automatically trigger next branch
-              if (action.type === 'nextChat' && response.nextBranch) {
-                setTimeout(() => {
-                  console.log('ChatInterface: Auto-triggering next branch:', response.nextBranch);
-                  const nextResponse = conversationEngine?.processUserInput('auto-followup');
-                  if (nextResponse) {
-                    if (nextResponse.predelay && nextResponse.predelay > 0) {
-                      setTimeout(() => {
-                        showResponse(nextResponse, onArtifactAction);
-                      }, nextResponse.predelay);
-                    } else {
-                      showResponse(nextResponse, onArtifactAction);
-                    }
-                  }
-                }, 100); // Small delay to ensure other actions complete first
               }
             });
           }
