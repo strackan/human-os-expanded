@@ -1,5 +1,15 @@
 # Authentication Setup - Clean Implementation
 
+> **⚠️ DEPRECATED DOCUMENTATION**
+>
+> **Status:** Archived - Superseded by Comprehensive OAuth Guide
+> **Date Archived:** 2025-10-07
+> **Reason:** This "clean implementation" guide has been superseded by the full-featured authentication system with dual auth, fallbacks, and password reset.
+>
+> **Current Documentation:** See root `OAUTH_AUTHENTICATION_GUIDE.md` and `docs/DOCUMENTATION_INDEX.md`
+>
+> ---
+
 ## Overview
 This is a simplified, best-practice implementation of Supabase authentication with Google OAuth for Next.js 14+.
 

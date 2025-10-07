@@ -1,5 +1,15 @@
 # Task Management System - Sandbox Implementation
 
+> **⚠️ DEPRECATED DOCUMENTATION**
+>
+> **Status:** Archived - Historical Reference Only
+> **Date Archived:** 2025-10-07
+> **Reason:** Sandbox implementation superseded by production modular workflow system.
+>
+> **Current Documentation:** See `docs/DOCUMENTATION_INDEX.md` for current system documentation.
+>
+> ---
+
 ## Overview
 
 This is a sandbox implementation of a priority-driven task management system for Customer Success Managers (CSMs). The system displays the highest priority customer event with an appropriate workflow, allowing CSMs to efficiently process their task queue.

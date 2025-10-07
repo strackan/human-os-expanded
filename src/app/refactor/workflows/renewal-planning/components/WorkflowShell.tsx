@@ -14,8 +14,7 @@ interface WorkflowShellProps {
   onClose: () => void;
   title: string;
   steps: Step[];
-  currentStep: number;
-  onStepChange?: (stepIndex: number) => void;
+  currentStep?: number; // Optional now since chat handles navigation
   children: React.ReactNode;
 }
 
@@ -28,36 +27,20 @@ interface WorkflowShellProps {
  * - Header with title and close button
  * - Step progress indicator
  * - Content area for workflow steps
- * - Navigation buttons (Next/Previous)
  *
  * Checkpoint 1.1: Basic modal with step display
  * Checkpoint 1.2: Added step navigation
+ * Checkpoint 1.3: Removed navigation footer (chat handles buttons)
  */
 export function WorkflowShell({
   open,
   onClose,
   title,
   steps,
-  currentStep,
-  onStepChange,
+  currentStep = 0,
   children
 }: WorkflowShellProps) {
   if (!open) return null;
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1 && onStepChange) {
-      onStepChange(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0 && onStepChange) {
-      onStepChange(currentStep - 1);
-    }
-  };
-
-  const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === steps.length - 1;
 
   return (
     <>
@@ -89,44 +72,9 @@ export function WorkflowShell({
           {/* Step Progress */}
           <StepProgress steps={steps} currentStep={currentStep} />
 
-          {/* Content Area */}
+          {/* Content Area - Chat handles its own buttons */}
           <div className="flex-1 overflow-auto">
             {children}
-          </div>
-
-          {/* Navigation Footer */}
-          <div className="flex items-center justify-between px-8 py-4 border-t bg-gray-50">
-            <button
-              onClick={handlePrevious}
-              disabled={isFirstStep}
-              className={`
-                px-6 py-2 font-semibold rounded-lg transition-all
-                ${isFirstStep
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-gray-600 text-white hover:bg-gray-700'
-                }
-              `}
-            >
-              Previous
-            </button>
-
-            <div className="text-sm text-gray-600">
-              Step {currentStep + 1} of {steps.length}
-            </div>
-
-            <button
-              onClick={handleNext}
-              disabled={isLastStep}
-              className={`
-                px-6 py-2 font-semibold rounded-lg transition-all
-                ${isLastStep
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-                }
-              `}
-            >
-              Next Step
-            </button>
           </div>
         </div>
       </div>

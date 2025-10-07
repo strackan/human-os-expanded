@@ -469,7 +469,7 @@ src/app/refactor/workflows/
 ### 📍 Checkpoint 2.1: Config-Driven Messages (25% Complete)
 
 **What You're Building**:
-- Simple JSON config defines chat messages and buttons
+- Unified schema config defines both backend execution AND UI presentation (Option A)
 - WorkflowEngine component reads config and renders chat
 - Change config → UI updates (no code changes needed)
 
@@ -477,19 +477,30 @@ src/app/refactor/workflows/
 
 ```typescript
 // configs/SimpleRenewal.ts
+// UNIFIED SCHEMA: Backend execution + UI configuration in one file
 export const SimpleRenewal = {
   id: 'simple-renewal',
   name: 'Simple Renewal Planning',
   version: '1.0',
+
+  // Backend metadata
+  type: 'renewal',
+  stage: 'prepare', // Emergency, Critical, Prepare, Monitor
+  baseScore: 50,
 
   steps: [
     {
       id: 'start',
       title: 'Start Planning',
 
+      // Backend execution logic
+      type: 'planning',
+      dataRequired: ['customer.arr', 'customer.renewalDate', 'intelligence.riskScore'],
+
+      // UI configuration
       chat: {
         initialMessage: {
-          text: 'Hi! Ready to start renewal planning for {{customer.name}}?',
+          text: 'Hi! Ready to start renewal planning for {{customer.name}}? ARR: {{customer.arr}}, Risk Score: {{intelligence.riskScore}}',
           buttons: [
             { label: 'Start Planning', value: 'confirm' },
             { label: 'Not Yet', value: 'skip' }
@@ -519,7 +530,8 @@ export const SimpleRenewal = {
           type: 'contract',
           visible: false,
           data: {
-            arr: '{{customer.arr}}',
+            customer: '{{customer.name}}',
+            arr: '{{data.financials.currentARR}}',
             renewalDate: '{{customer.renewalDate}}',
             terms: ['8% price cap', '60-day notice']
           }
@@ -813,37 +825,123 @@ src/app/refactor/
 
 ```typescript
 // services/WorkflowService.ts
-import { getWorkflowQueueForCSM } from '@/automation/workflow-orchestrator';
-import { WorkflowRegistry } from '../workflows/configs';
+// API Bridge Layer - Connects UI to Backend Orchestration System
+// Uses endpoints defined in API-CONTRACT.md
 
 export class WorkflowService {
-  static async getQueue(csmId: string, companyId: string) {
-    // Get assignments from automation system
-    const assignments = getWorkflowQueueForCSM(csmId, companyId);
+  private baseUrl = '/api/workflows';
 
-    // Map to UI format
-    return assignments.map(assignment => ({
-      id: assignment.workflow.id,
-      type: assignment.workflow.type,
-      customer: assignment.customer,
-      priority: assignment.workflow.priority_score,
-      config: WorkflowRegistry[assignment.workflow.type],
-      variables: {
-        customer: assignment.customer,
-        context: assignment.context
-      }
-    }));
+  /**
+   * Get prioritized workflow queue for a CSM
+   * Endpoint: GET /workflows/queue/{csmId}
+   * See API-CONTRACT.md Section 1
+   */
+  static async getQueue(csmId: string) {
+    const response = await fetch(`${this.baseUrl}/queue/${csmId}`);
+    if (!response.ok) throw new Error('Failed to fetch queue');
+
+    const data = await response.json();
+
+    // Response format:
+    // {
+    //   workflows: Array<{
+    //     id, customerId, customer, workflow, intelligence
+    //   }>,
+    //   stats: { totalWorkflows, pending, inProgress, completedToday }
+    // }
+
+    return data;
   }
 
-  static async executeWorkflow(workflowId: string) {
-    // Get workflow assignment
-    const assignment = await this.getWorkflowById(workflowId);
+  /**
+   * Start a workflow (pending → in_progress)
+   * Endpoint: POST /workflows/{workflowId}/start
+   * See API-CONTRACT.md Section 2
+   */
+  static async startWorkflow(workflowId: string, csmId: string) {
+    const response = await fetch(`${this.baseUrl}/${workflowId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csmId,
+        startedAt: new Date().toISOString()
+      })
+    });
+    if (!response.ok) throw new Error('Failed to start workflow');
+    return response.json();
+  }
 
-    // Return config + variables for UI
-    return {
-      config: assignment.config,
-      variables: assignment.variables
-    };
+  /**
+   * Get complete customer context for variable injection
+   * Endpoint: GET /workflows/{workflowId}/context
+   * See API-CONTRACT.md Section 3
+   */
+  static async getWorkflowContext(workflowId: string) {
+    const response = await fetch(`${this.baseUrl}/${workflowId}/context`);
+    if (!response.ok) throw new Error('Failed to fetch context');
+
+    const context = await response.json();
+
+    // Context structure from API-CONTRACT.md:
+    // {
+    //   customer: { id, name, domain, arr, renewalDate, owner },
+    //   intelligence: { riskScore, healthScore, sentiment, aiSummary, insights, recommendations },
+    //   data: {
+    //     salesforce: { opportunities, cases, contacts },
+    //     usage: { activeUsers, licensedUsers, utilizationRate, trend, featureAdoption },
+    //     financials: { currentARR, arrHistory, paymentHistory },
+    //     engagement: { lastMeeting, meetingFrequency, supportTickets, qbrStatus }
+    //   },
+    //   workflow: { stage, daysUntilRenewal, priorityScore }
+    // }
+
+    return context;
+  }
+
+  /**
+   * Complete a workflow step
+   * Endpoint: POST /workflows/{workflowId}/steps/{stepId}/complete
+   * See API-CONTRACT.md Section 4
+   */
+  static async completeStep(workflowId: string, stepId: string, outcomes: StepOutcomes) {
+    const response = await fetch(
+      `${this.baseUrl}/${workflowId}/steps/${stepId}/complete`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stepId,
+          completedAt: new Date().toISOString(),
+          duration: outcomes.duration,
+          status: 'completed',
+          outputs: outcomes.outputs,
+          completedBy: outcomes.completedBy
+        })
+      }
+    );
+    if (!response.ok) throw new Error('Failed to complete step');
+    return response.json();
+  }
+
+  /**
+   * Complete entire workflow
+   * Endpoint: POST /workflows/{workflowId}/complete
+   * See API-CONTRACT.md Section 5
+   */
+  static async completeWorkflow(workflowId: string, outcomes: WorkflowOutcomes) {
+    const response = await fetch(`${this.baseUrl}/${workflowId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        completedAt: new Date().toISOString(),
+        totalDuration: outcomes.totalDuration,
+        status: outcomes.status,
+        outcomes: outcomes.outcomes,
+        completedBy: outcomes.completedBy
+      })
+    });
+    if (!response.ok) throw new Error('Failed to complete workflow');
+    return response.json();
   }
 }
 ```
@@ -926,17 +1024,18 @@ export default function RefactorDashboard() {
 
 ```typescript
 // Updated SimpleRenewal config with variables
+// Variables match API-CONTRACT.md context structure
 export const SimpleRenewal = {
   steps: [
     {
       chat: {
         initialMessage: {
-          text: 'Hi! {{customer.name}} (ARR: {{customer.arr}}) renewal is on {{customer.renewalDate}}. Days until renewal: {{context.days_until_renewal}}. Ready to start?',
+          text: 'Hi! {{customer.name}} (ARR: ${{data.financials.currentARR}}) renewal is on {{customer.renewalDate}}. Days until renewal: {{workflow.daysUntilRenewal}}. Risk Score: {{intelligence.riskScore}}. Ready to start?',
           buttons: [...]
         },
         branches: {
           'confirm': {
-            response: 'Great! Based on {{customer.name}}\'s {{context.account_plan}} account plan and {{context.renewal_stage}} stage, here\'s the contract.',
+            response: 'Great! Based on {{customer.name}}\'s {{customer.arr}} ARR and {{workflow.stage}} stage, here\'s the contract. Current health score: {{intelligence.healthScore}}/100.',
             actions: ['showArtifact'],
             artifactId: 'contract'
           }
@@ -948,10 +1047,19 @@ export const SimpleRenewal = {
           title: 'Contract: {{customer.name}}',
           data: {
             customer: '{{customer.domain}}',
-            arr: '{{customer.arr}}',
-            renewalDate: '{{customer.renewal_date}}',
-            stage: '{{context.renewal_stage}}',
-            daysRemaining: '{{context.days_until_renewal}}'
+            arr: '{{data.financials.currentARR}}',
+            renewalDate: '{{customer.renewalDate}}',
+            stage: '{{workflow.stage}}',
+            daysRemaining: '{{workflow.daysUntilRenewal}}',
+            riskScore: '{{intelligence.riskScore}}',
+            sentiment: '{{intelligence.sentiment}}',
+            usage: {
+              activeUsers: '{{data.usage.activeUsers}}',
+              trend: '{{data.usage.trend}}',
+              changePercent: '{{data.usage.changePercent}}'
+            },
+            lastMeeting: '{{data.engagement.lastMeeting}}',
+            contacts: '{{data.salesforce.contacts}}'
           }
         }
       ]
@@ -960,6 +1068,7 @@ export const SimpleRenewal = {
 };
 
 // Enhanced variable injection
+// Supports nested paths from API context structure
 function injectVariables(template: string, variables: any): string {
   return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
     const value = path.split('.').reduce((obj, key) => obj?.[key], variables);

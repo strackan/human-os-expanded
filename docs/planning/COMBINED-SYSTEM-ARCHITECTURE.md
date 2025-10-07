@@ -493,112 +493,165 @@ dashboard/
 
 ### Week 4: Schema Alignment
 
-**Unified Workflow Schema:**
+**Unified Workflow Schema (Option A - Recommended):**
+
+Backend engineer preference: **Single source of truth with backend execution + UI config in one file**
+
 ```typescript
+// UNIFIED SCHEMA: Backend and UI configuration combined
 interface WorkflowDefinition {
   // Backend metadata
   id: string;
   type: 'renewal' | 'strategic' | 'opportunity' | 'risk';
-  stage?: string; // For renewals: "Emergency", "Critical", etc.
-
-  // Execution logic (Backend owns)
-  steps: {
-    id: string;
-    name: string;
-    type: 'data_analysis' | 'planning' | 'action' | 'review';
-    llmPrompt?: string;
-    dataRequired?: string[];
-    executor?: string; // Function name to run
-
-    // UI configuration (Frontend owns)
-    ui: {
-      chat: {
-        initialMessage: string;
-        buttons: Array<{
-          label: string;
-          value: string;
-          action: string;
-        }>;
-      };
-      artifacts: Array<{
-        id: string;
-        title: string;
-        type: 'report' | 'email' | 'contract' | 'plan';
-        template: string;
-      }>;
-    };
-  }[];
+  stage?: string; // For renewals: "Emergency", "Critical", "Prepare", "Monitor"
+  version: string;
 
   // Priority calculation (Backend)
   baseScore: number;
   urgencyScore?: number;
+
+  // Execution logic + UI presentation
+  steps: Array<{
+    // Backend execution properties
+    id: string;
+    name: string;
+    type: 'data_analysis' | 'planning' | 'action' | 'review';
+    llmPrompt?: string;
+    dataRequired?: string[]; // e.g., ['customer.arr', 'intelligence.riskScore']
+    executor?: string; // Function name to run on backend
+
+    // UI configuration (consumed by WorkflowEngine)
+    chat: {
+      initialMessage: {
+        text: string; // Supports {{variable}} injection
+        buttons: Array<{
+          label: string;
+          value: string;
+          action?: string;
+        }>;
+      };
+      branches: {
+        [buttonValue: string]: {
+          response: string;
+          actions?: string[]; // ['showArtifact', 'nextStep', 'completeStep']
+          artifactId?: string;
+          buttons?: Array<{ label: string; value: string }>;
+          nextBranches?: { [buttonValue: string]: string };
+        };
+      };
+    };
+
+    // Artifact definitions
+    artifacts: Array<{
+      id: string;
+      title: string; // Supports {{variable}} injection
+      type: 'report' | 'email' | 'contract' | 'plan' | 'checklist';
+      visible: boolean;
+      data: any; // Artifact-specific data with {{variable}} support
+    }>;
+  }>;
 }
+
+// Example: Emergency Renewal Workflow
+const EmergencyRenewalWorkflow: WorkflowDefinition = {
+  id: 'emergency-renewal',
+  type: 'renewal',
+  stage: 'Emergency',
+  version: '1.0',
+  baseScore: 90,
+
+  steps: [
+    {
+      id: 'analyze-arr-performance',
+      name: 'Analyze ARR Performance',
+      type: 'data_analysis',
+      dataRequired: ['data.financials.currentARR', 'intelligence.riskScore'],
+
+      chat: {
+        initialMessage: {
+          text: 'Hi! {{customer.name}} (ARR: ${{data.financials.currentARR}}) shows risk score {{intelligence.riskScore}}/100. Only {{workflow.daysUntilRenewal}} days until renewal. Ready to assess?',
+          buttons: [
+            { label: 'Review Analysis', value: 'review', action: 'showArtifact' },
+            { label: 'Skip', value: 'skip' }
+          ]
+        },
+        branches: {
+          'review': {
+            response: 'Here\'s the complete ARR analysis with AI insights.',
+            actions: ['showArtifact'],
+            artifactId: 'arr-analysis',
+            buttons: [
+              { label: 'Complete Step', value: 'complete', action: 'completeStep' }
+            ]
+          }
+        }
+      },
+
+      artifacts: [
+        {
+          id: 'arr-analysis',
+          title: 'ARR Performance - {{customer.name}}',
+          type: 'report',
+          visible: false,
+          data: {
+            currentARR: '{{data.financials.currentARR}}',
+            trend: '{{data.usage.trend}}',
+            riskScore: '{{intelligence.riskScore}}',
+            recommendations: '{{intelligence.recommendations}}'
+          }
+        }
+      ]
+    }
+  ]
+};
 ```
 
 ### Week 5-6: API Integration
 
-**API Contract:**
+**Complete API specification:** See `docs/planning/API-CONTRACT.md` for full details.
+
+**Key Endpoints Summary:**
+
 ```typescript
-// GET /api/workflows/queue?csm=sarah
+// 1. GET /workflows/queue/{csmId}
+// Returns prioritized workflow queue with customer intelligence
 Response: {
   workflows: Array<{
-    id: string;
-    customerId: string;
-    customer: {
-      name: string;
-      domain: string;
-      arr: number;
-      renewalDate: string;
-    };
-    workflow: {
-      type: 'emergency-renewal';
-      priorityScore: 287;
-      assignedTo: 'sarah@company.com';
-      status: 'pending';
-    };
-    context: {
-      riskScore: 72;
-      aiInsights: {
-        summary: string;
-        recommendations: string[];
-        urgency: 'high' | 'medium' | 'low';
-      };
-      trends: {
-        usage: { direction: 'up' | 'down', magnitude: number };
-        support: { tickets: number, avgTime: string };
-      };
-      salesforce: {
-        opportunityStage: string;
-        lastActivity: string;
-      };
-    };
-  }>;
+    id, customerId, customer, workflow, intelligence
+  }>,
+  stats: { totalWorkflows, pending, inProgress, completedToday }
 }
 
-// POST /api/workflows/:id/execute
-Request: { csmId: string }
+// 2. POST /workflows/{workflowId}/start
+// Initialize workflow (pending → in_progress)
+
+// 3. GET /workflows/{workflowId}/context
+// Get complete customer context for variable injection
 Response: {
-  workflowInstance: WorkflowInstance;
-  config: WorkflowDefinition;
-  context: CustomerContext;
+  customer: { id, name, domain, arr, renewalDate, owner },
+  intelligence: { riskScore, healthScore, sentiment, aiSummary, insights, recommendations },
+  data: {
+    salesforce: { opportunities, cases, contacts },
+    usage: { activeUsers, licensedUsers, utilizationRate, trend, featureAdoption },
+    financials: { currentARR, arrHistory, paymentHistory },
+    engagement: { lastMeeting, meetingFrequency, supportTickets, qbrStatus }
+  },
+  workflow: { stage, daysUntilRenewal, priorityScore, priorityFactors }
 }
 
-// POST /api/workflows/:id/steps/:stepId/complete
-Request: {
-  stepId: string;
-  duration: number; // seconds
-  outcomes: {
-    action: string;
-    notes?: string;
-    artifacts?: string[];
-    nextActions?: string[];
-  };
-}
-Response: {
-  nextStep: Step | null;
-  updatedContext: CustomerContext;
-}
+// 4. POST /workflows/{workflowId}/steps/{stepId}/complete
+// Mark step complete, returns next step and suggestions
+
+// 5. POST /workflows/{workflowId}/complete
+// Complete workflow, returns stats and next workflow in queue
 ```
+
+**Real-Time Updates Strategy:**
+- **MVP (Weeks 5-6)**: Synchronous responses (no WebSockets)
+- POST requests return updated workflow state immediately
+- UI updates by reading response
+- **Future**: WebSocket for dashboard updates (new workflows, priority changes)
+- Step completion remains synchronous for reliability
 
 ---
 
@@ -628,17 +681,17 @@ Response: {
 - Checkpoint 2.3: Multiple workflow configs
 
 **Backend Track:**
-- Build data ingestion API
-- Create intelligence-processor.js
-- Implement LLM integration
-- Store customer intelligence
+- Define unified workflow schema (Option A)
+- Build workflow execution engine foundation
+- Create workflow-state-manager.js
+- Design step executor architecture
 
-**Milestone:** UI has templating, Backend has data pipeline
+**Milestone:** UI has templating, Backend has execution framework
 
 **Week 4 Sync:**
-- Schema alignment meeting
-- API contract definition
-- Integration planning
+- Schema alignment meeting (finalize unified schema)
+- API contract definition (documented in API-CONTRACT.md)
+- Integration planning (data ingestion aligned with UI integration)
 
 ---
 
@@ -650,15 +703,21 @@ Response: {
 - Checkpoint 3.3: Complete integration loop
 
 **Backend Track:**
-- Build workflow execution engine
-- Create workflow-state-manager.js
-- Implement step executor
-- Add workflow_instances table
+- **Data ingestion pipeline** (moved from Phase 2)
+  - Build data ingestion API
+  - Create intelligence-processor.js
+  - Implement LLM integration
+  - Store customer intelligence
+- **Queue & execution**
+  - Implement workflow queue endpoints (GET /workflows/queue/{csmId})
+  - Complete workflow-state-manager.js
+  - Implement step executor
+  - Add workflow_instances table
 
 **Joint Work:**
-- API integration
-- End-to-end testing
-- One complete workflow working
+- API integration (using API-CONTRACT.md)
+- End-to-end testing with real customer data
+- One complete workflow working (data → queue → execution → completion)
 
 **Milestone:** Full integration, data flows through entire system
 

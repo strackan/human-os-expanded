@@ -1,5 +1,15 @@
 # Authentication System Implementation
 
+> **⚠️ DEPRECATED DOCUMENTATION**
+>
+> **Status:** Archived - Superseded by Comprehensive OAuth Guide
+> **Date Archived:** 2025-10-07
+> **Reason:** This document describes an earlier authentication approach. The comprehensive, current authentication system is documented in `OAUTH_AUTHENTICATION_GUIDE.md`.
+>
+> **Current Documentation:** See root `OAUTH_AUTHENTICATION_GUIDE.md` and `docs/DOCUMENTATION_INDEX.md`
+>
+> ---
+
 ## 🔐 **Overview**
 
 This implementation provides comprehensive authentication protection for all internal pages in the Renubu application. Users who are not authenticated will be automatically redirected to the sign-in page, and upon successful authentication, they will be redirected back to their originally requested page.

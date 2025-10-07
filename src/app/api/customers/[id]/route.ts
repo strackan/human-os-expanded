@@ -8,12 +8,12 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    
+
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-    
+
     const customer = await CustomerService.getCustomerById(resolvedParams.id, supabase);
 
     if (!customer) {
@@ -26,6 +26,16 @@ export async function GET(
     return NextResponse.json({ customer });
   } catch (error) {
     console.error('Error fetching customer:', error);
+
+    // Check if it's a validation error (invalid UUID format)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('invalid input syntax for type uuid')) {
+      return NextResponse.json(
+        { error: 'Invalid customer ID format' },
+        { status: 400 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch customer' },
       { status: 500 }

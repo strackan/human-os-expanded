@@ -1,5 +1,23 @@
 # Customer Management & Workflow System
 
+> **⚠️ DEPRECATED DOCUMENTATION**
+>
+> **Status:** Archived - Historical Reference Only
+> **Date Archived:** 2025-10-07
+> **Reason:** This document describes a legacy workflow system that has been superseded by the modular, configuration-driven workflow system.
+>
+> **Current Documentation:** See `docs/DOCUMENTATION_INDEX.md` for the authoritative source of truth.
+>
+> **Do not use this document for:**
+> - Understanding the current system architecture
+> - API integration guidance
+> - Implementation decisions
+>
+> **This document is preserved for:**
+> - Historical context
+> - Understanding the evolution of the system
+> - Reference for migration discussions
+
 ## 🎯 **Overview**
 
 This system provides a comprehensive customer management platform with dynamic workflow generation based on customer parameters. It allows Customer Success Managers to:

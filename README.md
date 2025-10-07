@@ -75,12 +75,18 @@ npm run sync-schema
 
 ## 📚 **Essential Documentation**
 
-### **For New Workers**
-1. **[NEW WORKER ONBOARDING GUIDE](NEW_WORKER_ONBOARDING.md)** - Start here! Complete guide for new team members
-2. **[AUTHENTICATION_SYSTEM_README.md](AUTHENTICATION_SYSTEM_README.md)** - Complete authentication system details
-3. **[DATABASE_SYSTEM_GUIDE.md](DATABASE_SYSTEM_GUIDE.md)** - Complete database system, schema management, and migrations
-4. **[CUSTOMER_WORKFLOW_SYSTEM_README.md](CUSTOMER_WORKFLOW_SYSTEM_README.md)** - Customer management system
-5. **[TASK_MANAGEMENT_README.md](TASK_MANAGEMENT_README.md)** - Task management implementation
+> **📖 START HERE:** For all documentation, see **[Documentation Index](docs/DOCUMENTATION_INDEX.md)**
+>
+> The Documentation Index is the **single source of truth** for navigating all project documentation. It clearly identifies which docs are current, which are historical, and which are future planning.
+
+### **Core Documentation**
+
+1. **[Documentation Index](docs/DOCUMENTATION_INDEX.md)** ⭐ **START HERE** - Master guide to all documentation
+2. **[NEW WORKER ONBOARDING GUIDE](NEW_WORKER_ONBOARDING.md)** - Complete onboarding for new team members (if exists)
+3. **[OAUTH_AUTHENTICATION_GUIDE.md](OAUTH_AUTHENTICATION_GUIDE.md)** - Current authentication system (OAuth + email/password)
+4. **[DATABASE_SYSTEM_GUIDE.md](DATABASE_SYSTEM_GUIDE.md)** - Database system and migrations (if exists)
+5. **[Workflow System](src/components/artifacts/workflows/README.md)** - Current modular workflow architecture
+6. **[Design System](src/styles/design-system.md)** - UI styling guidelines
 
 ### **Development Resources**
 - **Next.js Documentation**: https://nextjs.org/docs
