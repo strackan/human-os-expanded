@@ -13,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'show-buttons' | 'hide-buttons' | 'clear-chat' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'advanceWithoutComplete' | 'resetWorkflow' | 'nextStep';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'enterStep' | 'advanceWithoutComplete' | 'resetWorkflow';
   payload?: any;
 }
 
@@ -153,6 +153,16 @@ export class ConversationEngine {
           actions.push({
             type: 'showMenu',
             payload: {}
+          });
+        } else if (action === 'completeStep' && branch.stepId) {
+          actions.push({
+            type: 'completeStep',
+            payload: { stepId: branch.stepId }
+          });
+        } else if (action === 'enterStep' && branch.stepNumber !== undefined) {
+          actions.push({
+            type: 'enterStep',
+            payload: { stepNumber: branch.stepNumber }
           });
         } else {
           actions.push({ type: action });

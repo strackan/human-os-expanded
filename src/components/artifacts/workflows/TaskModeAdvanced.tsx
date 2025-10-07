@@ -36,7 +36,7 @@
  * ```
  */
 
-import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useEffect, useMemo } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import CustomerOverview from './components/CustomerOverview';
 import Analytics from './components/Analytics';
@@ -47,6 +47,7 @@ import { WorkflowConfig, defaultWorkflowConfig } from './config/WorkflowConfig';
 import { ConversationAction } from './utils/conversationEngine';
 import { isLastTemplateInGroup } from './config/templateGroups';
 import { getChartTemplate } from './config/chartTemplates';
+import { getWorkflow } from './configs/workflows/workflowRegistry';
 
 interface TaskModeModalProps {
   isOpen: boolean;
@@ -55,7 +56,8 @@ interface TaskModeModalProps {
   showArtifact?: boolean; // New prop to control initial artifact visibility
   conversationSeed?: any[] | null;
   starting_with?: "ai" | "user";
-  workflowConfig?: WorkflowConfig;
+  workflowId?: string; // NEW: Load workflow from registry (e.g., 'renewal-planning')
+  workflowConfig?: WorkflowConfig; // LEGACY: Direct config for backwards compat
   workflowConfigName?: string;
   onNextCustomer?: () => void;
   nextCustomerName?: string; // Next customer name for template groups
@@ -82,6 +84,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   showArtifact = true, // Default to true for backward compatibility
   conversationSeed = null,
   starting_with = "ai",
+  workflowId,
   workflowConfig,
   workflowConfigName = "default",
   onNextCustomer,
@@ -93,46 +96,64 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   templateGroupId,
   currentTemplateIndex = 0
 }, ref) => {
-  // Debug: Log what config we received
-  console.log('TaskModeAdvanced received:', {
-    workflowConfigName,
-    customerName: workflowConfig?.customer?.name,
-    configPassed: !!workflowConfig,
-    isDefault: workflowConfig === defaultWorkflowConfig
-  });
+  // Load workflow from registry if workflowId provided
+  // Initialize with default first to avoid conditional hooks
+  const initialConfig = workflowId
+    ? getWorkflow(workflowId) || defaultWorkflowConfig
+    : workflowConfig || defaultWorkflowConfig;
 
-  // Use configuration with overrides - ensure we have a config
-  const baseConfig = workflowConfig || defaultWorkflowConfig;
-  const config: WorkflowConfig = {
-    ...baseConfig,
-    chat: {
-      ...baseConfig.chat,
-      conversationSeed: conversationSeed || baseConfig.chat.conversationSeed
+  const [loadedConfig, setLoadedConfig] = useState<WorkflowConfig>(initialConfig);
+
+  useEffect(() => {
+    if (workflowId) {
+      // NEW: Load from registry
+      console.log('TaskModeAdvanced: Loading workflow from registry:', workflowId);
+      const config = getWorkflow(workflowId);
+      if (config) {
+        setLoadedConfig(config);
+      } else {
+        console.error('TaskModeAdvanced: Workflow not found:', workflowId);
+        setLoadedConfig(defaultWorkflowConfig);
+      }
+    } else if (workflowConfig) {
+      // LEGACY: Use passed config
+      console.log('TaskModeAdvanced: Using passed workflowConfig');
+      setLoadedConfig(workflowConfig);
     }
-  };
+  }, [workflowId, workflowConfig]);
+
+  // Use loaded configuration with overrides
+  // Memoize to prevent recreation on every render, which was causing useEffect instability
+  const config: WorkflowConfig = useMemo(() => ({
+    ...loadedConfig,
+    chat: {
+      ...loadedConfig.chat,
+      conversationSeed: conversationSeed || loadedConfig.chat.conversationSeed
+    }
+  }), [loadedConfig, conversationSeed]);
 
   // Initialize with config defaults
 
   // Modal dimensions and position
-  const [modalDimensions, setModalDimensions] = useState(baseConfig.layout.modalDimensions);
+  const [modalDimensions, setModalDimensions] = useState(loadedConfig.layout.modalDimensions);
 
   // Layout states
-  const [statsHeight, setStatsHeight] = useState(baseConfig.layout.statsHeight || 45.3); // Default 45.3% for stats
-  const [isSplitMode, setIsSplitMode] = useState(baseConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
-  const [chatWidth, setChatWidth] = useState(baseConfig.layout.chatWidth);
+  const [statsHeight, setStatsHeight] = useState(loadedConfig.layout.statsHeight || 45.3); // Default 45.3% for stats
+  const [isSplitMode, setIsSplitMode] = useState(loadedConfig.layout.splitModeDefault || false); // Honor each config's splitModeDefault
+  const [chatWidth, setChatWidth] = useState(loadedConfig.layout.chatWidth);
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false); // Track dragging state
-  const [currentSlideIndex, setCurrentSlideIndex] = useState(0); // Track current slide
   const [showFinalSlide, setShowFinalSlide] = useState(false); // Track final slide state
-  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set()); // Track completed steps
+  const [currentStepNumber, setCurrentStepNumber] = useState(0); // Single source of truth for step tracking (0 = initial greeting)
   const [isSideMenuVisible, setIsSideMenuVisible] = useState(false); // Track side menu visibility
+  const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set()); // Track which steps have been completed
 
   // Reset split mode when template changes
   React.useEffect(() => {
-    setIsSplitMode(baseConfig.layout.splitModeDefault || false);
+    setIsSplitMode(loadedConfig.layout.splitModeDefault || false);
     setVisibleArtifacts(new Set()); // Also clear any visible artifacts
-  }, [workflowConfigName, baseConfig.layout.splitModeDefault]);
+  }, [workflowConfigName, loadedConfig.layout.splitModeDefault]);
 
   // Adjust chat width when side menu visibility changes to maintain equal widths
   React.useEffect(() => {
@@ -143,63 +164,26 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       setChatWidth(45); // Reduce from 50% to 45% to compensate for side menu
     } else {
       // Side menu is hidden, restore original chat width
-      setChatWidth(baseConfig.layout.chatWidth);
+      setChatWidth(loadedConfig.layout.chatWidth);
     }
-  }, [isSideMenuVisible, baseConfig.layout.chatWidth]);
+  }, [isSideMenuVisible, loadedConfig.layout.chatWidth]);
 
-  // Determine if we're using slides or traditional config
-  // Only use slides if explicitly set or if slides array exists
-  const isSlideBased = config.slides && config.slides.length > 0;
-  const currentConfig = isSlideBased ? config.slides![currentSlideIndex] : config;
-  
+  // Use config directly (no more slide-based complexity)
   console.log('TaskModeAdvanced: Config analysis:', {
-    isSlideBased,
-    currentSlideIndex,
-    totalSlides: config.slides?.length || 0,
-    currentSlideTitle: isSlideBased ? config.slides![currentSlideIndex]?.title : 'N/A',
-    hasInitialMessage: isSlideBased ? !!config.slides![currentSlideIndex]?.chat?.initialMessage : !!config.chat?.dynamicFlow,
+    customerName: config.customer?.name,
+    hasInitialMessage: !!config.chat?.dynamicFlow?.initialMessage,
     hasDynamicFlow: !!config.chat?.dynamicFlow,
-    hasConversationSeed: !!config.chat?.conversationSeed,
-    currentSlideChat: isSlideBased ? config.slides![currentSlideIndex]?.chat : null,
-    mainChatConfig: config.chat
+    totalSteps: config.sidePanel?.steps?.length || 0,
+    initialMessageText: config.chat?.dynamicFlow?.initialMessage?.text?.substring(0, 50)
   });
   
-  // Create proper ChatConfig from slide config or use main config
-  const currentChatConfig = isSlideBased ? {
-    ...config.chat,
-    mode: 'dynamic', // Ensure slide-based configs are treated as dynamic
-    dynamicFlow: {
-      startsWith: 'ai',
-      defaultMessage: config.chat.dynamicFlow?.defaultMessage || "I understand you'd like to discuss something else. How can I help?",
-      initialMessage: currentConfig.chat.initialMessage,
-      branches: currentConfig.chat.branches || {},
-      userTriggers: currentConfig.chat.userTriggers || {}
-    }
-  } : config.chat;
-  
-  console.log('TaskModeAdvanced: Final currentChatConfig:', {
-    mode: currentChatConfig.mode,
-    hasDynamicFlow: !!currentChatConfig.dynamicFlow,
-    hasInitialMessage: !!currentChatConfig.initialMessage,
-    initialMessageText: currentChatConfig.initialMessage?.text
-  });
-  
-  const currentArtifactsConfig = isSlideBased
-    ? (currentConfig.artifacts || config.artifacts)
-    : config.artifacts;
+  // Use config directly (no more slide-based complexity)
+  const currentArtifactsConfig = config.artifacts;
+  const currentSidePanelConfig = config.sidePanel;
 
-  // Use slide-specific sidePanel if available, otherwise use main config's sidePanel
-  const currentSidePanelConfig = isSlideBased && currentConfig.sidePanel
-    ? currentConfig.sidePanel
-    : config.sidePanel;
-
-  // Calculate progress percentage based on:
-  // - Single slide (slides.length === 1): Based on current step (cap at 100% when all steps complete)
-  // - Multiple slides (slides.length > 1): Based on current slide number
-  const progressPercentage = isSlideBased && config.slides
-    ? (config.slides.length === 1 && currentSidePanelConfig?.steps
-        ? (Math.min(completedSteps.size + 1, currentSidePanelConfig.steps.length) / currentSidePanelConfig.steps.length) * 100
-        : ((currentSlideIndex + 1) / config.slides.length) * 100)
+  // Calculate progress percentage based on current step number
+  const progressPercentage = currentSidePanelConfig?.steps
+    ? (Math.min(currentStepNumber, currentSidePanelConfig.steps.length) / currentSidePanelConfig.steps.length) * 100
     : 0;
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -248,6 +232,31 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     setIsStatsVisible(!isStatsVisible);
   };
 
+  /**
+   * Central action handler for all workflow actions
+   *
+   * UI/Layout Actions:
+   * - launch-artifact: Add artifact to visible set (keeps existing artifacts)
+   * - showArtifact: Show artifact exclusively (replaces all other visible artifacts)
+   * - removeArtifact: Remove artifact from visible set
+   * - showMenu: Open side menu in artifacts panel
+   *
+   * Navigation Actions:
+   * - exitTaskMode: Close modal, used for snooze/skip workflow
+   * - nextCustomer: Advance to next customer in sequence
+   * - nextSlide: Advance to next workflow slide
+   * - showFinalSlide: Show completion screen
+   * - advanceWithoutComplete: Smart progression without marking step complete
+   *
+   * Workflow State Actions:
+   * - completeStep: Mark step complete, increment currentStepNumber, auto-navigate to next step's branch
+   * - resetWorkflow: Reset workflow state (currentStepNumber + chat)
+   * - resetChat: Reset chat only (clear messages, reset conversation engine)
+   * - resetToInitialState: Full reset (workflow + UI layout + all state)
+   *
+   * Chat Flow Actions (handled in ChatInterface, passed through here):
+   * - nextChat: Auto-continue to next conversation branch (internal to ChatInterface)
+   */
   const handleArtifactAction = (action: ConversationAction) => {
     console.log('TaskModeAdvanced: Received action:', action);
     
@@ -327,78 +336,49 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       // Show the final slide
       setShowFinalSlide(true);
     } else if (action.type === 'nextSlide') {
-      console.log('TaskModeAdvanced: Processing nextSlide action');
-      // Advance to next slide if using slide-based config
-      if (isSlideBased && config.slides) {
-        const nextIndex = currentSlideIndex + 1;
-        if (nextIndex < config.slides.length) {
-          setCurrentSlideIndex(nextIndex);
-          console.log('Advanced to slide:', nextIndex, config.slides[nextIndex].title);
-          // Also show the side menu when advancing
-          openArtifact();
-          setIsStatsVisible(false);
-        } else {
-          console.log('Already at last slide');
-        }
-      } else {
-        console.log('Not using slide-based config, nextSlide has no effect');
-      }
+      console.log('TaskModeAdvanced: nextSlide action deprecated - workflows use steps, not slides');
     } else if (action.type === 'completeStep') {
       console.log('TaskModeAdvanced: Processing completeStep action for:', action.payload?.stepId);
       // Mark step as completed
       if (action.payload?.stepId) {
         handleStepComplete(action.payload.stepId);
       }
+    } else if (action.type === 'enterStep') {
+      console.log('TaskModeAdvanced: Processing enterStep action - advancing to step:', action.payload?.stepNumber);
+      // Enter a new step (increment step number without marking previous complete)
+      if (action.payload?.stepNumber !== undefined) {
+        const stepNumber = action.payload.stepNumber;
+
+        // Get the step info for the step we're entering
+        const enteringStep = currentSidePanelConfig?.steps?.[stepNumber - 1]; // stepNumber is 1-based, array is 0-based
+
+        // Add separator for the step we're entering
+        if (enteringStep && chatInterfaceRef.current?.addSeparator) {
+          chatInterfaceRef.current.addSeparator(enteringStep.title);
+        }
+
+        // Update step number
+        setCurrentStepNumber(stepNumber);
+      }
     } else if (action.type === 'advanceWithoutComplete') {
-      console.log('TaskModeAdvanced: Processing advanceWithoutComplete action - smart progression');
-      // Smart progression: step → slide → customer (without marking complete)
-      if (isSlideBased && config.slides) {
-        const nextSlideIndex = currentSlideIndex + 1;
-        if (nextSlideIndex < config.slides.length) {
-          // Advance to next slide
-          console.log('Smart progression: Advancing to next slide:', nextSlideIndex);
-          setCurrentSlideIndex(nextSlideIndex);
-          openArtifact();
-          setIsStatsVisible(false);
-        } else {
-          // At last slide, advance to next customer
-          console.log('Smart progression: At last slide, advancing to next customer');
-          if (modalRef.current) {
-            modalRef.current.style.display = 'none';
-          }
-          if (onNextCustomer) {
-            onNextCustomer();
-          } else {
-            onClose();
-          }
-        }
+      console.log('TaskModeAdvanced: Processing advanceWithoutComplete action');
+      // Advance to next customer without marking step complete
+      if (modalRef.current) {
+        modalRef.current.style.display = 'none';
+      }
+      if (onNextCustomer) {
+        onNextCustomer();
       } else {
-        // Non-slide based, just advance to next customer
-        console.log('Smart progression: Non-slide based, advancing to next customer');
-        if (modalRef.current) {
-          modalRef.current.style.display = 'none';
-        }
-        if (onNextCustomer) {
-          onNextCustomer();
-        } else {
-          onClose();
-        }
+        onClose();
       }
     } else if (action.type === 'resetWorkflow') {
       console.log('TaskModeAdvanced: Processing resetWorkflow action');
-      // Clear completed steps and reset to first slide
-      setCompletedSteps(new Set());
-      setCurrentSlideIndex(0);
+      // Reset step number to beginning
+      setCurrentStepNumber(1);
       // Reset the chat interface
       if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
         chatInterfaceRef.current.resetChat();
       }
-    } else if (action.type === 'nextStep') {
-      console.log('TaskModeAdvanced: Processing nextStep action');
-      // This action is primarily handled by the chat interface
-      // The chat interface will navigate to the next step in the conversation flow
-      // No state changes needed here - just log for debugging
-      console.log('Next step navigation triggered (handled by chat interface)');
     } else if (action.type === 'navigateToBranch') {
       console.log('TaskModeAdvanced: Processing navigateToBranch action for:', action.payload?.branchId);
       // Navigate to a specific conversation branch
@@ -429,22 +409,22 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   };
 
   const handleStepComplete = (stepId: string) => {
-    console.log('TaskModeAdvanced: Completing step:', stepId);
-    setCompletedSteps(prev => new Set(prev).add(stepId));
+    console.log('TaskModeAdvanced: Completing step:', stepId, 'Current step number:', currentStepNumber);
+
+    // Mark step as completed (for sidebar visual feedback)
+    setCompletedSteps(prev => new Set([...prev, stepId]));
+
+    // Increment step number when a step is completed
+    const nextStepNumber = currentStepNumber + 1;
+    setCurrentStepNumber(nextStepNumber);
+
+    console.log('TaskModeAdvanced: Step completed, advanced to step:', nextStepNumber);
+
+    // Note: Separator is added by enterStep action when entering the NEXT step
+    // This separates step completion from step entry
   };
 
-  const handleGotoSlide = (slideNumber: number) => {
-    console.log('TaskModeAdvanced: gotoSlide called with:', slideNumber);
-    if (isSlideBased && config.slides) {
-      const targetIndex = slideNumber - 1; // Convert 1-based to 0-based
-      if (targetIndex >= 0 && targetIndex < config.slides.length) {
-        setCurrentSlideIndex(targetIndex);
-        console.log('Navigated to slide:', targetIndex, config.slides[targetIndex].title);
-      } else {
-        console.warn('Invalid slide number:', slideNumber);
-      }
-    }
-  };
+  // No longer needed - workflows don't have slide navigation
 
   // Resolve analytics config template variables
   const resolveAnalyticsConfig = (analyticsConfig: any) => {
@@ -506,8 +486,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     setIsStatsVisible(true);
     setVisibleArtifacts(new Set());
     setIsDragging(false);
-    setCurrentSlideIndex(0);
+    setCurrentStepNumber(0); // Reset to step 0 (initial greeting/opening)
     setShowFinalSlide(false); // Reset final slide state
+    setCompletedSteps(new Set()); // Reset completed steps
     
     // Reset modal dimensions to initial values
     setModalDimensions(config.layout.modalDimensions);
@@ -876,18 +857,16 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         >
           <ChatInterface
             key={workflowConfigName} // Force remount when template changes
-            config={currentChatConfig}
+            config={config.chat}
             isSplitMode={isSplitMode}
             onToggleSplitMode={toggleSplitMode}
             startingWith={starting_with as "ai" | "user"}
             className="h-full overflow-hidden"
             onArtifactAction={handleArtifactAction}
-            onGotoSlide={handleGotoSlide}
             workingMessageRef={chatInterfaceRef}
             workflowConfig={config}
             sidePanelConfig={currentSidePanelConfig}
-            completedSteps={completedSteps}
-            slideKey={currentSlideIndex} // Trigger chat reset when slide changes
+            currentStepNumber={currentStepNumber}
           />
         </div>
 
@@ -916,12 +895,10 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
               visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}
               onStepClick={handleStepClick}
               onArtifactButtonClick={handleArtifactAction}
-              completedSteps={completedSteps}
+              currentStepNumber={currentStepNumber}
               progressPercentage={progressPercentage}
-              currentSlideIndex={currentSlideIndex}
-              totalSlides={isSlideBased && config.slides ? config.slides.length : undefined}
-              currentStepNumber={completedSteps.size + 1}
               totalSteps={currentSidePanelConfig?.steps?.length}
+              completedSteps={completedSteps}
               onSideMenuToggle={(isVisible) => setIsSideMenuVisible(isVisible)}
               sideMenuRef={sideMenuRef}
             />

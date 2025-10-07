@@ -286,8 +286,9 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     // Planning checklist display
     'expansion': {
       response: "Great! Let's review what we need to accomplish for the renewal planning:",
-      actions: ['showArtifact'],
-      artifactId: 'planning-checklist-renewal'
+      actions: ['showArtifact', 'completeStep'],
+      artifactId: 'planning-checklist-renewal',
+      stepId: 'start-planning'
     },
     // Contract review flow
     'contract-planning': createContractReviewBranch({

@@ -9,7 +9,6 @@
 
 import React, { useState } from 'react';
 import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
-import { dynamicChatAITemplated } from '@/components/artifacts/workflows/config/configs';
 
 export default function TestTemplatedDynamicPage() {
   const [isModalOpen, setIsModalOpen] = useState(true);
@@ -22,17 +21,17 @@ export default function TestTemplatedDynamicPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Template System Test
+                Renewal Planning Workflow
               </h1>
               <p className="mt-2 text-sm text-gray-600">
-                Testing DynamicChatFixedTemplated - Built entirely from reusable templates
+                Testing workflow system with step-based progression
               </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="text-right">
-                <div className="text-sm font-medium text-gray-500">Test Config</div>
+                <div className="text-sm font-medium text-gray-500">Workflow ID</div>
                 <div className="text-lg font-semibold text-blue-600">
-                  DynamicChatAITemplated
+                  renewal-planning
                 </div>
               </div>
             </div>
@@ -44,50 +43,56 @@ export default function TestTemplatedDynamicPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white rounded-lg shadow-md p-8 mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Template System Validation
+            Workflow System Test
           </h2>
           <div className="prose prose-sm max-w-none text-gray-600">
             <p className="mb-4">
-              This test page demonstrates the complete template-based workflow system with 5 slides and all artifact types.
+              Testing the renewal planning workflow with 6 steps. Currently Steps 1-2 are fully implemented, Steps 3-6 are placeholders.
             </p>
           </div>
 
-          <div className="bg-purple-50 p-6 rounded-lg mb-6">
-            <h3 className="font-semibold text-purple-900 mb-3">Artifact Types Demonstrated</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div className="bg-blue-50 p-6 rounded-lg mb-6">
+            <h3 className="font-semibold text-blue-900 mb-3">Workflow Steps</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
               <div className="bg-white p-3 rounded shadow-sm">
-                <div className="font-medium text-gray-900">Slide 1</div>
-                <div className="text-gray-600 mt-1">
-                  • Planning Checklist<br />
-                  • Contract<br />
-                  • Email<br />
-                  • Workflow Summary
+                <div className="font-medium text-green-700">✅ Step 1: Start Planning</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Planning checklist with expansion branch
                 </div>
               </div>
               <div className="bg-white p-3 rounded shadow-sm">
-                <div className="font-medium text-gray-900">Slide 2</div>
-                <div className="text-gray-600 mt-1">
-                  • Follow-up Email<br />
-                  • Assessment Summary
+                <div className="font-medium text-green-700">✅ Step 2: Review Contract</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Contract details with email flow
                 </div>
               </div>
-              <div className="bg-white p-3 rounded shadow-sm">
-                <div className="font-medium text-gray-900">Slide 3</div>
-                <div className="text-gray-600 mt-1">
-                  • Pricing Analysis ⭐<br />
-                  • Quote ⭐
+              <div className="bg-white p-3 rounded shadow-sm border-2 border-orange-200">
+                <div className="font-medium text-orange-600">🚧 Step 3: Set Price</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Placeholder - to be implemented
                 </div>
               </div>
-              <div className="bg-white p-3 rounded shadow-sm">
-                <div className="font-medium text-gray-900">Slides 4-5</div>
-                <div className="text-gray-600 mt-1">
-                  • Contact Strategy ⭐<br />
-                  • Plan Summary ⭐
+              <div className="bg-white p-3 rounded shadow-sm border-2 border-orange-200">
+                <div className="font-medium text-orange-600">🚧 Step 4: Confirm Contacts</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Placeholder - to be implemented
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded shadow-sm border-2 border-orange-200">
+                <div className="font-medium text-orange-600">🚧 Step 5: Send Renewal Notice</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Placeholder - to be implemented
+                </div>
+              </div>
+              <div className="bg-white p-3 rounded shadow-sm border-2 border-orange-200">
+                <div className="font-medium text-orange-600">🚧 Step 6: Review Action Items</div>
+                <div className="text-gray-600 mt-1 text-xs">
+                  Placeholder - to be implemented
                 </div>
               </div>
             </div>
-            <div className="mt-3 text-xs text-purple-700">
-              ⭐ = New artifact types added via template system
+            <div className="mt-3 text-xs text-blue-700">
+              ✅ = Fully implemented | 🚧 = Placeholder (needs implementation)
             </div>
           </div>
 
@@ -96,7 +101,7 @@ export default function TestTemplatedDynamicPage() {
               onClick={() => setIsModalOpen(true)}
               className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
             >
-              Launch Templated Workflow
+              Launch Renewal Planning Workflow
             </button>
             <button
               onClick={() => window.location.reload()}
@@ -112,8 +117,8 @@ export default function TestTemplatedDynamicPage() {
       <TaskModeModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        workflowConfigName="dynamic-ai-templated"
-        config={dynamicChatAITemplated}
+        workflowConfigName="renewal-planning"
+        workflowId="renewal-planning"
       />
     </div>
   );

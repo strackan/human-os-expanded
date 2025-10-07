@@ -30,6 +30,7 @@ import {
   pricingAnalysisDemoConfig,
   allArtifactsMasterDemo
 } from '../workflows/config/configs';
+import { renewalPlanningWorkflow } from '../workflows/configs/workflows/RenewalPlanning';
 import Metrics from './Metrics';
 import PriorityTasks from './PriorityTasks';
 import RecentUpdates from './RecentUpdates';
@@ -49,6 +50,7 @@ const configMap: Record<string, WorkflowConfig> = {
   'simple-dynamic': simpleDynamicConfig,
   'dynamic-ai': dynamicChatAI,
   'dynamic-ai-templated': dynamicChatAITemplated,
+  'test-templated-dynamic': renewalPlanningWorkflow, // NEW: Renewal Planning workflow (6 steps)
   'dynamic-user': dynamicChatUser,
   'dynamic-chat-example': dynamicChatExampleConfig,
   'dynamic-ai-clone': dynamicClone,

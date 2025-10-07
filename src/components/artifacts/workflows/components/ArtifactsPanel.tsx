@@ -55,11 +55,9 @@ interface ArtifactsPanelProps {
     toggleSideMenu: () => void;
   }>; // Ref to expose side menu methods to parent components
   completedSteps?: Set<string>; // Shared state for completed steps
-  progressPercentage?: number; // Progress percentage based on slide number
-  currentSlideIndex?: number; // Current slide index for progress tracking
-  totalSlides?: number; // Total number of slides in the workflow
-  currentStepNumber?: number; // Current step number (for single-slide workflows)
-  totalSteps?: number; // Total number of steps (for single-slide workflows)
+  progressPercentage?: number; // Progress percentage based on step completion
+  currentStepNumber?: number; // Current step number
+  totalSteps?: number; // Total number of steps in the workflow
 }
 
 interface SideMenuState {
@@ -775,8 +773,16 @@ const ArtifactsPanel: React.FC<ArtifactsPanelProps> = ({ config, sidePanelConfig
                 ></div>
               </div>
               <div className="text-xs text-gray-500">
-                {/* Always show workflow-based progress (1 slide = 1 workflow) */}
-                <>Workflow {(currentSlideIndex !== undefined ? currentSlideIndex + 1 : 1)} of {totalSlides || 1}</>
+                {/* Show step-based progress for workflows */}
+                {totalSteps ? (
+                  currentStepNumber === 0 ? (
+                    <>Opening</>
+                  ) : (
+                    <>Step {currentStepNumber} of {totalSteps}</>
+                  )
+                ) : (
+                  <>Workflow 1 of 1</>
+                )}
               </div>
             </div>
           </div>

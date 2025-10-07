@@ -4,7 +4,8 @@
       "WebSearch",
       "Read(//c/Users/TriCityPC/dev/renubu/renubu/src/components/artifacts/workflows/components/**)",
       "Read(//c/Users/TriCityPC/dev/renubu/renubu/src/components/artifacts/**)",
-      "Read(//c/Users/TriCityPC/dev/renubu/renubu/**)"
+      "Read(//c/Users/TriCityPC/dev/renubu/renubu/**)",
+      "Read(//c/Users/TriCityPC/dev/renubu/automation/**)"
     ],
     "deny": [],
     "ask": []

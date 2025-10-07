@@ -35,7 +35,7 @@ interface ChatInterfaceProps {
   } | null>;
   sidePanelConfig?: any; // Add side panel config for progress navigation
   workflowConfig?: WorkflowConfig; // Add workflow config for variable context
-  completedSteps?: Set<string>; // Track step completion for separator insertion
+  currentStepNumber?: number; // Single source of truth for current step
   slideKey?: string | number; // Unique key that changes when slide changes to trigger chat reset
 }
 
@@ -47,6 +47,7 @@ const ChatInterface = React.forwardRef<{
   hideWorkingMessage: () => void;
   resetChat: () => void;
   navigateToBranch: (branchId: string) => void;
+  addSeparator: (stepTitle: string) => void;
 }, ChatInterfaceProps>(({
   config,
   isSplitMode,
@@ -58,7 +59,7 @@ const ChatInterface = React.forwardRef<{
   workingMessageRef,
   workflowConfig,
   sidePanelConfig,
-  completedSteps,
+  currentStepNumber,
   slideKey
 }, ref) => {
   const { user } = useAuth();
@@ -100,7 +101,8 @@ const ChatInterface = React.forwardRef<{
   const [typingMessages, setTypingMessages] = useState<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const prevStepIdRef = useRef<string | undefined>(undefined);
+  const prevStepNumberRef = useRef<number | undefined>(undefined);
+  const initialMessageShownRef = useRef(false); // Track if initialMessage already shown for current slide
 
   // Working message control functions
   const showWorkingMessage = () => {
@@ -166,6 +168,17 @@ const ChatInterface = React.forwardRef<{
           showResponse(response, onArtifactAction);
         }
       }
+    },
+    addSeparator: (stepTitle: string) => {
+      console.log('ChatInterface: Adding separator for step:', stepTitle);
+      setMessages(prev => [...prev, {
+        id: `separator-${Date.now()}`,
+        text: '',
+        sender: 'ai',
+        timestamp: new Date(),
+        type: 'separator',
+        stepName: stepTitle
+      }]);
     }
   }), [messages, inputValue, conversationEngine, config, onArtifactAction]);
 
@@ -177,14 +190,30 @@ const ChatInterface = React.forwardRef<{
   }), [resetChat]);
 
   useEffect(() => {
+    console.log('ChatInterface: useEffect TRIGGERED');
+
+    // Reset initialMessage tracking when slide changes
+    initialMessageShownRef.current = false;
+
     console.log('ChatInterface: Initializing with config:', {
       mode: config.mode,
       hasDynamicFlow: !!config.dynamicFlow,
       hasUser: !!user,
-      customerName: workflowConfig?.customer?.name
+      customerName: workflowConfig?.customer?.name,
+      slideKey: slideKey,
+      initialMessageShown: initialMessageShownRef.current,
+      configKeys: Object.keys(config),
+      dynamicFlowKeys: config.dynamicFlow ? Object.keys(config.dynamicFlow) : 'NO DYNAMIC FLOW'
     });
 
     if (config.mode === 'dynamic' && config.dynamicFlow) {
+      // Guard: Wait for user auth to complete before initializing
+      // This prevents variable substitution errors when user is null
+      if (!user) {
+        console.log('ChatInterface: Waiting for user authentication to complete...');
+        return; // useEffect will re-run when user is loaded
+      }
+
       // Create variable context from user and workflow config
       const variableContext: VariableContext = {
         user: user,
@@ -206,11 +235,19 @@ const ChatInterface = React.forwardRef<{
       }, variableContext);
       setConversationEngine(engine);
 
-      // Show initial message if configured
+      // Show initial message ONLY if not already shown for this slide
       const initialMessage = engine.getInitialMessage();
+      console.log('ChatInterface: getInitialMessage result:', {
+        hasInitialMessage: !!initialMessage,
+        initialMessageText: initialMessage?.text,
+        startsWith: config.dynamicFlow.startsWith,
+        hasFlowInitialMessage: !!config.dynamicFlow.initialMessage
+      });
 
-      if (initialMessage) {
-        // Clear existing messages and show new initial message
+      if (initialMessage && !initialMessageShownRef.current) {
+        console.log('ChatInterface: Showing initialMessage for first time (Step 0)');
+        initialMessageShownRef.current = true;
+        // Add initial message
         setTimeout(() => {
           setMessages([{
             id: Date.now(),
@@ -221,87 +258,44 @@ const ChatInterface = React.forwardRef<{
             buttons: initialMessage.buttons
           }]);
         }, 500);
-      } else {
-        // No initial message, clear chat
-        setMessages([]);
+      } else if (!initialMessage && !initialMessageShownRef.current && sidePanelConfig?.steps?.[0]) {
+        // No initialMessage (Step 0) - auto-advance to Step 1's branch
+        console.log('ChatInterface: No initialMessage, auto-advancing to Step 1:', sidePanelConfig.steps[0].workflowBranch);
+        initialMessageShownRef.current = true;
+
+        setTimeout(() => {
+          const step1Branch = sidePanelConfig.steps[0].workflowBranch;
+          const response = engine.processBranch(step1Branch);
+
+          if (response) {
+            setMessages([{
+              id: Date.now(),
+              text: response.text,
+              sender: 'ai',
+              timestamp: new Date(),
+              type: response.buttons ? 'buttons' : 'text',
+              buttons: response.buttons
+            }]);
+          }
+        }, 500);
       }
     }
-  }, [config.mode, config.dynamicFlow, user, workflowConfig, sidePanelConfig, slideKey]); // slideKey triggers reset on slide change
+  }, [config.mode, config.dynamicFlow, user, workflowConfig, sidePanelConfig, slideKey]); // slideKey triggers engine recreation on slide change
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const scrollingForSeparatorRef = useRef(false); // Track if we're in separator scroll mode
-
   useEffect(() => {
-    // Don't auto-scroll if we're in the middle of a separator scroll sequence
-    if (!scrollingForSeparatorRef.current) {
+    // Don't scroll on initial mount (only 1-2 messages = initial greeting)
+    // This prevents the opening greeting from being scrolled off-screen
+    if (messages.length > 2) {
       scrollToBottom();
     }
-  }, [messages]);
+  }, [messages, isSplitMode]); // Add isSplitMode to trigger scroll on layout changes
 
-  // Detect step changes and insert separator with scroll clearing effect
-  useEffect(() => {
-    // Derive current active step ID (first uncompleted step)
-    const currentStepId = sidePanelConfig?.steps?.find((s: any) =>
-      !completedSteps?.has(s.id) && s.status !== 'completed'
-    )?.id;
-
-    // Only insert separator if:
-    // 1. We have a current step
-    // 2. We had a previous step (not initial load)
-    // 3. Step has changed
-    // 4. We have messages (not initial load)
-    if (
-      currentStepId &&
-      prevStepIdRef.current &&
-      prevStepIdRef.current !== currentStepId &&
-      messages.length > 0
-    ) {
-      // Find the current step to get its title and opening message
-      const currentStep = sidePanelConfig?.steps?.find((s: any) => s.id === currentStepId);
-      if (currentStep) {
-        console.log('ChatInterface: Inserting separator for step:', currentStep.title);
-
-        // Set flag to prevent auto-scroll during separator sequence
-        scrollingForSeparatorRef.current = true;
-
-        // STEP 1: Add 800px spacer FIRST
-        if (messagesEndRef.current) {
-          messagesEndRef.current.style.height = '800px';
-        }
-
-        // STEP 2: Scroll to bottom to create the "clearing" effect
-        setTimeout(() => {
-          scrollToBottom();
-
-          // STEP 3: After scroll completes, insert separator header
-          setTimeout(() => {
-            setMessages(prev => [...prev, {
-              id: `separator-${Date.now()}`,
-              text: '',
-              sender: 'ai',
-              timestamp: new Date(),
-              type: 'separator',
-              stepName: currentStep.title
-            }]);
-
-            // STEP 4: Remove the temporary height and re-enable auto-scroll
-            setTimeout(() => {
-              if (messagesEndRef.current) {
-                messagesEndRef.current.style.height = '0px';
-              }
-              scrollingForSeparatorRef.current = false;
-            }, 300);
-          }, 600); // Wait for scroll animation to complete
-        }, 50);
-      }
-    }
-
-    // Update previous step ref
-    prevStepIdRef.current = currentStepId;
-  }, [completedSteps, sidePanelConfig, messages.length]);
+  // Note: Separator handling moved to TaskModeAdvanced.handleStepComplete()
+  // which calls addSeparator() explicitly for better control over timing
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -373,8 +367,20 @@ const ChatInterface = React.forwardRef<{
     }
   };
 
+  // Helper function to handle response with optional predelay
+  const handleResponseWithDelay = (response: any, onArtifactAction?: (action: any) => void) => {
+    if (response.predelay && response.predelay > 0) {
+      // Wait for predelay, then show the response
+      setTimeout(() => {
+        showResponse(response, onArtifactAction);
+      }, response.predelay);
+    } else {
+      // No predelay, show response immediately
+      showResponse(response, onArtifactAction);
+    }
+  };
 
-  const handleButtonClick = (buttonValue: string, buttonLabel: string, buttonAction?: string) => {
+  const handleButtonClick = (buttonValue: string, buttonLabel: string, buttonAction?: string, completeStepId?: string) => {
     setMessages(prev => [...prev, {
       id: Date.now(),
       text: buttonLabel,
@@ -382,8 +388,8 @@ const ChatInterface = React.forwardRef<{
       timestamp: new Date()
     }]);
 
-    // Handle special actions from opening message buttons
-    if (buttonAction) {
+    // Handle special actions from opening message buttons (legacy)
+    if (buttonAction && !completeStepId) {
       if (buttonAction === 'nextStep' && onArtifactAction) {
         // Trigger the nextStep action to complete current step and move to next
         setTimeout(() => {
@@ -391,15 +397,13 @@ const ChatInterface = React.forwardRef<{
         }, 500);
         return;
       } else if (buttonAction === 'completeStep' && onArtifactAction) {
-        // Complete the current step
-        const currentStepId = sidePanelConfig?.steps?.find((s: any) =>
-          !completedSteps?.has(s.id) && s.status !== 'completed'
-        )?.id;
-        if (currentStepId) {
+        // Complete the current step using step number
+        const currentStep = sidePanelConfig?.steps?.[currentStepNumber ? currentStepNumber - 1 : 0];
+        if (currentStep) {
           setTimeout(() => {
             onArtifactAction({
               type: 'completeStep',
-              payload: { stepId: currentStepId }
+              payload: { stepId: currentStep.id }
             });
           }, 500);
         }
@@ -409,17 +413,23 @@ const ChatInterface = React.forwardRef<{
 
     if (config.mode === 'dynamic' && conversationEngine) {
       setTimeout(() => {
-        const response = conversationEngine.processUserInput(buttonValue);
+        // FIRST: Complete step if button has completeStep attribute (adds separator)
+        if (completeStepId && onArtifactAction) {
+          console.log('ChatInterface: Completing step BEFORE branch navigation:', completeStepId);
+          onArtifactAction({
+            type: 'completeStep',
+            payload: { stepId: completeStepId }
+          });
 
-        // Handle predelay - wait before showing the response
-        if (response.predelay && response.predelay > 0) {
-          // Wait for predelay, then show the response
+          // Wait for separator to be added before processing branch
           setTimeout(() => {
-            showResponse(response, onArtifactAction);
-          }, response.predelay);
+            const response = conversationEngine.processUserInput(buttonValue);
+            handleResponseWithDelay(response, onArtifactAction);
+          }, 200); // Short delay to ensure separator is added first
         } else {
-          // No predelay, show response immediately
-          showResponse(response, onArtifactAction);
+          // No step completion needed, process branch immediately
+          const response = conversationEngine.processUserInput(buttonValue);
+          handleResponseWithDelay(response, onArtifactAction);
         }
       }, 500);
     } else {
@@ -613,7 +623,7 @@ const ChatInterface = React.forwardRef<{
   return (
     <div className={`h-full relative ${className}`}>
       <div
-        className="p-4 space-y-4 overflow-y-auto absolute"
+        className="p-4 pb-48 space-y-4 overflow-y-auto absolute"
         style={{
           minHeight: 0,
           top: 0,
@@ -643,18 +653,18 @@ const ChatInterface = React.forwardRef<{
             )}
             
             {messages.map((message) => {
-              // Handle separator message type
+              // Handle separator message type - adds visual break between steps (Claude-style)
               if (message.type === 'separator' && message.stepName) {
                 return (
-                  <div key={message.id} className="my-8">
-                    <div className="flex items-center justify-center">
-                      <div className="w-full max-w-md">
-                        <div className="text-center mb-2">
-                          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                            {message.stepName}
-                          </h4>
-                        </div>
-                        <hr className="border-t-2 border-gray-300" />
+                  <div key={message.id} className="my-12">
+                    <div className="relative py-6">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t-2 border-gray-300"></div>
+                      </div>
+                      <div className="relative flex justify-center">
+                        <span className="bg-white px-6 py-2 text-sm font-semibold text-gray-700 uppercase tracking-wider rounded-full border-2 border-gray-300 shadow-sm">
+                          {message.stepName}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -697,19 +707,29 @@ const ChatInterface = React.forwardRef<{
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Button clicked:', button.label, 'value:', button.value);
-                            handleButtonClick(button.value, button.label, (button as any).action);
+                            console.log('Button clicked:', button.label, 'value:', button.value, 'completeStep:', (button as any).completeStep);
+                            handleButtonClick(button.value, button.label, (button as any).action, (button as any).completeStep);
                           }}
                           data-action={button.value}
                           data-label={button.label}
-                          className={`text-center px-4 py-2 rounded-lg transition-colors border font-medium cursor-pointer ${
+                          className={`text-center px-4 py-2 rounded-lg transition-all duration-200 border-2 font-medium cursor-pointer shadow-md hover:shadow-lg hover:scale-105 active:scale-95 ${
                             message['button-pos'] === 'column' ? 'block w-full text-left' : 'flex-1 min-w-0 max-w-xs'
                           }`}
                           style={{
                             backgroundColor: button['label-background'] || '#f3f4f6',
                             color: button['label-text'] || '#374151',
-                            borderColor: button['label-background'] || '#d1d5db',
+                            borderColor: button['label-background'] ?
+                              `rgba(0, 0, 0, 0.2)` : // Darker border for colored buttons
+                              '#d1d5db', // Gray border for default buttons
                             pointerEvents: 'auto'
+                          }}
+                          onMouseEnter={(e) => {
+                            // Darken background on hover
+                            const bg = button['label-background'] || '#f3f4f6';
+                            e.currentTarget.style.filter = 'brightness(0.9)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.filter = 'brightness(1)';
                           }}
                         >
                           {button.label}
