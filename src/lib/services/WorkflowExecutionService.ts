@@ -20,7 +20,7 @@ export interface WorkflowExecution {
   workflow_type?: string;
   customer_id: string;
   user_id: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'snoozed' | 'abandoned';
+  status: 'not_started' | 'in_progress' | 'completed' | 'completed_with_pending_tasks' | 'snoozed' | 'abandoned';
   current_step_id?: string;
   current_step_index: number;
   total_steps: number;
@@ -294,7 +294,8 @@ export class WorkflowExecutionService {
   }
 
   /**
-   * Complete entire workflow
+   * Complete entire workflow (checks for pending tasks)
+   * Phase 3.3: Now supports 'completed_with_pending_tasks' status
    */
   static async completeWorkflow(
     executionId: string,
@@ -302,10 +303,15 @@ export class WorkflowExecutionService {
   ): Promise<void> {
     const supabase = supabaseClient || createClient();
 
+    // Check if there are pending tasks for this workflow
+    const hasPendingTasks = await this.hasPendingTasks(executionId, supabase);
+
+    const status = hasPendingTasks ? 'completed_with_pending_tasks' : 'completed';
+
     const { error } = await supabase
       .from('workflow_executions')
       .update({
-        status: 'completed',
+        status,
         completed_at: new Date().toISOString(),
         completion_percentage: 100
       })
@@ -315,6 +321,55 @@ export class WorkflowExecutionService {
       console.error('Error completing workflow:', error);
       throw new Error(`Failed to complete workflow: ${error.message}`);
     }
+  }
+
+  /**
+   * Check if workflow has pending tasks
+   * Phase 3.3: Task State Management
+   */
+  static async hasPendingTasks(
+    executionId: string,
+    supabaseClient?: SupabaseClient
+  ): Promise<boolean> {
+    const supabase = supabaseClient || createClient();
+
+    const { count, error } = await supabase
+      .from('workflow_tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('workflow_execution_id', executionId)
+      .in('status', ['pending', 'snoozed', 'in_progress']);
+
+    if (error) {
+      console.error('Error checking pending tasks:', error);
+      return false; // Fail safe: don't block workflow completion
+    }
+
+    return (count || 0) > 0;
+  }
+
+  /**
+   * Get pending tasks for a workflow execution
+   * Phase 3.3: Task State Management
+   */
+  static async getPendingTasks(
+    executionId: string,
+    supabaseClient?: SupabaseClient
+  ): Promise<any[]> {
+    const supabase = supabaseClient || createClient();
+
+    const { data, error } = await supabase
+      .from('workflow_tasks')
+      .select('*')
+      .eq('workflow_execution_id', executionId)
+      .in('status', ['pending', 'snoozed', 'in_progress'])
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching pending tasks:', error);
+      throw new Error(`Failed to fetch pending tasks: ${error.message}`);
+    }
+
+    return data || [];
   }
 
   /**
@@ -342,6 +397,7 @@ export class WorkflowExecutionService {
 
   /**
    * Get incomplete workflows for a customer
+   * Phase 3.3: Now includes 'completed_with_pending_tasks'
    */
   static async getIncompleteWorkflows(
     customerId: string,
@@ -353,7 +409,7 @@ export class WorkflowExecutionService {
       .from('workflow_executions')
       .select('*')
       .eq('customer_id', customerId)
-      .in('status', ['not_started', 'in_progress', 'snoozed'])
+      .in('status', ['not_started', 'in_progress', 'snoozed', 'completed_with_pending_tasks'])
       .order('last_activity_at', { ascending: false });
 
     if (error) {
