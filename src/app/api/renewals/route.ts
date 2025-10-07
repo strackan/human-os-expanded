@@ -66,7 +66,7 @@ export async function GET() {
 }
 
 // temporary shim: if anything issues POST, reuse GET so you don't get 405s
-export async function POST(request: Request) {
-  // @ts-ignore reuse GET implementation
+export async function POST(_request: Request) {
+  // @ts-expect-error reuse GET implementation
   return GET();
 }

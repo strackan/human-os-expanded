@@ -885,6 +885,9 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
             onGotoSlide={handleGotoSlide}
             workingMessageRef={chatInterfaceRef}
             workflowConfig={config}
+            sidePanelConfig={currentSidePanelConfig}
+            completedSteps={completedSteps}
+            slideKey={currentSlideIndex} // Trigger chat reset when slide changes
           />
         </div>
 

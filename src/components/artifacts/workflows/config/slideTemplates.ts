@@ -105,11 +105,7 @@ export const createWorkflowSlide = (config: WorkflowSlideConfig): WorkflowSlide 
  * Presents initial options: proceed, snooze, or skip
  */
 export interface InitialContactSlideConfig extends Omit<BaseSlideConfig, 'id' | 'slideNumber' | 'title' | 'description' | 'label'> {
-  customerName: string;
-  renewalDate?: string;
-  daysUntilRenewal?: string;
-  estimatedDuration?: string;
-  planningBranch?: string;
+  initialMessage?: SlideChatConfig['initialMessage'];
   artifacts: WorkflowSlideConfig['artifacts'];
   branches: SlideChatConfig['branches'];
   sidePanel?: SidePanelConfig;
@@ -128,19 +124,7 @@ export const createInitialContactSlide = (config: InitialContactSlideConfig): Wo
     customerOverview: config.customerOverview,
     analytics: config.analytics,
     chat: {
-      initialMessage: {
-        text: `Hi {{user.first}}! ${config.customerName}'s renewal is coming up${config.renewalDate ? ` on ${config.renewalDate}` : ''}${config.daysUntilRenewal ? `, which means we have about ${config.daysUntilRenewal} to decide if we're going to increase their license fees` : ''}. Shall we make a plan?${config.estimatedDuration ? ` It should take about <b>${config.estimatedDuration}</b>.` : ''}`,
-        buttons: [
-          { label: 'Start Planning', value: 'plan', completeStep: 'start-planning' } as any,
-          { label: 'Snooze', value: 'snooze' },
-          { label: 'Skip this workflow', value: 'skip' }
-        ],
-        nextBranches: {
-          'plan': config.planningBranch || 'expansion',
-          'snooze': 'snooze',
-          'skip': 'skip'
-        }
-      },
+      initialMessage: config.initialMessage,
       branches: config.branches,
       userTriggers: config.userTriggers,
       defaultMessage: "I'm sorry, I didn't understand that. Could you try again or select one of the available options?"
@@ -157,9 +141,7 @@ export const createInitialContactSlide = (config: InitialContactSlideConfig): Wo
  * Second slide for analyzing customer requirements and opportunities
  */
 export interface NeedsAssessmentSlideConfig extends Omit<BaseSlideConfig, 'id' | 'slideNumber' | 'title' | 'description' | 'label'> {
-  customerName: string;
-  growthMetric?: string;
-  fundingInfo?: string;
+  initialMessage?: SlideChatConfig['initialMessage'];
   artifacts: WorkflowSlideConfig['artifacts'];
   branches: SlideChatConfig['branches'];
   sidePanel?: SidePanelConfig;
@@ -178,14 +160,7 @@ export const createNeedsAssessmentSlide = (config: NeedsAssessmentSlideConfig): 
     customerOverview: config.customerOverview,
     analytics: config.analytics,
     chat: {
-      initialMessage: {
-        text: `Great! I've prepared an analysis of ${config.customerName}'s expansion opportunities.${config.growthMetric ? ` Based on their ${config.growthMetric}` : ''}${config.fundingInfo ? ` and ${config.fundingInfo}` : ''}, they're prime candidates for a multi-year expansion deal.`,
-        buttons: [
-          { label: 'Draft email', value: 'draft-email', completeStep: 'needs-assessment' } as any,
-          { label: 'Schedule meeting', value: 'schedule' },
-          { label: 'View detailed analysis', value: 'analysis' }
-        ]
-      },
+      initialMessage: config.initialMessage,
       branches: config.branches,
       userTriggers: config.userTriggers,
       defaultMessage: "I'm sorry, I didn't understand that. Could you try again or select one of the available options?"

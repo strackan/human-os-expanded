@@ -10,7 +10,7 @@ interface Message {
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
-  type?: 'text' | 'buttons' | 'loading';
+  type?: 'text' | 'buttons' | 'loading' | 'separator';
   buttons?: Array<{
     label: string;
     value: string;
@@ -18,6 +18,7 @@ interface Message {
     'label-text'?: string;
   }>;
   'button-pos'?: string;
+  stepName?: string; // For separator messages
 }
 
 interface ChatInterfaceProps {
@@ -34,6 +35,8 @@ interface ChatInterfaceProps {
   } | null>;
   sidePanelConfig?: any; // Add side panel config for progress navigation
   workflowConfig?: WorkflowConfig; // Add workflow config for variable context
+  completedSteps?: Set<string>; // Track step completion for separator insertion
+  slideKey?: string | number; // Unique key that changes when slide changes to trigger chat reset
 }
 
 const ChatInterface = React.forwardRef<{
@@ -53,7 +56,10 @@ const ChatInterface = React.forwardRef<{
   onArtifactAction,
   onGotoSlide,
   workingMessageRef,
-  workflowConfig
+  workflowConfig,
+  sidePanelConfig,
+  completedSteps,
+  slideKey
 }, ref) => {
   const { user } = useAuth();
   // Generate initial messages from config (no auto-save - state preserved by keeping component mounted)
@@ -94,6 +100,7 @@ const ChatInterface = React.forwardRef<{
   const [typingMessages, setTypingMessages] = useState<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevStepIdRef = useRef<string | undefined>(undefined);
 
   // Working message control functions
   const showWorkingMessage = () => {
@@ -199,11 +206,12 @@ const ChatInterface = React.forwardRef<{
       }, variableContext);
       setConversationEngine(engine);
 
+      // Show initial message if configured
       const initialMessage = engine.getInitialMessage();
-      console.log('ChatInterface: Initial message from engine:', initialMessage);
-      if (initialMessage && messages.length === 0) { // Only add initial message if no messages exist
+
+      if (initialMessage) {
+        // Clear existing messages and show new initial message
         setTimeout(() => {
-          console.log('ChatInterface: Setting initial message with buttons:', initialMessage.buttons);
           setMessages([{
             id: Date.now(),
             text: initialMessage.text,
@@ -213,17 +221,87 @@ const ChatInterface = React.forwardRef<{
             buttons: initialMessage.buttons
           }]);
         }, 500);
+      } else {
+        // No initial message, clear chat
+        setMessages([]);
       }
     }
-  }, [config.mode, config.dynamicFlow, user, workflowConfig]); // Add user and workflowConfig dependencies
+  }, [config.mode, config.dynamicFlow, user, workflowConfig, sidePanelConfig, slideKey]); // slideKey triggers reset on slide change
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const scrollingForSeparatorRef = useRef(false); // Track if we're in separator scroll mode
+
   useEffect(() => {
-    scrollToBottom();
+    // Don't auto-scroll if we're in the middle of a separator scroll sequence
+    if (!scrollingForSeparatorRef.current) {
+      scrollToBottom();
+    }
   }, [messages]);
+
+  // Detect step changes and insert separator with scroll clearing effect
+  useEffect(() => {
+    // Derive current active step ID (first uncompleted step)
+    const currentStepId = sidePanelConfig?.steps?.find((s: any) =>
+      !completedSteps?.has(s.id) && s.status !== 'completed'
+    )?.id;
+
+    // Only insert separator if:
+    // 1. We have a current step
+    // 2. We had a previous step (not initial load)
+    // 3. Step has changed
+    // 4. We have messages (not initial load)
+    if (
+      currentStepId &&
+      prevStepIdRef.current &&
+      prevStepIdRef.current !== currentStepId &&
+      messages.length > 0
+    ) {
+      // Find the current step to get its title and opening message
+      const currentStep = sidePanelConfig?.steps?.find((s: any) => s.id === currentStepId);
+      if (currentStep) {
+        console.log('ChatInterface: Inserting separator for step:', currentStep.title);
+
+        // Set flag to prevent auto-scroll during separator sequence
+        scrollingForSeparatorRef.current = true;
+
+        // STEP 1: Add 800px spacer FIRST
+        if (messagesEndRef.current) {
+          messagesEndRef.current.style.height = '800px';
+        }
+
+        // STEP 2: Scroll to bottom to create the "clearing" effect
+        setTimeout(() => {
+          scrollToBottom();
+
+          // STEP 3: After scroll completes, insert separator header
+          setTimeout(() => {
+            setMessages(prev => [...prev, {
+              id: `separator-${Date.now()}`,
+              text: '',
+              sender: 'ai',
+              timestamp: new Date(),
+              type: 'separator',
+              stepName: currentStep.title
+            }]);
+
+            // STEP 4: Remove the temporary height and re-enable auto-scroll
+            setTimeout(() => {
+              if (messagesEndRef.current) {
+                messagesEndRef.current.style.height = '0px';
+              }
+              scrollingForSeparatorRef.current = false;
+            }, 300);
+          }, 600); // Wait for scroll animation to complete
+        }, 50);
+      }
+    }
+
+    // Update previous step ref
+    prevStepIdRef.current = currentStepId;
+  }, [completedSteps, sidePanelConfig, messages.length]);
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -296,7 +374,7 @@ const ChatInterface = React.forwardRef<{
   };
 
 
-  const handleButtonClick = (buttonValue: string, buttonLabel: string) => {
+  const handleButtonClick = (buttonValue: string, buttonLabel: string, buttonAction?: string) => {
     setMessages(prev => [...prev, {
       id: Date.now(),
       text: buttonLabel,
@@ -304,10 +382,35 @@ const ChatInterface = React.forwardRef<{
       timestamp: new Date()
     }]);
 
+    // Handle special actions from opening message buttons
+    if (buttonAction) {
+      if (buttonAction === 'nextStep' && onArtifactAction) {
+        // Trigger the nextStep action to complete current step and move to next
+        setTimeout(() => {
+          onArtifactAction({ type: 'nextStep' });
+        }, 500);
+        return;
+      } else if (buttonAction === 'completeStep' && onArtifactAction) {
+        // Complete the current step
+        const currentStepId = sidePanelConfig?.steps?.find((s: any) =>
+          !completedSteps?.has(s.id) && s.status !== 'completed'
+        )?.id;
+        if (currentStepId) {
+          setTimeout(() => {
+            onArtifactAction({
+              type: 'completeStep',
+              payload: { stepId: currentStepId }
+            });
+          }, 500);
+        }
+        return;
+      }
+    }
+
     if (config.mode === 'dynamic' && conversationEngine) {
       setTimeout(() => {
         const response = conversationEngine.processUserInput(buttonValue);
-        
+
         // Handle predelay - wait before showing the response
         if (response.predelay && response.predelay > 0) {
           // Wait for predelay, then show the response
@@ -327,7 +430,7 @@ const ChatInterface = React.forwardRef<{
           sender: 'user',
           timestamp: new Date()
         }]);
-        
+
         setMessages(prev => [...prev, {
           id: Date.now() + 2,
           text: config.aiGreeting,
@@ -539,7 +642,27 @@ const ChatInterface = React.forwardRef<{
               </div>
             )}
             
-            {messages.map((message) => (
+            {messages.map((message) => {
+              // Handle separator message type
+              if (message.type === 'separator' && message.stepName) {
+                return (
+                  <div key={message.id} className="my-8">
+                    <div className="flex items-center justify-center">
+                      <div className="w-full max-w-md">
+                        <div className="text-center mb-2">
+                          <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                            {message.stepName}
+                          </h4>
+                        </div>
+                        <hr className="border-t-2 border-gray-300" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Regular message rendering
+              return (
                 <div
                   key={message.id}
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-center'}`}
@@ -575,7 +698,7 @@ const ChatInterface = React.forwardRef<{
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Button clicked:', button.label, 'value:', button.value);
-                            handleButtonClick(button.value, button.label);
+                            handleButtonClick(button.value, button.label, (button as any).action);
                           }}
                           data-action={button.value}
                           data-label={button.label}
@@ -604,7 +727,8 @@ const ChatInterface = React.forwardRef<{
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
             <div ref={messagesEndRef} />
           </>
         )}

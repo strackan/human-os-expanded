@@ -65,12 +65,79 @@ import {
  * - Workflow Summary artifact
  * - Standard branch patterns
  */
+
+// Define workflow steps ONCE - single source of truth
+const renewalSteps = [
+  {
+    id: "start-planning",
+    title: "Start Planning",
+    description: "Begin renewal planning process",
+    status: 'pending' as const,
+    workflowBranch: "expansion",
+    icon: "🚀"
+  },
+  {
+    id: "review-contract",
+    title: "Review Contract",
+    description: "Analyze current contract terms and conditions",
+    status: 'pending' as const,
+    workflowBranch: "contract-planning",
+    icon: "📋"
+  },
+  {
+    id: "set-price",
+    title: "Set Price",
+    description: "Determine renewal pricing strategy",
+    status: 'pending' as const,
+    workflowBranch: "contract-review",
+    icon: "💰"
+  },
+  {
+    id: "confirm-contacts",
+    title: "Confirm Contacts",
+    description: "Verify decision makers and stakeholders",
+    status: 'pending' as const,
+    workflowBranch: "email-flow",
+    icon: "👥"
+  },
+  {
+    id: "send-renewal-notice",
+    title: "Send Renewal Notice",
+    description: "Send renewal notification to customer",
+    status: 'pending' as const,
+    workflowBranch: "email-flow",
+    icon: "📧"
+  },
+  {
+    id: "review-action-items",
+    title: "Review Action Items",
+    description: "Final review of all renewal activities",
+    status: 'pending' as const,
+    workflowBranch: "summary",
+    icon: "✅"
+  }
+];
+
 const slide1 = createInitialContactSlide({
-  customerName: "Dynamic Corp",
-  renewalDate: "February 27th",
-  daysUntilRenewal: "a week",
-  estimatedDuration: "7 minutes",
-  planningBranch: 'expansion',
+  initialMessage: {
+    text: "Hi {{user.first}}! Dynamic Corp's renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall we make a plan? It should take about <b>7 minutes</b>.",
+    buttons: [
+      { label: "Start Planning", value: "plan", "label-background": "#3b82f6", "label-text": "#ffffff" },
+      { label: "Snooze", value: "snooze", "label-background": "#f3f4f6", "label-text": "#374151" },
+      { label: "Skip this workflow", value: "skip", "label-background": "#f3f4f6", "label-text": "#374151" }
+    ],
+    nextBranches: {
+      'plan': 'expansion',
+      'snooze': 'snooze',
+      'skip': 'skip'
+    }
+  },
+  sidePanel: createSidePanel({
+    title: "Renewal Planning",
+    subtitle: "Dynamic Corp - 6 Steps",
+    icon: "📋",
+    steps: renewalSteps
+  }),
   artifacts: [
     // Planning Checklist - shows renewal steps
     {
@@ -295,58 +362,7 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     ".*expand.*|.*expansion.*": "expansion",
     ".*usage.*|.*analyze.*": "usage",
     ".*email.*|.*draft.*": "email-flow"
-  },
-  sidePanel: createSidePanel({
-    title: "Renewal Planning",
-    subtitle: "Dynamic Corp - 6 Steps",
-    icon: "📋",
-    steps: [
-      {
-        id: "start-planning",
-        title: "Start Planning",
-        description: "Begin renewal planning process",
-        workflowBranch: "expansion",
-        icon: "🚀"
-      },
-      {
-        id: "review-contract",
-        title: "Review Contract",
-        description: "Analyze current contract terms and conditions",
-        workflowBranch: "contract-planning",
-        icon: "📋"
-      },
-      {
-        id: "set-price",
-        title: "Set Price",
-        description: "Determine renewal pricing strategy",
-        workflowBranch: "contract-review",
-        icon: "💰"
-      },
-      {
-        id: "confirm-contacts",
-        title: "Confirm Contacts",
-        description: "Verify decision makers and stakeholders",
-        workflowBranch: "email-flow",
-        icon: "👥"
-      },
-      {
-        id: "send-renewal-notice",
-        title: "Send Renewal Notice",
-        description: "Initiate formal renewal communication",
-        workflowBranch: "email-flow",
-        icon: "📧"
-      },
-      {
-        id: "review-action-items",
-        title: "Review Action Items",
-        description: "Finalize and track next steps",
-        workflowBranch: "email-complete",
-        icon: "✅"
-      }
-    ],
-    showSteps: true,
-    showProgressMeter: false
-  })
+  }
 });
 
 /**
@@ -355,9 +371,17 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
  * Demonstrates same artifacts in different context
  */
 const slide2 = createNeedsAssessmentSlide({
-  customerName: "Dynamic Corp",
-  growthMetric: "65% growth",
-  fundingInfo: "Series C funding",
+  initialMessage: {
+    text: "Take a look at the contract to the right and let me know what you think.",
+    buttons: [
+      { label: "Looks good", value: "looks-good", "label-background": "#10b981", "label-text": "#ffffff" },
+      { label: "Let's discuss", value: "lets-discuss", "label-background": "#f3f4f6", "label-text": "#374151" }
+    ],
+    nextBranches: {
+      'looks-good': 'contract-planning',
+      'lets-discuss': 'contract-review'
+    }
+  },
   artifacts: [
     // Re-use email artifact from slide 1 structure
     {
