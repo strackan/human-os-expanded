@@ -142,3 +142,6 @@ const growingConfig = applyTemplateSet(baseConfig, 'growing');
 ## Example Workflow Configurations
 
 See `ChartTemplateExamples.ts` and `ChartTemplateUsageExample.ts` for complete examples of how to use chart templates in real workflow configurations.
+
+
+

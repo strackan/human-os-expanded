@@ -237,3 +237,6 @@ export const chartTemplateDocumentation = {
     "{{chart.lastMonth.flat.chart.data}} - Just the chart data array"
   ]
 };
+
+
+
