@@ -32,6 +32,15 @@ export interface WorkflowStep {
   description: string;
   component: string; // Component name to render
   validation?: (data: any) => boolean;
+  artifacts?: Array<{
+    id: string;
+    type: 'dashboard' | 'status_grid' | 'countdown' | 'action_tracker' | 'timeline' | 'table' | 'checklist' | 'alert' | 'markdown';
+    title: string;
+    autoRefresh?: boolean;
+    refreshInterval?: number; // seconds
+    visible?: string; // template condition
+    config: any;
+  }>;
 }
 
 export interface WorkflowDefinition {
@@ -87,9 +96,13 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [artifactsPanelOpen, setArtifactsPanelOpen] = useState(false);
+  const [artifactsPanelWidth, setArtifactsPanelWidth] = useState(50); // percentage
+  const [artifactsExpanded, setArtifactsExpanded] = useState(false);
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const resizeRef = useRef<HTMLDivElement>(null);
 
   // =====================================================
   // Initialization & Loading
@@ -388,6 +401,42 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   };
 
   // =====================================================
+  // Resize Handling
+  // =====================================================
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+
+      const windowWidth = window.innerWidth;
+      const newWidth = ((windowWidth - e.clientX) / windowWidth) * 100;
+
+      // Constrain between 20% and 80%
+      const constrainedWidth = Math.min(Math.max(newWidth, 20), 80);
+      setArtifactsPanelWidth(constrainedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
+
+  // =====================================================
   // Render
   // =====================================================
 
@@ -508,9 +557,18 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Step Content */}
-        <div className={`${artifactsPanelOpen ? 'w-2/3' : 'w-full'} flex flex-col overflow-hidden transition-all duration-300`}>
+        <div
+          className={`flex flex-col overflow-hidden transition-all duration-300 ${
+            artifactsExpanded ? 'hidden' : ''
+          }`}
+          style={{
+            width: artifactsPanelOpen && !artifactsExpanded
+              ? `${100 - artifactsPanelWidth}%`
+              : '100%'
+          }}
+        >
           {/* Customer Metrics (slides down from top) */}
           <CustomerMetrics
             customerId={customerId}
@@ -522,11 +580,12 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
           {/* Step Content (scrollable, takes remaining height) */}
           <div className="flex-1 overflow-y-auto">
             <div className="p-6">
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-4xl mx-auto space-y-6">
                 <StepRenderer
                   step={currentStep}
                   data={currentStepData}
                   executionId={executionState.executionId}
+                  customerId={customerId}
                   onDataChange={(data) => handleStepDataChange(currentStep.number, data)}
                   onArtifactGenerated={(artifact) => handleArtifactGenerated(currentStep.number, artifact)}
                   onComplete={() => completeStep(currentStep.number)}
@@ -536,12 +595,45 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
           </div>
         </div>
 
+        {/* Resize Handle */}
+        {artifactsPanelOpen && !artifactsExpanded && (
+          <div
+            ref={resizeRef}
+            onMouseDown={handleResizeStart}
+            className={`
+              w-1 bg-gray-200 hover:bg-blue-400 cursor-col-resize relative group
+              transition-colors duration-150 flex-shrink-0
+              ${isResizing ? 'bg-blue-500' : ''}
+            `}
+          >
+            {/* Resize Pill/Notch */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                          w-1.5 h-12 bg-gray-300 group-hover:bg-blue-500 rounded-full
+                          transition-colors duration-150
+                          flex items-center justify-center">
+              <div className="w-0.5 h-8 bg-white/50 rounded-full"></div>
+            </div>
+          </div>
+        )}
+
         {/* Artifact Panel */}
         {artifactsPanelOpen && (
-          <div className="w-1/3 border-l border-gray-200 bg-white">
+          <div
+            className={`border-l border-gray-200 bg-white transition-all duration-300 ${
+              artifactsExpanded ? 'fixed inset-0 z-50' : 'relative'
+            }`}
+            style={{
+              width: artifactsExpanded ? '100%' : `${artifactsPanelWidth}%`
+            }}
+          >
             <ArtifactDisplay
               artifacts={allArtifacts}
-              onClose={() => setArtifactsPanelOpen(false)}
+              onClose={() => {
+                setArtifactsPanelOpen(false);
+                setArtifactsExpanded(false);
+              }}
+              isExpanded={artifactsExpanded}
+              onToggleExpand={() => setArtifactsExpanded(!artifactsExpanded)}
             />
           </div>
         )}

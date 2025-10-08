@@ -16,6 +16,8 @@
 import React from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { WorkflowStep } from './WorkflowExecutor';
+import { CustomerAnalysisStep } from './steps/CustomerAnalysisStep';
+import { ArtifactRenderer } from './artifacts/ArtifactRenderer';
 
 // Step components will be registered here
 const STEP_COMPONENTS: { [key: string]: React.ComponentType<StepComponentProps> } = {};
@@ -27,6 +29,7 @@ const STEP_COMPONENTS: { [key: string]: React.ComponentType<StepComponentProps> 
 export interface StepComponentProps {
   data?: any;
   executionId: string;
+  customerId?: string;
   onDataChange: (data: any) => void;
   onArtifactGenerated: (artifact: any) => void;
   onComplete: () => void;
@@ -36,6 +39,7 @@ export interface StepRendererProps {
   step: WorkflowStep;
   data?: any;
   executionId: string;
+  customerId?: string;
   onDataChange: (data: any) => void;
   onArtifactGenerated: (artifact: any) => void;
   onComplete: () => void;
@@ -61,11 +65,25 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
   step,
   data,
   executionId,
+  customerId,
   onDataChange,
   onArtifactGenerated,
   onComplete
 }) => {
   const StepComponent = STEP_COMPONENTS[step.component];
+
+  // Build context for template rendering
+  const context = {
+    customer: {
+      id: customerId,
+      // Additional customer data would be fetched from API in real implementation
+    },
+    workflow: {
+      stepNumber: step.number,
+      stepTitle: step.title,
+      // Additional workflow data
+    }
+  };
 
   // Component not found
   if (!StepComponent) {
@@ -115,26 +133,51 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
     );
   }
 
-  // Render step component
+  // Render step component with inline artifacts
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Step Header */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <h2 className="text-xl font-semibold text-gray-900">{step.title}</h2>
-        <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+    <>
+      {/* Step Card */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        {/* Step Header */}
+        <div className="border-b border-gray-200 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-900">{step.title}</h2>
+          <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+        </div>
+
+        {/* Step Content */}
+        <div className="p-6">
+          <StepComponent
+            data={data}
+            executionId={executionId}
+            customerId={customerId}
+            onDataChange={onDataChange}
+            onArtifactGenerated={onArtifactGenerated}
+            onComplete={onComplete}
+          />
+        </div>
       </div>
 
-      {/* Step Content */}
-      <div className="p-6">
-        <StepComponent
-          data={data}
-          executionId={executionId}
-          onDataChange={onDataChange}
-          onArtifactGenerated={onArtifactGenerated}
-          onComplete={onComplete}
-        />
-      </div>
-    </div>
+      {/* Inline Artifacts (appear below step card) */}
+      {step.artifacts && step.artifacts.length > 0 && (
+        <div className="space-y-4">
+          {step.artifacts.map((artifact) => (
+            <ArtifactRenderer
+              key={artifact.id}
+              artifact={artifact}
+              context={context}
+              onAction={(actionId, data) => {
+                console.log('[StepRenderer] Artifact action:', actionId, data);
+                // Handle artifact actions (e.g., check task, void envelope, etc.)
+              }}
+              onRefresh={async (artifactId) => {
+                console.log('[StepRenderer] Refresh artifact:', artifactId);
+                // Implement refresh logic (fetch fresh data from API)
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 };
 
@@ -148,22 +191,30 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
  */
 export const GenericFormStep: React.FC<StepComponentProps> = ({
   data = {},
+  executionId,
+  customerId,
   onDataChange,
   onComplete
 }) => {
   const [formData, setFormData] = React.useState(data);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const prevExecutionIdRef = React.useRef(executionId);
 
-  // Reset form data when prop data changes (new step loaded)
+  // Reset form data only when switching to a different step (executionId stays same, but we detect step change via data structure)
+  // Use JSON stringify to detect actual data changes, not just reference changes
+  const dataString = JSON.stringify(data);
   React.useEffect(() => {
-    setFormData(data);
-  }, [data]);
+    // Only reset if we're loading existing data from a different step
+    if (Object.keys(data).length > 0 && JSON.stringify(formData) !== dataString) {
+      setFormData(data);
+    }
+  }, [dataString]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-focus input on mount and when form resets
+  // Auto-focus input on mount only
   React.useEffect(() => {
     inputRef.current?.focus();
-  }, [data]);
+  }, []); // Empty array means only on mount
 
   const handleChange = (field: string, value: any) => {
     const newData = { ...formData, [field]: value };
@@ -245,3 +296,6 @@ export const LoadingStep: React.FC<StepComponentProps> = () => {
 // Register example components
 registerStepComponent('GenericFormStep', GenericFormStep);
 registerStepComponent('LoadingStep', LoadingStep);
+
+// Register test components
+registerStepComponent('CustomerAnalysisStep', CustomerAnalysisStep);

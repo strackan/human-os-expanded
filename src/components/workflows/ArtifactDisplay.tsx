@@ -15,7 +15,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Copy, Download, ChevronDown, ChevronUp, FileText, Clock, Check } from 'lucide-react';
+import { X, Copy, Download, ChevronDown, ChevronUp, FileText, Clock, Check, Maximize2, Minimize2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { DashboardArtifact, DashboardArtifactData } from './artifacts/DashboardArtifact';
@@ -37,6 +37,8 @@ export interface Artifact {
 export interface ArtifactDisplayProps {
   artifacts: Artifact[];
   onClose: () => void;
+  isExpanded?: boolean;
+  onToggleExpand?: () => void;
 }
 
 // =====================================================
@@ -45,7 +47,9 @@ export interface ArtifactDisplayProps {
 
 export const ArtifactDisplay: React.FC<ArtifactDisplayProps> = ({
   artifacts,
-  onClose
+  onClose,
+  isExpanded = false,
+  onToggleExpand
 }) => {
   const [selectedArtifactId, setSelectedArtifactId] = useState<string>(
     artifacts.length > 0 ? artifacts[artifacts.length - 1].id : ''
@@ -104,7 +108,22 @@ export const ArtifactDisplay: React.FC<ArtifactDisplayProps> = ({
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Artifacts</h3>
+          <div className="flex items-center space-x-2">
+            {onToggleExpand && (
+              <button
+                onClick={onToggleExpand}
+                className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+                title={isExpanded ? 'Exit full screen' : 'Expand to full screen'}
+              >
+                {isExpanded ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
+            )}
+            <h3 className="text-lg font-semibold text-gray-900">Artifacts</h3>
+          </div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -129,9 +148,24 @@ export const ArtifactDisplay: React.FC<ArtifactDisplayProps> = ({
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200 flex-shrink-0">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">Artifacts</h3>
-          <p className="text-sm text-gray-600">{artifacts.length} generated</p>
+        <div className="flex items-center space-x-2">
+          {onToggleExpand && (
+            <button
+              onClick={onToggleExpand}
+              className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+              title={isExpanded ? 'Exit full screen' : 'Expand to full screen'}
+            >
+              {isExpanded ? (
+                <Minimize2 className="w-4 h-4" />
+              ) : (
+                <Maximize2 className="w-4 h-4" />
+              )}
+            </button>
+          )}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Artifacts</h3>
+            <p className="text-sm text-gray-600">{artifacts.length} generated</p>
+          </div>
         </div>
         <button
           onClick={onClose}
