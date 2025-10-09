@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider'; // ADD THIS IMPORT
@@ -19,7 +19,10 @@ interface AppLayoutProps {
 export default function AppLayout({ children }: AppLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+
   // ADD THIS: Get user data from auth context
   const { user, profile, loading } = useAuth();
   
@@ -56,6 +59,43 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return 'User'
   }
 
+  // Fetch unread notification count
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch('/api/notifications/unread/count');
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('[AppLayout] Error fetching unread count:', error);
+    }
+  };
+
+  // Fetch unread notifications when popover opens
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const response = await fetch('/api/notifications/unread?limit=10');
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data.notifications || []);
+      }
+    } catch (error) {
+      console.error('[AppLayout] Error fetching notifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  // Fetch count on mount and every 30 seconds
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Sample reminders for fallback
   const sampleReminders = [
     {
       title: "Draft Amendment",
@@ -118,7 +158,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
             <div className="flex items-center space-x-4">
               {/* Reminder Icon with badge and popover */}
-              <Popover>
+              <Popover onOpenChange={(open) => { if (open) fetchNotifications(); }}>
                 <PopoverTrigger asChild>
                   <button
                     id="reminder-button"
@@ -129,32 +169,52 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     data-testid="reminder-icon"
                   >
                     <BookmarkIcon className="h-6 w-6" aria-hidden="true" />
-                    {/* Alert badge */}
-                    <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full border-2 border-white shadow">1</span>
+                    {/* Alert badge - only show if count > 0 */}
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full border-2 border-white shadow">
+                        {unreadCount}
+                      </span>
+                    )}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-0 z-50 bg-green-50" align="end">
+                <PopoverContent className="w-80 p-0 z-50 bg-white" align="end">
                   <div className="p-4 border-b border-gray-200">
-                    <h3 className="font-semibold text-gray-900">Sample Reminders</h3>
-                    <p className="text-sm text-gray-500">Common tasks for renewal workflow</p>
+                    <h3 className="font-semibold text-gray-900">
+                      Notifications {unreadCount > 0 && `(${unreadCount})`}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      {loadingNotifications ? 'Loading...' : 'Recent updates and reminders'}
+                    </p>
                   </div>
                   <div className="max-h-[300px] overflow-y-auto">
-                    {sampleReminders.map((reminder, index) => (
-                      <div
-                        key={index}
-                        className="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{reminder.title}</h4>
-                            <p className="text-sm text-gray-500">{reminder.description}</p>
-                          </div>
-                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                            {reminder.dueDate}
-                          </span>
-                        </div>
+                    {loadingNotifications ? (
+                      <div className="p-4 text-center text-gray-500">
+                        Loading notifications...
                       </div>
-                    ))}
+                    ) : notifications.length > 0 ? (
+                      notifications.map((notification) => (
+                        <div
+                          key={notification.id}
+                          className="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h4 className="font-medium text-gray-900">{notification.title}</h4>
+                              <p className="text-sm text-gray-500">{notification.message}</p>
+                            </div>
+                            {notification.metadata?.dueDate && (
+                              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                {notification.metadata.dueDate}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-gray-500">
+                        No new notifications
+                      </div>
+                    )}
                   </div>
                   <div className="p-3 bg-gray-50 border-t border-gray-200">
                     <button className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium">

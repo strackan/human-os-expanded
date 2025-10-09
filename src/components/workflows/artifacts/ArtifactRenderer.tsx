@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { resolveTemplate, evaluateCondition } from '@/utils/templateResolver';
 
 // =====================================================
 // Types
@@ -48,30 +49,7 @@ export interface ArtifactRendererProps {
   onRefresh?: (artifactId: string) => Promise<void>;
 }
 
-// =====================================================
-// Template Rendering
-// =====================================================
-
-function renderTemplate(template: string, context: Record<string, any> = {}): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (match, path) => {
-    const keys = path.trim().split('.');
-    let value: any = context;
-    for (const key of keys) {
-      value = value?.[key];
-    }
-    return value !== undefined ? String(value) : match;
-  });
-}
-
-function evaluateCondition(condition: string, context: Record<string, any> = {}): boolean {
-  try {
-    const rendered = renderTemplate(condition, context);
-    // Simple boolean evaluation
-    return rendered === 'true' || rendered === '1' || rendered !== '' && rendered !== 'false' && rendered !== '0';
-  } catch {
-    return false;
-  }
-}
+// Template rendering utilities imported from @/utils/templateResolver
 
 // =====================================================
 // Status Grid Artifact
@@ -117,9 +95,9 @@ const StatusGridArtifact: React.FC<{ config: StatusGridConfig; context?: Record<
   return (
     <div className={`grid grid-cols-${columns} gap-3`}>
       {config.items.map((item, index) => {
-        const label = renderTemplate(item.label, context);
-        const value = renderTemplate(item.value, context);
-        const sublabel = item.sublabel ? renderTemplate(item.sublabel, context) : undefined;
+        const label = resolveTemplate(item.label, context);
+        const value = resolveTemplate(item.value, context);
+        const sublabel = item.sublabel ? resolveTemplate(item.sublabel, context) : undefined;
 
         return (
           <div
@@ -162,7 +140,7 @@ const CountdownArtifact: React.FC<{ config: CountdownConfig; context?: Record<st
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const targetDateStr = renderTemplate(config.targetDate, context);
+      const targetDateStr = resolveTemplate(config.targetDate, context);
       const target = new Date(targetDateStr);
       const now = new Date();
       const diff = target.getTime() - now.getTime();
@@ -217,7 +195,7 @@ const CountdownArtifact: React.FC<{ config: CountdownConfig; context?: Record<st
             <div key={index} className="flex items-center space-x-2 bg-red-100 border border-red-300 rounded p-3 mb-2">
               <AlertTriangle className="w-5 h-5 text-red-600" />
               <span className="text-sm font-medium text-red-900">
-                {renderTemplate(threshold.message, context)}
+                {resolveTemplate(threshold.message, context)}
               </span>
             </div>
           );
@@ -230,8 +208,8 @@ const CountdownArtifact: React.FC<{ config: CountdownConfig; context?: Record<st
         <div className="grid grid-cols-2 gap-2 mt-4">
           {config.statusItems.map((item, index) => (
             <div key={index} className="flex items-center space-x-2 p-2 bg-white rounded">
-              <span className="text-sm text-gray-700">{renderTemplate(item.label, context)}</span>
-              <span className="text-xs">{renderTemplate(item.status, context)}</span>
+              <span className="text-sm text-gray-700">{resolveTemplate(item.label, context)}</span>
+              <span className="text-xs">{resolveTemplate(item.status, context)}</span>
             </div>
           ))}
         </div>
@@ -328,16 +306,16 @@ const ActionTrackerArtifact: React.FC<{
 
                 <div className="flex-1 min-w-0">
                   <div className={`font-medium text-gray-900 ${isComplete ? 'line-through' : ''}`}>
-                    {renderTemplate(action.title, context)}
+                    {resolveTemplate(action.title, context)}
                   </div>
                   <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                     <span className="flex items-center space-x-1">
                       <User className="w-3 h-3" />
-                      <span>{renderTemplate(action.owner, context)}</span>
+                      <span>{resolveTemplate(action.owner, context)}</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <Calendar className="w-3 h-3" />
-                      <span>{renderTemplate(action.deadline, context)}</span>
+                      <span>{resolveTemplate(action.deadline, context)}</span>
                     </span>
                   </div>
                 </div>
@@ -397,14 +375,14 @@ const TimelineArtifact: React.FC<{ config: TimelineConfig; context?: Record<stri
             {/* Event content */}
             <div className="flex-1 pb-8">
               <div className="text-sm text-gray-500 mb-1">
-                {renderTemplate(event.date, context)}
+                {resolveTemplate(event.date, context)}
               </div>
               <div className={`font-semibold text-gray-900 ${isCurrent ? 'text-blue-600' : ''}`}>
-                {renderTemplate(event.title, context)}
+                {resolveTemplate(event.title, context)}
               </div>
               {event.description && (
                 <div className="text-sm text-gray-600 mt-1">
-                  {renderTemplate(event.description, context)}
+                  {resolveTemplate(event.description, context)}
                 </div>
               )}
             </div>
@@ -449,10 +427,10 @@ const AlertArtifact: React.FC<{ config: AlertConfig; context?: Record<string, an
         <Icon className={`w-5 h-5 ${styles.text} flex-shrink-0 mt-0.5`} />
         <div className="flex-1">
           <h4 className={`font-semibold ${styles.text} mb-1`}>
-            {renderTemplate(config.title, context)}
+            {resolveTemplate(config.title, context)}
           </h4>
           <p className={`text-sm ${styles.text}`}>
-            {renderTemplate(config.message, context)}
+            {resolveTemplate(config.message, context)}
           </p>
         </div>
         {config.dismissible && (
@@ -522,7 +500,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
         <h3 className="font-semibold text-gray-900">
-          {renderTemplate(artifact.title, context)}
+          {resolveTemplate(artifact.title, context)}
         </h3>
 
         <div className="flex items-center space-x-2">
@@ -570,7 +548,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         {artifact.type === 'markdown' && (
           <div className="prose prose-sm max-w-none">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {renderTemplate(artifact.config.content, context)}
+              {resolveTemplate(artifact.config.content, context)}
             </ReactMarkdown>
           </div>
         )}

@@ -48,58 +48,30 @@ export async function PUT(
     const stepId = `step-${stepNumber}`;
     const stepIndex = stepNumber - 1; // Convert to 0-based index
 
-    // Check if step execution exists
-    const { data: existing } = await supabase
+    // Use UPSERT to insert or update based on unique constraint (workflow_execution_id + step_id)
+    const { data: stepExecution, error } = await supabase
       .from('workflow_step_executions')
-      .select('id')
-      .eq('workflow_execution_id', executionId)
-      .eq('step_index', stepIndex)
+      .upsert({
+        workflow_execution_id: executionId,
+        step_id: stepId,
+        step_index: stepIndex,
+        step_title: `Step ${stepNumber}`,
+        step_type: 'generic',
+        status: status || 'in_progress',
+        metadata: { ...stepData, artifacts },
+        started_at: new Date().toISOString(),
+        ...(status === 'completed' && { completed_at: new Date().toISOString() }),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'workflow_execution_id,step_id', // Match unique constraint
+        ignoreDuplicates: false // Update on conflict
+      })
+      .select()
       .single();
 
-    let stepExecution;
-
-    if (existing) {
-      // Update existing step execution
-      const { data, error } = await supabase
-        .from('workflow_step_executions')
-        .update({
-          ...(stepData && { metadata: { ...stepData, artifacts } }),
-          ...(status && { status }),
-          ...(status === 'completed' && { completed_at: new Date().toISOString() }),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existing.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to update step: ${error.message}`);
-      }
-
-      stepExecution = data;
-    } else {
-      // Create new step execution
-      const { data, error } = await supabase
-        .from('workflow_step_executions')
-        .insert({
-          workflow_execution_id: executionId,
-          step_id: stepId,
-          step_index: stepIndex,
-          step_title: `Step ${stepNumber}`,
-          step_type: 'generic',
-          status: status || 'in_progress',
-          metadata: { ...stepData, artifacts },
-          started_at: new Date().toISOString(),
-          ...(status === 'completed' && { completed_at: new Date().toISOString() })
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to create step: ${error.message}`);
-      }
-
-      stepExecution = data;
+    if (error) {
+      console.error('[Steps API] Upsert error:', error);
+      throw new Error(`Failed to save step: ${error.message}`);
     }
 
     return NextResponse.json({

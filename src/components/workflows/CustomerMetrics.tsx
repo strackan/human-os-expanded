@@ -37,59 +37,14 @@ export interface CustomerMetricsProps {
 }
 
 // =====================================================
-// Default Metrics (for demo/fallback)
+// Fallback Metrics (shown only during initial load)
 // =====================================================
 
-const DEFAULT_METRICS: CustomerMetric[] = [
-  {
-    label: 'ARR',
-    value: '$725,000',
-    sublabel: '+12% YoY',
-    status: 'green',
-    trend: 'up'
-  },
-  {
-    label: 'Health Score',
-    value: '85%',
-    sublabel: 'Healthy',
-    status: 'green'
-  },
-  {
-    label: 'Renewal',
-    value: '120 days',
-    sublabel: 'Feb 28, 2026',
-    status: 'yellow'
-  },
-  {
-    label: 'Risk Score',
-    value: '3.2/10',
-    sublabel: 'Low Risk',
-    status: 'green'
-  },
-  {
-    label: 'NPS',
-    value: '45',
-    sublabel: 'Promoter',
-    status: 'green'
-  },
-  {
-    label: 'Engagement',
-    value: '78%',
-    sublabel: 'High',
-    status: 'green'
-  },
-  {
-    label: 'Support Tickets',
-    value: '3 open',
-    sublabel: '1 critical',
-    status: 'yellow'
-  },
-  {
-    label: 'Last Contact',
-    value: '5 days ago',
-    sublabel: 'Email',
-    status: 'neutral'
-  }
+const LOADING_PLACEHOLDER_METRICS: CustomerMetric[] = [
+  { label: 'ARR', value: 'Loading...', status: 'neutral' },
+  { label: 'Health Score', value: 'Loading...', status: 'neutral' },
+  { label: 'Renewal', value: 'Loading...', status: 'neutral' },
+  { label: 'Risk Score', value: 'Loading...', status: 'neutral' }
 ];
 
 // =====================================================
@@ -104,8 +59,10 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
   onToggle
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [metrics, setMetrics] = useState<CustomerMetric[]>(propMetrics || DEFAULT_METRICS);
+  const [metrics, setMetrics] = useState<CustomerMetric[]>(propMetrics || LOADING_PLACEHOLDER_METRICS);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [customerName, setCustomerName] = useState<string>('');
 
   // Fetch metrics from API when opened
   React.useEffect(() => {
@@ -116,16 +73,28 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
 
   const fetchMetrics = async () => {
     setLoading(true);
+    setError(null);
     try {
+      console.log('[CustomerMetrics] Fetching metrics for execution:', executionId);
       const response = await fetch(`/api/workflows/executions/${executionId}/metrics`);
-      if (response.ok) {
-        const data = await response.json();
-        setMetrics(data.metrics);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
       }
+
+      const data = await response.json();
+      console.log('[CustomerMetrics] Received metrics:', data);
+
+      setMetrics(data.metrics);
+      setCustomerName(data.customerName || '');
     } catch (error) {
-      console.error('Failed to fetch metrics:', error);
-      // Fallback to defaults
-      setMetrics(DEFAULT_METRICS);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch metrics';
+      console.error('[CustomerMetrics] Error fetching metrics:', error);
+      setError(errorMessage);
+
+      // Keep placeholder metrics visible on error
+      setMetrics(LOADING_PLACEHOLDER_METRICS);
     } finally {
       setLoading(false);
     }
@@ -185,8 +154,16 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
           </button>
 
           <h3 className="text-sm font-semibold text-gray-700">
-            📊 Customer Metrics
+            📊 Customer Metrics{customerName && ` - ${customerName}`}
           </h3>
+
+          {loading && (
+            <span className="text-xs text-gray-500 animate-pulse">Loading...</span>
+          )}
+
+          {error && (
+            <span className="text-xs text-red-600" title={error}>⚠ Error loading metrics</span>
+          )}
         </div>
 
         {/* Close Button - Upper Right */}
@@ -201,6 +178,21 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
 
       {/* Metrics Grid */}
       <div className="h-full overflow-y-auto p-4">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-start space-x-2">
+              <span className="text-red-600 font-medium">Failed to load metrics:</span>
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+            <button
+              onClick={fetchMetrics}
+              className="mt-2 px-3 py-1 text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {metrics.map((metric, index) => (
             <div
@@ -208,6 +200,7 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
               className={`
                 p-3 rounded-lg border transition-colors
                 ${getStatusColor(metric.status)}
+                ${loading ? 'animate-pulse' : ''}
               `}
             >
               <div className="flex items-start justify-between mb-1">

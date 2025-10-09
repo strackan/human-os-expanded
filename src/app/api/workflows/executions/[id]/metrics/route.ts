@@ -160,7 +160,7 @@ export async function GET(
     }
 
     // 2. Health Score (Priority 2)
-    if (customer.health_score !== undefined) {
+    if (customer.health_score !== undefined && customer.health_score !== null) {
       const healthStatus = calculateHealthStatus(customer.health_score);
       metrics.push({
         label: 'Health Score',
@@ -185,7 +185,7 @@ export async function GET(
     }
 
     // 4. Risk Score (Priority 4)
-    if (latestRenewal?.ai_risk_score !== undefined) {
+    if (latestRenewal?.ai_risk_score !== undefined && latestRenewal?.ai_risk_score !== null) {
       const riskStatus = calculateRiskStatus(latestRenewal.ai_risk_score);
       metrics.push({
         label: 'Risk Score',
@@ -197,7 +197,7 @@ export async function GET(
     }
 
     // 5. NPS Score (Priority 5)
-    if (customer.nps_score !== undefined) {
+    if (customer.nps_score !== undefined && customer.nps_score !== null) {
       const npsStatus = customer.nps_score >= 9 ? 'green' : customer.nps_score >= 7 ? 'yellow' : 'red';
       metrics.push({
         label: 'NPS',

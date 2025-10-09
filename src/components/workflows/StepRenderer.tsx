@@ -18,6 +18,8 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { WorkflowStep } from './WorkflowExecutor';
 import { CustomerAnalysisStep } from './steps/CustomerAnalysisStep';
 import { ArtifactRenderer } from './artifacts/ArtifactRenderer';
+import { useTemplateContext } from '@/contexts/WorkflowContext';
+import { resolveTemplate } from '@/utils/templateResolver';
 
 // Step components will be registered here
 const STEP_COMPONENTS: { [key: string]: React.ComponentType<StepComponentProps> } = {};
@@ -72,18 +74,17 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
 }) => {
   const StepComponent = STEP_COMPONENTS[step.component];
 
-  // Build context for template rendering
-  const context = {
-    customer: {
-      id: customerId,
-      // Additional customer data would be fetched from API in real implementation
-    },
-    workflow: {
-      stepNumber: step.number,
-      stepTitle: step.title,
-      // Additional workflow data
-    }
-  };
+  // Get workflow context for template rendering
+  const templateContext = useTemplateContext();
+
+  // Resolve templates in step content
+  const resolvedTitle = templateContext
+    ? resolveTemplate(step.title, templateContext)
+    : step.title;
+
+  const resolvedDescription = templateContext
+    ? resolveTemplate(step.description, templateContext)
+    : step.description;
 
   // Component not found
   if (!StepComponent) {
@@ -140,8 +141,8 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {/* Step Header */}
         <div className="border-b border-gray-200 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">{step.title}</h2>
-          <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+          <h2 className="text-xl font-semibold text-gray-900">{resolvedTitle}</h2>
+          <p className="text-sm text-gray-600 mt-1">{resolvedDescription}</p>
         </div>
 
         {/* Step Content */}
@@ -158,13 +159,13 @@ export const StepRenderer: React.FC<StepRendererProps> = ({
       </div>
 
       {/* Inline Artifacts (appear below step card) */}
-      {step.artifacts && step.artifacts.length > 0 && (
+      {step.artifacts && step.artifacts.length > 0 && templateContext && (
         <div className="space-y-4">
           {step.artifacts.map((artifact) => (
             <ArtifactRenderer
               key={artifact.id}
               artifact={artifact}
-              context={context}
+              context={templateContext}
               onAction={(actionId, data) => {
                 console.log('[StepRenderer] Artifact action:', actionId, data);
                 // Handle artifact actions (e.g., check task, void envelope, etc.)

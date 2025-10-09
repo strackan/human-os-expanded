@@ -19,6 +19,7 @@ import { ChevronRight, ChevronLeft, Save, Check, AlertCircle } from 'lucide-reac
 import { StepRenderer } from './StepRenderer';
 import { ArtifactDisplay } from './ArtifactDisplay';
 import { CustomerMetrics, MetricsToggleButton } from './CustomerMetrics';
+import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
 import { createClient } from '@/lib/supabase';
 
 // =====================================================
@@ -461,9 +462,10 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+    <WorkflowContextProvider customerId={customerId} executionId={executionState.executionId}>
+      <div className="h-screen flex flex-col bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">{workflowDefinition.name}</h1>
@@ -675,6 +677,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
-    </div>
+      </div>
+    </WorkflowContextProvider>
   );
 };
