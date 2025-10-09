@@ -17,6 +17,8 @@ import React from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { WorkflowStep } from './WorkflowExecutor';
 import { CustomerAnalysisStep } from './steps/CustomerAnalysisStep';
+import { SimpleFormStep } from './steps/SimpleFormStep';
+import { ReviewStep } from './steps/ReviewStep';
 import { ArtifactRenderer } from './artifacts/ArtifactRenderer';
 import { useTemplateContext } from '@/contexts/WorkflowContext';
 import { resolveTemplate } from '@/utils/templateResolver';
@@ -300,3 +302,7 @@ registerStepComponent('LoadingStep', LoadingStep);
 
 // Register test components
 registerStepComponent('CustomerAnalysisStep', CustomerAnalysisStep);
+
+// Register Phase 2.4 step components
+registerStepComponent('SimpleFormStep', SimpleFormStep);
+registerStepComponent('ReviewStep', ReviewStep);

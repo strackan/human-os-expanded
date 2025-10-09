@@ -20,8 +20,79 @@
   }
 }
 
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom thin scrollbar for panels */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+/* Chat panel scrollbar - bluish-gray, 4px */
+.scrollbar-chat {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(191 219 254) transparent;
+}
+
+.scrollbar-chat::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-chat::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb {
+  background-color: rgb(191 219 254);
+  border-radius: 2px;
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(147 197 253);
 }

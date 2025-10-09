@@ -15,10 +15,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronRight, ChevronLeft, Save, Check, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, Check, AlertCircle, MessageCircle, Zap } from 'lucide-react';
 import { StepRenderer } from './StepRenderer';
 import { ArtifactDisplay } from './ArtifactDisplay';
 import { CustomerMetrics, MetricsToggleButton } from './CustomerMetrics';
+import { WorkflowChatPanel } from './WorkflowChatPanel';
+import { TaskPanel } from './TaskPanel';
 import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
 import { createClient } from '@/lib/supabase';
 
@@ -100,6 +102,8 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [artifactsPanelWidth, setArtifactsPanelWidth] = useState(50); // percentage
   const [artifactsExpanded, setArtifactsExpanded] = useState(false);
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
+  const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
 
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
@@ -463,21 +467,57 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
   return (
     <WorkflowContextProvider customerId={customerId} executionId={executionState.executionId}>
-      <div className="h-screen flex flex-col bg-gray-50">
+      <div id="workflow-executor" className="h-screen flex flex-col bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <div id="workflow-header" className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{workflowDefinition.name}</h1>
-            <p className="text-sm text-gray-600 mt-1">{workflowDefinition.description}</p>
+            <h1 id="workflow-name" className="text-2xl font-bold text-gray-900">{workflowDefinition.name}</h1>
+            <p id="workflow-description" className="text-sm text-gray-600 mt-1">{workflowDefinition.description}</p>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div id="workflow-controls" className="flex items-center space-x-4">
             {/* Metrics Toggle Button */}
             <MetricsToggleButton
               isOpen={metricsOpen}
               onClick={() => setMetricsOpen(!metricsOpen)}
             />
+
+            {/* Chat Toggle Button */}
+            <button
+              id="workflow-chat-toggle"
+              onClick={() => setChatPanelOpen(!chatPanelOpen)}
+              className={`
+                flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors
+                ${chatPanelOpen
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }
+              `}
+              title={chatPanelOpen ? 'Close chat panel' : 'Open chat panel'}
+              aria-label={chatPanelOpen ? 'Close chat panel' : 'Open chat panel'}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span className="text-sm font-medium">Chat</span>
+            </button>
+
+            {/* Tasks Toggle Button */}
+            <button
+              id="workflow-tasks-toggle"
+              onClick={() => setTaskPanelOpen(!taskPanelOpen)}
+              className={`
+                flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors
+                ${taskPanelOpen
+                  ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }
+              `}
+              title={taskPanelOpen ? 'Close tasks panel' : 'Open tasks panel'}
+              aria-label={taskPanelOpen ? 'Close tasks panel' : 'Open tasks panel'}
+            >
+              <Zap className="w-4 h-4" />
+              <span className="text-sm font-medium">Tasks</span>
+            </button>
 
             {/* Save Status */}
             <div className="flex items-center space-x-2 text-sm">
@@ -515,17 +555,18 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-4">
+        <div id="workflow-progress" className="mt-4">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span id="workflow-step-counter" className="text-sm font-medium text-gray-700">
               Step {executionState.currentStepIndex + 1} of {workflowDefinition.steps.length}
             </span>
-            <span className="text-sm text-gray-600">
+            <span id="workflow-progress-percentage" className="text-sm text-gray-600">
               {Math.round(progressPercentage)}% Complete
             </span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
+              id="workflow-progress-bar"
               className="bg-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progressPercentage}%` }}
             />
@@ -533,7 +574,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
         </div>
 
         {/* Breadcrumb Navigation */}
-        <div className="mt-4 flex items-center space-x-2 overflow-x-auto pb-2">
+        <div id="workflow-breadcrumbs" className="mt-4 flex items-center space-x-2 overflow-x-auto pb-2">
           {workflowDefinition.steps.map((step, index) => (
             <React.Fragment key={step.id}>
               <button
@@ -559,9 +600,10 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden relative">
+      <div id="workflow-main-content" className="flex-1 flex overflow-hidden relative">
         {/* Step Content */}
         <div
+          id="workflow-step-container"
           className={`flex flex-col overflow-hidden transition-all duration-300 ${
             artifactsExpanded ? 'hidden' : ''
           }`}
@@ -580,7 +622,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
           />
 
           {/* Step Content (scrollable, takes remaining height) */}
-          <div className="flex-1 overflow-y-auto">
+          <div id="workflow-step-content" className="flex-1 overflow-y-auto scrollbar-thin">
             <div className="p-6">
               <div className="max-w-4xl mx-auto space-y-6">
                 <StepRenderer
@@ -678,6 +720,34 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
         </button>
       </div>
       </div>
+
+      {/* Chat Panel (slides in from right) */}
+      <WorkflowChatPanel
+        workflowId={workflowDefinition.id}
+        stepId={currentStep.id}
+        executionId={executionState.executionId}
+        isOpen={chatPanelOpen}
+        onClose={() => setChatPanelOpen(false)}
+        onNavigateToStep={(stepId) => {
+          // Find step index by ID and navigate
+          const stepIndex = workflowDefinition.steps.findIndex(s => s.id === stepId);
+          if (stepIndex !== -1) {
+            navigateToStep(stepIndex);
+          }
+        }}
+      />
+
+      {/* Task Panel (slides in from right, stacks with chat if both open) */}
+      <TaskPanel
+        workflowExecutionId={executionState.executionId}
+        customerId={customerId}
+        isOpen={taskPanelOpen}
+        onClose={() => setTaskPanelOpen(false)}
+        onCreateTask={() => {
+          // TODO: Open task creation dialog
+          console.log('[WorkflowExecutor] Create task clicked');
+        }}
+      />
     </WorkflowContextProvider>
   );
 };

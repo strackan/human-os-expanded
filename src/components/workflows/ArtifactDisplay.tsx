@@ -267,7 +267,7 @@ export const ArtifactDisplay: React.FC<ArtifactDisplayProps> = ({
           </div>
 
           {/* Artifact Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin">
             {/* Render Dashboard Artifact */}
             {selectedArtifact.type === 'dashboard' ? (
               <DashboardArtifact data={JSON.parse(selectedArtifact.content) as DashboardArtifactData} />
