@@ -70,7 +70,12 @@ export async function POST(request: NextRequest) {
       };
     } else {
       // Execute built-in action
-      result = await executeBuiltInAction(action.action_type, params);
+      result = await executeBuiltInAction(action.action_type, params, supabase);
+    }
+
+    // Update workflow execution state based on action
+    if (workflowExecutionId && result.success) {
+      await updateWorkflowState(workflowExecutionId, action.action_type, result, supabase);
     }
 
     // Log execution
@@ -110,7 +115,8 @@ export async function POST(request: NextRequest) {
 
 async function executeBuiltInAction(
   actionType: string,
-  params: Record<string, any>
+  params: Record<string, any>,
+  supabase: any
 ): Promise<ActionResult> {
   switch (actionType) {
     case 'snooze':
@@ -126,6 +132,69 @@ async function executeBuiltInAction(
         success: false,
         message: `Unknown action type: ${actionType}`
       };
+  }
+}
+
+// Update workflow execution state based on action
+async function updateWorkflowState(
+  workflowExecutionId: string,
+  actionType: string,
+  result: ActionResult,
+  supabase: any
+): Promise<void> {
+  try {
+    const updates: any = {
+      updated_at: new Date().toISOString()
+    };
+
+    switch (actionType) {
+      case 'snooze':
+        updates.status = 'snoozed';
+        if (result.data?.resumeDate) {
+          updates.snoozed_until = result.data.resumeDate;
+        }
+        break;
+
+      case 'escalate':
+        updates.status = 'escalated';
+        updates.metadata = {
+          escalatedTo: result.data?.escalatedTo,
+          escalatedAt: result.data?.escalatedAt,
+          reason: result.data?.reason
+        };
+        break;
+
+      case 'skip':
+        // Mark current step as skipped (handled in step execution)
+        // No workflow-level status change needed
+        break;
+
+      case 'schedule':
+        // Add scheduled follow-up to metadata
+        const { data: currentExecution } = await supabase
+          .from('workflow_executions')
+          .select('metadata')
+          .eq('id', workflowExecutionId)
+          .single();
+
+        updates.metadata = {
+          ...currentExecution?.metadata,
+          scheduledFollowUp: result.data
+        };
+        break;
+    }
+
+    if (Object.keys(updates).length > 1) { // More than just updated_at
+      await supabase
+        .from('workflow_executions')
+        .update(updates)
+        .eq('id', workflowExecutionId);
+
+      console.log(`[Action Execute] Updated workflow ${workflowExecutionId} state: ${actionType}`);
+    }
+  } catch (error) {
+    console.error('Error updating workflow state:', error);
+    // Don't fail the action if state update fails
   }
 }
 

@@ -34,14 +34,16 @@ Build a beautiful, demo-ready frontend for renewal workflows that:
 
 ### Key Demo Requirements
 
-By demo date, we must show:
+By demo date (NEXT WEEK), we must show:
 - ✅ CSM opens workflow for a customer
 - ✅ AI-generated context pre-populated from backend
-- ✅ Chat interface with fixed buttons AND flexible LLM mode
-- ✅ Specialized artifacts (contract review, pricing analysis, stakeholder mapping)
+- ✅ Chat interface with fixed buttons AND flexible LLM mode (Ollama)
+- ✅ Specialized artifacts (3-5 demo-ready artifacts minimum)
 - ✅ Task management with snooze/skip/complete
 - ✅ Workflow completion with outcomes tracking
-- ✅ Smooth, polished UI that feels production-ready
+- ✅ Smooth, polished UI that feels demo-ready
+
+**Timeline:** Demo is NEXT WEEK (October 2025). Focus on demo-ready functionality over production perfection.
 
 ### Ollama's Role
 
@@ -152,25 +154,31 @@ By demo date, we must show:
 
 ## 🚧 Phase 3: LLM Integration & State Tracking (IN PROGRESS)
 
-**Status:** 50% Complete
-**Timeline:** Current sprint (1-2 weeks)
-**Goal:** Real LLM (Ollama) + complete workflow state integration
+**Status:** 30% Complete
+**Timeline:** THIS WEEK (Demo next week)
+**Goal:** Real LLM (Ollama) + complete workflow state integration + customer context API
 
-### Checkpoint 3.1: Ollama Integration ⏳
+**⚠️ CRITICAL PREREQUISITE:**
+- **Database Migration:** Backend SQLite work → Postgres/Supabase
+- **Status:** Unknown - needs verification before proceeding with integrations
+- **Frontend connects to:** Supabase (Postgres)
+- **Backend uses:** SQLite (automation/renubu-test.db)
+
+### Checkpoint 3.1: Ollama Integration ✅
 
 **Objective:** Replace mock LLM with real Ollama, with easy toggle for testing.
 
 **Tasks:**
 
-1. **Create LLM Service** ⏳ IN PROGRESS
-   - File: `src/lib/services/LLMService.ts`
+1. **Create LLM Service** ✅ COMPLETE (Backend finished)
+   - File: Backend completed `LLMService.ts`
    - Ollama client (POST to `localhost:11434/api/generate`)
    - Mock fallback (existing responses)
    - Timeout handling (10 seconds)
    - Environment toggle: `NEXT_PUBLIC_USE_OLLAMA=true/false`
    - Model selection: `NEXT_PUBLIC_OLLAMA_MODEL=llama3.1:8b`
 
-2. **Update Messages API** ✅ DONE
+2. **Update Messages API** ✅ COMPLETE
    - File: `src/app/api/workflows/chat/threads/[threadId]/messages/route.ts`
    - Already updated to use `LLMService.generateResponse()`
    - Passes conversation history and customer context
@@ -231,49 +239,76 @@ By demo date, we must show:
 
 ---
 
-### Checkpoint 3.3: Customer Context Integration ⏳
+### Checkpoint 3.3: Customer Context Integration ⏳ CRITICAL FOR DEMO
 
 **Objective:** Pass rich customer data to LLM for personalized responses.
 
+**Priority:** HIGHEST - Must be wired up for demo
+
 **Tasks:**
 
-1. **Fetch Customer Context** ⏳ PENDING
-   - API: `GET /api/workflows/[workflowId]/context` (backend provides)
+1. **Fetch Customer Context** ⏳ CRITICAL
+   - API: `GET /api/workflows/[workflowId]/context` (backend must provide)
    - Returns: customer data, intelligence, financials, usage, engagement
    - Cache in workflow state
 
-2. **Pass Context to LLM** ⏳ PENDING
-   - Update: `LLMService.ts` system prompt
+2. **Pass Context to LLM** ⏳ CRITICAL
+   - Update: `LLMService.ts` system prompt (backend may have already done this)
    - Include customer name, ARR, renewal date, risk score, trends
    - LLM responses reference specific customer data
 
-3. **Variable Injection in Chat** ⏳ PENDING
+3. **Variable Injection in Chat** ⏳ CRITICAL
    - Support `{{customer.name}}`, `{{data.financials.currentARR}}` in messages
    - Inject variables before displaying
    - Update chat templates to use variables
 
-**Deliverable:** LLM knows customer context, gives personalized recommendations.
+**Deliverable:** LLM knows customer context, gives personalized recommendations. MUST WORK FOR DEMO.
 
 ---
 
-## 📦 Phase 4: Artifact Components (NEXT - 4 weeks)
+## 📦 Phase 4: Artifact Components (URGENT - This Week)
 
 **Status:** Not Started
-**Timeline:** After Phase 3 completion
-**Goal:** Build specialized artifact components for demo workflows
+**Timeline:** THIS WEEK (alongside Phase 3) - Demo next week
+**Goal:** Build ALL 10 artifact components for demo workflows
 
 ### Overview
 
 Artifacts are specialized UI components that display workflow-specific data. Each artifact type has:
-- **Database config** or **config file** defining content, styling, actions
-- **React component** for rendering
+- **Database config** or **config file** defining content, styling, actions (uses handlebars for {{variables}})
+- **React component** for rendering with inline editing support
+- **Basic button actions** (save, edit, complete, create task)
 - **Integration** with backend data sources
 
-### Checkpoint 4.1: Forms & Assessment (Week 1)
+**Build Strategy for Demo:**
+- **Text-based artifacts:** Build fully functional with real data/editing
+- **Complex/intelligent artifacts:** Build display components with MOCKED data/actions
+- **Focus:** Handlebars template variables + inline text editing + basic buttons
+- **NOT building:** PDF parsing, Salesforce integration, complex calculations (mock these)
 
-**Objective:** Build form-based artifacts for data collection.
+### All 10 Artifacts (Prioritized for Demo)
 
-#### Artifact: CSM Assessment Form
+**Priority 1 - Build Fully (Demo Critical):**
+1. **CSM Assessment Form** - Text-based form, build fully
+2. **Open Tasks Step** - Existing component, integrate/test
+3. **Pricing Analysis Table** - Editable table, build fully with mock calculations
+
+**Priority 2 - Build Display + Mock Actions:**
+4. **Contract Review** - Display component with inline editing, mock document upload
+5. **Recommendations** - LLM output display with "Create Task" buttons, use mock recommendations
+6. **Stakeholder Map** - Visual display (React Flow), use static mock nodes
+
+**Priority 3 - Mock for Demo (If Time):**
+7. **Email Draft Template** - Display with handlebars variables, mock send
+8. **Meeting Notes** - Form with sections, mock AI summaries
+9. **Risk Analysis Dashboard** - Static graphs/metrics display
+10. **Action Items Checklist** - Simple checklist component
+
+---
+
+### Checkpoint 4.1: Priority 1 Artifacts (Demo Critical)
+
+#### Artifact 1: CSM Assessment Form
 
 **Purpose:** Capture CSM's qualitative assessment of customer relationship.
 
@@ -327,204 +362,174 @@ Artifacts are specialized UI components that display workflow-specific data. Eac
 
 ---
 
-### Checkpoint 4.2: Document Processing (Week 2)
+#### Artifact 2: Open Tasks (Step 0)
 
-**Objective:** Build file upload and document analysis artifacts.
+**Status:** ✅ Component exists (backend built), needs integration testing
 
-#### Artifact: Contract Analysis
+**Purpose:** Show existing open tasks from previous workflows.
 
-**Purpose:** Upload contract documents, use LLM to extract key terms.
+**Component:** `src/components/workflows/OpenTasksStep.tsx` (already exists)
 
-**Component:** `src/components/artifacts/ContractAnalysisArtifact.tsx`
+**What to Do:**
+- Integrate with frontend workflow system
+- Test display of tasks from `workflow_tasks` table
+- Verify transfer task functionality
+- Test snooze eligibility display
+- Test ForcedDecisionModal integration
 
-**Features:**
-- File upload (drag-and-drop, PDF/DOCX support)
-- Document preview (PDF viewer)
-- LLM integration for contract extraction
-- Structured data display (terms, dates, pricing, clauses)
-- Edit/override extracted data
-- Document storage (Supabase Storage)
-
-**Flow:**
-1. User uploads contract PDF
-2. Frontend uploads to Supabase Storage
-3. Backend calls LLM: "Extract key terms from this contract"
-4. LLM returns structured data (JSON)
-5. Frontend displays editable form with extracted data
-6. User reviews/edits, saves to workflow
-
-**API Needed:**
-- `POST /api/workflows/contracts/upload` - Upload file, trigger LLM extraction
-- Returns: `{ contractId, extractedData }`
-
-**LLM Prompt:**
-```
-Extract key contract terms from the following contract text:
-- Contract ID
-- Start Date
-- End Date
-- Annual Value
-- Payment Terms
-- Auto-renewal clause
-- Price increase caps
-- Notice period
-- Non-standard terms
-
-Return as JSON.
-```
-
-**Deliverable:** CSM can upload contract, LLM extracts terms, CSM reviews and saves.
+**Deliverable:** Open tasks display works in workflow, can transfer/resolve tasks.
 
 ---
 
-### Checkpoint 4.3: Data Tables & Calculations (Week 3)
-
-**Objective:** Build editable table artifacts for pricing analysis.
-
-#### Artifact: Pricing Analysis Table
+#### Artifact 3: Pricing Analysis Table
 
 **Purpose:** Review current pricing and build renewal pricing model.
 
 **Component:** `src/components/artifacts/PricingAnalysisArtifact.tsx`
 
-**Features:**
+**Features (Build Fully):**
 - Editable data table (inline editing with contentEditable or inputs)
 - Row add/delete functionality
-- Column calculations (totals, discounts, ARR)
-- Pricing comparison (current vs. proposed)
-- Discount approval workflow
-- Export to CSV/Excel
+- Handlebars variables for pre-population: `{{data.currentARR}}`
+- Basic save functionality
 
-**Table Structure:**
-```
-Product | Current Price | Proposed Price | Discount % | ARR Impact
---------|---------------|----------------|------------|------------
-Base    | $50,000       | $55,000       | 0%         | +$5,000
-Feature | $20,000       | $22,000       | 5%         | +$1,000
-...
---------|---------------|----------------|------------|------------
-Total   | $70,000       | $77,000       | 2%         | +$7,000
-```
+**Features (Mock for Demo):**
+- Column calculations (totals, discounts, ARR) - use hardcoded/static calculations
+- Export to CSV - show button, mock action
 
-**Calculations:**
-- Discount % = (Proposed - Current) / Current * 100
-- ARR Impact = Proposed - Current
-- Auto-calculate totals
-
-**Data Source:**
-- Pre-populated from `contracts` and `financials` tables (backend)
-- Saves to `workflow_step_executions.metadata.pricing_analysis`
-
-**Deliverable:** CSM can build pricing model with calculations, export to CSV.
+**Deliverable:** CSM can edit pricing table, see mock calculations, save data.
 
 ---
 
-### Checkpoint 4.4: Visual & Advanced Artifacts (Week 4)
+### Checkpoint 4.2: Priority 2 Artifacts (Display + Mock)
 
-**Objective:** Build visual canvas and advanced artifacts.
+#### Artifact 4: Contract Review
 
-#### Artifact: Stakeholder Mapping Canvas
+**Purpose:** Display contract terms with inline editing.
+
+**Component:** `src/components/artifacts/ContractReviewArtifact.tsx`
+
+**Features (Build):**
+- Display contract terms in structured layout
+- Inline text editing (contentEditable)
+- Handlebars support: `{{contract.startDate}}`, `{{contract.value}}`
+- Save edited terms
+
+**Features (Mock for Demo):**
+- Document upload - show upload button, use pre-populated mock data
+- PDF parsing/extraction - NOT building, use static mock data
+- Document preview - optional, low priority
+
+**Deliverable:** CSM can view contract terms (pre-populated), edit inline, save changes. NO PDF parsing.
+
+#### Artifact 5: AI Recommendations with Task Creation
+
+**Purpose:** Display AI recommendations and convert to actionable tasks.
+
+**Component:** `src/components/artifacts/RecommendationsArtifact.tsx`
+
+**Features (Build):**
+- Display recommendations list with categorization (Urgent/Important/Nice-to-have)
+- "Convert to Task" buttons for each recommendation
+- Task creation form (assignee, due date, priority)
+- Link recommendations to created tasks
+
+**Features (Mock for Demo):**
+- LLM streaming - use static mock recommendations, NOT real-time generation
+- Recommendation generation - pre-populated mock data
+
+**Mock Recommendations Example:**
+```typescript
+[
+  { id: 1, text: "Schedule executive review meeting", priority: "urgent", category: "Relationship" },
+  { id: 2, text: "Review Q3 usage metrics with customer", priority: "important", category: "Health" },
+  // ...
+]
+```
+
+**Deliverable:** Display recommendations, CSM can create tasks from them. Use mock data.
+
+---
+
+#### Artifact 6: Stakeholder Mapping Canvas
 
 **Purpose:** Visual relationship map of key stakeholders.
 
 **Component:** `src/components/artifacts/StakeholderMapArtifact.tsx`
 
-**Technology Options:**
-- **Option A:** Use [React Flow](https://reactflow.dev/) (drag-and-drop nodes, connections)
-- **Option B:** Custom canvas with D3.js
-- **Recommendation:** React Flow (faster, professional, well-maintained)
+**Technology:** Use [React Flow](https://reactflow.dev/) - drag-and-drop nodes
 
-**Features:**
+**Features (Build):**
 - Interactive canvas (drag-and-drop nodes)
-- Node creation (stakeholders with roles, influence, sentiment)
-- Connection lines (relationships between stakeholders)
 - Visual indicators:
   - Color-coded by sentiment (red=negative, yellow=neutral, green=positive)
   - Size by influence (larger = more influential)
-- Pan and zoom functionality
-- Export as PNG/SVG
-- Save/load canvas state
+- Basic save/load canvas state
 
-**Node Data:**
+**Features (Mock for Demo):**
+- Node creation - pre-populate with static mock stakeholders
+- Connection lines - static mock relationships
+- Salesforce integration - NOT building, use mock data
+- Export as PNG/SVG - show button, mock action
+
+**Mock Stakeholder Data:**
 ```typescript
-{
-  id: 'stakeholder-1',
-  type: 'stakeholder',
-  position: { x: 100, y: 100 },
-  data: {
-    name: 'John Doe',
-    role: 'CTO',
-    influence: 'high', // high, medium, low
-    sentiment: 'positive', // positive, neutral, negative
-    notes: 'Champions our product'
-  }
-}
+[
+  { id: '1', name: 'John Doe', role: 'CTO', influence: 'high', sentiment: 'positive', position: { x: 100, y: 100 } },
+  { id: '2', name: 'Jane Smith', role: 'VP Ops', influence: 'medium', sentiment: 'neutral', position: { x: 300, y: 150 } },
+  // ...
+]
 ```
 
-**Data Source:**
-- Pre-populated from `salesforce.contacts` (backend)
-- Saves to `workflow_step_executions.metadata.stakeholder_map`
-
-**Deliverable:** CSM can visually map stakeholders, save map to workflow.
+**Deliverable:** Visual stakeholder map with React Flow, uses static mock data, drag-and-drop works.
 
 ---
 
-#### Artifact: AI Recommendations with Task Creation
+### Checkpoint 4.3: Priority 3 Artifacts (If Time Permits)
 
-**Purpose:** Generate AI recommendations and convert to actionable tasks.
+These artifacts are lower priority. Build only if time permits, otherwise demo with placeholders.
 
-**Component:** `src/components/artifacts/RecommendationsArtifact.tsx`
+#### Artifact 7: Email Draft Template
+- Display template with handlebars variables
+- Inline editing
+- Mock "Send" button (no actual email sending)
 
-**Features:**
-- LLM streaming integration (show recommendations as they generate)
-- Recommendation display with categorization:
-  - 🔴 Urgent
-  - 🟡 Important
-  - 🟢 Nice-to-have
-- "Convert to Task" buttons for each recommendation
-- Task creation modal/form
-- Task assignment and due dates
-- Link recommendations to created tasks
+#### Artifact 8: Meeting Notes
+- Form with sections (Attendees, Summary, Action Items)
+- Mock AI summary generation
 
-**Flow:**
-1. System calls LLM: "Based on {{customer.name}}'s data, what are the top 5 renewal actions?"
-2. LLM streams back recommendations
-3. Frontend displays each recommendation with "Create Task" button
-4. CSM clicks button → Task creation form opens
-5. CSM sets assignee, due date, priority
-6. Task created via `POST /api/workflows/tasks`
-7. Recommendation marked as "converted to task"
+#### Artifact 9: Risk Analysis Dashboard
+- Static graphs/metrics display
+- Mock data visualization
 
-**LLM Prompt:**
-```
-Based on this customer's data:
-- ARR: {{data.financials.currentARR}}
-- Risk Score: {{intelligence.riskScore}}
-- Days until renewal: {{workflow.daysUntilRenewal}}
-- Usage trend: {{data.usage.trend}}
-- Recent support tickets: {{data.support.recentTickets}}
-
-Generate 5 specific, actionable recommendations for this renewal.
-Categorize each as Urgent, Important, or Nice-to-have.
-Format as numbered list.
-```
-
-**Deliverable:** LLM generates recommendations, CSM converts to tasks with one click.
+#### Artifact 10: Action Items Checklist
+- Simple checklist component
+- Check/uncheck items
+- Basic status tracking
 
 ---
 
 ## 📊 Artifact Type Registry
 
-**Summary of Artifact Types:**
+**Summary of All 10 Artifacts:**
 
-| Artifact Type | Component | Complexity | Data Source | Save Location |
-|---------------|-----------|------------|-------------|---------------|
-| CSM Assessment | CSMAssessmentArtifact | Low | Pre-filled from intelligence | step_executions.metadata |
-| Open Tasks | OpenTasksStep | Medium | workflow_tasks table | task actions update DB |
-| Contract Analysis | ContractAnalysisArtifact | High | File upload + LLM | contracts table + storage |
-| Pricing Table | PricingAnalysisArtifact | Medium-High | contracts + financials | step_executions.metadata |
-| Stakeholder Map | StakeholderMapArtifact | High | salesforce.contacts | step_executions.metadata |
-| Recommendations | RecommendationsArtifact | High | LLM generation | tasks table (when converted) |
+| # | Artifact Type | Component | Priority | Build Status | Data Source |
+|---|---------------|-----------|----------|--------------|-------------|
+| 1 | CSM Assessment | CSMAssessmentArtifact | P1 | Build Fully | Pre-filled from intelligence |
+| 2 | Open Tasks | OpenTasksStep | P1 | Integrate Existing | workflow_tasks table |
+| 3 | Pricing Table | PricingAnalysisArtifact | P1 | Build Fully + Mock Calcs | contracts + financials |
+| 4 | Contract Review | ContractReviewArtifact | P2 | Display + Mock Upload | Mock contract data |
+| 5 | Recommendations | RecommendationsArtifact | P2 | Display + Mock LLM | Static mock recommendations |
+| 6 | Stakeholder Map | StakeholderMapArtifact | P2 | Display + Mock Data | Static mock stakeholders |
+| 7 | Email Template | EmailDraftArtifact | P3 | Mock/Placeholder | Template with variables |
+| 8 | Meeting Notes | MeetingNotesArtifact | P3 | Mock/Placeholder | Form with sections |
+| 9 | Risk Dashboard | RiskAnalysisArtifact | P3 | Mock/Placeholder | Static charts/metrics |
+| 10 | Action Checklist | ActionChecklistArtifact | P3 | Mock/Placeholder | Simple checklist |
+
+**Build Strategy:**
+- **P1 (Priority 1):** Must have for demo, build fully functional
+- **P2 (Priority 2):** Important for demo, build display + mock complex features
+- **P3 (Priority 3):** Nice to have, build only if time permits
 
 **Artifact Component Pattern:**
 
@@ -549,11 +554,11 @@ export function GenericArtifact({ artifactId, artifactType, title, data, custome
 
 ---
 
-## 🎨 Phase 5: Demo Polish & Deployment (Final 2 weeks)
+## 🎨 Phase 5: Demo Polish & Deployment (Post-Demo)
 
 **Status:** Not Started
-**Timeline:** After Phase 4 completion
-**Goal:** Production-ready UI for design partner demos
+**Timeline:** After demo, as needed for production
+**Goal:** Production-ready UI for design partner rollout
 
 ### Checkpoint 5.1: Performance & UX Polish
 
@@ -819,40 +824,54 @@ docs/planning/
 |-------|----------|--------|-------------|
 | Phase 1: Core Infrastructure | 2 weeks | ✅ COMPLETE | WorkflowExecutor, ChatPanel, TaskPanel |
 | Phase 2: Backend APIs | 2 weeks | ✅ COMPLETE | All APIs functional, hybrid chat model |
-| Phase 3: LLM & State Integration | 1-2 weeks | ⏳ 50% DONE | Ollama working, state tracking complete |
-| Phase 4: Artifact Components | 4 weeks | ⏳ PENDING | All 6 artifact types built and tested |
-| Phase 5: Demo Polish | 2 weeks | ⏳ PENDING | Production-ready, demo-able |
+| Phase 3: LLM & State Integration | THIS WEEK | ⏳ 30% DONE | Customer context API, state tracking, LLM wired up |
+| Phase 4: Artifact Components | THIS WEEK | ⏳ PENDING | 3 Priority 1 artifacts + 3 Priority 2 artifacts |
+| Phase 5: Demo Polish | Post-Demo | ⏳ PENDING | Production-ready polish after successful demo |
 
-**Total:** ~10-12 weeks
-**Current Week:** Phase 3, Week 1
-**Next Milestone:** Ollama integration complete, state tracking complete
+**Demo Date:** NEXT WEEK (October 2025)
+**Current Focus:** Phase 3 + Phase 4 in parallel
+**Critical Path:** Customer Context API → Artifact components → Demo testing
+
+**This Week's Goals:**
+1. Complete customer context API integration
+2. Build 3 Priority 1 artifacts (CSM Assessment, Open Tasks, Pricing Table)
+3. Build 3 Priority 2 artifacts (Contract, Recommendations, Stakeholder Map)
+4. Integration testing and demo preparation
 
 ---
 
 ## 🎯 Success Criteria
 
-### By Demo Date
+### By Demo Date (NEXT WEEK)
 
-**Technical:**
-- ✅ All 6 artifact types functional
+**Technical (Must Have):**
+- ✅ 3 Priority 1 artifacts functional (CSM Assessment, Open Tasks, Pricing Table)
+- ✅ 3 Priority 2 artifacts with mock data (Contract, Recommendations, Stakeholder Map)
 - ✅ Ollama LLM integration working (with mock fallback)
-- ✅ Workflow state persists across sessions
-- ✅ Customer context populates throughout workflow
-- ✅ Task management fully integrated
-- ✅ Performance: Dashboard loads <2s, no lag
+- ✅ Customer context API wired up and populating data
+- ✅ Workflow state tracking functional
+- ✅ Task management integrated
 
-**Business:**
-- ✅ Can demo complete renewal workflow end-to-end
-- ✅ Show both fixed branches AND dynamic LLM conversations
-- ✅ Demonstrate specialized artifacts (contract, pricing, stakeholder map)
-- ✅ Show AI-generated recommendations → tasks
-- ✅ UI looks polished and production-ready
+**Business (Must Show):**
+- ✅ Complete renewal workflow end-to-end
+- ✅ Fixed chat branches AND dynamic LLM conversations
+- ✅ Specialized artifacts displaying customer data
+- ✅ Handlebars template variables working ({{customer.name}}, etc.)
+- ✅ Task creation from recommendations
+- ✅ UI looks demo-ready (polished enough to impress)
 
-**Quality:**
-- ✅ No critical bugs in demo scenarios
-- ✅ Graceful error handling (API failures, LLM timeouts)
-- ✅ Edge cases handled (missing data, network issues)
-- ✅ All components <400 lines (modular, maintainable)
+**Quality (Demo Standards):**
+- ✅ No critical bugs in happy path demo scenario
+- ✅ Basic error handling (show error messages, not crashes)
+- ✅ Mock data looks realistic
+- ✅ Smooth transitions between steps
+
+**NOT Required for Demo:**
+- Production-perfect error handling
+- PDF parsing / document upload
+- Salesforce integration
+- Advanced calculations / analytics
+- Full test coverage
 
 ---
 
@@ -938,45 +957,48 @@ npm run dev
 
 ## 🚀 Next Actions
 
-### Immediate (This Week)
+### Immediate Priority (This Week - Demo Prep)
 
-1. **Complete LLMService.ts** ⏳
-   - Finish Ollama client implementation
-   - Test timeout and fallback behavior
-   - Document usage patterns
+**Day 1-2: Critical Infrastructure**
+1. **Verify Database Migration Status** ⚠️ BLOCKER
+   - Check if SQLite → Postgres migration complete
+   - Ensure frontend APIs connect to correct database
+   - Resolve any migration blockers
 
-2. **Build Artifact Save API** ⏳
+2. **Build Customer Context API** ⚠️ CRITICAL
+   - Create `GET /api/workflows/[workflowId]/context`
+   - Return customer data, intelligence, financials
+   - Test variable injection in chat/artifacts
+
+3. **Build Artifact Save API**
    - Create `POST /api/workflows/artifacts`
-   - Test with sample artifacts
-   - Integrate with chat for auto-save
+   - Integrate with workflow state
+   - Test save/load flow
 
-3. **Wire Thread Complete → Step Update** ⏳
-   - Update thread complete API
-   - Call steps API to mark complete
-   - Test state persistence
+**Day 3-4: Priority 1 Artifacts**
+4. **Build CSM Assessment Form**
+   - Form component with handlebars
+   - Auto-save on blur
+   - Integration with context API
 
-4. **Add LLM Mode Indicator** ⏳
-   - Show Ollama/Mock badge in chat
-   - Display loading spinner
-   - Handle errors gracefully
+5. **Integrate Open Tasks Component**
+   - Test existing component in workflow
+   - Verify task actions work
 
-### Next Sprint (Week 2)
+6. **Build Pricing Table**
+   - Editable table component
+   - Mock calculations
+   - Save functionality
 
-1. **Customer Context Integration**
-   - Fetch context from backend
-   - Pass to LLM system prompt
-   - Test variable injection
+**Day 5-6: Priority 2 Artifacts + Polish**
+7. **Build Contract Review** (display + mock)
+8. **Build Recommendations** (display + mock)
+9. **Build Stakeholder Map** (React Flow + mock)
 
-2. **Start Artifact Components**
-   - Begin with CSM Assessment (simplest)
-   - Build reusable form patterns
-   - Test auto-save functionality
-
-### Month 2
-
-1. **Complete All Artifact Components** (4 weeks)
-2. **Integration Testing** (ongoing)
-3. **Demo Preparation** (final 2 weeks)
+**Day 7: Demo Prep**
+10. **Integration Testing** - End-to-end workflow test
+11. **Demo Polish** - Fix critical bugs, smooth UX
+12. **Demo Data** - Seed realistic customer data
 
 ---
 
@@ -1015,9 +1037,11 @@ npm run dev
 
 ---
 
-**Last Updated:** January 2025
-**Next Review:** After Phase 3 completion
-**Status:** Phase 3 in progress - Ollama integration + workflow state tracking
+**Last Updated:** October 9, 2025
+**Next Review:** After demo (post-demo retrospective)
+**Status:** Phase 3 + 4 in progress - Customer context API + artifacts for demo NEXT WEEK
+
+**⚠️ URGENT:** Demo is next week. All hands on deck for Phase 3 (infrastructure) and Phase 4 (artifacts).
 
 ---
 

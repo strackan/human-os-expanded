@@ -23,6 +23,8 @@ export interface Customer {
   current_arr: number;
   renewal_date: string;
   assigned_to?: string;
+  account_plan?: 'invest' | 'manage' | 'monitor' | 'expand'; // Added for orchestrator
+  renewal_stage?: string; // Added for orchestrator (calculated from renewal_date)
   created_at: string;
   updated_at: string;
 }
