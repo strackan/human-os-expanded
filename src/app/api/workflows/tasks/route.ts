@@ -27,14 +27,18 @@ export async function GET(request: NextRequest) {
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get current user (skip auth check in demo mode)
+    let user = null;
+    if (!demoMode && !authBypassEnabled) {
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      if (authError || !authUser) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      user = authUser;
     }
 
     // Build query
@@ -48,9 +52,13 @@ export async function GET(request: NextRequest) {
         workflow_execution:workflow_executions!workflow_tasks_workflow_execution_id_fkey(id, status),
         artifacts:workflow_task_artifacts(*)
       `)
-      .eq('assigned_to', user.id)
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    // Only filter by assigned_to if we have a user (not in demo mode)
+    if (user) {
+      query = query.eq('assigned_to', user.id);
+    }
 
     // Apply filters
     if (status) {
