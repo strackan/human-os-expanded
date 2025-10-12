@@ -1,6 +1,6 @@
 -- ============================================================================
--- ACO Demo Data Seeding Script
--- Purpose: Seed Apex Consolidated Operations demo data for Act 1
+-- Obsidian Black Demo Data Seeding Script
+-- Purpose: Seed Obsidian Black demo data for Act 1
 --
 -- DATA SPECIFICATION (PM Approved Oct 11, 2025):
 -- - ARR: $185,000 (realistic mid-market)
@@ -9,7 +9,7 @@
 -- - Operation Blackout: $85K loss
 -- ============================================================================
 
--- Use fixed UUID for ACO customer (makes it easy to reference)
+-- Use fixed UUID for Obsidian Black customer (makes it easy to reference)
 DO $$
 DECLARE
   v_aco_customer_id UUID := '550e8400-e29b-41d4-a716-446655440001';
@@ -37,8 +37,8 @@ INSERT INTO public.customers (
 )
 VALUES (
   v_aco_customer_id,
-  'Apex Consolidated Operations',
-  'apexconsolidated.ops',
+  'Obsidian Black',
+  'obsidianblack.ops',
   'Global Strategic Coordination Services',
   64,  -- 6.4/10 stored as integer (display as 6.4)
   185000.00,  -- $185K ARR
@@ -112,7 +112,7 @@ VALUES (
   v_aco_customer_id,
   'Marcus',
   'Castellan',
-  'marcus.castellan@apexconsolidated.ops',
+  'marcus.castellan@obsidianblack.ops',
   '+1 (555) 0100',
   'Chief Operating Officer',
   true,  -- Primary contact
@@ -141,7 +141,7 @@ VALUES (
   v_aco_customer_id,
   'Elena',
   'Voss',
-  'elena.voss@apexconsolidated.ops',
+  'elena.voss@obsidianblack.ops',
   '+1 (555) 0101',
   'VP of Technical Operations',
   false,  -- Secondary contact
@@ -156,7 +156,7 @@ RAISE NOTICE 'Dr. Elena Voss created: %', v_elena_contact_id;
 -- Update customer with primary contact
 UPDATE public.customers
 SET primary_contact_name = 'Marcus Castellan',
-    primary_contact_email = 'marcus.castellan@apexconsolidated.ops',
+    primary_contact_email = 'marcus.castellan@obsidianblack.ops',
     updated_at = NOW()
 WHERE id = v_aco_customer_id;
 
@@ -425,9 +425,9 @@ END $$;
 -- ============================================================================
 
 -- Show what was created
-SELECT 'ACO Customer:' as section, name, arr, health_score, renewal_date, is_demo
+SELECT 'Obsidian Black Customer:' as section, name, arr, health_score, renewal_date, is_demo
 FROM customers
-WHERE name = 'Apex Consolidated Operations';
+WHERE name = 'Obsidian Black';
 
 SELECT 'Contacts:' as section, first_name || ' ' || last_name as name, title, email, is_primary
 FROM contacts
@@ -447,7 +447,7 @@ ORDER BY created_at DESC;
 -- ============================================================================
 -- SEEDING COMPLETE
 -- ============================================================================
-RAISE NOTICE '✅ ACO Demo Data Seeding Complete!';
+RAISE NOTICE '✅ Obsidian Black Demo Data Seeding Complete!';
 RAISE NOTICE 'Customer ID: 550e8400-e29b-41d4-a716-446655440001';
 RAISE NOTICE 'ARR: $185,000';
 RAISE NOTICE 'Health Score: 6.4/10';

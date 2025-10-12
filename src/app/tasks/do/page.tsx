@@ -61,8 +61,8 @@ const CustomerCard = ({ customer }: { customer: Customer | Record<string, unknow
             {Number(customer.health_score) || 0}/100
           </span>
         </div>
-        
-        {customer.renewal_date && (
+
+        {!!customer.renewal_date && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Renewal Date:</span>
             <span className="font-medium">
@@ -70,15 +70,15 @@ const CustomerCard = ({ customer }: { customer: Customer | Record<string, unknow
             </span>
           </div>
         )}
-        
-        {customer.current_arr && (
+
+        {!!customer.current_arr && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Current ARR:</span>
             <span className="font-medium">${Number(customer.current_arr).toLocaleString()}</span>
           </div>
         )}
-        
-        {customer.risk_level && (
+
+        {!!customer.risk_level && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Risk Level:</span>
             <span className={`font-medium ${getRiskColor(String(customer.risk_level))}`}>
@@ -86,10 +86,10 @@ const CustomerCard = ({ customer }: { customer: Customer | Record<string, unknow
             </span>
           </div>
         )}
-        
-        {customer.primary_contact && (
+
+        {!!customer.primary_contact && (
           <div className="text-sm text-gray-500">
-            Contact: {customer.primary_contact.first_name} {customer.primary_contact.last_name}
+            Contact: {(customer.primary_contact as any).first_name} {(customer.primary_contact as any).last_name}
           </div>
         )}
       </div>

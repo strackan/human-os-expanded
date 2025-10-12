@@ -99,7 +99,7 @@ export const SimpleRenewal: WorkflowConfig = {
       id: 'analyze-contract',
       title: 'Analyze Contract',
 
-      type: 'analysis',
+      type: 'data_analysis',
       dataRequired: ['customer.name', 'customer.arr'],
 
       chat: {
@@ -166,7 +166,7 @@ export const SimpleRenewal: WorkflowConfig = {
       id: 'draft-email',
       title: 'Draft Email',
 
-      type: 'communication',
+      type: 'action',
       dataRequired: ['customer.name', 'customer.contact.name'],
 
       chat: {

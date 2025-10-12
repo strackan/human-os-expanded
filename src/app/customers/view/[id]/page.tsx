@@ -156,11 +156,11 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
     };
   };
 
-  const handleUpdateCustomer = async (field: keyof CustomerWithContact, value: string | number) => {
+  const handleUpdateCustomer = async <K extends keyof CustomerWithContact>(field: K, value: CustomerWithContact[K]) => {
     if (!customer) return;
-    
+
     try {
-      const updates = { [field]: value };
+      const updates = { [field]: value } as Partial<CustomerWithContact>;
       const updatedCustomer = await CustomerService.updateCustomer(customer.id, updates);
       setCustomer(updatedCustomer);
     } catch (error) {
@@ -284,7 +284,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Company Name</label>
                   <EditableCell
                     value={customer.name}
-                    onSave={(value) => handleUpdateCustomer('name', value)}
+                    onSave={(value) => handleUpdateCustomer('name', value as string)}
                     className="mt-1"
                   />
                 </div>
@@ -292,7 +292,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Industry</label>
                   <EditableCell
                     value={customer.industry}
-                    onSave={(value) => handleUpdateCustomer('industry', value)}
+                    onSave={(value) => handleUpdateCustomer('industry', value as string)}
                     className="mt-1"
                   />
                 </div>
@@ -300,7 +300,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Domain</label>
                   <EditableCell
                     value={customer.domain || ''}
-                    onSave={(value) => handleUpdateCustomer('domain', value)}
+                    onSave={(value) => handleUpdateCustomer('domain', value as string)}
                     className="mt-1"
                   />
                 </div>
@@ -308,7 +308,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Renewal Date</label>
                   <EditableCell
                     value={customer.renewal_date}
-                    onSave={(value) => handleUpdateCustomer('renewal_date', value)}
+                    onSave={(value) => handleUpdateCustomer('renewal_date', value as string)}
                     className="mt-1"
                   />
                 </div>
@@ -316,7 +316,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Current ARR</label>
                   <EditableCell
                     value={customer.current_arr.toString()}
-                    onSave={(value) => handleUpdateCustomer('current_arr', parseFloat(value))}
+                    onSave={(value) => handleUpdateCustomer('current_arr', parseFloat(value as string))}
                     className="mt-1"
                   />
                 </div>
@@ -324,7 +324,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                   <label className="block text-sm font-medium text-gray-700">Health Score</label>
                   <EditableCell
                     value={customer.health_score.toString()}
-                    onSave={(value) => handleUpdateCustomer('health_score', parseInt(value))}
+                    onSave={(value) => handleUpdateCustomer('health_score', parseInt(value as string))}
                     className="mt-1"
                   />
                 </div>

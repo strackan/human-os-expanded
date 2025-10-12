@@ -13,7 +13,9 @@
       "Bash(npm run build)",
       "Bash(npx next build:*)",
       "Bash(node:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(curl http://localhost:3000/demo-dashboard)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

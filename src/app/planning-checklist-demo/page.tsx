@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { planningChecklistWorkingDemo } from '@/components/artifacts/workflows/config/configs/PlanningChecklistWorkingDemo';
 
 export default function PlanningChecklistDemoPage() {
@@ -45,7 +45,7 @@ export default function PlanningChecklistDemoPage() {
           Launch Planning Checklist Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={planningChecklistWorkingDemo}

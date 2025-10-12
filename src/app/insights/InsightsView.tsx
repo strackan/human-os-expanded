@@ -171,7 +171,7 @@ const InsightsView = () => {
     setShowChat(true);
     setChatMessages([
       {
-        role: 'assistant',
+        role: 'assistant' as const,
         content: `I'm ready to discuss the ${insight.title.toLowerCase()} issue. I've analyzed the data and prepared some insights. What specific aspects would you like to explore?`
       }
     ]);
@@ -213,7 +213,7 @@ const InsightsView = () => {
 
     const newMessages = [
       ...chatMessages,
-      { role: 'user', content: messageInput }
+      { role: 'user' as const, content: messageInput }
     ];
     setChatMessages(newMessages);
     setMessageInput('');
@@ -223,7 +223,7 @@ const InsightsView = () => {
       setChatMessages([
         ...newMessages,
         {
-          role: 'assistant',
+          role: 'assistant' as const,
           content: `I understand your interest in ${messageInput.toLowerCase()}. Based on our analysis, this relates to ${selectedInsight?.category.toLowerCase()} trends we've observed. Would you like me to provide more specific data or discuss potential actions?`
         }
       ]);
@@ -235,11 +235,11 @@ const InsightsView = () => {
       if (i.id === insight.id) {
         return {
           ...i,
-          status: 'assigned',
+          status: 'assigned' as const,
           assignment: {
             userId,
             assignedAt: new Date().toISOString(),
-            status: 'pending'
+            status: 'pending' as const
           }
         };
       }

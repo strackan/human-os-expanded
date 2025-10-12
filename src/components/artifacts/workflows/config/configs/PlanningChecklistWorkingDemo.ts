@@ -51,6 +51,18 @@ export const planningChecklistWorkingDemo: WorkflowConfig = {
         value: '8.5/10',
         status: 'green',
         sublabel: 'High expansion potential'
+      },
+      yoyGrowth: {
+        label: 'YoY Growth',
+        value: '+18%',
+        status: 'green',
+        sublabel: 'Strong growth'
+      },
+      lastMonth: {
+        label: 'Last Month',
+        value: '+2.3%',
+        status: 'green',
+        sublabel: 'Steady increase'
       }
     }
   },
@@ -82,6 +94,16 @@ export const planningChecklistWorkingDemo: WorkflowConfig = {
       chartContextLabel: '↗ Steady expansion',
       chartContextColor: 'text-purple-600',
       dataColors: { threshold: 18, belowColor: 'bg-purple-500', aboveColor: 'bg-orange-500' }
+    },
+    renewalInsights: {
+      renewalStage: 'Planning',
+      confidence: 85,
+      recommendedAction: 'Standard renewal with modest price increase',
+      keyReasons: [
+        { category: 'Usage', detail: 'Strong usage growth trend' },
+        { category: 'Growth', detail: 'High expansion potential' },
+        { category: 'Risk', detail: 'Low risk profile' }
+      ]
     }
   },
   slides: [

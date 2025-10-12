@@ -87,13 +87,13 @@ const Reporting: React.FC<ReportingProps> = ({ data, onGoToReports }) => {
             
             {/* ===== REFERENCE LINES ===== */}
             {/* Red 100% NRR Baseline Reference Line */}
-            <ReferenceLine 
-              y={100} 
-              stroke="#ef4444" 
+            <ReferenceLine
+              y={100}
+              stroke="#ef4444"
               strokeWidth={3}
               strokeDasharray="5 5"
               yAxisId="nrr"
-              label={{ value: "100% NRR", position: "topLeft", fill: "#ef4444", fontSize: 12 }}
+              label={{ value: "100% NRR", position: "topLeft", fill: "#ef4444", fontSize: 12 } as any}
               style={{ zIndex: 1000 }}
               id="ref-line-100-percent"
             />

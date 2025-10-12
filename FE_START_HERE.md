@@ -114,12 +114,76 @@ C:\Users\strac\dev\renubu\src\components\artifacts\workflows\components\
 ---
 
 ### Phase 3-4: Scene Implementation (Your Main Work)
-**Your Deliverables**:
+
+**Core Deliverables**:
 - [ ] Tier 1 scenes (4 essential workflows)
 - [ ] Tier 2 scenes (3 additional workflows)
 - [ ] All artifact components
 - [ ] Scene transitions and navigation
 - [ ] Customer data context integration
+
+**NEW: Account Plan & Workflow Automation UI** (8-9 hours):
+
+**Task 1: Account Plan Selector Component** (2 hours)
+- [ ] Create `src/components/workflows/AccountPlanSelector.tsx`
+  - 4 plan cards with descriptions
+  - Visual design: Clean, minimal (no badges/colors yet)
+  - Hover states with plan details
+  - Selection state management
+- [ ] Plan descriptions:
+  - **invest**: "Long-term strategic growth - dedicate significant CSM time"
+  - **expand**: "Short-term revenue opportunity - focus on upsell/expansion"
+  - **manage**: "Standard touch - high-threshold events only"
+  - **monitor**: "At-risk defensive attention - frequent health checks"
+
+**Task 2: "Establish Account Plan" Workflow** (2 hours)
+- [ ] Create workflow config: `src/components/workflows/definitions/establishAccountPlanWorkflow.ts`
+- [ ] Chat flow guides CSM through evaluation:
+  - Customer context (ARR, renewal history, relationship quality)
+  - Strategic assessment questions
+  - Plan recommendation with explanation
+- [ ] Uses `<AccountPlanSelector>` as artifact
+- [ ] Saves selection via `/api/customers/[id]/account-plan`
+
+**Task 3: Account Plan Display** (1 hour)
+- [ ] Subtle indicator component (NO colorful badges yet)
+- [ ] Show on customer profile
+- [ ] Show in workflow header
+- [ ] Tooltip with plan description on hover
+
+**Task 4: Priority-Sorted Dashboard** (3-4 hours)
+- [ ] Update CSM dashboard to fetch from `/api/workflows/queue/[csmId]`
+- [ ] Display workflows sorted by priority score
+- [ ] Simple priority indicators (minimal visual noise):
+  - High: Subtle emphasis
+  - Medium: Normal
+  - Low: Slightly muted
+- [ ] Filter controls:
+  - By workflow type (renewal/strategic/opportunity/risk)
+  - By account plan (invest/expand/manage/monitor)
+  - By urgency level
+- [ ] Clean, calm aesthetic (defer detailed design to dashboard redesign)
+
+**Task 5: Priority Score Display** (1 hour)
+- [ ] Score breakdown tooltip/panel
+- [ ] Shows contributing factors:
+  - Base score
+  - ARR multiplier (e.g., "2.0x for $400k ARR")
+  - Account plan multiplier (e.g., "1.5x for invest plan")
+  - Urgency bonus
+  - Workload penalty
+- [ ] "Explain this score" expandable section
+- [ ] Links to configuration docs
+
+**Estimated Total: 8-9 hours**
+
+**Testing Checklist**:
+- [ ] Account plan can be selected and saved
+- [ ] "Establish Account Plan" workflow completes successfully
+- [ ] Dashboard shows prioritized workflows from API
+- [ ] Priority scores display correctly
+- [ ] Filters work as expected
+- [ ] Account plan indicator appears on customers
 
 ---
 

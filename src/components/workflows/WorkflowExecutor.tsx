@@ -21,6 +21,8 @@ import { ArtifactDisplay } from './ArtifactDisplay';
 import { CustomerMetrics, MetricsToggleButton } from './CustomerMetrics';
 import { WorkflowChatPanel } from './WorkflowChatPanel';
 import { TaskPanel } from './TaskPanel';
+import { AccountPlanIndicator } from './AccountPlanIndicator';
+import { AccountPlanType } from './AccountPlanSelector';
 import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
 import { createClient } from '@/lib/supabase';
 
@@ -105,6 +107,8 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
+  const [accountPlan, setAccountPlan] = useState<AccountPlanType | null>(null);
+  const [customerName, setCustomerName] = useState<string>('');
 
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -115,7 +119,22 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
   useEffect(() => {
     initializeExecution();
+    fetchCustomerInfo();
   }, []);
+
+  // Fetch customer info (name and account plan)
+  const fetchCustomerInfo = async () => {
+    try {
+      const response = await fetch(`/api/customers/${customerId}`);
+      if (response.ok) {
+        const { customer } = await response.json();
+        setAccountPlan(customer.account_plan || null);
+        setCustomerName(customer.name || customer.domain || '');
+      }
+    } catch (error) {
+      console.error('[WorkflowExecutor] Error fetching customer info:', error);
+    }
+  };
 
   const initializeExecution = async () => {
     try {
@@ -467,16 +486,20 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
   return (
     <WorkflowContextProvider customerId={customerId} executionId={executionState.executionId}>
-      <div id="workflow-executor" className="h-screen flex flex-col bg-gray-50">
+      <div id="workflow-executor" className="h-full flex flex-col bg-gray-50">
         {/* Header */}
         <div id="workflow-header" className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
         <div className="flex justify-between items-center">
-          <div>
-            <h1 id="workflow-name" className="text-2xl font-bold text-gray-900">{workflowDefinition.name}</h1>
-            <p id="workflow-description" className="text-sm text-gray-600 mt-1">{workflowDefinition.description}</p>
+          <div className="flex items-center space-x-4">
+            <div>
+              <h1 id="workflow-name" className="text-2xl font-bold text-gray-900">{workflowDefinition.name}</h1>
+              <p id="workflow-description" className="text-sm text-gray-600 mt-2">
+                {customerName}
+              </p>
+            </div>
           </div>
 
-          <div id="workflow-controls" className="flex items-center space-x-4">
+          <div id="workflow-controls" className="flex items-center space-x-4 pr-8">
             {/* Metrics Toggle Button */}
             <MetricsToggleButton
               isOpen={metricsOpen}
@@ -541,16 +564,6 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
                 </>
               )}
             </div>
-
-            {/* Exit Button */}
-            {onExit && (
-              <button
-                onClick={onExit}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-              >
-                Exit
-              </button>
-            )}
           </div>
         </div>
 

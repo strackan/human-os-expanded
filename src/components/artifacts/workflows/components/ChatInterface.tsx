@@ -405,10 +405,16 @@ const ChatInterface = React.forwardRef<{
     // Handle special actions from opening message buttons (legacy)
     if (buttonAction && !completeStepId) {
       if (buttonAction === 'nextStep' && onArtifactAction) {
-        // Trigger the nextStep action to complete current step and move to next
-        setTimeout(() => {
-          onArtifactAction({ type: 'nextStep' });
-        }, 500);
+        // Trigger the completeStep action to complete current step and move to next
+        const currentStep = sidePanelConfig?.steps?.[currentStepNumber ? currentStepNumber - 1 : 0];
+        if (currentStep) {
+          setTimeout(() => {
+            onArtifactAction({
+              type: 'completeStep',
+              payload: { stepId: currentStep.id }
+            });
+          }, 500);
+        }
         return;
       } else if (buttonAction === 'completeStep' && onArtifactAction) {
         // Complete the current step using step number

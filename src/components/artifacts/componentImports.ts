@@ -14,7 +14,7 @@ import PlanningChecklistEnhancedArtifact from './PlanningChecklistEnhancedArtifa
 // import PriceRecommendationFlat from './pricing/PriceRecommendationFlat';
 // import ViewContractEnterpriseBasic from './contracts/ViewContractEnterpriseBasic';
 
-export const componentMap: Record<string, React.ComponentType> = {
+export const componentMap: Record<string, React.ComponentType<any>> = {
   'TaskModeCustom': TaskModeCustom,
   'TaskModeGallery': TaskModeGallery,
   'PricingRecommendation': PricingRecommendation,

@@ -127,8 +127,8 @@ const CustomerOverviewHD: React.FC<CustomerOverviewHDProps> = ({ config, classNa
 
           <MetricCardHD metric={metrics.riskScore} />
           <MetricCardHD metric={metrics.growthScore} />
-          <MetricCardHD metric={metrics.yoyGrowth} />
-          <MetricCardHD metric={metrics.lastMonth} />
+          <MetricCardHD metric={metrics.yoyGrowth as CustomerMetric} />
+          <MetricCardHD metric={metrics.lastMonth as CustomerMetric} />
         </div>
       </div>
     </div>

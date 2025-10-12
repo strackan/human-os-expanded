@@ -16,10 +16,10 @@ import { DynamicChatBranch, DynamicChatButton } from './WorkflowConfig';
 export const createSnoozeSkipBranches = () => ({
   'snooze': {
     subflow: 'common.snooze'
-  } as DynamicChatBranch,
+  } as unknown as DynamicChatBranch,
   'skip': {
     subflow: 'common.skip'
-  } as DynamicChatBranch
+  } as unknown as DynamicChatBranch
 });
 
 /**

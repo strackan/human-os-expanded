@@ -7,7 +7,7 @@ import acoCustomerData from '../../../../../lib/mockData/acoCustomerData';
  */
 export const acoStrategicPlanningConfig: WorkflowConfig = {
   customer: {
-    name: 'Apex Consolidated Operations'
+    name: 'Obsidian Black'
   },
   layout: {
     modalDimensions: { width: 90, height: 90, top: 5, left: 5 },
@@ -109,12 +109,12 @@ export const acoStrategicPlanningConfig: WorkflowConfig = {
   },
   chat: {
     placeholder: 'Discuss strategic planning...',
-    aiGreeting: "Hello Sarah! I've analyzed Apex Consolidated Operations, and we have a critical situation. Their health score is 4.2/10, renewal is in 143 days with no auto-renewal clause, and they're evaluating competitors. However, there's an $850K opportunity if we act quickly. Ready to create a strategic recovery plan?",
+    aiGreeting: "Hello Sarah! I've analyzed Obsidian Black, and we have a critical situation. Their health score is 4.2/10, renewal is in 143 days with no auto-renewal clause, and they're evaluating competitors. However, there's an $850K opportunity if we act quickly. Ready to create a strategic recovery plan?",
     mode: 'preload',
     conversationSeed: [
       {
         sender: 'ai',
-        text: "Hello Sarah! I've analyzed Apex Consolidated Operations, and we have a critical situation. Their health score is 4.2/10, renewal is in 143 days with no auto-renewal clause, and they're evaluating competitors. However, there's an $850K opportunity if we act quickly. Ready to create a strategic recovery plan?",
+        text: "Hello Sarah! I've analyzed Obsidian Black, and we have a critical situation. Their health score is 4.2/10, renewal is in 143 days with no auto-renewal clause, and they're evaluating competitors. However, there's an $850K opportunity if we act quickly. Ready to create a strategic recovery plan?",
         type: 'buttons',
         buttons: [
           { label: 'Skip', value: 'skip', 'label-background': '#ef4444', 'label-text': '#ffffff' },
@@ -267,7 +267,7 @@ export const acoStrategicPlanningConfig: WorkflowConfig = {
           <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
             <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-t-lg">
               <h2 class="text-2xl font-bold mb-2">Risk Assessment</h2>
-              <p class="text-red-100">Apex Consolidated Operations - Health Score Analysis</p>
+              <p class="text-red-100">Obsidian Black - Health Score Analysis</p>
             </div>
 
             <div class="p-6">

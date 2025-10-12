@@ -447,7 +447,6 @@ Following up on our initial conversation about the renewal...`,
  * Slide 3: Pricing Strategy (NEW - Demonstrates Pricing Analysis artifact)
  */
 const slide3 = createPricingStrategySlide({
-  slideNumber: 3,
   artifacts: [
     {
       ...createPricingAnalysisArtifact({
@@ -556,7 +555,6 @@ const slide3 = createPricingStrategySlide({
  * Slide 4: Contact Planning (NEW - Demonstrates Contact Strategy artifact)
  */
 const slide4 = createContactPlanningSlide({
-  slideNumber: 4,
   artifacts: [
     {
       ...createContactStrategyArtifact({
@@ -635,7 +633,6 @@ const slide4 = createContactPlanningSlide({
  * Slide 5: Plan Summary (NEW - Demonstrates Plan Summary artifact)
  */
 const slide5 = createPlanSummarySlide({
-  slideNumber: 5,
   artifacts: [
     {
       ...createPlanSummaryArtifact({

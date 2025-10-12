@@ -1,15 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Paperclip, Mic, Square, MoreHorizontal, Brush, Edit, Zap } from 'lucide-react';
 
-const ChatTemplate = ({ 
+interface Message {
+  id: string | number;
+  text: string;
+  sender: string;
+  type?: string;
+  buttons?: any;
+  'button-pos'?: string;
+  timestamp: Date;
+}
+
+interface ChatTemplateProps {
+  conversationSeed?: any[] | null;
+  starting_with?: string;
+  onClose?: () => void;
+}
+
+const ChatTemplate: React.FC<ChatTemplateProps> = ({
   conversationSeed = null,
   starting_with = "ai",
   onClose = () => {}
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Layout states
   const [isSplitMode, setIsSplitMode] = useState(false);
@@ -40,7 +56,7 @@ const ChatTemplate = ({
     });
   };
 
-  const [messages, setMessages] = useState(generateInitialMessages());
+  const [messages, setMessages] = useState<Message[]>(generateInitialMessages());
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,23 +73,27 @@ const ChatTemplate = ({
         id: Date.now(),
         text: inputValue,
         sender: 'user',
+        type: 'text',
+        buttons: null,
         timestamp: new Date()
       }]);
       setInputValue('');
-      
+
       // Simulate AI response
       setTimeout(() => {
         setMessages(prev => [...prev, {
           id: Date.now() + 1,
           text: "I understand you're working on this task. How can I help you proceed?",
           sender: 'ai',
+          type: 'text',
+          buttons: null,
           timestamp: new Date()
         }]);
       }, 1000);
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyPress = (e: any) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -98,21 +118,25 @@ const ChatTemplate = ({
     setShowButtons(!showButtons);
   };
 
-  const handleButtonClick = (buttonValue, buttonLabel, messageId) => {
+  const handleButtonClick = (buttonValue: any, buttonLabel: any, messageId: any) => {
     // Add the user's button response to the conversation
     setMessages(prev => [...prev, {
       id: Date.now(),
       text: buttonLabel,
       sender: 'user',
+      type: 'text',
+      buttons: null,
       timestamp: new Date()
     }]);
-    
+
     // Simulate AI response
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         text: `I understand you selected "${buttonLabel}". How can I help you further?`,
         sender: 'ai',
+        type: 'text',
+        buttons: null,
         timestamp: new Date()
       }]);
     }, 500);
@@ -123,14 +147,18 @@ const ChatTemplate = ({
       id: Date.now(),
       text: "✅ Yes",
       sender: 'user',
+      type: 'text',
+      buttons: null,
       timestamp: new Date()
     }]);
-    
+
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         text: "Great! I'll proceed with that.",
         sender: 'ai',
+        type: 'text',
+        buttons: null,
         timestamp: new Date()
       }]);
     }, 500);
@@ -141,14 +169,18 @@ const ChatTemplate = ({
       id: Date.now(),
       text: "❌ No",
       sender: 'user',
+      type: 'text',
+      buttons: null,
       timestamp: new Date()
     }]);
-    
+
     setTimeout(() => {
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         text: "Understood. Let me know what you'd prefer instead.",
         sender: 'ai',
+        type: 'text',
+        buttons: null,
         timestamp: new Date()
       }]);
     }, 500);
@@ -222,7 +254,7 @@ const ChatTemplate = ({
                       {/* Custom Buttons for seeded conversation */}
                       {message.type === 'buttons' && message.buttons && (
                         <div className={`mt-3 ${message['button-pos'] === 'column' ? 'space-y-2' : 'flex gap-2 flex-wrap'}`}>
-                          {message.buttons.map((button, index) => (
+                          {message.buttons.map((button: any, index: number) => (
                             <button
                               key={index}
                               onClick={() => handleButtonClick(button.value, button.label, message.id)}

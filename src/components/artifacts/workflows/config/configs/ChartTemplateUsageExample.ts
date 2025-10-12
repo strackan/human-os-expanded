@@ -53,9 +53,20 @@ export const chartTemplateUsageExample: WorkflowConfig = {
       },
       // Example of using chart templates with different trends
       yoyGrowth: '{{chart.yoyGrowth.flat}}',        // Flat growth pattern
-      lastMonth: '{{chart.lastMonth.rising}}',      // Rising last month
-      usageTrend: '{{chart.usageTrend.falling}}',   // Falling usage trend
-      userLicenses: '{{chart.userLicenses.flat}}'   // Flat license usage
+      lastMonth: '{{chart.lastMonth.rising}}'       // Rising last month
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.falling}}',     // Falling usage trend
+    userLicenses: '{{chart.userLicenses.flat}}',    // Flat license usage
+    renewalInsights: {
+      renewalStage: 'Planning',
+      confidence: 65,
+      recommendedAction: 'Analyze Mixed Signals',
+      keyReasons: [
+        { category: 'Usage', detail: 'Mixed signals with falling usage trend' },
+        { category: 'Growth', detail: 'Recent rising growth in last month' }
+      ]
     }
   },
   chat: {
@@ -72,7 +83,17 @@ export const chartTemplateUsageExample: WorkflowConfig = {
           { label: 'Skip This Customer', value: 'skip', 'label-background': '#6b7280', 'label-text': '#ffffff' }
         ]
       }
-    ]
+    ],
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: false
+    }
+  },
+  artifacts: {
+    sections: []
   }
 };
 
@@ -128,12 +149,25 @@ export const dynamicChatWithChartTemplates: WorkflowConfig = {
       },
       // Using falling trend templates
       yoyGrowth: '{{chart.yoyGrowth.falling}}',
-      lastMonth: '{{chart.lastMonth.falling}}',
-      usageTrend: '{{chart.usageTrend.falling}}',
-      userLicenses: '{{chart.userLicenses.falling}}'
+      lastMonth: '{{chart.lastMonth.falling}}'
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.falling}}',
+    userLicenses: '{{chart.userLicenses.falling}}',
+    renewalInsights: {
+      renewalStage: 'At Risk',
+      confidence: 35,
+      recommendedAction: 'Immediate Retention Strategy Required',
+      keyReasons: [
+        { category: 'Usage', detail: 'Declining usage trend' },
+        { category: 'Engagement', detail: 'Limited executive engagement' }
+      ]
     }
   },
   chat: {
+    placeholder: 'Feel free to ask any questions here...',
+    aiGreeting: "Hi! I'm here to help with this customer's renewal.",
     mode: 'dynamic',
     dynamicFlow: {
       startsWith: 'ai',
@@ -201,7 +235,17 @@ export const dynamicChatWithChartTemplates: WorkflowConfig = {
           actions: ['nextCustomer']
         }
       }
+    },
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: false
     }
+  },
+  artifacts: {
+    sections: []
   }
 };
 

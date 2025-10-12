@@ -21,8 +21,14 @@ const DynamicAIHD: React.FC = () => {
 
   // Ref for ChatInterface to call its methods
   const chatInterfaceRef = useRef<{
-    advanceToNextStep?: (stepTitle: string) => void;
-  }>(null);
+    getMessages: () => any[];
+    getCurrentInput: () => string;
+    restoreState: (messages: any[], inputValue: string) => void;
+    showWorkingMessage: () => void;
+    hideWorkingMessage: () => void;
+    resetChat: () => void;
+    advanceToNextStep: (stepTitle: string) => void;
+  } | null>(null);
 
   // Use the dynamic AI configuration
   const config: WorkflowConfig = dynamicChatAI;
@@ -105,8 +111,8 @@ const DynamicAIHD: React.FC = () => {
               
               {/* Analytics - 50% height */}
               <div className="h-1/2">
-                <AnalyticsHD 
-                  config={config.analytics} 
+                <AnalyticsHD
+                  config={config.analytics as any}
                   className="h-full"
                 />
               </div>
@@ -153,12 +159,11 @@ const DynamicAIHD: React.FC = () => {
           <div className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
             <ArtifactsPanelHD
               config={currentArtifactsConfig}
-              sidePanelConfig={currentSidePanelConfig}
+              sidePanelConfig={currentSidePanelConfig as any}
               workflowConfigName="dynamic-ai-hd"
               className="h-full overflow-hidden"
               visibleArtifacts={config.chat.mode === 'dynamic' ? visibleArtifacts : undefined}
               onStepClick={handleStepClick}
-              onArtifactButtonClick={handleArtifactAction}
             />
           </div>
         )}

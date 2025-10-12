@@ -129,8 +129,8 @@ const CustomerOverview: React.FC<CustomerOverviewProps> = ({ config, className =
 
           <MetricCard metric={metrics.growthScore} />
 
-          <MetricCard metric={metrics.yoyGrowth} />
-          <MetricCard metric={metrics.lastMonth} />
+          <MetricCard metric={metrics.yoyGrowth as CustomerMetric} />
+          <MetricCard metric={metrics.lastMonth as CustomerMetric} />
         </div>
       </div>
     </div>

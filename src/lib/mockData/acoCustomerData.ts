@@ -1,5 +1,5 @@
 /**
- * Mock data for Apex Consolidated Operations (ACO)
+ * Mock data for Obsidian Black
  * Demo customer for Act 1 - Strategic Planning workflow
  *
  * DATA SPECIFICATION (PM Approved Oct 11, 2025):
@@ -13,7 +13,7 @@ export const acoCustomerData = {
   // Customer Profile
   customer: {
     id: 'aco-001',
-    name: 'Apex Consolidated Operations',
+    name: 'Obsidian Black',
     industry: 'Global Strategic Coordination Services',
     operatives: 450,
     facilities: 23,
@@ -29,7 +29,7 @@ export const acoCustomerData = {
     id: 'aco-marcus',
     name: 'Marcus Castellan',
     title: 'Chief Operating Officer',
-    email: 'marcus.castellan@apexconsolidated.io',
+    email: 'marcus.castellan@obsidianblack.ops',
     phone: '+1 (555) 0100',
     engagementLevel: 'high',
     satisfaction: 'low',
@@ -41,7 +41,7 @@ export const acoCustomerData = {
     id: 'aco-elena',
     name: 'Dr. Elena Voss',
     title: 'VP of Technical Operations',
-    email: 'elena.voss@apexconsolidated.io',
+    email: 'elena.voss@obsidianblack.ops',
     phone: '+1 (555) 0101',
     engagementLevel: 'medium',
     isEvaluatingCompetitors: true,
@@ -181,7 +181,7 @@ export const acoCustomerData = {
     keyRisks: [
       'No auto-renewal clause',
       'Operation Blackout cost $85K and damaged trust',
-      'Elena evaluating 3 competitors (ShadowCore, Helix, Obsidian)',
+      'Elena evaluating 3 competitors (ShadowCore, Helix, Phantom)',
       'Primary stakeholder (Marcus) disengaged for 90 days'
     ],
     keyOpportunities: [

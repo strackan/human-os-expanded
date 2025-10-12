@@ -59,102 +59,102 @@ export default function ArtifactGallery() {
     if (selectedComponent) {
       const loadComponent = async () => {
         try {
-          let componentModule;
+          let componentModule: any;
           // Direct mapping for each component to avoid dynamic import path issues
           switch (selectedComponent.name) {
             case 'PricingRecommendation':
               componentModule = await import('./pricing/PricingRecommendation');
               break;
             case 'PriceRecommendationFlat':
-              module = await import('./pricing/PriceRecommendationFlat');
+              componentModule = await import('./pricing/PriceRecommendationFlat');
               break;
             case 'ViewContractEnterpriseBasic':
-              module = await import('./contracts/ViewContractEnterpriseBasic');
+              componentModule = await import('./contracts/ViewContractEnterpriseBasic');
               break;
             case 'ViewContractEnterprise':
-              module = await import('./contracts/ViewContractEnterprise');
+              componentModule = await import('./contracts/ViewContractEnterprise');
               break;
             case 'ContractWorkflowAlert':
-              module = await import('./contracts/ContractWorkflowAlert');
+              componentModule = await import('./contracts/ContractWorkflowAlert');
               break;
             case 'ViewContractDetails':
-              module = await import('./contracts/ViewContractDetails');
+              componentModule = await import('./contracts/ViewContractDetails');
               break;
             case 'UsageUpsellWorkflow':
-              module = await import('./expansion/UsageUpsellWorkflow');
+              componentModule = await import('./expansion/UsageUpsellWorkflow');
               break;
             case 'PlgPriceIncreaseTest':
-              module = await import('./campaigns/PlgPriceIncreaseTest');
+              componentModule = await import('./campaigns/PlgPriceIncreaseTest');
               break;
             case 'AutomatedPLGCampaigns':
-              module = await import('./campaigns/AutomatedPLGCampaigns');
+              componentModule = await import('./campaigns/AutomatedPLGCampaigns');
               break;
             case 'RenewalsDashboard':
-              module = await import('./dashboards/RenewalsDashboard');
+              componentModule = await import('./dashboards/RenewalsDashboard');
               break;
             case 'ExpansionDashboard-qtr':
-              module = await import('./dashboards/ExpansionDashboard-qtr');
+              componentModule = await import('./dashboards/ExpansionDashboard-qtr');
               break;
             case 'TeamForecast-qtr':
-              module = await import('./dashboards/TeamForecast-qtr');
+              componentModule = await import('./dashboards/TeamForecast-qtr');
               break;
             case 'ChatTemplate':
-              module = await import('./chat/ChatTemplate');
+              componentModule = await import('./chat/ChatTemplate');
               break;
               case 'ChatQuote':
-              module = await import('./chat/ChatQuote');
+              componentModule = await import('./chat/ChatQuote');
               break;
             case 'CSMDashboard':
-              module = await import('./dashboards/CSMDashboard');
+              componentModule = await import('./dashboards/CSMDashboard');
               break;
               case 'TaskModeAdvanced':
-              module = await import('./workflows/TaskModeAdvanced');
+              componentModule = await import('./workflows/TaskModeAdvanced');
               break;
               case 'TaskModeCustom':
-              module = await import('./workflows/TaskModeCustom');
+              componentModule = await import('./workflows/TaskModeCustom');
               break;
             case 'TaskModeGallery':
-              module = await import('./workflows/TaskModeGallery');
+              componentModule = await import('./workflows/TaskModeGallery');
               break;
             case 'RenewalChatWorkflow':
-              module = await import('./RenewalChatWorkflow');
+              componentModule = await import('./RenewalChatWorkflow');
               break;
             case 'PlanningChecklistArtifact':
-              module = await import('./PlanningChecklistArtifact');
+              componentModule = await import('./PlanningChecklistArtifact');
               break;
             case 'ContractArtifact':
-              module = await import('./ContractArtifact');
+              componentModule = await import('./ContractArtifact');
               break;
             case 'PricingAnalysisArtifact':
-              module = await import('./PricingAnalysisArtifact');
+              componentModule = await import('./PricingAnalysisArtifact');
               break;
             case 'ContactStrategyArtifact':
-              module = await import('./ContactStrategyArtifact');
+              componentModule = await import('./ContactStrategyArtifact');
               break;
             case 'PlanSummaryArtifact':
-              module = await import('./PlanSummaryArtifact');
+              componentModule = await import('./PlanSummaryArtifact');
               break;
             case 'PlanningChecklistEnhancedArtifact':
-              module = await import('./PlanningChecklistEnhancedArtifact');
+              componentModule = await import('./PlanningChecklistEnhancedArtifact');
               break;
             // Demo components use specific wrappers
             case 'PlanningChecklistDemo':
-              module = await import('./demos/PlanningChecklistDemoGallery');
+              componentModule = await import('./demos/PlanningChecklistDemoGallery');
               break;
             case 'ContactStrategyDemo':
-              module = await import('./demos/ContactStrategyDemoGallery');
+              componentModule = await import('./demos/ContactStrategyDemoGallery');
               break;
             case 'ContractOverviewDemo':
-              module = await import('./demos/ContractOverviewDemoGallery');
+              componentModule = await import('./demos/ContractOverviewDemoGallery');
               break;
             case 'PricingAnalysisDemo':
-              module = await import('./demos/PricingAnalysisDemoGallery');
+              componentModule = await import('./demos/PricingAnalysisDemoGallery');
               break;
             case 'PlanSummaryDemo':
-              module = await import('./demos/PlanSummaryDemoGallery');
+              componentModule = await import('./demos/PlanSummaryDemoGallery');
               break;
             case 'AllArtifactsMasterDemo':
-              module = await import('./demos/AllArtifactsMasterDemoGallery');
+              componentModule = await import('./demos/AllArtifactsMasterDemoGallery');
               break;
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { allArtifactsMasterDemo } from '@/components/artifacts/workflows/config/configs/AllArtifactsMasterDemo';
 
 export default function CompleteWorkflowDemoPage() {
@@ -42,7 +42,7 @@ export default function CompleteWorkflowDemoPage() {
           Launch Complete Workflow Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={allArtifactsMasterDemo}

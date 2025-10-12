@@ -118,17 +118,81 @@ C:\Users\strac\dev\renubu\docs\planning\API-CONTRACT.md
 - [ ] Demo data structure and seeding strategy
 - [ ] State persistence approach
 - [ ] LLM integration architecture
+- [ ] **Account plan system database schema**
+- [ ] **Workflow automation integration architecture**
 
 ---
 
 ### Phase 3-4: Implementation (Your Main Work)
-**Your Deliverables**:
+
+**Core Deliverables**:
 - [ ] Database migrations for demo schema
 - [ ] Seed scripts with realistic villain data
 - [ ] Customer context API endpoints
 - [ ] Scene progression API
 - [ ] Workflow state management
 - [ ] LLM integration for AI-generated insights
+
+**NEW: Account Plan & Workflow Automation Integration** (7-9 hours):
+
+**Task 1: Database Schema** (30 min)
+- [ ] Add `account_plan` column to customers table
+  - Enum constraint: 'invest' | 'expand' | 'manage' | 'monitor'
+  - Create index for efficient filtering
+- [ ] Add `risk_score` and `opportunity_score` columns (for demo seed data)
+- [ ] Migration script: `20251012000000_account_plans.sql`
+
+**Task 2: Port Automation Modules** (4-5 hours)
+Convert JavaScript → TypeScript from `docs/automation-backup/`:
+- [ ] `workflow-types.js` → `src/lib/workflows/types.ts` (1 hour)
+  - Type definitions for workflows, assignments, scoring factors
+- [ ] `workflow-determination.js` → `src/lib/workflows/determination.ts` (2 hours)
+  - Eligibility rules based on account plan
+  - Threshold checking for risk/opportunity workflows
+- [ ] `workflow-scoring.js` → `src/lib/workflows/scoring.ts` (2 hours)
+  - Priority calculation formula
+  - Score explanation functions
+- [ ] `workflow-orchestrator.js` → `src/lib/workflows/orchestrator.ts` (2 hours)
+  - Ties everything together
+  - Generates sorted workflow queues
+
+**Task 3: Configuration System** (1 hour)
+- [ ] Create `src/lib/workflows/config/scoring-config.ts`
+  - ARR breakpoints and multipliers
+  - Account plan multipliers
+  - Renewal stage urgency scores
+  - Workload penalty settings
+- [ ] Configuration in TypeScript (can migrate to DB later)
+- [ ] Clear comments for non-technical editing
+
+**Task 4: API Endpoints** (2-3 hours)
+- [ ] Update `/api/workflows/queue/[csmId]/route.ts`
+  - Integrate orchestrator
+  - Return prioritized, filtered workflows
+  - Include score breakdown in response
+- [ ] Create `/api/customers/[id]/account-plan/route.ts`
+  - POST: Save account plan selection
+  - GET: Retrieve current plan
+- [ ] Update `/api/workflows/executions` to include account_plan context
+
+**Task 5: Database Adapter** (1 hour)
+- [ ] Convert SQLite queries → Supabase queries
+  - Update data access layer for PostgreSQL
+  - Test with existing demo data
+
+**Task 6: Seed Demo Data** (30 min)
+- [ ] Add account plans to Obsidian Black and other demo customers
+- [ ] Add risk_score and opportunity_score values
+- [ ] Test workflow generation with real data
+
+**Estimated Total: 7-9 hours**
+
+**Testing Checklist**:
+- [ ] Account plan can be saved and retrieved
+- [ ] Workflow determination respects account plan eligibility
+- [ ] Priority scoring produces reasonable rankings
+- [ ] Queue API returns sorted workflows
+- [ ] Configuration changes affect scoring correctly
 
 ---
 

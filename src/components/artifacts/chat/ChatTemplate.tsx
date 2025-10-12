@@ -39,9 +39,9 @@ const ConfigurableChatInterface = () => {
     });
   };
 
-  const handleConfigSubmit = (e) => {
+  const handleConfigSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newMessages = formData.messages.split('\n').filter(msg => msg.trim() !== '');
+    const newMessages = formData.messages.split('\n').filter((msg: string) => msg.trim() !== '');
     setChatConfig({
       starting_with: formData.starting_with,
       messages: newMessages
@@ -49,7 +49,7 @@ const ConfigurableChatInterface = () => {
     setShowConfig(false);
   };
 
-  const handleConfigChange = (field, value) => {
+  const handleConfigChange = (field: string, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { planSummaryDemoConfig } from '@/components/artifacts/workflows/config/configs/PlanSummaryDemoConfig';
 
 export default function PlanSummaryDemoPage() {
@@ -37,7 +37,7 @@ export default function PlanSummaryDemoPage() {
           Launch Plan Summary Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={planSummaryDemoConfig}

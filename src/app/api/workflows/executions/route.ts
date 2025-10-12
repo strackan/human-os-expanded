@@ -18,14 +18,21 @@ export async function POST(request: NextRequest) {
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get current user (skip auth check in demo mode)
+    let userId: string;
+    if (demoMode || authBypassEnabled) {
+      // Use demo user ID in demo mode
+      userId = '00000000-0000-0000-0000-000000000000'; // Demo user placeholder
+    } else {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      userId = user.id;
     }
 
     // Parse request body
@@ -52,7 +59,7 @@ export async function POST(request: NextRequest) {
       workflowName,
       workflowType,
       customerId,
-      userId: user.id,
+      userId: userId,
       totalSteps
     }, supabase);
 

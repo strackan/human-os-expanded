@@ -44,6 +44,9 @@ CREATE TABLE public.customers (
     renewal_date DATE,
     assigned_to UUID REFERENCES public.profiles(id),
     company_id UUID REFERENCES public.companies(id),
+    account_plan TEXT CHECK (account_plan IN ('invest', 'expand', 'manage', 'monitor')),
+    risk_score INTEGER CHECK (risk_score >= 0 AND risk_score <= 100),
+    opportunity_score INTEGER CHECK (opportunity_score >= 0 AND opportunity_score <= 100),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -419,6 +422,10 @@ CREATE INDEX idx_customers_health_score ON public.customers(health_score);
 CREATE INDEX idx_customers_renewal_date ON public.customers(renewal_date);
 CREATE INDEX idx_customers_assigned_to ON public.customers(assigned_to);
 CREATE INDEX idx_customers_company_id ON public.customers(company_id);
+CREATE INDEX idx_customers_account_plan ON public.customers(account_plan) WHERE account_plan IS NOT NULL;
+CREATE INDEX idx_customers_risk_score ON public.customers(risk_score DESC) WHERE risk_score IS NOT NULL;
+CREATE INDEX idx_customers_opportunity_score ON public.customers(opportunity_score DESC) WHERE opportunity_score IS NOT NULL;
+CREATE INDEX idx_customers_workflow_queue ON public.customers(assigned_to, account_plan, renewal_date) WHERE assigned_to IS NOT NULL;
 
 CREATE INDEX idx_customer_properties_customer_id ON public.customer_properties(customer_id);
 CREATE INDEX idx_customer_properties_revenue_tier ON public.customer_properties(revenue_impact_tier);

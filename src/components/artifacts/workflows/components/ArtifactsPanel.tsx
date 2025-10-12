@@ -58,6 +58,8 @@ interface ArtifactsPanelProps {
   progressPercentage?: number; // Progress percentage based on step completion
   currentStepNumber?: number; // Current step number
   totalSteps?: number; // Total number of steps in the workflow
+  currentSlideIndex?: number; // Current slide index for slide-based workflows
+  totalSlides?: number; // Total number of slides in the workflow
 }
 
 interface SideMenuState {
@@ -424,7 +426,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isVisible, isCollapsed, onToggleCol
                   return (
                     <li
                       key={step.id}
-                      onClick={() => onStepClick?.(step.id, step.workflowBranch)}
+                      onClick={() => onStepClick?.(step.id, step.workflowBranch ?? '')}
                       className={`flex items-center gap-3 py-1.5 px-2 cursor-pointer rounded transition-colors ${
                         isActive ? 'bg-blue-100 hover:bg-blue-200' : 'hover:bg-gray-50'
                       }`}

@@ -1,8 +1,8 @@
 /**
- * ACO Strategic Planning Workflow
+ * Obsidian Black Strategic Planning Workflow
  *
  * Five-step workflow for creating strategic recovery plan for
- * Apex Consolidated Operations (at-risk customer).
+ * Obsidian Black (at-risk customer).
  *
  * Based on FE_ACT1_TASKS.md Phase 2: Workflow 1
  */
@@ -10,8 +10,8 @@
 import { WorkflowDefinition } from '../WorkflowExecutor';
 
 export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
-  id: 'aco-strategic-planning',
-  name: 'Strategic Account Planning - Apex Consolidated Operations',
+  id: 'obsblk-strategic-planning',
+  name: 'Strategic Account Planning - Obsidian Black',
   description: 'Create 90-day recovery plan for at-risk coordination services customer',
   steps: [
     // ============================================
@@ -25,7 +25,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
       component: 'GenericFormStep',
       artifacts: [
         {
-          id: 'aco-contract-status',
+          id: 'obsblk-contract-status',
           type: 'status_grid',
           title: 'Annual Coordination Services Agreement - Status',
           config: {
@@ -52,7 +52,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
       component: 'GenericFormStep',
       artifacts: [
         {
-          id: 'aco-incident-timeline',
+          id: 'obsblk-incident-timeline',
           type: 'timeline',
           title: 'Critical Events - Operation Blackout Failure',
           config: {
@@ -85,7 +85,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
           }
         },
         {
-          id: 'aco-service-status',
+          id: 'obsblk-service-status',
           type: 'status_grid',
           title: 'Service Quality Indicators',
           config: {
@@ -112,7 +112,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
       component: 'GenericFormStep',
       artifacts: [
         {
-          id: 'aco-health-breakdown',
+          id: 'obsblk-health-breakdown',
           type: 'status_grid',
           title: 'Health Score Component Analysis',
           config: {
@@ -141,7 +141,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
       component: 'GenericFormStep',
       artifacts: [
         {
-          id: 'aco-concerns-checklist',
+          id: 'obsblk-concerns-checklist',
           type: 'checklist',
           title: 'Primary Concerns - Select Your Focus',
           config: {
@@ -168,7 +168,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
       component: 'GenericFormStep',
       artifacts: [
         {
-          id: 'aco-recovery-plan',
+          id: 'obsblk-recovery-plan',
           type: 'action_tracker',
           title: '90-Day Strategic Recovery Plan',
           config: {
@@ -269,7 +269,7 @@ export const acoStrategicPlanningWorkflow: WorkflowDefinition = {
           }
         },
         {
-          id: 'aco-success-metrics',
+          id: 'obsblk-success-metrics',
           type: 'status_grid',
           title: 'Success Probability Forecast',
           config: {

@@ -1,4 +1,4 @@
-import { WorkflowConfig, WorkflowSlide } from '../WorkflowConfig';
+import { WorkflowConfig, WorkflowSlide, DynamicChatBranch } from '../WorkflowConfig';
 
 // Slide-based workflow configuration
 export const dynamicChatSlides: WorkflowSlide[] = [
@@ -124,8 +124,8 @@ export const dynamicChatSlides: WorkflowSlide[] = [
             'standard': 'standard-renewal'
           }
         },
-        'snooze': { subflow: 'common.snooze' },
-        'skip': { subflow: 'common.skip' },
+        'snooze': { subflow: 'common.snooze' } as unknown as DynamicChatBranch,
+        'skip': { subflow: 'common.skip' } as unknown as DynamicChatBranch,
         'exit-task-mode': {
           response: "Task mode closed. You can reopen it anytime from the dashboard.",
           actions: ['exitTaskMode']
@@ -814,8 +814,8 @@ export const dynamicChatAI: WorkflowConfig = {
             'contract-planning-phase': 'contract-planning-phase'
           }
         },
-        'skip': { subflow: 'common.skip' },
-        'snooze': { subflow: 'common.snooze' },
+        'skip': { subflow: 'common.skip' } as unknown as DynamicChatBranch,
+        'snooze': { subflow: 'common.snooze' } as unknown as DynamicChatBranch,
         'exit-task-mode': {
           response: "Task mode closed. You can reopen it anytime from the dashboard.",
           actions: ['exitTaskMode']

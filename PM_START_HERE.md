@@ -45,6 +45,44 @@ You are the **Master Storyteller and Project Manager**. You:
 
 ---
 
+## 2.5 Core Platform Integration: Account Plans & Workflow Automation
+
+**Integration Source**: Automation backup system (proven, tested code from separate prototype)
+
+**What We're Integrating**:
+1. **Account Plan System** - 4 types that drive workflow behavior
+   - **invest**: Long-term strategic growth accounts (1.5x priority multiplier)
+   - **expand**: Short-term revenue opportunity accounts (1.3x multiplier)
+   - **manage**: Standard accounts, high-threshold events only (1.0x multiplier)
+   - **monitor**: At-risk accounts needing defensive attention (1.2x multiplier)
+
+2. **Workflow Determination Engine** - Automatically determines which workflows each customer needs
+   - Checks account plan eligibility
+   - Applies urgency thresholds
+   - Filters workflows based on customer context
+
+3. **Priority Scoring Algorithm** - Multi-factor formula ranks workflows by importance
+   - ARR multipliers ($150k+ = 2.0x, $100k-150k = 1.5x)
+   - Account plan multipliers (see above)
+   - Renewal stage urgency (Emergency=90, Critical=80, etc.)
+   - CSM workload balancing (-2 points per existing workflow)
+
+4. **Configuration System** - Easy-to-adjust thresholds in config files
+   - No code changes needed to tune behavior
+   - JSON/YAML format for non-technical editing
+   - Can migrate to database tables later
+
+**Why This Matters for Demo**:
+- Sarah uses these features in the story (post-renewal → establish account plan → drives future workflows)
+- Showcases AI-powered workflow assignment (key differentiator)
+- Account plan selection is part of Strategic Planning workflow
+
+**Integration Timeline**: 15-18 hours total (BE: 7-9 + FE: 8-9)
+
+**Status**: Proven code, 159 tests passing, ready to port from JavaScript → TypeScript
+
+---
+
 ## 3. Where to Find Everything
 
 ### Core Project Documents (Read These First!)

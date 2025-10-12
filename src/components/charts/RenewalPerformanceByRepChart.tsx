@@ -29,6 +29,16 @@ interface LegendProps {
   }>;
 }
 
+interface RenewalPerformanceByRepChartProps {
+  data: Array<{
+    rep: string;
+    timeToClose: number;
+    priceIncrease: number;
+    renewalRate: number;
+    nrg: number;
+  }>;
+}
+
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   return (
@@ -59,11 +69,11 @@ const TwoColumnLegend = (props: LegendProps) => {
   );
 };
 
-const RenewalPerformanceByRepChart: React.FC = () => (
+const RenewalPerformanceByRepChart: React.FC<RenewalPerformanceByRepChartProps> = ({ data }) => (
   <div className="flex flex-col h-full min-h-[400px]">
     <div className="flex-1 flex items-center">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={repPerformanceTrailing4QData} margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
+        <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 30 }}>
           <XAxis dataKey="quarter" className="text-xs" />
           <YAxis className="text-xs" tickFormatter={v => `${(v * 100).toFixed(0)}%`} />
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(99,102,241,0.04)' }} />

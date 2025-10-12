@@ -104,10 +104,6 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
         'conservative-strategy': {
           response: "Great, we'll proceed with the conservative strategy.",
           delay: 1,
-          followUp: {
-            text: "Checking contract for business impact...",
-            delay: 2
-          },
           buttons: [
             { label: 'Continue', value: 'check-contract', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }
           ],
@@ -144,10 +140,6 @@ export const bluebirdMemorialPlanningConfig: WorkflowConfig = {
         'send-quote': {
           response: "On it! I've sent the quote to **Joe Devine** and cc'd you using your standard email template.",
           delay: 1,
-          followUp: {
-            text: "I'll check in next week to see how it went and we can set our next steps to reduce risk with this account prior to renewal.",
-            delay: 2
-          },
           buttons: [
             { label: 'Perfect, thank you!', value: 'complete', 'label-background': 'bg-green-100', 'label-text': 'text-green-800' },
             { label: 'Set follow-up reminder', value: 'reminder', 'label-background': 'bg-blue-100', 'label-text': 'text-blue-800' }

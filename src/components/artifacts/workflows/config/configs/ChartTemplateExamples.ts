@@ -55,9 +55,20 @@ export const decliningCustomerConfig: WorkflowConfig = {
       },
       // Chart templates will be applied here
       yoyGrowth: '{{chart.yoyGrowth.falling}}',
-      lastMonth: '{{chart.lastMonth.falling}}',
-      usageTrend: '{{chart.usageTrend.falling}}',
-      userLicenses: '{{chart.userLicenses.falling}}'
+      lastMonth: '{{chart.lastMonth.falling}}'
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.falling}}',
+    userLicenses: '{{chart.userLicenses.falling}}',
+    renewalInsights: {
+      renewalStage: 'At Risk',
+      confidence: 45,
+      recommendedAction: 'Retention Strategy Required',
+      keyReasons: [
+        { category: 'Usage', detail: 'Declining usage trend over 6 months' },
+        { category: 'Engagement', detail: 'Reduced user engagement' }
+      ]
     }
   },
   chat: {
@@ -74,7 +85,17 @@ export const decliningCustomerConfig: WorkflowConfig = {
           { label: 'Skip This Customer', value: 'skip', 'label-background': '#6b7280', 'label-text': '#ffffff' }
         ]
       }
-    ]
+    ],
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: false
+    }
+  },
+  artifacts: {
+    sections: []
   }
 };
 
@@ -130,9 +151,20 @@ export const stableCustomerConfig: WorkflowConfig = {
       },
       // Chart templates will be applied here
       yoyGrowth: '{{chart.yoyGrowth.flat}}',
-      lastMonth: '{{chart.lastMonth.flat}}',
-      usageTrend: '{{chart.usageTrend.flat}}',
-      userLicenses: '{{chart.userLicenses.flat}}'
+      lastMonth: '{{chart.lastMonth.flat}}'
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.flat}}',
+    userLicenses: '{{chart.userLicenses.flat}}',
+    renewalInsights: {
+      renewalStage: 'Planning',
+      confidence: 70,
+      recommendedAction: 'Standard Renewal with Modest Price Increase',
+      keyReasons: [
+        { category: 'Usage', detail: 'Stable usage patterns' },
+        { category: 'Engagement', detail: 'Regular executive check-ins' }
+      ]
     }
   },
   chat: {
@@ -149,7 +181,17 @@ export const stableCustomerConfig: WorkflowConfig = {
           { label: 'Skip This Customer', value: 'skip', 'label-background': '#6b7280', 'label-text': '#ffffff' }
         ]
       }
-    ]
+    ],
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: false
+    }
+  },
+  artifacts: {
+    sections: []
   }
 };
 
@@ -205,9 +247,20 @@ export const growingCustomerConfig: WorkflowConfig = {
       },
       // Chart templates will be applied here
       yoyGrowth: '{{chart.yoyGrowth.rising}}',
-      lastMonth: '{{chart.lastMonth.rising}}',
-      usageTrend: '{{chart.usageTrend.rising}}',
-      userLicenses: '{{chart.userLicenses.rising}}'
+      lastMonth: '{{chart.lastMonth.rising}}'
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.rising}}',
+    userLicenses: '{{chart.userLicenses.rising}}',
+    renewalInsights: {
+      renewalStage: 'Expansion',
+      confidence: 92,
+      recommendedAction: 'Aggressive Price Increase and License Expansion',
+      keyReasons: [
+        { category: 'Usage', detail: 'Excellent usage growth exceeding license limits' },
+        { category: 'Engagement', detail: 'Strong executive relationship and engagement' }
+      ]
     }
   },
   chat: {
@@ -224,7 +277,17 @@ export const growingCustomerConfig: WorkflowConfig = {
           { label: 'Skip This Customer', value: 'skip', 'label-background': '#6b7280', 'label-text': '#ffffff' }
         ]
       }
-    ]
+    ],
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: false
+    }
+  },
+  artifacts: {
+    sections: []
   }
 };
 

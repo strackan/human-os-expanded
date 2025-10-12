@@ -1,20 +1,30 @@
 import React, { useState } from 'react';
-import { 
-  FileDown, 
-  AlertTriangle, 
-  FileCheck, 
-  Scale, 
-  DollarSign, 
-  Search, 
+import {
+  FileDown,
+  AlertTriangle,
+  FileCheck,
+  Scale,
+  DollarSign,
+  Search,
   FileText
 } from 'lucide-react';
 
+type ContractStatus = 'Unsigned' | 'In Review' | 'Signed' | 'Pending Approval' | 'Negotiation';
+
+interface Contract {
+  id: string;
+  customerName: string;
+  status: ContractStatus;
+  value: string;
+  renewalDate: string;
+}
+
 const SimpleView = () => {
-  const [selectedContract, setSelectedContract] = useState(null);
+  const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [showAmendmentPanel, setShowAmendmentPanel] = useState(false);
-  
+
   // Sample contract data
-  const contracts = [
+  const contracts: Contract[] = [
     {
       id: 'CNT-001',
       customerName: 'Acme Corporation',
@@ -39,29 +49,29 @@ const SimpleView = () => {
   ];
 
   // Status styling
-  const statusStyles = {
-    'Unsigned': { 
-      bg: 'bg-red-50', 
+  const statusStyles: Record<ContractStatus, { bg: string; text: string; icon: any }> = {
+    'Unsigned': {
+      bg: 'bg-red-50',
       text: 'text-red-700',
       icon: FileDown
     },
-    'In Review': { 
-      bg: 'bg-yellow-50', 
+    'In Review': {
+      bg: 'bg-yellow-50',
       text: 'text-yellow-700',
       icon: AlertTriangle
     },
-    'Signed': { 
-      bg: 'bg-green-50', 
+    'Signed': {
+      bg: 'bg-green-50',
       text: 'text-green-700',
       icon: FileCheck
     },
-    'Pending Approval': { 
-      bg: 'bg-blue-50', 
+    'Pending Approval': {
+      bg: 'bg-blue-50',
       text: 'text-blue-700',
       icon: Scale
     },
-    'Negotiation': { 
-      bg: 'bg-purple-50', 
+    'Negotiation': {
+      bg: 'bg-purple-50',
       text: 'text-purple-700',
       icon: DollarSign
     }

@@ -3,11 +3,11 @@ export const techvisionData = {
     name: "TechVision Inc.",
     arr: "$350,000",
     stages: [
-      { id: 1, name: "Planning", status: "complete" },
-      { id: 2, name: "Outreach", status: "complete" },
-      { id: 3, name: "Negotiation", status: "current" },
-      { id: 4, name: "Approval", status: "upcoming" },
-      { id: 5, name: "Closed", status: "upcoming" },
+      { id: 1, name: "Planning", status: "complete" as const },
+      { id: 2, name: "Outreach", status: "complete" as const },
+      { id: 3, name: "Negotiation", status: "current" as const },
+      { id: 4, name: "Approval", status: "upcoming" as const },
+      { id: 5, name: "Closed", status: "upcoming" as const },
     ],
   },
   stats: [
@@ -19,10 +19,10 @@ export const techvisionData = {
     { label: "Last Engagement", value: "2 days ago" },
   ],
   aiInsights: [
-    { category: "Value", color: "green", text: "Customer achieved 120% ROI in first year based on usage metrics." },
-    { category: "Milestone", color: "blue", text: "Customer reached 1M transactions last week - key achievement." },
-    { category: "Engagement", color: "purple", text: "Sponsor shared positive feedback after last QBR." },
-    { category: "Opportunity", color: "red", text: "Perfect timing for value summary to reinforce renewal decision." },
+    { category: "Value", color: "green" as const, text: "Customer achieved 120% ROI in first year based on usage metrics." },
+    { category: "Milestone", color: "blue" as const, text: "Customer reached 1M transactions last week - key achievement." },
+    { category: "Engagement", color: "purple" as const, text: "Sponsor shared positive feedback after last QBR." },
+    { category: "Opportunity", color: "red" as const, text: "Perfect timing for value summary to reinforce renewal decision." },
   ],
   miniCharts: [
     { label: "ARR Trend", data: [9, 10, 11, 12, 12.5, 13, 13.5] },

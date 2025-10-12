@@ -19,6 +19,7 @@ import { WorkflowStep } from './WorkflowExecutor';
 import { CustomerAnalysisStep } from './steps/CustomerAnalysisStep';
 import { SimpleFormStep } from './steps/SimpleFormStep';
 import { ReviewStep } from './steps/ReviewStep';
+import { AccountPlanStep } from './steps/AccountPlanStep';
 import { ArtifactRenderer } from './artifacts/ArtifactRenderer';
 import { useTemplateContext } from '@/contexts/WorkflowContext';
 import { resolveTemplate } from '@/utils/templateResolver';
@@ -306,3 +307,6 @@ registerStepComponent('CustomerAnalysisStep', CustomerAnalysisStep);
 // Register Phase 2.4 step components
 registerStepComponent('SimpleFormStep', SimpleFormStep);
 registerStepComponent('ReviewStep', ReviewStep);
+
+// Register Account Plan components
+registerStepComponent('AccountPlanStep', AccountPlanStep);

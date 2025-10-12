@@ -3,11 +3,11 @@ export const dataOneData = {
     name: "DataOne Technologies",
     arr: "$580,000",
     stages: [
-      { id: 1, name: "Planning", status: "current" },
-      { id: 2, name: "Outreach", status: "upcoming" },
-      { id: 3, name: "Negotiation", status: "upcoming" },
-      { id: 4, name: "Approval", status: "upcoming" },
-      { id: 5, name: "Closed", status: "upcoming" },
+      { id: 1, name: "Planning", status: "current" as const },
+      { id: 2, name: "Outreach", status: "upcoming" as const },
+      { id: 3, name: "Negotiation", status: "upcoming" as const },
+      { id: 4, name: "Approval", status: "upcoming" as const },
+      { id: 5, name: "Closed", status: "upcoming" as const },
     ],
   },
   stats: [
@@ -19,10 +19,10 @@ export const dataOneData = {
     { label: "Last Engagement", value: "3 days ago" },
   ],
   aiInsights: [
-    { category: "Profit", color: "green", text: "Customer is likely to accept a 5-7% price increase based on historical data." },
-    { category: "Expansion", color: "blue", text: "Usage patterns indicate 40% more capacity needed in Q4." },
-    { category: "Upsell", color: "purple", text: "Ready for Premium Analytics add-on based on feature usage." },
-    { category: "Risk", color: "red", text: "No major risks identified; renewal probability high." },
+    { category: "Profit", color: "green" as const, text: "Customer is likely to accept a 5-7% price increase based on historical data." },
+    { category: "Expansion", color: "blue" as const, text: "Usage patterns indicate 40% more capacity needed in Q4." },
+    { category: "Upsell", color: "purple" as const, text: "Ready for Premium Analytics add-on based on feature usage." },
+    { category: "Risk", color: "red" as const, text: "No major risks identified; renewal probability high." },
   ],
   miniCharts: [
     { label: "ARR Trend", data: [12, 14, 16, 18, 19, 19.5, 20] },

@@ -31,13 +31,13 @@ const DynamicHDAI: React.FC = () => {
   // Create proper ChatConfig from slide config or use main config
   const currentChatConfig = isSlideBased ? {
     ...config.chat,
-    mode: 'dynamic',
+    mode: 'dynamic' as const,
     dynamicFlow: {
-      startsWith: 'ai',
+      startsWith: 'ai' as const,
       defaultMessage: config.chat.dynamicFlow?.defaultMessage || "I understand you'd like to discuss something else. How can I help?",
-      initialMessage: currentConfig.chat.initialMessage,
-      branches: currentConfig.chat.branches || {},
-      userTriggers: currentConfig.chat.userTriggers || {}
+      initialMessage: (currentConfig.chat as any).initialMessage,
+      branches: (currentConfig.chat as any).branches || {},
+      userTriggers: (currentConfig.chat as any).userTriggers || {}
     }
   } : config.chat;
   
@@ -93,8 +93,8 @@ const DynamicHDAI: React.FC = () => {
             
             {/* Analytics */}
             <div className="h-full border-l border-gray-200" style={{ width: `${chatWidth}%` }}>
-              <Analytics 
-                config={config.analytics} 
+              <Analytics
+                config={config.analytics as any}
                 className="h-full"
               />
             </div>

@@ -30,6 +30,7 @@ export interface ResizableModalProps {
   defaultHeight?: number; // percentage or pixels
   minWidth?: number;
   minHeight?: number;
+  showHeader?: boolean; // whether to show modal header (default true)
 }
 
 type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw' | null;
@@ -46,7 +47,8 @@ export const ResizableModal: React.FC<ResizableModalProps> = ({
   defaultWidth = 80, // 80% of viewport
   defaultHeight = 85, // 85% of viewport
   minWidth = 600,
-  minHeight = 400
+  minHeight = 400,
+  showHeader = true
 }) => {
   // Modal dimensions and position
   const [dimensions, setDimensions] = useState({
@@ -269,48 +271,61 @@ export const ResizableModal: React.FC<ResizableModalProps> = ({
         className="fixed z-50 bg-white rounded-lg shadow-2xl flex flex-col overflow-hidden"
         style={modalStyle}
       >
-        {/* Header (draggable) */}
-        <div
-          onMouseDown={handleDragStart}
-          className={`flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200 flex-shrink-0 ${
-            !isFullScreen ? 'cursor-move' : ''
-          }`}
-        >
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+        {/* Header (draggable) - conditionally rendered */}
+        {showHeader && (
+          <div
+            onMouseDown={handleDragStart}
+            className={`flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200 flex-shrink-0 ${
+              !isFullScreen ? 'cursor-move' : ''
+            }`}
+          >
+            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
 
-          <div className="flex items-center space-x-2">
-            {/* Minimize */}
-            <button
-              onClick={toggleMinimize}
-              className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
-              title="Minimize"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
+            <div className="flex items-center space-x-2">
+              {/* Minimize */}
+              <button
+                onClick={toggleMinimize}
+                className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+                title="Minimize"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
 
-            {/* Full Screen Toggle */}
-            <button
-              onClick={toggleFullScreen}
-              className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
-              title={isFullScreen ? 'Exit full screen' : 'Full screen'}
-            >
-              {isFullScreen ? (
-                <Minimize2 className="w-4 h-4" />
-              ) : (
-                <Maximize2 className="w-4 h-4" />
-              )}
-            </button>
+              {/* Full Screen Toggle */}
+              <button
+                onClick={toggleFullScreen}
+                className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+                title={isFullScreen ? 'Exit full screen' : 'Full screen'}
+              >
+                {isFullScreen ? (
+                  <Minimize2 className="w-4 h-4" />
+                ) : (
+                  <Maximize2 className="w-4 h-4" />
+                )}
+              </button>
 
-            {/* Close */}
-            <button
-              onClick={onClose}
-              className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
-              title="Close"
-            >
-              <X className="w-4 h-4" />
-            </button>
+              {/* Close */}
+              <button
+                onClick={onClose}
+                className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Close Button (when header is hidden) - positioned in upper right */}
+        {!showHeader && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-2 bg-white/90 hover:bg-white rounded-lg shadow-lg border border-gray-200 text-gray-600 hover:text-gray-800 transition-all"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-hidden">

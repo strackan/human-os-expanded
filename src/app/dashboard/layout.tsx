@@ -36,7 +36,7 @@ export default function DashboardLayout({
   const handleSignOut = async () => {
     console.log('🔐 [LAYOUT] Sign out clicked')
     try {
-      await signOut('global')
+      await signOut()
       console.log('✅ [LAYOUT] Signout completed')
     } catch (error) {
       console.error('❌ [LAYOUT] Signout error:', error)

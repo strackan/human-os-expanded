@@ -141,74 +141,62 @@ const ArtifactsPanelHD: React.FC<ArtifactsPanelHDProps> = ({
         return (
           <PlanningChecklistEnhancedArtifact
             title={section.title}
-            description={section.content.description}
+            subtitle={section.content.description}
             items={section.content.items}
             showActions={section.content.showActions}
-            className="text-sm"
           />
         );
       
       case 'pricing-analysis':
         return (
           <PricingAnalysisArtifact
-            title={section.title}
-            content={section.content}
-            className="text-sm"
+            data={section.content}
           />
         );
       
       case 'contract':
         return (
           <ContractArtifact
-            title={section.title}
-            content={section.content}
-            className="text-sm"
+            data={section.content}
           />
         );
-      
+
       case 'contact-strategy':
         return (
           <ContactStrategyArtifact
             title={section.title}
-            content={section.content}
-            className="text-sm"
+            contacts={section.content.contacts || []}
           />
         );
-      
+
       case 'plan-summary':
         return (
           <PlanSummaryArtifact
-            title={section.title}
-            content={section.content}
-            className="text-sm"
+            {...section.content}
           />
         );
-      
+
       case 'document':
         return (
           <DocumentArtifact
             title={section.title}
-            content={section.content}
+            data={section.content}
             className="text-sm"
           />
         );
-      
+
       case 'quote':
         return (
           <QuoteArtifact
-            title={section.title}
-            content={section.content}
-            className="text-sm"
+            data={section.content}
           />
         );
       
       case 'email':
         return (
           <EmailComposer
-            title={section.title}
             content={section.content}
             editable={section.editable}
-            className="text-sm"
           />
         );
       

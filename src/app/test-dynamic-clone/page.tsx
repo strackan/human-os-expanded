@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { dynamicClone } from '@/components/artifacts/workflows/config/configs/DynamicClone';
 
 export default function TestDynamicClonePage() {
@@ -33,7 +33,7 @@ export default function TestDynamicClonePage() {
           Launch Dynamic Clone Test
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={dynamicClone}

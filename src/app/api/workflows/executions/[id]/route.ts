@@ -60,14 +60,16 @@ export async function PUT(
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
 
-    // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get current user (skip auth check in demo mode)
+    if (!demoMode && !authBypassEnabled) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
     }
 
     // Parse request body

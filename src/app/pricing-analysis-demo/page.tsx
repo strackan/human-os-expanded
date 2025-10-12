@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { pricingAnalysisDemoConfig } from '@/components/artifacts/workflows/config/configs/PricingAnalysisDemoConfig';
 
 export default function PricingAnalysisDemoPage() {
@@ -37,7 +37,7 @@ export default function PricingAnalysisDemoPage() {
           Launch Pricing Analysis Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={pricingAnalysisDemoConfig}

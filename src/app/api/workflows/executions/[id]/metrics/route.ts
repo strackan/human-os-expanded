@@ -223,7 +223,7 @@ export async function GET(
     if (latestRenewal?.stage) {
       metrics.push({
         label: 'Stage',
-        value: latestRenewal.stage.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        value: latestRenewal.stage.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
         sublabel: `${latestRenewal.probability}% probability`,
         status: latestRenewal.probability >= 70 ? 'green' : latestRenewal.probability >= 40 ? 'yellow' : 'red',
         priority: 7

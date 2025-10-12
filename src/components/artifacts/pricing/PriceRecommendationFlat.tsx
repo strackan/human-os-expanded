@@ -165,7 +165,7 @@ const PricingRecommendationFlat = () => {
                 No
               </button>
               <div className="flex flex-col items-center">
-                <button className="px-6 py-3 rounded-lg font-medium text-white transition-colors mb-1" style={{backgroundColor: '#2b136c'}} onMouseOver={(e) => e.target.style.backgroundColor = '#1f0d4d'} onMouseOut={(e) => e.target.style.backgroundColor = '#2b136c'}>
+                <button className="px-6 py-3 rounded-lg font-medium text-white transition-colors mb-1" style={{backgroundColor: '#2b136c'}} onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#1f0d4d'} onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2b136c'}>
                   Yes
                 </button>
                 <button className="text-sm text-gray-500 hover:text-gray-700 underline">

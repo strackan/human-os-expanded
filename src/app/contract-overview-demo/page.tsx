@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { contractDemoConfig } from '@/components/artifacts/workflows/config/configs/ContractDemoConfig';
 
 export default function ContractOverviewDemoPage() {
@@ -37,7 +37,7 @@ export default function ContractOverviewDemoPage() {
           Launch Contract Overview Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={contractDemoConfig}

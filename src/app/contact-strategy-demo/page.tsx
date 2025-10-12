@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import TaskModeAdvanced from '@/components/artifacts/workflows/TaskModeAdvanced';
+import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
 import { contactStrategyDemoConfig } from '@/components/artifacts/workflows/config/configs/ContactStrategyDemoConfig';
 
 export default function ContactStrategyDemoPage() {
@@ -37,7 +37,7 @@ export default function ContactStrategyDemoPage() {
           Launch Contact Strategy Demo
         </button>
 
-        <TaskModeAdvanced
+        <TaskModeModal
           isOpen={isOpen}
           onClose={() => setIsOpen(false)}
           workflowConfig={contactStrategyDemoConfig}

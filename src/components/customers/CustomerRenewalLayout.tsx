@@ -35,7 +35,7 @@ export type CustomerRenewalLayoutProps = {
   riskLevel: string;
   riskColor: string;
   chatConfig: {
-    recommendedAction: { label: string; icon: React.ElementType; onClick: () => void };
+    recommendedAction: { label: string; icon: React.ElementType | string; onClick?: () => void };
     botIntroMessage?: string;
     inputPlaceholder?: string;
   };

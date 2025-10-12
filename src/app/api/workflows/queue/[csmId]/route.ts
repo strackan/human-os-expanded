@@ -3,27 +3,14 @@
  *
  * GET /api/workflows/queue/[csmId]?companyId={companyId}
  * - Returns prioritized workflow queue for a CSM
- * - Connects to automation system's workflow orchestrator
+ * - Uses integrated workflow orchestrator system
  * - Workflows sorted by priority (highest first)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
-import path from 'path';
-
-// Import automation orchestrator
-// Using dynamic import since it's a Node.js CommonJS module
-const getOrchestrator = async () => {
-  try {
-    // Path to automation folder (relative to project root)
-    const orchestratorPath = path.join(process.cwd(), '..', 'automation', 'workflow-orchestrator.js');
-    const orchestratorModule = await import(orchestratorPath);
-    return orchestratorModule.default || orchestratorModule;
-  } catch (error) {
-    console.error('Failed to load workflow orchestrator:', error);
-    return null;
-  }
-};
+import { getCustomersNeedingWorkflows } from '@/lib/workflows/data-access';
+import { getWorkflowQueueForCSM, getWorkflowStats, groupWorkflowsByCustomer } from '@/lib/workflows/orchestrator';
 
 export async function GET(
   request: NextRequest,
@@ -57,25 +44,39 @@ export async function GET(
       );
     }
 
-    // Load orchestrator
-    const orchestrator = await getOrchestrator();
-    if (!orchestrator) {
-      return NextResponse.json(
-        { error: 'Workflow orchestrator not available' },
-        { status: 500 }
-      );
+    // Get customers for this CSM from database
+    const customers = await getCustomersNeedingWorkflows(companyId, csmId);
+
+    if (customers.length === 0) {
+      return NextResponse.json({
+        success: true,
+        csmId,
+        companyId,
+        totalWorkflows: 0,
+        stats: {
+          total: 0,
+          byType: { renewal: 0, strategic: 0, opportunity: 0, risk: 0 },
+          byStage: {},
+          byAccountPlan: {},
+          uniqueCustomers: 0,
+          avgPriority: 0,
+          priorityRange: { min: 0, max: 0 }
+        },
+        workflows: [],
+        groupedByCustomer: []
+      });
     }
 
     // Get workflow queue for this CSM
-    const workflowQueue = orchestrator.getWorkflowQueueForCSM(csmId, companyId, {
+    const workflowQueue = getWorkflowQueueForCSM(customers, {
       includeMetadata: true
     });
 
     // Get workflow stats
-    const stats = orchestrator.getWorkflowStats(workflowQueue);
+    const stats = getWorkflowStats(workflowQueue);
 
     // Group by customer (useful for UI)
-    const groupedByCustomer = orchestrator.groupWorkflowsByCustomer(workflowQueue);
+    const groupedByCustomer = groupWorkflowsByCustomer(workflowQueue);
 
     return NextResponse.json({
       success: true,
@@ -91,7 +92,7 @@ export async function GET(
         avgPriority: stats.avg_priority,
         priorityRange: stats.priority_range
       },
-      workflows: workflowQueue.map(assignment => ({
+      workflows: workflowQueue.map((assignment: any) => ({
         // Workflow info
         workflow: {
           id: assignment.workflow.id,
