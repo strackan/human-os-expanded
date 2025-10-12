@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider'; // ADD THIS IMPORT
 import UserAvatarDropdown from './UserAvatarDropdown';
@@ -61,39 +61,46 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   // Fetch unread notification count
   const fetchUnreadCount = async () => {
-    try {
-      const response = await fetch('/api/notifications/unread/count');
-      if (response.ok) {
-        const data = await response.json();
-        setUnreadCount(data.count || 0);
-      }
-    } catch (error) {
-      console.error('[AppLayout] Error fetching unread count:', error);
-    }
+    // TODO: Implement notifications API
+    // Disabled for now to avoid console errors
+    return;
+    // try {
+    //   const response = await fetch('/api/notifications/unread/count');
+    //   if (response.ok) {
+    //     const data = await response.json();
+    //     setUnreadCount(data.count || 0);
+    //   }
+    // } catch (error) {
+    //   console.error('[AppLayout] Error fetching unread count:', error);
+    // }
   };
 
   // Fetch unread notifications when popover opens
   const fetchNotifications = async () => {
-    setLoadingNotifications(true);
-    try {
-      const response = await fetch('/api/notifications/unread?limit=10');
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data.notifications || []);
-      }
-    } catch (error) {
-      console.error('[AppLayout] Error fetching notifications:', error);
-    } finally {
-      setLoadingNotifications(false);
-    }
+    // TODO: Implement notifications API
+    // Disabled for now to avoid console errors
+    setLoadingNotifications(false);
+    return;
+    // setLoadingNotifications(true);
+    // try {
+    //   const response = await fetch('/api/notifications/unread?limit=10');
+    //   if (response.ok) {
+    //     const data = await response.json();
+    //     setNotifications(data.notifications || []);
+    //   }
+    // } catch (error) {
+    //   console.error('[AppLayout] Error fetching notifications:', error);
+    // } finally {
+    //   setLoadingNotifications(false);
+    // }
   };
 
   // Fetch count on mount and every 30 seconds
-  useEffect(() => {
-    fetchUnreadCount();
-    const interval = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  // useEffect(() => {
+  //   fetchUnreadCount();
+  //   const interval = setInterval(fetchUnreadCount, 30000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // Sample reminders for fallback
   const sampleReminders = [
@@ -141,34 +148,47 @@ export default function AppLayout({ children }: AppLayoutProps) {
           role="banner"
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center space-x-6">
-              {/* UPDATED: Use dynamic first name */}
-              <h1 className="text-2xl font-semibold text-gray-900">
-                Welcome back, {getFirstName()}
-              </h1>
-              <div 
-                className="flex items-center space-x-2" 
-                aria-label="Weather information"
-                role="status"
-              >
-                <SunIcon className="h-6 w-6 text-yellow-400" aria-hidden="true" />
-                <span className="text-base font-medium text-gray-800">72°F</span>
-                <span className="text-sm text-gray-500">Sunny</span>
-              </div>
+            {/* Left: Logo + Wordmark */}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600"></div>
+              <span className="text-gray-400 text-sm">renubu</span>
             </div>
-            <div className="flex items-center space-x-4">
-              {/* Reminder Icon with badge and popover */}
+
+            {/* Right: Icons */}
+            <div className="flex items-center gap-6">
+              {/* Check In - Minimal checklist style */}
+              <button
+                type="button"
+                className="text-gray-400 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-lg p-1 transition-colors"
+                aria-label="Check In"
+                onClick={() => {
+                  // TODO: Implement check-in functionality
+                  console.log('Check In clicked');
+                }}
+              >
+                <ClipboardDocumentCheckIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
+
+              {/* Calendar Icon */}
+              <button
+                type="button"
+                className="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-lg p-1 transition-colors"
+                aria-label="Calendar"
+              >
+                <SunIcon className="h-5 w-5" aria-hidden="true" />
+              </button>
+
+              {/* Bell Icon with badge and popover */}
               <Popover onOpenChange={(open) => { if (open) fetchNotifications(); }}>
                 <PopoverTrigger asChild>
                   <button
                     id="reminder-button"
                     type="button"
-                    className="rounded-lg p-2 text-blue-600 hover:bg-blue-100 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
-                    aria-label="Reminders"
+                    className="relative text-gray-400 hover:text-purple-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-lg p-1"
+                    aria-label="Notifications"
                     tabIndex={0}
-                    data-testid="reminder-icon"
                   >
-                    <BookmarkIcon className="h-6 w-6" aria-hidden="true" />
+                    <BookmarkIcon className="h-5 w-5" aria-hidden="true" />
                     {/* Alert badge - only show if count > 0 */}
                     {unreadCount > 0 && (
                       <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full border-2 border-white shadow">
@@ -203,7 +223,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                               <p className="text-sm text-gray-500">{notification.message}</p>
                             </div>
                             {notification.metadata?.dueDate && (
-                              <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                              <span className="text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded">
                                 {notification.metadata.dueDate}
                               </span>
                             )}
@@ -217,39 +237,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     )}
                   </div>
                   <div className="p-3 bg-gray-50 border-t border-gray-200">
-                    <button className="w-full text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    <button className="w-full text-sm text-purple-600 hover:text-purple-700 font-medium">
                       Add New Reminder
                     </button>
                   </div>
                 </PopoverContent>
               </Popover>
-              <form
-                className="relative"
-                role="search"
-                aria-label="Search"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                </span>
-                <input
-                  id="search-input"
-                  type="search"
-                  className="block w-48 rounded-lg border border-gray-300 bg-gray-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-                  placeholder="Search..."
-                  aria-label="Search"
-                  tabIndex={0}
-                />
-              </form>
-              <button
-                id="settings-button"
-                type="button"
-                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="View settings"
-                tabIndex={0}
-              >
-                <Cog6ToothIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
+
               {user ? <UserAvatarDropdown /> : <AuthButton />}
             </div>
           </div>
