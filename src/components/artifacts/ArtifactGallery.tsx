@@ -59,11 +59,11 @@ export default function ArtifactGallery() {
     if (selectedComponent) {
       const loadComponent = async () => {
         try {
-          let module;
+          let componentModule;
           // Direct mapping for each component to avoid dynamic import path issues
           switch (selectedComponent.name) {
             case 'PricingRecommendation':
-              module = await import('./pricing/PricingRecommendation');
+              componentModule = await import('./pricing/PricingRecommendation');
               break;
             case 'PriceRecommendationFlat':
               module = await import('./pricing/PriceRecommendationFlat');
@@ -159,7 +159,7 @@ export default function ArtifactGallery() {
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);
           }
-          setLoadedComponent(() => module.default);
+          setLoadedComponent(() => componentModule.default);
         } catch (error) {
           console.error('Error loading component:', error);
           setLoadedComponent(null);

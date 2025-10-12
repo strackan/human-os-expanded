@@ -464,11 +464,9 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     ? evaluateCondition(artifact.visible, context)
     : true;
 
-  if (!isVisible) return null;
-
-  // Auto-refresh logic
+  // Auto-refresh logic (must be called before any conditional returns)
   useEffect(() => {
-    if (!artifact.autoRefresh || !artifact.refreshInterval || !onRefresh) return;
+    if (!isVisible || !artifact.autoRefresh || !artifact.refreshInterval || !onRefresh) return;
 
     const interval = setInterval(async () => {
       setIsRefreshing(true);
@@ -481,7 +479,10 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     }, artifact.refreshInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [artifact.autoRefresh, artifact.refreshInterval, artifact.id, onRefresh]);
+  }, [isVisible, artifact.autoRefresh, artifact.refreshInterval, artifact.id, onRefresh]);
+
+  // Check visibility after all hooks
+  if (!isVisible) return null;
 
   const handleManualRefresh = async () => {
     if (!onRefresh || isRefreshing) return;

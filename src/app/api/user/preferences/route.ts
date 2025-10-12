@@ -72,11 +72,14 @@ export async function GET(request: NextRequest) {
     // =====================================================
 
     // Try to get existing preferences
-    let { data: preferences, error: prefsError } = await supabase
+    const prefsResult = await supabase
       .from('user_preferences')
       .select('*')
       .eq('user_id', user.id)
       .single();
+
+    let preferences = prefsResult.data;
+    const prefsError = prefsResult.error;
 
     // If no preferences exist, create them with defaults
     if (prefsError && prefsError.code === 'PGRST116') {
@@ -192,11 +195,14 @@ export async function PUT(request: NextRequest) {
     // Get Current Preferences
     // =====================================================
 
-    let { data: currentPrefs, error: fetchError } = await supabase
+    const fetchResult = await supabase
       .from('user_preferences')
       .select('*')
       .eq('user_id', user.id)
       .single();
+
+    let currentPrefs = fetchResult.data;
+    const fetchError = fetchResult.error;
 
     // If no preferences exist, create them first
     if (fetchError && fetchError.code === 'PGRST116') {

@@ -12,12 +12,13 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 import path from 'path';
 
 // Import automation orchestrator
-// Using dynamic require since it's a Node.js CommonJS module
-const getOrchestrator = () => {
+// Using dynamic import since it's a Node.js CommonJS module
+const getOrchestrator = async () => {
   try {
     // Path to automation folder (relative to project root)
     const orchestratorPath = path.join(process.cwd(), '..', 'automation', 'workflow-orchestrator.js');
-    return require(orchestratorPath);
+    const orchestratorModule = await import(orchestratorPath);
+    return orchestratorModule.default || orchestratorModule;
   } catch (error) {
     console.error('Failed to load workflow orchestrator:', error);
     return null;
@@ -57,7 +58,7 @@ export async function GET(
     }
 
     // Load orchestrator
-    const orchestrator = getOrchestrator();
+    const orchestrator = await getOrchestrator();
     if (!orchestrator) {
       return NextResponse.json(
         { error: 'Workflow orchestrator not available' },

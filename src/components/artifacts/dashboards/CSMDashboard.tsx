@@ -4,8 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { Play } from 'lucide-react';
 import { resolveTemplateName } from '../workflows/utils/templateLauncher';
 import { getTemplateGroup } from '../workflows/config/templateGroups';
-import { TaskModeModal } from '../workflows/TaskModeAdvanced';
+import { ResizableModal } from '@/components/workflows/ResizableModal';
+import { WorkflowExecutor } from '@/components/workflows/WorkflowExecutor';
+import { WorkflowDefinition } from '@/components/workflows/WorkflowExecutor';
 import { WorkflowConfig } from '../workflows/config/WorkflowConfig';
+import { acoStrategicPlanningWorkflow } from '@/components/workflows/definitions';
 import {
   acmeCorpConfig,
   intrasoftConfig,
@@ -29,6 +32,8 @@ import {
   planSummaryDemoConfig,
   pricingAnalysisDemoConfig,
   allArtifactsMasterDemo
+  // Act 1 Demo - Bluesoft / ACO
+  // NOTE: acoStrategicPlanningConfig deprecated - now using WorkflowExecutor
 } from '../workflows/config/configs';
 import { renewalPlanningWorkflow } from '../workflows/configs/workflows/RenewalPlanning';
 import Metrics from './Metrics';
@@ -36,7 +41,27 @@ import PriorityTasks from './PriorityTasks';
 import RecentUpdates from './RecentUpdates';
 import Reporting from './Reporting';
 
-// Config mapping for easy lookup
+// Temporary converter: WorkflowConfig → WorkflowDefinition
+// TODO: Replace with proper backend workflow definitions
+function convertWorkflowConfigToDefinition(config: WorkflowConfig, configId: string): WorkflowDefinition {
+  const customerName = config.customer?.name || 'Customer';
+  return {
+    id: configId,
+    name: `Strategic Account Planning - ${customerName}`,
+    description: `Complete strategic planning for ${customerName}`,
+    steps: [
+      {
+        id: 'step-1',
+        number: 1,
+        title: 'Account Overview',
+        description: 'Review customer information and current status',
+        component: 'GenericFormStep'
+      }
+    ]
+  };
+}
+
+// Old Config mapping (deprecated WorkflowConfig system)
 const configMap: Record<string, WorkflowConfig> = {
   'acme': acmeCorpConfig,
   'intrasoft': intrasoftConfig,
@@ -50,17 +75,21 @@ const configMap: Record<string, WorkflowConfig> = {
   'simple-dynamic': simpleDynamicConfig,
   'dynamic-ai': dynamicChatAI,
   'dynamic-ai-templated': dynamicChatAITemplated,
-  'test-templated-dynamic': renewalPlanningWorkflow, // NEW: Renewal Planning workflow (6 steps)
+  'test-templated-dynamic': renewalPlanningWorkflow,
   'dynamic-user': dynamicChatUser,
   'dynamic-chat-example': dynamicChatExampleConfig,
   'dynamic-ai-clone': dynamicClone,
-  // Artifact Showcase Demo Configs
   'planning-checklist-demo': planningChecklistDemoConfig,
   'contract-demo': contractDemoConfig,
   'contact-strategy-demo': contactStrategyDemoConfig,
   'plan-summary-demo': planSummaryDemoConfig,
   'pricing-analysis-demo': pricingAnalysisDemoConfig,
-  'all-artifacts-master-demo': allArtifactsMasterDemo,
+  'all-artifacts-master-demo': allArtifactsMasterDemo
+};
+
+// New WorkflowDefinition mapping (modern system)
+const workflowDefinitionsMap: Record<string, WorkflowDefinition> = {
+  'aco-strategic-planning': acoStrategicPlanningWorkflow
 };
 
 
@@ -118,6 +147,16 @@ const dashboardData = {
   upcomingTasks: [
     {
       id: 1,
+      title: 'Complete Strategic Account Plan',
+      customer: 'Apex Consolidated Operations',
+      type: 'renewal' as const,
+      priority: 'high' as const,
+      dueDate: '2025-10-11',
+      status: 'pending' as const,
+      configId: 'aco-strategic-planning' // Uses new WorkflowDefinition
+    },
+    {
+      id: 2,
       title: 'Renewal Process',
       customer: 'Bluebird Memorial Hospital',
       type: 'renewal' as const,
@@ -126,7 +165,7 @@ const dashboardData = {
       status: 'pending' as const
     },
     {
-      id: 2,
+      id: 3,
       title: 'Expansion Opportunity',
       customer: 'Acme Corp Inc.',
       type: 'expansion' as const,
@@ -135,7 +174,7 @@ const dashboardData = {
       status: 'pending' as const
     },
     {
-      id: 3,
+      id: 4,
       title: 'Health Check',
       customer: 'Intrasoft Solutions',
       type: 'health_check' as const,
@@ -475,7 +514,14 @@ const CSMDashboard: React.FC = () => {
         // Launch specific task - check for task-specific overrides first
         const task = dashboardData.upcomingTasks.find(t => t.id === taskId);
 
-        if (defaultLaunchConfig?.type === 'group') {
+        // First check if task has a specific configId
+        if (task && (task as any).configId) {
+          configToUse = {
+            type: 'template',
+            id: (task as any).configId
+          };
+        }
+        else if (defaultLaunchConfig?.type === 'group') {
           configToUse = {
             type: 'group',
             id: defaultLaunchConfig.id,
@@ -552,10 +598,11 @@ const CSMDashboard: React.FC = () => {
     }
   };
 
-  // Check if we should show a slide-based workflow
+  // Get current workflow (check both systems)
   const getCurrentConfigId = () => modalConfig?.id || defaultLaunchConfig?.id;
   const currentConfigId = getCurrentConfigId();
   const currentConfig = currentConfigId ? configMap[currentConfigId] : null;
+  const currentWorkflowDefinition = currentConfigId ? workflowDefinitionsMap[currentConfigId] : null;
 
   const handleContextualHelp = (update: any) => {
     // TODO: Implement contextual chat functionality
@@ -646,117 +693,58 @@ const CSMDashboard: React.FC = () => {
         onGoToReports={handleGoToReports}
       />
 
-      {/* Task Mode Modal Overlay - Always rendered, controlled by opacity */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-95 z-50 flex items-center justify-center transition-opacity duration-200"
-        style={{
-          padding: '40px',
-          opacity: showTaskModal ? 1 : 0,
-          pointerEvents: showTaskModal ? 'auto' : 'none'
-        }}
-        onClick={handleCloseModal}
+      {/* Resizable Modal with WorkflowExecutor (Modern UX) */}
+      <ResizableModal
+        isOpen={showTaskModal}
+        onClose={handleCloseModal}
+        title={
+          currentWorkflowDefinition?.name ||
+          (currentConfig ? `Strategic Account Planning${currentConfig.customer?.name ? ` - ${currentConfig.customer.name}` : ''}` : 'Workflow')
+        }
+        defaultWidth={90}
+        defaultHeight={90}
+        minWidth={800}
+        minHeight={600}
       >
-          <div
-            className="bg-white rounded-lg shadow-2xl mx-auto overflow-hidden"
-            style={{
-              width: currentConfig?.layout?.modalDimensions?.width ? `${currentConfig.layout.modalDimensions.width}vw` : '80vw',
-              height: currentConfig?.layout?.modalDimensions?.height ? `${currentConfig.layout.modalDimensions.height}vh` : '80vh',
-              minWidth: '400px',
-              minHeight: '300px'
+        {currentWorkflowDefinition ? (
+          // NEW SYSTEM: Use WorkflowDefinition directly
+          <WorkflowExecutor
+            workflowDefinition={currentWorkflowDefinition}
+            customerId="550e8400-e29b-41d4-a716-446655440001"
+            onComplete={(executionId) => {
+              console.log('Workflow completed:', executionId);
+              handleCloseModal();
             }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {(modalConfig?.type === 'group') ? (
-              (() => {
-                // Get the template group
-                const group = getTemplateGroup(modalConfig.id);
-                const groupIndex = modalConfig.groupIndex || 0;
-                
-                if (!group || !group.templates[groupIndex]) {
-                  return (
-                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
-                      <div>
-                        <p>Template group not found</p>
-                        <p>Group ID: {modalConfig.id}</p>
-                        <p>Index: {groupIndex}</p>
-                      </div>
-                    </div>
-                  );
-                }
-                
-                // Get the current template from the group
-                const currentTemplateId = group.templates[groupIndex];
-                const currentConfig = configMap[currentTemplateId];
-                
-                if (!currentConfig) {
-                  return (
-                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
-                      <div>
-                        <p>Template not found in config map</p>
-                        <p>Template ID: {currentTemplateId}</p>
-                        <p>Group: {group.name}</p>
-                      </div>
-                    </div>
-                  );
-                }
-                
-                // Calculate group progress
-                const groupProgress = `Customer ${groupIndex + 1} of ${group.templates.length}`;
-
-                // Get next customer name from next template in group (if exists)
-                let nextCustomerName: string | undefined;
-                if (groupIndex < group.templates.length - 1) {
-                  const nextTemplateId = group.templates[groupIndex + 1];
-                  const nextConfig = configMap[nextTemplateId];
-                  nextCustomerName = nextConfig?.customer.name;
-                }
-
-                // Render the current template from the group
-                return (
-                  <TaskModeModal
-                    isOpen={showTaskModal}
-                    onClose={handleCloseModal}
-                    workflowConfig={currentConfig}
-                    workflowConfigName={currentTemplateId}
-                    inline={true} // Use inline mode but within the modal container
-                    onNextCustomer={handleNextCustomer}
-                    nextCustomerName={nextCustomerName}
-                    groupProgress={groupProgress}
-                  />
-                );
-              })()
-            ) : (
-              (() => {
-                // Determine which config to use for non-group templates
-                const configId = modalConfig?.id || defaultLaunchConfig?.id;
-                const selectedConfig = configId ? configMap[configId] : null;
-
-                if (!selectedConfig) {
-                  return (
-                    <div className="text-center p-8 text-gray-500 h-full flex items-center justify-center">
-                      <div>
-                        <p>Configuration not found</p>
-                        <p>Config ID: {configId || 'none'}</p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <TaskModeModal
-                    isOpen={showTaskModal}
-                    onClose={handleCloseModal}
-                    workflowConfig={selectedConfig}
-                    workflowConfigName={configId}
-                    showArtifact={false} // Start without artifacts visible
-                    artifact_visible={true} // Artifacts available when opened
-                    inline={true} // Use inline mode but within the modal container
-                  />
-                );
-              })()
-            )}
-        </div>
-      </div>
+            onExit={() => {
+              if (confirm('Are you sure you want to exit this workflow?')) {
+                handleCloseModal();
+              }
+            }}
+          />
+        ) : currentConfig ? (
+          // OLD SYSTEM: Convert WorkflowConfig → WorkflowDefinition (legacy)
+          <WorkflowExecutor
+            workflowDefinition={convertWorkflowConfigToDefinition(currentConfig, currentConfigId || 'unknown')}
+            customerId="550e8400-e29b-41d4-a716-446655440001"
+            onComplete={(executionId) => {
+              console.log('Workflow completed:', executionId);
+              handleCloseModal();
+            }}
+            onExit={() => {
+              if (confirm('Are you sure you want to exit this workflow?')) {
+                handleCloseModal();
+              }
+            }}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <div className="text-center">
+              <p>Configuration not found</p>
+              <p className="text-sm mt-2">Config ID: {currentConfigId || 'none'}</p>
+            </div>
+          </div>
+        )}
+      </ResizableModal>
     </div>
   );
 };

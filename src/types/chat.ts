@@ -2,10 +2,10 @@ import { ComponentType } from 'react';
 
 export interface ChatStep {
   bot: string | string[];
-  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress';
+  inputType: 'numberOrSkip' | 'emailOrSkip' | 'choice' | 'choiceOrInput' | 'progress' | 'finalStep';
   choices?: string[];
   progressStep?: number;
-  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void }) => string | string[] | { type: string; text: string; href: string; }[] | (string | { type: string; text: string; href: string; })[];
+  onUser: (answer: string, ctx?: { setPrice?: (price: number) => void; pendingConfirmation?: boolean; pendingValue?: number; [key: string]: any }) => string | string[] | { type: string; text?: string; href?: string; showSummary?: boolean; }[] | (string | { type: string; text?: string; href?: string; showSummary?: boolean; })[] | { type: string; showSummary?: boolean; href?: string };
 }
 
 export interface ProgressStep {

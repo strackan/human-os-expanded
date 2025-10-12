@@ -165,7 +165,7 @@ export async function POST(
       }));
 
     // Get customer context (optional - from workflow execution if available)
-    let customerContext = undefined;
+    const customerContext = undefined;
     if (thread.workflow_execution_id) {
       // TODO: Fetch customer context from workflow execution
       // For now, context is optional

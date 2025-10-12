@@ -45,16 +45,17 @@ const renewalsChatSteps: ChatStep[] = [
     bot: "", // Leave bot message empty, since the previous step's reply already contains the question
     inputType: 'numberOrSkip',
     progressStep: 1, // Move from "Confirm renewal strategy" to "Confirm contacts"
-    pendingConfirmation: false,
     onUser: (answer, context) => {
       // Check if we're in a confirmation state
       if (context?.pendingConfirmation) {
         if (/yes|y|confirm/i.test(answer)) {
           const pendingValue = context.pendingValue;
-          if (pendingValue < 3) {
-            return `Understood. We'll proceed with a ${pendingValue}% increase for this renewal.`;
-          } else if (pendingValue > 8) {
-            return `Noted. We'll proceed with a ${pendingValue}% increase for this renewal.`;
+          if (pendingValue !== undefined) {
+            if (pendingValue < 3) {
+              return `Understood. We'll proceed with a ${pendingValue}% increase for this renewal.`;
+            } else if (pendingValue > 8) {
+              return `Noted. We'll proceed with a ${pendingValue}% increase for this renewal.`;
+            }
           }
         } else if (/no|n|cancel/i.test(answer)) {
           // Re-ask the original question

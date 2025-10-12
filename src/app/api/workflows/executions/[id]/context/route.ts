@@ -77,8 +77,12 @@ export async function GET(
 
     const customerId = execution.customer_id;
 
+    // Handle potential array from foreign key join
+    const rawCustomer = execution.customer;
+    const customerFromDb = rawCustomer ? (Array.isArray(rawCustomer) ? rawCustomer[0] : rawCustomer) : null;
+
     // For demo: If customer data is missing, use mock data
-    const customerData = execution.customer || {
+    const customerData = customerFromDb || {
       id: customerId,
       name: 'Acme Corporation',
       industry: 'Technology',

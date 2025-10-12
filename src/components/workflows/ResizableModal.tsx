@@ -148,7 +148,7 @@ export const ResizableModal: React.FC<ResizableModalProps> = ({
       const deltaY = e.clientY - dragStartRef.current.y;
       const start = dimensionsStartRef.current;
 
-      let newDimensions = { ...start };
+      const newDimensions = { ...start };
 
       // Handle horizontal resizing
       if (resizeDirection.includes('e')) {

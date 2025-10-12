@@ -27,3 +27,7 @@ export { contactStrategyDemoConfig } from './ContactStrategyDemoConfig';
 export { planSummaryDemoConfig } from './PlanSummaryDemoConfig';
 export { pricingAnalysisDemoConfig } from './PricingAnalysisDemoConfig';
 export { allArtifactsMasterDemo } from './AllArtifactsMasterDemo';
+
+// Act 1 Demo - Bluesoft / ACO
+// NOTE: Old config deprecated - now using WorkflowExecutor with WorkflowDefinitions
+// export { acoStrategicPlanningConfig } from './ACOStrategicPlanningConfig';

@@ -32,7 +32,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   setPrice,
   onMultiStepAdvance,
 }) => {
-  const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string | { type: string; text: string; href: string } }[]>([
+  const [history, setHistory] = useState<{ role: 'bot' | 'user'; text: string }[]>([
     steps && steps.length > 0 && steps[0] && steps[0].bot
       ? { role: 'bot', text: typeof steps[0].bot === 'string' ? steps[0].bot : steps[0].bot[0] }
       : { role: 'bot', text: "Welcome! (No chat steps configured.)" }
@@ -237,9 +237,9 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     // Normal step handling with context support
     const context = { ...stepContext, setPrice };
     const botAck = steps[localStep].onUser(choice, context);
-    
+
     // Check if we got a confirmation request (array with confirmation message)
-    if (Array.isArray(botAck) && botAck.length === 1 && 
+    if (Array.isArray(botAck) && botAck.length === 1 && typeof botAck[0] === 'string' &&
         (botAck[0].includes('Are you certain') || botAck[0].includes('Please confirm'))) {
       // This is a confirmation request
       setStepContext(context);
@@ -250,13 +250,13 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
     
     // Check if this was a re-ask (array but not moving forward)
     if (Array.isArray(botAck)) {
-      const isReAsk = (botAck.length === 1 && 
-                       (botAck[0].includes("Let's reconsider") || 
+      const isReAsk = (botAck.length === 1 && typeof botAck[0] === 'string' &&
+                       (botAck[0].includes("Let's reconsider") ||
                         botAck[0].includes("I didn't understand") ||
                         botAck[0].includes("Please confirm"))) ||
-                      (botAck.length === 2 && botAck[1].includes("Please enter 1, 2, or 3"));
-      
-      if (isReAsk && !botAck[0].includes('Are you certain')) {
+                      (botAck.length === 2 && typeof botAck[1] === 'string' && botAck[1].includes("Please enter 1, 2, or 3"));
+
+      if (isReAsk && typeof botAck[0] === 'string' && !botAck[0].includes('Are you certain')) {
         // Reset context and show the message(s)
         setStepContext({});
         setShowConfirmButtons(false);
@@ -316,7 +316,7 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
       // Handle special response types (review, proceed)
       if (botAck.type === 'review') {
         setShowSummary(true);
-      } else if (botAck.type === 'proceed') {
+      } else if (botAck.type === 'proceed' && botAck.href) {
         window.location.href = botAck.href;
       }
     } else {
@@ -420,13 +420,16 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
   };
 
   // Helper to add a bot message with typing effect
-  const addBotMessage = (msg: string | { type: string; text: string; href: string }, showFormAfter: boolean = false) => {
+  const addBotMessage = (msg: string | { type?: string; text?: string; href?: string; showSummary?: boolean; [key: string]: any }, showFormAfter: boolean = false) => {
+    // Only add string messages to history (ignore objects used for control flow)
+    if (typeof msg !== 'string') {
+      return;
+    }
     setIsBotTyping(true);
     setShowFormElements(false); // Hide form elements while typing
-    const typingDuration = Math.max(600, Math.min(2000, (typeof msg === 'string' ? msg : msg.text).length * 30));
+    const typingDuration = Math.max(600, Math.min(2000, msg.length * 30));
     setTimeout(() => {
-      const textToAdd = typeof msg === 'string' ? msg : msg.text;
-      setHistory(prev => [...prev, { role: 'bot', text: textToAdd }]);
+      setHistory(prev => [...prev, { role: 'bot', text: msg }]);
       setIsBotTyping(false);
       // Ensure scroll after message is added
       setTimeout(() => {
@@ -483,32 +486,13 @@ const ConversationalChat: React.FC<ConversationalChatProps> = ({
             </div>
           </div>
         ) : (
-          history.map((msg, i) => {
-          if (!msg.text) return null;
-          if (typeof msg.text === 'string') {
-            return (
-              <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
-                <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
-                  {msg.text}
-                </div>
+          history.map((msg, i) => (
+            <div key={i} className={msg.role === 'bot' ? 'text-left' : 'text-right'}>
+              <div className={msg.role === 'bot' ? 'inline-block bg-gray-100 text-gray-800 rounded-lg px-4 py-2' : 'inline-block bg-blue-600 text-white rounded-lg px-4 py-2'}>
+                {msg.text}
               </div>
-            );
-          }
-          // If it's a link object
-          if (typeof msg.text === 'object' && 'type' in msg.text && msg.text.type === 'link' && 'href' in msg.text && 'text' in msg.text) {
-            return (
-              <div key={i} className="text-center mt-4">
-                <a
-                  href={msg.text.href}
-                  className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {msg.text.text}
-                </a>
-              </div>
-            );
-          }
-          return null;
-        })
+            </div>
+          ))
         )}
         {!showSummary && isBotTyping && <TypingIndicator />}
         <div ref={chatEndRef} />

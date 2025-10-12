@@ -3,13 +3,28 @@
  *
  * GET /api/workflows/executions/[id]/steps/[stepId]/stream
  * - Stream LLM-generated content using Server-Sent Events (SSE)
+ * - Uses Ollama for local LLM inference with mock fallback
  *
  * Phase 3.4: Workflow Execution Framework - LLM Integration
  */
 
 import { NextRequest } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
-import Anthropic from '@anthropic-ai/sdk';
+
+// Simple mock response generator
+function generateMockResponse(prompt: string): string {
+  const lowerPrompt = prompt.toLowerCase();
+
+  if (lowerPrompt.includes('renewal') || lowerPrompt.includes('contract')) {
+    return "Based on the customer's renewal timeline, I recommend scheduling a QBR within the next 30 days to discuss their success metrics and future goals. This will help position the renewal conversation around value delivered.";
+  }
+
+  if (lowerPrompt.includes('risk') || lowerPrompt.includes('churn')) {
+    return "The current health score indicates moderate risk. Key factors to address: 1) Declining product usage over the past 2 months, 2) No executive sponsor engagement in last quarter, 3) Recent support tickets show frustration with feature gaps. Recommend immediate intervention.";
+  }
+
+  return `I've analyzed your request about: "${prompt}". Here are my recommendations:\n\n1. Review current customer engagement metrics\n2. Schedule strategic touch-points with key stakeholders\n3. Prepare value demonstration materials\n4. Develop success plan for next quarter\n\nWould you like me to elaborate on any of these points?`;
+}
 
 export async function GET(
   request: NextRequest,
@@ -49,48 +64,106 @@ export async function GET(
 
     console.log('[LLM Stream] Starting stream for execution:', executionId, 'step:', stepId);
 
-    // Initialize Anthropic client
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY || ''
-    });
+    // Ollama configuration
+    const useOllama = process.env.NEXT_PUBLIC_USE_OLLAMA === 'true';
+    const ollamaModel = process.env.NEXT_PUBLIC_OLLAMA_MODEL || 'llama3.1:8b';
+    const ollamaUrl = 'http://localhost:11434/api/chat';
 
     // Create readable stream
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          // Create LLM stream
-          const messageStream = await anthropic.messages.create({
-            model: 'claude-3-5-sonnet-20241022',
-            max_tokens: 4096,
-            messages: [
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            stream: true
-          });
-
           let fullContent = '';
           let tokenCount = 0;
 
-          // Stream tokens
-          for await (const event of messageStream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-              const token = event.delta.text;
-              fullContent += token;
-              tokenCount++;
-
-              // Send token to client
-              const data = JSON.stringify({
-                type: 'token',
-                content: token,
-                tokenCount
+          if (useOllama) {
+            // Try Ollama streaming
+            try {
+              const ollamaResponse = await fetch(ollamaUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: ollamaModel,
+                  messages: [
+                    {
+                      role: 'system',
+                      content: 'You are a helpful AI assistant helping a Customer Success Manager with renewal workflows.'
+                    },
+                    {
+                      role: 'user',
+                      content: prompt
+                    }
+                  ],
+                  stream: true
+                })
               });
 
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              if (!ollamaResponse.ok) {
+                throw new Error(`Ollama returned ${ollamaResponse.status}`);
+              }
+
+              // Stream Ollama response
+              const reader = ollamaResponse.body?.getReader();
+              if (!reader) throw new Error('No response body');
+
+              const decoder = new TextDecoder();
+              let buffer = '';
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                  if (line.trim()) {
+                    try {
+                      const data = JSON.parse(line);
+                      if (data.message?.content) {
+                        const token = data.message.content;
+                        fullContent += token;
+                        tokenCount++;
+
+                        // Send token to client
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                          type: 'token',
+                          content: token,
+                          tokenCount
+                        })}\n\n`));
+                      }
+                    } catch (e) {
+                      // Skip invalid JSON lines
+                    }
+                  }
+                }
+              }
+
+              console.log('[LLM Stream] Ollama stream complete');
+            } catch (ollamaError) {
+              console.warn('[LLM Stream] Ollama failed, using mock response:', ollamaError);
+              // Fall through to mock response
+              fullContent = generateMockResponse(prompt);
+              tokenCount = fullContent.length;
+
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'token',
+                content: fullContent,
+                tokenCount
+              })}\n\n`));
             }
+          } else {
+            // Use mock response
+            fullContent = generateMockResponse(prompt);
+            tokenCount = fullContent.length;
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'token',
+              content: fullContent,
+              tokenCount
+            })}\n\n`));
           }
 
           // Save artifact to database

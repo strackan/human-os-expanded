@@ -234,20 +234,24 @@ export async function GET(
         .single();
 
       if (!teamError && accountTeam) {
+        const ae = Array.isArray(accountTeam.account_executive) ? accountTeam.account_executive[0] : accountTeam.account_executive;
+        const sa = Array.isArray(accountTeam.solutions_architect) ? accountTeam.solutions_architect[0] : accountTeam.solutions_architect;
+        const es = Array.isArray(accountTeam.executive_sponsor) ? accountTeam.executive_sponsor[0] : accountTeam.executive_sponsor;
+
         const allEmails = [
-          accountTeam.account_executive?.email,
-          accountTeam.solutions_architect?.email,
-          accountTeam.executive_sponsor?.email,
+          ae?.email,
+          sa?.email,
+          es?.email,
           csm?.email
         ].filter(Boolean).join(',');
 
         accountTeamData = {
-          ae: accountTeam.account_executive?.email || null,
-          aeName: accountTeam.account_executive?.name || null,
-          sa: accountTeam.solutions_architect?.email || null,
-          saName: accountTeam.solutions_architect?.name || null,
-          executiveSponsor: accountTeam.executive_sponsor?.email || null,
-          executiveSponsorName: accountTeam.executive_sponsor?.name || null,
+          ae: ae?.email || null,
+          aeName: ae?.name || null,
+          sa: sa?.email || null,
+          saName: sa?.name || null,
+          executiveSponsor: es?.email || null,
+          executiveSponsorName: es?.name || null,
           allEmails
         };
       }
@@ -273,6 +277,11 @@ export async function GET(
     const hoursUntilRenewal = calculateHoursUntilRenewal(renewalDate);
     const now = new Date();
 
+    // Handle potential arrays from foreign key joins
+    const manager = csm?.manager ? (Array.isArray(csm.manager) ? csm.manager[0] : csm.manager) : null;
+    const vpCs = companySettings?.vp_cs ? (Array.isArray(companySettings.vp_cs) ? companySettings.vp_cs[0] : companySettings.vp_cs) : null;
+    const ceoUser = companySettings?.ceo_user ? (Array.isArray(companySettings.ceo_user) ? companySettings.ceo_user[0] : companySettings.ceo_user) : null;
+
     const context: WorkflowContext = {
       customer: {
         id: customer.id,
@@ -297,9 +306,9 @@ export async function GET(
         email: csm?.email || '',
         name: csm?.name || '',
         title: csm?.title || null,
-        manager: csm?.manager?.email || null,
-        managerName: csm?.manager?.name || null,
-        managerTitle: csm?.manager?.title || null
+        manager: manager?.email || null,
+        managerName: manager?.name || null,
+        managerTitle: manager?.title || null
       },
 
       workflow: {
@@ -316,10 +325,10 @@ export async function GET(
 
       company: {
         name: companySettings?.company_name || 'Company',
-        vpCustomerSuccess: companySettings?.vp_cs?.email || null,
-        vpCustomerSuccessName: companySettings?.vp_cs?.name || null,
-        ceo: companySettings?.ceo_user?.email || null,
-        ceoName: companySettings?.ceo_user?.name || null,
+        vpCustomerSuccess: vpCs?.email || null,
+        vpCustomerSuccessName: vpCs?.name || null,
+        ceo: ceoUser?.email || null,
+        ceoName: ceoUser?.name || null,
         csTeamEmail: companySettings?.customer_success_team_email || null,
         execTeamEmail: companySettings?.executive_team_email || null
       },
