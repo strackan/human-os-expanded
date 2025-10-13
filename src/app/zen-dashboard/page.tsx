@@ -1,8 +1,19 @@
 'use client';
 
 import ZenGreeting from '@/components/dashboard/ZenGreeting';
+import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
+import { useRouter } from 'next/navigation';
 
 export default function ZenDashboardPage() {
+  const router = useRouter();
+
+  const handleLaunchWorkflow = () => {
+    // TODO: Navigate to workflow executor with proper workflow ID
+    console.log('Launching Strategic Account Planning workflow...');
+    // For now, navigate to demo-dashboard which has the workflow
+    router.push('/demo-dashboard');
+  };
+
   return (
     <>
       {/* Override the default max-width container for full gradient effect */}
@@ -14,10 +25,14 @@ export default function ZenDashboardPage() {
 
         {/* Placeholder for future sections */}
         <div className="max-w-6xl mx-auto space-y-6">
-          {/* Priority Card will go here */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-10 border border-gray-200 shadow-sm">
-            <p className="text-center text-gray-400 text-sm">Priority Workflow Card (Coming Soon)</p>
-          </div>
+          {/* Priority Workflow Card */}
+          <PriorityWorkflowCard
+            workflowTitle="Complete Strategic Account Plan for Obsidian Black"
+            priority="Critical"
+            dueDate="Today"
+            arr="$2.4M"
+            onLaunch={handleLaunchWorkflow}
+          />
 
           {/* Two columns for Today's Workflows and Quick Actions */}
           <div className="grid grid-cols-2 gap-6">
