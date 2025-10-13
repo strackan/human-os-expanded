@@ -331,22 +331,22 @@ const workflows: Record<'expand' | 'invest' | 'protect', WorkflowStep[]> = {
 
 const strategyInfo = {
   expand: {
-    color: 'bg-green-100 border-green-300 text-green-800',
-    icon: '📈',
-    title: 'EXPAND Strategy',
-    description: 'High health, high growth potential. Focus on upsell and expansion opportunities.'
+    color: 'border-green-200',
+    textColor: 'text-green-700',
+    title: 'Expand',
+    description: 'Growth-focused strategy'
   },
   invest: {
-    color: 'bg-blue-100 border-blue-300 text-blue-800',
-    icon: '🎯',
-    title: 'INVEST Strategy',
-    description: 'Strategic partnership potential. Focus on deepening relationship and long-term value.'
+    color: 'border-blue-200',
+    textColor: 'text-blue-700',
+    title: 'Invest',
+    description: 'Partnership development'
   },
   protect: {
-    color: 'bg-red-100 border-red-300 text-red-800',
-    icon: '🛡️',
-    title: 'PROTECT Strategy',
-    description: 'At-risk account. Focus on retention, resolution, and rebuilding trust.'
+    color: 'border-red-200',
+    textColor: 'text-red-700',
+    title: 'Protect',
+    description: 'Retention & recovery'
   }
 };
 
@@ -376,92 +376,92 @@ export default function StrategicAccountPlanArtifact({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
+    <div className="bg-white h-full flex flex-col">
       {/* Strategy Header */}
-      <div className={`px-6 py-5 border-b-2 ${strategy.color}`}>
-        <div className="flex items-center gap-3">
-          <span className="text-4xl">{strategy.icon}</span>
-          <div className="flex-1">
-            <h2 className="text-2xl font-bold">{strategy.title}</h2>
-            <p className="text-sm mt-1">{strategy.description}</p>
+      <div className={`px-8 py-4 border-b border-l-4 ${strategy.color} bg-gray-50/30`}>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className={`text-base font-medium ${strategy.textColor}`}>{strategy.title} Strategy</h2>
+              <span className="text-xs text-gray-500">•</span>
+              <span className="text-xs text-gray-600">{strategy.description}</span>
+            </div>
+            <p className="text-sm text-gray-600 mt-1">{customerName}</p>
           </div>
+          <Calendar className="w-4 h-4 text-gray-400" />
         </div>
       </div>
 
-      {/* Account Summary */}
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-blue-600" />
-          {customerName} - 9-Step Timeline
-        </h3>
-        <div className="grid grid-cols-3 gap-4 text-sm">
+      {/* Account Summary - Compact */}
+      <div className="px-8 py-3 bg-white border-b border-gray-100">
+        <div className="flex items-center gap-6 text-xs">
           {renewalDate && (
-            <div>
-              <span className="font-medium text-gray-700">Renewal Date:</span>
-              <span className="ml-2 text-gray-900">{renewalDate}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500">Renewal:</span>
+              <span className="font-medium text-gray-900">{renewalDate}</span>
             </div>
           )}
           {currentARR && (
-            <div>
-              <span className="font-medium text-gray-700">Current ARR:</span>
-              <span className="ml-2 text-gray-900">{currentARR}</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500">ARR:</span>
+              <span className="font-medium text-gray-900">{currentARR}</span>
             </div>
           )}
           {healthScore !== undefined && (
-            <div>
-              <span className="font-medium text-gray-700">Health:</span>
-              <span className="ml-2 text-gray-900">{healthScore}/10</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-gray-500">Health:</span>
+              <span className="font-medium text-gray-900">{healthScore}/10</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Workflow Steps */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
-        <div className="space-y-3">
+      {/* Workflow Steps - Scrollable */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="space-y-2">
           {steps.map((step, index) => (
             <div
               key={index}
-              className="border border-gray-200 rounded-lg overflow-hidden transition-all hover:border-gray-300"
+              className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors"
             >
               <button
                 onClick={() => toggleStep(index)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors text-left"
+                className="w-full flex items-center justify-between p-3 hover:bg-gray-50 transition-colors text-left"
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-bold flex-shrink-0">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="bg-gray-100 text-gray-700 px-2.5 py-0.5 rounded text-xs font-medium flex-shrink-0">
                     Day {step.day}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900">{step.title}</h4>
+                    <h4 className="text-sm font-medium text-gray-900">{step.title}</h4>
                     {!expandedSteps.includes(index) && (
-                      <p className="text-sm text-gray-600 mt-1 truncate">{step.description}</p>
+                      <p className="text-xs text-gray-600 mt-0.5 truncate">{step.description}</p>
                     )}
                   </div>
                 </div>
                 {expandedSteps.includes(index) ? (
-                  <ChevronUp className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                  <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 )}
               </button>
 
               {expandedSteps.includes(index) && (
-                <div className="px-4 pb-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-sm text-gray-700 mb-3 leading-relaxed">{step.description}</p>
-                  <div className="bg-white rounded-lg p-3 border border-gray-200">
-                    <p className="font-semibold text-sm text-gray-900 mb-2 flex items-center gap-2">
-                      <CheckSquare className="w-4 h-4 text-blue-600" />
-                      Action Items:
+                <div className="px-3 pb-3 pt-2 bg-gray-50 border-t border-gray-200">
+                  <p className="text-xs text-gray-700 mb-2 leading-relaxed">{step.description}</p>
+                  <div className="bg-white rounded p-2 border border-gray-200">
+                    <p className="text-xs font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                      <CheckSquare className="w-3 h-3 text-gray-400" />
+                      Action Items
                     </p>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5">
                       {step.actions.map((action, i) => (
-                        <li key={i} className="flex items-start gap-3">
+                        <li key={i} className="flex items-start gap-2">
                           <input
                             type="checkbox"
-                            className="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            className="mt-0.5 w-3.5 h-3.5 text-blue-500 border-gray-300 rounded focus:ring-blue-500"
                           />
-                          <span className="text-sm text-gray-700">{action}</span>
+                          <span className="text-xs text-gray-700">{action}</span>
                         </li>
                       ))}
                     </ul>
@@ -475,22 +475,22 @@ export default function StrategicAccountPlanArtifact({
 
       {/* Footer Actions */}
       {(onModify || onAgree || onComeBack) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-white flex gap-3">
+        <div className="px-8 py-4 border-t border-gray-100 bg-white flex gap-3 flex-shrink-0">
           {onModify && (
             <button
               onClick={onModify}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+              className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
             >
-              Modify Plan
+              Modify
             </button>
           )}
 
           {onComeBack && (
             <button
               onClick={onComeBack}
-              className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
+              className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
             >
-              Come Back to This
+              Save for Later
             </button>
           )}
 
@@ -499,9 +499,9 @@ export default function StrategicAccountPlanArtifact({
           {onAgree && (
             <button
               onClick={onAgree}
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
             >
-              I Agree, Let's Execute
+              Continue
             </button>
           )}
         </div>

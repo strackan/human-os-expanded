@@ -49,6 +49,18 @@ export const planSummaryDemoConfig: WorkflowConfig = {
         value: '8.9/10',
         status: 'green',
         sublabel: 'High expansion potential'
+      },
+      yoyGrowth: {
+        label: 'YoY Growth',
+        value: '+14%',
+        status: 'green',
+        sublabel: 'Strong annual growth'
+      },
+      lastMonth: {
+        label: 'Last Month',
+        value: '+2.1%',
+        status: 'green',
+        sublabel: 'Steady increase'
       }
     }
   },

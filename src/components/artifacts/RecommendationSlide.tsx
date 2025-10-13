@@ -54,92 +54,70 @@ export default function RecommendationSlide({
   const getIcon = (iconType: string) => {
     switch (iconType) {
       case 'check':
-        return <CheckCircle className="w-5 h-5 text-green-600" />;
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'trending':
-        return <TrendingUp className="w-5 h-5 text-blue-600" />;
+        return <TrendingUp className="w-4 h-4 text-blue-500" />;
       case 'alert':
-        return <AlertTriangle className="w-5 h-5 text-orange-600" />;
+        return <AlertTriangle className="w-4 h-4 text-orange-500" />;
       case 'target':
-        return <Target className="w-5 h-5 text-purple-600" />;
+        return <Target className="w-4 h-4 text-gray-500" />;
       default:
-        return <CheckCircle className="w-5 h-5 text-gray-600" />;
+        return <CheckCircle className="w-4 h-4 text-gray-400" />;
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-      {/* Hero Section */}
-      <div className="px-8 py-8 bg-gradient-to-br from-purple-600 to-indigo-700 text-white">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-sm font-medium mb-4">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            AI Recommendation
-          </div>
-
-          <h1 className="text-3xl font-bold mb-3">
-            We Recommend: {recommendationType}
+    <div className="bg-white h-full flex flex-col">
+      {/* Header Section */}
+      <div className="px-8 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <h1 className="text-base font-medium text-gray-900">
+            {recommendationType}
           </h1>
-
-          <p className="text-purple-100 text-lg">
-            Based on the information you've provided, a strategic approach will give you the best chance of success.
-          </p>
-
-          {/* Confidence Score */}
-          <div className="mt-6 inline-flex items-center gap-3 px-4 py-2 bg-white/10 rounded-lg border border-white/20">
-            <span className="text-sm font-medium text-purple-100">Confidence</span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white">{confidenceScore}%</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500">Confidence</span>
+            <span className="text-sm font-medium text-gray-900">{confidenceScore}%</span>
           </div>
         </div>
       </div>
 
       {/* Reasons Section */}
-      <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 overflow-y-auto px-8 py-6">
         <div className="max-w-2xl">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Here's why:</h2>
+          <h2 className="text-sm font-medium text-gray-700 mb-4">Key Factors</h2>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {reasons.map((reason, index) => (
               <div
                 key={index}
-                className={`flex items-start gap-4 p-4 rounded-lg border transition-all ${
+                className={`flex items-start gap-3 p-3 rounded-lg border ${
                   reason.highlight
-                    ? 'bg-orange-50 border-orange-200'
-                    : 'bg-gray-50 border-gray-200'
+                    ? 'bg-orange-50/50 border-orange-100'
+                    : 'bg-gray-50 border-gray-100'
                 }`}
               >
                 <div className="flex-shrink-0 mt-0.5">
                   {getIcon(reason.icon)}
                 </div>
                 <p className={`text-sm leading-relaxed ${
-                  reason.highlight ? 'text-gray-900 font-medium' : 'text-gray-700'
+                  reason.highlight ? 'text-gray-900' : 'text-gray-700'
                 }`}>
                   {reason.text}
                 </p>
               </div>
             ))}
           </div>
-
-          {/* What's Next */}
-          <div className="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2">What happens next?</h3>
-            <p className="text-sm text-blue-800 leading-relaxed">
-              We'll guide you through creating a comprehensive strategic account plan with clear action items,
-              timelines, and success metrics. You'll be able to review and modify the plan before finalizing.
-            </p>
-          </div>
         </div>
       </div>
 
       {/* Footer Actions */}
-      <div className="px-8 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center gap-3">
+      <div className="px-8 py-6 border-t border-gray-100 flex justify-between items-center gap-3">
         {onGoBack && (
           <button
             onClick={onGoBack}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-sm font-medium"
+            className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
           >
-            Back to Questions
+            Back
           </button>
         )}
 
@@ -148,9 +126,9 @@ export default function RecommendationSlide({
         {onProceed && (
           <button
             onClick={onProceed}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-lg"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
           >
-            Proceed to Create Plan
+            Continue
             <ChevronRight className="w-5 h-5" />
           </button>
         )}

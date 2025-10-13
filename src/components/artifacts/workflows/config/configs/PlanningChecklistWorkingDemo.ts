@@ -6,6 +6,20 @@ export const planningChecklistWorkingDemo: WorkflowConfig = {
     name: 'Showcase Corp',
     nextCustomer: 'Demo Industries'
   },
+  chat: {
+    placeholder: 'Type your message...',
+    aiGreeting: 'Welcome!',
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: true
+    }
+  },
+  artifacts: {
+    sections: []
+  },
   layout: {
     modalDimensions: { width: 85, height: 90, top: 5, left: 7.5 },
     dividerPosition: 55,

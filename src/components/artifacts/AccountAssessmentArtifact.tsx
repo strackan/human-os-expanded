@@ -42,17 +42,6 @@ export default function AccountAssessmentArtifact({
   };
 
   const handleSubmit = () => {
-    // Validate all fields are filled
-    if (!opportunityReason.trim() || !riskReason.trim() || !yearOverview.trim()) {
-      showToast({
-        message: 'Please answer all questions before submitting',
-        type: 'error',
-        icon: 'alert',
-        duration: 3000
-      });
-      return;
-    }
-
     onSubmit?.({
       opportunityScore,
       opportunityReason: opportunityReason.trim(),

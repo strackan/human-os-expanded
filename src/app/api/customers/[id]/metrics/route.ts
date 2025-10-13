@@ -27,14 +27,16 @@ export async function GET(
     const metrics = [
       {
         label: 'ARR',
-        value: customer.arr ? `$${(customer.arr / 1000).toFixed(0)}K` : '$185K',
+        value: (customer as any).arr ? `$${((customer as any).arr / 1000).toFixed(0)}K` : '$185K',
         status: 'green' as const,
         trend: 'up' as const
       },
       {
         label: 'Health Score',
         value: customer.health_score ? `${customer.health_score}/100` : '85/100',
-        status: customer.health_score ? (customer.health_score >= 80 ? 'green' : customer.health_score >= 60 ? 'yellow' : 'red') as const : 'green' as const,
+        status: (customer.health_score
+          ? (customer.health_score >= 80 ? 'green' : customer.health_score >= 60 ? 'yellow' : 'red')
+          : 'green') as 'green' | 'yellow' | 'red',
         trend: 'flat' as const
       },
       {
@@ -49,12 +51,12 @@ export async function GET(
       },
       {
         label: 'Risk Score',
-        value: customer.risk_level
-          ? customer.risk_level.charAt(0).toUpperCase() + customer.risk_level.slice(1)
+        value: (customer as any).risk_level
+          ? (customer as any).risk_level.charAt(0).toUpperCase() + (customer as any).risk_level.slice(1)
           : 'Low',
-        status: customer.risk_level === 'high' ? 'red' as const
-          : customer.risk_level === 'medium' ? 'yellow' as const
-          : 'green' as const,
+        status: ((customer as any).risk_level === 'high' ? 'red'
+          : (customer as any).risk_level === 'medium' ? 'yellow'
+          : 'green') as 'green' | 'yellow' | 'red',
         trend: 'flat' as const
       }
     ];
