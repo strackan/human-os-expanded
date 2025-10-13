@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Sparkles, CheckCircle2, MessageSquare, Target, TrendingUp, Heart, Zap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Sparkles, ChevronDown, ChevronRight, MessageSquare, Target, TrendingUp, Heart, Zap } from 'lucide-react';
 import SendEmailPopover from './popovers/SendEmailPopover';
 import ScheduleMeetingPopover from './popovers/ScheduleMeetingPopover';
 import CreateTaskPopover from './popovers/CreateTaskPopover';
@@ -24,6 +24,12 @@ interface QuickActionsProps {
 export default function QuickActions({ className = '' }: QuickActionsProps) {
   const [activeTab, setActiveTab] = useState<'starters' | 'plans' | 'noticed' | 'mystuff'>('starters');
   const [activeAction, setActiveAction] = useState<QuickActionData | null>(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Reset expanded state when tab changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [activeTab]);
 
   const handleActionClick = (actionData: QuickActionData) => {
     setActiveAction(actionData);
@@ -78,9 +84,16 @@ export default function QuickActions({ className = '' }: QuickActionsProps) {
           <Sparkles className="w-5 h-5 text-purple-400" />
           <span className="text-sm text-purple-600 font-medium">Quick Actions</span>
         </div>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-purple-600 transition-colors">
-          <CheckCircle2 className="w-4 h-4" />
-          <span>check in</span>
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label={isExpanded ? 'Collapse' : 'Expand'}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-5 h-5" />
+          ) : (
+            <ChevronRight className="w-5 h-5" />
+          )}
         </button>
       </div>
 
@@ -106,6 +119,7 @@ export default function QuickActions({ className = '' }: QuickActionsProps) {
         {/* Starters Tab */}
         {activeTab === 'starters' && (
           <div className="animate-fadeIn space-y-3">
+            {/* First card - always shown */}
             <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
               <div className="flex items-start gap-3">
                 <MessageSquare className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
@@ -127,53 +141,60 @@ export default function QuickActions({ className = '' }: QuickActionsProps) {
                 </button>
               </div>
             </div>
-            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
-              <div className="flex items-start gap-3">
-                <MessageSquare className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">Acme Corp new VP of Engineering</p>
-                  <p className="text-xs text-gray-500">Opportunity to reconnect</p>
+
+            {/* Remaining cards - shown when expanded */}
+            {isExpanded && (
+              <>
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-700 mb-1">Acme Corp new VP of Engineering</p>
+                      <p className="text-xs text-gray-500">Opportunity to reconnect</p>
+                    </div>
+                    <button
+                      onClick={() => handleActionClick({
+                        type: 'email',
+                        title: 'Reconnect email',
+                        customer: 'Acme Corp',
+                        contact: 'New VP of Engineering'
+                      })}
+                      className="text-gray-400 hover:text-purple-500 transition-colors p-1"
+                      aria-label="Quick action"
+                    >
+                      <Zap className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleActionClick({
-                    type: 'email',
-                    title: 'Reconnect email',
-                    customer: 'Acme Corp',
-                    contact: 'New VP of Engineering'
-                  })}
-                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
-                  aria-label="Quick action"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-            <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-sm transition-all">
-              <div className="flex items-start gap-3">
-                <MessageSquare className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">TechFlow contract ends in 60 days</p>
-                  <p className="text-xs text-gray-500">Schedule renewal discussion</p>
+                <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-sm transition-all">
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-700 mb-1">TechFlow contract ends in 60 days</p>
+                      <p className="text-xs text-gray-500">Schedule renewal discussion</p>
+                    </div>
+                    <button
+                      onClick={() => handleActionClick({
+                        type: 'remind',
+                        title: 'TechFlow renewal discussion',
+                        customer: 'TechFlow'
+                      })}
+                      className="text-gray-400 hover:text-indigo-500 transition-colors p-1"
+                      aria-label="Quick action"
+                    >
+                      <Zap className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleActionClick({
-                    type: 'remind',
-                    title: 'TechFlow renewal discussion',
-                    customer: 'TechFlow'
-                  })}
-                  className="text-gray-400 hover:text-indigo-500 transition-colors p-1"
-                  aria-label="Quick action"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Plans Tab */}
         {activeTab === 'plans' && (
           <div className="animate-fadeIn space-y-3">
+            {/* First card - always shown */}
             <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all">
               <div className="flex items-start gap-3">
                 <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -194,32 +215,37 @@ export default function QuickActions({ className = '' }: QuickActionsProps) {
                 </button>
               </div>
             </div>
-            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all">
-              <div className="flex items-start gap-3">
-                <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">TechFlow: Renewal Strategy</p>
-                  <p className="text-xs text-gray-500">Due this week</p>
+
+            {/* Remaining cards - shown when expanded */}
+            {isExpanded && (
+              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all">
+                <div className="flex items-start gap-3">
+                  <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-700 mb-1">TechFlow: Renewal Strategy</p>
+                    <p className="text-xs text-gray-500">Due this week</p>
+                  </div>
+                  <button
+                    onClick={() => handleActionClick({
+                      type: 'task',
+                      title: 'Plan Renewal Strategy',
+                      customer: 'TechFlow'
+                    })}
+                    className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                    aria-label="Quick action"
+                  >
+                    <Zap className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleActionClick({
-                    type: 'task',
-                    title: 'Plan Renewal Strategy',
-                    customer: 'TechFlow'
-                  })}
-                  className="text-gray-400 hover:text-blue-500 transition-colors p-1"
-                  aria-label="Quick action"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {/* Noticed Tab */}
         {activeTab === 'noticed' && (
           <div className="animate-fadeIn space-y-3">
+            {/* First card - always shown */}
             <div className="p-4 bg-green-50 rounded-xl border border-green-100 hover:border-green-300 hover:shadow-sm transition-all">
               <div className="flex items-start gap-3">
                 <TrendingUp className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
@@ -240,26 +266,30 @@ export default function QuickActions({ className = '' }: QuickActionsProps) {
                 </button>
               </div>
             </div>
-            <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 hover:border-orange-300 hover:shadow-sm transition-all">
-              <div className="flex items-start gap-3">
-                <TrendingUp className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">CloudSync: 3 support tickets</p>
-                  <p className="text-xs text-gray-500">May need check-in</p>
+
+            {/* Remaining cards - shown when expanded */}
+            {isExpanded && (
+              <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 hover:border-orange-300 hover:shadow-sm transition-all">
+                <div className="flex items-start gap-3">
+                  <TrendingUp className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-700 mb-1">CloudSync: 3 support tickets</p>
+                    <p className="text-xs text-gray-500">May need check-in</p>
+                  </div>
+                  <button
+                    onClick={() => handleActionClick({
+                      type: 'meeting',
+                      title: 'Check-in call',
+                      customer: 'CloudSync'
+                    })}
+                    className="text-gray-400 hover:text-orange-500 transition-colors p-1"
+                    aria-label="Quick action"
+                  >
+                    <Zap className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleActionClick({
-                    type: 'meeting',
-                    title: 'Check-in call',
-                    customer: 'CloudSync'
-                  })}
-                  className="text-gray-400 hover:text-orange-500 transition-colors p-1"
-                  aria-label="Quick action"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
               </div>
-            </div>
+            )}
           </div>
         )}
 

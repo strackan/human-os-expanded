@@ -56,7 +56,7 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
   return (
     <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-purple-500" />
@@ -79,8 +79,8 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
         </button>
       </div>
 
-      {/* RYG Progress Bar */}
-      <div className="mb-4">
+      {/* RYG Progress Bar - always shown */}
+      <div className="mt-12">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-gray-500">Progress</span>
           <span className="text-xs font-medium text-gray-600">{Math.round(percentComplete)}%</span>
@@ -96,9 +96,9 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
 
       {/* Expanded Content */}
       {isExpanded && (
-        <div className="mt-4 animate-fadeIn">
+        <>
           {/* View Toggle Tabs */}
-          <div className="flex gap-2 mb-4 border-b border-gray-200">
+          <div className="flex gap-2 my-4 border-b border-gray-200">
             <button
               onClick={() => setViewMode('category')}
               className={`px-3 py-2 text-sm font-medium transition-colors ${
@@ -178,7 +178,7 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
               ))}
             </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
+import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen';
 import { useRouter } from 'next/navigation';
 
 interface PriorityWorkflow {
@@ -22,6 +23,7 @@ export default function ZenDashboardPage() {
   const router = useRouter();
   const [priorityWorkflow, setPriorityWorkflow] = useState<PriorityWorkflow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [taskModeOpen, setTaskModeOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -53,10 +55,8 @@ export default function ZenDashboardPage() {
   }, []);
 
   const handleLaunchWorkflow = () => {
-    // TODO: Navigate to workflow executor with proper workflow ID
     console.log('Launching Strategic Account Planning workflow...');
-    // For now, navigate to demo-dashboard which has the workflow
-    router.push('/demo-dashboard');
+    setTaskModeOpen(true);
   };
 
   return (
@@ -99,6 +99,17 @@ export default function ZenDashboardPage() {
           {/* Below the fold content will go here */}
         </div>
       </div>
+
+      {/* Task Mode Fullscreen */}
+      {taskModeOpen && priorityWorkflow && (
+        <TaskModeFullscreen
+          workflowId={priorityWorkflow.id}
+          workflowTitle={priorityWorkflow.title}
+          customerId={priorityWorkflow.customerId}
+          customerName={priorityWorkflow.customerName}
+          onClose={() => setTaskModeOpen(false)}
+        />
+      )}
     </>
   );
 }

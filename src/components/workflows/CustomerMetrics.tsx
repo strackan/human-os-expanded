@@ -66,17 +66,17 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
 
   // Fetch metrics from API when opened
   React.useEffect(() => {
-    if (isOpen && !propMetrics && executionId) {
+    if (isOpen && !propMetrics && customerId) {
       fetchMetrics();
     }
-  }, [isOpen, executionId, propMetrics]);
+  }, [isOpen, customerId, propMetrics]);
 
   const fetchMetrics = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log('[CustomerMetrics] Fetching metrics for execution:', executionId);
-      const response = await fetch(`/api/workflows/executions/${executionId}/metrics`);
+      console.log('[CustomerMetrics] Fetching metrics for customer:', customerId);
+      const response = await fetch(`/api/customers/${customerId}/metrics`);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));

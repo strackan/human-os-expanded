@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ChatProvider } from "@/context/ChatContext";
 import { DateProvider } from "@/context/DateContext";
@@ -9,6 +10,7 @@ import { PageTransitionProvider } from "../components/layout/PageTransitionConte
 // import AuthProviderWrapper from "@/components/auth/AuthProviderWrapper";
 import AuthProvider from "@/components/auth/AuthProvider";
 import RouteGuard from "@/components/auth/RouteGuard";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,24 +26,24 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous"></script>
-      </head>
       <body className={inter.className}>
-              <AuthProvider>
-          <RouteGuard>
-            <ChatProvider>
-              <DateProvider>
-                <PageTransitionProvider>
-                  <AppLayout>
-                    {children}
-                    <GlobalChat />
-                  </AppLayout>
-                </PageTransitionProvider>
-              </DateProvider>
-            </ChatProvider>
-          </RouteGuard>
-        </AuthProvider>
+        <Script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous" strategy="afterInteractive" />
+        <ToastProvider>
+          <AuthProvider>
+            <RouteGuard>
+              <ChatProvider>
+                <DateProvider>
+                  <PageTransitionProvider>
+                    <AppLayout>
+                      {children}
+                      <GlobalChat />
+                    </AppLayout>
+                  </PageTransitionProvider>
+                </DateProvider>
+              </ChatProvider>
+            </RouteGuard>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );
