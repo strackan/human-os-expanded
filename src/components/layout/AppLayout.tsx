@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider'; // ADD THIS IMPORT
 import UserAvatarDropdown from './UserAvatarDropdown';
@@ -156,17 +156,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Right: Icons */}
             <div className="flex items-center gap-6">
-              {/* Check In - Minimal checklist style */}
+              {/* Check In - Coffee Mug Icon */}
               <button
                 type="button"
-                className="text-gray-400 hover:text-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-lg p-1 transition-colors"
+                className="hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500 rounded-lg p-1 transition-all"
                 aria-label="Check In"
                 onClick={() => {
                   // TODO: Implement check-in functionality
                   console.log('Check In clicked');
                 }}
               >
-                <ClipboardDocumentCheckIcon className="h-5 w-5" aria-hidden="true" />
+                <i className="fa-duotone fa-light fa-mug-hot text-lg" style={{ '--fa-primary-color': '#936c6c', '--fa-secondary-color': '#936c6c' } as React.CSSProperties}></i>
               </button>
 
               {/* Calendar Icon */}

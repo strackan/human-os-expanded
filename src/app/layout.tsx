@@ -24,6 +24,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous"></script>
+      </head>
       <body className={inter.className}>
               <AuthProvider>
           <RouteGuard>

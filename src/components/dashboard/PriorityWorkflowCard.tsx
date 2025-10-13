@@ -1,7 +1,6 @@
 'use client';
 
-import { PlayIcon } from '@heroicons/react/24/solid';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { Target } from 'lucide-react';
 
 interface PriorityWorkflowCardProps {
   workflowTitle: string;
@@ -43,12 +42,12 @@ export default function PriorityWorkflowCard({
       {/* Header Row */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <ChartBarIcon className="w-6 h-6 text-purple-500" />
-          <span className="text-sm text-gray-500 uppercase tracking-wide">Today's Priority Workflow</span>
+          <Target className="w-6 h-6 text-purple-500" />
+          <span className="text-sm text-gray-500 uppercase tracking-wide">If You Do One Thing Today (make it this)</span>
         </div>
-        {/* Subtle Launch Icon */}
+        {/* Subtle Launch Icon - Passage/Door */}
         <div className="flex items-center gap-2 text-gray-400 group-hover:text-purple-500 transition-colors">
-          <PlayIcon className="w-5 h-5 fill-current" />
+          <img src="/passage_icon.png" alt="Launch" className="w-6 h-6 opacity-40 group-hover:opacity-70 transition-opacity" />
           <span className="text-xs font-medium">Launch Task Mode</span>
         </div>
       </div>
