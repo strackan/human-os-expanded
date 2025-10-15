@@ -103,10 +103,10 @@ export default function ChatModal({ isOpen, onClose, customer }: ChatModalProps)
   const handleSendMessage = () => {
     if (!messageInput.trim() || !customer) return;
 
-    const newMessages = [
+    const newMessages: ChatMessage[] = [
       ...messages,
-      { 
-        role: 'user',
+      {
+        role: 'user' as const,
         content: messageInput,
         timestamp: new Date().toISOString()
       }
@@ -119,7 +119,7 @@ export default function ChatModal({ isOpen, onClose, customer }: ChatModalProps)
       setMessages([
         ...newMessages,
         {
-          role: 'assistant',
+          role: 'assistant' as const,
           content: `I understand your interest in ${messageInput.toLowerCase()}. Based on ${customer.name}'s renewal data, this relates to their current status and upcoming renewal. Would you like me to provide more specific information or discuss potential actions?`,
           timestamp: new Date().toISOString()
         }

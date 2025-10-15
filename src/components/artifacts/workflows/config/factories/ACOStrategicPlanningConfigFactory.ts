@@ -201,11 +201,11 @@ export function createACOStrategicPlanningConfig(
         ...(criticalIncident
           ? [
               {
-                sender: 'user',
+                sender: 'user' as const,
                 text: `What went wrong with ${criticalIncident.name}?`
               },
               {
-                sender: 'ai',
+                sender: 'ai' as const,
                 text: `${criticalIncident.name} was ${customer.name}'s most critical failure. ${criticalIncident.failure_reason || 'A platform issue caused the operation to fail'}, costing them ${formatARR(incidentCost)}. Combined with an 87-day communication gap after your predecessor left, and 4 different support liaisons in 8 months, trust is severely damaged.`
               }
             ]
@@ -221,11 +221,11 @@ export function createACOStrategicPlanningConfig(
         ...(secondaryContactName
           ? [
               {
-                sender: 'user',
+                sender: 'user' as const,
                 text: `Tell me about ${secondaryContactName}`
               },
               {
-                sender: 'ai',
+                sender: 'ai' as const,
                 text: `${secondaryContactName} is ${secondaryContactTitle} and is evaluating ALL vendors. Priority: establish relationship within 7 days. This is both a risk AND your biggest opportunity with a ${formatARR(expansionOpportunity)} expansion potential.`
               }
             ]

@@ -191,12 +191,12 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
   const chatInterfaceRef = useRef<{
     showWorkingMessage: () => void;
     hideWorkingMessage: () => void;
-    getMessages?: () => any[];
-    getCurrentInput?: () => string;
-    restoreState?: (messages: any[], inputValue: string) => void;
-    resetChat?: () => void;
-    navigateToBranch?: (branchId: string) => void;
-    addSeparator?: (stepTitle: string) => void;
+    getMessages: () => any[];
+    getCurrentInput: () => string;
+    restoreState: (messages: any[], inputValue: string) => void;
+    resetChat: () => void;
+    navigateToBranch: (branchId: string) => void;
+    addSeparator: (stepTitle: string) => void;
   }>(null);
   const sideMenuRef = useRef<{
     showSideMenu: () => void;
@@ -324,7 +324,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     } else if (action.type === 'resetChat') {
       console.log('TaskModeAdvanced: Processing resetChat action');
       // Reset the chat interface to initial state
-      if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+      if (chatInterfaceRef.current) {
         chatInterfaceRef.current.resetChat();
       }
     } else if (action.type === 'resetToInitialState') {
@@ -359,7 +359,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
         const enteringStep = currentSidePanelConfig?.steps?.[stepNumber - 1]; // stepNumber is 1-based, array is 0-based
 
         // Add separator for the step we're entering
-        if (enteringStep && chatInterfaceRef.current?.addSeparator) {
+        if (enteringStep && chatInterfaceRef.current) {
           chatInterfaceRef.current.addSeparator(enteringStep.title);
         }
 
@@ -382,7 +382,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       // Reset step number to beginning
       setCurrentStepNumber(1);
       // Reset the chat interface
-      if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+      if (chatInterfaceRef.current) {
         chatInterfaceRef.current.resetChat();
       }
     } else if (action.type === 'navigateToBranch') {
@@ -390,7 +390,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
       // Navigate to a specific conversation branch
       if (action.payload?.branchId && chatInterfaceRef.current) {
         const attemptNavigation = (retries = 0) => {
-          if (chatInterfaceRef.current?.navigateToBranch) {
+          if (chatInterfaceRef.current) {
             console.log('TaskModeAdvanced: navigateToBranch available, calling it');
             chatInterfaceRef.current.navigateToBranch(action.payload.branchId);
           } else if (retries < 5) {
@@ -510,7 +510,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
     }
     
     // Reset the chat interface - this will handle both dynamic and static configs
-    if (chatInterfaceRef.current && chatInterfaceRef.current.resetChat) {
+    if (chatInterfaceRef.current) {
       chatInterfaceRef.current.resetChat();
     }
   };
@@ -915,7 +915,7 @@ const TaskModeModal = forwardRef<TaskModeModalRef, TaskModeModalProps>(({
               totalSteps={currentSidePanelConfig?.steps?.length}
               completedSteps={completedSteps}
               onSideMenuToggle={(isVisible) => setIsSideMenuVisible(isVisible)}
-              sideMenuRef={sideMenuRef}
+              sideMenuRef={sideMenuRef as any}
             />
           </div>
         )}

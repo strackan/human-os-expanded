@@ -9,6 +9,7 @@ export const planningFlatSlides: WorkflowSlide[] = [
     slideNumber: 1,
     title: 'Slide 1',
     description: 'First slide test',
+    label: 'Test Step',
     stepMapping: 'slide-1',
     chat: {
       initialMessage: {
@@ -150,7 +151,6 @@ export const planningFlatWorkflow: WorkflowConfig = {
     placeholder: 'Type here...',
     aiGreeting: "Hello!",
     mode: 'dynamic',
-    presentationStyle: 'slides',
     dynamicFlow: {
       startsWith: 'ai',
       defaultMessage: "Please click a button above.",

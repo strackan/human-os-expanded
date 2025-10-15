@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, Users, DollarSign, ChevronRight, Calendar, AlertCircle, CheckCircle, Shield, Edit2, Briefcase, Building, Code, TrendingUp, BarChart3, Activity } from 'lucide-react';
+import { FileText, Users, DollarSign, ChevronRight, Calendar, AlertCircle, CheckCircle, Shield, Edit2, Briefcase, Building, Code, TrendingUp, BarChart3, Activity, Clock, X } from 'lucide-react';
+import ContactEditModal from './ContactEditModal';
 
 interface Contact {
   name: string;
@@ -48,6 +49,11 @@ interface AccountOverviewArtifactProps {
   onBack?: () => void;
   onContactConfirm?: (contact: Contact) => void;
   onContactEdit?: (contact: Contact) => void;
+  onContactUpdate?: (oldContact: Contact, newContact: Contact, context: { davidRole: string; newContactRole: string }) => void;
+  onContractQuestion?: (question: string, answer: string) => void;
+  showSkipSnooze?: boolean;
+  onSkip?: () => void;
+  onSnooze?: () => void;
 }
 
 export default function AccountOverviewArtifact({
@@ -58,10 +64,17 @@ export default function AccountOverviewArtifact({
   onContinue,
   onBack,
   onContactConfirm,
-  onContactEdit
+  onContactEdit,
+  onContactUpdate,
+  onContractQuestion,
+  showSkipSnooze = false,
+  onSkip,
+  onSnooze
 }: AccountOverviewArtifactProps) {
   const [activeTab, setActiveTab] = useState<'contract' | 'contacts' | 'pricing'>('contract');
   const [localContacts, setLocalContacts] = useState(contacts);
+  const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const getContactTypeConfig = (type: Contact['type']) => {
     switch (type) {
@@ -118,6 +131,29 @@ export default function AccountOverviewArtifact({
     );
     setLocalContacts(updatedContacts);
     onContactConfirm?.(contact);
+  };
+
+  const handleContactEditClick = (contact: Contact) => {
+    setEditingContact(contact);
+    setIsEditModalOpen(true);
+    onContactEdit?.(contact);
+  };
+
+  const handleContactUpdate = (newContact: Contact, context: { davidRole: string; newContactRole: string }) => {
+    if (editingContact) {
+      // Update local contacts list
+      const updatedContacts = localContacts.map(c =>
+        c.email === editingContact.email ? { ...newContact, confirmed: false } : c
+      );
+      setLocalContacts(updatedContacts);
+
+      // Notify parent component
+      onContactUpdate?.(editingContact, newContact, context);
+
+      // Close modal
+      setIsEditModalOpen(false);
+      setEditingContact(null);
+    }
   };
 
   return (
@@ -364,7 +400,7 @@ export default function AccountOverviewArtifact({
                           </button>
                         )}
                         <button
-                          onClick={() => onContactEdit?.(contact)}
+                          onClick={() => handleContactEditClick(contact)}
                           className="p-1 hover:bg-white/50 rounded transition-colors"
                           title="Edit contact"
                         >
@@ -537,14 +573,40 @@ export default function AccountOverviewArtifact({
 
       {/* Footer Actions */}
       <div className="px-8 py-6 border-t border-gray-100 flex justify-between items-center gap-3">
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
-          >
-            Back
-          </button>
-        )}
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
+            >
+              Back
+            </button>
+          )}
+
+          {/* Skip/Snooze Controls */}
+          {showSkipSnooze && (
+            <div className="flex items-center gap-2 ml-2">
+              {onSnooze && (
+                <button
+                  onClick={onSnooze}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                  title="Snooze this workflow"
+                >
+                  <Clock className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                </button>
+              )}
+              {onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                  title="Skip this workflow"
+                >
+                  <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="flex-1"></div>
 
@@ -558,6 +620,19 @@ export default function AccountOverviewArtifact({
           </button>
         )}
       </div>
+
+      {/* Contact Edit Modal */}
+      {editingContact && (
+        <ContactEditModal
+          isOpen={isEditModalOpen}
+          currentContact={editingContact}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingContact(null);
+          }}
+          onUpdate={handleContactUpdate}
+        />
+      )}
     </div>
   );
 }

@@ -4,15 +4,32 @@ import { useState } from 'react';
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 
-interface TodaysWorkflowsProps {
-  className?: string;
+interface WorkflowItem {
+  workflowId: string;
+  title: string;
+  customerId: string;
+  customerName: string;
+  description?: string;
+  day?: string;
 }
 
-export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'category' | 'list'>('category');
+interface TodaysWorkflowsProps {
+  className?: string;
+  workflows?: WorkflowItem[];
+  onWorkflowClick?: (workflow: WorkflowItem) => void;
+  completedWorkflowIds?: Set<string>;
+}
 
-  // Static demo data - hardcoded
+export default function TodaysWorkflows({
+  className = '',
+  workflows: providedWorkflows,
+  onWorkflowClick,
+  completedWorkflowIds = new Set()
+}: TodaysWorkflowsProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [viewMode, setViewMode] = useState<'category' | 'list'>('list'); // Default to list when workflows provided
+
+  // Static demo data - hardcoded (fallback when no workflows provided)
   const categories = [
     { name: 'Check-ins', complete: true, count: 0 },
     { name: 'Renewals', complete: true, count: 0 },
@@ -24,7 +41,8 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
     { name: 'QBRs', complete: false, count: 1 }
   ];
 
-  const workflows = [
+  // Use provided workflows if available, otherwise use fallback hardcoded data
+  const staticWorkflows = [
     { customer: 'Obsidian Black', workflow: 'Strategic Account Plan', priority: 'Critical', complete: false },
     { customer: 'DataViz Corp', workflow: 'Expansion Discovery', priority: 'High', complete: false },
     { customer: 'Acme Industries', workflow: 'Health Score Review', priority: 'High', complete: false },
@@ -34,8 +52,19 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
     { customer: 'NexGen Solutions', workflow: 'Pricing Review', priority: 'Medium', complete: false },
   ];
 
-  const totalWorkflows = 10;
-  const completedWorkflows = 3;
+  // Map provided workflows to display format
+  const displayWorkflows = providedWorkflows?.map(wf => ({
+    customer: wf.customerName,
+    workflow: wf.title,
+    priority: 'High' as const, // Default priority
+    complete: completedWorkflowIds.has(wf.workflowId),
+    workflowData: wf
+  }));
+
+  const workflows = displayWorkflows || staticWorkflows;
+
+  const totalWorkflows = providedWorkflows?.length || 10;
+  const completedWorkflows = completedWorkflowIds.size || 3;
   const percentComplete = (completedWorkflows / totalWorkflows) * 100;
 
   const getPriorityColor = (priority: string) => {
@@ -153,8 +182,14 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
           {viewMode === 'list' && (
             <div className="space-y-2">
               {workflows.map((item, idx) => (
-                <div
+                <button
                   key={idx}
+                  onClick={() => {
+                    if (!item.complete && 'workflowData' in item && onWorkflowClick && item.workflowData) {
+                      onWorkflowClick(item.workflowData as WorkflowItem);
+                    }
+                  }}
+                  disabled={item.complete}
                   className={`w-full p-3 rounded-xl border transition-all text-left ${
                     item.complete
                       ? 'bg-green-50 border-green-200 opacity-60 cursor-default'
@@ -174,7 +209,7 @@ export default function TodaysWorkflows({ className = '' }: TodaysWorkflowsProps
                       {item.priority}
                     </span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

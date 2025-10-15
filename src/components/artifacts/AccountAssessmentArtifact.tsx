@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mic, ChevronRight } from 'lucide-react';
+import { Mic, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/ToastProvider';
 
 interface AccountAssessmentArtifactProps {
@@ -26,11 +26,14 @@ export default function AccountAssessmentArtifact({
   onBack
 }: AccountAssessmentArtifactProps) {
   const { showToast } = useToast();
+  const [currentQuestion, setCurrentQuestion] = useState(0);
   const [opportunityScore, setOpportunityScore] = useState<number>(5);
   const [opportunityReason, setOpportunityReason] = useState('');
   const [riskScore, setRiskScore] = useState<number>(5);
   const [riskReason, setRiskReason] = useState('');
   const [yearOverview, setYearOverview] = useState('');
+
+  const totalQuestions = 3;
 
   const handleMicClick = () => {
     showToast({

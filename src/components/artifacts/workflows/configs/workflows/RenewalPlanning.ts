@@ -114,6 +114,7 @@ export const renewalPlanningWorkflow: WorkflowConfig = {
     }
   },
   sidePanel: {
+    enabled: true,
     title: {
       text: "Renewal Planning",
       subtitle: "Dynamic Corp - 6 Steps",
@@ -171,11 +172,19 @@ export const renewalPlanningWorkflow: WorkflowConfig = {
         icon: "✅"
       }
     ],
+    progressMeter: {
+      currentStep: 1,
+      totalSteps: 6,
+      progressPercentage: 0,
+      showPercentage: true,
+      showStepNumbers: true
+    },
     showSteps: true,
     showProgressMeter: false
   },
   chat: {
     placeholder: 'Type your question or select an option...',
+    aiGreeting: "Hi! Let's plan the renewal for Dynamic Corp.",
     mode: 'dynamic',
     features: {
       attachments: false,

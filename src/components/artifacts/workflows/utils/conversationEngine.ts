@@ -13,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'enterStep' | 'advanceWithoutComplete' | 'resetWorkflow';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'enterStep' | 'advanceWithoutComplete' | 'resetWorkflow' | 'navigateToBranch';
   payload?: any;
 }
 
@@ -182,19 +182,22 @@ export class ConversationEngine {
     let isExactMatch = false;
     let clickedButton: DynamicChatButton | null = null;
 
-    if (currentBranchData?.nextBranches) {
-      nextBranchName = currentBranchData.nextBranches[userInput] || null;
+    // Type guard: all subflows should be resolved in constructor, so we can safely cast
+    const currentBranch = !isSubflowReference(currentBranchData) ? currentBranchData as DynamicChatBranch | null : null;
+
+    if (currentBranch?.nextBranches) {
+      nextBranchName = currentBranch.nextBranches[userInput] || null;
       isExactMatch = !!nextBranchName;
 
-      if (!isExactMatch && currentBranchData.buttons) {
-        const matchedButton = currentBranchData.buttons.find(
+      if (!isExactMatch && currentBranch.buttons) {
+        const matchedButton = currentBranch.buttons.find(
           btn => btn.label.toLowerCase() === userInput.toLowerCase() ||
                  btn.value.toLowerCase() === userInput.toLowerCase()
         );
         if (matchedButton) {
           clickedButton = matchedButton;
-          nextBranchName = currentBranchData.nextBranches[matchedButton.value] ||
-                          currentBranchData.nextBranches[matchedButton.label];
+          nextBranchName = currentBranch.nextBranches[matchedButton.value] ||
+                          currentBranch.nextBranches[matchedButton.label];
           isExactMatch = !!nextBranchName;
         }
       }
@@ -224,7 +227,21 @@ export class ConversationEngine {
     }
 
     if (nextBranchName && this.flow.branches[nextBranchName]) {
-      const nextBranch = this.flow.branches[nextBranchName];
+      const nextBranchData = this.flow.branches[nextBranchName];
+
+      // Type guard: all subflows should be resolved in constructor, so we can safely cast
+      if (isSubflowReference(nextBranchData)) {
+        console.error('Unexpected subflow reference in processUserInput:', nextBranchName);
+        return {
+          text: "I'm sorry, there was an error processing your request. Please try again.",
+          buttons: currentBranch?.buttons?.map(button => ({
+            ...button,
+            label: substituteVariablesWithMappings(button.label, this.variableContext)
+          }))
+        };
+      }
+
+      const nextBranch = nextBranchData as DynamicChatBranch;
 
       this.state.history.push({
         branch: nextBranchName,
@@ -261,11 +278,11 @@ export class ConversationEngine {
       };
     }
 
-    const defaultMessage = this.getCurrentDefaultMessage(currentBranchData || undefined);
+    const defaultMessage = this.getCurrentDefaultMessage(currentBranch || undefined);
 
     return {
       text: defaultMessage,
-      buttons: currentBranchData?.buttons?.map(button => ({
+      buttons: currentBranch?.buttons?.map(button => ({
         ...button,
         label: substituteVariablesWithMappings(button.label, this.variableContext)
       }))

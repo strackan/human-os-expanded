@@ -93,7 +93,21 @@ export const createWorkflowSlide = (config: WorkflowSlideConfig): WorkflowSlide 
     artifacts: {
       sections: config.artifacts
     },
-    sidePanel: config.sidePanel,
+    sidePanel: config.sidePanel ? {
+      ...config.sidePanel,
+      title: {
+        ...config.sidePanel.title,
+        subtitle: config.sidePanel.title.subtitle || '',
+        icon: config.sidePanel.title.icon || '📋'
+      },
+      steps: config.sidePanel.steps.map(step => ({
+        ...step,
+        description: step.description || '',
+        icon: step.icon || '⚡',
+        workflowBranch: step.workflowBranch || step.id,
+        status: step.status === 'skipped' ? 'pending' : (step.status as 'pending' | 'in-progress' | 'completed')
+      }))
+    } : undefined,
     onComplete: config.onComplete
   };
 };
@@ -186,11 +200,11 @@ export interface PricingStrategySlideConfig extends Omit<BaseSlideConfig, 'id' |
 export const createPricingStrategySlide = (config: PricingStrategySlideConfig): WorkflowSlide => {
   return createWorkflowSlide({
     id: 'pricing-strategy',
-    slideNumber: config.slideNumber || 3,
+    slideNumber: 3,
     title: 'Pricing Strategy',
     description: 'Analyze and optimize pricing approach',
     label: 'Pricing Strategy',
-    stepMapping: config.stepMapping || 'pricing-strategy',
+    stepMapping: 'pricing-strategy',
     showSideMenu: config.showSideMenu ?? false,
     customerOverview: config.customerOverview,
     analytics: config.analytics,
@@ -228,11 +242,11 @@ export interface ContactPlanningSlideConfig extends Omit<BaseSlideConfig, 'id' |
 export const createContactPlanningSlide = (config: ContactPlanningSlideConfig): WorkflowSlide => {
   return createWorkflowSlide({
     id: 'contact-planning',
-    slideNumber: config.slideNumber || 4,
+    slideNumber: 4,
     title: 'Contact Strategy',
     description: 'Plan stakeholder engagement approach',
     label: 'Contact Strategy',
-    stepMapping: config.stepMapping || 'contact-planning',
+    stepMapping: 'contact-planning',
     showSideMenu: config.showSideMenu ?? false,
     customerOverview: config.customerOverview,
     analytics: config.analytics,
@@ -270,11 +284,11 @@ export interface PlanSummarySlideConfig extends Omit<BaseSlideConfig, 'id' | 'sl
 export const createPlanSummarySlide = (config: PlanSummarySlideConfig): WorkflowSlide => {
   return createWorkflowSlide({
     id: 'plan-summary',
-    slideNumber: config.slideNumber || 5,
+    slideNumber: 5,
     title: 'Plan Summary',
     description: 'Review complete renewal plan and next steps',
     label: 'Plan Summary',
-    stepMapping: config.stepMapping || 'plan-summary',
+    stepMapping: 'plan-summary',
     showSideMenu: config.showSideMenu ?? false,
     customerOverview: config.customerOverview,
     analytics: config.analytics,

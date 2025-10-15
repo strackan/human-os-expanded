@@ -116,6 +116,11 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
   const [progressCollapsed, setProgressCollapsed] = useState(false);
   const [showTaskDetail, setShowTaskDetail] = useState<string | null>(null);
 
+  // Define risk variables (could be passed as props in future)
+  const riskColor = 'blue';
+  const riskLevel = 'High';
+  const additionalSteps: typeof customer.stages = [];
+
   // Calculate total time saved
   const totalTimeSaved = aiTasks.reduce((total, task) => {
     const timeStr = task.timeSaved;
@@ -357,11 +362,6 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
 
   // Unified handler for proceeding to renewal workflow
   const handleProceedToRenewal = () => {
-    setAnswers(prev => {
-      const newAnswers = [...prev];
-      newAnswers[0] = 'Completed in initial review';
-      return newAnswers;
-    });
     setStep(1);
     setMode('chat');
   };
@@ -443,7 +443,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}
@@ -503,7 +503,7 @@ const AIPoweredLayout: React.FC<AIPoweredLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}

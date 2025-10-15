@@ -20,18 +20,14 @@ interface ZenGreetingProps {
 }
 
 export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [friendlyMessage, setFriendlyMessage] = useState<string>('Let\'s make today count');
   const [helpfulThing, setHelpfulThing] = useState<string>('3 workflows need attention');
   const [loading, setLoading] = useState<boolean>(true);
 
   // Extract first name from user data
   const getFirstName = () => {
-    // Try to get name from profile first
-    if (profile?.full_name) {
-      const name = profile.full_name.split(' ')[0];
-      return name;
-    }
+    // Try to get name from user metadata first
 
     // Then try user metadata from Google OAuth
     if (user?.user_metadata) {

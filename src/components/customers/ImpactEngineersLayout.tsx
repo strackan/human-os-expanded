@@ -95,8 +95,6 @@ const ImpactEngineersLayout: React.FC<ImpactEngineersLayoutProps> = ({
   stats,
   aiInsights,
   miniCharts,
-  contextByStep,
-  additionalSteps = [],
   milestones,
   riskLevel,
   riskColor,
@@ -408,7 +406,7 @@ const ImpactEngineersLayout: React.FC<ImpactEngineersLayoutProps> = ({
                   <span className={`inline-block px-2 py-0.5 rounded-full bg-${riskColor}-100 text-${riskColor}-700 text-xs font-semibold ml-2`}>{riskLevel}</span>
                 </div>
               </div>
-              <StageTimeline stages={[...customer.stages, ...additionalSteps]} />
+              <StageTimeline stages={customer.stages} />
             </div>
             {/* Navigation arrows at bottom left and right */}
             <div className="flex w-full justify-end items-end mt-4">
@@ -453,7 +451,7 @@ const ImpactEngineersLayout: React.FC<ImpactEngineersLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}
@@ -511,7 +509,7 @@ const ImpactEngineersLayout: React.FC<ImpactEngineersLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}

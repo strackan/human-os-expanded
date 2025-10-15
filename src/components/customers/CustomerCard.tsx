@@ -99,7 +99,7 @@ export default function CustomerCard({
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <button
-              onClick={onView || handleDefaultView}
+              onClick={() => onView ? onView(customer) : handleDefaultView()}
               className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-colors truncate block"
             >
               {customer.name}
@@ -144,7 +144,7 @@ export default function CustomerCard({
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <button
-                onClick={onView || handleDefaultView}
+                onClick={() => onView ? onView(customer) : handleDefaultView()}
                 className="text-xl font-bold text-gray-900 hover:text-blue-600 hover:underline transition-colors block"
               >
                 {customer.name}
@@ -315,7 +315,7 @@ export default function CustomerCard({
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1 min-w-0">
           <button
-            onClick={onView || handleDefaultView}
+            onClick={() => onView ? onView(customer) : handleDefaultView()}
             className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline transition-colors block truncate"
           >
             {customer.name}

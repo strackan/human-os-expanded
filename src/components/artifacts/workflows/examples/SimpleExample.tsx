@@ -32,7 +32,8 @@ const customConfig: WorkflowConfig = {
       showReferenceLine: true,
       referenceLineLabel: 'Plan Limit',
       data: [10, 12, 15, 18, 22, 25, 30, 35, 40, 45],
-      upliftPercentage: 78,
+      chartContextLabel: '78% over plan limits',
+      chartContextColor: 'red',
       dataColors: { threshold: 6, belowColor: 'bg-blue-400', aboveColor: 'bg-green-400' }
     },
     userLicenses: {
@@ -40,8 +41,9 @@ const customConfig: WorkflowConfig = {
       showReferenceLine: false,
       referenceLineLabel: '',
       data: [20, 22, 25, 28, 30, 32, 35, 38, 40, 42],
-      spikePercentage: 110,
-      color: 'indigo'
+      chartContextLabel: '110% growth trend',
+      chartContextColor: 'indigo',
+      dataColors: { threshold: 0, belowColor: 'bg-indigo-400', aboveColor: 'bg-indigo-400' }
     },
     renewalInsights: {
       renewalStage: 'Ready to Close',

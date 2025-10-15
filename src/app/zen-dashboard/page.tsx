@@ -7,7 +7,8 @@ import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
 import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
 
 interface PriorityWorkflow {
   id: string;
@@ -21,9 +22,39 @@ interface PriorityWorkflow {
 
 export default function ZenDashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [priorityWorkflow, setPriorityWorkflow] = useState<PriorityWorkflow | null>(null);
   const [loading, setLoading] = useState(true);
   const [taskModeOpen, setTaskModeOpen] = useState(false);
+
+  // Workflow Sequence State
+  const [sequenceId, setSequenceId] = useState<string | null>(null);
+  const [sequenceIndex, setSequenceIndex] = useState<number>(0);
+  const [activeWorkflow, setActiveWorkflow] = useState<{
+    workflowId: string;
+    title: string;
+    customerId: string;
+    customerName: string;
+  } | null>(null);
+
+  // Parse URL parameters for workflow sequences
+  useEffect(() => {
+    const sequence = searchParams.get('sequence');
+    if (sequence) {
+      const workflowSequence = getWorkflowSequence(sequence);
+      if (workflowSequence) {
+        setSequenceId(sequence);
+        setSequenceIndex(0);
+
+        // Prepare first workflow from sequence (but don't open modal yet)
+        const firstWorkflow = getWorkflowInSequence(sequence, 0);
+        if (firstWorkflow) {
+          setActiveWorkflow(firstWorkflow);
+          // Don't auto-open modal - let user click the button to start
+        }
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -56,7 +87,72 @@ export default function ZenDashboardPage() {
 
   const handleLaunchWorkflow = () => {
     console.log('Launching Strategic Account Planning workflow...');
+    // If in sequence mode, use activeWorkflow, otherwise use priorityWorkflow
+    if (!sequenceId && priorityWorkflow) {
+      setActiveWorkflow({
+        workflowId: priorityWorkflow.id,
+        title: priorityWorkflow.title,
+        customerId: priorityWorkflow.customerId,
+        customerName: priorityWorkflow.customerName,
+      });
+    }
     setTaskModeOpen(true);
+  };
+
+  const handleNextWorkflow = () => {
+    if (!sequenceId) {
+      // Not in sequence mode, just close
+      setTaskModeOpen(false);
+      return;
+    }
+
+    // Check if there's a next workflow in the sequence
+    if (hasNextWorkflow(sequenceId, sequenceIndex)) {
+      const nextIndex = sequenceIndex + 1;
+      const nextWorkflow = getWorkflowInSequence(sequenceId, nextIndex);
+
+      if (nextWorkflow) {
+        console.log(`[Zen Dashboard] Moving to workflow ${nextIndex + 1}:`, nextWorkflow.customerName);
+        setSequenceIndex(nextIndex);
+        setActiveWorkflow(nextWorkflow);
+        // Keep modal open, just update the workflow
+      }
+    } else {
+      // No more workflows, close modal
+      console.log('[Zen Dashboard] Sequence complete!');
+      setTaskModeOpen(false);
+      setSequenceId(null);
+      setSequenceIndex(0);
+      setActiveWorkflow(null);
+    }
+  };
+
+  const handleJumpToWorkflow = (index: number) => {
+    if (!sequenceId) return;
+
+    const targetWorkflow = getWorkflowInSequence(sequenceId, index);
+    if (targetWorkflow) {
+      console.log(`[Zen Dashboard] Jumping to workflow ${index + 1}:`, targetWorkflow.customerName);
+      setSequenceIndex(index);
+      setActiveWorkflow(targetWorkflow);
+    }
+  };
+
+  const handleWorkflowClick = (workflow: { workflowId: string; title: string; customerId: string; customerName: string; }) => {
+    // Find the index of this workflow in the sequence
+    if (sequenceId) {
+      const sequence = getWorkflowSequence(sequenceId);
+      const index = sequence?.workflows.findIndex(w => w.workflowId === workflow.workflowId) ?? -1;
+      if (index >= 0) {
+        setSequenceIndex(index);
+        setActiveWorkflow(workflow);
+        setTaskModeOpen(true);
+      }
+    } else {
+      // Not in sequence mode, launch single workflow
+      setActiveWorkflow(workflow);
+      setTaskModeOpen(true);
+    }
   };
 
   return (
@@ -89,7 +185,11 @@ export default function ZenDashboardPage() {
 
           {/* Two columns for Today's Workflows and Quick Actions */}
           <div className="grid grid-cols-2 gap-6">
-            <TodaysWorkflows />
+            <TodaysWorkflows
+              workflows={sequenceId ? getWorkflowSequence(sequenceId)?.workflows : undefined}
+              onWorkflowClick={handleWorkflowClick}
+              completedWorkflowIds={new Set()} // TODO: Track completion state
+            />
             <QuickActions />
           </div>
 
@@ -101,13 +201,26 @@ export default function ZenDashboardPage() {
       </div>
 
       {/* Task Mode Fullscreen */}
-      {taskModeOpen && priorityWorkflow && (
+      {taskModeOpen && activeWorkflow && (
         <TaskModeFullscreen
-          workflowId={priorityWorkflow.id}
-          workflowTitle={priorityWorkflow.title}
-          customerId={priorityWorkflow.customerId}
-          customerName={priorityWorkflow.customerName}
-          onClose={() => setTaskModeOpen(false)}
+          key={`${activeWorkflow.workflowId}-${sequenceIndex}`} // Force remount when workflow changes
+          workflowId={activeWorkflow.workflowId}
+          workflowTitle={activeWorkflow.title}
+          customerId={activeWorkflow.customerId}
+          customerName={activeWorkflow.customerName}
+          onClose={() => {
+            setTaskModeOpen(false);
+            setSequenceId(null);
+            setSequenceIndex(0);
+            setActiveWorkflow(null);
+          }}
+          sequenceInfo={sequenceId ? {
+            sequenceId,
+            currentIndex: sequenceIndex,
+            totalCount: getWorkflowSequence(sequenceId)?.workflows.length || 0,
+            onNextWorkflow: handleNextWorkflow,
+            onJumpToWorkflow: handleJumpToWorkflow
+          } : undefined}
         />
       )}
     </>

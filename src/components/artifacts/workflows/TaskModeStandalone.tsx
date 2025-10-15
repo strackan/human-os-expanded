@@ -70,13 +70,13 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
   // Create proper ChatConfig from slide config or use main config
   const currentChatConfig = isSlideBased ? {
     ...config.chat,
-    mode: 'dynamic',
+    mode: 'dynamic' as const,
     dynamicFlow: {
-      startsWith: 'ai',
+      startsWith: 'ai' as const,
       defaultMessage: config.chat.dynamicFlow?.defaultMessage || "I understand you'd like to discuss something else. How can I help?",
-      initialMessage: currentConfig.chat.initialMessage,
-      branches: currentConfig.chat.branches || {},
-      userTriggers: currentConfig.chat.userTriggers || {}
+      initialMessage: (currentConfig.chat as any).dynamicFlow?.initialMessage,
+      branches: (currentConfig.chat as any).dynamicFlow?.branches || {},
+      userTriggers: (currentConfig.chat as any).dynamicFlow?.userTriggers || {}
     }
   } : config.chat;
 
@@ -92,6 +92,9 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
     getCurrentInput?: () => string;
     restoreState?: (messages: any[], inputValue: string) => void;
     resetChat?: () => void;
+    navigateToBranch?: (branchId: string) => void;
+    advanceToNextStep?: (stepTitle: string) => void;
+    startNewSlideConversation?: (slideTitle: string) => void;
   }>(null);
 
   // Resolve analytics config template variables
@@ -223,7 +226,7 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
       if (chatInterfaceRef.current?.resetChat) {
         chatInterfaceRef.current.resetChat();
       }
-    } else if (action.type === 'nextStep') {
+    } else if ((action as any).type === 'nextStep') {
       console.log('TaskModeStandalone: Processing nextStep action');
       const { stepId, stepTitle, artifactId, branchId, showMenu } = action.payload || {};
 
@@ -239,7 +242,7 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
       }
       if (branchId && chatInterfaceRef.current?.navigateToBranch) {
         setTimeout(() => {
-          chatInterfaceRef.current?.navigateToBranch(branchId);
+          chatInterfaceRef.current?.navigateToBranch?.(branchId);
         }, 100);
       }
       setIsStatsVisible(false);
@@ -257,9 +260,9 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
       setShowFinalSlide(false);
     } else if (action.type === 'showFinalSlide') {
       setShowFinalSlide(true);
-    } else if (action.type === 'showWorkingMessage') {
+    } else if ((action as any).type === 'showWorkingMessage') {
       chatInterfaceRef.current?.showWorkingMessage();
-    } else if (action.type === 'hideWorkingMessage') {
+    } else if ((action as any).type === 'hideWorkingMessage') {
       chatInterfaceRef.current?.hideWorkingMessage();
     }
   };
@@ -328,7 +331,7 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
   if (showFinalSlide) {
     return (
       <FinalSlide
-        customerName={config.customer.name}
+        onClose={() => {}}
         message="That's all for today!"
       />
     );

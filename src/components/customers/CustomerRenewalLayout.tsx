@@ -112,8 +112,6 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
   stats,
   aiInsights,
   miniCharts,
-  contextByStep,
-  additionalSteps = [],
   riskLevel,
   riskColor,
   chatConfig,
@@ -288,7 +286,7 @@ const CustomerRenewalLayout: React.FC<CustomerRenewalLayoutProps> = ({
       const currentStep = chatSteps[workflowStep];
       const response = currentStep.onUser(answer);
       setWorkflowAnswers(prev => [...prev, answer]);
-      setMessages(prev => [...prev, { sender: 'bot', text: response }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: typeof response === 'string' ? response : JSON.stringify(response) }]);
 
       // Update progress stepper if this step has a progressStep property
       if (currentStep.progressStep !== undefined) {

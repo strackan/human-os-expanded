@@ -138,3 +138,106 @@
 	text-align: center;
 	font-size: 1.75rem;
 }
+
+/* ============================================ */
+/* HERO SECTION - Left column only, max vertical space */
+/* ============================================ */
+#hero {
+	height: 100vh !important;
+	min-height: 100vh !important;
+	max-height: 100vh !important;
+	overflow: hidden !important;
+}
+
+#hero .inner {
+	align-items: flex-start !important;
+	justify-content: flex-start !important;
+	padding-top: 0 !important;
+	padding-bottom: 3vh !important;
+	height: 100% !important;
+	display: flex !important;
+	flex-direction: row !important;
+}
+
+/* Left column with all content - more vertical space */
+#hero .inner > div:first-child {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(0.5rem, 1vh, 1rem);
+	max-width: 55%;
+	justify-content: flex-start;
+	padding-top: 0;
+	margin-top: 0;
+}
+
+/* Heading spacing */
+#hero h1 {
+	font-size: clamp(2rem, 4vw, 3.5rem) !important;
+	line-height: 1.15 !important;
+	margin: 0 0 clamp(0.5rem, 1vh, 1rem) 0 !important;
+}
+
+#hero h2, #hero p {
+	font-size: clamp(0.9rem, 1.4vw, 1.125rem) !important;
+	line-height: 1.4 !important;
+	margin: clamp(0.25rem, 0.5vh, 0.5rem) 0 !important;
+}
+
+/* List spacing */
+#hero ul {
+	margin: clamp(0.5rem, 1vh, 1rem) 0 !important;
+	padding-left: 1.5rem !important;
+}
+
+#hero li {
+	font-size: clamp(0.85rem, 1.3vw, 1.05rem) !important;
+	line-height: 1.5 !important;
+	margin: clamp(0.25rem, 0.5vh, 0.5rem) 0 !important;
+	padding: 0 !important;
+}
+
+/* Buttons with comfortable spacing */
+#buttons03 {
+	margin-top: clamp(1rem, 2vh, 2rem) !important;
+	margin-bottom: 0 !important;
+}
+
+/* Hide image or move to background */
+#hero .inner > div:last-child {
+	position: absolute !important;
+	right: 0 !important;
+	bottom: 0 !important;
+	max-width: 40% !important;
+	height: 85vh !important;
+	opacity: 0.15 !important;
+	pointer-events: none !important;
+	z-index: 0 !important;
+}
+
+#hero .inner > div:last-child img {
+	max-height: 85vh !important;
+	width: auto !important;
+	object-fit: contain !important;
+}
+
+/* Ensure text is above image */
+#hero .inner > div:first-child {
+	position: relative !important;
+	z-index: 1 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 980px) {
+	#hero .inner > div:first-child {
+		max-width: 90% !important;
+	}
+
+	#hero .inner > div:last-child {
+		opacity: 0.1 !important;
+		max-width: 60% !important;
+	}
+
+	#hero h1 {
+		font-size: clamp(1.75rem, 6vw, 2.5rem) !important;
+	}
+}

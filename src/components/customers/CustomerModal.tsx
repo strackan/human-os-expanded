@@ -136,8 +136,8 @@ export default function CustomerModal({ isOpen, onClose, onSave, customer, mode 
         industry: formData.industry.trim(),
         health_score: formData.health_score,
         current_arr: formData.current_arr ? parseFloat(formData.current_arr) : 0,
-        renewal_date: formData.renewal_date || null,
-        assigned_to: formData.assigned_to || null
+        renewal_date: formData.renewal_date || undefined,
+        assigned_to: formData.assigned_to || undefined
       };
 
       let savedCustomer: Customer;

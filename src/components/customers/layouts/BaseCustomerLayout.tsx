@@ -30,6 +30,7 @@ export type BaseCustomerLayoutProps = {
   // Chat workflow props
   chatSteps?: any[];
   onChatComplete?: () => void;
+  children?: React.ReactNode;
 };
 
 const BaseCustomerLayout: React.FC<BaseCustomerLayoutProps> = ({

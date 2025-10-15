@@ -1,11 +1,10 @@
 "use client";
 import React from 'react';
-import BaseCustomerLayout from './BaseCustomerLayout';
-import { CustomerData } from '../../../types/customer';
-import { renewalsChatWorkflow } from '../../../components/chat/chatWorkflow';
+import BaseCustomerLayout, { BaseCustomerLayoutProps } from './BaseCustomerLayout';
+import { renewalsChatSteps } from '../../../components/chat/chatWorkflow';
 import MiniSparklineChart from '../shared/MiniSparklineChart';
 
-interface RenewalLayoutProps extends CustomerData {
+interface RenewalLayoutProps extends BaseCustomerLayoutProps {
   prevCustomer?: string;
   nextCustomer?: string;
 }
@@ -19,7 +18,7 @@ const RenewalLayout: React.FC<RenewalLayoutProps> = (props) => {
   return (
     <BaseCustomerLayout
       {...props}
-      chatSteps={renewalsChatWorkflow.steps}
+      chatSteps={renewalsChatSteps}
       onChatComplete={handleChatComplete}
     >
       {/* Left Panel Content */}

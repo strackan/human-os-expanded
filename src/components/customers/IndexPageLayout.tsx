@@ -289,7 +289,7 @@ const IndexPageLayout: React.FC<IndexPageLayoutProps> = ({
       const currentStep = chatSteps[workflowStep];
       const response = currentStep.onUser(answer);
       setWorkflowAnswers(prev => [...prev, answer]);
-      setMessages(prev => [...prev, { sender: 'bot', text: response }]);
+      setMessages(prev => [...prev, { sender: 'bot', text: typeof response === 'string' ? response : JSON.stringify(response) }]);
 
       // Update progress stepper if this step has a progressStep property
       if (currentStep.progressStep !== undefined) {

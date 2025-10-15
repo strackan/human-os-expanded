@@ -60,7 +60,7 @@ export default function AuthButton() {
     setLoading(true)
     try {
       // Use the new signOut function from AuthProvider
-      await signOut('global')
+      await signOut()
       console.log('✅ AuthButton signout completed')
       // The signOut function handles the redirect automatically
     } catch (error) {

@@ -5,7 +5,7 @@
  * Each workflow is self-contained with all its steps, branches, and artifacts.
  */
 
-import { WorkflowConfig } from '../WorkflowConfig';
+import { WorkflowConfig } from '../../config/WorkflowConfig';
 import { renewalPlanningWorkflow } from './RenewalPlanning';
 
 export const workflowRegistry: Record<string, WorkflowConfig> = {

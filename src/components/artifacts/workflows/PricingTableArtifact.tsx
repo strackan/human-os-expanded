@@ -65,12 +65,14 @@ export function PricingTableArtifact({
   };
 
   // Calculate metrics
+  const currentTotal = pricingData.rows.reduce((sum, row) => sum + (row.currentPrice * row.quantity), 0);
+  const proposedTotal = pricingData.rows.reduce((sum, row) => sum + (row.proposedPrice * row.quantity), 0);
   const metrics = {
-    currentTotal: pricingData.rows.reduce((sum, row) => sum + (row.currentPrice * row.quantity), 0),
-    proposedTotal: pricingData.rows.reduce((sum, row) => sum + (row.proposedPrice * row.quantity), 0)
+    currentTotal,
+    proposedTotal,
+    arrImpact: proposedTotal - currentTotal,
+    changePercent: currentTotal > 0 ? ((proposedTotal - currentTotal) / currentTotal * 100) : 0
   };
-  metrics.arrImpact = metrics.proposedTotal - metrics.currentTotal;
-  metrics.changePercent = metrics.currentTotal > 0 ? ((metrics.proposedTotal - metrics.currentTotal) / metrics.currentTotal * 100) : 0;
 
   // Format currency
   const formatCurrency = (value: number) => {

@@ -371,7 +371,7 @@ const RevenueArchitectsLayout: React.FC<RevenueArchitectsLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}
@@ -429,7 +429,7 @@ const RevenueArchitectsLayout: React.FC<RevenueArchitectsLayoutProps> = ({
                   recommendedAction={{
                     ...chatConfig.recommendedAction,
                     onClick: handleRecommendedAction
-                  }}
+                  } as any}
                   workflowSteps={[]}
                   onPrepare={handleProceedToRenewal}
                   botIntroMessage={chatConfig.botIntroMessage}

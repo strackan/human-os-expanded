@@ -178,11 +178,10 @@ export function formatHealthScore(score: number): string {
 /**
  * Get health score status color
  */
-export function getHealthScoreStatus(score: number): 'red' | 'orange' | 'yellow' | 'green' {
+export function getHealthScoreStatus(score: number): 'red' | 'orange' | 'green' {
   const normalizedScore = score / 10; // Convert 64 -> 6.4
   if (normalizedScore < 4) return 'red';
-  if (normalizedScore < 6) return 'orange';
-  if (normalizedScore < 8) return 'yellow';
+  if (normalizedScore < 7) return 'orange';
   return 'green';
 }
 
