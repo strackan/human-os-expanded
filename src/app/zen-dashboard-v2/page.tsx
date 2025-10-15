@@ -6,7 +6,7 @@ import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
-import { TaskModeModal } from '@/components/artifacts/workflows/TaskModeAdvanced';
+import TaskModeFullscreenV2 from '@/components/workflows/TaskModeFullscreen-v2';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
 
@@ -200,12 +200,14 @@ export default function ZenDashboardPage() {
         </div>
       </div>
 
-      {/* Task Mode Modal */}
+      {/* Task Mode Fullscreen - V2 Clone for Safe Experimentation */}
       {taskModeOpen && activeWorkflow && (
-        <TaskModeModal
-          key={`${activeWorkflow.workflowId}-${sequenceIndex}`} // Force remount when workflow changes
+        <TaskModeFullscreenV2
+          key={`${activeWorkflow.workflowId}-${sequenceIndex}`}
           workflowId={activeWorkflow.workflowId}
-          isOpen={taskModeOpen}
+          workflowTitle={activeWorkflow.title}
+          customerId={activeWorkflow.customerId}
+          customerName={activeWorkflow.customerName}
           onClose={() => {
             setTaskModeOpen(false);
             setSequenceId(null);

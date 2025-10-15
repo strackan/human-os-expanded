@@ -279,7 +279,7 @@ export const accountOverviewWithQAConfig: WorkflowConfig = {
     sections: [
       {
         id: 'account-overview',
-        componentName: 'AccountOverviewArtifact',
+        type: 'custom',
         title: 'Account Overview',
         visible: false,
         props: {
@@ -351,7 +351,7 @@ export const accountOverviewWithQAConfig: WorkflowConfig = {
       },
       {
         id: 'strategic-plan-artifact',
-        componentName: 'PlanningChecklistArtifact',
+        type: 'planning-checklist',
         title: 'Strategic Renewal Plan',
         visible: false,
         props: {
