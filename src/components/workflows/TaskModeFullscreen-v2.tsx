@@ -1337,11 +1337,11 @@ export default function TaskModeFullscreen({
                 <PlanningChecklistArtifact
                   title={`Executive Engagement - ${customerName}`}
                   items={[
-                    { id: '1', label: 'Marcus sent escalation email about service issues', completed: true },
-                    { id: '2', label: 'Relationship strength currently weak', completed: true },
-                    { id: '3', label: 'Critical engagement required to rebuild trust', completed: true },
-                    { id: '4', label: 'Marcus expects accountability and concrete actions', completed: true },
-                    { id: '5', label: 'Timeline pressure - immediate response needed', completed: true }
+                    { id: '1', label: 'Marcus sent escalation email about service issues', completed: false },
+                    { id: '2', label: 'Relationship strength currently weak', completed: false },
+                    { id: '3', label: 'Critical engagement required to rebuild trust', completed: false },
+                    { id: '4', label: 'Marcus expects accountability and concrete actions', completed: false },
+                    { id: '5', label: 'Timeline pressure - immediate response needed', completed: false }
                   ]}
                   showActions={false}
                 />
@@ -1363,11 +1363,11 @@ export default function TaskModeFullscreen({
                 <PlanningChecklistArtifact
                   title={`Expansion Opportunity for ${customerName}`}
                   items={[
-                    { id: '1', label: 'Customer is 40% over licensed capacity', completed: true },
-                    { id: '2', label: 'Strong product adoption (94% adoption rate)', completed: true },
-                    { id: '3', label: 'Rapid growth trajectory (47% YoY)', completed: true },
-                    { id: '4', label: 'Significantly underpriced (18th percentile)', completed: true },
-                    { id: '5', label: 'Renewal 6+ months away - perfect timing', completed: true }
+                    { id: '1', label: 'Customer is 40% over licensed capacity', completed: false },
+                    { id: '2', label: 'Strong product adoption (94% adoption rate)', completed: false },
+                    { id: '3', label: 'Rapid growth trajectory (47% YoY)', completed: false },
+                    { id: '4', label: 'Significantly underpriced (18th percentile)', completed: false },
+                    { id: '5', label: 'Renewal 6+ months away - perfect timing', completed: false }
                   ]}
                   showActions={false}
                 />

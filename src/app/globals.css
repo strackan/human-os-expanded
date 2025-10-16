@@ -143,3 +143,21 @@ body {
 .animate-slide-down {
   animation: slide-down 0.3s ease-out forwards;
 }
+
+/* Global input/textarea styles - fix light text issue */
+input[type="text"],
+input[type="email"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea,
+select {
+  color: rgb(17 24 39) !important; /* gray-900 for input text */
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgb(156 163 175) !important; /* gray-400 for placeholder */
+  opacity: 1;
+}

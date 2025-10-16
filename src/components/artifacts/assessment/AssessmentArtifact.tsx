@@ -200,8 +200,8 @@ export default function AssessmentArtifact({
       </div>
 
       {/* Form Content - Single Question Block */}
-      <div className="flex-1 flex flex-col p-8 min-h-0">
-        <div className="w-full max-w-3xl mx-auto flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto p-8">
+        <div className="w-full max-w-3xl mx-auto">
           {renderQuestionBlock()}
         </div>
       </div>

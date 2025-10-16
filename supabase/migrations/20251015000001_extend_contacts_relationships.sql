@@ -33,4 +33,7 @@ COMMENT ON COLUMN public.contacts.relationship_notes IS 'Additional notes about 
 -- Grant permissions (if needed)
 -- Note: Existing RLS policies should cover these new columns
 
-RAISE NOTICE 'Contacts table extended with relationship metadata columns';
+DO $$
+BEGIN
+  RAISE NOTICE 'Contacts table extended with relationship metadata columns';
+END $$;

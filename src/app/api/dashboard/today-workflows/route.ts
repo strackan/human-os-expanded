@@ -2,12 +2,15 @@
  * Dashboard Today Workflows API
  *
  * GET /api/dashboard/today-workflows
- * - Returns priority workflow from database (Obsidian Black)
- * - Fetches real customer data for priority card
+ * - Returns priority workflow from orchestrator queue
+ * - Fetches workflow executions from database with customer data
+ *
+ * Phase 2C.5: Orchestrator Integration
  */
 
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { getWorkflowQueueForCSM } from '@/lib/workflows/orchestrator-db';
 
 export async function GET() {
   try {
@@ -18,70 +21,87 @@ export async function GET() {
       ? createServiceRoleClient()
       : await createServerSupabaseClient();
 
-    // Query for Obsidian Black customer data
-    const obsidianBlackId = '550e8400-e29b-41d4-a716-446655440001';
+    // Get current user or default CSM for demo
+    let csmId = process.env.NEXT_PUBLIC_DEMO_CSM_ID || '';
 
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('id', obsidianBlackId)
-      .single();
-
-    if (customerError) {
-      console.error('[Dashboard API] Error fetching customer:', customerError);
-      throw new Error('Failed to fetch customer data');
+    if (!demoMode && !authBypassEnabled) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        csmId = user.id;
+      }
     }
 
-    if (!customer) {
-      throw new Error('Customer not found');
+    // Get workflow queue from orchestrator (demo mode enabled)
+    const queue = await getWorkflowQueueForCSM(csmId, 1, true); // Get top 1 workflow, demo mode
+
+    if (!queue || queue.length === 0) {
+      // Fallback: No workflows in queue
+      return NextResponse.json({
+        priorityWorkflow: null,
+        message: 'No workflows in queue'
+      });
     }
 
-    // Calculate days until renewal
-    const renewalDate = new Date(customer.renewal_date);
-    const today = new Date();
-    const daysUntil = Math.ceil((renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const topWorkflow = queue[0];
+    const customer = topWorkflow.customer;
+    const definition = topWorkflow.workflow_definition;
 
-    // Determine due date label
+    // Calculate days until renewal (if applicable)
     let dueDateLabel = 'Today';
-    if (daysUntil < 0) {
-      dueDateLabel = 'Overdue';
-    } else if (daysUntil === 0) {
-      dueDateLabel = 'Today';
-    } else if (daysUntil === 1) {
-      dueDateLabel = 'Tomorrow';
-    } else if (daysUntil <= 7) {
-      dueDateLabel = `${daysUntil} days`;
-    } else {
-      dueDateLabel = renewalDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (customer.renewal_date) {
+      const renewalDate = new Date(customer.renewal_date);
+      const today = new Date();
+      const daysUntil = Math.ceil((renewalDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntil < 0) {
+        dueDateLabel = 'Overdue';
+      } else if (daysUntil === 0) {
+        dueDateLabel = 'Today';
+      } else if (daysUntil === 1) {
+        dueDateLabel = 'Tomorrow';
+      } else if (daysUntil <= 7) {
+        dueDateLabel = `${daysUntil} days`;
+      } else {
+        dueDateLabel = renewalDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
     }
 
     // Format ARR
-    const arrFormatted = customer.current_arr
-      ? `$${(customer.current_arr / 1000).toFixed(0)}K`
+    const arrFormatted = customer.arr
+      ? `$${(customer.arr / 1000).toFixed(0)}K`
       : '$0';
 
-    // Determine priority based on health score and days until renewal
+    // Determine priority from workflow type and priority score
     let priority: 'Critical' | 'High' | 'Medium' | 'Low' = 'Medium';
-    if (customer.health_score < 50 || daysUntil < 30) {
-      priority = 'Critical';
-    } else if (customer.health_score < 70 || daysUntil < 60) {
-      priority = 'High';
-    } else if (customer.health_score < 80) {
-      priority = 'Medium';
+    if (topWorkflow.priority_score >= 1000) {
+      priority = 'Critical'; // Snoozed critical
+    } else if (topWorkflow.priority_score >= 900) {
+      priority = 'Critical'; // Risk workflows
+    } else if (topWorkflow.priority_score >= 800) {
+      priority = 'High'; // Opportunity workflows
+    } else if (topWorkflow.priority_score >= 700) {
+      priority = 'High'; // Strategic workflows
+    } else if (topWorkflow.priority_score >= 600) {
+      priority = 'Medium'; // Renewal workflows
     } else {
       priority = 'Low';
     }
 
+    // Map workflow_definition trigger_conditions to workflowId
+    const workflowId = definition.trigger_conditions?.workflow_id || definition.id;
+
     // Return priority workflow data
     return NextResponse.json({
       priorityWorkflow: {
-        id: 'obsblk-strategic-planning',
-        title: `Complete Strategic Account Plan for ${customer.name}`,
+        id: workflowId,
+        executionId: topWorkflow.id, // Include execution ID for status updates
+        title: definition.name,
         customerId: customer.id,
-        customerName: customer.name,
+        customerName: customer.domain,
         priority,
         dueDate: dueDateLabel,
         arr: arrFormatted,
+        workflowType: definition.workflow_type
       }
     });
 

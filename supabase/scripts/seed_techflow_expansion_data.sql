@@ -23,8 +23,6 @@ INSERT INTO public.customers (
   current_arr,
   renewal_date,
   is_demo,
-  primary_contact_name,
-  primary_contact_email,
   created_at,
   updated_at
 )
@@ -37,8 +35,6 @@ VALUES (
   78000.00,  -- $78K ARR (current)
   '2025-09-15',
   true,  -- is_demo flag
-  'Sarah Chen',
-  'sarah.chen@techflow.io',
   NOW(),
   NOW()
 )

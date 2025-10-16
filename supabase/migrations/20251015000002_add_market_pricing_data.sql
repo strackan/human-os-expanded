@@ -46,4 +46,7 @@ COMMENT ON COLUMN public.customer_properties.last_month_growth IS 'Last month us
 COMMENT ON COLUMN public.customer_properties.peak_usage IS 'Peak concurrent users (historical high)';
 COMMENT ON COLUMN public.customer_properties.adoption_rate IS 'Percentage of provisioned users who are active';
 
-RAISE NOTICE 'Customer properties extended with market pricing and usage data columns';
+DO $$
+BEGIN
+  RAISE NOTICE 'Customer properties extended with market pricing and usage data columns';
+END $$;

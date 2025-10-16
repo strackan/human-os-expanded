@@ -44,10 +44,10 @@ export const bluesoftDemo2025: WorkflowSequence = {
       day: 'Day 1'
     },
     {
-      workflowId: 'techflow-expansion-opportunity',
-      title: 'Expansion Opportunity for TechFlow Industries',
-      customerId: 'techflow-001',
-      customerName: 'TechFlow Industries',
+      workflowId: 'obsblk-expansion-opportunity',
+      title: 'Expansion Opportunity for Obsidian Black',
+      customerId: '550e8400-e29b-41d4-a716-446655440001',
+      customerName: 'Obsidian Black',
       description: 'Proactive multi-year expansion with underpriced, high-growth customer',
       day: 'Day 2'
     },
@@ -58,14 +58,6 @@ export const bluesoftDemo2025: WorkflowSequence = {
       customerName: 'Obsidian Black',
       description: 'Critical executive engagement following Marcus escalation email',
       day: 'Day 3'
-    },
-    {
-      workflowId: 'bluesoft-account-overview',
-      title: 'Account Overview with Contract Q&A',
-      customerId: 'bluesoft-001',
-      customerName: 'Bluesoft Industries',
-      description: 'Review account overview with interactive contract, contacts, and pricing Q&A',
-      day: 'Day 4'
     }
     // Additional workflows can be added here for extended demos
   ]
