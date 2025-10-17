@@ -1,0 +1,464 @@
+'use client';
+
+/**
+ * ChatRenderer - Chat Branching System Implementation
+ *
+ * Renders chat conversations with support for:
+ * - Message history (AI + User messages)
+ * - Inline components (slider, textarea, input, radio, dropdown, checkbox)
+ * - Branch navigation based on user responses
+ * - Auto-advance after component input
+ * - Action execution (launch-artifact, nextSlide, etc.)
+ *
+ * This component enables form-based interactions to happen conversationally
+ * within the chat panel, reserving the artifacts panel for rich documents only.
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Bot, User, Check } from 'lucide-react';
+import { WorkflowSlide, InlineComponent, DynamicChatBranch } from '@/components/artifacts/workflows/config/WorkflowConfig';
+
+export interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'ai';
+  timestamp: Date;
+  component?: InlineComponent;
+  componentValue?: any;
+  buttons?: Array<{
+    label: string;
+    value: string;
+    'label-background'?: string;
+    'label-text'?: string;
+  }>;
+}
+
+interface ChatRendererProps {
+  currentSlide: WorkflowSlide;
+  chatMessages: ChatMessage[];
+  workflowState: Record<string, any>;
+  customerName: string;
+  onSendMessage: (message: string) => void;
+  onBranchNavigation: (branchName: string, value?: any) => void;
+  onComponentValueChange: (componentId: string, value: any) => void;
+  onButtonClick?: (buttonValue: string) => void;
+}
+
+export default function ChatRenderer({
+  currentSlide,
+  chatMessages,
+  workflowState,
+  customerName,
+  onSendMessage,
+  onBranchNavigation,
+  onComponentValueChange,
+  onButtonClick
+}: ChatRendererProps) {
+  const [pendingComponentValue, setPendingComponentValue] = useState<any>(null);
+  const [currentComponentId, setCurrentComponentId] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  // Handle inline component value changes
+  const handleComponentChange = (componentId: string, value: any) => {
+    setPendingComponentValue(value);
+    setCurrentComponentId(componentId);
+  };
+
+  // Submit component value (triggers branch navigation)
+  const handleComponentSubmit = (componentId: string, value: any) => {
+    onComponentValueChange(componentId, value);
+    setPendingComponentValue(null);
+    setCurrentComponentId(null);
+  };
+
+  // Render inline slider component
+  const renderSlider = (component: InlineComponent & { type: 'slider' }, messageId: string) => {
+    if (component.type !== 'slider') return null;
+
+    const value = pendingComponentValue ?? component.defaultValue ?? component.min;
+    const accentColor = component.accentColor || 'blue';
+    const colorClasses = {
+      purple: 'accent-purple-600 bg-purple-600',
+      blue: 'accent-blue-600 bg-blue-600',
+      red: 'accent-red-600 bg-red-600',
+      green: 'accent-green-600 bg-green-600',
+      orange: 'accent-orange-600 bg-orange-600'
+    };
+
+    return (
+      <div className="my-4 p-4 bg-white border border-gray-200 rounded-lg">
+        <div className="flex items-center justify-between mb-2">
+          {component.labels && (
+            <>
+              <span className="text-xs text-gray-500">{component.labels.min}</span>
+              {component.showValue !== false && (
+                <span className={`text-lg font-semibold text-${accentColor}-600`}>{value}</span>
+              )}
+              <span className="text-xs text-gray-500">{component.labels.max}</span>
+            </>
+          )}
+        </div>
+        <input
+          type="range"
+          min={component.min}
+          max={component.max}
+          step={component.step || 1}
+          value={value}
+          onChange={(e) => handleComponentChange(component.id, Number(e.target.value))}
+          className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${colorClasses[accentColor]}`}
+        />
+        <button
+          onClick={() => handleComponentSubmit(component.id, value)}
+          className={`mt-3 w-full py-2 px-4 ${colorClasses[accentColor].replace('accent-', 'bg-').replace('bg-bg-', 'bg-')} text-white rounded-lg hover:opacity-90 transition-opacity font-medium`}
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline textarea component
+  const renderTextarea = (component: InlineComponent & { type: 'textarea' }, messageId: string) => {
+    if (component.type !== 'textarea') return null;
+
+    const [value, setValue] = useState('');
+
+    return (
+      <div className="my-4">
+        <textarea
+          placeholder={component.placeholder || 'Type your response...'}
+          rows={component.rows || 4}
+          maxLength={component.maxLength}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+        />
+        {component.maxLength && (
+          <div className="text-xs text-gray-500 mt-1 text-right">
+            {value.length} / {component.maxLength}
+          </div>
+        )}
+        <button
+          onClick={() => {
+            if (component.required && !value.trim()) return;
+            handleComponentSubmit(component.id, value);
+          }}
+          disabled={component.required && !value.trim()}
+          className="mt-2 w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline input component
+  const renderInput = (component: InlineComponent & { type: 'input' }, messageId: string) => {
+    if (component.type !== 'input') return null;
+
+    const [value, setValue] = useState('');
+
+    return (
+      <div className="my-4">
+        <input
+          type={component.inputType || 'text'}
+          placeholder={component.placeholder || 'Type your response...'}
+          maxLength={component.maxLength}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+        <button
+          onClick={() => {
+            if (component.required && !value.trim()) return;
+            handleComponentSubmit(component.id, value);
+          }}
+          disabled={component.required && !value.trim()}
+          className="mt-2 w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline radio component
+  const renderRadio = (component: InlineComponent & { type: 'radio' }, messageId: string) => {
+    if (component.type !== 'radio') return null;
+
+    const [selectedValue, setSelectedValue] = useState<string | null>(null);
+
+    return (
+      <div className="my-4 space-y-2">
+        {component.options.map((option, idx) => (
+          <label
+            key={idx}
+            className={`flex items-start p-3 border rounded-lg cursor-pointer transition-colors ${
+              selectedValue === option.value
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <input
+              type="radio"
+              name={component.id}
+              value={option.value}
+              checked={selectedValue === option.value}
+              onChange={(e) => setSelectedValue(e.target.value)}
+              className="mt-1 mr-3 text-blue-600 focus:ring-blue-500"
+            />
+            <div className="flex-1">
+              <div className="font-medium text-gray-900">{option.label}</div>
+              {option.description && (
+                <div className="text-sm text-gray-500 mt-1">{option.description}</div>
+              )}
+            </div>
+          </label>
+        ))}
+        <button
+          onClick={() => {
+            if (component.required && !selectedValue) return;
+            handleComponentSubmit(component.id, selectedValue);
+          }}
+          disabled={component.required && !selectedValue}
+          className="mt-2 w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline dropdown component
+  const renderDropdown = (component: InlineComponent & { type: 'dropdown' }, messageId: string) => {
+    if (component.type !== 'dropdown') return null;
+
+    const [selectedValue, setSelectedValue] = useState<string>('');
+
+    return (
+      <div className="my-4">
+        <select
+          value={selectedValue}
+          onChange={(e) => setSelectedValue(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+        >
+          <option value="" disabled>
+            {component.placeholder || 'Select an option...'}
+          </option>
+          {component.options.map((option, idx) => (
+            <option key={idx} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <button
+          onClick={() => {
+            if (component.required && !selectedValue) return;
+            handleComponentSubmit(component.id, selectedValue);
+          }}
+          disabled={component.required && !selectedValue}
+          className="mt-2 w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline checkbox component
+  const renderCheckbox = (component: InlineComponent & { type: 'checkbox' }, messageId: string) => {
+    if (component.type !== 'checkbox') return null;
+
+    const [selectedValues, setSelectedValues] = useState<string[]>([]);
+
+    const handleCheckboxChange = (value: string, checked: boolean) => {
+      if (checked) {
+        if (component.maxSelections && selectedValues.length >= component.maxSelections) {
+          return;
+        }
+        setSelectedValues([...selectedValues, value]);
+      } else {
+        setSelectedValues(selectedValues.filter(v => v !== value));
+      }
+    };
+
+    const isValid = () => {
+      if (component.minSelections && selectedValues.length < component.minSelections) return false;
+      if (component.required && selectedValues.length === 0) return false;
+      return true;
+    };
+
+    return (
+      <div className="my-4 space-y-2">
+        {component.options.map((option, idx) => {
+          const isChecked = selectedValues.includes(option.value);
+          const isDisabled =
+            !isChecked &&
+            component.maxSelections !== undefined &&
+            selectedValues.length >= component.maxSelections;
+
+          return (
+            <label
+              key={idx}
+              className={`flex items-start p-3 border rounded-lg cursor-pointer transition-colors ${
+                isChecked
+                  ? 'border-blue-500 bg-blue-50'
+                  : isDisabled
+                  ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="checkbox"
+                value={option.value}
+                checked={isChecked}
+                onChange={(e) => handleCheckboxChange(option.value, e.target.checked)}
+                disabled={isDisabled}
+                className="mt-1 mr-3 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <div className="flex-1">
+                <div className={`font-medium ${isDisabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                  {option.label}
+                </div>
+                {option.description && (
+                  <div className={`text-sm mt-1 ${isDisabled ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {option.description}
+                  </div>
+                )}
+              </div>
+            </label>
+          );
+        })}
+        {(component.minSelections || component.maxSelections) && (
+          <div className="text-xs text-gray-500 mt-2">
+            {component.minSelections && component.maxSelections
+              ? `Select ${component.minSelections}-${component.maxSelections} options`
+              : component.minSelections
+              ? `Select at least ${component.minSelections} option${component.minSelections > 1 ? 's' : ''}`
+              : `Select up to ${component.maxSelections} option${component.maxSelections! > 1 ? 's' : ''}`}
+          </div>
+        )}
+        <button
+          onClick={() => handleComponentSubmit(component.id, selectedValues)}
+          disabled={!isValid()}
+          className="mt-2 w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
+  // Render inline component based on type
+  const renderInlineComponent = (component: InlineComponent, messageId: string) => {
+    switch (component.type) {
+      case 'slider':
+        return renderSlider(component, messageId);
+      case 'textarea':
+        return renderTextarea(component, messageId);
+      case 'input':
+        return renderInput(component, messageId);
+      case 'radio':
+        return renderRadio(component, messageId);
+      case 'dropdown':
+        return renderDropdown(component, messageId);
+      case 'checkbox':
+        return renderCheckbox(component, messageId);
+      default:
+        return null;
+    }
+  };
+
+  // Render buttons from message
+  const renderButtons = (buttons: ChatMessage['buttons']) => {
+    if (!buttons || buttons.length === 0) return null;
+
+    return (
+      <div className="flex gap-3 mt-4">
+        {buttons.map((button, index) => (
+          <button
+            key={index}
+            onClick={() => onButtonClick?.(button.value)}
+            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md ${
+              button['label-background'] || 'bg-purple-600 hover:bg-purple-700'
+            } ${button['label-text'] || 'text-white'}`}
+          >
+            {button.label}
+          </button>
+        ))}
+      </div>
+    );
+  };
+
+  // Replace {{customerName}} and other template variables
+  const replaceTemplateVars = (text: string): string => {
+    return text.replace(/\{\{customerName\}\}/g, customerName);
+  };
+
+  return (
+    <div className="flex items-start justify-center p-12 h-full">
+      <div className="max-w-2xl w-full space-y-6">
+        {chatMessages.map((message, index) => (
+          <div key={message.id} className="space-y-3">
+            {/* Message Bubble */}
+            <div
+              className={`flex ${
+                message.sender === 'user' ? 'justify-end' : 'justify-start'
+              } items-end gap-2`}
+            >
+              {message.sender === 'ai' && (
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-5 h-5 text-white" />
+                </div>
+              )}
+
+              <div
+                className={`rounded-2xl px-5 py-3 max-w-lg ${
+                  message.sender === 'user'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-900'
+                }`}
+              >
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                  {replaceTemplateVars(message.text)}
+                </p>
+              </div>
+
+              {message.sender === 'user' && (
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
+                </div>
+              )}
+            </div>
+
+            {/* Inline Component (only for AI messages) */}
+            {message.sender === 'ai' && message.component && (
+              <div className="ml-10">{renderInlineComponent(message.component, message.id)}</div>
+            )}
+
+            {/* Buttons (only for AI messages) */}
+            {message.sender === 'ai' && message.buttons && (
+              <div className="ml-10">{renderButtons(message.buttons)}</div>
+            )}
+
+            {/* Submitted Component Value Display */}
+            {message.componentValue !== undefined && (
+              <div className="ml-10 flex items-center gap-2 text-sm text-gray-500">
+                <Check className="w-4 h-4 text-green-600" />
+                <span>Submitted: {JSON.stringify(message.componentValue)}</span>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Auto-scroll anchor */}
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
+  );
+}

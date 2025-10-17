@@ -571,55 +571,57 @@ export default function AccountOverviewArtifact({
         )}
       </div>
 
-      {/* Footer Actions */}
-      <div className="px-8 py-6 border-t border-gray-100 flex justify-between items-center gap-3">
-        <div className="flex items-center gap-3">
-          {onBack && (
+      {/* Footer Actions - Only show if any callbacks are provided */}
+      {(onBack || onContinue || showSkipSnooze) && (
+        <div className="px-8 py-6 border-t border-gray-100 flex justify-between items-center gap-3">
+          <div className="flex items-center gap-3">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
+              >
+                Back
+              </button>
+            )}
+
+            {/* Skip/Snooze Controls */}
+            {showSkipSnooze && (
+              <div className="flex items-center gap-2 ml-2">
+                {onSnooze && (
+                  <button
+                    onClick={onSnooze}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                    title="Snooze this workflow"
+                  >
+                    <Clock className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                )}
+                {onSkip && (
+                  <button
+                    onClick={onSkip}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+                    title="Skip this workflow"
+                  >
+                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex-1"></div>
+
+          {onContinue && (
             <button
-              onClick={onBack}
-              className="px-4 py-2 text-gray-600 text-sm font-medium hover:text-gray-900"
+              onClick={onContinue}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
             >
-              Back
+              Continue
+              <ChevronRight className="w-4 h-4" />
             </button>
           )}
-
-          {/* Skip/Snooze Controls */}
-          {showSkipSnooze && (
-            <div className="flex items-center gap-2 ml-2">
-              {onSnooze && (
-                <button
-                  onClick={onSnooze}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
-                  title="Snooze this workflow"
-                >
-                  <Clock className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-                </button>
-              )}
-              {onSkip && (
-                <button
-                  onClick={onSkip}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
-                  title="Skip this workflow"
-                >
-                  <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
-                </button>
-              )}
-            </div>
-          )}
         </div>
-
-        <div className="flex-1"></div>
-
-        {onContinue && (
-          <button
-            onClick={onContinue}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
-          >
-            Continue
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Contact Edit Modal */}
       {editingContact && (

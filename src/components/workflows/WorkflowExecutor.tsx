@@ -18,7 +18,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ChevronRight, ChevronLeft, Save, Check, AlertCircle, MessageCircle, Zap } from 'lucide-react';
 import { StepRenderer } from './StepRenderer';
 import { ArtifactDisplay } from './ArtifactDisplay';
-import { CustomerMetrics, MetricsToggleButton } from './CustomerMetrics';
+import { CustomerMetrics } from './CustomerMetrics';
 import { WorkflowChatPanel } from './WorkflowChatPanel';
 import { TaskPanel } from './TaskPanel';
 import { AccountPlanIndicator } from './AccountPlanIndicator';
@@ -501,10 +501,13 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
           <div id="workflow-controls" className="flex items-center space-x-4 pr-8">
             {/* Metrics Toggle Button */}
-            <MetricsToggleButton
-              isOpen={metricsOpen}
+            <button
               onClick={() => setMetricsOpen(!metricsOpen)}
-            />
+              className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              title={metricsOpen ? 'Hide metrics' : 'Show metrics'}
+            >
+              <span>📊 Metrics</span>
+            </button>
 
             {/* Chat Toggle Button */}
             <button

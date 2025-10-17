@@ -61,12 +61,99 @@ export interface DynamicChatButton {
   'label-text'?: string;
 }
 
+// Inline component types for chat
+export type InlineComponentType =
+  | 'slider'           // Slider with min/max range
+  | 'textarea'         // Multi-line text input
+  | 'input'            // Single-line text input
+  | 'radio'            // Radio button group
+  | 'dropdown'         // Dropdown/select
+  | 'checkbox'         // Checkbox group (multiple selection)
+  | 'buttons'          // Button group (already exists, included for completeness)
+  | 'chart';           // Inline chart visualization (future)
+
+export interface InlineSliderComponent {
+  type: 'slider';
+  id: string;
+  min: number;
+  max: number;
+  defaultValue?: number;
+  step?: number;
+  labels?: {
+    min: string;
+    max: string;
+  };
+  accentColor?: 'purple' | 'blue' | 'red' | 'green' | 'orange';
+  showValue?: boolean;
+}
+
+export interface InlineTextareaComponent {
+  type: 'textarea';
+  id: string;
+  placeholder?: string;
+  rows?: number;
+  maxLength?: number;
+  required?: boolean;
+}
+
+export interface InlineInputComponent {
+  type: 'input';
+  id: string;
+  placeholder?: string;
+  maxLength?: number;
+  inputType?: 'text' | 'email' | 'number' | 'tel';
+  required?: boolean;
+}
+
+export interface InlineRadioComponent {
+  type: 'radio';
+  id: string;
+  options: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+  required?: boolean;
+}
+
+export interface InlineDropdownComponent {
+  type: 'dropdown';
+  id: string;
+  options: Array<{
+    value: string;
+    label: string;
+  }>;
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface InlineCheckboxComponent {
+  type: 'checkbox';
+  id: string;
+  options: Array<{
+    value: string;
+    label: string;
+    description?: string;
+  }>;
+  minSelections?: number;
+  maxSelections?: number;
+  required?: boolean;
+}
+
+export type InlineComponent =
+  | InlineSliderComponent
+  | InlineTextareaComponent
+  | InlineInputComponent
+  | InlineRadioComponent
+  | InlineDropdownComponent
+  | InlineCheckboxComponent;
+
 export interface DynamicChatBranch {
   response: string;
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide'>;
   artifactId?: string;
   stepId?: string; // Step ID for completeStep action
   stepNumber?: number; // Step number for enterStep action
@@ -74,6 +161,12 @@ export interface DynamicChatBranch {
   nextBranches?: {
     [userResponse: string]: string;
   };
+  // Inline component support
+  component?: InlineComponent;
+  nextBranch?: string;          // Auto-advance to this branch after component input
+  nextBranchOnText?: string;    // Branch to navigate to when user sends a text response (for Q&A flow)
+  storeAs?: string;              // Store component value in workflow state under this key
+  autoAdvance?: boolean | string; // Auto-go to nextBranch (true) or specified branch (string)
 }
 
 export interface DynamicChatFlow {
@@ -108,6 +201,7 @@ export interface WorkflowSlide {
     initialMessage?: {
       text: string;
       buttons?: DynamicChatButton[];
+      component?: InlineComponent;
       nextBranches?: {
         [userResponse: string]: string;
       };
