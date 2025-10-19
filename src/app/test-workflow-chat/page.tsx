@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Sparkles } from 'lucide-react';
 import { ArtifactRenderer } from '@/components/workflows/artifacts/ArtifactRenderer';
-import { CustomerMetrics, MetricsToggleButton } from '@/components/workflows/CustomerMetrics';
+import { CustomerMetrics } from '@/components/workflows/CustomerMetrics';
 import { ArtifactDisplay } from '@/components/workflows/ArtifactDisplay';
 
 interface ChatMessage {
@@ -235,10 +235,13 @@ export default function TestWorkflowChatPage() {
 
           <div className="flex items-center space-x-4">
             {/* Metrics Toggle */}
-            <MetricsToggleButton
-              isOpen={metricsOpen}
+            <button
               onClick={() => setMetricsOpen(!metricsOpen)}
-            />
+              className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              title={metricsOpen ? 'Hide metrics' : 'Show metrics'}
+            >
+              <span>📊 Metrics</span>
+            </button>
 
             {/* Artifacts Toggle */}
             <button

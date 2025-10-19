@@ -1,5 +1,7 @@
-import React from 'react';
-import { FileText, Calendar, DollarSign, User, Building } from 'lucide-react';
+'use client';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { FileText, Calendar, DollarSign, User, Building, Palette } from 'lucide-react';
 
 interface QuoteArtifactProps {
   data?: {
@@ -20,6 +22,7 @@ interface QuoteArtifactProps {
     };
     companyInfo?: {
       name?: string;
+      tagline?: string;
       address?: {
         street?: string;
         city?: string;
@@ -54,24 +57,209 @@ interface QuoteArtifactProps {
   onFieldChange?: (field: string, value: any) => void;
 }
 
+interface ColorPreset {
+  bg: string;
+  text: string;
+  name: string;
+}
+
+const colorPresets: ColorPreset[] = [
+  { bg: '#EFF6FF', text: '#1E3A8A', name: 'Blue' },
+  { bg: '#F0FDF4', text: '#14532D', name: 'Green' },
+  { bg: '#FAF5FF', text: '#581C87', name: 'Purple' },
+  { bg: '#F9FAFB', text: '#111827', name: 'Gray' },
+  { bg: '#F0FDFA', text: '#134E4A', name: 'Teal' },
+  { bg: '#FFF7ED', text: '#7C2D12', name: 'Orange' }
+];
+
+// Editable Text Component
+interface EditableTextProps {
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  readOnly?: boolean;
+  multiline?: boolean;
+}
+
+function EditableText({ value, onChange, className = '', readOnly = false, multiline = false }: EditableTextProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  const handleDoubleClick = () => {
+    if (readOnly) return;
+    setIsEditing(true);
+    setTimeout(() => {
+      if (multiline) {
+        textareaRef.current?.select();
+      } else {
+        inputRef.current?.select();
+      }
+    }, 0);
+  };
+
+  const handleSave = () => {
+    onChange(editValue);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !multiline) {
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setEditValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (readOnly) {
+    return <span className={className}>{value}</span>;
+  }
+
+  return isEditing ? (
+    multiline ? (
+      <textarea
+        ref={textareaRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className={`bg-blue-50 border-2 border-blue-400 rounded px-2 py-1 w-full ${className}`}
+        rows={2}
+      />
+    ) : (
+      <input
+        ref={inputRef}
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className={`bg-blue-50 border-2 border-blue-400 rounded px-2 py-1 ${className}`}
+      />
+    )
+  ) : (
+    <span
+      onDoubleClick={handleDoubleClick}
+      className={`cursor-text hover:border-b-2 hover:border-dotted hover:border-gray-400 transition-all ${className}`}
+      title="Double-click to edit"
+    >
+      {value}
+    </span>
+  );
+}
+
+// Color Picker Popover Component
+interface ColorPickerPopoverProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectColor: (color: ColorPreset) => void;
+  position: { top: number; left: number };
+}
+
+function ColorPickerPopover({ isOpen, onClose, onSelectColor, position }: ColorPickerPopoverProps) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      ref={ref}
+      className="absolute z-50 bg-white rounded-lg shadow-xl border border-gray-200 p-3"
+      style={{ top: position.top, left: position.left }}
+    >
+      <p className="text-xs text-gray-500 mb-2 font-medium">Choose Color</p>
+      <div className="grid grid-cols-3 gap-2">
+        {colorPresets.map(color => (
+          <button
+            key={color.name}
+            onClick={() => {
+              onSelectColor(color);
+              onClose();
+            }}
+            className="group relative w-12 h-12 rounded-lg border-2 border-gray-200 hover:border-blue-500 transition-all"
+            style={{ backgroundColor: color.bg }}
+            title={color.name}
+          >
+            <span
+              className="absolute inset-0 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ color: color.text }}
+            >
+              Aa
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
   data = {},
   readOnly = false,
   onFieldChange
 }) => {
+  // State for editable content
+  const [quoteData, setQuoteData] = useState({
+    quoteNumber: data.quoteNumber || 'Q-2025-0924',
+    quoteDate: data.quoteDate || new Date().toLocaleDateString(),
+    customerName: data.customerName || 'Customer Name',
+    companyName: data.companyInfo?.name || 'Renubu',
+    companyTagline: data.companyInfo?.tagline || 'Enterprise Software Solutions',
+    product: data.lineItems?.[0]?.product || 'Renubu Platform License',
+    description: data.lineItems?.[0]?.description || 'AI-powered customer success automation',
+    period: data.lineItems?.[0]?.period || '12 months',
+    rate: data.lineItems?.[0]?.rate || 3996,
+    quantity: data.lineItems?.[0]?.quantity || 50
+  });
+
+  // State for styling
+  const [headerStyle, setHeaderStyle] = useState<ColorPreset>({ bg: '#F9FAFB', text: '#6B7280', name: 'Gray' });
+  const [lineItemStyle, setLineItemStyle] = useState<ColorPreset>({ bg: '#FFFFFF', text: '#111827', name: 'White' });
+  const [showHeaderPicker, setShowHeaderPicker] = useState(false);
+  const [showLineItemPicker, setShowLineItemPicker] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
+
+  const headerRef = useRef<HTMLTableSectionElement>(null);
+  const lineItemRef = useRef<HTMLTableRowElement>(null);
+
   const {
-    quoteNumber = 'Q-2025-0924',
-    quoteDate = new Date().toLocaleDateString(),
-    customerName = 'Customer Name',
     customerContact = {},
     customerAddress = {},
     companyInfo = {},
-    lineItems = [],
     summary = {},
     terms = [],
     effectiveDate,
     notes
   } = data;
+
+  // Auto-calculate totals
+  const calculateTotal = () => quoteData.rate * quoteData.quantity;
+  const subtotal = data.summary?.subtotal || (quoteData.rate * quoteData.quantity);
+  const increasePercentage = data.summary?.increase?.percentage || 0;
+  const increaseAmount = data.summary?.increase?.amount || (subtotal * increasePercentage / 100);
+  const total = subtotal + increaseAmount;
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('en-US', {
@@ -79,6 +267,35 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
       currency: 'USD',
       minimumFractionDigits: 2
     }).format(amount);
+  };
+
+  const updateField = (field: string, value: any) => {
+    setQuoteData(prev => ({ ...prev, [field]: value }));
+    onFieldChange?.(field, value);
+  };
+
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    if (readOnly) return;
+    const rect = headerRef.current?.getBoundingClientRect();
+    if (rect) {
+      setPickerPosition({
+        top: rect.bottom + window.scrollY + 5,
+        left: rect.left + window.scrollX
+      });
+      setShowHeaderPicker(true);
+    }
+  };
+
+  const handleLineItemClick = (e: React.MouseEvent) => {
+    if (readOnly) return;
+    const rect = lineItemRef.current?.getBoundingClientRect();
+    if (rect) {
+      setPickerPosition({
+        top: rect.bottom + window.scrollY + 5,
+        left: rect.left + window.scrollX
+      });
+      setShowLineItemPicker(true);
+    }
   };
 
   return (
@@ -91,14 +308,24 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-blue-600 font-bold text-lg">R</span>
               </div>
-              <span className="text-2xl font-bold">Renubu</span>
+              <EditableText
+                value={quoteData.companyName}
+                onChange={(val) => updateField('companyName', val)}
+                className="text-2xl font-bold"
+                readOnly={readOnly}
+              />
             </div>
-            <p className="text-blue-100 text-sm">Enterprise Software Solutions</p>
+            <EditableText
+              value={quoteData.companyTagline}
+              onChange={(val) => updateField('companyTagline', val)}
+              className="text-blue-100 text-sm"
+              readOnly={readOnly}
+            />
           </div>
           <div className="text-right">
             <h1 className="text-3xl font-bold mb-1">RENEWAL QUOTE</h1>
-            <p className="text-blue-100 text-sm">{quoteNumber}</p>
-            <p className="text-blue-100 text-xs mt-1">{quoteDate}</p>
+            <p className="text-blue-100 text-sm">{quoteData.quoteNumber}</p>
+            <p className="text-blue-100 text-xs mt-1">{quoteData.quoteDate}</p>
           </div>
         </div>
       </div>
@@ -131,7 +358,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                 {customerContact.name || 'Customer Contact'}
                 {customerContact.title && `, ${customerContact.title}`}
               </p>
-              <p>{customerAddress.company || customerName}</p>
+              <p>{customerAddress.company || quoteData.customerName}</p>
               {customerAddress.street && <p>{customerAddress.street}</p>}
               {(customerAddress.city || customerAddress.state || customerAddress.zip) && (
                 <p>
@@ -151,66 +378,97 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
           Renewal Details
         </h3>
 
-        <div className="overflow-hidden rounded-lg border border-gray-200">
+        <div className="overflow-hidden rounded-lg border border-gray-200 relative">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead
+              ref={headerRef}
+              className="group relative cursor-pointer transition-all"
+              style={{ backgroundColor: headerStyle.bg }}
+              onClick={handleHeaderClick}
+            >
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Product
                 </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Period
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Rate
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider relative" style={{ color: headerStyle.text }}>
                   Total
+                  {!readOnly && (
+                    <Palette className="w-3 h-3 absolute top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {lineItems.length > 0 ? (
-                lineItems.map((item, index) => (
-                  <tr key={item.id || index}>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.product}</p>
-                        {item.description && (
-                          <p className="text-sm text-gray-500">{item.description}</p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-900">
-                      {item.period}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-gray-900">
-                      {item.rate ? formatCurrency(item.rate) : ''}
-                      {item.quantity && item.quantity > 1 && (
-                        <span className="text-gray-500">/{item.quantity > 1 ? 'unit' : 'license'}</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">
-                      {formatCurrency(item.total || 0)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-4 py-3">
-                    <div>
-                      <p className="font-medium text-gray-900">Renubu Platform License</p>
-                      <p className="text-sm text-gray-500">Healthcare workflow optimization platform</p>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center text-sm text-gray-900">12 months</td>
-                  <td className="px-4 py-3 text-right text-sm text-gray-900">$150.00/license</td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-gray-900">$124,500.00</td>
-                </tr>
-              )}
+            <tbody className="divide-y divide-gray-200">
+              <tr
+                ref={lineItemRef}
+                className="group cursor-pointer transition-all"
+                style={{ backgroundColor: lineItemStyle.bg }}
+                onClick={handleLineItemClick}
+              >
+                <td className="px-4 py-3 relative">
+                  <div>
+                    <EditableText
+                      value={quoteData.product}
+                      onChange={(val) => updateField('product', val)}
+                      className="font-medium"
+                      readOnly={readOnly}
+                    />
+                    <EditableText
+                      value={quoteData.description}
+                      onChange={(val) => updateField('description', val)}
+                      className="text-sm text-gray-500"
+                      readOnly={readOnly}
+                    />
+                  </div>
+                  {!readOnly && (
+                    <Palette className="w-3 h-3 absolute top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </td>
+                <td className="px-4 py-3 text-center text-sm" style={{ color: lineItemStyle.text }}>
+                  <EditableText
+                    value={quoteData.period}
+                    onChange={(val) => updateField('period', val)}
+                    readOnly={readOnly}
+                  />
+                </td>
+                <td className="px-4 py-3 text-right text-sm" style={{ color: lineItemStyle.text }}>
+                  <EditableText
+                    value={formatCurrency(quoteData.rate)}
+                    onChange={(val) => {
+                      const num = parseFloat(val.replace(/[$,]/g, ''));
+                      if (!isNaN(num)) updateField('rate', num);
+                    }}
+                    readOnly={readOnly}
+                  />
+                  <span className="text-gray-500">/seat</span>
+                </td>
+                <td className="px-4 py-3 text-right text-sm font-medium" style={{ color: lineItemStyle.text }}>
+                  {formatCurrency(calculateTotal())}
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
+
+        {/* Color Pickers */}
+        <ColorPickerPopover
+          isOpen={showHeaderPicker}
+          onClose={() => setShowHeaderPicker(false)}
+          onSelectColor={setHeaderStyle}
+          position={pickerPosition}
+        />
+        <ColorPickerPopover
+          isOpen={showLineItemPicker}
+          onClose={() => setShowLineItemPicker(false)}
+          onSelectColor={setLineItemStyle}
+          position={pickerPosition}
+        />
 
         {/* Totals Section */}
         <div className="mt-6 flex justify-end">
@@ -220,7 +478,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Current Year Total:</span>
                   <span className="text-gray-900">
-                    {formatCurrency(summary.subtotal || 124500)}
+                    {formatCurrency(subtotal)}
                   </span>
                 </div>
                 {summary.increase && (
@@ -229,7 +487,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                       {summary.increase.description || `${summary.increase.percentage}% Annual Increase:`}
                     </span>
                     <span className="text-gray-900">
-                      {formatCurrency(summary.increase.amount || 2490)}
+                      {formatCurrency(increaseAmount)}
                     </span>
                   </div>
                 )}
@@ -237,7 +495,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                   <div className="flex justify-between text-lg font-bold">
                     <span className="text-gray-900">Renewal Total:</span>
                     <span className="text-blue-600">
-                      {formatCurrency(summary.total || 126990)}
+                      {formatCurrency(total)}
                     </span>
                   </div>
                 </div>
@@ -264,8 +522,8 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               ))
             ) : (
               <>
-                <p>• Renewal effective January 18, 2026</p>
-                <p>• 2% annual increase per contract terms (Section 4.2)</p>
+                <p>• Renewal effective March 15, 2026</p>
+                <p>• 8% annual increase based on market adjustment</p>
                 <p>• Payment due within 30 days of renewal date</p>
                 <p>• This renewal is bound by the existing License Agreement</p>
               </>
@@ -298,7 +556,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
 
         <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            Thank you for your continued partnership with Renubu. We look forward to supporting {customerName}'s continued success.
+            Thank you for your continued partnership with Renubu. We look forward to supporting {quoteData.customerName}'s continued success.
           </p>
         </div>
       </div>

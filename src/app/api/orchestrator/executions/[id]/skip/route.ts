@@ -12,7 +12,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -26,7 +26,7 @@ export async function POST(
       );
     }
 
-    const executionId = params.id;
+    const { id: executionId } = await params;
 
     // Parse body
     const body = await request.json();

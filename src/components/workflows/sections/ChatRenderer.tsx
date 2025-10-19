@@ -400,6 +400,22 @@ export default function ChatRenderer({
     return text.replace(/\{\{customerName\}\}/g, customerName);
   };
 
+  // Convert markdown-style formatting to HTML
+  const formatTextToHTML = (text: string): string => {
+    let formatted = replaceTemplateVars(text);
+
+    // Convert **bold** to <strong>
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Convert *italic* to <em>
+    formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Convert line breaks to <br>
+    formatted = formatted.replace(/\n/g, '<br />');
+
+    return formatted;
+  };
+
   return (
     <div className="flex items-start justify-center p-12 h-full">
       <div className="max-w-2xl w-full space-y-6">
@@ -424,9 +440,10 @@ export default function ChatRenderer({
                     : 'bg-gray-100 text-gray-900'
                 }`}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                  {replaceTemplateVars(message.text)}
-                </p>
+                <div
+                  className="text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: formatTextToHTML(message.text) }}
+                />
               </div>
 
               {message.sender === 'user' && (

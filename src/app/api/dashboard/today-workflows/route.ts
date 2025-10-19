@@ -17,22 +17,74 @@ export async function GET() {
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+    const demoCompanyId = process.env.NEXT_PUBLIC_DEMO_COMPANY_ID || '';
+
     const supabase = (demoMode || authBypassEnabled)
       ? createServiceRoleClient()
       : await createServerSupabaseClient();
 
     // Get current user or default CSM for demo
     let csmId = process.env.NEXT_PUBLIC_DEMO_CSM_ID || '';
+    let isDemoCompanyUser = false;
 
     if (!demoMode && !authBypassEnabled) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         csmId = user.id;
+
+        // Check if user belongs to demo company
+        if (demoCompanyId) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('id', user.id)
+            .single();
+
+          isDemoCompanyUser = profile?.company_id === demoCompanyId;
+          console.log('[Dashboard API] User company check:', {
+            userCompanyId: profile?.company_id,
+            demoCompanyId,
+            isDemoCompanyUser
+          });
+        }
+      }
+    } else {
+      // In demo/bypass mode, always treat as demo company user
+      isDemoCompanyUser = true;
+    }
+
+    // If no CSM ID yet, find a CSM with demo workflows (fallback for demo)
+    if (!csmId && demoMode) {
+      console.log('[Dashboard API] No CSM ID set, finding CSM with demo workflows...');
+      const { data: demoExecution } = await supabase
+        .from('workflow_executions')
+        .select('assigned_csm_id')
+        .eq('is_demo', true)
+        .limit(1)
+        .single();
+
+      if (demoExecution) {
+        csmId = demoExecution.assigned_csm_id;
+        console.log('[Dashboard API] Using CSM ID from demo workflow:', csmId);
       }
     }
 
-    // Get workflow queue from orchestrator (demo mode enabled)
-    const queue = await getWorkflowQueueForCSM(csmId, 1, true); // Get top 1 workflow, demo mode
+    // Final fallback: get the first profile
+    if (!csmId) {
+      console.log('[Dashboard API] Still no CSM ID, using first profile...');
+      const { data: profiles } = await supabase.from('profiles').select('id').limit(1);
+      if (profiles && profiles.length > 0) {
+        csmId = profiles[0].id;
+        console.log('[Dashboard API] Using profile ID:', csmId);
+      }
+    }
+
+    console.log('[Dashboard API] Fetching workflows for CSM:', csmId, 'isDemoCompanyUser:', isDemoCompanyUser);
+
+    // Get workflow queue from orchestrator (demo mode enabled, pass demo company flag and supabase client)
+    const queue = await getWorkflowQueueForCSM(csmId, 1, true, isDemoCompanyUser, supabase); // Get top 1 workflow, demo mode, demo company user flag, service role client
+
+    console.log('[Dashboard API] Queue result:', queue ? `${queue.length} workflows` : 'null');
 
     if (!queue || queue.length === 0) {
       // Fallback: No workflows in queue
@@ -67,8 +119,8 @@ export async function GET() {
     }
 
     // Format ARR
-    const arrFormatted = customer.arr
-      ? `$${(customer.arr / 1000).toFixed(0)}K`
+    const arrFormatted = customer.current_arr
+      ? `$${(customer.current_arr / 1000).toFixed(0)}K`
       : '$0';
 
     // Determine priority from workflow type and priority score

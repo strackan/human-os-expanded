@@ -11,6 +11,8 @@ import { WorkflowConfig } from '@/components/artifacts/workflows/config/Workflow
 import { strategicPlanningWorkflowConfig } from './strategicPlanningWorkflow.config';
 import { expansionWorkflowConfig } from './expansionWorkflow.config';
 import { executiveEngagementWorkflowConfig } from './executiveEngagementWorkflow.config';
+import { obsidianBlackPricingConfig } from './obsidianBlackPricing.config';
+import { obsidianBlackCallDebriefConfig } from './obsidianBlackCallDebrief.config';
 
 // ============================================================================
 // Workflow ID Mapping
@@ -29,6 +31,10 @@ const WORKFLOW_REGISTRY: Record<string, WorkflowConfig> = {
   'obsblk-expansion': expansionWorkflowConfig,
   'obsblk-expansion-opportunity': expansionWorkflowConfig,
   'obsblk-executive-engagement': executiveEngagementWorkflowConfig,
+
+  // Obsidian Black demo workflows (1-minute product demo)
+  'obsidian-black-pricing': obsidianBlackPricingConfig,
+  'obsidian-black-call-debrief': obsidianBlackCallDebriefConfig,
 
   // Alias mappings for backwards compatibility
   'strategic-planning': strategicPlanningWorkflowConfig,
@@ -86,4 +92,6 @@ export {
   strategicPlanningWorkflowConfig,
   expansionWorkflowConfig,
   executiveEngagementWorkflowConfig,
+  obsidianBlackPricingConfig,
+  obsidianBlackCallDebriefConfig,
 };

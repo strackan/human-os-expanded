@@ -51,7 +51,7 @@ export const accountAssessmentQuestions: QuestionBlock[] = [
     question: 'Overview of the past year',
     description: 'Share your perspective on how things have gone with this account',
     placeholder: 'Describe the account\'s journey over the past year...',
-    rows: 5,
+    rows: 3,
     required: true
   }
 ];

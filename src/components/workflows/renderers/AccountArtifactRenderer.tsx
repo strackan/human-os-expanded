@@ -11,6 +11,7 @@
  * - ExpansionOverviewArtifact
  * - ExpansionProposalArtifact
  * - StrategicAccountPlanArtifact
+ * - PricingAnalysisArtifact
  */
 
 import React from 'react';
@@ -19,6 +20,7 @@ import AccountOverviewArtifact from '@/components/artifacts/AccountOverviewArtif
 import ExpansionOverviewArtifact from '@/components/artifacts/ExpansionOverviewArtifact';
 import ExpansionProposalArtifact from '@/components/artifacts/ExpansionProposalArtifact';
 import StrategicAccountPlanArtifact from '@/components/artifacts/StrategicAccountPlanArtifact';
+import PricingAnalysisArtifact from '@/components/artifacts/PricingAnalysisArtifact';
 
 interface AccountArtifactRendererProps {
   slide: WorkflowSlide;
@@ -149,6 +151,40 @@ export default function AccountArtifactRenderer({
           onModify={onBack}
           onAgree={onNext}
           onComeBack={onClose}
+        />
+      );
+
+    case 'PricingAnalysisArtifact':
+      const props = section.data?.props || {};
+      return (
+        <PricingAnalysisArtifact
+          data={{
+            customerName: customerName,
+            currentPrice: props.currentARR || (customer ? customer.arr : 185000),
+            currentARR: props.currentARR || (customer ? customer.arr : 185000),
+            pricePerUnit: props.currentPricePerSeat || 3700,
+            unitType: props.unitType || 'seat',
+            comparativeAnalysis: props.marketPercentile ? {
+              averagePrice: props.proposedPricePerSeat || 3996,
+              percentile: props.marketPercentile?.current || 35,
+              similarCustomerCount: 50
+            } : undefined,
+            usageMetrics: {
+              currentUsage: customer?.healthScore || 87,
+              usageGrowth: 23,
+              usageEfficiency: 92
+            },
+            recommendation: {
+              priceIncrease: props.increasePercentage || 8,
+              newAnnualPrice: props.proposedARR || 199800,
+              reasons: props.justification || [
+                'Strong product utilization',
+                'Market-aligned pricing opportunity',
+                'Healthy customer relationship',
+                'Optimal timing window'
+              ]
+            }
+          }}
         />
       );
 

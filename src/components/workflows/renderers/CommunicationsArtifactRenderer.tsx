@@ -10,6 +10,7 @@
  * - EmailArtifact
  * - StakeholderProfileArtifact
  * - TalkingPointsArtifact
+ * - QuoteArtifact
  */
 
 import React from 'react';
@@ -17,6 +18,7 @@ import { WorkflowSlide } from '@/components/artifacts/workflows/config/WorkflowC
 import EmailArtifact from '@/components/artifacts/EmailArtifact';
 import StakeholderProfileArtifact from '@/components/artifacts/StakeholderProfileArtifact';
 import TalkingPointsArtifact from '@/components/artifacts/TalkingPointsArtifact';
+import QuoteArtifact from '@/components/artifacts/QuoteArtifact';
 
 interface CommunicationsArtifactRendererProps {
   slide: WorkflowSlide;
@@ -223,6 +225,29 @@ export default function CommunicationsArtifactRenderer({
           meetingType={props.meetingType || 'Business Review'}
           onContinue={onNext}
           onBack={onBack}
+        />
+      );
+
+    case 'QuoteArtifact':
+      return (
+        <QuoteArtifact
+          data={{
+            quoteNumber: props.quoteNumber || 'Q-2025-001',
+            quoteDate: props.quoteDate || new Date().toLocaleDateString(),
+            customerName: customerName,
+            companyInfo: props.companyInfo || {
+              name: 'Renubu',
+              tagline: 'AI-Powered Customer Success Platform',
+              address: '123 Innovation Drive, San Francisco, CA 94102',
+              phone: '(555) 123-4567',
+              email: 'quotes@renubu.com'
+            },
+            lineItems: props.lineItems || [],
+            summary: props.summary || {},
+            terms: props.terms || [],
+            validUntil: props.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()
+          }}
+          readOnly={props.readOnly !== undefined ? props.readOnly : false}
         />
       );
 

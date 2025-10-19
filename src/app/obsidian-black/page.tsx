@@ -6,7 +6,7 @@ import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
-import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen';
+import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen-v3';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
 
@@ -20,7 +20,7 @@ interface PriorityWorkflow {
   arr: string;
 }
 
-export default function ZenDashboardPage() {
+export default function ObsidianBlackDashboard() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [priorityWorkflow, setPriorityWorkflow] = useState<PriorityWorkflow | null>(null);
@@ -57,44 +57,21 @@ export default function ZenDashboardPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        console.log('[Zen Dashboard] Fetching workflow data...');
-        const response = await fetch('/api/dashboard/today-workflows');
-        console.log('[Zen Dashboard] Response status:', response.status);
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch dashboard data');
-        }
-        const data = await response.json();
-        console.log('[Zen Dashboard] Received data:', data);
-        console.log('[Zen Dashboard] Priority workflow:', data.priorityWorkflow);
-
-        setPriorityWorkflow(data.priorityWorkflow);
-      } catch (error) {
-        console.error('[Zen Dashboard] Error fetching data:', error);
-        // Fallback to hardcoded data
-        console.log('[Zen Dashboard] Using fallback data');
-        setPriorityWorkflow({
-          id: 'obsblk-strategic-planning',
-          title: 'Complete Strategic Account Plan for Obsidian Black',
-          customerId: '550e8400-e29b-41d4-a716-446655440001',
-          customerName: 'Obsidian Black',
-          priority: 'Critical',
-          dueDate: 'Today',
-          arr: '$185K',
-        });
-      } finally {
-        console.log('[Zen Dashboard] Setting loading to false');
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
+    // Set hardcoded demo data for Obsidian Black
+    setPriorityWorkflow({
+      id: 'obsidian-black-pricing',
+      title: 'Optimize Pricing for Obsidian Black Renewal',
+      customerId: '550e8400-e29b-41d4-a716-446655440001',
+      customerName: 'Obsidian Black',
+      priority: 'Critical',
+      dueDate: 'Today',
+      arr: '$185K',
+    });
+    setLoading(false);
   }, []);
 
   const handleLaunchWorkflow = () => {
-    console.log('Launching Strategic Account Planning workflow...');
+    console.log('[Obsidian Black] Launching Pricing workflow...');
     // If in sequence mode, use activeWorkflow, otherwise use priorityWorkflow
     if (!sequenceId && priorityWorkflow) {
       setActiveWorkflow({
@@ -120,14 +97,14 @@ export default function ZenDashboardPage() {
       const nextWorkflow = getWorkflowInSequence(sequenceId, nextIndex);
 
       if (nextWorkflow) {
-        console.log(`[Zen Dashboard] Moving to workflow ${nextIndex + 1}:`, nextWorkflow.customerName);
+        console.log(`[Obsidian Black] Moving to workflow ${nextIndex + 1}:`, nextWorkflow.customerName);
         setSequenceIndex(nextIndex);
         setActiveWorkflow(nextWorkflow);
         // Keep modal open, just update the workflow
       }
     } else {
       // No more workflows, close modal
-      console.log('[Zen Dashboard] Sequence complete!');
+      console.log('[Obsidian Black] Sequence complete!');
       setTaskModeOpen(false);
       setSequenceId(null);
       setSequenceIndex(0);
@@ -140,7 +117,7 @@ export default function ZenDashboardPage() {
 
     const targetWorkflow = getWorkflowInSequence(sequenceId, index);
     if (targetWorkflow) {
-      console.log(`[Zen Dashboard] Jumping to workflow ${index + 1}:`, targetWorkflow.customerName);
+      console.log(`[Obsidian Black] Jumping to workflow ${index + 1}:`, targetWorkflow.customerName);
       setSequenceIndex(index);
       setActiveWorkflow(targetWorkflow);
     }
@@ -172,7 +149,7 @@ export default function ZenDashboardPage() {
         {/* Greeting Section */}
         <ZenGreeting className="mb-12" />
 
-        {/* Placeholder for future sections */}
+        {/* Main Dashboard Content */}
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Priority Workflow Card */}
           {loading ? (
@@ -202,16 +179,29 @@ export default function ZenDashboardPage() {
           </div>
 
           {/* When You're Ready Divider */}
-          <WhenYouReReady />
+          <WhenYouReReady
+            demoLinks={[
+              {
+                label: 'Pricing Optimization',
+                href: '/obsidian-black?workflow=obsidian-black-pricing',
+                description: 'Optimize renewal pricing for Obsidian Black'
+              },
+              {
+                label: 'Call Debrief Follow-Up',
+                href: '/obsidian-black?workflow=obsidian-black-call-debrief',
+                description: 'Post-call feedback and analysis'
+              }
+            ]}
+          />
 
           {/* Below the fold content will go here */}
         </div>
       </div>
 
-      {/* Task Mode Fullscreen */}
+      {/* Task Mode Fullscreen - V3 Config-Driven Architecture */}
       {taskModeOpen && activeWorkflow && (
         <TaskModeFullscreen
-          key={`${activeWorkflow.workflowId}-${sequenceIndex}`} // Force remount when workflow changes
+          key={`${activeWorkflow.workflowId}-${sequenceIndex}`}
           workflowId={activeWorkflow.workflowId}
           workflowTitle={activeWorkflow.title}
           customerId={activeWorkflow.customerId}

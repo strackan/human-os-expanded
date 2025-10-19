@@ -6,7 +6,7 @@ import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
-import TaskModeFullscreenV2 from '@/components/workflows/TaskModeFullscreen-v2';
+import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen-v3';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
 
@@ -200,9 +200,9 @@ export default function ZenDashboardPage() {
         </div>
       </div>
 
-      {/* Task Mode Fullscreen - V2 Clone for Safe Experimentation */}
+      {/* Task Mode Fullscreen - V3 Config-Driven Architecture */}
       {taskModeOpen && activeWorkflow && (
-        <TaskModeFullscreenV2
+        <TaskModeFullscreen
           key={`${activeWorkflow.workflowId}-${sequenceIndex}`}
           workflowId={activeWorkflow.workflowId}
           workflowTitle={activeWorkflow.title}

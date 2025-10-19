@@ -9,16 +9,18 @@ interface WorkflowSequencePanelProps {
   currentIndex: number;
   onSelectWorkflow: (index: number) => void;
   completedWorkflows: Set<number>;
+  isDropdown?: boolean;
 }
 
 export default function WorkflowSequencePanel({
   workflows,
   currentIndex,
   onSelectWorkflow,
-  completedWorkflows
+  completedWorkflows,
+  isDropdown = false
 }: WorkflowSequencePanelProps) {
   return (
-    <div className="bg-white border-r border-gray-200 w-80 flex flex-col h-full">
+    <div className={`bg-white flex flex-col overflow-hidden ${isDropdown ? 'rounded-b-2xl' : 'border-r border-gray-200 w-80 h-full'}`}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <h3 className="text-sm font-semibold text-gray-900">Workflow Sequence</h3>

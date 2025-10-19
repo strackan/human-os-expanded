@@ -16,6 +16,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ============================================================================
 // Types
@@ -60,7 +61,7 @@ export interface WorkflowExecutionWithDetails extends WorkflowExecution {
   customer: {
     id: string;
     domain: string;
-    arr: number;
+    current_arr: number;
     renewal_date: string | null;
     assigned_to: string | null;
   };
@@ -350,17 +351,29 @@ export async function calculateWorkflowPriorityScore(executionId: string): Promi
  * In demo mode, returns workflows from demo sequence (order field in trigger_conditions)
  * In production mode, returns workflows ranked by priority score
  *
- * @param csmId - CSM user ID
+ * @param csmId - CSM user ID (optional when isDemoCompanyUser is true)
  * @param limit - Max number of workflows to return (default 10)
  * @param demoMode - If true, use demo sequence order instead of priority
+ * @param isDemoCompanyUser - If true, show ALL demo workflows regardless of assigned_csm_id
+ * @param supabaseClient - Optional Supabase client (use service role client for demo mode)
  * @returns Array of workflow executions with details, sorted by priority
  */
 export async function getWorkflowQueueForCSM(
   csmId: string,
   limit: number = 10,
-  demoMode: boolean = false
+  demoMode: boolean = false,
+  isDemoCompanyUser: boolean = false,
+  supabaseClient?: SupabaseClient
 ): Promise<WorkflowExecutionWithDetails[]> {
-  const supabase = await createClient();
+  const supabase = supabaseClient || await createClient();
+
+  console.log('[Orchestrator] getWorkflowQueueForCSM called with:', {
+    csmId,
+    limit,
+    demoMode,
+    isDemoCompanyUser,
+    hasCustomClient: !!supabaseClient
+  });
 
   // Build query for workflow executions
   let query = supabase
@@ -368,23 +381,30 @@ export async function getWorkflowQueueForCSM(
     .select(`
       *,
       workflow_definition:workflow_definitions(*),
-      customer:customers!workflow_executions_customer_id_fkey(id, domain, arr, renewal_date, assigned_to),
-      customer_properties:customer_properties!workflow_executions_customer_id_fkey(
-        revenue_impact_tier,
-        churn_risk_score,
-        usage_score,
-        opportunity_score
-      )
+      customer:customers!workflow_executions_customer_id_fkey(id, domain, current_arr, renewal_date, assigned_to)
     `)
-    .eq('assigned_csm_id', csmId)
     .in('status', ['not_started', 'underway', 'snoozed']);
+
+  // Only filter by CSM if NOT a demo company user
+  if (!isDemoCompanyUser) {
+    query = query.eq('assigned_csm_id', csmId);
+    console.log('[Orchestrator] Filtering by assigned_csm_id:', csmId);
+  } else {
+    console.log('[Orchestrator] NOT filtering by CSM (demo company user)');
+  }
 
   if (demoMode) {
     // Demo mode: only return demo workflows
     query = query.eq('is_demo', true);
+    console.log('[Orchestrator] Filtering for demo workflows only');
   }
 
   const { data: executions, error } = await query;
+
+  console.log('[Orchestrator] Query result:', {
+    count: executions?.length || 0,
+    error: error?.message || null
+  });
 
   if (error || !executions) return [];
 

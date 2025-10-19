@@ -14,7 +14,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Maximize2, Minimize2 } from 'lucide-react';
+import { X } from 'lucide-react';
 
 // =====================================================
 // Types
@@ -58,7 +58,6 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
   isOpen,
   onToggle
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [metrics, setMetrics] = useState<CustomerMetric[]>(propMetrics || LOADING_PLACEHOLDER_METRICS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,49 +129,15 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      className={`
-        bg-white border-b border-gray-200 transition-all duration-300
-        ${isExpanded ? 'fixed inset-0 z-50' : 'relative'}
-      `}
-      style={!isExpanded ? { height: '50%' } : {}}
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center px-4 py-2 bg-gray-50 border-b border-gray-200">
-        <div className="flex items-center space-x-2">
-          {/* Expand/Collapse Button - Upper Left */}
-          <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
-            title={isExpanded ? 'Exit full screen' : 'Expand to full screen'}
-          >
-            {isExpanded ? (
-              <Minimize2 className="w-4 h-4" />
-            ) : (
-              <Maximize2 className="w-4 h-4" />
-            )}
-          </button>
-
-          <h3 className="text-sm font-semibold text-gray-700">
-            📊 Customer Metrics{customerName && ` - ${customerName}`}
-          </h3>
-
-          {loading && (
-            <span className="text-xs text-gray-500 animate-pulse">Loading...</span>
-          )}
-
-          {error && (
-            <span className="text-xs text-red-600" title={error}>⚠ Error loading metrics</span>
-          )}
-        </div>
-
-        {/* Close Button - Upper Right */}
+    <div className="bg-white h-full flex flex-col overflow-hidden">
+      {/* Minimal Header - Just Close Button */}
+      <div className="flex justify-end items-center px-4 py-3 border-b border-gray-200">
         <button
           onClick={onToggle}
-          className="p-1.5 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
-          title="Hide metrics"
+          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          title="Close metrics"
         >
-          <ChevronUp className="w-4 h-4" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
@@ -226,57 +191,12 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
             </div>
           ))}
         </div>
-
-        {/* Additional details when expanded */}
-        {isExpanded && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="text-sm font-semibold text-gray-700 mb-3">Recent Activity</h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-700">Last product update deployed</span>
-                <span className="text-xs text-gray-500">2 days ago</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-700">Quarterly business review completed</span>
-                <span className="text-xs text-gray-500">1 week ago</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-700">Contract renewal discussion started</span>
-                <span className="text-xs text-gray-500">2 weeks ago</span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
 // =====================================================
-// Toggle Button Component (for header)
+// Toggle Button Component (for header) - DEPRECATED
+// This component is no longer used with the new icon-based UI
 // =====================================================
-
-export const MetricsToggleButton: React.FC<{
-  isOpen: boolean;
-  onClick: () => void;
-}> = ({ isOpen, onClick }) => {
-  return (
-    <button
-      onClick={onClick}
-      className="
-        flex items-center space-x-1 px-3 py-1.5
-        text-sm font-medium text-gray-700
-        bg-gray-100 hover:bg-gray-200
-        rounded-md transition-colors
-      "
-      title={isOpen ? 'Hide metrics' : 'Show metrics'}
-    >
-      <span>📊 Metrics</span>
-      {isOpen ? (
-        <ChevronUp className="w-4 h-4" />
-      ) : (
-        <ChevronDown className="w-4 h-4" />
-      )}
-    </button>
-  );
-};

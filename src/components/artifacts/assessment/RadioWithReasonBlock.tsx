@@ -41,16 +41,16 @@ export default function RadioWithReasonBlock({
   return (
     <div className="flex flex-col h-full animate-fade-in">
       {/* Question Header */}
-      <div className="flex items-start gap-4 mb-6">
-        <span className="flex-shrink-0 w-10 h-10 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-lg font-bold">
+      <div className="flex items-start gap-3 mb-4">
+        <span className="flex-shrink-0 w-8 h-8 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center text-sm font-bold">
           {questionNumber}
         </span>
         <div className="flex-1">
-          <label className="text-2xl font-semibold text-gray-900 block mb-2">
+          <label className="text-lg font-semibold text-gray-900 block mb-1">
             {config.question}
           </label>
           {config.description && (
-            <p className="text-base text-gray-600">
+            <p className="text-sm text-gray-600">
               {config.description}
             </p>
           )}
@@ -58,20 +58,20 @@ export default function RadioWithReasonBlock({
         {onMicClick && (
           <button
             onClick={onMicClick}
-            className="flex-shrink-0 p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+            className="flex-shrink-0 p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
             title="Use voice input"
           >
-            <Mic className="w-5 h-5" />
+            <Mic className="w-4 h-4" />
           </button>
         )}
       </div>
 
       {/* Radio Options */}
-      <div className="pl-14 space-y-3 mb-6">
+      <div className="pl-11 space-y-2 mb-4">
         {config.options.map((option) => (
           <label
             key={option.value}
-            className={`flex items-start gap-4 p-4 border-2 rounded-lg cursor-pointer transition-all ${
+            className={`flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
               selectedValue === option.value
                 ? 'border-purple-500 bg-purple-50'
                 : 'border-gray-200 hover:border-purple-200 hover:bg-gray-50'
@@ -83,14 +83,14 @@ export default function RadioWithReasonBlock({
               value={option.value}
               checked={selectedValue === option.value}
               onChange={(e) => handleRadioChange(e.target.value)}
-              className="mt-1 w-4 h-4 text-purple-600 focus:ring-purple-500"
+              className="mt-0.5 w-4 h-4 text-purple-600 focus:ring-purple-500"
             />
             <div className="flex-1">
-              <span className="text-base font-medium text-gray-900 block">
+              <span className="text-sm font-medium text-gray-900 block">
                 {option.label}
               </span>
               {option.description && (
-                <span className="text-sm text-gray-600 mt-1 block">
+                <span className="text-xs text-gray-600 mt-0.5 block">
                   {option.description}
                 </span>
               )}
@@ -101,17 +101,18 @@ export default function RadioWithReasonBlock({
 
       {/* Reason Text Area */}
       {selectedValue && (
-        <div className="pl-14 flex flex-col flex-1 min-h-0">
-          <label className="text-lg font-medium text-gray-700 block mb-3">Why?</label>
+        <div className="pl-11">
+          <label className="text-sm font-medium text-gray-700 block mb-2">Why?</label>
           <textarea
             value={reason}
             onChange={(e) => handleReasonChange(e.target.value)}
             placeholder={config.reasonPlaceholder || 'Explain your reasoning...'}
-            className="w-full px-5 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-base resize-none text-gray-900 placeholder:text-gray-400 flex-1 min-h-0"
+            rows={config.reasonRows || 3}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm resize-none text-gray-900 placeholder:text-gray-400"
             autoFocus={autoFocus}
           />
           {config.helpText && (
-            <p className="text-sm text-gray-500 mt-3">{config.helpText}</p>
+            <p className="text-xs text-gray-500 mt-2">{config.helpText}</p>
           )}
         </div>
       )}
