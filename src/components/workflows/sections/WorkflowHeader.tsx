@@ -74,24 +74,13 @@ export default function WorkflowHeader({
             </button>
           )}
 
-          {/* Metrics Toggle (only show after first slide) */}
-          {currentSlideIndex > 0 && (
-            <button
-              onClick={onToggleMetrics}
-              className="text-gray-500 hover:text-blue-600 hover:scale-110 transition-all p-2 hover:bg-blue-50 rounded-lg"
-              title="View customer metrics"
-            >
-              <i className="fa-light fa-chart-simple text-xl"></i>
-            </button>
-          )}
-
-          {/* Artifacts Toggle */}
+          {/* Metrics Toggle */}
           <button
-            onClick={onToggleArtifacts}
+            onClick={onToggleMetrics}
             className="text-gray-500 hover:text-blue-600 hover:scale-110 transition-all p-2 hover:bg-blue-50 rounded-lg"
-            title={showArtifacts ? 'Hide artifacts' : 'Show artifacts'}
+            title="View customer metrics"
           >
-            <i className={`fa-light ${showArtifacts ? 'fa-panel-ews' : 'fa-sidebar'} text-xl`}></i>
+            <i className="fa-light fa-chart-simple text-xl"></i>
           </button>
 
           {/* Close Button */}

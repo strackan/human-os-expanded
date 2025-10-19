@@ -425,6 +425,7 @@ export default function TaskModeFullscreen({
           setShowArtifacts(false);
           break;
 
+        case 'closeWorkflow':
         case 'exitTaskMode':
           onClose();
           break;
@@ -1263,7 +1264,7 @@ export default function TaskModeFullscreen({
           {/* Left Panel - Chat */}
           <div
             id="chat-panel"
-            className="flex flex-col bg-white transition-all duration-500 ease-in-out"
+            className="flex flex-col bg-white"
             style={{ width: showArtifacts ? `${100 - artifactsPanelWidth}%` : '100%' }}
           >
             <div className="flex-1 overflow-y-auto">
@@ -1344,7 +1345,7 @@ export default function TaskModeFullscreen({
           {showArtifacts && (
             <div
               id="artifacts-panel"
-              className="bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-500 ease-in-out animate-slide-in-from-right"
+              className="bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden"
               style={{ width: `${artifactsPanelWidth}%` }}
             >
               {currentSlide && renderArtifact(currentSlide)}
@@ -1353,7 +1354,7 @@ export default function TaskModeFullscreen({
         </div>
 
         {/* Metrics Slide-Up Overlay */}
-        {showMetricsSlideup && currentSlideIndex > 0 && (
+        {showMetricsSlideup && (
           <>
             {/* Backdrop */}
             <div
@@ -1364,7 +1365,7 @@ export default function TaskModeFullscreen({
             <div
               id="metrics-slideup"
               className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-2xl z-50 animate-slide-up"
-              style={{ height: '60vh' }}
+              style={{ height: '30vh' }}
             >
               <CustomerMetrics
                 customerId={customerId}

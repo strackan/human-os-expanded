@@ -39,3 +39,26 @@ export const UI_CONSTANTS = {
   DEFAULT_PANEL_WIDTH: 600,
   TRANSITION_DURATION: 200,
 } as const;
+
+// Terminology constants (customer-facing labels)
+export const TERMINOLOGY = {
+  WORKFLOW_SINGULAR: 'Play',
+  WORKFLOW_PLURAL: 'Plays',
+  WORKFLOW_SINGULAR_LOWER: 'play',
+  WORKFLOW_PLURAL_LOWER: 'plays',
+  TASK_MODE: 'Task Mode',
+  TASK_MODE_LOWER: 'task mode',
+} as const;
+
+// Helper function to get time-based greeting
+export function getTimeBasedGreeting(): string {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return 'Good morning';
+  } else if (hour < 17) {
+    return 'Good afternoon';
+  } else {
+    return 'Good evening';
+  }
+}

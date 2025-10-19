@@ -149,9 +149,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
             {/* Left: Logo + Wordmark */}
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600"></div>
-              <span className="text-gray-400 text-sm">renubu</span>
+            <div className="flex items-center gap-3 h-full">
+              <img
+                src="/logo.png"
+                alt="Renubu Logo"
+                className="h-10 w-auto"
+                style={{ display: 'block', verticalAlign: 'middle' }}
+              />
             </div>
 
             {/* Right: Icons */}

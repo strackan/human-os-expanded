@@ -60,7 +60,7 @@ export default function ObsidianBlackDashboard() {
     // Set hardcoded demo data for Obsidian Black
     setPriorityWorkflow({
       id: 'obsidian-black-pricing',
-      title: 'Optimize Pricing for Obsidian Black Renewal',
+      title: 'Renewal Planning for Obsidian Black',
       customerId: '550e8400-e29b-41d4-a716-446655440001',
       customerName: 'Obsidian Black',
       priority: 'Critical',
@@ -168,14 +168,14 @@ export default function ObsidianBlackDashboard() {
             />
           ) : null}
 
-          {/* Two columns for Today's Workflows and Quick Actions */}
+          {/* Two columns for Today's Plays and Quick Actions */}
           <div className="grid grid-cols-2 gap-6">
             <TodaysWorkflows
               workflows={sequenceId ? getWorkflowSequence(sequenceId)?.workflows : undefined}
               onWorkflowClick={handleWorkflowClick}
               completedWorkflowIds={new Set()} // TODO: Track completion state
             />
-            <QuickActions />
+            <QuickActions expandByDefault={true} />
           </div>
 
           {/* When You're Ready Divider */}

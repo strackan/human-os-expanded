@@ -142,6 +142,58 @@ async function seedObsidianBlack() {
     console.log('✅ Dr. Elena Voss created');
   }
 
+  // Sarah Martinez
+  const { data: sarah, error: sarahError } = await supabase
+    .from('contacts')
+    .upsert({
+      customer_id: OBSIDIAN_BLACK_ID,
+      first_name: 'Sarah',
+      last_name: 'Martinez',
+      email: 's.martinez@obsidianblack.ops',
+      phone: '+1 (555) 0102',
+      title: 'Director of Strategic Initiatives',
+      is_primary: false,
+      is_demo: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'customer_id,email'
+    })
+    .select()
+    .single();
+
+  if (sarahError) {
+    console.log('⚠️  Sarah contact:', sarahError.message);
+  } else {
+    console.log('✅ Sarah Martinez created');
+  }
+
+  // David Park
+  const { data: david, error: davidError } = await supabase
+    .from('contacts')
+    .upsert({
+      customer_id: OBSIDIAN_BLACK_ID,
+      first_name: 'David',
+      last_name: 'Park',
+      email: 'david.park@obsidianblack.ops',
+      phone: '+1 (555) 0103',
+      title: 'Operations Manager',
+      is_primary: false,
+      is_demo: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }, {
+      onConflict: 'customer_id,email'
+    })
+    .select()
+    .single();
+
+  if (davidError) {
+    console.log('⚠️  David contact:', davidError.message);
+  } else {
+    console.log('✅ David Park created');
+  }
+
   // ============================================================================
   // 4. Contract
   // ============================================================================

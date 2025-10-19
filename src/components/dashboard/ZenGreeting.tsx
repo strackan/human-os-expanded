@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { getTimeBasedGreeting } from '@/lib/constants';
 
 // ===================================================================
 // EDITABLE PROMPTS - Modify these to change LLM-generated content
@@ -108,7 +109,7 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
   return (
     <div className={`text-center space-y-2 ${className}`}>
       <h1 className="text-3xl font-light text-gray-700">
-        Good morning, {getFirstName()}
+        {getTimeBasedGreeting()}, {getFirstName()}
       </h1>
       <p className="text-sm text-gray-400">
         {getCurrentDayDate()}

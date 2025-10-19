@@ -255,7 +255,7 @@ const PlanSummaryArtifact: React.FC<PlanSummaryProps> = ({
         <div className="px-8 py-4 border-t border-gray-100 flex justify-end">
           <button
             onClick={onNextCustomer}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2 cursor-pointer"
           >
             {nextButtonLabel}
             <ArrowRight className="w-4 h-4" />

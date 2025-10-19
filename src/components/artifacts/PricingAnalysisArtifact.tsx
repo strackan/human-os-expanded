@@ -152,9 +152,9 @@ const PricingAnalysisArtifact = React.memo(function PricingAnalysisArtifact({ da
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="bg-white h-full flex flex-col rounded-lg border border-gray-200 shadow-sm">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-lg border-b border-gray-200">
+      <div className="flex-shrink-0 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-t-lg border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -173,7 +173,7 @@ const PricingAnalysisArtifact = React.memo(function PricingAnalysisArtifact({ da
       </div>
 
       {/* Main Content */}
-      <div className="p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         {/* Key Metrics Row */}
         <div className="grid grid-cols-4 gap-4">
           <div className="bg-gray-50 rounded-lg p-4">

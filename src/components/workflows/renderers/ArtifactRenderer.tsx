@@ -59,7 +59,8 @@ function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 
   if (componentType === 'AccountOverviewArtifact' ||
       componentType === 'ExpansionOverviewArtifact' ||
       componentType === 'ExpansionProposalArtifact' ||
-      componentType === 'StrategicAccountPlanArtifact') {
+      componentType === 'StrategicAccountPlanArtifact' ||
+      componentType === 'PricingAnalysisArtifact') {
     return 'account';
   }
 
@@ -74,7 +75,8 @@ function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 
   // Communications & People
   if (componentType === 'EmailArtifact' ||
       componentType === 'StakeholderProfileArtifact' ||
-      componentType === 'TalkingPointsArtifact') {
+      componentType === 'TalkingPointsArtifact' ||
+      componentType === 'QuoteArtifact') {
     return 'communications';
   }
 

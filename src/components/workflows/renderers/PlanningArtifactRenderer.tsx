@@ -137,12 +137,12 @@ export default function PlanningArtifactRenderer({
   }
 
   // Handle PlanningChecklistArtifact
-  if (type === 'planning-checklist') {
+  if (componentType === 'PlanningChecklistArtifact' || type === 'planning-checklist') {
     return (
       <PlanningChecklistArtifact
-        title={section.title.replace(/\{\{customerName\}\}/g, customerName)}
-        items={section.data?.items || []}
-        showActions={section.data?.showActions !== false}
+        title={section.data?.props?.title || section.title?.replace(/\{\{customerName\}\}/g, customerName) || "Let's review what we need to accomplish:"}
+        items={section.data?.props?.items || section.data?.items || []}
+        showActions={section.data?.props?.showActions ?? section.data?.showActions ?? true}
       />
     );
   }

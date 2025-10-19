@@ -9,8 +9,13 @@
  */
 
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
+import { getTimeBasedGreeting } from '@/lib/constants';
 
-export const obsidianBlackPricingConfig: WorkflowConfig = {
+// Dynamic config that includes time-based greeting
+const createConfig = (): WorkflowConfig => {
+  const greeting = getTimeBasedGreeting();
+
+  return {
   customer: {
     name: 'Obsidian Black',
   },
@@ -78,10 +83,10 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
       stepMapping: 'greeting',
       chat: {
         initialMessage: {
-          text: "Good morning! Your **ONE critical task** today:\n\n**Optimize pricing for {{customerName}}'s upcoming renewal.**\n\nThey're at the 35th percentile for pricing - significantly below market. With 4 months until renewal and 87% utilization, this is the perfect window to optimize.\n\nReady to build the pricing strategy?",
+          text: `${greeting}, Justin. You've got one critical task for today:\n\n**Renewal Planning for {{customerName}}.**\n\nWe need to review contract terms, make sure we've got the right contacts, and put our initial forecast in.\n\nThe full plan is on the right. Ready to get started?`,
           buttons: [
-            { label: "Let's Optimize Pricing", value: 'start', 'label-background': 'bg-blue-600', 'label-text': 'text-white' },
-            { label: 'Review Later', value: 'snooze', 'label-background': 'bg-gray-500', 'label-text': 'text-white' }
+            { label: 'Review Later', value: 'snooze', 'label-background': 'bg-gray-500', 'label-text': 'text-white' },
+            { label: "Let's Begin!", value: 'start', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
           ]
         },
         branches: {
@@ -97,7 +102,28 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
         }
       },
       artifacts: {
-        sections: []
+        sections: [
+          {
+            id: 'planning-checklist',
+            title: 'Pricing Optimization Plan',
+            type: 'custom',
+            visible: true,
+            data: {
+              componentType: 'PlanningChecklistArtifact',
+              props: {
+                title: "Here's what we'll accomplish together:",
+                items: [
+                  { id: '1', label: 'Review account health and contract details', completed: false },
+                  { id: '2', label: 'Analyze current pricing vs. market benchmarks', completed: false },
+                  { id: '3', label: 'Generate optimized renewal quote', completed: false },
+                  { id: '4', label: 'Draft personalized outreach email', completed: false },
+                  { id: '5', label: 'Create action plan and next steps', completed: false }
+                ],
+                showActions: false
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -109,10 +135,13 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
       stepMapping: 'account-overview',
       chat: {
         initialMessage: {
-          text: "Here's {{customerName}}'s current state:\n\n**Key Insights:**\n• **35th percentile pricing** - significant upside opportunity\n• **87% utilization** - healthy usage, room for growth\n• **87% health score** - strong relationship foundation\n• **4 months to renewal** - perfect timing window\n\nReview the detailed metrics on the right. Notice the pricing gap compared to market benchmarks.\n\nReady to see the pricing analysis?",
+          text: "Please review {{customerName}}'s current status to the right:\n\n**Key Insights:**\n• 20% usage increase over prior month\n• 4 months to renewal - time to engage\n• Paying less per unit than 65% of customers - Room for expansion\n• Recent negative comments in support - May need to investigate\n• Key contract items - 5% limit on price increases. Consider amendment.\n\nMake sure you've reviewed the contract and stakeholder. When you're ready, click to move onto pricing.",
           buttons: [
             { label: 'Analyze Pricing Strategy', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
-          ]
+          ],
+          nextBranches: {
+            'continue': 'continue'
+          }
         },
         branches: {
           'continue': {
@@ -161,7 +190,11 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
           buttons: [
             { label: 'Draft The Quote', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' },
             { label: 'Adjust Strategy', value: 'adjust', 'label-background': 'bg-gray-500', 'label-text': 'text-white' }
-          ]
+          ],
+          nextBranches: {
+            'continue': 'continue',
+            'adjust': 'adjust'
+          }
         },
         branches: {
           'continue': {
@@ -229,7 +262,10 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
           text: "**Quote Generated!**\n\nI've prepared a renewal quote for {{customerName}} on the right.\n\n**Here's the magic:** This isn't a static PDF. You can:\n• **Double-click any text** to edit it inline\n• **Click the table rows** to change background colors\n• Customize it for your customer's brand\n\nTry editing the product description or changing the header color. When you're ready, we'll draft the email to Marcus.",
           buttons: [
             { label: 'Draft Email To Marcus', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
-          ]
+          ],
+          nextBranches: {
+            'continue': 'continue'
+          }
         },
         branches: {
           'continue': {
@@ -252,11 +288,27 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
                 quoteNumber: 'Q-2025-OB-001',
                 quoteDate: new Date().toLocaleDateString(),
                 customerName: 'Obsidian Black',
+                customerContact: {
+                  name: 'Marcus Chen',
+                  title: 'VP Engineering',
+                  email: 'marcus.chen@obsidianblack.com'
+                },
+                customerAddress: {
+                  company: 'Obsidian Black',
+                  street: '450 Market Street, Suite 2000',
+                  city: 'San Francisco',
+                  state: 'CA',
+                  zip: '94111'
+                },
                 companyInfo: {
                   name: 'Renubu',
                   tagline: 'AI-Powered Customer Success Platform',
-                  address: '123 Innovation Drive, San Francisco, CA 94102',
-                  phone: '(555) 123-4567',
+                  address: {
+                    street: '1247 Innovation Drive, Suite 400',
+                    city: 'San Francisco',
+                    state: 'CA',
+                    zip: '94105'
+                  },
                   email: 'quotes@renubu.com'
                 },
                 lineItems: [
@@ -301,7 +353,10 @@ export const obsidianBlackPricingConfig: WorkflowConfig = {
           text: "**Email Draft Ready!**\n\nI've drafted a personalized email to Marcus Chen about the renewal discussion. It:\n• References their strong usage and growth\n• Positions the pricing as market-aligned\n• Suggests a call to discuss their roadmap\n• Attaches the quote for transparency\n\nReview it on the right, edit if needed, then we'll wrap up.",
           buttons: [
             { label: 'Looks Good - Finish Up', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
-          ]
+          ],
+          nextBranches: {
+            'continue': 'continue'
+          }
         },
         branches: {
           'continue': {
@@ -344,7 +399,7 @@ I'd love to schedule a 30-minute call to:
 I've attached the formal quote for your review. Let me know what works for your calendar!
 
 Best,
-[Your Name]
+<User.First>
 
 ---
 *Quote attached: Q-2025-OB-001*`,
@@ -367,7 +422,10 @@ Best,
           text: "**Pricing Optimization Complete!**\n\nYour renewal strategy for {{customerName}} is ready. Review the summary on the right to see:\n• What we accomplished together\n• What I'll handle automatically (CRM updates, reminders)\n• What you need to do (schedule the call with Marcus)\n\nThis is how Renubu works - **ONE critical task, done in under 2 minutes**. No dashboards, no busywork, just the work that matters.",
           buttons: [
             { label: 'Complete', value: 'complete', 'label-background': 'bg-green-600', 'label-text': 'text-white' }
-          ]
+          ],
+          nextBranches: {
+            'complete': 'complete'
+          }
         },
         branches: {
           'complete': {
@@ -462,4 +520,8 @@ Best,
       progressPercentage: 16
     }
   }
+  };
 };
+
+// Export the config as a result of calling the function
+export const obsidianBlackPricingConfig = createConfig();

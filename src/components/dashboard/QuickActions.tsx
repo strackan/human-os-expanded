@@ -19,17 +19,26 @@ interface QuickActionData {
 
 interface QuickActionsProps {
   className?: string;
+  expandByDefault?: boolean;
 }
 
-export default function QuickActions({ className = '' }: QuickActionsProps) {
+export default function QuickActions({ className = '', expandByDefault = false }: QuickActionsProps) {
   const [activeTab, setActiveTab] = useState<'starters' | 'plans' | 'noticed' | 'mystuff'>('starters');
   const [activeAction, setActiveAction] = useState<QuickActionData | null>(null);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(expandByDefault);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Reset expanded state when tab changes
+  // Reset expanded state when tab changes (but not on initial load)
   useEffect(() => {
-    setIsExpanded(false);
-  }, [activeTab]);
+    if (isInitialLoad) {
+      setIsInitialLoad(false);
+      return;
+    }
+    // Only collapse if not set to expand by default
+    if (!expandByDefault) {
+      setIsExpanded(false);
+    }
+  }, [activeTab, expandByDefault, isInitialLoad]);
 
   const handleActionClick = (actionData: QuickActionData) => {
     setActiveAction(actionData);

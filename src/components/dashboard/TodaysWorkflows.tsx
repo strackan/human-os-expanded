@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { TERMINOLOGY } from '@/lib/constants';
 
 interface WorkflowItem {
   workflowId: string;
@@ -91,7 +92,7 @@ export default function TodaysWorkflows({
             <Sparkles className="w-5 h-5 text-purple-500" />
           </div>
           <div>
-            <h3 className="text-lg text-gray-700">Today's Workflows</h3>
+            <h3 className="text-lg text-gray-700">Today's {TERMINOLOGY.WORKFLOW_PLURAL}</h3>
             <p className="text-sm text-gray-400">{completedWorkflows} of {totalWorkflows} complete</p>
           </div>
         </div>
@@ -146,7 +147,7 @@ export default function TodaysWorkflows({
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              By Workflow
+              By {TERMINOLOGY.WORKFLOW_SINGULAR}
             </button>
           </div>
 

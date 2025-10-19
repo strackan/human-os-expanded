@@ -48,6 +48,11 @@ function getWorkflowType(workflowId: string): 'strategic-planning' | 'expansion'
     return 'engagement';
   }
 
+  // Pricing workflows also need stakeholders for contact review
+  if (id.includes('pricing')) {
+    return 'strategic-planning';
+  }
+
   return 'unknown';
 }
 

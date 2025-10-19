@@ -437,9 +437,28 @@ export default function ChatRenderer({
   const renderButtons = (buttons: ChatMessage['buttons']) => {
     if (!buttons || buttons.length === 0) return null;
 
+    // Determine if button is a "proceed" action (goes on right) or "back/cancel" action (goes on left)
+    const isProceedButton = (button: typeof buttons[number]) => {
+      const proceedValues = ['start', 'continue', 'next', 'complete', 'submit'];
+      const proceedLabels = ['continue', 'next', 'start', 'complete', 'submit', 'yes', 'proceed'];
+      return (
+        proceedValues.includes(button.value.toLowerCase()) ||
+        proceedLabels.some(label => button.label.toLowerCase().includes(label))
+      );
+    };
+
+    // Sort buttons: back/cancel on left, proceed on right
+    const sortedButtons = [...buttons].sort((a, b) => {
+      const aIsProceed = isProceedButton(a);
+      const bIsProceed = isProceedButton(b);
+      if (aIsProceed && !bIsProceed) return 1;  // a goes right
+      if (!aIsProceed && bIsProceed) return -1; // a goes left
+      return 0; // keep original order
+    });
+
     return (
       <div className="flex gap-3 mt-4">
-        {buttons.map((button, index) => (
+        {sortedButtons.map((button, index) => (
           <button
             key={index}
             onClick={() => onButtonClick?.(button.value)}
@@ -480,55 +499,61 @@ export default function ChatRenderer({
       <div className="max-w-2xl w-full space-y-6">
         {chatMessages.map((message, index) => (
           <div key={message.id} className="space-y-3">
-            {/* Message Bubble */}
+            {/* Message Row with Avatar */}
             <div
               className={`flex ${
                 message.sender === 'user' ? 'justify-end' : 'justify-start'
-              } items-end gap-2`}
+              } items-start gap-2`}
             >
+              {/* AI Avatar */}
               {message.sender === 'ai' && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <Bot className="w-5 h-5 text-white" />
                 </div>
               )}
 
-              <div
-                className={`rounded-2xl px-5 py-3 max-w-lg ${
-                  message.sender === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
+              {/* Message Content Column (bubble, components, buttons all same width) */}
+              <div className="flex flex-col gap-3 max-w-lg w-full">
+                {/* Message Bubble */}
                 <div
-                  className="text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: formatTextToHTML(message.text) }}
-                />
+                  className={`rounded-2xl px-5 py-3 ${
+                    message.sender === 'user'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  <div
+                    className="text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: formatTextToHTML(message.text) }}
+                  />
+                </div>
+
+                {/* Inline Component (only for AI messages) */}
+                {message.sender === 'ai' && message.component && (
+                  <div>{renderInlineComponent(message.component, message.id)}</div>
+                )}
+
+                {/* Buttons (only for AI messages) */}
+                {message.sender === 'ai' && message.buttons && (
+                  <div>{renderButtons(message.buttons)}</div>
+                )}
+
+                {/* Submitted Component Value Display */}
+                {message.componentValue !== undefined && (
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Check className="w-4 h-4 text-green-600" />
+                    <span>Submitted: {JSON.stringify(message.componentValue)}</span>
+                  </div>
+                )}
               </div>
 
+              {/* User Avatar */}
               {message.sender === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                   <User className="w-5 h-5 text-white" />
                 </div>
               )}
             </div>
-
-            {/* Inline Component (only for AI messages) */}
-            {message.sender === 'ai' && message.component && (
-              <div className="ml-10">{renderInlineComponent(message.component, message.id)}</div>
-            )}
-
-            {/* Buttons (only for AI messages) */}
-            {message.sender === 'ai' && message.buttons && (
-              <div className="ml-10">{renderButtons(message.buttons)}</div>
-            )}
-
-            {/* Submitted Component Value Display */}
-            {message.componentValue !== undefined && (
-              <div className="ml-10 flex items-center gap-2 text-sm text-gray-500">
-                <Check className="w-4 h-4 text-green-600" />
-                <span>Submitted: {JSON.stringify(message.componentValue)}</span>
-              </div>
-            )}
           </div>
         ))}
 

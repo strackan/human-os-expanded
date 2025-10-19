@@ -1,6 +1,7 @@
 'use client';
 
 import { Target } from 'lucide-react';
+import { TERMINOLOGY } from '@/lib/constants';
 
 interface PriorityWorkflowCardProps {
   workflowTitle: string;
@@ -43,12 +44,12 @@ export default function PriorityWorkflowCard({
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Target className="w-6 h-6 text-purple-500" />
-          <span className="text-sm text-gray-500 uppercase tracking-wide">If You Do One Thing Today (make it this)</span>
+          <span className="text-sm text-gray-500 tracking-wide">Today's One Thing</span>
         </div>
         {/* Subtle Launch Icon - Passage/Door */}
         <div className="flex items-center gap-2 text-gray-400 group-hover:text-purple-500 transition-colors">
           <img src="/passage_icon.png" alt="Launch" className="w-6 h-6 opacity-40 group-hover:opacity-70 transition-opacity" />
-          <span className="text-xs font-medium">Launch Task Mode</span>
+          <span className="text-xs font-medium">Launch {TERMINOLOGY.TASK_MODE}</span>
         </div>
       </div>
 

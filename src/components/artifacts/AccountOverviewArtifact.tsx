@@ -54,6 +54,7 @@ interface AccountOverviewArtifactProps {
   showSkipSnooze?: boolean;
   onSkip?: () => void;
   onSnooze?: () => void;
+  showPricingTab?: boolean;
 }
 
 export default function AccountOverviewArtifact({
@@ -69,12 +70,15 @@ export default function AccountOverviewArtifact({
   onContractQuestion,
   showSkipSnooze = false,
   onSkip,
-  onSnooze
+  onSnooze,
+  showPricingTab = true
 }: AccountOverviewArtifactProps) {
   const [activeTab, setActiveTab] = useState<'contract' | 'contacts' | 'pricing'>('contract');
   const [localContacts, setLocalContacts] = useState(contacts);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [contractReviewed, setContractReviewed] = useState(false);
+  const [contactsReviewed, setContactsReviewed] = useState(false);
 
   const getContactTypeConfig = (type: Contact['type']) => {
     switch (type) {
@@ -188,17 +192,19 @@ export default function AccountOverviewArtifact({
           <Users className="w-4 h-4" />
           Contacts
         </button>
-        <button
-          onClick={() => setActiveTab('pricing')}
-          className={`flex items-center gap-2 px-8 py-4 text-sm font-medium ${
-            activeTab === 'pricing'
-              ? 'text-gray-900 border-b-2 border-blue-600'
-              : 'text-gray-500 hover:text-gray-900'
-          }`}
-        >
-          <DollarSign className="w-4 h-4" />
-          Pricing
-        </button>
+        {showPricingTab && (
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`flex items-center gap-2 px-8 py-4 text-sm font-medium ${
+              activeTab === 'pricing'
+                ? 'text-gray-900 border-b-2 border-blue-600'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            <DollarSign className="w-4 h-4" />
+            Pricing
+          </button>
+        )}
       </div>
 
       {/* Content */}
@@ -360,6 +366,35 @@ export default function AccountOverviewArtifact({
                 </div>
               )}
             </div>
+
+            {/* Review Checkbox */}
+            <div className="pt-6 border-t border-gray-200">
+              <button
+                onClick={() => setContractReviewed(!contractReviewed)}
+                className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all w-full text-left ${
+                  contractReviewed
+                    ? 'bg-green-50 border-green-500'
+                    : 'bg-gray-50 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                    contractReviewed
+                      ? 'bg-green-500 border-green-500'
+                      : 'bg-white border-gray-400'
+                  }`}
+                >
+                  {contractReviewed && <CheckCircle className="w-5 h-5 text-white" />}
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    contractReviewed ? 'text-green-900' : 'text-gray-700'
+                  }`}
+                >
+                  I have reviewed the Contract
+                </span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -430,6 +465,35 @@ export default function AccountOverviewArtifact({
               <p className="text-sm text-blue-700">
                 Make sure these are the right contacts for your plan. You can confirm or update each person above.
               </p>
+            </div>
+
+            {/* Review Checkbox */}
+            <div className="pt-6 border-t border-gray-200 mt-6">
+              <button
+                onClick={() => setContactsReviewed(!contactsReviewed)}
+                className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all w-full text-left ${
+                  contactsReviewed
+                    ? 'bg-green-50 border-green-500'
+                    : 'bg-gray-50 border-gray-300 hover:border-gray-400'
+                }`}
+              >
+                <div
+                  className={`flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                    contactsReviewed
+                      ? 'bg-green-500 border-green-500'
+                      : 'bg-white border-gray-400'
+                  }`}
+                >
+                  {contactsReviewed && <CheckCircle className="w-5 h-5 text-white" />}
+                </div>
+                <span
+                  className={`text-sm font-medium ${
+                    contactsReviewed ? 'text-green-900' : 'text-gray-700'
+                  }`}
+                >
+                  I have reviewed the Contacts
+                </span>
+              </button>
             </div>
           </div>
         )}

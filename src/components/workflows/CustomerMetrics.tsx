@@ -130,17 +130,6 @@ export const CustomerMetrics: React.FC<CustomerMetricsProps> = ({
 
   return (
     <div className="bg-white h-full flex flex-col overflow-hidden">
-      {/* Minimal Header - Just Close Button */}
-      <div className="flex justify-end items-center px-4 py-3 border-b border-gray-200">
-        <button
-          onClick={onToggle}
-          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-          title="Close metrics"
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
       {/* Metrics Grid */}
       <div className="h-full overflow-y-auto p-4">
         {error && (

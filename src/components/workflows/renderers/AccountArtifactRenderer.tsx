@@ -57,27 +57,72 @@ export default function AccountArtifactRenderer({
       const contractInfo = expansionData?.contract ? {
         startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
         endDate: expansionData.contract.renewalDate,
-        term: expansionData.contract.term,
+        term: '1 year',
         autoRenew: expansionData.contract.autoRenew,
+        autoRenewLanguage: 'Contract automatically renews for successive 1-year terms unless either party provides written notice 90 days prior to renewal date',
         noticePeriod: '90 days',
+        terminationClause: 'Either party may terminate for convenience with 90 days written notice',
+        pricingCaps: [
+          'Annual price increases limited to 5% or CPI, whichever is lower',
+          'Seat expansion pricing locked at current rate for remainder of term'
+        ],
+        nonStandardTerms: [
+          'Custom data retention requirements (7 years)',
+          'Dedicated support SLA with 2-hour response time'
+        ],
         riskLevel: 'low' as const
       } : {
-        startDate: new Date().toISOString(),
+        startDate: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString(),
         endDate: customer?.renewalDate || '',
-        term: '12 months',
+        term: '1 year',
         autoRenew: false,
+        autoRenewLanguage: undefined,
         noticePeriod: '90 days',
+        terminationClause: 'Either party may terminate for convenience with 90 days written notice',
+        pricingCaps: [
+          'Annual price increases limited to 5% or CPI, whichever is lower',
+          'Volume discount applies at 100+ seats'
+        ],
         riskLevel: 'medium' as const
       };
 
       // Transform stakeholders to contacts format
-      const contacts = (stakeholders || []).map((s, idx) => ({
+      const contacts = (stakeholders && stakeholders.length > 0) ? stakeholders.map((s, idx) => ({
         name: s.name,
         role: s.role,
         email: s.email,
         type: (idx === 0 ? 'executive' : idx === 1 ? 'champion' : 'business') as 'executive' | 'champion' | 'business',
         confirmed: false
-      }));
+      })) : [
+        {
+          name: 'Mr. Big',
+          role: 'CTO',
+          email: 'cto@obsidianblack.com',
+          type: 'executive' as const,
+          confirmed: false
+        },
+        {
+          name: 'Marcus Chen',
+          role: 'VP of Engineering',
+          email: 'marcus.chen@obsidianblack.com',
+          type: 'executive' as const,
+          confirmed: false
+        },
+        {
+          name: 'Sarah Martinez',
+          role: 'Director of Customer Success',
+          email: 's.martinez@obsidianblack.com',
+          type: 'champion' as const,
+          confirmed: false
+        },
+        {
+          name: 'David Park',
+          role: 'Senior Product Manager',
+          email: 'david.park@obsidianblack.com',
+          type: 'business' as const,
+          confirmed: false
+        }
+      ];
 
       // Transform pricing info
       const pricingInfo = expansionData ? {
@@ -104,6 +149,7 @@ export default function AccountArtifactRenderer({
           contractInfo={contractInfo}
           contacts={contacts}
           pricingInfo={pricingInfo}
+          showPricingTab={false}
           // Navigation now handled by chat buttons
           // onContinue={onNext}
           // onBack={onBack}

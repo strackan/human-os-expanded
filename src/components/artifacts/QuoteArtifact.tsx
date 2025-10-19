@@ -72,6 +72,18 @@ const colorPresets: ColorPreset[] = [
   { bg: '#FFF7ED', text: '#7C2D12', name: 'Orange' }
 ];
 
+// Header color presets - vibrant colors for quote header
+const headerColorPresets: ColorPreset[] = [
+  { bg: '#2563EB', text: '#FFFFFF', name: 'Blue' },
+  { bg: '#059669', text: '#FFFFFF', name: 'Green' },
+  { bg: '#DC2626', text: '#FFFFFF', name: 'Red' },
+  { bg: '#1F2937', text: '#FFFFFF', name: 'Black' },
+  { bg: '#7C3AED', text: '#FFFFFF', name: 'Purple' },
+  { bg: '#0891B2', text: '#FFFFFF', name: 'Cyan' },
+  { bg: '#EA580C', text: '#FFFFFF', name: 'Orange' },
+  { bg: '#4338CA', text: '#FFFFFF', name: 'Indigo' }
+];
+
 // Editable Text Component
 interface EditableTextProps {
   value: string;
@@ -160,9 +172,10 @@ interface ColorPickerPopoverProps {
   onClose: () => void;
   onSelectColor: (color: ColorPreset) => void;
   position: { top: number; left: number };
+  colors?: ColorPreset[];
 }
 
-function ColorPickerPopover({ isOpen, onClose, onSelectColor, position }: ColorPickerPopoverProps) {
+function ColorPickerPopover({ isOpen, onClose, onSelectColor, position, colors = colorPresets }: ColorPickerPopoverProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -190,8 +203,8 @@ function ColorPickerPopover({ isOpen, onClose, onSelectColor, position }: ColorP
       style={{ top: position.top, left: position.left }}
     >
       <p className="text-xs text-gray-500 mb-2 font-medium">Choose Color</p>
-      <div className="grid grid-cols-3 gap-2">
-        {colorPresets.map(color => (
+      <div className="grid grid-cols-4 gap-2">
+        {colors.map(color => (
           <button
             key={color.name}
             onClick={() => {
@@ -235,12 +248,15 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
   });
 
   // State for styling
+  const [quoteHeaderStyle, setQuoteHeaderStyle] = useState<ColorPreset>({ bg: '#2563EB', text: '#FFFFFF', name: 'Blue' });
   const [headerStyle, setHeaderStyle] = useState<ColorPreset>({ bg: '#F9FAFB', text: '#6B7280', name: 'Gray' });
   const [lineItemStyle, setLineItemStyle] = useState<ColorPreset>({ bg: '#FFFFFF', text: '#111827', name: 'White' });
+  const [showQuoteHeaderPicker, setShowQuoteHeaderPicker] = useState(false);
   const [showHeaderPicker, setShowHeaderPicker] = useState(false);
   const [showLineItemPicker, setShowLineItemPicker] = useState(false);
   const [pickerPosition, setPickerPosition] = useState({ top: 0, left: 0 });
 
+  const quoteHeaderRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLTableSectionElement>(null);
   const lineItemRef = useRef<HTMLTableRowElement>(null);
 
@@ -274,13 +290,30 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
     onFieldChange?.(field, value);
   };
 
-  const handleHeaderClick = (e: React.MouseEvent) => {
+  const handleQuoteHeaderClick = (e: React.MouseEvent) => {
     if (readOnly) return;
-    const rect = headerRef.current?.getBoundingClientRect();
+    const rect = quoteHeaderRef.current?.getBoundingClientRect();
     if (rect) {
       setPickerPosition({
         top: rect.bottom + window.scrollY + 5,
         left: rect.left + window.scrollX
+      });
+      setShowQuoteHeaderPicker(true);
+    }
+  };
+
+  const handleHeaderClick = (e: React.MouseEvent) => {
+    if (readOnly) return;
+    e.stopPropagation();
+    const rect = headerRef.current?.getBoundingClientRect();
+    if (rect) {
+      // Get the parent scrollable container
+      const scrollContainer = headerRef.current?.closest('.overflow-y-auto');
+      const scrollTop = scrollContainer?.scrollTop || 0;
+
+      setPickerPosition({
+        top: rect.top + scrollTop, // Align with top of header
+        left: rect.right + 10 // Position to the right of the header
       });
       setShowHeaderPicker(true);
     }
@@ -299,9 +332,17 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden max-w-4xl mx-auto">
+    <div className="bg-white h-full flex flex-col rounded-lg border border-gray-200 shadow-sm">
       {/* Quote Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
+      <div
+        ref={quoteHeaderRef}
+        onClick={handleQuoteHeaderClick}
+        className={`flex-shrink-0 text-white p-6 relative group ${!readOnly ? 'cursor-pointer' : ''}`}
+        style={{ backgroundColor: quoteHeaderStyle.bg, color: quoteHeaderStyle.text }}
+      >
+        {!readOnly && (
+          <Palette className="w-4 h-4 absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+        )}
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center space-x-3 mb-2">
@@ -318,20 +359,22 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
             <EditableText
               value={quoteData.companyTagline}
               onChange={(val) => updateField('companyTagline', val)}
-              className="text-blue-100 text-sm"
+              className="text-sm opacity-80"
               readOnly={readOnly}
             />
           </div>
           <div className="text-right">
             <h1 className="text-3xl font-bold mb-1">RENEWAL QUOTE</h1>
-            <p className="text-blue-100 text-sm">{quoteData.quoteNumber}</p>
-            <p className="text-blue-100 text-xs mt-1">{quoteData.quoteDate}</p>
+            <p className="text-sm opacity-80">{quoteData.quoteNumber}</p>
+            <p className="text-xs mt-1 opacity-80">{quoteData.quoteDate}</p>
           </div>
         </div>
       </div>
 
-      {/* Company and Customer Details */}
-      <div className="p-6 border-b border-gray-100">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        {/* Company and Customer Details */}
+        <div className="p-6 border-b border-gray-100">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* From Section */}
           <div>
@@ -340,10 +383,10 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               From
             </h3>
             <div className="space-y-1 text-sm">
-              <p className="font-medium">{companyInfo.name || 'Renubu Technologies Inc.'}</p>
-              <p>{companyInfo.address?.street || '1247 Innovation Drive, Suite 400'}</p>
-              <p>{companyInfo.address?.city || 'San Francisco'}, {companyInfo.address?.state || 'CA'} {companyInfo.address?.zip || '94105'}</p>
-              <p>Email: {companyInfo.email || 'renewals@renubu.com'}</p>
+              <p className="font-medium text-gray-900">{companyInfo.name || 'Renubu Technologies Inc.'}</p>
+              <p className="text-gray-700">{companyInfo.address?.street || '1247 Innovation Drive, Suite 400'}</p>
+              <p className="text-gray-700">{companyInfo.address?.city || 'San Francisco'}, {companyInfo.address?.state || 'CA'} {companyInfo.address?.zip || '94105'}</p>
+              <p className="text-gray-700">Email: {companyInfo.email || 'renewals@renubu.com'}</p>
             </div>
           </div>
 
@@ -354,18 +397,18 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               To
             </h3>
             <div className="space-y-1 text-sm">
-              <p className="font-medium">
+              <p className="font-medium text-gray-900">
                 {customerContact.name || 'Customer Contact'}
                 {customerContact.title && `, ${customerContact.title}`}
               </p>
-              <p>{customerAddress.company || quoteData.customerName}</p>
-              {customerAddress.street && <p>{customerAddress.street}</p>}
+              <p className="text-gray-700">{customerAddress.company || quoteData.customerName}</p>
+              {customerAddress.street && <p className="text-gray-700">{customerAddress.street}</p>}
               {(customerAddress.city || customerAddress.state || customerAddress.zip) && (
-                <p>
+                <p className="text-gray-700">
                   {customerAddress.city}, {customerAddress.state} {customerAddress.zip}
                 </p>
               )}
-              {customerContact.email && <p>Email: {customerContact.email}</p>}
+              {customerContact.email && <p className="text-gray-700">Email: {customerContact.email}</p>}
             </div>
           </div>
         </div>
@@ -387,16 +430,16 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               onClick={handleHeaderClick}
             >
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Product
                 </th>
                 <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Period
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider" style={{ color: headerStyle.text }}>
                   Rate
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider relative" style={{ color: headerStyle.text }}>
+                <th className="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider relative" style={{ color: headerStyle.text }}>
                   Total
                   {!readOnly && (
                     <Palette className="w-3 h-3 absolute top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -413,16 +456,18 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               >
                 <td className="px-4 py-3 relative">
                   <div>
-                    <EditableText
-                      value={quoteData.product}
-                      onChange={(val) => updateField('product', val)}
-                      className="font-medium"
-                      readOnly={readOnly}
-                    />
+                    <div className="mb-1">
+                      <EditableText
+                        value={quoteData.product}
+                        onChange={(val) => updateField('product', val)}
+                        className="text-gray-900 font-semibold"
+                        readOnly={readOnly}
+                      />
+                    </div>
                     <EditableText
                       value={quoteData.description}
                       onChange={(val) => updateField('description', val)}
-                      className="text-sm text-gray-500"
+                      className="text-sm text-gray-600"
                       readOnly={readOnly}
                     />
                   </div>
@@ -457,6 +502,13 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
         </div>
 
         {/* Color Pickers */}
+        <ColorPickerPopover
+          isOpen={showQuoteHeaderPicker}
+          onClose={() => setShowQuoteHeaderPicker(false)}
+          onSelectColor={setQuoteHeaderStyle}
+          position={pickerPosition}
+          colors={headerColorPresets}
+        />
         <ColorPickerPopover
           isOpen={showHeaderPicker}
           onClose={() => setShowHeaderPicker(false)}
@@ -559,6 +611,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
             Thank you for your continued partnership with Renubu. We look forward to supporting {quoteData.customerName}'s continued success.
           </p>
         </div>
+      </div>
       </div>
     </div>
   );
