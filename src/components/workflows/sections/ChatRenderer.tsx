@@ -5,7 +5,7 @@
  *
  * Renders chat conversations with support for:
  * - Message history (AI + User messages)
- * - Inline components (slider, textarea, input, radio, dropdown, checkbox)
+ * - Inline components (slider, textarea, input, radio, dropdown, checkbox, star-rating)
  * - Branch navigation based on user responses
  * - Auto-advance after component input
  * - Action execution (launch-artifact, nextSlide, etc.)
@@ -354,6 +354,63 @@ export default function ChatRenderer({
     );
   };
 
+  // Render inline star rating component
+  const renderStarRating = (component: InlineComponent & { type: 'star-rating' }, messageId: string) => {
+    if (component.type !== 'star-rating') return null;
+
+    const [selectedRating, setSelectedRating] = useState<number | null>(null);
+    const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+
+    const min = component.min || 1;
+    const max = component.max || 5;
+    const labels = component.labels || {};
+
+    const getLabel = (rating: number): string => {
+      return labels[rating] || '';
+    };
+
+    const displayRating = hoveredRating || selectedRating || 0;
+
+    return (
+      <div className="my-4 p-4 bg-white border border-gray-200 rounded-lg">
+        {/* Star Display */}
+        <div className="flex justify-center gap-2 mb-3">
+          {Array.from({ length: max - min + 1 }, (_, i) => min + i).map((rating) => (
+            <button
+              key={rating}
+              type="button"
+              onClick={() => setSelectedRating(rating)}
+              onMouseEnter={() => setHoveredRating(rating)}
+              onMouseLeave={() => setHoveredRating(null)}
+              className="text-4xl transition-transform hover:scale-110 focus:outline-none"
+            >
+              {rating <= displayRating ? '⭐' : '☆'}
+            </button>
+          ))}
+        </div>
+
+        {/* Label Display */}
+        {displayRating > 0 && (
+          <div className="text-center text-sm font-medium text-gray-700 mb-3">
+            {getLabel(displayRating)}
+          </div>
+        )}
+
+        {/* Continue Button */}
+        <button
+          onClick={() => {
+            if (component.required && !selectedRating) return;
+            handleComponentSubmit(component.id, selectedRating);
+          }}
+          disabled={component.required && !selectedRating}
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  };
+
   // Render inline component based on type
   const renderInlineComponent = (component: InlineComponent, messageId: string) => {
     switch (component.type) {
@@ -369,6 +426,8 @@ export default function ChatRenderer({
         return renderDropdown(component, messageId);
       case 'checkbox':
         return renderCheckbox(component, messageId);
+      case 'star-rating':
+        return renderStarRating(component, messageId);
       default:
         return null;
     }
