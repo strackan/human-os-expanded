@@ -180,27 +180,6 @@ export default function EmailArtifact({
         <div className="flex-1"></div>
 
         <div className="flex gap-3 items-center">
-          {/* Inline Confirmation */}
-          {showConfirmation && (
-            <div className="flex items-center gap-3 mr-2 bg-amber-50 border border-amber-200 px-4 py-2 rounded-lg animate-scale-in">
-              <span className="text-sm text-amber-900">Send this email to {emailTo}?</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowConfirmation(false)}
-                  className="px-3 py-1 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded border border-gray-300 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleConfirmSend}
-                  className="px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
-                >
-                  Confirm
-                </button>
-              </div>
-            </div>
-          )}
-
           <button
             onClick={handleSaveToDrafts}
             className={`px-5 py-2.5 ${savedToDrafts ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} rounded-lg text-sm font-medium flex items-center gap-2 transition-colors`}
@@ -223,6 +202,31 @@ export default function EmailArtifact({
           </button>
         </div>
       </div>
+
+      {/* Confirmation Overlay */}
+      {showConfirmation && (
+        <div className="fixed bottom-20 right-8 z-50 animate-slide-up">
+          <div className="bg-amber-50 border border-amber-200 px-5 py-3 rounded-lg shadow-lg">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-amber-900">Send this email to {emailTo}?</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowConfirmation(false)}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded border border-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmSend}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded transition-colors"
+                >
+                  Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success Toast */}
       {showSuccessToast && (

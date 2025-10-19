@@ -52,7 +52,7 @@ interface TaskModeFullscreenProps {
   workflowTitle: string;
   customerId: string;
   customerName: string;
-  onClose: () => void;
+  onClose: (completed?: boolean) => void;
   sequenceInfo?: {
     sequenceId: string;
     currentIndex: number;
@@ -221,7 +221,7 @@ export default function TaskModeFullscreen({
       if (sequenceInfo) {
         sequenceInfo.onNextWorkflow();
       } else {
-        onClose();
+        onClose(true); // Pass true to indicate completion
       }
     }, 1500);
   };
@@ -427,7 +427,7 @@ export default function TaskModeFullscreen({
 
         case 'closeWorkflow':
         case 'exitTaskMode':
-          onClose();
+          onClose(true); // Pass true to indicate workflow completion
           break;
 
         case 'nextCustomer':

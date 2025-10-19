@@ -1,62 +1,83 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight } from 'lucide-react';
-import Link from 'next/link';
-
-interface DemoLink {
-  label: string;
-  href: string;
-  description?: string;
-}
+import { ChevronRight, TrendingUp, Heart, Target, Users } from 'lucide-react';
 
 interface WhenYouReReadyProps {
   className?: string;
-  demoLinks?: DemoLink[];
 }
 
-export default function WhenYouReReady({ className = '', demoLinks }: WhenYouReReadyProps) {
+const cards = [
+  {
+    id: 'performance',
+    title: 'Performance',
+    subtitle: 'Revenue metrics',
+    icon: TrendingUp,
+    iconColor: 'text-green-500'
+  },
+  {
+    id: 'customers',
+    title: 'Customers',
+    subtitle: 'Portfolio overview',
+    icon: Heart,
+    iconColor: 'text-red-400'
+  },
+  {
+    id: 'my-plays',
+    title: 'My Plays',
+    subtitle: 'Workflow library',
+    icon: Target,
+    iconColor: 'text-blue-500'
+  },
+  {
+    id: 'team',
+    title: 'Team',
+    subtitle: 'Peer insights',
+    icon: Users,
+    iconColor: 'text-purple-500'
+  }
+];
+
+export default function WhenYouReReady({ className = '' }: WhenYouReReadyProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className={`text-center py-8 ${className}`}>
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="text-sm text-gray-400 hover:text-gray-600 transition-colors inline-flex items-center gap-2"
-      >
-        <span>When you're ready</span>
-        <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-      </button>
+    <div className={`${className}`}>
+      {/* Divider with Toggle */}
+      <div className="text-center py-8">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="text-sm text-gray-400 hover:text-gray-600 transition-colors inline-flex items-center gap-2"
+        >
+          <span>When you're ready</span>
+          <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+        </button>
+      </div>
 
-      {/* Expandable Demo Links */}
-      {isExpanded && demoLinks && demoLinks.length > 0 && (
-        <div className="mt-6 max-w-2xl mx-auto">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-4">Demo Workflows</h3>
-            <div className="space-y-3">
-              {demoLinks.map((link, index) => (
-                <Link
-                  key={index}
-                  href={link.href}
-                  className="block p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="text-left">
-                      <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
-                        {link.label}
-                      </div>
-                      {link.description && (
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          {link.description}
-                        </div>
-                      )}
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
+      {/* Expandable Cards Grid */}
+      {isExpanded && (
+        <div className="grid grid-cols-4 gap-4 animate-fade-in">
+          {cards.map((card) => {
+            const Icon = card.icon;
+            return (
+              <button
+                key={card.id}
+                className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md hover:border-gray-300 transition-all group text-left"
+              >
+                <div className="flex flex-col gap-4">
+                  <Icon className={`w-6 h-6 ${card.iconColor}`} />
+                  <div>
+                    <h3 className="text-base font-medium text-gray-900 group-hover:text-gray-700">
+                      {card.title}
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {card.subtitle}
+                    </p>
                   </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

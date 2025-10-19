@@ -9,6 +9,7 @@ import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
 import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen-v3';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
+import confetti from 'canvas-confetti';
 
 interface PriorityWorkflow {
   id: string;
@@ -26,6 +27,7 @@ export default function ObsidianBlackDashboard() {
   const [priorityWorkflow, setPriorityWorkflow] = useState<PriorityWorkflow | null>(null);
   const [loading, setLoading] = useState(true);
   const [taskModeOpen, setTaskModeOpen] = useState(false);
+  const [completedWorkflowIds, setCompletedWorkflowIds] = useState<Set<string>>(new Set());
 
   // Workflow Sequence State
   const [sequenceId, setSequenceId] = useState<string | null>(null);
@@ -36,6 +38,52 @@ export default function ObsidianBlackDashboard() {
     customerId: string;
     customerName: string;
   } | null>(null);
+
+  const triggerConfetti = () => {
+    // Fire confetti from multiple positions - 2x faster with quick fadeout
+    const count = 200;
+    const defaults = {
+      origin: { y: 0.7 },
+      zIndex: 9999,
+      decay: 0.85, // Faster fadeout
+      gravity: 1.2 // Faster fall
+    };
+
+    function fire(particleRatio: number, opts: any) {
+      confetti({
+        ...defaults,
+        ...opts,
+        particleCount: Math.floor(count * particleRatio)
+      });
+    }
+
+    fire(0.25, {
+      spread: 26,
+      startVelocity: 110,
+    });
+
+    fire(0.2, {
+      spread: 60,
+      startVelocity: 100,
+    });
+
+    fire(0.35, {
+      spread: 100,
+      scalar: 0.8,
+      startVelocity: 90
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 50,
+      scalar: 1.2
+    });
+
+    fire(0.1, {
+      spread: 120,
+      startVelocity: 90,
+    });
+  };
 
   // Parse URL parameters for workflow sequences
   useEffect(() => {
@@ -165,6 +213,7 @@ export default function ObsidianBlackDashboard() {
               dueDate={priorityWorkflow.dueDate}
               arr={priorityWorkflow.arr}
               onLaunch={handleLaunchWorkflow}
+              completed={completedWorkflowIds.has(priorityWorkflow.id)}
             />
           ) : null}
 
@@ -173,26 +222,13 @@ export default function ObsidianBlackDashboard() {
             <TodaysWorkflows
               workflows={sequenceId ? getWorkflowSequence(sequenceId)?.workflows : undefined}
               onWorkflowClick={handleWorkflowClick}
-              completedWorkflowIds={new Set()} // TODO: Track completion state
+              completedWorkflowIds={completedWorkflowIds}
             />
             <QuickActions expandByDefault={true} />
           </div>
 
           {/* When You're Ready Divider */}
-          <WhenYouReReady
-            demoLinks={[
-              {
-                label: 'Pricing Optimization',
-                href: '/obsidian-black?workflow=obsidian-black-pricing',
-                description: 'Optimize renewal pricing for Obsidian Black'
-              },
-              {
-                label: 'Call Debrief Follow-Up',
-                href: '/obsidian-black?workflow=obsidian-black-call-debrief',
-                description: 'Post-call feedback and analysis'
-              }
-            ]}
-          />
+          <WhenYouReReady />
 
           {/* Below the fold content will go here */}
         </div>
@@ -206,7 +242,17 @@ export default function ObsidianBlackDashboard() {
           workflowTitle={activeWorkflow.title}
           customerId={activeWorkflow.customerId}
           customerName={activeWorkflow.customerName}
-          onClose={() => {
+          onClose={(completed?: boolean) => {
+            if (completed && activeWorkflow) {
+              // Mark workflow as completed
+              setCompletedWorkflowIds(prev => new Set(prev).add(activeWorkflow.workflowId));
+
+              // Trigger confetti effect
+              setTimeout(() => {
+                triggerConfetti();
+              }, 100);
+            }
+
             setTaskModeOpen(false);
             setSequenceId(null);
             setSequenceIndex(0);
