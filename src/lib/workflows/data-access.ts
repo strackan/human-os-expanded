@@ -7,7 +7,7 @@
  * Ported from automation-backup SQLite implementation to Supabase PostgreSQL
  */
 
-import { createClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import type { CustomerData } from './types';
 
 /**
@@ -87,7 +87,7 @@ export async function getCustomersNeedingWorkflows(
   companyId: string,
   ownerId?: string
 ): Promise<CustomerData[]> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     // Build query for customers
@@ -166,7 +166,7 @@ export async function getCustomersNeedingWorkflows(
  * @returns Customer data or null if not found
  */
 export async function getCustomerById(customerId: string): Promise<CustomerData | null> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     // Get customer
@@ -227,7 +227,7 @@ export async function updateCustomerAccountPlan(
   customerId: string,
   accountPlan: string
 ): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { error } = await supabase
@@ -262,7 +262,7 @@ export async function updateCustomerScores(
     opportunity_score?: number;
   }
 ): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     const updateData: any = {};
@@ -302,7 +302,7 @@ export async function getCustomersByAccountPlan(
   companyId: string,
   accountPlan: string
 ): Promise<CustomerData[]> {
-  const supabase = createClient();
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { data: customers, error } = await supabase

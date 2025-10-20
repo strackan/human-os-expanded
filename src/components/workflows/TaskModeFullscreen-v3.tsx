@@ -427,7 +427,7 @@ export default function TaskModeFullscreen({
 
         case 'closeWorkflow':
         case 'exitTaskMode':
-          onClose(true); // Pass true to indicate workflow completion
+          onClose(); // Close without marking as completed
           break;
 
         case 'nextCustomer':

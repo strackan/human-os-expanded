@@ -79,7 +79,7 @@ export const obsidianBlackCallDebriefConfig: WorkflowConfig = {
             response: "Got it. That was my take as well.\n\nI've updated the account notes with your feedback and identified a few follow-up actions. I'll handle the CRM updates and send you a reminder in 2 days to check on Marcus's decision timeline.",
             storeAs: 'callDebrief.feedback',
             delay: 2,
-            actions: ['closeWorkflow']
+            actions: ['nextCustomer']
           }
         },
         userTriggers: {

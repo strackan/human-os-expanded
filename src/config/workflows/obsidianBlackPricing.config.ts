@@ -431,7 +431,7 @@ Best,
           'complete': {
             response: "Perfect! I'll handle the follow-up and check back in 3 days. Great work!",
             delay: 1,
-            actions: ['closeWorkflow']
+            actions: ['nextCustomer']
           }
         }
       },
