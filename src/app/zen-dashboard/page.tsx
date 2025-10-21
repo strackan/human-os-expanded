@@ -6,7 +6,7 @@ import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
-import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen';
+import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getWorkflowSequence, getWorkflowInSequence, hasNextWorkflow } from '@/config/workflowSequences';
 
