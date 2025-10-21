@@ -18,7 +18,8 @@
       "Bash(curl:*)",
       "Bash(git log:*)",
       "Bash(cat:*)",
-      "Bash(xargs ls:*)"
+      "Bash(xargs ls:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

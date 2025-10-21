@@ -26,8 +26,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <Script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous" strategy="beforeInteractive" />
+      </head>
       <body className={inter.className}>
-        <Script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous" strategy="afterInteractive" />
         <ToastProvider>
           <AuthProvider>
             <RouteGuard>
