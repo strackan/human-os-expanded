@@ -443,7 +443,7 @@ export function explainWorkflowScore(
   if (factors.custom.experience_multiplier !== 1.0) {
     explanation.breakdown.push({
       component: 'CSM Experience',
-      value: factors.custom.experience_multiplier,
+      value: factors.custom.experience_multiplier ?? 1.0,
       description: `CSM experience adjustment (${factors.custom.experience_multiplier}x)`
     });
   }
@@ -452,7 +452,7 @@ export function explainWorkflowScore(
   if (factors.custom.workload_penalty !== 0) {
     explanation.breakdown.push({
       component: 'Workload Adjustment',
-      value: factors.custom.workload_penalty,
+      value: factors.custom.workload_penalty ?? 0,
       description: `Current workload penalty: ${factors.custom.workload_penalty} points`
     });
   }

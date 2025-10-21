@@ -139,11 +139,11 @@ export const SimpleFormStep: React.FC<StepComponentProps> = ({
 
   // Handle field change
   const handleChange = (field: FormFieldConfig, value: any) => {
-    setFormData(prev => ({ ...prev, [field.name]: value }));
+    setFormData((prev: Record<string, any>) => ({ ...prev, [field.name]: value }));
 
     // Clear error when user starts typing
     if (errors[field.name]) {
-      setErrors(prev => ({ ...prev, [field.name]: '' }));
+      setErrors((prev: Record<string, string>) => ({ ...prev, [field.name]: '' }));
     }
   };
 

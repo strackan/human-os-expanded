@@ -216,7 +216,7 @@ export class NotificationService {
     userId: string,
     supabase: SupabaseClient
   ): Promise<number> {
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('in_product_notifications')
       .update({
         is_read: true,
@@ -224,13 +224,13 @@ export class NotificationService {
       })
       .eq('user_id', userId)
       .eq('is_read', false)
-      .select('*', { count: 'exact', head: true });
+      .select();
 
     if (error) {
       throw new Error(`Failed to mark all notifications as read: ${error.message}`);
     }
 
-    return count || 0;
+    return data?.length || 0;
   }
 
   /**
@@ -259,17 +259,17 @@ export class NotificationService {
   ): Promise<number> {
     const now = new Date().toISOString();
 
-    const { count, error } = await supabase
+    const { data, error } = await supabase
       .from('in_product_notifications')
       .delete()
       .lt('expires_at', now)
-      .select('*', { count: 'exact', head: true });
+      .select();
 
     if (error) {
       throw new Error(`Failed to clean up old notifications: ${error.message}`);
     }
 
-    return count || 0;
+    return data?.length || 0;
   }
 
   // =====================================================

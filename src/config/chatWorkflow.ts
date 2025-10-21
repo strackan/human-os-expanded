@@ -10,11 +10,11 @@ export const defaultChecklistItems = [
 ];
 
 export const defaultProgressSteps = [
-  { id: 1, name: "Review account data", status: "upcoming" },
-  { id: 2, name: "Confirm renewal strategy", status: "upcoming" },
-  { id: 3, name: "Confirm contacts", status: "upcoming" },
-  { id: 4, name: "Address risk", status: "upcoming" },
-  { id: 5, name: "Send renewal notice", status: "upcoming" },
+  { id: 1, name: "Review account data", status: "upcoming" as const },
+  { id: 2, name: "Confirm renewal strategy", status: "upcoming" as const },
+  { id: 3, name: "Confirm contacts", status: "upcoming" as const },
+  { id: 4, name: "Address risk", status: "upcoming" as const },
+  { id: 5, name: "Send renewal notice", status: "upcoming" as const },
 ];
 
 export const defaultRecommendedAction = {

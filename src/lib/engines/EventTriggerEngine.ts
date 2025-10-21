@@ -65,10 +65,10 @@ export class EventTriggerEngine {
   
   private static identifyPrimaryTrigger(scores: ActionScore[]): string {
     // Find the highest scoring update
-    const topScore = scores.reduce((max, score) => 
+    const topScore = scores.reduce((max, score) =>
       score.score_value > max.score_value ? score : max
     );
-    return topScore.calculation_method;
+    return topScore.calculation_method || 'unknown';
   }
 
   private static getRecommendedActions(scores: ActionScore[]): string[] {

@@ -215,7 +215,7 @@ export const ReviewStep: React.FC<StepComponentProps> = ({
       <div className="flex items-center space-x-3 pt-4">
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting || (config.confirmationText && !confirmed)}
+          disabled={isSubmitting || (Boolean(config.confirmationText) && !confirmed)}
           className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium"
         >
           {isSubmitting ? (
