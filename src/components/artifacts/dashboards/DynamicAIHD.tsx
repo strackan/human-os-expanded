@@ -102,20 +102,24 @@ const DynamicAIHD: React.FC = () => {
             {/* Stats Container - 70% width to remove 30% whitespace */}
             <div className="h-full flex flex-col" style={{ width: '70%' }}>
               {/* Customer Overview - 50% height */}
-              <div className="h-1/2 border-b border-gray-200">
-                <CustomerOverviewHD 
-                  config={config.customerOverview} 
-                  className="h-full"
-                />
-              </div>
-              
+              {config.customerOverview && (
+                <div className="h-1/2 border-b border-gray-200">
+                  <CustomerOverviewHD
+                    config={config.customerOverview}
+                    className="h-full"
+                  />
+                </div>
+              )}
+
               {/* Analytics - 50% height */}
-              <div className="h-1/2">
-                <AnalyticsHD
-                  config={config.analytics as any}
-                  className="h-full"
-                />
-              </div>
+              {config.analytics && (
+                <div className="h-1/2">
+                  <AnalyticsHD
+                    config={config.analytics as any}
+                    className="h-full"
+                  />
+                </div>
+              )}
             </div>
           </div>
           

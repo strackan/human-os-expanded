@@ -84,20 +84,24 @@ const DynamicHDAI: React.FC = () => {
         >
           <div className="h-full flex">
             {/* Customer Overview */}
-            <div className="h-full" style={{ width: `${100 - chatWidth}%` }}>
-              <CustomerOverview 
-                config={config.customerOverview} 
-                className="h-full"
-              />
-            </div>
-            
+            {config.customerOverview && (
+              <div className="h-full" style={{ width: `${100 - chatWidth}%` }}>
+                <CustomerOverview
+                  config={config.customerOverview}
+                  className="h-full"
+                />
+              </div>
+            )}
+
             {/* Analytics */}
-            <div className="h-full border-l border-gray-200" style={{ width: `${chatWidth}%` }}>
-              <Analytics
-                config={config.analytics as any}
-                className="h-full"
-              />
-            </div>
+            {config.analytics && (
+              <div className="h-full border-l border-gray-200" style={{ width: `${chatWidth}%` }}>
+                <Analytics
+                  config={config.analytics as any}
+                  className="h-full"
+                />
+              </div>
+            )}
           </div>
           
           {/* Resize Handle */}
