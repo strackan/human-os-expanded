@@ -124,8 +124,6 @@ export default function ChatRenderer({
 
   // Render inline textarea component
   const RenderTextarea = ({ component, messageId }: { component: InlineComponent & { type: 'textarea' }, messageId: string }) => {
-    if (component.type !== 'textarea') return null;
-
     const [value, setValue] = useState('');
 
     return (
@@ -159,8 +157,6 @@ export default function ChatRenderer({
 
   // Render inline input component
   const RenderInput = ({ component, messageId }: { component: InlineComponent & { type: 'input' }, messageId: string }) => {
-    if (component.type !== 'input') return null;
-
     const [value, setValue] = useState('');
 
     return (
@@ -189,8 +185,6 @@ export default function ChatRenderer({
 
   // Render inline radio component
   const RenderRadio = ({ component, messageId }: { component: InlineComponent & { type: 'radio' }, messageId: string }) => {
-    if (component.type !== 'radio') return null;
-
     const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
     return (
@@ -236,8 +230,6 @@ export default function ChatRenderer({
 
   // Render inline dropdown component
   const RenderDropdown = ({ component, messageId }: { component: InlineComponent & { type: 'dropdown' }, messageId: string }) => {
-    if (component.type !== 'dropdown') return null;
-
     const [selectedValue, setSelectedValue] = useState<string>('');
 
     return (
@@ -272,8 +264,6 @@ export default function ChatRenderer({
 
   // Render inline checkbox component
   const RenderCheckbox = ({ component, messageId }: { component: InlineComponent & { type: 'checkbox' }, messageId: string }) => {
-    if (component.type !== 'checkbox') return null;
-
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
     const handleCheckboxChange = (value: string, checked: boolean) => {
@@ -356,8 +346,6 @@ export default function ChatRenderer({
 
   // Render inline star rating component
   const RenderStarRating = ({ component, messageId }: { component: InlineComponent & { type: 'star-rating' }, messageId: string }) => {
-    if (component.type !== 'star-rating') return null;
-
     const [selectedRating, setSelectedRating] = useState<number | null>(null);
     const [hoveredRating, setHoveredRating] = useState<number | null>(null);
 
