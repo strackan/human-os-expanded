@@ -137,25 +137,6 @@ export default function ArtifactGallery() {
             case 'PlanningChecklistEnhancedArtifact':
               componentModule = await import('./PlanningChecklistEnhancedArtifact');
               break;
-            // Demo components use specific wrappers
-            case 'PlanningChecklistDemo':
-              componentModule = await import('./demos/PlanningChecklistDemoGallery');
-              break;
-            case 'ContactStrategyDemo':
-              componentModule = await import('./demos/ContactStrategyDemoGallery');
-              break;
-            case 'ContractOverviewDemo':
-              componentModule = await import('./demos/ContractOverviewDemoGallery');
-              break;
-            case 'PricingAnalysisDemo':
-              componentModule = await import('./demos/PricingAnalysisDemoGallery');
-              break;
-            case 'PlanSummaryDemo':
-              componentModule = await import('./demos/PlanSummaryDemoGallery');
-              break;
-            case 'AllArtifactsMasterDemo':
-              componentModule = await import('./demos/AllArtifactsMasterDemoGallery');
-              break;
             default:
               throw new Error(`Unknown component: ${selectedComponent.name}`);
           }
