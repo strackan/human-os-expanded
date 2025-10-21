@@ -110,7 +110,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [accountPlan, setAccountPlan] = useState<AccountPlanType | null>(null);
   const [customerName, setCustomerName] = useState<string>('');
 
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
 
   // =====================================================
