@@ -15,10 +15,12 @@ export interface Alert {
 }
 
 export class AlertService {
-  private static supabase = createClient();
+  private static getClient() {
+    return createClient();
+  }
 
   static async getRecentAlerts(limit: number = 50): Promise<Alert[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('alerts')
       .select('*')
       .order('created_at', { ascending: false })
@@ -29,7 +31,7 @@ export class AlertService {
   }
 
   static async getUnprocessedAlerts(): Promise<Alert[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('alerts')
       .select('*')
       .is('processed_at', null)
@@ -40,7 +42,7 @@ export class AlertService {
   }
 
   static async createAlert(alert: Omit<Alert, 'id' | 'created_at'>): Promise<Alert> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('alerts')
       .insert(alert)
       .select()
@@ -51,7 +53,7 @@ export class AlertService {
   }
 
   static async markAlertAsProcessed(alertId: string): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getClient()
       .from('alerts')
       .update({ processed_at: new Date().toISOString() })
       .eq('id', alertId);
@@ -60,7 +62,7 @@ export class AlertService {
   }
 
   static async getAlertsByRenewalId(renewalId: string): Promise<Alert[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('alerts')
       .select('*')
       .eq('renewal_id', renewalId)

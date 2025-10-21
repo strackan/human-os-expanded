@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { AlertService } from '@/lib/services/AlertService';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     console.log('Fetching alerts...');
