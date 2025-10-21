@@ -6,9 +6,9 @@ import { useState } from "react";
 
 const variants = {
   initial: { x: 0, opacity: 1, scale: 1 },
-  exit: { x: "100%", opacity: 0, scale: 0.98, position: "absolute", width: "100%" },
-  enter: { x: "-100%", opacity: 0, scale: 1.02, position: "absolute", width: "100%" },
-  animate: { x: 0, opacity: 1, scale: 1, position: "relative", width: "100%" },
+  exit: { x: "100%", opacity: 0, scale: 0.98 },
+  enter: { x: "-100%", opacity: 0, scale: 1.02 },
+  animate: { x: 0, opacity: 1, scale: 1 },
 };
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {
