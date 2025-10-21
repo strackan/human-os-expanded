@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Contract Management Platform",
 };
 
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({
   children,
 }: {
