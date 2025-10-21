@@ -123,7 +123,7 @@ export default function ChatRenderer({
   };
 
   // Render inline textarea component
-  const renderTextarea = (component: InlineComponent & { type: 'textarea' }, messageId: string) => {
+  const RenderTextarea = ({ component, messageId }: { component: InlineComponent & { type: 'textarea' }, messageId: string }) => {
     if (component.type !== 'textarea') return null;
 
     const [value, setValue] = useState('');
@@ -158,7 +158,7 @@ export default function ChatRenderer({
   };
 
   // Render inline input component
-  const renderInput = (component: InlineComponent & { type: 'input' }, messageId: string) => {
+  const RenderInput = ({ component, messageId }: { component: InlineComponent & { type: 'input' }, messageId: string }) => {
     if (component.type !== 'input') return null;
 
     const [value, setValue] = useState('');
@@ -188,7 +188,7 @@ export default function ChatRenderer({
   };
 
   // Render inline radio component
-  const renderRadio = (component: InlineComponent & { type: 'radio' }, messageId: string) => {
+  const RenderRadio = ({ component, messageId }: { component: InlineComponent & { type: 'radio' }, messageId: string }) => {
     if (component.type !== 'radio') return null;
 
     const [selectedValue, setSelectedValue] = useState<string | null>(null);
@@ -235,7 +235,7 @@ export default function ChatRenderer({
   };
 
   // Render inline dropdown component
-  const renderDropdown = (component: InlineComponent & { type: 'dropdown' }, messageId: string) => {
+  const RenderDropdown = ({ component, messageId }: { component: InlineComponent & { type: 'dropdown' }, messageId: string }) => {
     if (component.type !== 'dropdown') return null;
 
     const [selectedValue, setSelectedValue] = useState<string>('');
@@ -271,7 +271,7 @@ export default function ChatRenderer({
   };
 
   // Render inline checkbox component
-  const renderCheckbox = (component: InlineComponent & { type: 'checkbox' }, messageId: string) => {
+  const RenderCheckbox = ({ component, messageId }: { component: InlineComponent & { type: 'checkbox' }, messageId: string }) => {
     if (component.type !== 'checkbox') return null;
 
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
@@ -355,7 +355,7 @@ export default function ChatRenderer({
   };
 
   // Render inline star rating component
-  const renderStarRating = (component: InlineComponent & { type: 'star-rating' }, messageId: string) => {
+  const RenderStarRating = ({ component, messageId }: { component: InlineComponent & { type: 'star-rating' }, messageId: string }) => {
     if (component.type !== 'star-rating') return null;
 
     const [selectedRating, setSelectedRating] = useState<number | null>(null);
@@ -417,17 +417,17 @@ export default function ChatRenderer({
       case 'slider':
         return renderSlider(component, messageId);
       case 'textarea':
-        return renderTextarea(component, messageId);
+        return <RenderTextarea component={component} messageId={messageId} />;
       case 'input':
-        return renderInput(component, messageId);
+        return <RenderInput component={component} messageId={messageId} />;
       case 'radio':
-        return renderRadio(component, messageId);
+        return <RenderRadio component={component} messageId={messageId} />;
       case 'dropdown':
-        return renderDropdown(component, messageId);
+        return <RenderDropdown component={component} messageId={messageId} />;
       case 'checkbox':
-        return renderCheckbox(component, messageId);
+        return <RenderCheckbox component={component} messageId={messageId} />;
       case 'star-rating':
-        return renderStarRating(component, messageId);
+        return <RenderStarRating component={component} messageId={messageId} />;
       default:
         return null;
     }
