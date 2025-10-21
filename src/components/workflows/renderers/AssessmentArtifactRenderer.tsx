@@ -39,13 +39,13 @@ function generateReasons(
   workflowState: Record<string, any>,
   customer: any,
   expansionData: any
-): Array<{ icon: string; text: string; highlight: boolean }> {
+): Array<{ icon: 'check' | 'trending' | 'alert' | 'target'; text: string; highlight: boolean }> {
   const assessmentAnswers = Object.keys(workflowState)
     .filter(key => key.includes('_answers'))
     .map(key => workflowState[key])
     .find(v => v);
 
-  const reasons = [];
+  const reasons: Array<{ icon: 'check' | 'trending' | 'alert' | 'target'; text: string; highlight: boolean }> = [];
 
   // Add assessment-based reasons
   if (assessmentAnswers) {

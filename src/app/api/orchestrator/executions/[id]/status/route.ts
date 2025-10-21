@@ -15,7 +15,7 @@ const VALID_STATUSES = ['not_started', 'underway', 'completed', 'snoozed', 'skip
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -29,7 +29,8 @@ export async function PATCH(
       );
     }
 
-    const executionId = params.id;
+    const { id } = await params;
+    const executionId = id;
 
     // Parse body
     const body = await request.json();

@@ -15,7 +15,10 @@
       "Bash(node:*)",
       "Bash(npx tsc:*)",
       "Bash(curl http://localhost:3000/demo-dashboard)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git log:*)",
+      "Bash(cat:*)",
+      "Bash(xargs ls:*)"
     ],
     "deny": [],
     "ask": []

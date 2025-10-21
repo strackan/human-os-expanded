@@ -24,15 +24,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [loadingNotifications, setLoadingNotifications] = useState(false);
 
   // ADD THIS: Get user data from auth context
-  const { user, profile, loading } = useAuth();
-  
+  const { user, loading } = useAuth();
+
   // Extract first name from user data
   const getFirstName = () => {
     if (loading) return 'User'
-    
-    // Try to get name from profile first
-    if (profile?.full_name) {
-      const name = profile.full_name.split(' ')[0]
+
+    // Try to get name from user metadata
+    if (user?.user_metadata?.full_name) {
+      const name = user.user_metadata.full_name.split(' ')[0]
       return name
     }
     

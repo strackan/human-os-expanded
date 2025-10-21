@@ -148,16 +148,9 @@ export default function CommunicationsArtifactRenderer({
           to={props.to || emailContent.recipients}
           subject={props.subject || emailContent.subject}
           body={props.body || emailContent.body}
-          onSend={() => {
+          onCompose={() => {
             onUpdateState('emailSent', true);
             onNext();
-          }}
-          onSchedule={() => {
-            onUpdateState('emailScheduled', true);
-            onNext();
-          }}
-          onSaveDraft={() => {
-            onUpdateState('emailDraft', emailContent);
           }}
           onBack={onBack}
         />
@@ -174,16 +167,6 @@ export default function CommunicationsArtifactRenderer({
         <StakeholderProfileArtifact
           customerName={customerName}
           stakeholders={profiles}
-          onAddStakeholder={(stakeholder) => {
-            const updated = [...(stakeholders || []), stakeholder];
-            onUpdateState('stakeholders', updated);
-          }}
-          onUpdateStakeholder={(id, updates) => {
-            const updated = (stakeholders || []).map(s =>
-              s.id === id ? { ...s, ...updates } : s
-            );
-            onUpdateState('stakeholders', updated);
-          }}
           onContinue={onNext}
           onBack={onBack}
         />
@@ -221,8 +204,7 @@ export default function CommunicationsArtifactRenderer({
       return (
         <TalkingPointsArtifact
           customerName={customerName}
-          talkingPoints={talkingPoints}
-          meetingType={props.meetingType || 'Business Review'}
+          initialPoints={talkingPoints}
           onContinue={onNext}
           onBack={onBack}
         />
@@ -238,14 +220,11 @@ export default function CommunicationsArtifactRenderer({
             companyInfo: props.companyInfo || {
               name: 'Renubu',
               tagline: 'AI-Powered Customer Success Platform',
-              address: '123 Innovation Drive, San Francisco, CA 94102',
-              phone: '(555) 123-4567',
               email: 'quotes@renubu.com'
             },
             lineItems: props.lineItems || [],
             summary: props.summary || {},
-            terms: props.terms || [],
-            validUntil: props.validUntil || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString()
+            terms: props.terms || []
           }}
           readOnly={props.readOnly !== undefined ? props.readOnly : false}
         />

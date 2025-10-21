@@ -85,7 +85,8 @@ const sampleTasks: SampleTaskCard[] = [
       buttonText: 'Schedule Meeting',
       urgency: 'medium'
     },
-    rationale: 'Customer shows strong engagement and growth potential. Early QBR will help secure renewal and identify expansion opportunities.'
+    rationale: 'Customer shows strong engagement and growth potential. Early QBR will help secure renewal and identify expansion opportunities.',
+    priority: 3
   },
   {
     id: '2',
@@ -124,7 +125,8 @@ const sampleTasks: SampleTaskCard[] = [
       buttonText: 'Schedule Urgent Meeting',
       urgency: 'critical'
     },
-    rationale: 'Customer at high risk due to usage decline, new sponsor, and budget concerns. Immediate executive engagement required.'
+    rationale: 'Customer at high risk due to usage decline, new sponsor, and budget concerns. Immediate executive engagement required.',
+    priority: 1
   },
   {
     id: '3',
@@ -163,7 +165,8 @@ const sampleTasks: SampleTaskCard[] = [
       buttonText: 'Start Analysis',
       urgency: 'high'
     },
-    rationale: 'Competitor activity detected requires proactive strategy to maintain customer loyalty and secure renewal.'
+    rationale: 'Competitor activity detected requires proactive strategy to maintain customer loyalty and secure renewal.',
+    priority: 2
   },
   {
     id: '4',
@@ -202,7 +205,8 @@ const sampleTasks: SampleTaskCard[] = [
       buttonText: 'Complete Negotiation',
       urgency: 'high'
     },
-    rationale: 'Renewal deadline approaching with ongoing negotiations. Need to finalize terms and secure approval.'
+    rationale: 'Renewal deadline approaching with ongoing negotiations. Need to finalize terms and secure approval.',
+    priority: 2
   },
   {
     id: '5',
@@ -241,7 +245,8 @@ const sampleTasks: SampleTaskCard[] = [
       buttonText: 'Schedule Growth Meeting',
       urgency: 'low'
     },
-    rationale: 'Customer showing exceptional growth and engagement. Opportunity to secure early renewal with expansion.'
+    rationale: 'Customer showing exceptional growth and engagement. Opportunity to secure early renewal with expansion.',
+    priority: 4
   }
 ];
 

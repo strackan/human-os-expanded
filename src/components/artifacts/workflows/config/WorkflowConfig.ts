@@ -69,6 +69,7 @@ export type InlineComponentType =
   | 'radio'            // Radio button group
   | 'dropdown'         // Dropdown/select
   | 'checkbox'         // Checkbox group (multiple selection)
+  | 'star-rating'      // Star rating component
   | 'buttons'          // Button group (already exists, included for completeness)
   | 'chart';           // Inline chart visualization (future)
 
@@ -140,20 +141,30 @@ export interface InlineCheckboxComponent {
   required?: boolean;
 }
 
+export interface InlineStarRatingComponent {
+  type: 'star-rating';
+  id: string;
+  min?: number;
+  max?: number;
+  labels?: { [rating: number]: string };
+  required?: boolean;
+}
+
 export type InlineComponent =
   | InlineSliderComponent
   | InlineTextareaComponent
   | InlineInputComponent
   | InlineRadioComponent
   | InlineDropdownComponent
-  | InlineCheckboxComponent;
+  | InlineCheckboxComponent
+  | InlineStarRatingComponent;
 
 export interface DynamicChatBranch {
   response: string;
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow' | 'navigateToBranch'>;
   artifactId?: string;
   stepId?: string; // Step ID for completeStep action
   stepNumber?: number; // Step number for enterStep action
@@ -359,8 +370,8 @@ export interface WorkflowConfig {
     splitModeDefault: boolean;
     statsHeight?: number; // Percentage of height for stats section (default: 45.3)
   };
-  customerOverview: CustomerOverviewConfig;
-  analytics: AnalyticsConfigOrTemplate;
+  customerOverview?: CustomerOverviewConfig;
+  analytics?: AnalyticsConfigOrTemplate;
   chat: ChatConfig;
   artifacts: ArtifactsConfig;
   sidePanel?: SidePanelConfig;

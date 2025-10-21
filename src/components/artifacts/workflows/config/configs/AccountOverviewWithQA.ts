@@ -282,7 +282,7 @@ export const accountOverviewWithQAConfig: WorkflowConfig = {
         type: 'custom',
         title: 'Account Overview',
         visible: false,
-        props: {
+        content: {
           customerName: 'Bluesoft Industries',
           contractInfo: {
             startDate: '2024-03-15',
@@ -354,7 +354,7 @@ export const accountOverviewWithQAConfig: WorkflowConfig = {
         type: 'planning-checklist',
         title: 'Strategic Renewal Plan',
         visible: false,
-        props: {
+        content: {
           title: 'Strategic Renewal Plan',
           description: 'Comprehensive plan for Bluesoft Industries renewal, incorporating all account insights:',
           items: [

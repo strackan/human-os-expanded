@@ -7,32 +7,36 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onActionClick }: EventCardProps) {
-  const severityColors = {
+  type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
+
+  const severityColors: Record<SeverityLevel, string> = {
     low: 'border-blue-200 bg-blue-50',
-    medium: 'border-yellow-200 bg-yellow-50', 
+    medium: 'border-yellow-200 bg-yellow-50',
     high: 'border-orange-200 bg-orange-50',
     critical: 'border-red-200 bg-red-50'
   };
-  
-  const severityTextColors = {
+
+  const severityTextColors: Record<SeverityLevel, string> = {
     low: 'text-blue-700',
     medium: 'text-yellow-700',
     high: 'text-orange-700',
     critical: 'text-red-700'
   };
-  
-  const severityBgColors = {
+
+  const severityBgColors: Record<SeverityLevel, string> = {
     low: 'bg-blue-100',
     medium: 'bg-yellow-100',
     high: 'bg-orange-100',
     critical: 'bg-red-100'
   };
-  
+
+  const severity = event.event_severity as SeverityLevel;
+
   return (
-    <div className={`border-2 rounded-lg p-4 ${severityColors[event.event_severity]}`}>
+    <div className={`border-2 rounded-lg p-4 ${severityColors[severity]}`}>
       <div className="flex justify-between items-start">
         <div className="space-y-2">
-          <h3 className={`font-semibold ${severityTextColors[event.event_severity]}`}>
+          <h3 className={`font-semibold ${severityTextColors[severity]}`}>
             {event.event_type.replace(/_/g, ' ').toUpperCase()}
           </h3>
           <div className="space-y-1">
@@ -44,8 +48,8 @@ export function EventCard({ event, onActionClick }: EventCardProps) {
             </p>
           </div>
         </div>
-        <span className={`px-2 py-1 text-xs rounded-full ${severityBgColors[event.event_severity]} ${severityTextColors[event.event_severity]}`}>
-          {event.event_severity}
+        <span className={`px-2 py-1 text-xs rounded-full ${severityBgColors[severity]} ${severityTextColors[severity]}`}>
+          {severity}
         </span>
       </div>
       

@@ -1,8 +1,15 @@
 export interface Update {
   id: string;
-  type: string;
-  title: string;
-  description: string;
+  type?: string;
+  title?: string;
+  description?: string;
+  renewal_id: string;
+  update_type: string;
+  update_subtype?: string;
+  current_value: any;
+  previous_value?: any;
+  data_source?: string;
+  confidence_score?: number;
   created_at: string;
   updated_at: string;
 }

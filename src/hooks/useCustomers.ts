@@ -161,7 +161,7 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
         const renewals = customer.renewals || [];
         
         // Calculate days until renewal for each renewal
-        const processedRenewals = renewals.map(renewal => ({
+        const processedRenewals = renewals.map((renewal: any) => ({
           ...renewal,
           days_until_renewal: Math.ceil(
             (new Date(renewal.renewal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
@@ -286,7 +286,7 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
       }
 
       // Update local state
-      setCustomers(prev => 
+      setCustomers(prev =>
         prev.map(customer => {
           if (customer.id === customerId) {
             return {
@@ -295,7 +295,7 @@ export const useCustomers = (options: UseCustomersOptions = {}): UseCustomersRet
                 ...customer.properties,
                 ...properties,
                 updated_at: new Date().toISOString()
-              }
+              } as typeof customer.properties
             };
           }
           return customer;

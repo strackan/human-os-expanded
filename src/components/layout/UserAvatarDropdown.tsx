@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/popover"
 
 export default function UserAvatarDropdown() {
-  const { user, profile, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [avatarError, setAvatarError] = useState(false)
@@ -19,44 +19,39 @@ export default function UserAvatarDropdown() {
 
   const getFirstName = () => {
     if (!user) return 'User'
-    
-    // Try to get name from profile first
-    if (profile?.full_name) {
-      return profile.full_name.split(' ')[0]
-    }
-    
-    // Then try user metadata from Google OAuth
+
+    // Try user metadata from Google OAuth
     if (user?.user_metadata) {
       const metadata = user.user_metadata
-      const name = metadata.given_name || 
-                  metadata.name?.split(' ')[0] || 
+      const name = metadata.given_name ||
+                  metadata.name?.split(' ')[0] ||
                   metadata.full_name?.split(' ')[0]
-      
+
       if (name) {
         return name
       }
     }
-    
+
     // Fallback to email username if no name found
     if (user?.email) {
       const emailPrefix = user.email.split('@')[0]
       return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
     }
-    
+
     return 'User'
   }
 
   const getUserInitials = () => {
     if (!user) return 'U'
-    
-    if (profile?.full_name) {
-      const names = profile.full_name.split(' ')
+
+    if (user?.user_metadata?.full_name) {
+      const names = user.user_metadata.full_name.split(' ')
       if (names.length >= 2) {
         return (names[0][0] + names[1][0]).toUpperCase()
       }
       return names[0][0].toUpperCase()
     }
-    
+
     if (user?.user_metadata?.name) {
       const names = user.user_metadata.name.split(' ')
       if (names.length >= 2) {
@@ -64,11 +59,11 @@ export default function UserAvatarDropdown() {
       }
       return names[0][0].toUpperCase()
     }
-    
+
     if (user?.email) {
       return user.email[0].toUpperCase()
     }
-    
+
     return 'U'
   }
 
@@ -79,7 +74,7 @@ export default function UserAvatarDropdown() {
     
     try {
       // Call signOut - this will handle client-side signout and form submission
-      await signOut('global')
+      await signOut()
       console.log('✅ User avatar dropdown - Sign out completed')
       // The signOut function handles the form submission and server-side redirect
       // Keep the loading state active until the page actually redirects

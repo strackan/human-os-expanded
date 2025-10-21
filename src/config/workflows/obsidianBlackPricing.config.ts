@@ -34,13 +34,14 @@ const createConfig = (): WorkflowConfig => {
 
   customerOverview: {
     metrics: {
-      arr: { label: 'ARR', value: '$185K', status: 'yellow' },
+      arr: { label: 'ARR', value: '$185K', status: 'orange' },
       licenseUnitPrice: { label: 'Price/Seat', value: '$3,700', status: 'red', sublabel: '35th percentile' },
-      renewalDate: { label: 'Renewal', value: 'Apr 15, 2025', sublabel: '4 months out', status: 'yellow' },
+      renewalDate: { label: 'Renewal', value: 'Apr 15, 2025', sublabel: '4 months out', status: 'orange' },
       primaryContact: { label: 'Primary Contact', value: 'Marcus Chen', role: 'VP Engineering' },
-      healthScore: { label: 'Health Score', value: '87%', status: 'green' },
-      utilization: { label: 'Utilization', value: '87%', status: 'green' },
-      yoyGrowth: { label: 'YoY Growth', value: '+23%', status: 'green' }
+      riskScore: { label: 'Risk Score', value: 'Low', status: 'green' },
+      growthScore: { label: 'Growth Score', value: 'High', status: 'green' },
+      yoyGrowth: { label: 'YoY Growth', value: '+23%', status: 'green' },
+      lastMonth: { label: 'Last Month', value: 'Active' }
     }
   },
 
@@ -54,6 +55,21 @@ const createConfig = (): WorkflowConfig => {
       chartContextLabel: '↗ Stable at 87% capacity',
       chartContextColor: 'text-green-600',
       dataColors: { threshold: 100, belowColor: 'bg-blue-500', aboveColor: 'bg-red-500' }
+    },
+    userLicenses: {
+      title: 'User Licenses',
+      showReferenceLine: false,
+      referenceLineLabel: '',
+      data: [50],
+      chartContextLabel: '50 of 50 licenses',
+      chartContextColor: 'text-green-600',
+      dataColors: { threshold: 100, belowColor: 'bg-blue-500', aboveColor: 'bg-red-500' }
+    },
+    renewalInsights: {
+      renewalStage: 'negotiation',
+      confidence: 85,
+      recommendedAction: 'Proceed with pricing increase',
+      keyReasons: []
     }
   },
 

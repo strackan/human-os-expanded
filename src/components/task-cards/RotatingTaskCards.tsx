@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon, CurrencyDollarIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
-import SampleTaskCards from './SampleTaskCards';
+import SampleTaskCards from '../SampleTaskCards';
 
 const RotatingTaskCards: React.FC = () => {
   const [currentIndex, setCurrentIndex] = useState(0);

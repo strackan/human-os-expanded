@@ -149,7 +149,7 @@ export const useConversations = (options: UseConversationsOptions = {}): UseConv
 
         return {
           ...conv,
-          participant_count: new Set(messages.map(m => m.participant_id).filter(Boolean)).size,
+          participant_count: new Set(messages.map((m: any) => m.participant_id).filter(Boolean)).size,
           last_message_at: lastMessage?.created_at || conv.updated_at,
           messages: includeMessages ? messages : undefined
         };
