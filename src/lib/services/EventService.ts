@@ -17,10 +17,12 @@ export interface Event {
 }
 
 export class EventService {
-  private static supabase = createClient();
-  
+  private static getClient() {
+    return createClient();
+  }
+
   static async createEvent(data: Omit<Event, 'id' | 'created_at' | 'workflow_instances_created'>): Promise<Event> {
-    const { data: event, error } = await this.supabase
+    const { data: event, error } = await this.getClient()
       .from('events')
       .insert([{
         ...data,
@@ -34,7 +36,7 @@ export class EventService {
   }
   
   static async getUnprocessedEvents(): Promise<Event[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('events')
       .select('*')
       .is('processed_at', null)
@@ -45,7 +47,7 @@ export class EventService {
   }
   
   static async markEventProcessed(eventId: string, workflowsCreated: number = 0): Promise<void> {
-    const { error } = await this.supabase
+    const { error } = await this.getClient()
       .from('events')
       .update({ 
         processed_at: new Date().toISOString(),
@@ -57,7 +59,7 @@ export class EventService {
   }
 
   static async getEventsForRenewal(renewalId: string): Promise<Event[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('events')
       .select('*')
       .eq('renewal_id', renewalId)
@@ -68,7 +70,7 @@ export class EventService {
   }
 
   static async getLatestEventByType(renewalId: string, eventType: string): Promise<Event | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('events')
       .select('*')
       .eq('renewal_id', renewalId)

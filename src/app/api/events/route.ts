@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { EventService } from '@/lib/services/EventService';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const events = await EventService.getUnprocessedEvents();

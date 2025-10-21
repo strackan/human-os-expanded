@@ -15,10 +15,12 @@ export interface ActionScore {
 }
 
 export class ActionScoreService {
-  private static supabase = createClient();
-  
+  private static getClient() {
+    return createClient();
+  }
+
   static async createActionScore(data: Omit<ActionScore, 'id' | 'created_at'>): Promise<ActionScore> {
-    const { data: score, error } = await this.supabase
+    const { data: score, error } = await this.getClient()
       .from('action_scores')
       .insert([data])
       .select()
@@ -29,7 +31,7 @@ export class ActionScoreService {
   }
   
   static async getActiveScoresForRenewal(renewalId: string): Promise<ActionScore[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('action_scores')
       .select('*')
       .eq('renewal_id', renewalId)
@@ -48,7 +50,7 @@ export class ActionScoreService {
   }
 
   static async getLatestScoreByType(renewalId: string, scoreType: string): Promise<ActionScore | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getClient()
       .from('action_scores')
       .select('*')
       .eq('renewal_id', renewalId)
