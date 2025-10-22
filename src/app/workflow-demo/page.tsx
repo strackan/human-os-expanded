@@ -16,7 +16,7 @@
 
 import { useState, useEffect } from 'react';
 import type { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
-import Button from '@/components/ui/button';
+import Button from '@/components/ui/Button';
 
 // For demo purposes, we'll use a mock version of the config builder
 // In production, this would call the actual API routes
