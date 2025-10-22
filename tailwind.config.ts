@@ -6,6 +6,15 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  safelist: [
+    // Button background colors used in workflow slides
+    'bg-blue-600',
+    'bg-gray-500',
+    'bg-green-600',
+    'hover:bg-blue-700',
+    'hover:bg-gray-600',
+    'hover:bg-green-700',
+  ],
   theme: {
     extend: {
       colors: {

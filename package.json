@@ -24,6 +24,7 @@
     "@radix-ui/react-popover": "^1.1.13",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
+    "@types/handlebars": "^4.0.40",
     "canvas-confetti": "^1.9.3",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",

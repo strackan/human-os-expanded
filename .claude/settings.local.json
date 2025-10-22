@@ -19,7 +19,10 @@
       "Bash(git log:*)",
       "Bash(cat:*)",
       "Bash(xargs ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//c/Users/strac/.claude/**)",
+      "Read(//c/Users/strac/dev/**)",
+      "Read(//c/Users/**)"
     ],
     "deny": [],
     "ask": []

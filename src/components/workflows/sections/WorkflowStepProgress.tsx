@@ -45,7 +45,7 @@ export default function WorkflowStepProgress({
           const showActions = stepActionMenu === index;
 
           return (
-            <React.Fragment key={slide.id}>
+            <React.Fragment key={`step-${index}-${slide.id}`}>
               <div
                 className="flex flex-col items-center flex-1 relative"
                 id={`step-${index}`}

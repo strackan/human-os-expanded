@@ -136,11 +136,12 @@ export default function EmailArtifact({
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">Message</label>
             {typingComplete ? (
-              <textarea
-                rows={14}
-                value={emailBody}
-                onChange={(e) => setEmailBody(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 leading-relaxed resize-none"
+              <div
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 leading-relaxed min-h-[336px] whitespace-pre-wrap cursor-text"
+                dangerouslySetInnerHTML={{ __html: formatTextToHTML(emailBody) }}
+                contentEditable
+                suppressContentEditableWarning
+                onInput={(e) => setEmailBody(e.currentTarget.textContent || '')}
               />
             ) : (
               <div

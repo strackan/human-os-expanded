@@ -86,6 +86,29 @@ export function isWorkflowRegistered(workflowId: string): boolean {
 }
 
 /**
+ * Register a workflow config at runtime
+ *
+ * Used for dynamically-generated configs from the slide library system.
+ * Allows configs built using compose → hydrate → build to be used by TaskModeFullscreen.
+ *
+ * @param workflowId - Unique workflow identifier
+ * @param config - Complete workflow configuration
+ *
+ * @example
+ * // Build config from slide library
+ * const slides = composeWorkflow(standardRenewalComposition);
+ * const hydratedSlides = hydrateSlides(slides, context);
+ * const config = { customer, slides: hydratedSlides };
+ *
+ * // Register it so TaskMode can find it
+ * registerWorkflowConfig('standard-renewal', config);
+ */
+export function registerWorkflowConfig(workflowId: string, config: WorkflowConfig): void {
+  WORKFLOW_REGISTRY[workflowId] = config;
+  console.log(`[Workflow Registry] Registered workflow: ${workflowId}`);
+}
+
+/**
  * Re-export workflow configs for direct import if needed
  */
 export {

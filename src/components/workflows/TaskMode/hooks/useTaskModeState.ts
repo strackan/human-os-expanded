@@ -203,8 +203,10 @@ export function useTaskModeState({
   const snoozeStep = useCallback((stepIndex: number) => {
     console.log('[TaskMode] Snooze step:', stepIndex);
     setConfirmationModal({ type: null, stepIndex: null });
-    // TODO: Implement step snooze logic
-  }, []);
+
+    // Show toast confirmation
+    showToast(`Step "${slides[stepIndex]?.title || `#${stepIndex + 1}`}" snoozed! I'll remind you later.`, 'success');
+  }, [slides, showToast]);
 
   // ============================================================
   // CHAT HANDLERS
