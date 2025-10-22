@@ -38,10 +38,10 @@ export default async function ObsidianBlackDashboardV3() {
           name: 'Obsidian Black',
           current_arr: 185000,
           health_score: 87,
-          contract_end_date: '2026-03-15',
-          days_until_renewal: 120,
+          contract_end_date: '2026-10-21',
+          days_until_renewal: 365,
           utilization: 87,
-          monthsToRenewal: 4,
+          monthsToRenewal: 12,
           seatCount: 50,
           primaryContact: {
             name: 'Marcus Chen',

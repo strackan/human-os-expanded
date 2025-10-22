@@ -240,12 +240,19 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
     customerName: data.customerName || 'Customer Name',
     companyName: data.companyInfo?.name || 'Renubu',
     companyTagline: data.companyInfo?.tagline || 'Enterprise Software Solutions',
-    product: data.lineItems?.[0]?.product || 'Renubu Platform License',
-    description: data.lineItems?.[0]?.description || 'AI-powered customer success automation',
-    period: data.lineItems?.[0]?.period || '12 months',
-    rate: data.lineItems?.[0]?.rate || 3996,
-    quantity: data.lineItems?.[0]?.quantity || 50
   });
+
+  const [lineItems, setLineItems] = useState(
+    data.lineItems && data.lineItems.length > 0
+      ? data.lineItems
+      : [{
+          product: 'Renubu Platform License',
+          description: 'AI-powered customer success automation',
+          period: '12 months',
+          rate: 3996,
+          quantity: 50
+        }]
+  );
 
   // State for styling
   const [quoteHeaderStyle, setQuoteHeaderStyle] = useState<ColorPreset>({ bg: '#2563EB', text: '#FFFFFF', name: 'Blue' });
@@ -271,11 +278,11 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
   } = data;
 
   // Auto-calculate totals
-  const calculateTotal = () => quoteData.rate * quoteData.quantity;
-  const subtotal = data.summary?.subtotal || (quoteData.rate * quoteData.quantity);
-  const increasePercentage = data.summary?.increase?.percentage || 0;
-  const increaseAmount = data.summary?.increase?.amount || (subtotal * increasePercentage / 100);
-  const total = subtotal + increaseAmount;
+  const calculateLineTotal = (rate: number, quantity: number) => rate * quantity;
+  const subtotal = data.pricing?.subtotal || lineItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
+  const increasePercentage = data.pricing?.increase?.percentage || 0;
+  const increaseAmount = data.pricing?.increase?.amount || 0;
+  const total = data.pricing?.total || subtotal;
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('en-US', {
@@ -448,55 +455,74 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              <tr
-                ref={lineItemRef}
-                className="group cursor-pointer transition-all"
-                style={{ backgroundColor: lineItemStyle.bg }}
-                onClick={handleLineItemClick}
-              >
-                <td className="px-4 py-3 relative">
-                  <div>
-                    <div className="mb-1">
+              {lineItems.map((item, index) => (
+                <tr
+                  key={index}
+                  ref={index === 0 ? lineItemRef : undefined}
+                  className="group cursor-pointer transition-all"
+                  style={{ backgroundColor: lineItemStyle.bg }}
+                  onClick={index === 0 ? handleLineItemClick : undefined}
+                >
+                  <td className="px-4 py-3 relative">
+                    <div>
+                      <div className="mb-1">
+                        <EditableText
+                          value={item.product}
+                          onChange={(val) => {
+                            const newItems = [...lineItems];
+                            newItems[index].product = val;
+                            setLineItems(newItems);
+                          }}
+                          className="text-gray-900 font-semibold"
+                          readOnly={readOnly}
+                        />
+                      </div>
                       <EditableText
-                        value={quoteData.product}
-                        onChange={(val) => updateField('product', val)}
-                        className="text-gray-900 font-semibold"
+                        value={item.description}
+                        onChange={(val) => {
+                          const newItems = [...lineItems];
+                          newItems[index].description = val;
+                          setLineItems(newItems);
+                        }}
+                        className="text-sm text-gray-600"
                         readOnly={readOnly}
                       />
                     </div>
+                    {!readOnly && index === 0 && (
+                      <Palette className="w-3 h-3 absolute top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center text-sm" style={{ color: lineItemStyle.text }}>
                     <EditableText
-                      value={quoteData.description}
-                      onChange={(val) => updateField('description', val)}
-                      className="text-sm text-gray-600"
+                      value={item.period}
+                      onChange={(val) => {
+                        const newItems = [...lineItems];
+                        newItems[index].period = val;
+                        setLineItems(newItems);
+                      }}
                       readOnly={readOnly}
                     />
-                  </div>
-                  {!readOnly && (
-                    <Palette className="w-3 h-3 absolute top-3 right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                  )}
-                </td>
-                <td className="px-4 py-3 text-center text-sm" style={{ color: lineItemStyle.text }}>
-                  <EditableText
-                    value={quoteData.period}
-                    onChange={(val) => updateField('period', val)}
-                    readOnly={readOnly}
-                  />
-                </td>
-                <td className="px-4 py-3 text-right text-sm" style={{ color: lineItemStyle.text }}>
-                  <EditableText
-                    value={formatCurrency(quoteData.rate)}
-                    onChange={(val) => {
-                      const num = parseFloat(val.replace(/[$,]/g, ''));
-                      if (!isNaN(num)) updateField('rate', num);
-                    }}
-                    readOnly={readOnly}
-                  />
-                  <span className="text-gray-500">/seat</span>
-                </td>
-                <td className="px-4 py-3 text-right text-sm font-medium" style={{ color: lineItemStyle.text }}>
-                  {formatCurrency(calculateTotal())}
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm" style={{ color: lineItemStyle.text }}>
+                    <EditableText
+                      value={formatCurrency(item.rate)}
+                      onChange={(val) => {
+                        const num = parseFloat(val.replace(/[$,]/g, ''));
+                        if (!isNaN(num)) {
+                          const newItems = [...lineItems];
+                          newItems[index].rate = num;
+                          setLineItems(newItems);
+                        }
+                      }}
+                      readOnly={readOnly}
+                    />
+                    <span className="text-gray-500">/seat</span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm font-medium" style={{ color: lineItemStyle.text }}>
+                    {formatCurrency(calculateLineTotal(item.rate, item.quantity))}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

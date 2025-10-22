@@ -53,8 +53,8 @@ We need to review contract terms, make sure we've got the right contacts, and pu
 
 The full plan is on the right. Ready to get started?`,
         buttons: [
-          { label: 'Review Later', value: 'snooze' },
-          { label: "Let's Begin!", value: 'start' }
+          { label: 'Review Later', value: 'snooze', 'label-background': 'bg-gray-500 hover:bg-gray-600', 'label-text': 'text-white' },
+          { label: "Let's Begin!", value: 'start', 'label-background': 'bg-blue-600 hover:bg-blue-700', 'label-text': 'text-white' }
         ]
       }
     },
