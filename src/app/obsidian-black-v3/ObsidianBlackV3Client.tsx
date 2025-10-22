@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ZenGreeting from '@/components/dashboard/ZenGreeting';
 import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
@@ -10,6 +10,8 @@ import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import confetti from 'canvas-confetti';
 import type { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { registerWorkflowConfig } from '@/config/workflows/index';
+import { createWorkflowExecution, getTestUserId } from '@/lib/workflows/actions';
+import { createClient } from '@/lib/supabase/client';
 
 interface PriorityWorkflow {
   id: string;
@@ -43,6 +45,9 @@ export default function ObsidianBlackV3Client({
   const [taskModeOpen, setTaskModeOpen] = useState(false);
   const [completedWorkflowIds, setCompletedWorkflowIds] = useState<Set<string>>(new Set());
   const [workflowConfig] = useState<WorkflowConfig | null>(initialWorkflowConfig);
+  const [executionId, setExecutionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [workflowStatus, setWorkflowStatus] = useState<string>('in_progress');
 
   const priorityWorkflow: PriorityWorkflow = {
     id: 'obsidian-black-renewal',
@@ -91,6 +96,34 @@ export default function ObsidianBlackV3Client({
         slides: workflowMetadata.slideCount,
       });
 
+      // Get test user ID
+      const testUserId = await getTestUserId();
+      if (!testUserId) {
+        console.error('❌ Could not get test user ID');
+        return;
+      }
+      setUserId(testUserId);
+
+      // Create workflow execution record
+      const executionResult = await createWorkflowExecution({
+        workflowConfigId: workflowMetadata.workflowId,
+        workflowName: workflowMetadata.workflowName,
+        workflowType: workflowMetadata.workflowType,
+        customerId: priorityWorkflow.customerId,
+        userId: testUserId,
+        assignedCsmId: testUserId,
+        totalSteps: workflowMetadata.slideCount,
+      });
+
+      if (!executionResult.success || !executionResult.executionId) {
+        console.error('❌ Failed to create workflow execution:', executionResult.error);
+        // Continue anyway for demo purposes
+      } else {
+        console.log('✅ [V3] Workflow execution created:', executionResult.executionId);
+        setExecutionId(executionResult.executionId);
+        setWorkflowStatus('in_progress');
+      }
+
       // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowMetadata.workflowId, workflowConfig);
       console.log('✅ [V3] Config registered in workflow registry');
@@ -112,6 +145,31 @@ export default function ObsidianBlackV3Client({
       setTimeout(() => triggerConfetti(), 100);
 
       console.log('✅ [V3] Workflow completed!');
+    }
+  };
+
+  const handleWorkflowAction = (actionType: string) => {
+    console.log('🔔 [V3] Workflow action performed:', actionType);
+
+    // Update workflow status based on action
+    if (actionType === 'snooze') {
+      setWorkflowStatus('snoozed');
+      setTaskModeOpen(false);
+      setTimeout(() => {
+        alert('✅ Workflow snoozed! It will reappear when the snooze time expires.');
+      }, 100);
+    } else if (actionType === 'skip') {
+      setWorkflowStatus('skipped');
+      setTaskModeOpen(false);
+      setTimeout(() => {
+        alert('✅ Workflow skipped and removed from your workflow list.');
+      }, 100);
+    } else if (actionType === 'escalate') {
+      setWorkflowStatus('escalated');
+      setTaskModeOpen(false);
+      setTimeout(() => {
+        alert('✅ Workflow escalated! The new owner will see it in their workflow list.');
+      }, 100);
     }
   };
 
@@ -289,7 +347,11 @@ export default function ObsidianBlackV3Client({
           workflowId={workflowMetadata.workflowId}
           customerId={priorityWorkflow.customerId}
           customerName={priorityWorkflow.customerName}
+          executionId={executionId || undefined}
+          userId={userId || undefined}
+          workflowStatus={workflowStatus}
           onClose={handleWorkflowComplete}
+          onWorkflowAction={handleWorkflowAction}
         />
       )}
     </>

@@ -72,7 +72,7 @@ export default function ObsidianBlackDashboardV2() {
   };
 
   // NEW: Mock customer data (in production this comes from database)
-  const mockCustomerData: WorkflowCustomerData = {
+  const mockCustomerData = {
     id: '550e8400-e29b-41d4-a716-446655440001',
     name: 'Obsidian Black',
     domain: 'obsidianblack.com',
@@ -183,9 +183,12 @@ export default function ObsidianBlackDashboardV2() {
         {priorityWorkflow && (
           <div className="mb-8">
             <PriorityWorkflowCard
-              workflow={priorityWorkflow}
+              workflowTitle={priorityWorkflow.title}
+              priority={priorityWorkflow.priority}
+              dueDate={priorityWorkflow.dueDate}
+              arr={priorityWorkflow.arr}
               onLaunch={handleLaunchWorkflow}
-              isCompleted={completedWorkflowIds.has(priorityWorkflow.id)}
+              completed={completedWorkflowIds.has(priorityWorkflow.id)}
             />
           </div>
         )}

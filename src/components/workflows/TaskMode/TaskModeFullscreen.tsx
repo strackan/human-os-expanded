@@ -33,10 +33,14 @@ import { Mic, Paperclip } from 'lucide-react';
 
 interface TaskModeFullscreenProps {
   workflowId: string;
-  workflowTitle: string;
+  workflowTitle?: string;
   customerId: string;
   customerName: string;
+  executionId?: string;
+  userId?: string;
+  workflowStatus?: string;
   onClose: (completed?: boolean) => void;
+  onWorkflowAction?: (actionType: string) => void;
   sequenceInfo?: {
     sequenceId: string;
     currentIndex: number;
@@ -52,7 +56,11 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     workflowTitle,
     customerId,
     customerName,
+    executionId,
+    userId,
+    workflowStatus,
     onClose,
+    onWorkflowAction,
     sequenceInfo
   } = props;
 
@@ -270,16 +278,20 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
 
           {/* Header */}
           <WorkflowHeader
-            workflowTitle={workflowTitle}
+            workflowTitle={workflowTitle || state.config?.workflowName || 'Workflow'}
             customerName={customerName}
             currentSlideIndex={state.currentSlideIndex}
             showArtifacts={state.showArtifacts}
             sequenceInfo={sequenceInfo}
+            executionId={executionId}
+            userId={userId}
+            workflowStatus={workflowStatus}
             onEscalate={() => console.log('Escalate')}
             onTogglePlays={() => state.togglePlaysDropdown(!state.showPlaysDropdown)}
             onToggleMetrics={() => state.toggleMetricsSlideup(true)}
             onToggleArtifacts={() => state.toggleArtifacts(!state.showArtifacts)}
             onClose={state.handleClose}
+            onWorkflowAction={onWorkflowAction}
           />
 
           {/* Progress Bar */}

@@ -4,6 +4,7 @@
  * WorkflowHeader Component
  *
  * Renders the workflow header with title, customer name, and icon controls:
+ * - Workflow action buttons (Snooze, Skip, Escalate)
  * - Escalate button
  * - Plays/Sequence dropdown toggle
  * - Metrics toggle
@@ -13,12 +14,16 @@
 
 import React from 'react';
 import { X } from 'lucide-react';
+import WorkflowActionButtons from '@/components/workflows/WorkflowActionButtons';
 
 interface WorkflowHeaderProps {
   workflowTitle: string;
   customerName: string;
   currentSlideIndex: number;
   showArtifacts: boolean;
+  executionId?: string;
+  userId?: string;
+  workflowStatus?: string;
   sequenceInfo?: {
     sequenceId: string;
     currentIndex: number;
@@ -29,6 +34,7 @@ interface WorkflowHeaderProps {
   onToggleMetrics: () => void;
   onToggleArtifacts: () => void;
   onClose: () => void;
+  onWorkflowAction?: (actionType: string) => void;
 }
 
 export default function WorkflowHeader({
@@ -36,12 +42,16 @@ export default function WorkflowHeader({
   customerName,
   currentSlideIndex,
   showArtifacts,
+  executionId,
+  userId,
+  workflowStatus,
   sequenceInfo,
   onEscalate,
   onTogglePlays,
   onToggleMetrics,
   onToggleArtifacts,
-  onClose
+  onClose,
+  onWorkflowAction
 }: WorkflowHeaderProps) {
   return (
     <div className="flex-shrink-0 border-b border-gray-200 bg-white" id="workflow-header">
@@ -51,6 +61,19 @@ export default function WorkflowHeader({
           <h2 className="text-lg font-semibold text-gray-900">{workflowTitle}</h2>
           <p className="text-sm text-gray-600">{customerName}</p>
         </div>
+
+        {/* Center: Workflow Action Buttons */}
+        {executionId && userId && onWorkflowAction && (
+          <div className="flex-1 flex justify-center">
+            <WorkflowActionButtons
+              executionId={executionId}
+              userId={userId}
+              currentStatus={workflowStatus || 'in_progress'}
+              onActionComplete={onWorkflowAction}
+              className="mx-4"
+            />
+          </div>
+        )}
 
         {/* Right: Icon Controls */}
         <div className="flex items-center gap-4" id="workflow-icon-controls">
