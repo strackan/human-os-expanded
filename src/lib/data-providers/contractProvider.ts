@@ -14,6 +14,22 @@ export interface ContractData {
   renewalDays: number;
   term: string;
   autoRenew: boolean;
+  // Business terms from contract_matrix
+  pricingModel?: string;
+  discountPercent?: number;
+  paymentTerms?: string;
+  autoRenewalNoticeDays?: number;
+  renewalPriceCapPercent?: number;
+  slaUptimePercent?: number;
+  supportTier?: string;
+  responseTimeHours?: number;
+  dedicatedCsm?: boolean;
+  liabilityCap?: string;
+  dataResidency?: string[];
+  includedFeatures?: string[];
+  usageLimits?: any;
+  daysUntilRenewal?: number;
+  inRenewalWindow?: boolean;
 }
 
 export interface UsageData {
@@ -189,12 +205,11 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
   try {
     const supabase = createClient();
 
-    // Fetch contract data
+    // Fetch contract data from contract_matrix view (includes business terms)
     const { data: contractData, error: contractError } = await supabase
-      .from('contracts')
+      .from('contract_matrix')
       .select('*')
       .eq('customer_id', customerId)
-      .eq('status', 'active')
       .single();
 
     if (contractError || !contractData) {
@@ -215,7 +230,7 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
     // Calculate price per seat
     const pricePerSeat = contractData.arr / contractData.seats / 12;
 
-    // Build contract data
+    // Build contract data (includes business terms from contract_matrix)
     const contract: ContractData = {
       licenseCount: contractData.seats || 0,
       pricePerSeat: pricePerSeat,
@@ -223,7 +238,23 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
       renewalDate: contractData.end_date || '',
       renewalDays: calculateRenewalDays(contractData.end_date),
       term: `${contractData.term_months || 12} months`, // Use auto-calculated term_months from database
-      autoRenew: contractData.auto_renewal || false
+      autoRenew: contractData.auto_renewal || false,
+      // Business terms from contract_matrix view
+      pricingModel: contractData.pricing_model || undefined,
+      discountPercent: contractData.discount_percent || undefined,
+      paymentTerms: contractData.payment_terms || undefined,
+      autoRenewalNoticeDays: contractData.auto_renewal_notice_days || undefined,
+      renewalPriceCapPercent: contractData.renewal_price_cap_percent || undefined,
+      slaUptimePercent: contractData.sla_uptime_percent || undefined,
+      supportTier: contractData.support_tier || undefined,
+      responseTimeHours: contractData.response_time_hours || undefined,
+      dedicatedCsm: contractData.dedicated_csm || false,
+      liabilityCap: contractData.liability_cap || undefined,
+      dataResidency: contractData.data_residency || undefined,
+      includedFeatures: contractData.included_features || undefined,
+      usageLimits: contractData.usage_limits || undefined,
+      daysUntilRenewal: contractData.days_until_renewal || undefined,
+      inRenewalWindow: contractData.in_renewal_window || false
     };
 
     // Build usage data
