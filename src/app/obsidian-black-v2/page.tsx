@@ -257,8 +257,7 @@ export default function ObsidianBlackDashboardV2() {
           workflowId="obsidian-black-pricing"
           customerId={priorityWorkflow?.customerId || ''}
           customerName={priorityWorkflow?.customerName || ''}
-          onClose={() => handleWorkflowComplete(false)}
-          onComplete={handleWorkflowComplete}
+          onClose={handleWorkflowComplete}
         />
       )}
     </div>

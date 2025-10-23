@@ -11,7 +11,7 @@
  * This is the new modular architecture replacing the monolithic TaskModeFullscreen-v3.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import TaskModeContext, { TaskModeContextValue } from './TaskModeContext';
 import { useTaskModeState } from './hooks/useTaskModeState';
 
@@ -30,6 +30,8 @@ import { CustomerMetrics } from '@/components/workflows/CustomerMetrics';
 import WorkflowSequencePanel from '@/components/workflows/WorkflowSequencePanel';
 import { getWorkflowSequence } from '@/config/workflowSequences';
 import { Mic, Paperclip } from 'lucide-react';
+import { StepSnoozeModal, StepSkipModal } from '@/components/workflows/StepActionModals';
+import { WorkflowStepActionService } from '@/lib/workflows/actions/WorkflowStepActionService';
 
 interface TaskModeFullscreenProps {
   workflowId: string;
@@ -72,6 +74,39 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     onClose,
     sequenceInfo
   });
+
+  // Step-level action modal state
+  const [showStepSnoozeModal, setShowStepSnoozeModal] = useState<number | null>(null);
+  const [showStepSkipModal, setShowStepSkipModal] = useState<number | null>(null);
+
+  // Step states from database
+  const [stepStates, setStepStates] = useState<Record<number, any>>({});
+
+  // Function to load/reload step states
+  const reloadStepStates = async () => {
+    if (executionId) {
+      console.log('[TaskModeFullscreen] Loading step states for execution:', executionId);
+      const service = new WorkflowStepActionService();
+      const result = await service.getStepStates(executionId);
+
+      console.log('[TaskModeFullscreen] Step states result:', result);
+
+      if (result.success && result.states) {
+        // Convert array to map indexed by step_index
+        const stateMap: Record<number, any> = {};
+        result.states.forEach((state: any) => {
+          stateMap[state.step_index] = state;
+        });
+        console.log('[TaskModeFullscreen] Step states map:', stateMap);
+        setStepStates(stateMap);
+      }
+    }
+  };
+
+  // Load step states when executionId is available
+  useEffect(() => {
+    reloadStepStates();
+  }, [executionId]);
 
   // Resize handling effect (must be before early returns)
   const handleResizeStart = (e: React.MouseEvent) => {
@@ -300,14 +335,15 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
             currentSlideIndex={state.currentSlideIndex}
             completedSlides={state.completedSlides}
             stepActionMenu={state.stepActionMenu}
+            stepStates={stepStates}
             onStepClick={state.goToSlide}
             onToggleStepActionMenu={state.setStepActionMenu}
             onSnoozeStep={(index) => {
-              state.setConfirmationModal({ type: 'snooze', stepIndex: index });
+              setShowStepSnoozeModal(index);
               state.setStepActionMenu(null);
             }}
             onSkipStep={(index) => {
-              state.setConfirmationModal({ type: 'skip', stepIndex: index });
+              setShowStepSkipModal(index);
               state.setStepActionMenu(null);
             }}
           />
@@ -424,44 +460,38 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
             </>
           )}
 
-          {/* Skip/Snooze Confirmation Modal */}
-          {state.confirmationModal.type && state.confirmationModal.stepIndex !== null && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-in">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {state.confirmationModal.type === 'skip' ? 'Skip This Step?' : 'Snooze This Step?'}
-                </h3>
-                <p className="text-sm text-gray-600 mb-6">
-                  {state.confirmationModal.type === 'skip'
-                    ? `Are you sure you want to skip "${state.slides[state.confirmationModal.stepIndex]?.label}"? This step will be removed from your workflow.`
-                    : `Are you sure you want to snooze "${state.slides[state.confirmationModal.stepIndex]?.label}"? It will reappear in your next workflow session.`}
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={() => state.setConfirmationModal({ type: null, stepIndex: null })}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (state.confirmationModal.type === 'skip') {
-                        state.skipStep(state.confirmationModal.stepIndex!);
-                      } else {
-                        state.snoozeStep(state.confirmationModal.stepIndex!);
-                      }
-                    }}
-                    className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors ${
-                      state.confirmationModal.type === 'skip'
-                        ? 'bg-red-600 hover:bg-red-700'
-                        : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
-                  >
-                    {state.confirmationModal.type === 'skip' ? 'Skip Step' : 'Snooze Step'}
-                  </button>
-                </div>
-              </div>
-            </div>
+          {/* Step-level Snooze Modal */}
+          {showStepSnoozeModal !== null && executionId && userId && (
+            <StepSnoozeModal
+              executionId={executionId}
+              userId={userId}
+              stepIndex={showStepSnoozeModal}
+              stepId={state.slides[showStepSnoozeModal]?.id || `step-${showStepSnoozeModal}`}
+              stepLabel={state.slides[showStepSnoozeModal]?.label || `Step ${showStepSnoozeModal + 1}`}
+              onClose={() => setShowStepSnoozeModal(null)}
+              onSuccess={async () => {
+                console.log('[TaskModeFullscreen] Step snoozed successfully, reloading states...');
+                setShowStepSnoozeModal(null);
+                await reloadStepStates();
+              }}
+            />
+          )}
+
+          {/* Step-level Skip Modal */}
+          {showStepSkipModal !== null && executionId && userId && (
+            <StepSkipModal
+              executionId={executionId}
+              userId={userId}
+              stepIndex={showStepSkipModal}
+              stepId={state.slides[showStepSkipModal]?.id || `step-${showStepSkipModal}`}
+              stepLabel={state.slides[showStepSkipModal]?.label || `Step ${showStepSkipModal + 1}`}
+              onClose={() => setShowStepSkipModal(null)}
+              onSuccess={async () => {
+                console.log('[TaskModeFullscreen] Step skipped successfully, reloading states...');
+                setShowStepSkipModal(null);
+                await reloadStepStates();
+              }}
+            />
           )}
         </div>
       </div>

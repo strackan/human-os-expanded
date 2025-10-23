@@ -222,7 +222,7 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
       annualSpend: contractData.arr || 0,
       renewalDate: contractData.end_date || '',
       renewalDays: calculateRenewalDays(contractData.end_date),
-      term: `${Math.round((new Date(contractData.end_date).getTime() - new Date(contractData.start_date).getTime()) / (1000 * 60 * 60 * 24 * 30))} months`,
+      term: `${contractData.term_months || 12} months`, // Use auto-calculated term_months from database
       autoRenew: contractData.auto_renewal || false
     };
 

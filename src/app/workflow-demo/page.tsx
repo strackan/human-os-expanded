@@ -169,7 +169,7 @@ export default function WorkflowDemoPage() {
         slides: hydratedSlides,
         layout: selectedWorkflow.composition.settings?.layout,
         chat: selectedWorkflow.composition.settings?.chat,
-      };
+      } as any;
 
       setConfig(builtConfig);
     } catch (error) {
@@ -307,7 +307,7 @@ export default function WorkflowDemoPage() {
                     </div>
                     <div>
                       <span className="text-slate-600">Total Slides:</span>{' '}
-                      <span className="font-medium">{config.slides.length}</span>
+                      <span className="font-medium">{config.slides?.length || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -317,7 +317,7 @@ export default function WorkflowDemoPage() {
                 <h3 className="font-medium mb-2">Slide Sequence</h3>
                 <div className="bg-slate-50 rounded p-3">
                   <ol className="space-y-2 text-sm">
-                    {config.slides.map((slide, index) => (
+                    {config.slides?.map((slide: any, index) => (
                       <li key={index} className="flex items-start">
                         <span className="font-medium text-slate-600 mr-2">{index + 1}.</span>
                         <div className="flex-1">
@@ -327,7 +327,7 @@ export default function WorkflowDemoPage() {
                           </div>
                           {slide.artifactPanel?.content?.[0]?.type === 'intro' && (
                             <div className="text-slate-600 text-xs mt-1 line-clamp-1">
-                              {(slide.artifactPanel.content[0] as any).content}
+                              {slide.artifactPanel.content[0].content}
                             </div>
                           )}
                         </div>
@@ -426,9 +426,9 @@ export default function WorkflowDemoPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold mb-2">Slides ({config.slides.length})</h3>
+                <h3 className="font-semibold mb-2">Slides ({config.slides?.length || 0})</h3>
                 <div className="bg-slate-50 rounded p-3 space-y-2">
-                  {config.slides.map((slide, index) => (
+                  {config.slides?.map((slide: any, index) => (
                     <div key={index} className="border-b border-slate-200 last:border-0 pb-2">
                       <div className="font-medium text-sm">
                         {index + 1}. {slide.artifactPanel?.title || 'Chat Slide'}

@@ -66,11 +66,11 @@ export default async function ObsidianBlackDashboardV3() {
 
     workflowConfig = config;
     workflowMetadata = {
-      workflowId: config.workflowId,
-      workflowName: config.workflowName,
-      workflowType: config.workflowType,
-      slideCount: config.slides?.length || 0,
-      source: 'database',
+      workflowId: (config as any)?.workflowId || '',
+      workflowName: (config as any)?.workflowName || '',
+      workflowType: (config as any)?.workflowType || '',
+      slideCount: config?.slides?.length || 0,
+      source: 'database' as const,
     };
 
     console.log('✅ [V3] Workflow loaded from database!', {
@@ -90,13 +90,13 @@ export default async function ObsidianBlackDashboardV3() {
       workflowName: 'Obsidian Black Pricing (Fallback)',
       workflowType: 'renewal',
       slideCount: obsidianBlackPricingConfig.slides?.length || 0,
-      source: 'fallback-code',
+      source: 'fallback-code' as const,
     };
   }
 
   return (
     <ObsidianBlackV3Client
-      initialWorkflowConfig={workflowConfig}
+      initialWorkflowConfig={workflowConfig as any}
       workflowMetadata={workflowMetadata}
       loadError={error}
     />

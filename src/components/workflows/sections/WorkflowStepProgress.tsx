@@ -18,6 +18,7 @@ interface WorkflowStepProgressProps {
   currentSlideIndex: number;
   completedSlides: Set<number>;
   stepActionMenu: number | null;
+  stepStates?: Record<number, any>;
   onStepClick: (index: number) => void;
   onToggleStepActionMenu: (index: number | null) => void;
   onSnoozeStep: (index: number) => void;
@@ -29,6 +30,7 @@ export default function WorkflowStepProgress({
   currentSlideIndex,
   completedSlides,
   stepActionMenu,
+  stepStates = {},
   onStepClick,
   onToggleStepActionMenu,
   onSnoozeStep,
@@ -43,6 +45,12 @@ export default function WorkflowStepProgress({
           const isUpcoming = !completedSlides.has(index) && !isActive;
           const isClickable = completedSlides.has(index);
           const showActions = stepActionMenu === index;
+
+          // Check step state from database
+          const stepState = stepStates[index];
+          const isSnoozed = stepState?.status === 'snoozed';
+          const isSkipped = stepState?.status === 'skipped';
+          const snoozeUntil = stepState?.snooze_until ? new Date(stepState.snooze_until) : null;
 
           return (
             <React.Fragment key={`step-${index}-${slide.id}`}>
@@ -63,26 +71,72 @@ export default function WorkflowStepProgress({
                   }}
                   disabled={!isClickable && index === 0}
                   className={`flex flex-col items-center ${isClickable || index > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                  title={
+                    isSnoozed && snoozeUntil
+                      ? `Snoozed until ${snoozeUntil.toLocaleDateString()}`
+                      : isSkipped
+                      ? 'Step skipped'
+                      : undefined
+                  }
                 >
-                  <div
-                    className={`
-                      w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
-                      ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-200' : ''}
-                      ${isCompleted ? 'bg-green-600 text-white' : ''}
-                      ${isUpcoming ? 'bg-gray-200 text-gray-500' : ''}
-                    `}
-                  >
-                    {isCompleted ? '✓' : index + 1}
+                  <div className="relative">
+                    <div
+                      className={`
+                        w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm
+                        ${isActive && !isSnoozed && !isSkipped ? 'bg-blue-600 text-white ring-4 ring-blue-200' : ''}
+                        ${isCompleted && !isSnoozed && !isSkipped ? 'bg-green-600 text-white' : ''}
+                        ${isUpcoming && !isSnoozed && !isSkipped ? 'bg-gray-200 text-gray-500' : ''}
+                        ${isSnoozed ? 'bg-orange-50 text-orange-700 border-2 border-orange-400' : ''}
+                        ${isSkipped ? 'bg-gray-100 text-gray-300 border-2 border-gray-300 opacity-60' : ''}
+                      `}
+                    >
+                      {isSnoozed ? (
+                        <span className="text-lg">💤</span>
+                      ) : isSkipped ? (
+                        <span className="text-gray-300">—</span>
+                      ) : isCompleted ? (
+                        '✓'
+                      ) : (
+                        index + 1
+                      )}
+                    </div>
+
+                    {/* Snooze badge - smaller, bottom-right */}
+                    {isSnoozed && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                        <Clock className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
+
+                    {/* Skip badge - smaller, bottom-right */}
+                    {isSkipped && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-400 rounded-full flex items-center justify-center shadow-sm">
+                        <X className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
                   </div>
+
                   <div
                     className={`
                       mt-2 text-sm font-medium text-center
-                      ${isActive ? 'text-blue-600' : ''}
-                      ${isCompleted ? 'text-green-600' : ''}
-                      ${isUpcoming ? 'text-gray-500' : ''}
+                      ${isActive && !isSnoozed && !isSkipped ? 'text-blue-600' : ''}
+                      ${isCompleted && !isSnoozed && !isSkipped ? 'text-green-600' : ''}
+                      ${isUpcoming && !isSnoozed && !isSkipped ? 'text-gray-500' : ''}
+                      ${isSnoozed ? 'text-orange-600 italic' : ''}
+                      ${isSkipped ? 'text-gray-300 line-through opacity-60' : ''}
                     `}
                   >
                     {slide.label}
+                    {isSnoozed && snoozeUntil && (
+                      <div className="text-xs text-orange-500 mt-0.5">
+                        Until {snoozeUntil.toLocaleDateString()}
+                      </div>
+                    )}
+                    {isSkipped && (
+                      <div className="text-xs text-gray-400 mt-0.5">
+                        Skipped
+                      </div>
+                    )}
                   </div>
                 </button>
 
@@ -119,7 +173,17 @@ export default function WorkflowStepProgress({
 
               {index < slides.length - 1 && (
                 <div className="flex-1 px-4 pb-6">
-                  <div className={`h-1 rounded ${isCompleted ? 'bg-green-600' : 'bg-gray-200'}`} />
+                  <div
+                    className={`h-1 rounded ${
+                      isSnoozed
+                        ? 'bg-orange-300'
+                        : isSkipped
+                        ? 'bg-gray-300'
+                        : isCompleted
+                        ? 'bg-green-600'
+                        : 'bg-gray-200'
+                    }`}
+                  />
                 </div>
               )}
             </React.Fragment>
