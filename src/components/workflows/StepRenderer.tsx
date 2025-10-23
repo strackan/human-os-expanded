@@ -20,6 +20,7 @@ import { CustomerAnalysisStep } from './steps/CustomerAnalysisStep';
 import { SimpleFormStep } from './steps/SimpleFormStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { AccountPlanStep } from './steps/AccountPlanStep';
+import { ChatStep } from './steps/ChatStep';
 import { ArtifactRenderer } from './artifacts/ArtifactRenderer';
 import { useTemplateContext } from '@/contexts/WorkflowContext';
 import { resolveTemplate } from '@/utils/templateResolver';
@@ -310,3 +311,6 @@ registerStepComponent('ReviewStep', ReviewStep);
 
 // Register Account Plan components
 registerStepComponent('AccountPlanStep', AccountPlanStep);
+
+// Register Phase 3G Chat components
+registerStepComponent('ChatStep', ChatStep);

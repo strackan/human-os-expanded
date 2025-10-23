@@ -279,10 +279,10 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
 
   // Auto-calculate totals
   const calculateLineTotal = (rate: number, quantity: number) => rate * quantity;
-  const subtotal = data.pricing?.subtotal || lineItems.reduce((sum, item) => sum + (item.rate * item.quantity), 0);
-  const increasePercentage = data.pricing?.increase?.percentage || 0;
-  const increaseAmount = data.pricing?.increase?.amount || 0;
-  const total = data.pricing?.total || subtotal;
+  const subtotal = data.summary?.subtotal || lineItems.reduce((sum, item) => sum + ((item.rate || 0) * (item.quantity || 0)), 0);
+  const increasePercentage = data.summary?.increase?.percentage || 0;
+  const increaseAmount = data.summary?.increase?.amount || 0;
+  const total = data.summary?.total || subtotal;
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('en-US', {
@@ -467,7 +467,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                     <div>
                       <div className="mb-1">
                         <EditableText
-                          value={item.product}
+                          value={item.product || ''}
                           onChange={(val) => {
                             const newItems = [...lineItems];
                             newItems[index].product = val;
@@ -478,7 +478,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                         />
                       </div>
                       <EditableText
-                        value={item.description}
+                        value={item.description || ''}
                         onChange={(val) => {
                           const newItems = [...lineItems];
                           newItems[index].description = val;
@@ -494,7 +494,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                   </td>
                   <td className="px-4 py-3 text-center text-sm" style={{ color: lineItemStyle.text }}>
                     <EditableText
-                      value={item.period}
+                      value={item.period || ''}
                       onChange={(val) => {
                         const newItems = [...lineItems];
                         newItems[index].period = val;
@@ -519,7 +519,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                     <span className="text-gray-500">/seat</span>
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-medium" style={{ color: lineItemStyle.text }}>
-                    {formatCurrency(calculateLineTotal(item.rate, item.quantity))}
+                    {formatCurrency(calculateLineTotal(item.rate || 0, item.quantity || 0))}
                   </td>
                 </tr>
               ))}
