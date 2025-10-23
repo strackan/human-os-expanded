@@ -1,27 +1,67 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Target, CheckCircle } from 'lucide-react';
 import { TERMINOLOGY } from '@/lib/constants';
+import { WorkflowQueryService } from '@/lib/workflows/actions/WorkflowQueryService';
 
 interface PriorityWorkflowCardProps {
-  workflowTitle: string;
-  priority: 'Critical' | 'High' | 'Medium' | 'Low';
-  dueDate: string;
+  workflowTitle?: string; // Made optional for database mode
+  priority?: 'Critical' | 'High' | 'Medium' | 'Low'; // Made optional for database mode
+  dueDate?: string; // Made optional for database mode
   arr?: string;
+  userId?: string; // NEW: Add userId for database integration
   onLaunch: () => void;
   className?: string;
   completed?: boolean;
 }
 
 export default function PriorityWorkflowCard({
-  workflowTitle,
-  priority,
-  dueDate,
-  arr,
+  workflowTitle: providedTitle,
+  priority: providedPriority,
+  dueDate: providedDueDate,
+  arr: providedArr,
+  userId,
   onLaunch,
   className = '',
   completed = false
 }: PriorityWorkflowCardProps) {
+  const [dbWorkflow, setDbWorkflow] = useState<any>(null);
+  const [loadingDb, setLoadingDb] = useState(false);
+
+  // NEW: Fetch priority workflow from database when userId provided
+  useEffect(() => {
+    if (userId && !providedTitle) {
+      loadPriorityWorkflowFromDatabase();
+    }
+  }, [userId, providedTitle]);
+
+  const loadPriorityWorkflowFromDatabase = async () => {
+    if (!userId) return;
+
+    setLoadingDb(true);
+    try {
+      const queryService = new WorkflowQueryService();
+      const result = await queryService.getActiveWorkflows(userId);
+
+      if (result.success && result.workflows && result.workflows.length > 0) {
+        // Get the highest priority workflow
+        const sortedWorkflows = result.workflows.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+        setDbWorkflow(sortedWorkflows[0]);
+      }
+    } catch (err) {
+      console.error('[PriorityWorkflowCard] Error loading workflow from database:', err);
+    } finally {
+      setLoadingDb(false);
+    }
+  };
+
+  // Use provided data or database data
+  const workflowTitle = providedTitle || dbWorkflow?.workflow_name || 'No workflows available';
+  const priority = providedPriority || (dbWorkflow?.priority_score >= 80 ? 'Critical' : dbWorkflow?.priority_score >= 60 ? 'High' : 'Medium') as any;
+  const dueDate = providedDueDate || 'Today';
+  const arr = providedArr;
+
   const getPriorityColor = () => {
     switch (priority) {
       case 'Critical':
@@ -36,6 +76,19 @@ export default function PriorityWorkflowCard({
         return 'bg-gray-100 text-gray-600';
     }
   };
+
+  // NEW: Show loading state with zen styling
+  if (loadingDb) {
+    return (
+      <div className={`bg-white rounded-3xl p-10 border border-gray-200 shadow-lg ${className}`}>
+        <div className="space-y-4 animate-pulse">
+          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-200 rounded w-2/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

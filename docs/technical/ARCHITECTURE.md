@@ -10,6 +10,7 @@
 ---
 
 ## Recent Changes
+- **2025-10-23:** Added versioning strategy and dashboard architecture guidelines
 - **2025-10-23:** Initial consolidated version from COMPLETE-SYSTEM-FLOW.md
 - **2025-10-23:** Added step-level actions architecture
 - **2025-10-23:** Updated to Phase 3 database-driven workflows
@@ -24,7 +25,8 @@
 3. [Data Flow Diagrams](#data-flow-diagrams)
 4. [Key Components](#key-components)
 5. [Phase Evolution](#phase-evolution)
-6. [Code Reference](#code-reference)
+6. [Versioning Strategy & Dashboard Architecture](#versioning-strategy--dashboard-architecture)
+7. [Code Reference](#code-reference)
 
 ---
 
@@ -743,6 +745,186 @@ VALUES ('new-workflow',
 - Version control
 
 **Timeline:** Q1 2026
+
+---
+
+## Versioning Strategy & Dashboard Architecture
+
+### Dashboard vs Workflow Executor
+
+The codebase has **two distinct types of pages** that serve different purposes:
+
+#### 1. Dashboard Pages (Entry Points)
+Pages where users see their workflows/tasks and can launch them.
+
+**Recommended Structure:**
+```
+/dashboard              → Main user dashboard
+```
+
+**Components:**
+- WorkflowStatePanel (active, snoozed, escalated tabs)
+- NotificationBanner (due workflows, escalations)
+- WorkflowAnalyticsDashboard (insights)
+- PriorityWorkflowCard (main focus card)
+
+#### 2. Workflow Execution Pages (Runners)
+Pages that execute a specific workflow in fullscreen mode.
+
+**Recommended Structure:**
+```
+/workflows/[executionId]    → Dynamic workflow executor
+/workflows/demo/[id]        → Demo/testing workflows
+```
+
+**Backend:**
+- TaskModeFullscreen component
+- Database-driven composition
+- Phase 3 architecture
+
+---
+
+### Version Management Rules
+
+#### Rule 1: No Version Suffixes
+**❌ NEVER:**
+```
+my-feature-v2/
+my-feature-v3/
+my-feature-final/
+```
+
+**✅ INSTEAD:**
+```
+my-feature/                    # Current version (always)
+_archive/my-feature-2024-10-23/ # If you must keep old version
+```
+
+#### Rule 2: Use Git Branches for Experiments
+**❌ NEVER:** Create `/my-feature-experimental` page
+
+**✅ INSTEAD:**
+```bash
+git checkout -b experiment/new-workflow-ui
+# Make changes to /dashboard or /workflows
+# Test
+# If good: merge to main
+# If bad: delete branch
+```
+
+#### Rule 3: Feature Flags for A/B Testing
+**❌ NEVER:** Create `/dashboard-new-design` for testing
+
+**✅ INSTEAD:**
+```tsx
+export default function Dashboard() {
+  const { useNewDesign } = useFeatureFlags();
+
+  return useNewDesign ? (
+    <NewDashboardDesign />
+  ) : (
+    <CurrentDashboard />
+  );
+}
+```
+
+#### Rule 4: Archive, Don't Delete
+When replacing code:
+```bash
+# Move to archive with date
+mv src/components/old-component src/components/_archive/old-component-2024-10-23
+
+# Add deprecation notice
+echo "// DEPRECATED 2024-10-23: Use new-component instead" >> old-component.tsx
+```
+
+---
+
+### Clean Architecture Guidelines
+
+#### Current State (To Be Cleaned)
+```
+/obsidian-black          → Legacy dashboard
+/obsidian-black-v2       → Deprecated
+/obsidian-black-v3       → Current workflow executor template
+/demo-dashboard          → CSMDashboard component
+/zen-dashboard           → Zen aesthetic dashboard
+/zen-dashboard-v2        → Zen V2
+```
+
+#### Target State (Clean)
+```
+/dashboard               → THE dashboard (single source of truth)
+/workflows/[id]          → THE workflow executor (dynamic)
+/workflows/demo/[id]     → Demo/testing workflows
+/_archive/*              → Old versions (don't touch)
+```
+
+---
+
+### Migration Strategy
+
+#### Step 1: Identify "Latest" Version
+**For Workflow Execution:**
+- ✅ **LATEST:** `obsidian-black-v3` and `workflow-demo`
+  - Uses database-driven workflows (Phase 3)
+  - Fetches from `workflow_definitions` table
+  - Multi-tenant ready
+
+**For Dashboards:**
+- ✅ **LATEST:** zen-dashboard aesthetic + Phase 3F components
+  - Gradient backgrounds (gray-50 to purple-50)
+  - Minimal, centered design
+  - Database-driven workflows
+
+#### Step 2: Consolidate
+1. Create single `/dashboard` page (zen aesthetic + Phase 3F)
+2. Create dynamic `/workflows/[executionId]` page
+3. Move old versions to `/_archive/`
+4. Update all links/references
+5. Add deprecation notices
+
+#### Step 3: Maintain
+- Never create new version suffixes
+- Use Git branches for experiments
+- Use feature flags for A/B testing
+- Archive when replacing, don't delete
+
+---
+
+### Zen Dashboard Design Principles
+
+When building dashboard UIs, follow these zen aesthetic guidelines:
+
+**Color Palette:**
+```css
+--zen-gradient-from: #f9fafb;  /* gray-50 */
+--zen-gradient-to: #faf5ff;    /* purple-50 */
+--zen-card: rgba(255, 255, 255, 0.8);
+--zen-border: #e9d5ff;         /* purple-100 */
+--zen-accent: #9333ea;         /* purple-600 */
+```
+
+**Card Style:**
+```tsx
+<div className="bg-white/80 backdrop-blur-sm rounded-3xl p-8 border border-purple-100 shadow-sm">
+  {/* Content */}
+</div>
+```
+
+**Typography:**
+```tsx
+<h1 className="text-3xl font-light text-gray-700">  // Greeting
+<h2 className="text-2xl font-light text-gray-800">  // Section headers
+<p className="text-sm text-gray-400">               // Subtle text
+```
+
+**Layout:**
+- Centered, minimal design
+- Spacious, breathing room
+- Soft shadows, rounded corners
+- Gradient background
+- Purple accents
 
 ---
 

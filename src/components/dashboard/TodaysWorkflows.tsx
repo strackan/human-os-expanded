@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
 import { TERMINOLOGY } from '@/lib/constants';
+import { WorkflowQueryService } from '@/lib/workflows/actions/WorkflowQueryService';
 
 interface WorkflowItem {
   workflowId: string;
@@ -17,6 +18,7 @@ interface WorkflowItem {
 interface TodaysWorkflowsProps {
   className?: string;
   workflows?: WorkflowItem[];
+  userId?: string; // NEW: Add userId for database integration
   onWorkflowClick?: (workflow: WorkflowItem) => void;
   completedWorkflowIds?: Set<string>;
 }
@@ -24,11 +26,45 @@ interface TodaysWorkflowsProps {
 export default function TodaysWorkflows({
   className = '',
   workflows: providedWorkflows,
+  userId,
   onWorkflowClick,
   completedWorkflowIds = new Set()
 }: TodaysWorkflowsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [viewMode, setViewMode] = useState<'category' | 'list'>('list'); // Default to list when workflows provided
+  const [dbWorkflows, setDbWorkflows] = useState<WorkflowItem[]>([]);
+  const [loadingDb, setLoadingDb] = useState(false);
+
+  // NEW: Fetch workflows from database when userId provided
+  useEffect(() => {
+    if (userId && !providedWorkflows) {
+      loadWorkflowsFromDatabase();
+    }
+  }, [userId, providedWorkflows]);
+
+  const loadWorkflowsFromDatabase = async () => {
+    if (!userId) return;
+
+    setLoadingDb(true);
+    try {
+      const queryService = new WorkflowQueryService();
+      const result = await queryService.getActiveWorkflows(userId);
+
+      if (result.success && result.workflows) {
+        const mappedWorkflows = result.workflows.map(wf => ({
+          workflowId: wf.id,
+          title: wf.workflow_name,
+          customerId: wf.customer_id,
+          customerName: wf.customer_name || wf.customers?.name || 'Unknown Customer'
+        }));
+        setDbWorkflows(mappedWorkflows);
+      }
+    } catch (err) {
+      console.error('[TodaysWorkflows] Error loading workflows from database:', err);
+    } finally {
+      setLoadingDb(false);
+    }
+  };
 
   // Static demo data - hardcoded (fallback when no workflows provided)
   const categories = [
@@ -62,9 +98,19 @@ export default function TodaysWorkflows({
     workflowData: wf
   }));
 
-  const workflows = displayWorkflows || staticWorkflows;
+  // NEW: Map database workflows to display format
+  const dbDisplayWorkflows = dbWorkflows.map(wf => ({
+    customer: wf.customerName,
+    workflow: wf.title,
+    priority: 'High' as const, // Default priority
+    complete: completedWorkflowIds.has(wf.workflowId),
+    workflowData: wf
+  }));
 
-  const totalWorkflows = providedWorkflows?.length || 10;
+  // Use workflows in this order: provided > database > static fallback
+  const workflows = displayWorkflows || (dbWorkflows.length > 0 ? dbDisplayWorkflows : staticWorkflows);
+
+  const totalWorkflows = providedWorkflows?.length || dbWorkflows.length || 10;
   const completedWorkflows = completedWorkflowIds.size || 3;
   const percentComplete = (completedWorkflows / totalWorkflows) * 100;
 
@@ -82,6 +128,28 @@ export default function TodaysWorkflows({
         return 'bg-gray-100 text-gray-600';
     }
   };
+
+  // NEW: Show loading state with zen styling
+  if (loadingDb) {
+    return (
+      <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm ${className}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-purple-500" />
+          </div>
+          <div>
+            <h3 className="text-lg text-gray-700">Today's {TERMINOLOGY.WORKFLOW_PLURAL}</h3>
+            <p className="text-sm text-gray-400">Loading...</p>
+          </div>
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm ${className}`}>
