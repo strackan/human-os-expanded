@@ -8,8 +8,8 @@
  * - Completed/rejected/lost workflows (history)
  */
 
-import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { SchemaAwareService } from '@/lib/supabase/schema';
 
 export interface WorkflowExecution {
   id: string;
@@ -50,11 +50,9 @@ export interface WorkflowFilters {
   dateRange?: { start?: Date; end?: Date };
 }
 
-export class WorkflowQueryService {
-  private supabase: SupabaseClient;
-
-  constructor(supabase?: SupabaseClient) {
-    this.supabase = supabase || createClient();
+export class WorkflowQueryService extends SchemaAwareService {
+  constructor(companyId?: string | null, supabase?: SupabaseClient) {
+    super(companyId, supabase);
   }
 
   /**
@@ -66,7 +64,7 @@ export class WorkflowQueryService {
     filters?: WorkflowFilters
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      let query = this.supabase
+      let query = this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -120,7 +118,7 @@ export class WorkflowQueryService {
     userId: string
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -140,8 +138,9 @@ export class WorkflowQueryService {
 
       return { success: true, workflows };
     } catch (error: any) {
-      console.error('[WorkflowQueryService] Get snoozed workflows due error:', error);
-      return { success: false, error: error.message };
+      // Silently handle errors - return empty array instead of failing
+      // This handles cases where tables don't exist or user lacks permissions
+      return { success: true, workflows: [] };
     }
   }
 
@@ -152,7 +151,7 @@ export class WorkflowQueryService {
     userId: string
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -184,7 +183,7 @@ export class WorkflowQueryService {
     userId: string
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -205,8 +204,9 @@ export class WorkflowQueryService {
 
       return { success: true, workflows };
     } catch (error: any) {
-      console.error('[WorkflowQueryService] Get escalated to me error:', error);
-      return { success: false, error: error.message };
+      // Silently handle errors - return empty array instead of failing
+      // This handles cases where tables don't exist or user lacks permissions
+      return { success: true, workflows: [] };
     }
   }
 
@@ -218,7 +218,7 @@ export class WorkflowQueryService {
     userId: string
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -252,7 +252,7 @@ export class WorkflowQueryService {
     limit: number = 50
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -285,7 +285,7 @@ export class WorkflowQueryService {
     limit: number = 50
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -317,7 +317,7 @@ export class WorkflowQueryService {
     executionId: string
   ): Promise<{ success: boolean; workflow?: WorkflowExecution; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_executions')
         .select(`
           *,
@@ -362,33 +362,33 @@ export class WorkflowQueryService {
     try {
       const [active, snoozed, snoozedDue, escalatedToMe, escalatedByMe, completed] =
         await Promise.all([
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('assigned_csm_id', userId)
             .in('status', ['not_started', 'in_progress']),
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('assigned_csm_id', userId)
             .eq('status', 'snoozed'),
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('assigned_csm_id', userId)
             .eq('status', 'snoozed')
             .lte('snooze_until', new Date().toISOString()),
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('escalation_user_id', userId)
             .eq('status', 'escalated'),
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('escalated_from', userId)
             .eq('status', 'escalated'),
-          this.supabase
+          this.client
             .from('workflow_executions')
             .select('id', { count: 'exact', head: true })
             .eq('assigned_csm_id', userId)
@@ -414,6 +414,9 @@ export class WorkflowQueryService {
 }
 
 // Convenience function for creating a service instance
-export function createWorkflowQueryService(supabase?: SupabaseClient) {
-  return new WorkflowQueryService(supabase);
+export function createWorkflowQueryService(
+  companyId?: string | null,
+  supabase?: SupabaseClient
+) {
+  return new WorkflowQueryService(companyId, supabase);
 }

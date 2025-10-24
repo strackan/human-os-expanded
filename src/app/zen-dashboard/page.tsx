@@ -168,6 +168,17 @@ export default function ZenDashboardPage() {
       {/* Override the default max-width container for full gradient effect */}
       <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-purple-50 -z-10" />
 
+      {/* Deprecation Notice */}
+      <div className="bg-yellow-50 border-b-2 border-yellow-400 p-4 text-center">
+        <p className="text-sm text-yellow-900">
+          ⚠️ This page has been replaced. Please use{' '}
+          <a href="/dashboard" className="font-bold underline hover:text-yellow-700">
+            /dashboard
+          </a>
+          {' '}going forward (now includes Phase 3F features + database integration).
+        </p>
+      </div>
+
       <div className="min-h-screen -mt-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-12">
         {/* Greeting Section */}
         <ZenGreeting className="mb-12" />

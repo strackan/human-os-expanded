@@ -72,6 +72,8 @@ export function useTaskModeState({
 
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [completedSlides, setCompletedSlides] = useState<Set<number>>(new Set([0]));
+  const [skippedSlides, setSkippedSlides] = useState<Set<number>>(new Set());
+  const [snoozedSlides, setSnoozedSlides] = useState<Set<number>>(new Set());
   const [workflowState, setWorkflowState] = useState<Record<string, any>>({});
 
   // Get current slide from config
@@ -112,12 +114,33 @@ export function useTaskModeState({
 
   const goToNextSlide = useCallback(() => {
     if (currentSlideIndex < slides.length - 1) {
-      const nextIndex = currentSlideIndex + 1;
-      setCompletedSlides(prev => new Set(prev).add(nextIndex));
-      setCurrentSlideIndex(nextIndex);
+      // Find the next slide that hasn't been skipped or snoozed
+      let nextIndex = currentSlideIndex + 1;
+      while (nextIndex < slides.length && (skippedSlides.has(nextIndex) || snoozedSlides.has(nextIndex))) {
+        nextIndex++;
+      }
+
+      // If we found a valid slide, navigate to it
+      if (nextIndex < slides.length) {
+        setCompletedSlides(prev => new Set(prev).add(nextIndex));
+        setCurrentSlideIndex(nextIndex);
+        setMetricsExpanded(false);
+      } else {
+        // All remaining slides are skipped/snoozed, complete the workflow
+        showToast({
+          message: 'Workflow complete!',
+          type: 'success',
+          icon: 'check',
+          duration: 3000
+        });
+        setTimeout(() => onClose(true), 100);
+      }
+    } else {
+      // Already at the last slide, complete workflow
+      setCompletedSlides(prev => new Set(prev).add(currentSlideIndex));
       setMetricsExpanded(false);
     }
-  }, [currentSlideIndex, slides.length]);
+  }, [currentSlideIndex, slides.length, skippedSlides, snoozedSlides, showToast, onClose]);
 
   const goToPreviousSlide = useCallback(() => {
     if (currentSlideIndex > 0) {
@@ -196,17 +219,41 @@ export function useTaskModeState({
 
   const skipStep = useCallback((stepIndex: number) => {
     console.log('[TaskMode] Skip step:', stepIndex);
-    setConfirmationModal({ type: null, stepIndex: null });
-    // TODO: Implement step skip logic
-  }, []);
-
-  const snoozeStep = useCallback((stepIndex: number) => {
-    console.log('[TaskMode] Snooze step:', stepIndex);
+    setSkippedSlides(prev => new Set(prev).add(stepIndex));
     setConfirmationModal({ type: null, stepIndex: null });
 
     // Show toast confirmation
-    showToast(`Step "${slides[stepIndex]?.title || `#${stepIndex + 1}`}" snoozed! I'll remind you later.`, 'success');
-  }, [slides, showToast]);
+    showToast({
+      message: `Step "${slides[stepIndex]?.title || `#${stepIndex + 1}`}" skipped!`,
+      type: 'success',
+      icon: 'check',
+      duration: 3000
+    });
+
+    // If we're on the skipped step, advance to next
+    if (currentSlideIndex === stepIndex) {
+      goToNextSlide();
+    }
+  }, [slides, showToast, currentSlideIndex, goToNextSlide]);
+
+  const snoozeStep = useCallback((stepIndex: number) => {
+    console.log('[TaskMode] Snooze step:', stepIndex);
+    setSnoozedSlides(prev => new Set(prev).add(stepIndex));
+    setConfirmationModal({ type: null, stepIndex: null });
+
+    // Show toast confirmation
+    showToast({
+      message: `Step "${slides[stepIndex]?.title || `#${stepIndex + 1}`}" snoozed! I'll remind you later.`,
+      type: 'info',
+      icon: 'clock',
+      duration: 3000
+    });
+
+    // If we're on the snoozed step, advance to next
+    if (currentSlideIndex === stepIndex) {
+      goToNextSlide();
+    }
+  }, [slides, showToast, currentSlideIndex, goToNextSlide]);
 
   // ============================================================
   // CHAT HANDLERS

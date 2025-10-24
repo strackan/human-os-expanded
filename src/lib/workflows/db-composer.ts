@@ -14,6 +14,7 @@
  */
 
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { createSchemaAwareClient } from '@/lib/supabase/schema';
 import { SLIDE_LIBRARY } from './slides';
 import { composeWorkflow, buildWorkflowConfig, CompositionError } from './composer';
 import type { WorkflowComposition } from './slides/baseSlide';
@@ -46,7 +47,8 @@ export async function fetchWorkflowDefinition(
   companyId: string | null = null,
   supabase?: SupabaseClient
 ) {
-  const client = supabase || createBrowserClient();
+  const baseClient = supabase || createBrowserClient();
+  const client = createSchemaAwareClient(baseClient, companyId);
 
   // Query workflow_definitions
   // Priority: company-specific > stock workflow
@@ -161,7 +163,8 @@ export async function listAvailableWorkflows(
   companyId: string | null = null,
   supabase?: SupabaseClient
 ) {
-  const client = supabase || createBrowserClient();
+  const baseClient = supabase || createBrowserClient();
+  const client = createSchemaAwareClient(baseClient, companyId);
 
   let query = client
     .from('workflow_definitions')
@@ -217,7 +220,8 @@ export async function cloneStockWorkflow(
   },
   supabase?: SupabaseClient
 ) {
-  const client = supabase || createBrowserClient();
+  const baseClient = supabase || createBrowserClient();
+  const client = createSchemaAwareClient(baseClient, companyId);
 
   // 1. Fetch stock workflow
   const stockWorkflow = await fetchWorkflowDefinition(stockWorkflowId, null, client);
@@ -293,7 +297,8 @@ export async function updateWorkflow(
   },
   supabase?: SupabaseClient
 ) {
-  const client = supabase || createBrowserClient();
+  const baseClient = supabase || createBrowserClient();
+  const client = createSchemaAwareClient(baseClient, companyId);
 
   const { data, error } = await client
     .from('workflow_definitions')
@@ -334,10 +339,11 @@ export async function getWorkflowExecution(
   executionId: string,
   supabase?: SupabaseClient
 ) {
-  const client = supabase || createBrowserClient();
+  const baseClient = supabase || createBrowserClient();
 
-  // 1. Fetch execution record
-  const { data: execution, error: execError } = await client
+  // First, fetch without schema to get customer info
+  // (workflow_executions might be in different schema than we expect initially)
+  const { data: execution, error: execError } = await baseClient
     .from('workflow_executions')
     .select(`
       *,
@@ -354,15 +360,18 @@ export async function getWorkflowExecution(
     );
   }
 
-  // 2. Compose workflow config
+  // Extract company_id from customer
+  const companyId = execution.customer?.company_id || null;
+
+  // 2. Compose workflow config with proper schema
   const config = await composeFromDatabase(
     execution.workflow_config_id,
-    null, // TODO: Get company_id from customer
+    companyId,
     {
       name: execution.customer?.name || 'Customer',
       ...execution.customer,
     },
-    client
+    baseClient
   );
 
   return {

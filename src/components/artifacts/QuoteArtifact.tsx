@@ -467,7 +467,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                     <div>
                       <div className="mb-1">
                         <EditableText
-                          value={item.product || ''}
+                          value={(item.product ?? '') as string}
                           onChange={(val) => {
                             const newItems = [...lineItems];
                             newItems[index].product = val;
@@ -478,7 +478,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                         />
                       </div>
                       <EditableText
-                        value={item.description || ''}
+                        value={(item.description ?? '') as string}
                         onChange={(val) => {
                           const newItems = [...lineItems];
                           newItems[index].description = val;
@@ -494,7 +494,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                   </td>
                   <td className="px-4 py-3 text-center text-sm" style={{ color: lineItemStyle.text }}>
                     <EditableText
-                      value={item.period || ''}
+                      value={(item.period ?? '') as string}
                       onChange={(val) => {
                         const newItems = [...lineItems];
                         newItems[index].period = val;

@@ -195,9 +195,9 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   // Loading state
   if (!state.config && !state.configError) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#2D1271] flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="inline-block w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center">
+        <div className="text-center text-gray-700">
+          <div className="inline-block w-12 h-12 border-4 border-purple-400 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p>Loading workflow configuration...</p>
         </div>
       </div>
@@ -207,7 +207,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   // Error state
   if (state.configError || !state.config) {
     return (
-      <div className="fixed inset-0 z-50 bg-[#2D1271] flex items-center justify-center p-8">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center p-8">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md">
           <h2 className="text-xl font-bold text-red-600 mb-4">Configuration Error</h2>
           <p className="text-gray-700 mb-6">{state.configError || 'Unknown error loading workflow configuration'}</p>
@@ -288,7 +288,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
 
   return (
     <TaskModeContext.Provider value={contextValue}>
-      <div className="fixed inset-0 z-50 bg-[#2D1271] flex items-center justify-center p-8">
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center p-8">
         {/* Workstation Container */}
         <div className="relative w-full max-w-7xl h-full bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
 

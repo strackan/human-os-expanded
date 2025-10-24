@@ -34,8 +34,8 @@ export interface LLMChatParams {
 export class LLMService {
   private chatService: ChatService;
 
-  constructor(supabase?: SupabaseClient) {
-    this.chatService = new ChatService(supabase);
+  constructor(companyId?: string | null, supabase?: SupabaseClient) {
+    this.chatService = new ChatService(companyId, supabase);
   }
 
   /**
@@ -239,6 +239,9 @@ export class LLMService {
 /**
  * Create an LLM service instance
  */
-export function createLLMService(supabase?: SupabaseClient): LLMService {
-  return new LLMService(supabase);
+export function createLLMService(
+  companyId?: string | null,
+  supabase?: SupabaseClient
+): LLMService {
+  return new LLMService(companyId, supabase);
 }

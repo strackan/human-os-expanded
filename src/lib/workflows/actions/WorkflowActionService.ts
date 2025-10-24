@@ -9,8 +9,8 @@
  * - Complete/Reject/Lose: Terminal state transitions
  */
 
-import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { SchemaAwareService } from '@/lib/supabase/schema';
 
 export type WorkflowStatus =
   | 'not_started'
@@ -69,11 +69,9 @@ export interface WorkflowAction {
   created_at: string;
 }
 
-export class WorkflowActionService {
-  private supabase: SupabaseClient;
-
-  constructor(supabase?: SupabaseClient) {
-    this.supabase = supabase || createClient();
+export class WorkflowActionService extends SchemaAwareService {
+  constructor(companyId?: string | null, supabase?: SupabaseClient) {
+    super(companyId, supabase);
   }
 
   /**
@@ -87,7 +85,7 @@ export class WorkflowActionService {
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
       // Update workflow_executions
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'snoozed',
@@ -102,7 +100,7 @@ export class WorkflowActionService {
       if (updateError) throw updateError;
 
       // Record action
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -136,7 +134,7 @@ export class WorkflowActionService {
     userId: string
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'in_progress',
@@ -149,7 +147,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -181,7 +179,7 @@ export class WorkflowActionService {
     options: SkipOptions
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'skipped',
@@ -194,7 +192,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -226,7 +224,7 @@ export class WorkflowActionService {
     options: EscalateOptions
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'escalated',
@@ -241,7 +239,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -276,7 +274,7 @@ export class WorkflowActionService {
     notes?: string
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'completed',
@@ -289,7 +287,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -320,7 +318,7 @@ export class WorkflowActionService {
     options: RejectOptions
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'rejected',
@@ -333,7 +331,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -364,7 +362,7 @@ export class WorkflowActionService {
     options: LoseOptions
   ): Promise<{ success: boolean; actionId?: string; error?: string }> {
     try {
-      const { error: updateError } = await this.supabase
+      const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
           status: 'lost',
@@ -377,7 +375,7 @@ export class WorkflowActionService {
 
       if (updateError) throw updateError;
 
-      const { data: action, error: actionError } = await this.supabase
+      const { data: action, error: actionError } = await this.client
         .from('workflow_actions')
         .insert({
           execution_id: executionId,
@@ -406,7 +404,7 @@ export class WorkflowActionService {
     executionId: string
   ): Promise<{ success: boolean; actions?: WorkflowAction[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_actions')
         .select('*')
         .eq('execution_id', executionId)
@@ -429,7 +427,7 @@ export class WorkflowActionService {
     limit: number = 50
   ): Promise<{ success: boolean; actions?: WorkflowAction[]; error?: string }> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await this.client
         .from('workflow_actions')
         .select('*')
         .eq('performed_by', userId)
@@ -447,6 +445,9 @@ export class WorkflowActionService {
 }
 
 // Convenience function for creating a service instance
-export function createWorkflowActionService(supabase?: SupabaseClient) {
-  return new WorkflowActionService(supabase);
+export function createWorkflowActionService(
+  companyId?: string | null,
+  supabase?: SupabaseClient
+) {
+  return new WorkflowActionService(companyId, supabase);
 }

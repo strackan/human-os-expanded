@@ -6,7 +6,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { SchemaAwareService } from '@/lib/supabase/schema';
 
 export type ThreadType = 'llm' | 'rag' | 'fixed';
 export type ThreadStatus = 'active' | 'completed' | 'abandoned';
@@ -59,11 +59,9 @@ export interface SendMessageParams {
 /**
  * Chat Service
  */
-export class ChatService {
-  private client: SupabaseClient;
-
-  constructor(supabase?: SupabaseClient) {
-    this.client = supabase || createBrowserClient();
+export class ChatService extends SchemaAwareService {
+  constructor(companyId?: string | null, supabase?: SupabaseClient) {
+    super(companyId, supabase);
   }
 
   /**
@@ -362,6 +360,9 @@ export class ChatService {
 /**
  * Create a chat service instance
  */
-export function createChatService(supabase?: SupabaseClient): ChatService {
-  return new ChatService(supabase);
+export function createChatService(
+  companyId?: string | null,
+  supabase?: SupabaseClient
+): ChatService {
+  return new ChatService(companyId, supabase);
 }
