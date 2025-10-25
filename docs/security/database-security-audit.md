@@ -27,6 +27,24 @@
 
 [To be filled from audit results]
 
+## Multi-Tenant Company ID Coverage
+
+### Tables WITH company_id ✅
+- customers
+- workflow_executions
+- workflow_definitions
+- [List all tables with company_id]
+
+### Tables MISSING company_id ❌
+- [List tables that need company_id added]
+- Impact: [Describe security impact]
+- Priority: [HIGH/MEDIUM/LOW]
+
+### Intentionally Global Tables (No company_id)
+- app_settings (system configuration)
+- companies (tenant registry)
+- profiles (links via company_id FK)
+
 ## Recommendations
 
 1. [Security recommendations]
