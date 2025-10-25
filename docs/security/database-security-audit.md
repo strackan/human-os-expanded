@@ -45,6 +45,28 @@
 - companies (tenant registry)
 - profiles (links via company_id FK)
 
+## Row Level Security (RLS) Policy Analysis
+
+### Tables with Proper RLS ✅
+| Table | Policy | Operation | Company Isolation |
+|-------|--------|-----------|-------------------|
+| customers | [policy name] | SELECT | ✅ Checks company_id |
+
+### Tables with Demo Mode Bypass ⚠️
+- workflow_executions (has `is_demo_mode()` bypass)
+- workflow_actions (has `is_demo_mode()` bypass)
+- Status: **Acceptable for local dev, MUST disable in production**
+
+### Tables Missing RLS ❌
+- [List tables without RLS enabled]
+- Impact: [Security risk description]
+- Action Required: [Add RLS policies]
+
+### RLS Policy Recommendations
+1. All user-data tables MUST check company_id in USING clause
+2. Demo mode bypass acceptable ONLY when `is_demo_mode() = true`
+3. Production MUST set `app_settings.demo_mode = 'false'`
+
 ## Recommendations
 
 1. [Security recommendations]
