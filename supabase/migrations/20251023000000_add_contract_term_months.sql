@@ -1,19 +1,21 @@
 -- Add term_months as a generated column that auto-calculates from start_date and end_date
 -- This ensures term_months and end_date are always consistent
 
--- Add term_months column as a GENERATED ALWAYS column
+-- Add term_months column as a regular column (not generated, since age() is not immutable)
 ALTER TABLE public.contracts
-ADD COLUMN term_months INTEGER
-GENERATED ALWAYS AS (
-  -- Calculate months between start_date and end_date
-  -- Uses age() function which returns interval, then extracts years and months
-  EXTRACT(YEAR FROM age(end_date, start_date)) * 12 +
-  EXTRACT(MONTH FROM age(end_date, start_date))
-) STORED;
+ADD COLUMN IF NOT EXISTS term_months INTEGER;
+
+-- Update existing rows with calculated term_months
+UPDATE public.contracts
+SET term_months = (
+  EXTRACT(YEAR FROM age(end_date, start_date))::INTEGER * 12 +
+  EXTRACT(MONTH FROM age(end_date, start_date))::INTEGER
+)
+WHERE term_months IS NULL AND start_date IS NOT NULL AND end_date IS NOT NULL;
 
 -- Add comment explaining the column
 COMMENT ON COLUMN public.contracts.term_months IS
-'Auto-calculated contract term in months based on start_date and end_date. This is a generated column and cannot be manually set.';
+'Contract term in months. Should be kept in sync with start_date and end_date.';
 
 -- Add a check constraint to ensure end_date is after start_date
 ALTER TABLE public.contracts
