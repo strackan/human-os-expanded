@@ -62,7 +62,39 @@ COMMENT ON COLUMN public.customer_features.config IS
 'Optional JSON configuration specific to the feature. Can store version, options, or other settings.';
 
 -- =====================================================
--- 2. Row Level Security Policies
+-- 2. Helper Functions for RLS
+-- =====================================================
+
+-- Get current user's company_id
+CREATE OR REPLACE FUNCTION get_user_company_id()
+RETURNS UUID AS $$
+BEGIN
+  RETURN (
+    SELECT company_id
+    FROM public.profiles
+    WHERE id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+COMMENT ON FUNCTION get_user_company_id IS
+'Returns the company_id for the currently authenticated user';
+
+-- Check if demo mode is enabled
+CREATE OR REPLACE FUNCTION is_demo_mode()
+RETURNS BOOLEAN AS $$
+BEGIN
+  -- Demo mode is disabled in production/staging
+  -- Can be enabled via environment variable or database flag if needed
+  RETURN false;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+COMMENT ON FUNCTION is_demo_mode IS
+'Returns true if demo mode is enabled (allows bypassing RLS for testing)';
+
+-- =====================================================
+-- 3. Row Level Security Policies
 -- =====================================================
 
 ALTER TABLE public.customer_features ENABLE ROW LEVEL SECURITY;
@@ -100,7 +132,7 @@ FOR DELETE USING (
 );
 
 -- =====================================================
--- 3. Helper Function: Get Customer Feature
+-- 4. Helper Function: Get Customer Feature
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION get_customer_feature(
@@ -135,7 +167,7 @@ COMMENT ON FUNCTION get_customer_feature IS
 'Check if a feature is enabled for a company and get its configuration';
 
 -- =====================================================
--- 4. Updated Timestamp Trigger
+-- 5. Updated Timestamp Trigger
 -- =====================================================
 
 CREATE OR REPLACE FUNCTION update_customer_features_timestamp()
@@ -152,7 +184,7 @@ FOR EACH ROW
 EXECUTE FUNCTION update_customer_features_timestamp();
 
 -- =====================================================
--- 5. Sample Feature Keys (for documentation)
+-- 6. Sample Feature Keys (for documentation)
 -- =====================================================
 
 /*
@@ -177,12 +209,14 @@ Usage in Application:
 */
 
 -- =====================================================
--- 6. Grant Permissions
+-- 7. Grant Permissions
 -- =====================================================
 
 -- Grant access to authenticated users (RLS will handle company isolation)
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.customer_features TO authenticated;
 GRANT EXECUTE ON FUNCTION get_customer_feature TO authenticated;
+GRANT EXECUTE ON FUNCTION get_user_company_id TO authenticated;
+GRANT EXECUTE ON FUNCTION is_demo_mode TO authenticated;
 
 -- Service role has full access for admin operations
 GRANT ALL ON public.customer_features TO service_role;
