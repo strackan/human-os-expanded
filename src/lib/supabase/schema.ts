@@ -196,11 +196,12 @@ export abstract class SchemaAwareService {
 
     // Create schema-aware client
     if (baseClient) {
-      this.client = createSchemaAwareClient(baseClient, companyId);
+      this.client = createSchemaAwareClient(baseClient, companyId) as SupabaseClient;
     } else {
       // Import createClient dynamically to avoid circular dependencies
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { createClient } = require('./client');
-      this.client = createSchemaAwareClient(createClient(), companyId);
+      this.client = createSchemaAwareClient(createClient(), companyId) as SupabaseClient;
     }
   }
 

@@ -198,7 +198,7 @@ export default function ObsidianBlackV3Client({
         {/* Main Dashboard Content */}
         <div className="max-w-6xl mx-auto space-y-6">
           {/* Notification Banner (Phase 3F) */}
-          <NotificationBanner />
+          <NotificationBanner userId={userId || ''} />
 
           {/* Error Banner */}
           {loadError && (

@@ -18,6 +18,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import confetti from 'canvas-confetti';
 import { createWorkflowExecution, getTestUserId } from '@/lib/workflows/actions';
 import { registerWorkflowConfig } from '@/config/workflows/index';
+import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 
 export default function DashboardClient() {
@@ -75,16 +76,14 @@ export default function DashboardClient() {
         workflowId,
         null, // company_id (null = stock workflow)
         {
-          customer: {
-            name: 'Obsidian Black',
-            current_arr: 185000,
-            health_score: 87,
-            contract_end_date: '2026-10-21',
-            days_until_renewal: 365,
-            utilization: 87,
-            monthsToRenewal: 12,
-            seatCount: 50,
-          }
+          name: 'Obsidian Black',
+          current_arr: 185000,
+          health_score: 87,
+          contract_end_date: '2026-10-21',
+          days_until_renewal: 365,
+          utilization: 87,
+          monthsToRenewal: 12,
+          seatCount: 50,
         }
       );
 
@@ -97,13 +96,13 @@ export default function DashboardClient() {
       console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
 
       // Register the config so TaskMode can find it
-      registerWorkflowConfig(workflowId, workflowConfig);
+      registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
       console.log('[Dashboard] Config registered in workflow registry');
 
       // Create workflow execution record
       const executionResult = await createWorkflowExecution({
         workflowConfigId: workflowId,
-        workflowName: workflowConfig.workflowName || 'Renewal Planning',
+        workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
         workflowType: 'renewal',
         customerId: customerId,
         userId: userId,
@@ -120,7 +119,7 @@ export default function DashboardClient() {
       // Set active workflow
       setActiveWorkflow({
         workflowId: workflowId,
-        title: workflowConfig.workflowName || 'Renewal Planning',
+        title: (workflowConfig as any).workflowName || 'Renewal Planning',
         customerId: customerId,
         customerName: 'Obsidian Black'
       });

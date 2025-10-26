@@ -145,6 +145,8 @@ export const draftEmailSlide: SlideBuilder = createSlideBuilder(
     id: 'draft-email',
     name: 'Draft Email',
     category: 'action',
+    description: 'Compose and review email communications',
+    estimatedMinutes: 10,
     requiredFields: [
       'customer.name',
       'recipient.name',
@@ -169,6 +171,8 @@ export const draftEmailSlide: SlideBuilder = createSlideBuilder(
       description: 'Compose and review email',
       label: 'Email',
       stepMapping: 'draft-email',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping draft an email for a customer success workflow.`,

@@ -173,9 +173,7 @@ export const executiveContactLostTemplate: WorkflowTemplate = {
             buttons: [
               { label: 'Continue', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
             ],
-            nextBranches: {
-              'continue': 'proceed-to-health'
-            }
+            nextBranch: 'proceed-to-health'
           },
           'proceed-to-health': {
             response: "Now let's review {{customer.name}}'s overall account health.",
@@ -312,9 +310,7 @@ export const executiveContactLostTemplate: WorkflowTemplate = {
             buttons: [
               { label: 'Continue', value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
             ],
-            nextBranches: {
-              'continue': 'email-approved'
-            }
+            nextBranch: 'email-approved'
           }
         }
       },
@@ -547,7 +543,7 @@ Looking forward to connecting,
         label: 'Transition Risk',
         valuePath: 'assessment.relationshipImpact',
         formatAs: 'number',
-        sublabel: '/10',
+        sublabelPath: '/10',
         statusPath: 'assessment.impactColor'
       }
     }

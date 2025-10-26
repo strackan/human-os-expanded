@@ -27,6 +27,8 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
     id: 'pricing-strategy',
     name: 'Pricing Strategy',
     category: 'renewal',
+    description: 'Develop renewal pricing strategy',
+    estimatedMinutes: 5,
     requiredFields: ['customer.name', 'customer.current_arr'],
   },
   (context?: SlideContext) => {
@@ -54,6 +56,8 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
       description: 'Develop renewal pricing strategy',
       label: 'Pricing',
       stepMapping: 'pricing-strategy',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping develop a pricing strategy for a customer renewal.`,

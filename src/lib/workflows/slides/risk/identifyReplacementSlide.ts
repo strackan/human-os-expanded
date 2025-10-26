@@ -23,6 +23,8 @@ export const identifyReplacementSlide: SlideBuilder = createSlideBuilder(
     id: 'identify-replacement',
     name: 'Identify Replacement Contact',
     category: 'risk',
+    description: 'Identify and plan outreach to replacement contact',
+    estimatedMinutes: 4,
     requiredFields: ['customer.name', 'departed_contact.name'],
   },
   (context?: SlideContext) => {
@@ -30,6 +32,13 @@ export const identifyReplacementSlide: SlideBuilder = createSlideBuilder(
     const urgency = context?.urgency || 'high';
 
     return {
+      id: 'identify-replacement',
+      title: 'Identify Replacement Contact',
+      description: 'Identify and plan outreach to replacement contact',
+      label: 'Identify Contact',
+      stepMapping: 'identify-replacement',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping identify and plan outreach to a replacement contact after an executive departure.`,

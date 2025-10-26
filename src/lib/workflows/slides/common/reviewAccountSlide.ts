@@ -66,6 +66,32 @@ export const reviewAccountSlide: SlideBuilder = createSlideBuilder(
     // Use custom button label if provided
     const buttonLabel = context?.variables?.buttonLabel || 'Continue';
 
+    const initialMessage: {
+      text: string;
+      buttons: Array<{ label: string; value: string; 'label-background': string; 'label-text': string }>;
+      nextBranches: { [key: string]: string };
+    } = askForAssessment ? {
+      text: messageText,
+      buttons: [
+        { label: 'Looks Healthy', value: 'healthy', 'label-background': 'bg-green-600', 'label-text': 'text-white' },
+        { label: 'Some Concerns', value: 'concerns', 'label-background': 'bg-orange-600', 'label-text': 'text-white' },
+        { label: 'At Risk', value: 'at-risk', 'label-background': 'bg-red-600', 'label-text': 'text-white' },
+      ],
+      nextBranches: {
+        'healthy': 'health-good',
+        'concerns': 'health-concerns',
+        'at-risk': 'health-at-risk',
+      }
+    } : {
+      text: messageText,
+      buttons: [
+        { label: buttonLabel, value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
+      ],
+      nextBranches: {
+        'continue': 'proceed'
+      }
+    };
+
     return {
       id: 'review-account',
       title: 'Account Health Review',
@@ -74,27 +100,7 @@ export const reviewAccountSlide: SlideBuilder = createSlideBuilder(
       stepMapping: 'account-health',
 
       chat: {
-        initialMessage: askForAssessment ? {
-          text: messageText,
-          buttons: [
-            { label: 'Looks Healthy', value: 'healthy', 'label-background': 'bg-green-600', 'label-text': 'text-white' },
-            { label: 'Some Concerns', value: 'concerns', 'label-background': 'bg-orange-600', 'label-text': 'text-white' },
-            { label: 'At Risk', value: 'at-risk', 'label-background': 'bg-red-600', 'label-text': 'text-white' },
-          ],
-          nextBranches: {
-            'healthy': 'health-good',
-            'concerns': 'health-concerns',
-            'at-risk': 'health-at-risk',
-          }
-        } : {
-          text: messageText,
-          buttons: [
-            { label: buttonLabel, value: 'continue', 'label-background': 'bg-blue-600', 'label-text': 'text-white' }
-          ],
-          nextBranches: {
-            'continue': 'proceed'
-          }
-        },
+        initialMessage,
         branches: {
           'health-good': {
             response: "Great! With healthy metrics, we're in a good position to proceed confidently.",

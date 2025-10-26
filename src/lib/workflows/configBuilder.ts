@@ -112,10 +112,33 @@ export async function buildWorkflowConfigFromDatabase(
         name: customerData.name,
       },
       slides: hydratedSlides,
+      artifacts: { sections: [] },
 
-      // Add settings from composition
-      ...(composition.settings?.layout && { layout: composition.settings.layout }),
-      ...(composition.settings?.chat && { chat: composition.settings.chat }),
+      // Layout settings with defaults
+      layout: {
+        modalDimensions: composition.settings?.layout?.modalDimensions || {
+          width: 1600,
+          height: 900,
+          top: 80,
+          left: 160,
+        },
+        dividerPosition: composition.settings?.layout?.dividerPosition ?? 50,
+        chatWidth: composition.settings?.layout?.chatWidth ?? 600,
+        splitModeDefault: composition.settings?.layout?.splitModeDefault ?? false,
+      },
+
+      // Chat settings with defaults
+      chat: {
+        placeholder: composition.settings?.chat?.placeholder || 'Type your message...',
+        aiGreeting: composition.settings?.chat?.aiGreeting || 'Hello! How can I help you today?',
+        features: {
+          attachments: false,
+          voiceRecording: false,
+          designMode: false,
+          editMode: false,
+          artifactsToggle: true,
+        },
+      },
     };
 
     return config;
@@ -218,8 +241,33 @@ export async function buildWorkflowConfigFromComposition(
         name: customerData.name,
       },
       slides: hydratedSlides,
-      ...(composition.settings?.layout && { layout: composition.settings.layout }),
-      ...(composition.settings?.chat && { chat: composition.settings.chat }),
+      artifacts: { sections: [] },
+
+      // Layout settings with defaults
+      layout: {
+        modalDimensions: composition.settings?.layout?.modalDimensions || {
+          width: 1600,
+          height: 900,
+          top: 80,
+          left: 160,
+        },
+        dividerPosition: composition.settings?.layout?.dividerPosition ?? 50,
+        chatWidth: composition.settings?.layout?.chatWidth ?? 600,
+        splitModeDefault: composition.settings?.layout?.splitModeDefault ?? false,
+      },
+
+      // Chat settings with defaults
+      chat: {
+        placeholder: composition.settings?.chat?.placeholder || 'Type your message...',
+        aiGreeting: composition.settings?.chat?.aiGreeting || 'Hello! How can I help you today?',
+        features: {
+          attachments: false,
+          voiceRecording: false,
+          designMode: false,
+          editMode: false,
+          artifactsToggle: true,
+        },
+      },
     };
 
     return config;

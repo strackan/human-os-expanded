@@ -255,10 +255,30 @@ export function buildWorkflowConfig(
   // Add settings if provided
   if (composition.settings) {
     if (composition.settings.layout) {
-      config.layout = composition.settings.layout;
+      config.layout = {
+        modalDimensions: composition.settings.layout.modalDimensions || {
+          width: 1600,
+          height: 900,
+          top: 80,
+          left: 160,
+        },
+        dividerPosition: composition.settings.layout.dividerPosition ?? 50,
+        chatWidth: composition.settings.layout.chatWidth ?? 600,
+        splitModeDefault: composition.settings.layout.splitModeDefault ?? false,
+      };
     }
     if (composition.settings.chat) {
-      config.chat = composition.settings.chat;
+      config.chat = {
+        placeholder: composition.settings.chat.placeholder || 'Type your message...',
+        aiGreeting: composition.settings.chat.aiGreeting || 'Hello! How can I help you today?',
+        features: {
+          attachments: false,
+          voiceRecording: false,
+          designMode: false,
+          editMode: false,
+          artifactsToggle: true,
+        },
+      };
     }
   }
 
@@ -422,7 +442,7 @@ export function resolveSlideV2(
     chat.branches[branchName] = {
       response: resolveTemplate(branchTemplate.response, context),
       delay: branchTemplate.delay,
-      actions: branchTemplate.actions,
+      actions: branchTemplate.actions as any, // TODO: Add proper action type validation
       storeAs: branchTemplate.storeAs,
       nextBranchOnText: branchTemplate.nextBranchOnText,
     };

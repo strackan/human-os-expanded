@@ -313,7 +313,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
 
           {/* Header */}
           <WorkflowHeader
-            workflowTitle={workflowTitle || state.config?.workflowName || 'Workflow'}
+            workflowTitle={workflowTitle || (state.config as any)?.workflowName || 'Workflow'}
             customerName={customerName}
             currentSlideIndex={state.currentSlideIndex}
             showArtifacts={state.showArtifacts}

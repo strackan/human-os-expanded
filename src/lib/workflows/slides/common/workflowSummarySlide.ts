@@ -85,6 +85,8 @@ export const workflowSummarySlide: SlideBuilder = createSlideBuilder(
     id: 'workflow-summary',
     name: 'Workflow Summary',
     category: 'common',
+    description: 'Summary and next steps',
+    estimatedMinutes: 3,
     requiredFields: ['customer.name'],
   },
   (context?: SlideContext) => {
@@ -104,6 +106,8 @@ export const workflowSummarySlide: SlideBuilder = createSlideBuilder(
       description: 'Summary and next steps',
       label: 'Summary',
       stepMapping: 'workflow-summary',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping wrap up a customer success workflow.`,

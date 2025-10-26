@@ -154,6 +154,8 @@ export const scheduleCallSlide: SlideBuilder = createSlideBuilder(
     id: 'schedule-call',
     name: 'Schedule Call',
     category: 'action',
+    description: 'Schedule and prepare for customer calls',
+    estimatedMinutes: 15,
     requiredFields: [
       'customer.name',
       'primary_contact.name',
@@ -180,6 +182,13 @@ export const scheduleCallSlide: SlideBuilder = createSlideBuilder(
           : 'within the next week';
 
     return {
+      id: 'schedule-call',
+      title: 'Schedule Call',
+      description: 'Schedule and prepare for customer calls',
+      label: 'Call',
+      stepMapping: 'schedule-call',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping schedule and prepare for a customer success call.`,

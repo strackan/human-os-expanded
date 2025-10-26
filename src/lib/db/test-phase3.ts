@@ -228,7 +228,7 @@ async function testDatabaseComposer() {
       supabase
     );
 
-    const hasSlides = config.slides && config.slides.length > 0;
+    const hasSlides = !!(config.slides && config.slides.length > 0);
     logTest(
       'composeFromDatabase() builds workflow',
       hasSlides,
@@ -238,7 +238,7 @@ async function testDatabaseComposer() {
     if (hasSlides) {
       // Test that slides have required structure
       const firstSlide = config.slides![0];
-      const hasStructure = firstSlide.id && firstSlide.title;
+      const hasStructure = !!(firstSlide.id && firstSlide.title);
       logTest(
         'Composed slides have correct structure',
         hasStructure,
@@ -354,7 +354,7 @@ async function testEndToEnd() {
 
     logTest(
       'End-to-end workflow composition',
-      config.slides && config.slides.length === workflowDef.slide_sequence.length,
+      !!(config.slides && config.slides.length === workflowDef.slide_sequence.length),
       'Complete flow working'
     );
 

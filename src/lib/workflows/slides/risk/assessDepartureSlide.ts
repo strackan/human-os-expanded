@@ -24,6 +24,8 @@ export const assessDepartureSlide: SlideBuilder = createSlideBuilder(
     id: 'assess-departure',
     name: 'Assess Executive Departure',
     category: 'risk',
+    description: 'Assess impact of executive departure',
+    estimatedMinutes: 4,
     requiredFields: [
       'customer.name',
       'departed_contact.name',
@@ -36,6 +38,13 @@ export const assessDepartureSlide: SlideBuilder = createSlideBuilder(
     const relationshipStrength = context?.variables?.relationshipStrength || 'unknown';
 
     return {
+      id: 'assess-departure',
+      title: 'Assess Executive Departure',
+      description: 'Assess impact of executive departure',
+      label: 'Assess Impact',
+      stepMapping: 'assess-departure',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping assess the impact of an executive departure at a customer account.`,

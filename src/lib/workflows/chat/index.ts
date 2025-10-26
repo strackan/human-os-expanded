@@ -37,8 +37,8 @@ export async function startChat(
   params: StartChatParams,
   supabase?: SupabaseClient
 ): Promise<{ thread_id: string; suggested_responses?: string[] }> {
-  const chatService = createChatService(supabase);
-  const llmService = createLLMService(supabase);
+  const chatService = createChatService(supabase as any);
+  const llmService = createLLMService(supabase as any);
 
   // Create thread
   const thread = await chatService.createThread({
@@ -72,8 +72,8 @@ export async function sendChatMessage(
   params: ChatResponseParams,
   supabase?: SupabaseClient
 ): Promise<{ response: string; next_step?: string; tokens_used?: number }> {
-  const chatService = createChatService(supabase);
-  const llmService = createLLMService(supabase);
+  const chatService = createChatService(supabase as any);
+  const llmService = createLLMService(supabase as any);
 
   // Get thread to determine type
   const thread = await chatService.getThread(params.thread_id);
@@ -131,7 +131,7 @@ export async function getChatHistory(
   thread_id: string,
   supabase?: SupabaseClient
 ) {
-  const chatService = createChatService(supabase);
+  const chatService = createChatService(supabase as any);
 
   const [thread, messages] = await Promise.all([
     chatService.getThread(thread_id),
@@ -151,7 +151,7 @@ export async function completeChat(
   thread_id: string,
   supabase?: SupabaseClient
 ): Promise<void> {
-  const chatService = createChatService(supabase);
+  const chatService = createChatService(supabase as any);
   await chatService.completeThread(thread_id);
 }
 
@@ -162,7 +162,7 @@ export async function getExecutionChats(
   execution_id: string,
   supabase?: SupabaseClient
 ) {
-  const chatService = createChatService(supabase);
+  const chatService = createChatService(supabase as any);
   return chatService.getThreadsForExecution(execution_id);
 }
 
@@ -174,6 +174,6 @@ export async function getSuggestedResponses(
   step_id: string,
   supabase?: SupabaseClient
 ): Promise<string[]> {
-  const llmService = createLLMService(supabase);
+  const llmService = createLLMService(supabase as any);
   return llmService.getSuggestedResponses(workflow_id, step_id, supabase);
 }

@@ -22,8 +22,8 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const actionService = new WorkflowActionService(supabase);
-const queryService = new WorkflowQueryService(supabase);
+const actionService = new WorkflowActionService(supabase as any);
+const queryService = new WorkflowQueryService(supabase as any);
 
 // Test user IDs (these should exist in your database)
 const TEST_USER_ID = '00000000-0000-0000-0000-000000000001'; // Replace with real user ID

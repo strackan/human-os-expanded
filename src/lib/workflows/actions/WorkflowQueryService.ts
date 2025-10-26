@@ -370,11 +370,12 @@ export class WorkflowQueryService extends SchemaAwareService {
       escalatedToMe: number;
       escalatedByMe: number;
       completed: number;
+      skipped: number;
     };
     error?: string;
   }> {
     try {
-      const [active, snoozed, snoozedDue, escalatedToMe, escalatedByMe, completed] =
+      const [active, snoozed, snoozedDue, escalatedToMe, escalatedByMe, completed, skipped] =
         await Promise.all([
           this.client
             .from('workflow_executions')
@@ -407,6 +408,11 @@ export class WorkflowQueryService extends SchemaAwareService {
             .select('id', { count: 'exact', head: true })
             .eq('assigned_csm_id', userId)
             .eq('status', 'completed'),
+          this.client
+            .from('workflow_executions')
+            .select('id', { count: 'exact', head: true })
+            .eq('assigned_csm_id', userId)
+            .eq('status', 'skipped'),
         ]);
 
       return {
@@ -418,6 +424,7 @@ export class WorkflowQueryService extends SchemaAwareService {
           escalatedToMe: escalatedToMe.count || 0,
           escalatedByMe: escalatedByMe.count || 0,
           completed: completed.count || 0,
+          skipped: skipped.count || 0,
         },
       };
     } catch (error: any) {

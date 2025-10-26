@@ -221,7 +221,7 @@ export async function cloneStockWorkflow(
   supabase?: SupabaseClient
 ) {
   const baseClient = supabase || createBrowserClient();
-  const client = createSchemaAwareClient(baseClient, companyId);
+  const client = createSchemaAwareClient(baseClient, companyId) as SupabaseClient;
 
   // 1. Fetch stock workflow
   const stockWorkflow = await fetchWorkflowDefinition(stockWorkflowId, null, client);

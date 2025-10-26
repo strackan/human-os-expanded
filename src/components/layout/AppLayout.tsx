@@ -94,7 +94,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         ...escalatedWorkflows.map(wf => ({
           id: `escalated-${wf.id}`,
           title: `🔺 ${wf.workflow_name}`,
-          message: `Escalated from ${wf.previous_owner || 'another CSM'} - ${wf.customer_name || 'Unknown Customer'}`,
+          message: `Escalated from ${(wf as any).previous_owner || 'another CSM'} - ${wf.customer_name || 'Unknown Customer'}`,
           metadata: {
             dueDate: 'Urgent',
             workflowId: wf.id,

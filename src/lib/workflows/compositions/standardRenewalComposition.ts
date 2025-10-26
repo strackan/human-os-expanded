@@ -82,7 +82,7 @@ export const standardRenewalComposition: WorkflowComposition = {
     },
     'schedule-call': {
       purpose: 'renewal_planning',
-      urgency: 'normal',
+      urgency: 'medium',
       variables: {
         duration: 45,
         requiresPreparation: true

@@ -146,6 +146,8 @@ export const updateCRMSlide: SlideBuilder = createSlideBuilder(
     id: 'update-crm',
     name: 'Update CRM',
     category: 'action',
+    description: 'Update CRM records with latest information',
+    estimatedMinutes: 5,
     requiredFields: ['customer.name', 'customer.id'],
   },
   (context?: SlideContext) => {
@@ -159,6 +161,13 @@ export const updateCRMSlide: SlideBuilder = createSlideBuilder(
     const fieldGroups = FIELD_GROUPS[purpose] || FIELD_GROUPS.default;
 
     return {
+      id: 'update-crm',
+      title: 'Update CRM',
+      description: 'Update CRM records with latest information',
+      label: 'Update CRM',
+      stepMapping: 'update-crm',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping update CRM records for customer success workflows.`,
@@ -228,7 +237,7 @@ export const updateCRMSlide: SlideBuilder = createSlideBuilder(
                         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
                         .join(' '),
                       value: String(value),
-                      type: (autoUpdate || !hasValue ? 'text' : 'editable-text') as const,
+                      type: (autoUpdate || !hasValue ? 'text' : 'editable-text') as 'text' | 'editable-text',
                       helpText: hasValue ? undefined : 'Will be populated from workflow data',
                     };
                   }),

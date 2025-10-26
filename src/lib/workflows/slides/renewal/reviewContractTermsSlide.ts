@@ -24,6 +24,8 @@ export const reviewContractTermsSlide: SlideBuilder = createSlideBuilder(
     id: 'review-contract-terms',
     name: 'Review Contract Terms',
     category: 'renewal',
+    description: 'Review current contract and plan renewal terms',
+    estimatedMinutes: 5,
     requiredFields: [
       'customer.name',
       'customer.contract_start_date',
@@ -37,6 +39,13 @@ export const reviewContractTermsSlide: SlideBuilder = createSlideBuilder(
     const includeChanges = context?.variables?.includeChanges !== false;
 
     return {
+      id: 'review-contract-terms',
+      title: 'Review Contract Terms',
+      description: 'Review current contract and plan renewal terms',
+      label: 'Contract Review',
+      stepMapping: 'review-contract-terms',
+      chat: { initialMessage: undefined, branches: {} },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping review the current contract terms for a renewal.`,

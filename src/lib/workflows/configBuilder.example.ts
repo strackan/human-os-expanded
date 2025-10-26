@@ -33,8 +33,8 @@ export async function example1_BuildFromDatabase() {
   if (config) {
     console.log('✅ Config built successfully!');
     console.log(`  Customer: ${config.customer.name}`);
-    console.log(`  Slides: ${config.slides.length}`);
-    console.log(`  First slide layout: ${config.slides[0]?.layout}`);
+    console.log(`  Slides: ${config.slides?.length ?? 0}`);
+    console.log(`  First slide title: ${config.slides?.[0]?.title ?? 'N/A'}`);
 
     // You can now use this config in TaskMode:
     // <TaskModeFullscreen config={config} />
@@ -61,7 +61,7 @@ export async function example2_BuildFromExecution() {
   if (config) {
     console.log('✅ Config loaded from execution!');
     console.log(`  Customer: ${config.customer.name}`);
-    console.log(`  Slides: ${config.slides.length}`);
+    console.log(`  Slides: ${config.slides?.length ?? 0}`);
   }
 
   return config;
@@ -146,7 +146,7 @@ export async function example5_BuildWithContext() {
   if (config) {
     console.log('✅ Config built with additional context!');
     console.log(`  Customer: ${config.customer.name}`);
-    console.log(`  Slides: ${config.slides.length}`);
+    console.log(`  Slides: ${config.slides?.length ?? 0}`);
 
     // The slides will now have placeholders replaced:
     // {{departed_contact.name}} → "Jane Smith"

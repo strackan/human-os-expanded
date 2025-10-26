@@ -29,7 +29,7 @@ export function example1_ComposeWorkflow() {
 
   console.log(`Composed ${slides.length} slides:`);
   slides.forEach((slide, index) => {
-    console.log(`  ${index + 1}. ${slide.layout} slide`);
+    console.log(`  ${index + 1}. ${slide.title} slide`);
   });
 
   return slides;
@@ -50,6 +50,7 @@ export function example2_ValidateComposition() {
     id: 'bad-workflow',
     name: 'Bad Workflow',
     category: 'risk' as const,
+    description: 'A bad workflow for testing validation',
     slideSequence: ['greeting', 'nonexistent-slide', 'workflow-summary'],
   };
 
