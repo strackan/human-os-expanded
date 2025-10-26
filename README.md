@@ -201,7 +201,77 @@ npm install
 - Use `cursor-tools` for AI assistance
 - Ask questions when unsure about any process
 
+## 🔒 **Security**
+
+Renubu implements comprehensive security measures for multi-tenant data isolation and authentication:
+
+### **Multi-Tenant Security**
+- **Row Level Security (RLS):** All user-data tables protected with PostgreSQL RLS policies
+- **Company-Based Isolation:** company_id-based data segregation ensures complete tenant isolation
+- **Demo Mode Configuration:** Disabled in production, enabled for local development
+- **Verified Isolation:** Cross-company data access blocked by RLS policies
+
+### **Authentication Security**
+- **OAuth 2.0 with PKCE:** Google OAuth with Proof Key for Code Exchange (prevents auth code interception)
+- **Fallback Authentication:** Local email/password with minimum 8-character passwords
+- **Session Security:** HttpOnly, Secure cookies with SameSite protection
+- **Service Role Protection:** Service role key never exposed to client code
+
+### **Security Documentation**
+- **[Production Security Summary](docs/security/PRODUCTION_SECURITY_SUMMARY.md)** - Executive security overview and audit results
+- **[Database Security Audit](docs/security/database-security-audit.md)** - RLS policies and multi-tenant architecture
+- **[Demo Mode Configuration](docs/security/demo-mode-configuration.md)** - Development vs production configuration
+- **[OAuth Production Setup](docs/security/oauth-production-setup.md)** - OAuth security and production configuration
+- **[Security Testing Procedures](docs/security/security-testing-procedures.md)** - Manual and automated testing
+- **[Production Deployment Runbook](docs/deployment/production-deployment-runbook.md)** - Step-by-step secure deployment
+
+### **Running Security Tests**
+```bash
+# Run comprehensive automated security tests
+npx supabase db execute -f scripts/security-tests.sql
+
+# Run pre-deployment security checklist
+npx supabase db execute -f scripts/production-checklist.sql
+
+# Audit RLS policy coverage
+npx supabase db execute -f scripts/audit-rls-policies.sql
+
+# Verify multi-tenant isolation
+npx supabase db execute -f scripts/verify-company-isolation.sql
+```
+
+### **Production Readiness**
+Before deploying to production, ensure:
+- [ ] Demo mode disabled: `UPDATE app_settings SET value = 'false' WHERE key = 'demo_mode';`
+- [ ] All security tests pass
+- [ ] OAuth configured with PKCE enabled
+- [ ] Multi-tenant isolation verified
+- [ ] Backups and monitoring enabled
+
+See [Production Security Summary](docs/security/PRODUCTION_SECURITY_SUMMARY.md) for complete security audit results and deployment checklist.
+
+---
+
 ## 🚀 **Deployment**
+
+### **Production Deployment**
+
+For secure production deployment to Vercel + Supabase, follow the comprehensive [Production Deployment Runbook](docs/deployment/production-deployment-runbook.md).
+
+**Key Deployment Steps:**
+1. Create production Supabase project
+2. Configure OAuth for production domain
+3. Apply database migrations
+4. **CRITICAL:** Disable demo mode in production
+5. Run security validation tests
+6. Deploy to Vercel with environment variables
+7. Configure custom domain with SSL
+8. Verify security measures active
+
+**Deployment Resources:**
+- [Production Deployment Runbook](docs/deployment/production-deployment-runbook.md) - Complete step-by-step guide
+- [Production Security Summary](docs/security/PRODUCTION_SECURITY_SUMMARY.md) - Security requirements and checklist
+- [OAuth Production Setup](docs/security/oauth-production-setup.md) - OAuth configuration guide
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
