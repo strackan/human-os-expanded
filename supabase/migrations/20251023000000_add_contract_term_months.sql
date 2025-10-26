@@ -1,9 +1,19 @@
--- Add term_months as a generated column that auto-calculates from start_date and end_date
--- This ensures term_months and end_date are always consistent
+-- Add term_months column to contracts and tier column to customers
+-- Combined migration to fix version conflict
 
 -- Add term_months column as a regular column (not generated, since age() is not immutable)
 ALTER TABLE public.contracts
 ADD COLUMN IF NOT EXISTS term_months INTEGER;
+
+-- Add tier column to customers (needed by contract_terms migration)
+-- Note: account_plan already exists from 20251012000000_account_plans.sql
+ALTER TABLE public.customers
+ADD COLUMN IF NOT EXISTS tier TEXT;
+
+COMMENT ON COLUMN public.customers.tier IS
+'Customer tier/segment (e.g., Enterprise, Mid-Market, SMB)';
+
+CREATE INDEX IF NOT EXISTS idx_customers_tier ON public.customers(tier);
 
 -- Update existing rows with calculated term_months
 UPDATE public.contracts
