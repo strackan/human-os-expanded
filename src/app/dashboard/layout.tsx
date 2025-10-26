@@ -10,7 +10,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   // Start timing when component mounts
@@ -33,17 +33,6 @@ export default function DashboardLayout({
     }
   }, [user, loading, router, startTime])
 
-  const handleSignOut = async () => {
-    console.log('🔐 [LAYOUT] Sign out clicked')
-    try {
-      await signOut()
-      console.log('✅ [LAYOUT] Signout completed')
-    } catch (error) {
-      console.error('❌ [LAYOUT] Signout error:', error)
-      router.push('/signin')
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -57,11 +46,6 @@ export default function DashboardLayout({
 
   if (!user) return null
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <main>
-        {children}
-      </main>
-    </div>
-  )
+  // AppLayout is already in root layout - don't wrap again!
+  return <>{children}</>
 }

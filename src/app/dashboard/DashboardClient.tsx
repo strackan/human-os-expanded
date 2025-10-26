@@ -11,13 +11,14 @@ import { useState } from 'react';
 import ZenGreeting from '@/components/dashboard/ZenGreeting';
 import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
 import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
+import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
-import { ZenNotificationBanner, ZenWorkflowStateTabs, ZenQuickInsights } from '@/components/dashboard/zen';
 import { useAuth } from '@/components/auth/AuthProvider';
 import confetti from 'canvas-confetti';
 import { createWorkflowExecution, getTestUserId } from '@/lib/workflows/actions';
 import { registerWorkflowConfig } from '@/config/workflows/index';
+import { composeFromDatabase } from '@/lib/workflows/db-composer';
 
 export default function DashboardClient() {
   const { user } = useAuth();
@@ -64,20 +65,70 @@ export default function DashboardClient() {
     }
 
     try {
-      console.log('[Dashboard] Launching workflow...');
+      console.log('[Dashboard] Launching database-driven workflow...');
 
-      // For now, use a default workflow
-      // TODO: This should be dynamic based on the clicked workflow
+      const workflowId = 'obsidian-black-renewal';
+      const customerId = '550e8400-e29b-41d4-a716-446655440001';
+
+      // Load workflow config from database
+      const workflowConfig = await composeFromDatabase(
+        workflowId,
+        null, // company_id (null = stock workflow)
+        {
+          customer: {
+            name: 'Obsidian Black',
+            current_arr: 185000,
+            health_score: 87,
+            contract_end_date: '2026-10-21',
+            days_until_renewal: 365,
+            utilization: 87,
+            monthsToRenewal: 12,
+            seatCount: 50,
+          }
+        }
+      );
+
+      if (!workflowConfig) {
+        console.error('[Dashboard] Failed to load workflow config');
+        alert('Failed to load workflow configuration');
+        return;
+      }
+
+      console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
+
+      // Register the config so TaskMode can find it
+      registerWorkflowConfig(workflowId, workflowConfig);
+      console.log('[Dashboard] Config registered in workflow registry');
+
+      // Create workflow execution record
+      const executionResult = await createWorkflowExecution({
+        workflowConfigId: workflowId,
+        workflowName: workflowConfig.workflowName || 'Renewal Planning',
+        workflowType: 'renewal',
+        customerId: customerId,
+        userId: userId,
+        assignedCsmId: userId,
+        totalSteps: workflowConfig.slides?.length || 0,
+      });
+
+      if (executionResult.success && executionResult.executionId) {
+        console.log('[Dashboard] Workflow execution created:', executionResult.executionId);
+        setExecutionId(executionResult.executionId);
+        setWorkflowStatus('in_progress');
+      }
+
+      // Set active workflow
       setActiveWorkflow({
-        workflowId: 'obsidian-black-renewal',
-        title: 'Workflow',
-        customerId: '550e8400-e29b-41d4-a716-446655440001',
-        customerName: 'Customer'
+        workflowId: workflowId,
+        title: workflowConfig.workflowName || 'Renewal Planning',
+        customerId: customerId,
+        customerName: 'Obsidian Black'
       });
 
       setTaskModeOpen(true);
     } catch (error) {
       console.error('[Dashboard] Error launching workflow:', error);
+      alert('Error launching workflow. Check console for details.');
     }
   };
 
@@ -120,19 +171,7 @@ export default function DashboardClient() {
   };
 
   return (
-    <>
-      {/* Zen gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-purple-50 -z-10" />
-
-      <div className="min-h-screen -mt-8 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 py-12">
-        {/* Phase 3F: Notification Banner */}
-        {userId && (
-          <ZenNotificationBanner
-            userId={userId}
-            onWorkflowClick={handleWorkflowClick}
-          />
-        )}
-
+    <div className="w-full">
         {/* Zen Greeting */}
         <ZenGreeting className="mb-12" />
 
@@ -146,15 +185,7 @@ export default function DashboardClient() {
             />
           )}
 
-          {/* Phase 3F: Workflow State Tabs */}
-          {userId && (
-            <ZenWorkflowStateTabs
-              userId={userId}
-              onWorkflowClick={handleWorkflowClick}
-            />
-          )}
-
-          {/* Two columns: Today's Workflows + Quick Insights */}
+          {/* Two columns: Today's Workflows + Quick Actions */}
           <div className="grid grid-cols-2 gap-6">
             {userId ? (
               <TodaysWorkflows
@@ -167,13 +198,12 @@ export default function DashboardClient() {
               />
             )}
 
-            {userId && <ZenQuickInsights userId={userId} />}
+            <QuickActions expandByDefault={false} />
           </div>
 
           {/* When You're Ready Divider */}
           <WhenYouReReady />
         </div>
-      </div>
 
       {/* TaskMode Modal */}
       {taskModeOpen && activeWorkflow && (
@@ -189,6 +219,6 @@ export default function DashboardClient() {
           onWorkflowAction={handleWorkflowAction}
         />
       )}
-    </>
+    </div>
   );
 }

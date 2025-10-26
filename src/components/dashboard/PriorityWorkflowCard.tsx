@@ -56,6 +56,9 @@ export default function PriorityWorkflowCard({
     }
   };
 
+  // Check if no workflows are available
+  const hasNoWorkflows = !providedTitle && !dbWorkflow;
+
   // Use provided data or database data
   const workflowTitle = providedTitle || dbWorkflow?.workflow_name || 'No workflows available';
   const priority = providedPriority || (dbWorkflow?.priority_score >= 80 ? 'Critical' : dbWorkflow?.priority_score >= 60 ? 'High' : 'Medium') as any;
@@ -86,6 +89,50 @@ export default function PriorityWorkflowCard({
           <div className="h-8 bg-gray-200 rounded w-2/3"></div>
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
         </div>
+      </div>
+    );
+  }
+
+  // NEW: Show completion message when no workflows available
+  if (hasNoWorkflows) {
+    return (
+      <div className={`bg-white rounded-3xl p-10 border border-green-300 bg-green-50/30 shadow-lg relative ${className}`}>
+        {/* Completion Badge */}
+        <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+          <CheckCircle className="w-4 h-4" />
+          <span>All Done!</span>
+        </div>
+
+        {/* Header Row */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <Target className="w-6 h-6 text-green-500" />
+            <span className="text-sm text-gray-500 tracking-wide">Today's One Thing</span>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        <h2 className="text-2xl mb-4 text-green-800">
+          You knocked out your big task for the day
+        </h2>
+
+        {/* Message */}
+        <p className="text-gray-600 mb-6">
+          Would you like to view the rest of today's plays?
+        </p>
+
+        {/* View Plays Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            // Scroll to Today's Plays section
+            const playsSection = document.querySelector('[data-section="todays-plays"]');
+            playsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+        >
+          View Today's Plays
+        </button>
       </div>
     );
   }

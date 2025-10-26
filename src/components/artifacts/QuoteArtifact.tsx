@@ -467,7 +467,7 @@ const QuoteArtifact: React.FC<QuoteArtifactProps> = ({
                     <div>
                       <div className="mb-1">
                         <EditableText
-                          value={(item.product ?? '') as string}
+                          value={item.product || ''}
                           onChange={(val) => {
                             const newItems = [...lineItems];
                             newItems[index].product = val;

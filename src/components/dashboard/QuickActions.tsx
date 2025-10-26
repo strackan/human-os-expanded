@@ -85,6 +85,22 @@ export default function QuickActions({ className = '', expandByDefault = false }
     { id: 'mystuff' as const, label: 'My Stuff' }
   ];
 
+  // Severity-based card styles
+  const getSeverityStyles = (severity: 'critical' | 'high' | 'medium' | 'low') => {
+    switch (severity) {
+      case 'critical':
+        return { card: 'bg-red-50 border-red-100 hover:border-red-300', icon: 'text-red-500' };
+      case 'high':
+        return { card: 'bg-orange-50 border-orange-100 hover:border-orange-300', icon: 'text-orange-500' };
+      case 'medium':
+        return { card: 'bg-yellow-50 border-yellow-100 hover:border-yellow-300', icon: 'text-yellow-600' };
+      case 'low':
+        return { card: 'bg-blue-50 border-blue-100 hover:border-blue-300', icon: 'text-blue-500' };
+      default:
+        return { card: 'bg-gray-50 border-gray-100 hover:border-gray-300', icon: 'text-gray-500' };
+    }
+  };
+
   return (
     <div className={`bg-white/60 backdrop-blur-sm rounded-3xl p-6 border border-purple-100 shadow-sm ${className}`}>
       {/* Header */}
@@ -129,9 +145,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
         {activeTab === 'starters' && (
           <div className="animate-fadeIn space-y-3">
             {/* First card - always shown */}
-            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
+            <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('high').card}`}>
               <div className="flex items-start gap-3">
-                <MessageSquare className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                <MessageSquare className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('high').icon}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-700 mb-1">DataViz Corp mentioned expansion</p>
                   <p className="text-xs text-gray-500">Based on LinkedIn activity</p>
@@ -154,9 +170,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
             {/* Remaining cards - shown when expanded */}
             {isExpanded && (
               <>
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
+                <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('medium').card}`}>
                   <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                    <MessageSquare className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('medium').icon}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-700 mb-1">Acme Corp new VP of Engineering</p>
                       <p className="text-xs text-gray-500">Opportunity to reconnect</p>
@@ -175,9 +191,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
                     </button>
                   </div>
                 </div>
-                <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 hover:border-indigo-300 hover:shadow-sm transition-all">
+                <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('high').card}`}>
                   <div className="flex items-start gap-3">
-                    <MessageSquare className="w-4 h-4 text-indigo-500 mt-0.5 flex-shrink-0" />
+                    <MessageSquare className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('high').icon}`} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-700 mb-1">TechFlow contract ends in 60 days</p>
                       <p className="text-xs text-gray-500">Schedule renewal discussion</p>
@@ -188,7 +204,7 @@ export default function QuickActions({ className = '', expandByDefault = false }
                         title: 'TechFlow renewal discussion',
                         customer: 'TechFlow'
                       })}
-                      className="text-gray-400 hover:text-indigo-500 transition-colors p-1"
+                      className="text-gray-400 hover:text-purple-500 transition-colors p-1"
                       aria-label="Quick action"
                     >
                       <Zap className="w-4 h-4" />
@@ -204,9 +220,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
         {activeTab === 'plans' && (
           <div className="animate-fadeIn space-y-3">
             {/* First card - always shown */}
-            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all">
+            <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('critical').card}`}>
               <div className="flex items-start gap-3">
-                <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                <Target className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('critical').icon}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-700 mb-1">Obsidian Black: Account Plan</p>
                   <p className="text-xs text-gray-500">Due today • Critical</p>
@@ -217,7 +233,7 @@ export default function QuickActions({ className = '', expandByDefault = false }
                     title: 'Update Account Plan',
                     customer: 'Obsidian Black'
                   })}
-                  className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
                   aria-label="Quick action"
                 >
                   <Zap className="w-4 h-4" />
@@ -227,9 +243,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
 
             {/* Remaining cards - shown when expanded */}
             {isExpanded && (
-              <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 hover:border-blue-300 hover:shadow-sm transition-all">
+              <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('medium').card}`}>
                 <div className="flex items-start gap-3">
-                  <Target className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <Target className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('medium').icon}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-700 mb-1">TechFlow: Renewal Strategy</p>
                     <p className="text-xs text-gray-500">Due this week</p>
@@ -240,7 +256,7 @@ export default function QuickActions({ className = '', expandByDefault = false }
                       title: 'Plan Renewal Strategy',
                       customer: 'TechFlow'
                     })}
-                    className="text-gray-400 hover:text-blue-500 transition-colors p-1"
+                    className="text-gray-400 hover:text-purple-500 transition-colors p-1"
                     aria-label="Quick action"
                   >
                     <Zap className="w-4 h-4" />
@@ -255,9 +271,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
         {activeTab === 'noticed' && (
           <div className="animate-fadeIn space-y-3">
             {/* First card - always shown */}
-            <div className="p-4 bg-green-50 rounded-xl border border-green-100 hover:border-green-300 hover:shadow-sm transition-all">
+            <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('medium').card}`}>
               <div className="flex items-start gap-3">
-                <TrendingUp className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <TrendingUp className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('medium').icon}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-700 mb-1">DataViz usage up 40%</p>
                   <p className="text-xs text-gray-500">Expansion signal detected</p>
@@ -268,7 +284,7 @@ export default function QuickActions({ className = '', expandByDefault = false }
                     title: 'Discuss expansion opportunity',
                     customer: 'DataViz Corp'
                   })}
-                  className="text-gray-400 hover:text-green-500 transition-colors p-1"
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
                   aria-label="Quick action"
                 >
                   <Zap className="w-4 h-4" />
@@ -278,9 +294,9 @@ export default function QuickActions({ className = '', expandByDefault = false }
 
             {/* Remaining cards - shown when expanded */}
             {isExpanded && (
-              <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 hover:border-orange-300 hover:shadow-sm transition-all">
+              <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('high').card}`}>
                 <div className="flex items-start gap-3">
-                  <TrendingUp className="w-4 h-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                  <TrendingUp className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('high').icon}`} />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-700 mb-1">CloudSync: 3 support tickets</p>
                     <p className="text-xs text-gray-500">May need check-in</p>
@@ -291,7 +307,7 @@ export default function QuickActions({ className = '', expandByDefault = false }
                       title: 'Check-in call',
                       customer: 'CloudSync'
                     })}
-                    className="text-gray-400 hover:text-orange-500 transition-colors p-1"
+                    className="text-gray-400 hover:text-purple-500 transition-colors p-1"
                     aria-label="Quick action"
                   >
                     <Zap className="w-4 h-4" />
@@ -305,13 +321,13 @@ export default function QuickActions({ className = '', expandByDefault = false }
         {/* My Stuff Tab */}
         {activeTab === 'mystuff' && (
           <div className="animate-fadeIn space-y-3">
-            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 hover:border-purple-300 hover:shadow-sm transition-all">
+            <div className={`p-4 rounded-xl border hover:shadow-sm transition-all ${getSeverityStyles('low').card}`}>
               <div className="flex items-start gap-3">
-                <Heart className="w-4 h-4 text-purple-500 mt-0.5 flex-shrink-0" />
+                <Heart className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getSeverityStyles('low').icon}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-700 mb-1">Inbox Zero Progress</p>
-                  <div className="mt-2 w-full bg-purple-200 rounded-full h-1.5">
-                    <div className="bg-purple-500 h-1.5 rounded-full" style={{ width: '68%' }}></div>
+                  <div className="mt-2 w-full bg-blue-200 rounded-full h-1.5">
+                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: '68%' }}></div>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">68% of days this quarter</p>
                 </div>

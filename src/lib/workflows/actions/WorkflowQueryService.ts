@@ -64,6 +64,8 @@ export class WorkflowQueryService extends SchemaAwareService {
     filters?: WorkflowFilters
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
+      console.log('[WorkflowQueryService] getActiveWorkflows called with userId:', userId);
+
       let query = this.client
         .from('workflow_executions')
         .select(`
@@ -94,9 +96,15 @@ export class WorkflowQueryService extends SchemaAwareService {
       query = query.order('priority_score', { ascending: false });
       query = query.order('created_at', { ascending: true });
 
+      console.log('[WorkflowQueryService] Executing query...');
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('[WorkflowQueryService] Query error:', error);
+        throw error;
+      }
+
+      console.log('[WorkflowQueryService] Query successful, rows:', data?.length || 0);
 
       // Transform data to include customer_name
       const workflows = (data || []).map((w: any) => ({
@@ -107,6 +115,12 @@ export class WorkflowQueryService extends SchemaAwareService {
       return { success: true, workflows };
     } catch (error: any) {
       console.error('[WorkflowQueryService] Get active workflows error:', error);
+      console.error('[WorkflowQueryService] Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       return { success: false, error: error.message };
     }
   }

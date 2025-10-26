@@ -118,9 +118,9 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                 <Image
                   src="/logo.png"
                   alt="Renubu Logo"
-                  width={120}
-                  height={135}
-                  className="block my-2 ml-5"
+                  width={60}
+                  height={68}
+                  className="block my-2"
                   priority
                 />
               </Link>

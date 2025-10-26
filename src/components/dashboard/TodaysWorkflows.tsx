@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline';
+import { ChevronDown, ChevronRight, Sparkles, Play, Target, TrendingUp, AlertTriangle, RefreshCw, Users } from 'lucide-react';
 import { TERMINOLOGY } from '@/lib/constants';
 import { WorkflowQueryService } from '@/lib/workflows/actions/WorkflowQueryService';
 
@@ -31,8 +30,8 @@ export default function TodaysWorkflows({
   completedWorkflowIds = new Set()
 }: TodaysWorkflowsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [viewMode, setViewMode] = useState<'category' | 'list'>('list'); // Default to list when workflows provided
-  const [dbWorkflows, setDbWorkflows] = useState<WorkflowItem[]>([]);
+  const [viewMode, setViewMode] = useState<'all' | 'new' | 'due' | 'category'>('all');
+  const [dbWorkflows, setDbWorkflows] = useState<any[]>([]);
   const [loadingDb, setLoadingDb] = useState(false);
 
   // NEW: Fetch workflows from database when userId provided
@@ -51,13 +50,8 @@ export default function TodaysWorkflows({
       const result = await queryService.getActiveWorkflows(userId);
 
       if (result.success && result.workflows) {
-        const mappedWorkflows = result.workflows.map(wf => ({
-          workflowId: wf.id,
-          title: wf.workflow_name,
-          customerId: wf.customer_id,
-          customerName: wf.customer_name || wf.customers?.name || 'Unknown Customer'
-        }));
-        setDbWorkflows(mappedWorkflows);
+        // Keep full workflow data for sorting
+        setDbWorkflows(result.workflows);
       }
     } catch (err) {
       console.error('[TodaysWorkflows] Error loading workflows from database:', err);
@@ -65,18 +59,6 @@ export default function TodaysWorkflows({
       setLoadingDb(false);
     }
   };
-
-  // Static demo data - hardcoded (fallback when no workflows provided)
-  const categories = [
-    { name: 'Check-ins', complete: true, count: 0 },
-    { name: 'Renewals', complete: true, count: 0 },
-    { name: 'Expansion', complete: true, count: 0 },
-    { name: 'Health Scores', complete: false, count: 2 },
-    { name: 'Follow-ups', complete: false, count: 1 },
-    { name: 'Pricing', complete: false, count: 2 },
-    { name: 'Onboarding', complete: false, count: 1 },
-    { name: 'QBRs', complete: false, count: 1 }
-  ];
 
   // Use provided workflows if available, otherwise use fallback hardcoded data
   const staticWorkflows = [
@@ -98,17 +80,73 @@ export default function TodaysWorkflows({
     workflowData: wf
   }));
 
-  // NEW: Map database workflows to display format
-  const dbDisplayWorkflows = dbWorkflows.map(wf => ({
-    customer: wf.customerName,
-    workflow: wf.title,
-    priority: 'High' as const, // Default priority
-    complete: completedWorkflowIds.has(wf.workflowId),
-    workflowData: wf
-  }));
+  // NEW: Filter and sort database workflows
+  const getFilteredWorkflows = () => {
+    if (dbWorkflows.length === 0) return [];
+
+    let filtered = [...dbWorkflows];
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    switch (viewMode) {
+      case 'all':
+        // Show all, sort by criticality
+        filtered.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
+        break;
+      case 'new':
+        // Filter: created within last 7 days, sort by newest first
+        filtered = filtered.filter(wf => {
+          const createdDate = wf.created_at ? new Date(wf.created_at) : null;
+          return createdDate && createdDate >= sevenDaysAgo;
+        });
+        filtered.sort((a, b) => {
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return dateB - dateA; // Newest first
+        });
+        break;
+      case 'due':
+        // Filter: has due_date in next 30 days, sort by most urgent first
+        const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        filtered = filtered.filter(wf => {
+          const dueDate = wf.due_date ? new Date(wf.due_date) : null;
+          return dueDate && dueDate <= thirtyDaysFromNow;
+        });
+        filtered.sort((a, b) => {
+          const dateA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+          const dateB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+          return dateA - dateB; // Most urgent first
+        });
+        break;
+      case 'category':
+        // Show all, sort by category then criticality
+        filtered.sort((a, b) => {
+          const catA = a.workflow_type || '';
+          const catB = b.workflow_type || '';
+          if (catA !== catB) return catA.localeCompare(catB);
+          return (b.priority_score || 0) - (a.priority_score || 0);
+        });
+        break;
+    }
+
+    return filtered.map(wf => ({
+      customer: wf.customer_name || wf.customers?.name || 'Unknown Customer',
+      workflow: wf.workflow_name,
+      priority: wf.priority_score >= 80 ? 'Critical' : wf.priority_score >= 60 ? 'High' : wf.priority_score >= 40 ? 'Medium' : 'Low',
+      complete: completedWorkflowIds.has(wf.id),
+      workflowData: {
+        workflowId: wf.id,
+        title: wf.workflow_name,
+        customerId: wf.customer_id,
+        customerName: wf.customer_name || wf.customers?.name || 'Unknown Customer'
+      }
+    }));
+  };
+
+  const dbDisplayWorkflows = getFilteredWorkflows();
 
   // Use workflows in this order: provided > database > static fallback
-  const workflows = displayWorkflows || (dbWorkflows.length > 0 ? dbDisplayWorkflows : staticWorkflows);
+  const workflows = displayWorkflows || (dbDisplayWorkflows.length > 0 ? dbDisplayWorkflows : staticWorkflows);
 
   const totalWorkflows = providedWorkflows?.length || dbWorkflows.length || 10;
   const completedWorkflows = completedWorkflowIds.size || 3;
@@ -126,6 +164,66 @@ export default function TodaysWorkflows({
         return 'bg-gray-100 text-gray-600';
       default:
         return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getCardStyles = (priority: string, complete: boolean) => {
+    if (complete) {
+      return 'bg-green-50 border-green-100 opacity-60 cursor-default';
+    }
+
+    // Severity-based color system
+    switch (priority) {
+      case 'Critical':
+        return 'bg-red-50 border-red-100 hover:border-red-300';
+      case 'High':
+        return 'bg-orange-50 border-orange-100 hover:border-orange-300';
+      case 'Medium':
+        return 'bg-yellow-50 border-yellow-100 hover:border-yellow-300';
+      case 'Low':
+        return 'bg-blue-50 border-blue-100 hover:border-blue-300';
+      default:
+        return 'bg-gray-50 border-gray-100 hover:border-gray-300';
+    }
+  };
+
+  const getWorkflowIcon = (workflowName: string, workflowType?: string) => {
+    // Determine icon based on workflow type or name
+    const name = workflowName.toLowerCase();
+    const type = workflowType?.toLowerCase() || '';
+
+    if (type === 'risk' || name.includes('risk') || name.includes('executive') || name.includes('escalation')) {
+      return AlertTriangle;
+    }
+    if (type === 'opportunity' || name.includes('expansion') || name.includes('opportunity') || name.includes('upsell')) {
+      return TrendingUp;
+    }
+    if (type === 'renewal' || name.includes('renewal') || name.includes('contract')) {
+      return RefreshCw;
+    }
+    if (type === 'strategic' || name.includes('strategic') || name.includes('plan') || name.includes('account plan')) {
+      return Target;
+    }
+    if (name.includes('engagement') || name.includes('qbr') || name.includes('meeting')) {
+      return Users;
+    }
+
+    // Default
+    return Target;
+  };
+
+  const getIconColor = (priority: string) => {
+    switch (priority) {
+      case 'Critical':
+        return 'text-red-500';
+      case 'High':
+        return 'text-orange-500';
+      case 'Medium':
+        return 'text-yellow-600';
+      case 'Low':
+        return 'text-blue-500';
+      default:
+        return 'text-gray-500';
     }
   };
 
@@ -152,17 +250,12 @@ export default function TodaysWorkflows({
   }
 
   return (
-    <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm ${className}`}>
+    <div data-section="todays-plays" className={`bg-white/60 backdrop-blur-sm rounded-3xl p-6 border border-purple-100 shadow-sm ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-purple-500" />
-          </div>
-          <div>
-            <h3 className="text-lg text-gray-700">Today's {TERMINOLOGY.WORKFLOW_PLURAL}</h3>
-            <p className="text-sm text-gray-400">{completedWorkflows} of {totalWorkflows} complete</p>
-          </div>
+          <Sparkles className="w-5 h-5 text-purple-400" />
+          <span className="text-sm text-purple-600 font-medium">Today's Plays</span>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
@@ -177,113 +270,109 @@ export default function TodaysWorkflows({
         </button>
       </div>
 
-      {/* RYG Progress Bar - always shown */}
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-gray-500">Progress</span>
-          <span className="text-xs font-medium text-gray-600">{Math.round(percentComplete)}%</span>
-        </div>
-        <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-          <div className="flex h-full">
-            <div className="bg-green-500 h-2" style={{ width: `${percentComplete}%` }}></div>
-            <div className="bg-red-200 h-2" style={{ width: `${100 - percentComplete}%` }}></div>
-          </div>
-        </div>
-        <p className="text-xs text-gray-400 mt-2">Complete all {totalWorkflows} to hit your daily goal</p>
+      {/* Tabs - Always visible */}
+      <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
+        <button
+          onClick={() => setViewMode('all')}
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            viewMode === 'all'
+              ? 'bg-white text-purple-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          All
+        </button>
+        <button
+          onClick={() => setViewMode('new')}
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            viewMode === 'new'
+              ? 'bg-white text-purple-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          New
+        </button>
+        <button
+          onClick={() => setViewMode('due')}
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            viewMode === 'due'
+              ? 'bg-white text-purple-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Due
+        </button>
+        <button
+          onClick={() => setViewMode('category')}
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+            viewMode === 'category'
+              ? 'bg-white text-purple-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-800'
+          }`}
+        >
+          Category
+        </button>
       </div>
 
-      {/* Expanded Content */}
-      {isExpanded && (
-        <>
-          {/* View Toggle Tabs */}
-          <div className="flex gap-2 my-4 border-b border-gray-200">
-            <button
-              onClick={() => setViewMode('category')}
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'category'
-                  ? 'text-purple-600 border-b-2 border-purple-600 -mb-px'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              By Category
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'list'
-                  ? 'text-purple-600 border-b-2 border-purple-600 -mb-px'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              By {TERMINOLOGY.WORKFLOW_SINGULAR}
-            </button>
-          </div>
-
-          {/* Category View */}
-          {viewMode === 'category' && (
-            <div className="grid grid-cols-2 gap-3">
-              {categories.map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-xl border transition-all text-left ${
-                    item.complete
-                      ? 'bg-green-50 border-green-200 cursor-default'
-                      : 'bg-gray-50 border-gray-200 hover:border-purple-300 hover:shadow-sm cursor-pointer'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-sm text-gray-700">{item.name}</p>
-                    {item.complete ? (
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                    ) : (
-                      <ArrowTopRightOnSquareIcon className="w-3 h-3 text-gray-400" />
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    {item.complete ? 'Complete' : `${item.count} pending`}
-                  </p>
+      {/* Workflow List View */}
+      <div className="space-y-3">
+        {/* First workflow - always shown */}
+        {workflows.length > 0 && (() => {
+          const item = workflows[0];
+          const WorkflowIcon = getWorkflowIcon(item.workflow, (item as any).workflowData?.workflow_type);
+          return (
+            <div className={`p-4 rounded-xl border transition-all hover:shadow-sm ${getCardStyles(item.priority, item.complete)}`}>
+              <div className="flex items-start gap-3">
+                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getIconColor(item.priority)}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700 mb-1">{item.customer}</p>
+                  <p className="text-xs text-gray-500">{item.workflow}</p>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {/* Workflow List View */}
-          {viewMode === 'list' && (
-            <div className="space-y-2">
-              {workflows.map((item, idx) => (
                 <button
-                  key={idx}
                   onClick={() => {
                     if (!item.complete && 'workflowData' in item && onWorkflowClick && item.workflowData) {
                       onWorkflowClick(item.workflowData as WorkflowItem);
                     }
                   }}
                   disabled={item.complete}
-                  className={`w-full p-3 rounded-xl border transition-all text-left ${
-                    item.complete
-                      ? 'bg-green-50 border-green-200 opacity-60 cursor-default'
-                      : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow-sm cursor-pointer'
-                  }`}
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
+                  aria-label="Launch workflow"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 font-medium truncate">{item.customer}</p>
-                      <p className="text-xs text-gray-500">{item.workflow}</p>
-                    </div>
-                    <span
-                      className={`ml-3 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${getPriorityColor(
-                        item.priority
-                      )}`}
-                    >
-                      {item.priority}
-                    </span>
-                  </div>
+                  <Play className="w-4 h-4" />
                 </button>
-              ))}
+              </div>
             </div>
-          )}
-        </>
-      )}
+          );
+        })()}
+
+        {/* Remaining workflows - shown when expanded */}
+        {isExpanded && workflows.slice(1).map((item, idx) => {
+          const WorkflowIcon = getWorkflowIcon(item.workflow, (item as any).workflowData?.workflow_type);
+          return (
+            <div key={idx + 1} className={`p-4 rounded-xl border transition-all hover:shadow-sm ${getCardStyles(item.priority, item.complete)}`}>
+              <div className="flex items-start gap-3">
+                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getIconColor(item.priority)}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700 mb-1">{item.customer}</p>
+                  <p className="text-xs text-gray-500">{item.workflow}</p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!item.complete && 'workflowData' in item && onWorkflowClick && item.workflowData) {
+                      onWorkflowClick(item.workflowData as WorkflowItem);
+                    }
+                  }}
+                  disabled={item.complete}
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
+                  aria-label="Launch workflow"
+                >
+                  <Play className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

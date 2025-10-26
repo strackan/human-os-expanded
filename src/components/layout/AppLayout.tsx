@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
-import { useAuth } from '@/components/auth/AuthProvider'; // ADD THIS IMPORT
+import { useAuth } from '@/components/auth/AuthProvider';
 import UserAvatarDropdown from './UserAvatarDropdown';
 import AuthButton from '@/components/auth/AuthButton';
+import { WorkflowQueryService } from '@/lib/workflows/actions/WorkflowQueryService';
 import {
   Popover,
   PopoverContent,
@@ -59,77 +60,67 @@ export default function AppLayout({ children }: AppLayoutProps) {
     return 'User'
   }
 
-  // Fetch unread notification count
-  const fetchUnreadCount = async () => {
-    // TODO: Implement notifications API
-    // Disabled for now to avoid console errors
-    return;
-    // try {
-    //   const response = await fetch('/api/notifications/unread/count');
-    //   if (response.ok) {
-    //     const data = await response.json();
-    //     setUnreadCount(data.count || 0);
-    //   }
-    // } catch (error) {
-    //   console.error('[AppLayout] Error fetching unread count:', error);
-    // }
-  };
-
-  // Fetch unread notifications when popover opens
+  // Fetch workflow notifications (snoozed due + escalations)
   const fetchNotifications = async () => {
-    // TODO: Implement notifications API
-    // Disabled for now to avoid console errors
-    setLoadingNotifications(false);
-    return;
-    // setLoadingNotifications(true);
-    // try {
-    //   const response = await fetch('/api/notifications/unread?limit=10');
-    //   if (response.ok) {
-    //     const data = await response.json();
-    //     setNotifications(data.notifications || []);
-    //   }
-    // } catch (error) {
-    //   console.error('[AppLayout] Error fetching notifications:', error);
-    // } finally {
-    //   setLoadingNotifications(false);
-    // }
+    if (!user?.id) {
+      setLoadingNotifications(false);
+      return;
+    }
+
+    setLoadingNotifications(true);
+    try {
+      const queryService = new WorkflowQueryService();
+
+      // Fetch snoozed workflows that are now due
+      const snoozedResult = await queryService.getSnoozedWorkflowsDue(user.id);
+      const snoozedWorkflows = snoozedResult.success && snoozedResult.workflows ? snoozedResult.workflows : [];
+
+      // Fetch escalated workflows
+      const escalatedResult = await queryService.getEscalatedToMe(user.id);
+      const escalatedWorkflows = escalatedResult.success && escalatedResult.workflows ? escalatedResult.workflows : [];
+
+      // Combine into notifications
+      const allNotifications = [
+        ...snoozedWorkflows.map(wf => ({
+          id: `snoozed-${wf.id}`,
+          title: `⏰ ${wf.workflow_name}`,
+          message: `Snoozed workflow for ${wf.customer_name || 'Unknown Customer'} is now due`,
+          metadata: {
+            dueDate: 'Now',
+            workflowId: wf.id,
+            type: 'snoozed'
+          }
+        })),
+        ...escalatedWorkflows.map(wf => ({
+          id: `escalated-${wf.id}`,
+          title: `🔺 ${wf.workflow_name}`,
+          message: `Escalated from ${wf.previous_owner || 'another CSM'} - ${wf.customer_name || 'Unknown Customer'}`,
+          metadata: {
+            dueDate: 'Urgent',
+            workflowId: wf.id,
+            type: 'escalated'
+          }
+        }))
+      ];
+
+      setNotifications(allNotifications);
+      setUnreadCount(allNotifications.length);
+    } catch (error) {
+      console.error('[AppLayout] Error fetching workflow notifications:', error);
+    } finally {
+      setLoadingNotifications(false);
+    }
   };
 
-  // Fetch count on mount and every 30 seconds
-  // useEffect(() => {
-  //   fetchUnreadCount();
-  //   const interval = setInterval(fetchUnreadCount, 30000);
-  //   return () => clearInterval(interval);
-  // }, []);
+  // Fetch notifications on mount and every 2 minutes
+  useEffect(() => {
+    if (user?.id) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 120000); // 2 minutes
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
 
-  // Sample reminders for fallback
-  const sampleReminders = [
-    {
-      title: "Draft Amendment",
-      description: "Prepare amendment for additional seats",
-      dueDate: "Tomorrow",
-    },
-    {
-      title: "Schedule QBR",
-      description: "Book quarterly business review with executive sponsor",
-      dueDate: "Next week",
-    },
-    {
-      title: "Prepare Negotiation",
-      description: "Review pricing strategy and prepare counter-offers",
-      dueDate: "In 3 days",
-    },
-    {
-      title: "Update Success Plan",
-      description: "Document recent wins and usage metrics",
-      dueDate: "Today",
-    },
-    {
-      title: "Follow-up Meeting",
-      description: "Schedule follow-up with procurement team",
-      dueDate: "Next week",
-    },
-  ];
 
   return (
     <div id="app-layout-container" className="min-h-screen bg-gray-50">
@@ -148,14 +139,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
           role="banner"
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            {/* Left: Logo + Wordmark */}
+            {/* Left: Spacer (logo is in sidebar) */}
             <div className="flex items-center gap-3 h-full">
-              <img
-                src="/logo.png"
-                alt="Renubu Logo"
-                className="h-10 w-auto"
-                style={{ display: 'block', verticalAlign: 'middle' }}
-              />
+              {/* Logo removed - now only in sidebar */}
             </div>
 
             {/* Right: Icons */}
@@ -219,7 +205,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       notifications.map((notification) => (
                         <div
                           key={notification.id}
-                          className="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer"
+                          className="p-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 cursor-pointer transition-colors"
+                          onClick={() => {
+                            // TODO: Launch workflow in Task Mode or inline widget
+                            console.log('[AppLayout] Notification clicked:', notification.metadata?.workflowId);
+                            // Placeholder for future workflow launch logic:
+                            // Option 1: Navigate to /dashboard and trigger workflow launch
+                            // Option 2: Open inline workflow widget/modal
+                            // Option 3: Navigate directly to TaskMode with workflow ID
+                            alert(`TODO: Launch workflow ${notification.metadata?.workflowId}\nType: ${notification.metadata?.type}`);
+                          }}
                         >
                           <div className="flex justify-between items-start">
                             <div>
