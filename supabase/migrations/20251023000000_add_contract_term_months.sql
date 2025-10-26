@@ -17,11 +17,18 @@ WHERE term_months IS NULL AND start_date IS NOT NULL AND end_date IS NOT NULL;
 COMMENT ON COLUMN public.contracts.term_months IS
 'Contract term in months. Should be kept in sync with start_date and end_date.';
 
--- Add a check constraint to ensure end_date is after start_date
-ALTER TABLE public.contracts
-ADD CONSTRAINT contracts_end_date_after_start_date
-CHECK (end_date > start_date);
+-- Add a check constraint to ensure end_date is after start_date (if it doesn't exist)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'contracts_end_date_after_start_date'
+  ) THEN
+    ALTER TABLE public.contracts
+    ADD CONSTRAINT contracts_end_date_after_start_date
+    CHECK (end_date > start_date);
 
--- Add comment
-COMMENT ON CONSTRAINT contracts_end_date_after_start_date ON public.contracts IS
-'Ensures contract end date is always after start date';
+    COMMENT ON CONSTRAINT contracts_end_date_after_start_date ON public.contracts IS
+    'Ensures contract end date is always after start date';
+  END IF;
+END $$;
