@@ -12,11 +12,9 @@ export default function Home() {
   // Check if DEMO_MODE is enabled
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   
-  // In DEMO_MODE or when authenticated, redirect to appropriate page
+  // In DEMO_MODE or when authenticated, redirect to dashboard
   useEffect(() => {
-    if (isDemoMode) {
-      router.push('/workflows');
-    } else if (user) {
+    if (isDemoMode || user) {
       router.push('/dashboard');
     }
     // If not authenticated and not demo mode, stay on landing page (/)

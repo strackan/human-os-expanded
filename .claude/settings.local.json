@@ -22,7 +22,9 @@
       "Bash(find:*)",
       "Read(//c/Users/strac/.claude/**)",
       "Read(//c/Users/strac/dev/**)",
-      "Read(//c/Users/**)"
+      "Read(//c/Users/**)",
+      "Bash(npx supabase migration:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []

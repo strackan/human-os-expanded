@@ -1,0 +1,443 @@
+flowchart TD
+    %% =====================================================
+    %% LAYER 1: DATA INGESTION & INTELLIGENCE
+    %% =====================================================
+
+    START([CSM Wakes Up<br/>Monday Morning]) --> DAILY_JOB[Daily Background Job<br/>Runs at 6am]
+
+    DAILY_JOB --> INGEST[Data Ingestion Layer]
+
+    subgraph DATA_SOURCES[Data Sources]
+        CRM[(CRM System<br/>Customer Data)]
+        USAGE[(Usage Analytics<br/>Product Metrics)]
+        SUPPORT[(Support Tickets<br/>Sentiment Data)]
+        CONTRACTS[(Contract Database<br/>Terms & Dates)]
+    end
+
+    CRM --> INGEST
+    USAGE --> INGEST
+    SUPPORT --> INGEST
+    CONTRACTS --> INGEST
+
+    INGEST --> CUSTOMER_REFRESH[Refresh Customer Records]
+    CUSTOMER_REFRESH --> |"For each customer"| ANALYZE
+
+    %% =====================================================
+    %% LAYER 2: INTELLIGENCE ANALYSIS ENGINE
+    %% =====================================================
+
+    subgraph INTEL[Intelligence Analysis Engine]
+        ANALYZE[Analyze Customer State]
+
+        ANALYZE --> HEALTH[Calculate Health Score<br/>0-100]
+        ANALYZE --> USAGE_TREND[Analyze Usage Trends<br/>+/-% Change]
+        ANALYZE --> SENTIMENT[Assess Support Sentiment<br/>Positive/Negative/Neutral]
+        ANALYZE --> CONTRACT_CHECK[Check Contract Status<br/>Active/Expiring/Renewed]
+
+        HEALTH --> RISK_CALC[Risk Score Calculator<br/>0-10 Scale]
+        USAGE_TREND --> RISK_CALC
+        SENTIMENT --> RISK_CALC
+        CONTRACT_CHECK --> RISK_CALC
+
+        USAGE_TREND --> OPP_CALC[Opportunity Score Calculator<br/>0-10 Scale]
+        HEALTH --> OPP_CALC
+        CONTRACT_CHECK --> OPP_CALC
+
+        CONTRACT_CHECK --> RENEWAL_CALC[Days Until Renewal Calculator]
+
+        RISK_CALC --> STAGE_DETERMINE
+        OPP_CALC --> STAGE_DETERMINE
+        RENEWAL_CALC --> STAGE_DETERMINE
+        CONTRACT_CHECK --> STAGE_DETERMINE
+
+        STAGE_DETERMINE[Determine Renewal Stage<br/>Emergency/Critical/Urgent/etc]
+    end
+
+    STAGE_DETERMINE --> DECISION_MATRIX
+
+    %% =====================================================
+    %% LAYER 3: WORKFLOW DETERMINATION ENGINE
+    %% =====================================================
+
+    subgraph WORKFLOW_DETERMINATION[Workflow Determination Engine]
+        DECISION_MATRIX{Decision Matrix}
+
+        DECISION_MATRIX --> |Risk Score ≥ 7| RISK_TRIGGER[Risk Trigger Activated]
+        DECISION_MATRIX --> |Opportunity Score ≥ 6| OPP_TRIGGER[Opportunity Trigger Activated]
+        DECISION_MATRIX --> |Days ≤ 120| RENEWAL_TRIGGER[Renewal Trigger Activated]
+        DECISION_MATRIX --> |Account Plan = Invest/Expand| STRATEGIC_TRIGGER[Strategic Planning Trigger]
+        DECISION_MATRIX --> |No Triggers| MONITOR[Monitor Only<br/>No Workflow]
+
+        RISK_TRIGGER --> CHECK_TIMING{Within 120 Days<br/>of Renewal?}
+        CHECK_TIMING --> |Yes| IN_BAND_RISK[In-Band Risk Workflow]
+        CHECK_TIMING --> |No| OUT_BAND_RISK[Out-of-Band Risk Intervention]
+
+        OPP_TRIGGER --> CHECK_TIMING2{Within 120 Days<br/>of Renewal?}
+        CHECK_TIMING2 --> |Yes| IN_BAND_OPP[In-Band Opportunity Workflow]
+        CHECK_TIMING2 --> |No| OUT_BAND_OPP[Out-of-Band Opportunity Development]
+
+        RENEWAL_TRIGGER --> STAGE_WORKFLOW{Match Days to Stage}
+
+        STAGE_WORKFLOW --> |≤7 Days| EMERGENCY_WF[Emergency Retention Protocol]
+        STAGE_WORKFLOW --> |8-14 Days| CRITICAL_WF[Critical Intervention Workflow]
+        STAGE_WORKFLOW --> |15-30 Days| URGENT_WF[Urgent Action Workflow]
+        STAGE_WORKFLOW --> |31-60 Days| FINALIZE_WF[Contract Finalization Workflow]
+        STAGE_WORKFLOW --> |61-90 Days| NEGOTIATE_WF[Negotiation Prep Workflow]
+        STAGE_WORKFLOW --> |91-120 Days| ACTIVE_WF[Standard Renewal Workflow]
+        STAGE_WORKFLOW --> |121-180 Days| PREPARE_WF[Renewal Preparation Workflow]
+        STAGE_WORKFLOW --> |181+ Days| STRATEGIC_WF[Strategic Planning Workflow]
+
+        STRATEGIC_TRIGGER --> STRATEGIC_WF
+    end
+
+    IN_BAND_RISK --> WORKFLOW_INSTANCE
+    OUT_BAND_RISK --> WORKFLOW_INSTANCE
+    IN_BAND_OPP --> WORKFLOW_INSTANCE
+    OUT_BAND_OPP --> WORKFLOW_INSTANCE
+    EMERGENCY_WF --> WORKFLOW_INSTANCE
+    CRITICAL_WF --> WORKFLOW_INSTANCE
+    URGENT_WF --> WORKFLOW_INSTANCE
+    FINALIZE_WF --> WORKFLOW_INSTANCE
+    NEGOTIATE_WF --> WORKFLOW_INSTANCE
+    ACTIVE_WF --> WORKFLOW_INSTANCE
+    PREPARE_WF --> WORKFLOW_INSTANCE
+    STRATEGIC_WF --> WORKFLOW_INSTANCE
+    MONITOR --> DAILY_SUMMARY
+
+    %% =====================================================
+    %% LAYER 4: WORKFLOW INSTANCE CREATION & SCORING
+    %% =====================================================
+
+    subgraph WORKFLOW_CREATION[Workflow Instance Creation]
+        WORKFLOW_INSTANCE[Create Workflow Instance]
+
+        WORKFLOW_INSTANCE --> PRIORITY_SCORE[Calculate Priority Score]
+
+        subgraph PRIORITY_FACTORS[Priority Factors]
+            ARR_FACTOR[ARR Value<br/>Weight: 1.5x]
+            URGENCY_FACTOR[Urgency Score<br/>Days Until Renewal]
+            HEALTH_FACTOR[Health Decline<br/>Weight: 1.5x]
+            USAGE_FACTOR[Usage Decline<br/>Weight: 1.2x]
+            STRATEGIC_FACTOR[Strategic Account<br/>Weight: 2.0x]
+        end
+
+        ARR_FACTOR --> PRIORITY_SCORE
+        URGENCY_FACTOR --> PRIORITY_SCORE
+        HEALTH_FACTOR --> PRIORITY_SCORE
+        USAGE_FACTOR --> PRIORITY_SCORE
+        STRATEGIC_FACTOR --> PRIORITY_SCORE
+
+        PRIORITY_SCORE --> ASSIGN_CSM[Assign to CSM Owner]
+        ASSIGN_CSM --> QUEUE[Add to Workflow Queue]
+    end
+
+    QUEUE --> ALL_WORKFLOWS[Collect All Workflows<br/>From All Customers]
+    ALL_WORKFLOWS --> SORT_PRIORITY[Sort by Priority Score<br/>Highest First]
+    SORT_PRIORITY --> DAILY_SUMMARY
+
+    %% =====================================================
+    %% LAYER 5: DASHBOARD PRESENTATION
+    %% =====================================================
+
+    subgraph DASHBOARD[Dashboard Layer]
+        DAILY_SUMMARY[Generate Daily Summary<br/>Per CSM]
+
+        DAILY_SUMMARY --> TODAY_ONE[Today's One Thing<br/>Highest Priority Workflow]
+        DAILY_SUMMARY --> PRIORITY_LIST[Priority Workflows List<br/>Top 5-10]
+        DAILY_SUMMARY --> SNOOZED_CHECK{Any Snoozed Steps<br/>Due Today?}
+
+        SNOOZED_CHECK --> |Yes| SNOOZED_BANNER[Resume Snoozed Steps Banner]
+        SNOOZED_CHECK --> |No| CONTINUE_DASH
+
+        TODAY_ONE --> CONTINUE_DASH[Display Dashboard]
+        PRIORITY_LIST --> CONTINUE_DASH
+        SNOOZED_BANNER --> CONTINUE_DASH
+    end
+
+    CONTINUE_DASH --> CSM_LOGIN
+
+    %% =====================================================
+    %% LAYER 6: USER INTERACTION - DASHBOARD VIEW
+    %% =====================================================
+
+    CSM_LOGIN([CSM Opens Dashboard<br/>8:00 AM])
+
+    CSM_LOGIN --> SEES_DASHBOARD{What Does CSM See?}
+
+    SEES_DASHBOARD --> |Main Card| PRIORITY_CARD["Priority Card:<br/>Obsidian Black - $185K ARR<br/>Renewal in 365 days<br/>Health Score: 87"]
+    SEES_DASHBOARD --> |Secondary| WORKFLOW_TABS["Workflow State Panel:<br/>• Active (3)<br/>• Snoozed (1)<br/>• Escalated (0)"]
+    SEES_DASHBOARD --> |Notification| ALERT_BANNER["Alert Banner:<br/>1 snoozed step due today"]
+
+    PRIORITY_CARD --> CSM_DECISION{CSM Decides}
+    WORKFLOW_TABS --> CSM_DECISION
+    ALERT_BANNER --> CSM_DECISION
+
+    CSM_DECISION --> |Click Launch| LAUNCH_WORKFLOW[Click Let's Begin Button]
+    CSM_DECISION --> |View Snoozed| RESUME_SNOOZED[Resume Snoozed Step]
+    CSM_DECISION --> |Snooze Entire| SNOOZE_WORKFLOW[Snooze Entire Workflow]
+
+    %% =====================================================
+    %% LAYER 7: WORKFLOW LAUNCH & COMPOSITION
+    %% =====================================================
+
+    LAUNCH_WORKFLOW --> SERVER_COMPOSE[Server-Side Composition]
+
+    subgraph COMPOSITION[Workflow Composition Layer - Phase 3]
+        SERVER_COMPOSE --> FETCH_DEF[Fetch from workflow_definitions]
+
+        FETCH_DEF --> DB_QUERY["Database Query:<br/>SELECT * FROM workflow_definitions<br/>WHERE workflow_id = 'obsidian-black-renewal'<br/>AND company_id IS NULL"]
+
+        DB_QUERY --> DEF_RESULT["Workflow Definition:<br/>• slide_sequence: ['intro', 'account', 'pricing', 'quote', 'email', 'summary']<br/>• slide_contexts: {pricing: {variables: {...}}}"]
+
+        DEF_RESULT --> SLIDE_LOOP[Loop Through Slide Sequence]
+
+        SLIDE_LOOP --> SLIDE_LIB[Slide Library Lookup]
+
+        subgraph SLIDE_LIBRARY[Slide Library - Reusable Builders]
+            INTRO_SLIDE[intro-slide Builder]
+            ACCOUNT_SLIDE[account-overview Builder]
+            PRICING_SLIDE[pricing-strategy Builder]
+            QUOTE_SLIDE[prepare-quote Builder]
+            EMAIL_SLIDE[email-draft Builder]
+            SUMMARY_SLIDE[summary-slide Builder]
+        end
+
+        SLIDE_LIB --> BUILD_SLIDE[Build Slide with Context]
+        BUILD_SLIDE --> TEMPLATE_HYDRATE[Template Hydration Engine]
+
+        TEMPLATE_HYDRATE --> REPLACE_VARS["Replace Variables:<br/>{{customerName}} → 'Obsidian Black'<br/>{{timeOfDay}} → 'morning'<br/>{{daysToRenewal}} → '365'"]
+
+        REPLACE_VARS --> RESOLVE_COMPONENTS[Resolve Artifact Components]
+        RESOLVE_COMPONENTS --> SLIDE_COMPLETE[Slide Complete]
+
+        SLIDE_COMPLETE --> MORE_SLIDES{More Slides?}
+        MORE_SLIDES --> |Yes| SLIDE_LOOP
+        MORE_SLIDES --> |No| CONFIG_READY[Workflow Config Ready]
+    end
+
+    CONFIG_READY --> CREATE_EXECUTION
+
+    %% =====================================================
+    %% LAYER 8: WORKFLOW EXECUTION RECORD
+    %% =====================================================
+
+    subgraph EXECUTION_TRACKING[Execution Tracking Layer]
+        CREATE_EXECUTION[Create Workflow Execution Record]
+
+        CREATE_EXECUTION --> INSERT_EXEC["INSERT INTO workflow_executions:<br/>• workflow_config_id<br/>• customer_id<br/>• user_id<br/>• status: 'in_progress'<br/>• total_steps: 6<br/>• current_step: 0"]
+
+        INSERT_EXEC --> EXEC_ID[Return Execution ID]
+        EXEC_ID --> REGISTER_CONFIG[Register Config in Memory]
+    end
+
+    REGISTER_CONFIG --> OPEN_TASKMODE
+
+    %% =====================================================
+    %% LAYER 9: TASKMODE FULLSCREEN UI
+    %% =====================================================
+
+    subgraph TASKMODE_UI[TaskMode Fullscreen Interface]
+        OPEN_TASKMODE[Open TaskMode Fullscreen]
+
+        OPEN_TASKMODE --> INIT_STATE[Initialize useTaskModeState Hook]
+
+        INIT_STATE --> LOAD_STEPS[Load Step States from Database]
+
+        LOAD_STEPS --> STEP_QUERY["Query workflow_step_states<br/>for execution_id"]
+
+        STEP_QUERY --> RENDER_UI[Render Fullscreen Modal]
+
+        subgraph UI_COMPONENTS[UI Components]
+            HEADER[Workflow Header<br/>Customer Name, Progress]
+            PROGRESS_BAR[Step Progress Bar<br/>6 Steps with Status Badges]
+            CHAT_PANEL[Chat Panel - Left Side<br/>Conversation Interface]
+            ARTIFACT_PANEL[Artifact Panel - Right Side<br/>Interactive Components]
+        end
+
+        RENDER_UI --> HEADER
+        RENDER_UI --> PROGRESS_BAR
+        RENDER_UI --> CHAT_PANEL
+        RENDER_UI --> ARTIFACT_PANEL
+    end
+
+    CHAT_PANEL --> FIRST_SLIDE
+    ARTIFACT_PANEL --> FIRST_SLIDE
+
+    %% =====================================================
+    %% LAYER 10: SLIDE NAVIGATION & INTERACTION
+    %% =====================================================
+
+    subgraph SLIDE_FLOW[Slide-by-Slide Workflow Execution]
+        FIRST_SLIDE[Slide 1: Introduction]
+
+        FIRST_SLIDE --> INTRO_CHAT["Chat Message:<br/>'Good morning! Let's plan the renewal for Obsidian Black...'"]
+        FIRST_SLIDE --> INTRO_ARTIFACT["Artifact:<br/>Strategic Plan Summary<br/>• Current ARR: $185K<br/>• Health Score: 87<br/>• Renewal: 365 days"]
+
+        INTRO_CHAT --> INTRO_BUTTON[Button: Let's Review the Account]
+        INTRO_ARTIFACT --> INTRO_BUTTON
+
+        INTRO_BUTTON --> |Click| SLIDE2[Slide 2: Account Overview]
+
+        SLIDE2 --> ACCOUNT_CHAT["Chat Message:<br/>'Here's the complete account overview...'"]
+        SLIDE2 --> ACCOUNT_ARTIFACTS["Artifacts:<br/>• Contract Summary Card<br/>• Contact List<br/>• Usage Metrics Chart<br/>• Health Score Timeline"]
+
+        ACCOUNT_CHAT --> ACCOUNT_CHECKLIST[Interactive Checklist:<br/>☐ Reviewed contract terms<br/>☐ Verified key contacts<br/>☐ Checked usage trends]
+        ACCOUNT_ARTIFACTS --> ACCOUNT_CHECKLIST
+
+        ACCOUNT_CHECKLIST --> |All Checked| SLIDE3[Slide 3: Pricing Strategy]
+
+        SLIDE3 --> PRICING_CHAT["Chat Message:<br/>'Based on usage growth and market position,<br/>I recommend an 8% increase...'"]
+        SLIDE3 --> PRICING_ARTIFACTS["Artifacts:<br/>• Pricing Recommendation Card<br/>• Competitive Analysis<br/>• ROI Calculator<br/>• Scenario Comparison"]
+
+        PRICING_CHAT --> PRICING_DECISION{CSM Decision Point}
+        PRICING_ARTIFACTS --> PRICING_DECISION
+
+        PRICING_DECISION --> |Accept| SLIDE4[Slide 4: Prepare Quote]
+        PRICING_DECISION --> |Modify| PRICING_ADJUST[Adjust Pricing Parameters]
+        PRICING_DECISION --> |Snooze Step| SNOOZE_MODAL[Open Snooze Modal]
+
+        PRICING_ADJUST --> SLIDE4
+
+        SLIDE4 --> QUOTE_CHAT["Chat Message:<br/>'Let's build your renewal quote...'"]
+        SLIDE4 --> QUOTE_ARTIFACT["Artifact:<br/>Interactive Quote Builder<br/>• Line Items<br/>• Terms & Conditions<br/>• Payment Schedule<br/>• Approval Workflow"]
+
+        QUOTE_CHAT --> QUOTE_COMPLETE[Generate PDF Quote]
+        QUOTE_ARTIFACT --> QUOTE_COMPLETE
+
+        QUOTE_COMPLETE --> SLIDE5[Slide 5: Email Draft]
+
+        SLIDE5 --> EMAIL_CHAT["Chat Message:<br/>'Here's a personalized email for Marcus Chen...'"]
+        SLIDE5 --> EMAIL_ARTIFACT["Artifact:<br/>Email Composer<br/>• Personalized greeting<br/>• Usage highlights<br/>• Value proposition<br/>• Call to action"]
+
+        EMAIL_CHAT --> EMAIL_EDIT[CSM Reviews and Edits]
+        EMAIL_ARTIFACT --> EMAIL_EDIT
+
+        EMAIL_EDIT --> EMAIL_SEND{Send Email?}
+        EMAIL_SEND --> |Yes| SEND_EMAIL[Send via Integration]
+        EMAIL_SEND --> |Save Draft| SAVE_DRAFT[Save to CRM]
+
+        SEND_EMAIL --> SLIDE6[Slide 6: Summary & Completion]
+        SAVE_DRAFT --> SLIDE6
+
+        SLIDE6 --> SUMMARY_CHAT["Chat Message:<br/>'Excellent work! Here's what we accomplished...'"]
+        SLIDE6 --> SUMMARY_ARTIFACTS["Artifacts:<br/>• Completion Report<br/>• Next Steps Checklist<br/>• Follow-up Schedule<br/>• Success Metrics"]
+
+        SUMMARY_CHAT --> COMPLETE_BTN[Button: Mark Complete]
+        SUMMARY_ARTIFACTS --> COMPLETE_BTN
+
+        COMPLETE_BTN --> |Click| COMPLETE_WORKFLOW[Complete Workflow]
+    end
+
+    %% =====================================================
+    %% LAYER 11: STEP-LEVEL ACTIONS
+    %% =====================================================
+
+    subgraph STEP_ACTIONS[Step-Level Action System]
+        SNOOZE_MODAL --> SNOOZE_UI["Snooze Modal:<br/>• Date Picker<br/>• Quick Options (1 day, 2 days, 1 week)<br/>• Reason Field"]
+
+        SNOOZE_UI --> SNOOZE_SUBMIT[Submit Snooze]
+
+        SNOOZE_SUBMIT --> SNOOZE_SERVICE[WorkflowStepActionService]
+
+        SNOOZE_SERVICE --> UPSERT_STATE["UPSERT workflow_step_states:<br/>• execution_id<br/>• step_index: 2<br/>• status: 'snoozed'<br/>• snoozed_until: '2025-10-29 10:00'"]
+
+        SNOOZE_SERVICE --> INSERT_ACTION["INSERT workflow_step_actions:<br/>• action_type: 'snooze'<br/>• reason: 'Waiting for finance approval'<br/>• performed_by: user_id"]
+
+        UPSERT_STATE --> TRIGGER_UPDATE[Database Trigger Fires]
+        INSERT_ACTION --> TRIGGER_UPDATE
+
+        TRIGGER_UPDATE --> UPDATE_FLAGS["UPDATE workflow_executions:<br/>• has_snoozed_steps = true<br/>• next_due_step_date = '2025-10-29 10:00'"]
+
+        UPDATE_FLAGS --> RELOAD_STATE[Reload Step States in UI]
+        RELOAD_STATE --> ORANGE_BADGE[Display Orange Badge on Step 3]
+
+        ORANGE_BADGE --> CONTINUE_FLOW[Continue with Other Steps]
+    end
+
+    CONTINUE_FLOW --> SLIDE4
+
+    %% =====================================================
+    %% LAYER 12: WORKFLOW COMPLETION & FEEDBACK
+    %% =====================================================
+
+    subgraph COMPLETION[Workflow Completion Layer]
+        COMPLETE_WORKFLOW --> UPDATE_EXEC["UPDATE workflow_executions:<br/>• status = 'completed'<br/>• completed_at = NOW()<br/>• completion_percentage = 100"]
+
+        UPDATE_EXEC --> CREATE_TASKS[Create Follow-up Tasks]
+        CREATE_TASKS --> UPDATE_RENEWAL[Update Renewal Record]
+        UPDATE_RENEWAL --> LOG_OUTCOME[Log Workflow Outcome]
+
+        LOG_OUTCOME --> CONFETTI[Display Confetti Animation]
+        CONFETTI --> CLOSE_TASKMODE[Close TaskMode]
+    end
+
+    CLOSE_TASKMODE --> BACK_DASHBOARD[Return to Dashboard]
+
+    %% =====================================================
+    %% LAYER 13: CONTINUOUS IMPROVEMENT & FEEDBACK LOOP
+    %% =====================================================
+
+    subgraph FEEDBACK_LOOP[Feedback & Learning Loop]
+        BACK_DASHBOARD --> COLLECT_METRICS[Collect Workflow Metrics]
+
+        COLLECT_METRICS --> METRICS["Metrics Collected:<br/>• Time to complete<br/>• Steps snoozed/skipped<br/>• Button clicks<br/>• Artifacts viewed<br/>• Outcome achieved"]
+
+        METRICS --> ANALYZE_PATTERNS[Analyze Patterns]
+
+        ANALYZE_PATTERNS --> UPDATE_ALGO["Update Algorithms:<br/>• Priority scoring weights<br/>• Workflow determination rules<br/>• Template effectiveness"]
+
+        UPDATE_ALGO --> NEXT_CYCLE[Ready for Next Day]
+    end
+
+    NEXT_CYCLE --> DAILY_JOB
+
+    %% =====================================================
+    %% LAYER 14: BACKGROUND JOBS & AUTOMATED TRIGGERS
+    %% =====================================================
+
+    subgraph BACKGROUND[Background Jobs & Automation]
+        NIGHTLY_JOB[Nightly Job - 11pm]
+
+        NIGHTLY_JOB --> CHECK_SNOOZED["Check Snoozed Steps:<br/>Query workflow_step_states<br/>WHERE snoozed_until <= TOMORROW"]
+
+        CHECK_SNOOZED --> SEND_NOTIF[Send Notifications to CSMs]
+        SEND_NOTIF --> EMAIL_NOTIF[Email: You have 1 step due tomorrow]
+        SEND_NOTIF --> IN_APP_NOTIF[In-App Notification Badge]
+
+        WEEKLY_JOB[Weekly Job - Sunday]
+        WEEKLY_JOB --> ACCOUNT_REVIEW[Review All Accounts]
+        ACCOUNT_REVIEW --> ADJUST_PLANS[Adjust Account Plans]
+        ADJUST_PLANS --> FORECAST[Generate Forecast Report]
+
+        EVENT_TRIGGER[Event-Driven Triggers]
+        EVENT_TRIGGER --> |Support Ticket Created| SUPPORT_EVENT[High-Priority Ticket Detected]
+        SUPPORT_EVENT --> ESCALATE[Create Risk Workflow]
+
+        EVENT_TRIGGER --> |Usage Spike| USAGE_EVENT[Significant Usage Increase]
+        USAGE_EVENT --> CREATE_OPP[Create Opportunity Workflow]
+
+        EVENT_TRIGGER --> |Contact Changed| CONTACT_EVENT[Primary Contact Left Company]
+        CONTACT_EVENT --> EXEC_LOSS[Executive Contact Loss Workflow]
+    end
+
+    ESCALATE --> WORKFLOW_INSTANCE
+    CREATE_OPP --> WORKFLOW_INSTANCE
+    EXEC_LOSS --> WORKFLOW_INSTANCE
+
+    %% =====================================================
+    %% STYLING
+    %% =====================================================
+
+    classDef dataLayer fill:#7ED95A,stroke:#333,stroke-width:2px,color:#000
+    classDef intelligenceLayer fill:#2E1175,stroke:#333,stroke-width:2px,color:#fff
+    classDef workflowLayer fill:#ec8d1d,stroke:#333,stroke-width:2px,color:#fff
+    classDef executionLayer fill:#4095c9,stroke:#333,stroke-width:2px,color:#fff
+    classDef uiLayer fill:#9333ea,stroke:#333,stroke-width:2px,color:#fff
+    classDef dbLayer fill:#f59e0b,stroke:#333,stroke-width:2px,color:#000
+
+    class DAILY_JOB,INGEST,CUSTOMER_REFRESH dataLayer
+    class ANALYZE,HEALTH,USAGE_TREND,RISK_CALC,OPP_CALC,STAGE_DETERMINE intelligenceLayer
+    class DECISION_MATRIX,WORKFLOW_INSTANCE,PRIORITY_SCORE workflowLayer
+    class CREATE_EXECUTION,OPEN_TASKMODE,SLIDE_FLOW executionLayer
+    class CSM_LOGIN,SEES_DASHBOARD,TASKMODE_UI uiLayer
+    class INSERT_EXEC,UPSERT_STATE,INSERT_ACTION,UPDATE_EXEC dbLayer
