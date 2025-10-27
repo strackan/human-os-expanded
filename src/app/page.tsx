@@ -12,16 +12,14 @@ export default function Home() {
   // Check if DEMO_MODE is enabled
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
   
-  // In DEMO_MODE or when authenticated, redirect to workflows
+  // In DEMO_MODE or when authenticated, redirect to appropriate page
   useEffect(() => {
     if (isDemoMode) {
       router.push('/workflows');
     } else if (user) {
       router.push('/dashboard');
-    } else {
-      // Redirect unauthenticated users to the hero page
-      router.push('/hero');
     }
+    // If not authenticated and not demo mode, stay on landing page (/)
   }, [isDemoMode, user, router]);
 
   return (
@@ -39,15 +37,18 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            <p className="text-gray-600 mb-6">
-              Redirecting to our beautiful landing page...
+          <div className="space-y-6">
+            <p className="text-gray-600 text-lg">
+              Customer Success Management Platform
             </p>
-            <div className="flex justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
+            <Link
+              href="/signin"
+              className="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors"
+            >
+              Sign In
+            </Link>
             <p className="text-sm text-gray-500 mt-4">
-              If you're not redirected automatically, <Link href="/hero" className="text-blue-600 hover:underline">click here</Link>
+              Streamline renewals, drive expansion, reduce churn
             </p>
           </div>
         )}
