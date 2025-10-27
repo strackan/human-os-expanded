@@ -3,18 +3,19 @@
 import Link from 'next/link';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 export default function Home() {
   const { user } = useAuth();
   const router = useRouter();
-  
-  // Check if DEMO_MODE is enabled
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-  
+
+  // Check if DEMO_MODE is enabled (memoized to prevent re-calculation)
+  const isDemoMode = useMemo(() => process.env.NEXT_PUBLIC_DEMO_MODE === 'true', []);
+
   // In DEMO_MODE or when authenticated, redirect to dashboard
   useEffect(() => {
     if (isDemoMode || user) {
+      console.log('[Home] Redirecting to dashboard', { isDemoMode, hasUser: !!user });
       router.push('/dashboard');
     }
     // If not authenticated and not demo mode, stay on landing page (/)
