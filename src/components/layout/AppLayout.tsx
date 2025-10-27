@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -139,9 +141,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
           role="banner"
         >
           <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-            {/* Left: Spacer (logo is in sidebar) */}
+            {/* Left: Logo */}
             <div className="flex items-center gap-3 h-full">
-              {/* Logo removed - now only in sidebar */}
+              <Link href="/dashboard" className="flex items-center">
+                <Image
+                  src="/logo.png"
+                  alt="Renubu Logo"
+                  width={50}
+                  height={57}
+                  className="block"
+                  priority
+                />
+              </Link>
             </div>
 
             {/* Right: Icons */}

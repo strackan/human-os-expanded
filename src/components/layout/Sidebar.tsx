@@ -10,12 +10,12 @@ import {
   MagnifyingGlassCircleIcon,
   DocumentDuplicateIcon,
   LightBulbIcon,
-  TvIcon,
   UserGroupIcon,
-  PhotoIcon,
-  CubeIcon
+  CurrencyDollarIcon,
+  BellAlertIcon,
+  CalendarDaysIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
-import Image from 'next/image';
 
 interface NavItem {
   name: string;
@@ -29,66 +29,77 @@ interface SidebarProps {
   onToggle: (value: boolean) => void;
 }
 
-const navigation: NavItem[] = [
+// Primary navigation (main features)
+const primaryNavigation: NavItem[] = [
   {
-    name: 'Home',
-    href: '/',
+    name: 'Dashboard',
+    href: '/dashboard',
     icon: HomeIcon,
-    description: 'Welcome page'
+    description: 'Main dashboard'
   },
   {
     name: 'Customers',
     href: '/customers',
     icon: UserGroupIcon,
-    description: 'Customer list'
+    description: 'Customer management'
   },
   {
-    name: 'Insights',
-    href: '/insights',
-    icon: LightBulbIcon,
-    description: 'Analytics and business insights'
-  },
-  {
-    name: 'Scenarios',
-    href: '/scenarios',
-    icon: MagnifyingGlassCircleIcon,
-    description: 'Create and analyze different scenarios'
+    name: 'Renewals',
+    href: '/renewals',
+    icon: ClipboardDocumentCheckIcon,
+    description: 'Renewal tracking'
   },
   {
     name: 'Contracts',
     href: '/contracts',
     icon: DocumentDuplicateIcon,
-    description: 'Manage customer contracts'
+    description: 'Contract management'
+  }
+];
+
+// Secondary navigation (additional features - shown lower with transparency)
+const secondaryNavigation: NavItem[] = [
+  {
+    name: 'Tasks',
+    href: '/tasks/do',
+    icon: ClipboardDocumentCheckIcon,
+    description: 'Task execution'
+  },
+  {
+    name: 'Insights',
+    href: '/insights',
+    icon: LightBulbIcon,
+    description: 'Analytics and insights'
+  },
+  {
+    name: 'Scenarios',
+    href: '/scenarios',
+    icon: MagnifyingGlassCircleIcon,
+    description: 'Scenario modeling'
   },
   {
     name: 'Reports',
     href: '/reports',
     icon: ChartBarIcon,
-    description: 'View and generate reports'
+    description: 'Reports and analytics'
   },
   {
-    name: 'Demo',
-    href: '/demo',
-    icon: TvIcon,
-    description: 'Demo and examples'
+    name: 'Revenue',
+    href: '/revenue',
+    icon: CurrencyDollarIcon,
+    description: 'Revenue tracking'
   },
   {
-    name: 'Artifacts Gallery',
-    href: '/artifacts/gallery',
-    icon: PhotoIcon,
-    description: 'Browse artifacts in gallery view'
+    name: 'Alerts',
+    href: '/alerts',
+    icon: BellAlertIcon,
+    description: 'Alerts and notifications'
   },
   {
-    name: 'Artifacts Library',
-    href: '/artifacts',
-    icon: CubeIcon,
-    description: 'Complete artifacts library with configs'
-  },
-  {
-    name: 'Settings',
-    href: '/settings',
-    icon: Cog6ToothIcon,
-    description: 'Application settings'
+    name: 'Events',
+    href: '/events',
+    icon: CalendarDaysIcon,
+    description: 'Event history'
   }
 ];
 
@@ -103,80 +114,102 @@ export default function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       role="navigation"
       aria-label="Main navigation"
     >
-      <div className="flex h-full flex-col justify-between p-4">
-        <div>
-          {/* Logo/Brand */}
-          <div className="sidebar-logo-container mb-8 flex items-center justify-between">
-            <div className={`overflow-hidden transition-all duration-300 ${
-              isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
-            }`}>
-              <Link
-                href="/"
-                className="whitespace-nowrap hover:text-blue-200 transition-colors flex items-center"
-                aria-label="Renubu home"
-              >
-                <Image
-                  src="/logo.png"
-                  alt="Renubu Logo"
-                  width={60}
-                  height={68}
-                  className="block my-2"
-                  priority
-                />
-              </Link>
-            </div>
-            <button
-              id="sidebar-toggle"
-              onClick={() => onToggle(!isCollapsed)}
-              className="rounded-lg p-2 text-gray-400 hover:bg-[#3D3A63] hover:text-white focus:outline-none transition-colors"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              aria-expanded={!isCollapsed}
-              tabIndex={0}
-            >
-              <ChevronRightIcon
-                className={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-90'}`}
-                aria-hidden="true"
-              />
-            </button>
-          </div>
-
-          {/* Navigation Items */}
-          <nav id="sidebar-nav" className="space-y-1">
-            <ul role="list" className="space-y-1">
-              {navigation.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.name}>
-                    <Link
-                      id={`nav-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                      href={item.href}
-                      className={`group relative flex h-11 items-center rounded-lg px-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] ${
-                        isActive
-                          ? 'bg-[#3D3A63] text-white'
-                          : 'text-gray-300 hover:bg-[#3D3A63] hover:text-white'
-                      }`}
-                      aria-current={isActive ? 'page' : undefined}
-                      tabIndex={0}
-                      title={item.description}
-                    >
-                      <div className="flex h-5 w-5 items-center justify-center">
-                        <item.icon className="h-5 w-5" aria-hidden="true" />
-                      </div>
-                      <div className={`absolute left-9 overflow-hidden transition-all duration-300 ${
-                        isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
-                      }`}>
-                        <span className="whitespace-nowrap px-2">{item.name}</span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+      <div className="flex h-full flex-col p-4">
+        {/* Toggle Button */}
+        <div className="mb-6 flex justify-end">
+          <button
+            id="sidebar-toggle"
+            onClick={() => onToggle(!isCollapsed)}
+            className="rounded-lg p-2 text-gray-400 hover:bg-[#3D3A63] hover:text-white focus:outline-none transition-colors"
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            aria-expanded={!isCollapsed}
+            tabIndex={0}
+          >
+            <ChevronRightIcon
+              className={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
+              aria-hidden="true"
+            />
+          </button>
         </div>
 
-        {/* Settings Button */}
-        <div>
+        {/* Primary Navigation */}
+        <nav id="primary-nav" className="space-y-1">
+          <ul role="list" className="space-y-1">
+            {primaryNavigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    id={`nav-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={item.href}
+                    className={`group relative flex h-11 items-center rounded-lg px-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] ${
+                      isActive
+                        ? 'bg-[#3D3A63] text-white'
+                        : 'text-gray-300 hover:bg-[#3D3A63] hover:text-white'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                    tabIndex={0}
+                    title={item.description}
+                  >
+                    <div className="flex h-5 w-5 items-center justify-center">
+                      <item.icon className="h-5 w-5" aria-hidden="true" />
+                    </div>
+                    <div className={`absolute left-9 overflow-hidden transition-all duration-300 ${
+                      isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
+                    }`}>
+                      <span className="whitespace-nowrap px-2">{item.name}</span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Spacer to push secondary nav down */}
+        <div className="flex-grow" />
+
+        {/* Divider */}
+        <div className={`border-t border-gray-600 my-4 transition-all duration-300 ${
+          isCollapsed ? 'mx-2' : 'mx-0'
+        }`} />
+
+        {/* Secondary Navigation (lower, slightly transparent) */}
+        <nav id="secondary-nav" className="space-y-1 opacity-70">
+          <ul role="list" className="space-y-1">
+            {secondaryNavigation.map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    id={`nav-item-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    href={item.href}
+                    className={`group relative flex h-10 items-center rounded-lg px-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] ${
+                      isActive
+                        ? 'bg-[#3D3A63] text-white opacity-100'
+                        : 'text-gray-400 hover:bg-[#3D3A63] hover:text-white hover:opacity-100'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                    tabIndex={0}
+                    title={item.description}
+                  >
+                    <div className="flex h-5 w-5 items-center justify-center">
+                      <item.icon className="h-4 w-4" aria-hidden="true" />
+                    </div>
+                    <div className={`absolute left-9 overflow-hidden transition-all duration-300 ${
+                      isCollapsed ? 'w-0 opacity-0' : 'w-40 opacity-100'
+                    }`}>
+                      <span className="whitespace-nowrap px-2 text-xs">{item.name}</span>
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* Settings at bottom */}
+        <div className="mt-4">
           <Link
             href="/settings"
             className="group relative flex h-11 items-center rounded-lg px-2 text-sm font-medium text-gray-300 hover:bg-[#3D3A63] hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-[#2D2A53] transition-colors"
