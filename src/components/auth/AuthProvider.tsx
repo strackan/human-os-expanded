@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -45,10 +45,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
+
+  // FIX: Memoize supabase client to prevent re-instantiation
+  const supabase = useMemo(() => createClient(), [])
 
   // Helper: Check/create user profile and handle workspace logic
-  const handleUserProfile = async (authUser: User) => {
+  const handleUserProfile = async (authUser: User): Promise<UserProfile | null> => {
     try {
       console.log('[WORKSPACE] Checking profile for user:', authUser.email)
 
@@ -62,7 +64,34 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       if (profileError && profileError.code !== 'PGRST116') {
         // PGRST116 = not found, which is okay for first-time users
         console.error('[WORKSPACE] Error fetching profile:', profileError)
-        throw profileError
+
+        // FIX: If query fails, try without status/is_admin columns (backward compatibility)
+        console.log('[WORKSPACE] Retrying without workspace columns...')
+        const { data: basicProfile, error: basicError } = await supabase
+          .from('profiles')
+          .select('id, email, full_name, company_id')
+          .eq('id', authUser.id)
+          .single()
+
+        if (basicError) {
+          console.error('[WORKSPACE] Basic profile query also failed:', basicError)
+          // Return a minimal profile to allow user to continue
+          return {
+            id: authUser.id,
+            email: authUser.email!,
+            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+            company_id: null,
+            status: 1,
+            is_admin: false
+          }
+        }
+
+        // Upgrade basic profile with default workspace values
+        return {
+          ...basicProfile,
+          status: 1,
+          is_admin: false
+        } as UserProfile
       }
 
       if (existingProfile) {
@@ -136,7 +165,15 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       return newProfile
     } catch (error) {
       console.error('[WORKSPACE] Error in handleUserProfile:', error)
-      return null
+      // FIX: Return minimal profile instead of null to prevent blocking
+      return {
+        id: authUser.id,
+        email: authUser.email!,
+        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+        company_id: null,
+        status: 1,
+        is_admin: false
+      }
     }
   }
 
@@ -206,7 +243,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       console.log('⏱️ [AUTH] Provider unmounted at', new Date().toISOString())
     }
-  }, [supabase, router])
+  }, []) // FIX: Remove supabase from dependencies since it's memoized
 
   const signOut = async () => {
     console.log('⏱️ [AUTH] Starting sign-out...')
@@ -224,8 +261,13 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  const value = useMemo(
+    () => ({ user, profile, loading, signOut }),
+    [user, profile, loading]
+  )
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )
