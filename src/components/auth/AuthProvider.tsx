@@ -1,29 +1,18 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
-interface UserProfile {
-  id: string
-  email: string
-  full_name: string | null
-  company_id: string | null
-  status: number
-  is_admin: boolean
-}
-
 interface AuthContextType {
   user: User | null
-  profile: UserProfile | null
   loading: boolean
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  profile: null,
   loading: true,
   signOut: async () => {},
 })
@@ -42,140 +31,9 @@ interface AuthProviderProps {
 
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
-
-  // FIX: Memoize supabase client to prevent re-instantiation
-  const supabase = useMemo(() => createClient(), [])
-
-  // Helper: Check/create user profile and handle workspace logic
-  const handleUserProfile = async (authUser: User): Promise<UserProfile | null> => {
-    try {
-      console.log('[WORKSPACE] Checking profile for user:', authUser.email)
-
-      // Check if profile exists
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, full_name, company_id, status, is_admin')
-        .eq('id', authUser.id)
-        .single()
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        // PGRST116 = not found, which is okay for first-time users
-        console.error('[WORKSPACE] Error fetching profile:', profileError)
-
-        // FIX: If query fails, try without status/is_admin columns (backward compatibility)
-        console.log('[WORKSPACE] Retrying without workspace columns...')
-        const { data: basicProfile, error: basicError } = await supabase
-          .from('profiles')
-          .select('id, email, full_name, company_id')
-          .eq('id', authUser.id)
-          .single()
-
-        if (basicError) {
-          console.error('[WORKSPACE] Basic profile query also failed:', basicError)
-          // Return a minimal profile to allow user to continue
-          return {
-            id: authUser.id,
-            email: authUser.email!,
-            full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-            company_id: null,
-            status: 1,
-            is_admin: false
-          }
-        }
-
-        // Upgrade basic profile with default workspace values
-        return {
-          ...basicProfile,
-          status: 1,
-          is_admin: false
-        } as UserProfile
-      }
-
-      if (existingProfile) {
-        console.log('[WORKSPACE] Profile found:', {
-          status: existingProfile.status,
-          is_admin: existingProfile.is_admin,
-          has_company: !!existingProfile.company_id
-        })
-
-        // Check status
-        if (existingProfile.status === 0) {
-          // Disabled user
-          console.log('[WORKSPACE] User is disabled')
-          router.push('/no-access')
-          return null
-        }
-
-        if (existingProfile.status === 2) {
-          // Pending invitation - activate them
-          console.log('[WORKSPACE] Activating pending user')
-          const { data: activated } = await supabase
-            .from('profiles')
-            .update({ status: 1 })
-            .eq('id', authUser.id)
-            .select('id, email, full_name, company_id, status, is_admin')
-            .single()
-
-          return activated
-        }
-
-        // Status = 1 (Active)
-        return existingProfile
-      }
-
-      // No profile exists - this is the first user! Create company and admin profile
-      console.log('[WORKSPACE] First time user - creating company and admin profile')
-
-      // Create company
-      const companyName = authUser.email?.split('@')[1] || 'My Company'
-      const { data: newCompany, error: companyError } = await supabase
-        .from('companies')
-        .insert({ name: companyName })
-        .select()
-        .single()
-
-      if (companyError) {
-        console.error('[WORKSPACE] Error creating company:', companyError)
-        throw companyError
-      }
-
-      // Create profile as admin
-      const { data: newProfile, error: newProfileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: authUser.id,
-          email: authUser.email!,
-          full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name,
-          company_id: newCompany.id,
-          status: 1, // Active
-          is_admin: true // First user is admin
-        })
-        .select('id, email, full_name, company_id, status, is_admin')
-        .single()
-
-      if (newProfileError) {
-        console.error('[WORKSPACE] Error creating profile:', newProfileError)
-        throw newProfileError
-      }
-
-      console.log('[WORKSPACE] Created new company and admin profile')
-      return newProfile
-    } catch (error) {
-      console.error('[WORKSPACE] Error in handleUserProfile:', error)
-      // FIX: Return minimal profile instead of null to prevent blocking
-      return {
-        id: authUser.id,
-        email: authUser.email!,
-        full_name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
-        company_id: null,
-        status: 1,
-        is_admin: false
-      }
-    }
-  }
+  const supabase = createClient()
 
   useEffect(() => {
     const mountTime = performance.now()
@@ -192,16 +50,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           hasUser: !!session?.user,
           userEmail: session?.user?.email,
         })
-
-        // If user exists, check/create their profile
-        if (session?.user) {
-          const userProfile = await handleUserProfile(session.user)
-          setProfile(userProfile)
-        }
       } catch (error) {
         console.error('❌ [AUTH] Error loading user:', error)
         setUser(null)
-        setProfile(null)
       } finally {
         const end = performance.now()
         console.log(`⏱️ [AUTH] Initial session fetch took ${(end - start).toFixed(2)} ms`)
@@ -222,19 +73,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         })
 
         setUser(session?.user ?? null)
+        setLoading(false)
 
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Check/create profile for newly signed in user
-          const userProfile = await handleUserProfile(session.user)
-          setProfile(userProfile)
-          setLoading(false)
+        if (event === 'SIGNED_IN') {
           router.refresh()
         } else if (event === 'SIGNED_OUT') {
-          setProfile(null)
-          setLoading(false)
           router.push('/signin')
-        } else {
-          setLoading(false)
         }
       }
     )
@@ -243,7 +87,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       console.log('⏱️ [AUTH] Provider unmounted at', new Date().toISOString())
     }
-  }, []) // FIX: Remove supabase from dependencies since it's memoized
+  }, [supabase, router])
 
   const signOut = async () => {
     console.log('⏱️ [AUTH] Starting sign-out...')
@@ -261,13 +105,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  const value = useMemo(
-    () => ({ user, profile, loading, signOut }),
-    [user, profile, loading]
-  )
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   )
