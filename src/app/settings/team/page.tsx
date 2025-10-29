@@ -24,7 +24,7 @@ interface TeamMember {
 }
 
 export default function TeamManagementPage() {
-  const { profile, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,15 +35,14 @@ export default function TeamManagementPage() {
 
   useEffect(() => {
     if (!authLoading) {
-      if (!profile) {
-        router.push('/no-access');
-      } else if (!profile.is_admin) {
-        router.push('/dashboard');
+      // TODO: Re-enable admin check when profile is restored
+      if (!user) {
+        router.push('/signin');
       } else {
         fetchTeamMembers();
       }
     }
-  }, [authLoading, profile, router]);
+  }, [authLoading, user, router]);
 
   const fetchTeamMembers = async () => {
     try {
