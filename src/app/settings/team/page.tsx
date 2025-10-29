@@ -231,7 +231,7 @@ export default function TeamManagementPage() {
                     Admin
                   </span>
                 )}
-                {member.id !== profile?.id && (
+                {member.id !== user?.id && (
                   <div className="flex space-x-2">
                     <button
                       onClick={() => toggleAdmin(member.id, member.is_admin)}
