@@ -19,7 +19,7 @@ export default function AuthButton() {
       const next = urlParams.get('next') || '/dashboard'
       
       // Create the redirect URL to our callback route
-      const redirectUrl = `${location.origin}/api/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
+      const redirectUrl = `${location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`
       
       console.log('🔐 Sign in with redirect:', { next, redirectUrl })
       console.log('🔐 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
