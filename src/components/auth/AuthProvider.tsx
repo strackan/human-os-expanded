@@ -195,18 +195,45 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     const start = performance.now()
     try {
       setLoading(true)
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
-      // Reset workspace profile on sign out
+
+      // Add timeout to prevent hanging indefinitely
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign-out timeout')), 5000)
+      )
+
+      const { error } = await Promise.race([signOutPromise, timeoutPromise]) as any
+
+      if (error) {
+        console.warn('⚠️ [AUTH] Sign-out error, forcing local cleanup:', error)
+      }
+
+      // Always reset workspace profile on sign out
       setWorkspaceProfile({
         company_id: null,
         is_admin: false,
         status: 2,
       })
-      router.push('/signin')
+
+      // Force clear local state
+      setUser(null)
+
       console.log(`✅ [AUTH] Sign-out completed in ${(performance.now() - start).toFixed(2)} ms`)
+
+      // Use window.location for more reliable redirect
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin'
+      } else {
+        router.push('/signin')
+      }
     } catch (error) {
-      console.error('❌ [AUTH] Error signing out:', error)
+      console.error('❌ [AUTH] Error signing out, forcing redirect:', error)
+      // Force redirect even on error
+      if (typeof window !== 'undefined') {
+        window.location.href = '/signin'
+      } else {
+        router.push('/signin')
+      }
     } finally {
       setLoading(false)
     }
