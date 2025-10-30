@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, ChevronRight, Sparkles, Play, Target, TrendingUp, AlertTriangle, RefreshCw, Users } from 'lucide-react';
 import { TERMINOLOGY } from '@/lib/constants';
 import { WorkflowQueryService } from '@/lib/workflows/actions/WorkflowQueryService';
@@ -35,30 +35,47 @@ export default function TodaysWorkflows({
   const [loadingDb, setLoadingDb] = useState(false);
 
   // NEW: Fetch workflows from database when userId provided
-  useEffect(() => {
-    if (userId && !providedWorkflows) {
-      loadWorkflowsFromDatabase();
-    }
-  }, [userId, providedWorkflows]);
-
-  const loadWorkflowsFromDatabase = async () => {
+  // Wrap in useCallback to prevent useEffect dependency issues
+  const loadWorkflowsFromDatabase = useCallback(async () => {
     if (!userId) return;
 
+    console.log('[TodaysWorkflows] Loading workflows for user:', userId);
     setLoadingDb(true);
+
+    // Add timeout to prevent infinite loading (5 seconds)
+    const timeoutId = setTimeout(() => {
+      console.warn('[TodaysWorkflows] Query timeout after 5s, falling back to empty state');
+      setDbWorkflows([]);
+      setLoadingDb(false);
+    }, 5000);
+
     try {
       const queryService = new WorkflowQueryService();
       const result = await queryService.getActiveWorkflows(userId);
 
+      clearTimeout(timeoutId); // Clear timeout on success
+
       if (result.success && result.workflows) {
-        // Keep full workflow data for sorting
+        console.log('[TodaysWorkflows] Successfully loaded', result.workflows.length, 'workflows');
         setDbWorkflows(result.workflows);
+      } else {
+        console.warn('[TodaysWorkflows] Query failed or returned no workflows:', result.error);
+        setDbWorkflows([]);
       }
     } catch (err) {
+      clearTimeout(timeoutId);
       console.error('[TodaysWorkflows] Error loading workflows from database:', err);
+      setDbWorkflows([]); // Fallback to empty array on error
     } finally {
       setLoadingDb(false);
     }
-  };
+  }, [userId]);
+
+  useEffect(() => {
+    if (userId && !providedWorkflows) {
+      loadWorkflowsFromDatabase();
+    }
+  }, [userId, providedWorkflows, loadWorkflowsFromDatabase]);
 
   // Use provided workflows if available, otherwise use fallback hardcoded data
   const staticWorkflows = [

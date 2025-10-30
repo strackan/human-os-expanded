@@ -196,44 +196,56 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     try {
       setLoading(true)
 
-      // Add timeout to prevent hanging indefinitely
-      const signOutPromise = supabase.auth.signOut()
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Sign-out timeout')), 5000)
-      )
-
-      const { error } = await Promise.race([signOutPromise, timeoutPromise]) as any
-
-      if (error) {
-        console.warn('⚠️ [AUTH] Sign-out error, forcing local cleanup:', error)
-      }
-
-      // Always reset workspace profile on sign out
+      // CRITICAL: Clear local state FIRST to prevent RouteGuard race condition
+      console.log('⏱️ [AUTH] Clearing local state...')
+      setUser(null)
       setWorkspaceProfile({
         company_id: null,
         is_admin: false,
         status: 2,
       })
 
-      // Force clear local state
-      setUser(null)
+      // Then call Supabase signOut with timeout
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Sign-out timeout')), 5000)
+      )
+
+      const result = await Promise.race([signOutPromise, timeoutPromise]) as any
+
+      if (result?.error) {
+        console.warn('⚠️ [AUTH] Sign-out error (local state already cleared):', result.error)
+      }
 
       console.log(`✅ [AUTH] Sign-out completed in ${(performance.now() - start).toFixed(2)} ms`)
 
-      // Use window.location for more reliable redirect
-      if (typeof window !== 'undefined') {
-        window.location.href = '/signin'
-      } else {
-        router.push('/signin')
-      }
+      // Add small delay to ensure state updates propagate through React
+      setTimeout(() => {
+        console.log('⏱️ [AUTH] Redirecting to /signin...')
+        if (typeof window !== 'undefined') {
+          window.location.href = '/signin'
+        } else {
+          router.push('/signin')
+        }
+      }, 100)
+
     } catch (error) {
       console.error('❌ [AUTH] Error signing out, forcing redirect:', error)
-      // Force redirect even on error
-      if (typeof window !== 'undefined') {
-        window.location.href = '/signin'
-      } else {
-        router.push('/signin')
-      }
+      // Ensure state is cleared even on error
+      setUser(null)
+      setWorkspaceProfile({
+        company_id: null,
+        is_admin: false,
+        status: 2,
+      })
+      // Still add delay for consistency
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/signin'
+        } else {
+          router.push('/signin')
+        }
+      }, 100)
     } finally {
       setLoading(false)
     }

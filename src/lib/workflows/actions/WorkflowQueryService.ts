@@ -101,7 +101,16 @@ export class WorkflowQueryService extends SchemaAwareService {
 
       if (error) {
         console.error('[WorkflowQueryService] Query error:', error);
-        throw error;
+        console.error('[WorkflowQueryService] Error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+
+        // Return success with empty array instead of throwing
+        // This prevents UI from getting stuck in loading state
+        return { success: true, workflows: [] };
       }
 
       console.log('[WorkflowQueryService] Query successful, rows:', data?.length || 0);
@@ -121,7 +130,8 @@ export class WorkflowQueryService extends SchemaAwareService {
         details: error.details,
         hint: error.hint
       });
-      return { success: false, error: error.message };
+      // Return success with empty array to prevent UI from breaking
+      return { success: true, workflows: [] };
     }
   }
 

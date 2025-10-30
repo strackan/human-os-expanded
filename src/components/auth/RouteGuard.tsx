@@ -33,13 +33,6 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       return
     }
 
-    // 🆕 Fix: redirect signed-in users away from /signin
-    if (user && pathname === '/signin') {
-      console.log('🛡️ Signed in user stuck on /signin, redirecting to /dashboard')
-      router.replace('/dashboard')
-      return
-    }
-
     // Don't redirect if we're still loading or on a public route
     if (loading || isPublicRoute(pathname)) {
       console.log('🛡️ Skipping redirect - loading or public route')
