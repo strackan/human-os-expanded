@@ -1,20 +1,32 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
+import { createContext, useContext, useEffect, useState, useMemo } from 'react'
+import { User, AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+
+interface WorkspaceProfile {
+  company_id: string | null
+  is_admin: boolean
+  status: number
+}
 
 interface AuthContextType {
   user: User | null
   loading: boolean
   signOut: () => Promise<void>
+  companyId: string | null
+  isAdmin: boolean
+  status: number
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   signOut: async () => {},
+  companyId: null,
+  isAdmin: false,
+  status: 2, // Default to Pending
 })
 
 export const useAuth = () => {
@@ -32,8 +44,15 @@ interface AuthProviderProps {
 export default function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [workspaceProfile, setWorkspaceProfile] = useState<WorkspaceProfile>({
+    company_id: null,
+    is_admin: false,
+    status: 2,
+  })
   const router = useRouter()
-  const supabase = createClient()
+
+  // Memoize Supabase client to prevent re-instantiation on every render
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const mountTime = performance.now()
@@ -50,9 +69,26 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           hasUser: !!session?.user,
           userEmail: session?.user?.email,
         })
+
+        // Fetch workspace profile if user exists
+        if (session?.user) {
+          await fetchWorkspaceProfile(session.user.id)
+        } else {
+          // Reset workspace profile if no user
+          setWorkspaceProfile({
+            company_id: null,
+            is_admin: false,
+            status: 2,
+          })
+        }
       } catch (error) {
         console.error('❌ [AUTH] Error loading user:', error)
         setUser(null)
+        setWorkspaceProfile({
+          company_id: null,
+          is_admin: false,
+          status: 2,
+        })
       } finally {
         const end = performance.now()
         console.log(`⏱️ [AUTH] Initial session fetch took ${(end - start).toFixed(2)} ms`)
@@ -60,10 +96,63 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
+    const fetchWorkspaceProfile = async (userId: string) => {
+      try {
+        console.log('⏱️ [AUTH] Fetching workspace profile for user:', userId)
+        const profileStart = performance.now()
+
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('company_id, is_admin, status')
+          .eq('id', userId)
+          .single()
+
+        if (error) {
+          // Check if error is due to missing columns (backward compatibility)
+          if (error.message.includes('column') || error.code === 'PGRST116') {
+            console.warn('⚠️ [AUTH] Workspace columns not found, using defaults')
+            setWorkspaceProfile({
+              company_id: null,
+              is_admin: false,
+              status: 1, // Assume active for backward compatibility
+            })
+          } else {
+            console.error('❌ [AUTH] Error fetching workspace profile:', error)
+            // Set defaults on error
+            setWorkspaceProfile({
+              company_id: null,
+              is_admin: false,
+              status: 1,
+            })
+          }
+        } else if (profile) {
+          console.log('⏱️ [AUTH] Workspace profile fetched:', {
+            hasCompanyId: !!profile.company_id,
+            isAdmin: profile.is_admin,
+            status: profile.status,
+            fetchTime: `${(performance.now() - profileStart).toFixed(2)} ms`,
+          })
+          setWorkspaceProfile({
+            company_id: profile.company_id,
+            is_admin: profile.is_admin ?? false,
+            status: profile.status ?? 1,
+          })
+        }
+      } catch (error) {
+        console.error('❌ [AUTH] Unexpected error fetching workspace profile:', error)
+        // Set defaults on unexpected error
+        setWorkspaceProfile({
+          company_id: null,
+          is_admin: false,
+          status: 1,
+        })
+      }
+    }
+
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event: AuthChangeEvent, session: Session | null) => {
         const eventTime = performance.now()
         console.log('⏱️ [AUTH] Auth state change:', {
           event,
@@ -74,6 +163,18 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
         setUser(session?.user ?? null)
         setLoading(false)
+
+        // Fetch workspace profile on auth state change
+        if (session?.user) {
+          await fetchWorkspaceProfile(session.user.id)
+        } else {
+          // Reset workspace profile on sign out
+          setWorkspaceProfile({
+            company_id: null,
+            is_admin: false,
+            status: 2,
+          })
+        }
 
         if (event === 'SIGNED_IN') {
           router.refresh()
@@ -87,7 +188,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       console.log('⏱️ [AUTH] Provider unmounted at', new Date().toISOString())
     }
-  }, [supabase, router])
+  }, [router]) // Removed supabase from dependencies since it's memoized
 
   const signOut = async () => {
     console.log('⏱️ [AUTH] Starting sign-out...')
@@ -96,6 +197,12 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      // Reset workspace profile on sign out
+      setWorkspaceProfile({
+        company_id: null,
+        is_admin: false,
+        status: 2,
+      })
       router.push('/signin')
       console.log(`✅ [AUTH] Sign-out completed in ${(performance.now() - start).toFixed(2)} ms`)
     } catch (error) {
@@ -105,8 +212,21 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(
+    () => ({
+      user,
+      loading,
+      signOut,
+      companyId: workspaceProfile.company_id,
+      isAdmin: workspaceProfile.is_admin,
+      status: workspaceProfile.status,
+    }),
+    [user, loading, workspaceProfile]
+  )
+
   return (
-    <AuthContext.Provider value={{ user, loading, signOut }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )

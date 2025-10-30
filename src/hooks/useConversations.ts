@@ -141,7 +141,7 @@ export const useConversations = (options: UseConversationsOptions = {}): UseConv
       }
 
       // Process conversations and add computed fields
-      const processedConversations = (data || []).map(conv => {
+      const processedConversations = (data || []).map((conv: any) => {
         const messages = conv.messages || [];
         const lastMessage = messages.length > 0 
           ? messages[messages.length - 1] 
