@@ -51,8 +51,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   })
   const router = useRouter()
 
-  // Memoize Supabase client to prevent re-instantiation on every render
-  const supabase = useMemo(() => createClient(), [])
+  // Create Supabase client (no singleton needed - createBrowserClient handles it)
+  const supabase = createClient()
 
   useEffect(() => {
     const mountTime = performance.now()
