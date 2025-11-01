@@ -72,10 +72,11 @@ export default function TodaysWorkflows({
   }, [userId]);
 
   useEffect(() => {
-    if (userId && !providedWorkflows) {
+    // Only fetch workflows when expanded and userId is provided
+    if (userId && !providedWorkflows && isExpanded) {
       loadWorkflowsFromDatabase();
     }
-  }, [userId, providedWorkflows, loadWorkflowsFromDatabase]);
+  }, [userId, providedWorkflows, isExpanded, loadWorkflowsFromDatabase]);
 
   // Use provided workflows if available, otherwise use fallback hardcoded data
   const staticWorkflows = [
