@@ -163,12 +163,13 @@ export default function TodaysWorkflows({
 
   const dbDisplayWorkflows = getFilteredWorkflows();
 
-  // Use workflows in this order: provided > database > static fallback
-  const workflows = displayWorkflows || (dbDisplayWorkflows.length > 0 ? dbDisplayWorkflows : staticWorkflows);
+  // Use workflows in this order: provided > database > empty state (no static fallback)
+  const hasRealData = !!providedWorkflows || dbWorkflows.length > 0;
+  const workflows = displayWorkflows || (dbDisplayWorkflows.length > 0 ? dbDisplayWorkflows : (hasRealData ? [] : staticWorkflows));
 
-  const totalWorkflows = providedWorkflows?.length || dbWorkflows.length || 10;
-  const completedWorkflows = completedWorkflowIds.size || 3;
-  const percentComplete = (completedWorkflows / totalWorkflows) * 100;
+  const totalWorkflows = providedWorkflows?.length || dbWorkflows.length || (hasRealData ? 0 : 10);
+  const completedWorkflows = completedWorkflowIds.size || (hasRealData ? 0 : 3);
+  const percentComplete = totalWorkflows > 0 ? (completedWorkflows / totalWorkflows) * 100 : 0;
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -334,6 +335,17 @@ export default function TodaysWorkflows({
 
       {/* Workflow List View */}
       <div className="space-y-3">
+        {/* Empty State */}
+        {workflows.length === 0 && hasRealData && (
+          <div className="text-center py-12">
+            <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2">No workflows available</h3>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto">
+              You don't have any active workflows assigned yet. Workflows will appear here when they're created and assigned to you.
+            </p>
+          </div>
+        )}
+
         {/* First workflow - always shown */}
         {workflows.length > 0 && (() => {
           const item = workflows[0];

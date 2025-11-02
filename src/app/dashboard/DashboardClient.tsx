@@ -90,7 +90,7 @@ export default function DashboardClient() {
 
       if (!workflowConfig) {
         console.error('[Dashboard] Failed to load workflow config');
-        alert('Failed to load workflow configuration');
+        alert('Workflow template not found. Please contact your administrator to set up the "obsidian-black-renewal" workflow definition in the database.');
         return;
       }
 
@@ -127,10 +127,22 @@ export default function DashboardClient() {
 
       setTaskModeOpen(true);
       console.timeEnd('[Dashboard] Total workflow launch time');
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Dashboard] Error launching workflow:', error);
       console.timeEnd('[Dashboard] Total workflow launch time');
-      alert('Error launching workflow. Check console for details.');
+
+      // Provide helpful error messages based on error type
+      let errorMessage = 'Error launching workflow. ';
+
+      if (error.message?.includes('WORKFLOW_NOT_FOUND')) {
+        errorMessage += 'The workflow template "obsidian-black-renewal" was not found in the database. Please contact your administrator to set up workflow definitions.';
+      } else if (error.message?.includes('DB_FETCH_ERROR')) {
+        errorMessage += 'Unable to connect to the database. Please check your connection and try again.';
+      } else {
+        errorMessage += 'Please check the console for details or contact support.';
+      }
+
+      alert(errorMessage);
     }
   };
 
