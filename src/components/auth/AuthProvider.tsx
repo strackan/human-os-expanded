@@ -51,44 +51,29 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   })
   const router = useRouter()
 
-  // Memoize Supabase client to prevent re-instantiation on every render
-  // This prevents infinite useEffect loops
-  const supabase = useMemo(() => createClient(), [])
+  // Create Supabase client (no singleton needed - createBrowserClient handles it)
+  const supabase = createClient()
 
   useEffect(() => {
     const mountTime = performance.now()
     console.log('⏱️ [AUTH] Provider mounted at', new Date().toISOString())
 
     const getUser = async () => {
-      console.log('⏱️ [AUTH] Starting initial user fetch...')
+      console.log('⏱️ [AUTH] Starting initial session fetch...')
       const start = performance.now()
 
       try {
-        // STRATEGY: Use getSession() with timeout to handle LockManager hangs
-        console.log('⏱️ [AUTH] Step 1: Check local session...')
+        // Add timeout to prevent infinite hanging
         const sessionPromise = supabase.auth.getSession()
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
+          setTimeout(() => reject(new Error('Session fetch timeout after 10 seconds')), 10000)
         )
 
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
-
-        if (!session) {
-          console.log('⏱️ [AUTH] No local session found, user not authenticated')
-          setUser(null)
-          setWorkspaceProfile({
-            company_id: null,
-            is_admin: false,
-            status: 2,
-          })
-          return
-        }
-
-        console.log('⏱️ [AUTH] Session found, setting user:', session.user.email)
-        setUser(session.user)
-        console.log('⏱️ [AUTH] User fetch result:', {
-          hasUser: !!session.user,
-          userEmail: session.user?.email,
+        setUser(session?.user ?? null)
+        console.log('⏱️ [AUTH] Session fetch result:', {
+          hasUser: !!session?.user,
+          userEmail: session?.user?.email,
         })
 
         // TEMP: Workspace profile fetch disabled due to query hanging
@@ -102,23 +87,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         console.log('⚠️ [AUTH] Workspace profile fetch temporarily disabled')
       } catch (error) {
         console.error('❌ [AUTH] Error loading user:', error)
-
-        // If it's a timeout, try to clear corrupted auth state
-        if (error instanceof Error && error.message.includes('timeout')) {
-          console.warn('⚠️ [AUTH] Session fetch timed out - clearing potentially corrupted auth state')
-          try {
-            // Clear localStorage auth keys that might be corrupted
-            Object.keys(localStorage).forEach(key => {
-              if (key.includes('supabase') || key.includes('auth')) {
-                console.log('[AUTH] Clearing:', key)
-                localStorage.removeItem(key)
-              }
-            })
-          } catch (storageError) {
-            console.error('[AUTH] Failed to clear storage:', storageError)
-          }
-        }
-
         setUser(null)
         setWorkspaceProfile({
           company_id: null,
@@ -185,10 +153,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    // SKIP initial getUser() call - rely entirely on onAuthStateChange
-    // This avoids ALL hanging issues with getSession/getUser on initial load
-    console.log('⏱️ [AUTH] Skipping initial auth fetch, will rely on onAuthStateChange')
-    setLoading(false) // Set loading false immediately
+    getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
@@ -203,15 +168,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        // TEMP: Workspace profile fetch disabled due to query hanging
-        // Set defaults instead of fetching from database
+        // Fetch workspace profile on auth state change
         if (session?.user) {
-          console.log('⚠️ [AUTH] Workspace profile fetch disabled on auth state change')
-          setWorkspaceProfile({
-            company_id: null,
-            is_admin: false,
-            status: 1, // Default to Active
-          })
+          await fetchWorkspaceProfile(session.user.id)
         } else {
           // Reset workspace profile on sign out
           setWorkspaceProfile({
@@ -233,7 +192,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       console.log('⏱️ [AUTH] Provider unmounted at', new Date().toISOString())
     }
-  }, []) // Empty deps - supabase and router are stable, prevents infinite loop
+  }, [router]) // Removed supabase from dependencies since it's memoized
 
   const signOut = async () => {
     console.log('⏱️ [AUTH] Starting sign-out...')
