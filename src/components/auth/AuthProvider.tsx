@@ -63,7 +63,13 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       const start = performance.now()
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // Add timeout to prevent infinite hanging
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Session fetch timeout after 10 seconds')), 10000)
+        )
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
         setUser(session?.user ?? null)
         console.log('⏱️ [AUTH] Session fetch result:', {
           hasUser: !!session?.user,
