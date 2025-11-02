@@ -64,10 +64,14 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       const start = performance.now()
 
       try {
-        // STRATEGY: Use getSession() for initial load (fast, checks localStorage)
-        // Then optionally validate with getUser() if we have a session
+        // STRATEGY: Use getSession() with timeout to handle LockManager hangs
         console.log('⏱️ [AUTH] Step 1: Check local session...')
-        const { data: { session } } = await supabase.auth.getSession()
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout after 3 seconds')), 3000)
+        )
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
 
         if (!session) {
           console.log('⏱️ [AUTH] No local session found, user not authenticated')
@@ -181,7 +185,10 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       }
     }
 
-    getUser()
+    // SKIP initial getUser() call - rely entirely on onAuthStateChange
+    // This avoids ALL hanging issues with getSession/getUser on initial load
+    console.log('⏱️ [AUTH] Skipping initial auth fetch, will rely on onAuthStateChange')
+    setLoading(false) // Set loading false immediately
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, session: Session | null) => {
