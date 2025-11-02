@@ -46,9 +46,9 @@ export async function POST(request: NextRequest) {
       
       if (!hasPassword) {
         console.log('🔐 Adding password to existing OAuth user')
-        const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
+        const { error: updateError } = await supabase.auth.admin.updateUserById(
           existingUser.id,
-          { 
+          {
             password,
             app_metadata: {
               ...existingUser.app_metadata,

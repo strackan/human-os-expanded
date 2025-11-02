@@ -9,7 +9,6 @@ import {
   Shield,
   ShieldCheck,
   Mail,
-  Trash2,
   Crown,
   UserX
 } from 'lucide-react';

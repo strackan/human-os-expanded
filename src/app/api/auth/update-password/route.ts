@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ API: Password updated successfully for:', email)
       
       // Let's also verify the user still exists and can be retrieved
-      const { data: verifyData, error: verifyError } = await supabase.auth.admin.getUserById(userData.user.id)
+      const { error: verifyError } = await supabase.auth.admin.getUserById(userData.user.id)
       if (verifyError) {
         console.error('⚠️ API: Could not verify user after update:', verifyError)
       } else {

@@ -58,7 +58,7 @@ export async function POST(
 
     // Update corresponding workflow step execution (if exists)
     if (thread.workflow_execution_id && thread.step_id) {
-      const { data: stepExecution, error: stepError } = await supabase
+      const { data: stepExecution } = await supabase
         .from('workflow_step_executions')
         .select('*')
         .eq('workflow_execution_id', thread.workflow_execution_id)

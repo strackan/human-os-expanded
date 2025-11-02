@@ -63,7 +63,7 @@ export default function SignInPage() {
         redirectUrl += `&template=${encodeURIComponent(template)}`
       }
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
@@ -89,14 +89,14 @@ export default function SignInPage() {
       setIsLoading(true)
       setError(null)
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-  
+
       const mid = performance.now()
       console.log(`🧐 [EMAIL LOGIN] Supabase response in ${(mid - start).toFixed(2)} ms`)
-  
+
       if (error) throw error
   
       // 🚫 Commented out direct navigation — let RouteGuard handle it
@@ -119,32 +119,73 @@ export default function SignInPage() {
     }
   }
 
-  const signUp = async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  const MIN_PASS = 8; // Supabase allows 6+, but 8 is safer
 
-      console.log("🧐 [SignIn] Sign-up attempt with email:", email)
+  const signUp = async (e?: React.FormEvent) => {
+    e?.preventDefault?.();
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      setMessage(null);
+
+      // 1) Validate inputs early to avoid "anonymous" style errors
+      if (!email?.trim()) {
+        setError('Please enter an email address.');
+        return;
+      }
+      if (!password || password.length < MIN_PASS) {
+        setError(`Please enter a password of at least ${MIN_PASS} characters.`);
+        return;
+      }
+
+      // 2) Build redirect (used if email confirmations are ON)
+      const emailRedirectTo =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/auth/callback`
+          : undefined;
+
+      console.log('🧐 [SignIn] Sign-up attempt:', {
+        email,
+        passLen: password.length,
+        emailRedirectTo,
+      });
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo,
+          // include optional metadata if you have a name input:
+          // data: { full_name: name ?? null },
         },
-      })
+      });
 
-      console.log("🧐 [SignIn] SignUp response:", { data, error })
+      console.log('🧐 [SignIn] SignUp response:', { data, error });
 
-      if (error) throw error
-      setMessage('Check your email for the confirmation link!')
-    } catch (error: any) {
-      console.error('🧐 [SignIn] Sign up error:', error)
-      setError(error.message || 'Failed to sign up')
+      if (error) {
+        // Surface the exact reason to us/devtools and a friendly message to the user
+        console.error('[SIGNUP ERROR]', { code: (error as any).code, message: error.message });
+        // Some common messages: "Signups not allowed for this instance", "Anonymous sign-ins are disabled"
+        setError(error.message || 'Failed to sign up');
+        return;
+      }
+
+      // 3) If confirmations are OFF, a session is created immediately
+      if (data.session) {
+        router.push('/dashboard');
+        return;
+      }
+
+      // 4) If confirmations are ON, user must click the email link
+      setMessage('Check your email for the confirmation link, then log in.');
+    } catch (err: any) {
+      console.error('🧐 [SignIn] Sign up error (catch):', err);
+      setError(err?.message || 'Failed to sign up');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const resetPassword = async () => {
     if (!email) {

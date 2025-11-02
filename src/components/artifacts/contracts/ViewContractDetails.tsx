@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, TrendingUp, TrendingDown, Calendar, DollarSign, Users, Shield, AlertTriangle, CheckCircle } from 'lucide-react';
+import { FileText, TrendingUp, TrendingDown, CheckCircle } from 'lucide-react';
 
 const ContractDetails = () => {
   return (
@@ -173,7 +173,7 @@ const ContractDetails = () => {
               <div className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Critical Risk</div>
             </div>
             <p className="text-sm text-gray-600 mb-2 font-mono bg-gray-50 p-2 rounded">
-              "Customer shall indemnify and hold harmless Provider against any and all claims, damages, losses, costs and expenses arising from Customer's use of the Services, without limitation as to amount or scope."
+              &quot;Customer shall indemnify and hold harmless Provider against any and all claims, damages, losses, costs and expenses arising from Customer&apos;s use of the Services, without limitation as to amount or scope.&quot;
             </p>
             <div className="text-xs text-red-600">
               ⚠️ Unlimited liability exposure - could exceed contract value by 10x+ in worst case scenarios
@@ -186,7 +186,7 @@ const ContractDetails = () => {
               <div className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Critical Risk</div>
             </div>
             <p className="text-sm text-gray-600 mb-2 font-mono bg-gray-50 p-2 rounded">
-              "Service fees shall increase annually by fifteen percent (15%) effective on each anniversary date, automatically and without notice."
+              &quot;Service fees shall increase annually by fifteen percent (15%) effective on each anniversary date, automatically and without notice.&quot;
             </p>
             <div className="text-xs text-red-600">
               ⚠️ Automatic 15% increases will compound to $310K by year 5 vs industry standard 3% = $203K
@@ -199,7 +199,7 @@ const ContractDetails = () => {
               <div className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">Medium Risk</div>
             </div>
             <p className="text-sm text-gray-600 mb-2 font-mono bg-gray-50 p-2 rounded">
-              "Either party may terminate this Agreement with ninety (90) days written notice to the other party."
+              &quot;Either party may terminate this Agreement with ninety (90) days written notice to the other party.&quot;
             </p>
             <div className="text-xs text-amber-600">
               ⚠️ Extended notice period limits flexibility and negotiation leverage
@@ -212,7 +212,7 @@ const ContractDetails = () => {
               <div className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Favorable</div>
             </div>
             <p className="text-sm text-gray-600 mb-2 font-mono bg-gray-50 p-2 rounded">
-              "Provider guarantees 99.5% uptime with 4-hour response time for critical issues."
+              &quot;Provider guarantees 99.5% uptime with 4-hour response time for critical issues.&quot;
             </p>
             <div className="text-xs text-green-600">
               ✓ Strong SLA terms with good penalty structure for non-compliance

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, Send, Save } from 'lucide-react';
+import { Send, Save } from 'lucide-react';
 
 interface EmailArtifactProps {
   to: string;

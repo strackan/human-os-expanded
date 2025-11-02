@@ -362,7 +362,7 @@ export default function ExpansionOverviewArtifact({
                 <p className="text-sm font-medium text-gray-900 mb-2">Market Context</p>
                 <p className="text-sm text-gray-700">
                   Based on analysis of similar customers in the same industry vertical and size range,
-                  this account's current pricing represents a legacy rate that no longer reflects the
+                  this account&apos;s current pricing represents a legacy rate that no longer reflects the
                   value being delivered or market standards.
                 </p>
               </div>

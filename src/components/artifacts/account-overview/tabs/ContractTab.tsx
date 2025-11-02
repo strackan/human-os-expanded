@@ -14,9 +14,7 @@ import { ReviewCheckbox } from '../components/ReviewCheckbox';
  */
 export function ContractTab({
   contractInfo,
-  customerName,
-  onReview,
-  onContractQuestion
+  onReview
 }: ContractTabProps) {
   const [contractReviewed, setContractReviewed] = useState(false);
 

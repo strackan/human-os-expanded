@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, AlertTriangle, CheckCircle, Clock, Shield, DollarSign, Calendar, Users } from 'lucide-react';
+import { FileText, AlertTriangle, CheckCircle, Clock, Shield, Calendar } from 'lucide-react';
 
 const ContractAnalysisCard = () => {
   return (

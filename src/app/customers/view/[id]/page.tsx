@@ -2,22 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { 
-  ArrowLeftIcon, 
-  PencilIcon, 
-  WrenchIcon, 
-  ChartBarIcon, 
-  CalendarIcon, 
-  CurrencyDollarIcon, 
-  HeartIcon,
+import {
+  ArrowLeftIcon,
+  PencilIcon,
+  WrenchIcon,
+  ChartBarIcon,
+  CalendarIcon,
   UserGroupIcon,
   DocumentTextIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
   PhoneIcon,
-  EnvelopeIcon,
-  BuildingOfficeIcon
+  EnvelopeIcon
 } from '@heroicons/react/24/outline';
 import { CustomerService } from '../../../../lib/services/CustomerService';
 import { CustomerWithContact } from '../../../../types/customer';
@@ -28,15 +22,13 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
   const [customer, setCustomer] = useState<CustomerWithContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [customerId, setCustomerId] = useState<string>('');
 
   useEffect(() => {
     const loadCustomer = async () => {
       try {
         const resolvedParams = await params;
         const id = resolvedParams.id;
-        setCustomerId(id);
-        
+
         setLoading(true);
         setError(null);
         
@@ -64,11 +56,6 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
     loadCustomer();
   }, [params]);
 
-  const getHealthColor = (score: number) => {
-    if (score >= 80) return 'text-green-600 bg-green-100';
-    if (score >= 60) return 'text-yellow-600 bg-yellow-100';
-    return 'text-red-600 bg-red-100';
-  };
 
   const getRiskLevel = (healthScore: number, daysUntilRenewal: number) => {
     if (healthScore < 50 || daysUntilRenewal < 30) return 'high';

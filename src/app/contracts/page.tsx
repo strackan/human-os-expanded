@@ -6,9 +6,7 @@ import {
   DocumentArrowDownIcon,
   DocumentCheckIcon,
   ExclamationTriangleIcon,
-  CurrencyDollarIcon,
   SparklesIcon,
-  UserIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
 import type { ForwardRefExoticComponent, SVGProps, RefAttributes } from 'react';
@@ -74,15 +72,6 @@ const ContractsPage = () => {
     }
   }
 
-  const labelColors: Record<ContractLabel, { bg: string; text: string }> = {
-    'Unsigned': { bg: 'bg-red-50', text: 'text-red-700' },
-    'Non-Standard Pricing': { bg: 'bg-purple-50', text: 'text-purple-700' },
-    'Unlimited Liability': { bg: 'bg-orange-50', text: 'text-orange-700' },
-    'Price Cap': { bg: 'bg-blue-50', text: 'text-blue-700' },
-    'Custom SLA': { bg: 'bg-teal-50', text: 'text-teal-700' },
-    'Enterprise Terms': { bg: 'bg-indigo-50', text: 'text-indigo-700' },
-    'Multi-Year': { bg: 'bg-green-50', text: 'text-green-700' }
-  };
 
   const statusStyles: Record<ContractStatus, { bg: string; text: string; icon: IconType; display: string }> = {
     'active': {

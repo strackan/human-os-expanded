@@ -28,7 +28,7 @@ export async function POST() {
     // ============================================================================
     // 1. Customer
     // ============================================================================
-    const { data: customer, error: customerError } = await supabase
+    const { error: customerError } = await supabase
       .from('customers')
       .upsert({
         id: OBSIDIAN_BLACK_ID,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
+// No lucide imports needed
 
 export interface ChecklistItem {
   id: string;

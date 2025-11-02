@@ -41,7 +41,7 @@ export default function SetupPasswordPage() {
           setIsValidToken(true)
           setMessage(`Setting up password for: ${data.user.email}`)
         }
-      } catch (err) {
+      } catch {
         setIsValidToken(false)
         setError('Error validating setup link. Please try again.')
       }
@@ -70,7 +70,7 @@ export default function SetupPasswordPage() {
     setError(null)
     
     try {
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: password
       })
 
@@ -78,13 +78,13 @@ export default function SetupPasswordPage() {
         setError(error.message)
       } else {
         setMessage('Password set up successfully! You can now sign in with your email and password.')
-        
+
         // Redirect to signin after success
         setTimeout(() => {
           router.push('/signin?message=password_setup_complete')
         }, 2000)
       }
-    } catch (err) {
+    } catch {
       setError('Failed to set up password. Please try again.')
     } finally {
       setIsLoading(false)
@@ -178,7 +178,7 @@ export default function SetupPasswordPage() {
           </button>
 
           <div className="text-sm text-gray-500">
-            <p>After setting up your password, you'll be able to:</p>
+            <p>After setting up your password, you&apos;ll be able to:</p>
             <ul className="list-disc list-inside mt-2 text-left">
               <li>Sign in with email/password when OAuth is unavailable</li>
               <li>Access your account from any device</li>

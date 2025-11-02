@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, AlertTriangle, Clock, Shield, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react';
+import { FileText, AlertTriangle, Clock, CheckCircle, XCircle, Calendar, DollarSign } from 'lucide-react';
 
 const ContractWorkflow = () => {
   return (
@@ -69,7 +69,7 @@ const ContractWorkflow = () => {
           <div className="flex-1">
             <h3 className="font-semibold text-gray-900 mb-2">Critical Contract Issues Detected</h3>
             <p className="text-gray-700 mb-4">
-              I've identified <strong>4 high-risk clauses</strong> that could impact renewal. Immediate action recommended:
+              I&apos;ve identified <strong>4 high-risk clauses</strong> that could impact renewal. Immediate action recommended:
             </p>
             
             <div className="grid grid-cols-2 gap-4 mb-4">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, AlertTriangle, CheckCircle, Clock, Shield, DollarSign, Calendar, Users } from 'lucide-react';
+import { FileText, AlertTriangle, CheckCircle, Clock, Shield, Calendar } from 'lucide-react';
 
 const ContractAnalysisCard = () => {
   return (
@@ -181,7 +181,7 @@ const ContractAnalysisCard = () => {
                 <h4 className="font-medium text-gray-900">Section 8.3 - Liability Cap</h4>
                 <div className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">High Risk</div>
               </div>
-              <p className="text-sm text-gray-600 mb-2">"Liability shall not exceed $50,000 for any claim..."</p>
+              <p className="text-sm text-gray-600 mb-2">&quot;Liability shall not exceed $50,000 for any claim...&quot;</p>
               <p className="text-xs text-red-600">⚠️ Outdated limit - industry standard is $500K+ for this contract size</p>
             </div>
 
@@ -190,7 +190,7 @@ const ContractAnalysisCard = () => {
                 <h4 className="font-medium text-gray-900">Section 12.1 - IP Ownership</h4>
                 <div className="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded">Medium Risk</div>
               </div>
-              <p className="text-sm text-gray-600 mb-2">"All intellectual property developed during..."</p>
+              <p className="text-sm text-gray-600 mb-2">&quot;All intellectual property developed during...&quot;</p>
               <p className="text-xs text-amber-600">⚠️ Ambiguous language around derivative works and improvements</p>
             </div>
 
@@ -199,7 +199,7 @@ const ContractAnalysisCard = () => {
                 <h4 className="font-medium text-gray-900">Section 5.2 - SLA Terms</h4>
                 <div className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">Compliant</div>
               </div>
-              <p className="text-sm text-gray-600 mb-2">"99.5% uptime guarantee with 4-hour response..."</p>
+              <p className="text-sm text-gray-600 mb-2">&quot;99.5% uptime guarantee with 4-hour response...&quot;</p>
               <p className="text-xs text-green-600">✓ Consistently exceeded - actual performance 99.7%</p>
             </div>
           </div>

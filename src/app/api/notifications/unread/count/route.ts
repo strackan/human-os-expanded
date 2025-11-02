@@ -7,11 +7,11 @@
  * Phase 3.3: Task State Management
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { NotificationService } from '@/lib/services/NotificationService';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';

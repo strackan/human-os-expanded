@@ -24,10 +24,14 @@
       "Read(//c/Users/strac/dev/**)",
       "Read(//c/Users/**)",
       "Bash(npx supabase migration:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(vercel env pull:*)",
+      "Bash(vercel project:*)",
+      "Bash(vercel alias:*)",
+      "Bash(vercel inspect:*)"
     ],
     "deny": [],
     "ask": []
   },
-  "outputStyle": "tdd-ui-checkpoints"
+  "outputStyle": "default"
 }

@@ -18,7 +18,7 @@ export default function NoAccessPage() {
             Access Denied
           </h1>
           <p className="text-gray-600 mb-2">
-            You don't have permission to access this application.
+            You don&apos;t have permission to access this application.
           </p>
           {user?.email && (
             <p className="text-sm text-gray-500 mb-6">

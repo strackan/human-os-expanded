@@ -66,15 +66,6 @@ const ContractArtifact: React.FC<ContractArtifactProps> = ({ data = {}, isLoadin
     }).format(value);
   };
 
-  const getRiskColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'text-red-600 bg-red-50 border-red-200';
-      case 'medium': return 'text-amber-600 bg-amber-50 border-amber-200';
-      case 'low': return 'text-green-600 bg-green-50 border-green-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
   const getRiskBadgeColor = (level: string) => {
     switch (level) {
       case 'high': return 'bg-red-100 text-red-700 border-red-200';

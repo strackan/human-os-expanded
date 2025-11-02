@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { PlusIcon, MagnifyingGlassIcon, CalendarIcon, PlayIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, CalendarIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
 import CustomerGrid from "@/components/customers/CustomerGrid";
 import { CustomerWithContact } from "@/types/customer";

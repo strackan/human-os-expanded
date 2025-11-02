@@ -123,7 +123,7 @@ export async function POST(
         if (responseText) {
           responseData = JSON.parse(responseText)
         }
-      } catch (parseError) {
+      } catch {
         console.log('Response is not valid JSON:', responseText)
         responseData = { raw_response: responseText }
       }

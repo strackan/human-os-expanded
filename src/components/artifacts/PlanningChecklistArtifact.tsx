@@ -3,7 +3,6 @@
 console.log('🟠 PlanningChecklistArtifact LOADED - Build timestamp:', new Date().toISOString());
 
 import React from 'react';
-import { CheckSquare } from 'lucide-react';
 
 export interface ChecklistItem {
   id: string;
@@ -31,7 +30,6 @@ const PlanningChecklistArtifact: React.FC<PlanningChecklistProps> = ({
   showActions = true
 }) => {
   // Static display - no interactive state management
-  const completedCount = items.filter(item => item.completed).length;
 
   return (
     <div className="bg-white h-full flex flex-col">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrendingUp, AlertTriangle, Users, DollarSign, Calendar, Target, CheckCircle } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, Target } from 'lucide-react';
 
 const UsageSpikeWorkflow = () => {
   return (

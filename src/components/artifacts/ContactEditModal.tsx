@@ -203,7 +203,7 @@ export default function ContactEditModal({
                 )}
 
                 {searchQuery.trim().length > 0 && filteredContacts.length === 0 && !showDropdown && (
-                  <p className="mt-2 text-sm text-gray-500">No contacts found matching "{searchQuery}"</p>
+                  <p className="mt-2 text-sm text-gray-500">No contacts found matching &quot;{searchQuery}&quot;</p>
                 )}
               </div>
 

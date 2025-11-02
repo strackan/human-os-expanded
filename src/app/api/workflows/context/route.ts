@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get customer intelligence from database (uses helper function)
-    const { data: intelligenceData, error: intelligenceError } = await supabase
+    const { data: intelligenceData } = await supabase
       .rpc('get_latest_intelligence', { p_customer_id: customerIdToFetch });
 
     const intelligence = intelligenceData && intelligenceData.length > 0 ? {
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Get financial data from database
-    const { data: financialsData, error: financialsError } = await supabase
+    const { data: financialsData } = await supabase
       .rpc('get_latest_financials', { p_customer_id: customerIdToFetch });
 
     const financials = financialsData && financialsData.length > 0 ? {
@@ -132,7 +132,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Get usage data from database
-    const { data: usageData, error: usageError } = await supabase
+    const { data: usageData } = await supabase
       .rpc('get_latest_usage', { p_customer_id: customerIdToFetch });
 
     const usage = usageData && usageData.length > 0 ? {
@@ -150,7 +150,7 @@ export async function GET(request: NextRequest) {
     };
 
     // Get engagement data from database
-    const { data: engagementData, error: engagementError } = await supabase
+    const { data: engagementData } = await supabase
       .rpc('get_latest_engagement', { p_customer_id: customerIdToFetch });
 
     const engagement = engagementData && engagementData.length > 0 ? {

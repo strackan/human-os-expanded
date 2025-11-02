@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle2, Edit3 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 interface AssessmentSummaryArtifactProps {
   customerName: string;
@@ -47,7 +47,7 @@ export default function AssessmentSummaryArtifact({
             {assessmentData.opportunityReason && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-700 italic">
-                  "{assessmentData.opportunityReason}"
+                  &quot;{assessmentData.opportunityReason}&quot;
                 </p>
               </div>
             )}
@@ -66,7 +66,7 @@ export default function AssessmentSummaryArtifact({
             {assessmentData.riskReason && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                 <p className="text-sm text-gray-700 italic">
-                  "{assessmentData.riskReason}"
+                  &quot;{assessmentData.riskReason}&quot;
                 </p>
               </div>
             )}
@@ -79,7 +79,7 @@ export default function AssessmentSummaryArtifact({
             <h3 className="text-sm font-semibold text-gray-700">Year Overview</h3>
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p className="text-sm text-gray-700 italic">
-                "{assessmentData.yearOverview}"
+                &quot;{assessmentData.yearOverview}&quot;
               </p>
             </div>
           </div>

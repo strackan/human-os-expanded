@@ -148,7 +148,6 @@ export async function GET(
 
     // Get latest contract and renewal
     const latestContract = customer.contracts?.[0];
-    const latestRenewal = latestContract?.renewals?.[0];
     const renewalDate = latestContract?.end_date || customer.renewal_date;
 
     // =====================================================

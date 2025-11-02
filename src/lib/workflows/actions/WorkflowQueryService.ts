@@ -65,6 +65,8 @@ export class WorkflowQueryService extends SchemaAwareService {
   ): Promise<{ success: boolean; workflows?: WorkflowExecution[]; error?: string }> {
     try {
       console.log('[WorkflowQueryService] getActiveWorkflows called with userId:', userId);
+      console.log('[WorkflowQueryService] Filters:', filters);
+      console.time('[WorkflowQueryService] Query execution time');
 
       let query = this.client
         .from('workflow_executions')
@@ -98,6 +100,7 @@ export class WorkflowQueryService extends SchemaAwareService {
 
       console.log('[WorkflowQueryService] Executing query...');
       const { data, error } = await query;
+      console.timeEnd('[WorkflowQueryService] Query execution time');
 
       if (error) {
         console.error('[WorkflowQueryService] Query error:', error);
@@ -114,6 +117,7 @@ export class WorkflowQueryService extends SchemaAwareService {
       }
 
       console.log('[WorkflowQueryService] Query successful, rows:', data?.length || 0);
+      console.log('[WorkflowQueryService] Sample data:', data?.[0]);
 
       // Transform data to include customer_name
       const workflows = (data || []).map((w: any) => ({

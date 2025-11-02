@@ -113,8 +113,7 @@ const CSMDashboard: React.FC = () => {
     currentConfig,
     currentWorkflowDefinition,
     handleLaunchTaskMode,
-    handleCloseModal,
-    handleNextCustomer
+    handleCloseModal
   } = useDashboardWorkflows({
     configMap,
     staticWorkflowDefinitionsMap,
@@ -126,7 +125,7 @@ const CSMDashboard: React.FC = () => {
     // TODO: Implement contextual chat functionality
     // This could launch a chat interface with context about the specific update
     console.log('Launching contextual help for update:', update);
-    
+
     // For now, we'll just show an alert with the update details
     alert(`Contextual help for ${update.customer}:\n\n${update.update}\n\nThis will eventually launch a chat interface to help you with this specific issue.`);
   };
@@ -134,7 +133,7 @@ const CSMDashboard: React.FC = () => {
   const handleGoToReports = () => {
     // TODO: Navigate to reports page or open reports modal
     console.log('Navigating to reports...');
-    
+
     // For now, we'll just show an alert
     alert('This will navigate to the detailed reports section with more comprehensive revenue analytics and insights.');
   };
@@ -148,7 +147,7 @@ const CSMDashboard: React.FC = () => {
         <div className="flex items-center gap-4">
           {defaultLaunchConfig && (
             <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
-              Configured: {defaultLaunchConfig.type === 'group' ? 'Group' : 'Template'} "{defaultLaunchConfig.id}"
+              Configured: {defaultLaunchConfig.type === 'group' ? 'Group' : 'Template'} &quot;{defaultLaunchConfig.id}&quot;
             </div>
           )}
           <button 
@@ -184,7 +183,7 @@ const CSMDashboard: React.FC = () => {
         />
 
         {/* Recent Updates */}
-        <RecentUpdates 
+        <RecentUpdates
           data={dashboardData.recentUpdates}
           activeTab={activeUpdateTab}
           showCriticalOnly={showCriticalOnly}

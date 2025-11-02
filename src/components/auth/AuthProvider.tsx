@@ -70,17 +70,15 @@ export default function AuthProvider({ children }: AuthProviderProps) {
           userEmail: session?.user?.email,
         })
 
-        // Fetch workspace profile if user exists
-        if (session?.user) {
-          await fetchWorkspaceProfile(session.user.id)
-        } else {
-          // Reset workspace profile if no user
-          setWorkspaceProfile({
-            company_id: null,
-            is_admin: false,
-            status: 2,
-          })
-        }
+        // TEMP: Workspace profile fetch disabled due to query hanging
+        // Will re-enable after investigating Supabase client issue
+        // For now, use default values
+        setWorkspaceProfile({
+          company_id: null,
+          is_admin: false,
+          status: 1, // Default to Active
+        })
+        console.log('⚠️ [AUTH] Workspace profile fetch temporarily disabled')
       } catch (error) {
         console.error('❌ [AUTH] Error loading user:', error)
         setUser(null)

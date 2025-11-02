@@ -16,7 +16,7 @@ import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import { useAuth } from '@/components/auth/AuthProvider';
 import confetti from 'canvas-confetti';
-import { createWorkflowExecution, getTestUserId } from '@/lib/workflows/actions';
+import { createWorkflowExecution } from '@/lib/workflows/actions';
 import { registerWorkflowConfig } from '@/config/workflows/index';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
@@ -67,6 +67,7 @@ export default function DashboardClient() {
 
     try {
       console.log('[Dashboard] Launching database-driven workflow...');
+      console.time('[Dashboard] Total workflow launch time');
 
       const workflowId = 'obsidian-black-renewal';
       const customerId = '550e8400-e29b-41d4-a716-446655440001';
@@ -125,8 +126,10 @@ export default function DashboardClient() {
       });
 
       setTaskModeOpen(true);
+      console.timeEnd('[Dashboard] Total workflow launch time');
     } catch (error) {
       console.error('[Dashboard] Error launching workflow:', error);
+      console.timeEnd('[Dashboard] Total workflow launch time');
       alert('Error launching workflow. Check console for details.');
     }
   };

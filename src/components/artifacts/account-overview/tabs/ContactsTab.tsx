@@ -13,7 +13,6 @@ import ContactEditModal from '../../ContactEditModal';
  */
 export function ContactsTab({
   contacts,
-  customerName,
   onReview,
   onContactConfirm,
   onContactEdit,

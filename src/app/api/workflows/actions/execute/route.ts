@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       };
     } else {
       // Execute built-in action
-      result = await executeBuiltInAction(action.action_type, params, supabase);
+      result = await executeBuiltInAction(action.action_type, params);
     }
 
     // Update workflow execution state based on action
@@ -115,8 +115,7 @@ export async function POST(request: NextRequest) {
 
 async function executeBuiltInAction(
   actionType: string,
-  params: Record<string, any>,
-  supabase: any
+  params: Record<string, any>
 ): Promise<ActionResult> {
   switch (actionType) {
     case 'snooze':

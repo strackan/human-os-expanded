@@ -43,7 +43,7 @@ export default function ResetPasswordPage() {
           setUserEmail(data.user.email || '')
           setMessage(`Resetting password for: ${data.user.email}`)
         }
-      } catch (err) {
+      } catch {
         setIsValidToken(false)
         setError('Error validating reset link. Please try again.')
       }
@@ -72,7 +72,7 @@ export default function ResetPasswordPage() {
     setError(null)
     
     try {
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         password: password
       })
 
@@ -80,13 +80,13 @@ export default function ResetPasswordPage() {
         setError(error.message)
       } else {
         setMessage('Password reset successfully! You can now sign in with your new password.')
-        
+
         // Redirect to signin after success
         setTimeout(() => {
           router.push('/signin?message=password_reset_complete')
         }, 2000)
       }
-    } catch (err) {
+    } catch {
       setError('Failed to reset password. Please try again.')
     } finally {
       setIsLoading(false)

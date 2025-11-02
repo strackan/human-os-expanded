@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { User, Mail, Calendar, Edit2, UserX, RefreshCw, Check, X, Building, Briefcase, Code, Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import { User, Mail, Edit2, UserX, RefreshCw, Check, X, Building, Briefcase, Code, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 export interface Contact {

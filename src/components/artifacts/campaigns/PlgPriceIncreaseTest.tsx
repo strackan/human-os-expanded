@@ -1,5 +1,5 @@
 import React from 'react';
-import { TestTube, TrendingUp, TrendingDown, Users, DollarSign, Target, BarChart3, AlertCircle } from 'lucide-react';
+import { TestTube, Users, DollarSign, Target, BarChart3, AlertCircle } from 'lucide-react';
 
 const PriceTestingDashboard = () => {
   return (
@@ -106,7 +106,7 @@ const PriceTestingDashboard = () => {
             <h4 className="font-medium text-green-900 mb-2">Key Insights</h4>
             <ul className="text-xs text-green-800 space-y-1">
               <li>• High acceptance rate with minimal pushback</li>
-              <li>• Customers cite "reasonable adjustment"</li>
+              <li>• Customers cite &quot;reasonable adjustment&quot;</li>
               <li>• Low churn risk, stable customer base</li>
             </ul>
           </div>
@@ -156,7 +156,7 @@ const PriceTestingDashboard = () => {
             <h4 className="font-medium text-amber-900 mb-2">Key Insights</h4>
             <ul className="text-xs text-amber-800 space-y-1">
               <li>• Higher revenue but significant churn risk</li>
-              <li>• Complaints about "steep price jump"</li>
+              <li>• Complaints about &quot;steep price jump&quot;</li>
               <li>• Support burden increased substantially</li>
             </ul>
           </div>
@@ -241,7 +241,7 @@ const PriceTestingDashboard = () => {
               <div className="flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-yellow-800">
-                  <strong>Recommendation:</strong> Group A's lower churn rate and better customer sentiment outweigh Group B's marginal revenue advantage. The 2.8x higher churn risk in Group B threatens long-term value.
+                  <strong>Recommendation:</strong> Group A&apos;s lower churn rate and better customer sentiment outweigh Group B&apos;s marginal revenue advantage. The 2.8x higher churn risk in Group B threatens long-term value.
                 </div>
               </div>
             </div>

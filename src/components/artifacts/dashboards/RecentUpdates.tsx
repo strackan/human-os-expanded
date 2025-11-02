@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Users, DollarSign, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Users, ArrowRight } from 'lucide-react';
 
 interface Update {
   id: string;

@@ -163,7 +163,7 @@ export default function CreateUserPage() {
           <h3 className="text-sm font-medium text-blue-900 mb-2">Quick Setup Instructions:</h3>
           <ol className="text-xs text-blue-700 space-y-1 list-decimal list-inside">
             <li>Enter your desired email and password</li>
-            <li>Click "Create User" to create the account</li>
+            <li>Click &quot;Create User&quot; to create the account</li>
             <li>You'll be redirected to the sign-in page</li>
             <li>Use your new credentials to login</li>
           </ol>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, TrendingUp, AlertTriangle, Target, DollarSign, Calendar, BarChart3, Award } from 'lucide-react';
+import { Users, TrendingUp, AlertTriangle, Target, BarChart3, Award } from 'lucide-react';
 
 const Q4ManagerForecast = () => {
   return (

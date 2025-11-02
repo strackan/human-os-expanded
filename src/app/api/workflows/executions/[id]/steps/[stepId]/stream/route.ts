@@ -134,7 +134,7 @@ export async function GET(
                           tokenCount
                         })}\n\n`));
                       }
-                    } catch (e) {
+                    } catch {
                       // Skip invalid JSON lines
                     }
                   }

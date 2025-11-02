@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, TrendingUp, DollarSign, Calendar, CheckCircle, AlertTriangle, Target } from 'lucide-react';
+import { ChevronDown, ChevronUp, TrendingUp, Calendar, CheckCircle, AlertTriangle, Target } from 'lucide-react';
 
 interface Scenario {
   id: 'conservative' | 'balanced' | 'aggressive';
@@ -77,7 +77,7 @@ export default function ExpansionProposalArtifact({
           <h2 className="text-base font-medium text-gray-900">Expansion Proposal</h2>
         </div>
         <p className="text-sm text-gray-500">
-          Three scenarios for {customerName}'s capacity and pricing optimization
+          Three scenarios for {customerName}&apos;s capacity and pricing optimization
         </p>
       </div>
 

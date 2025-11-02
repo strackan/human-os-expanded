@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     // Try to authenticate with the provided password
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
         password
       })

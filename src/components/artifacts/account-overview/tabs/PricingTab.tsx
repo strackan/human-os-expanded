@@ -10,7 +10,7 @@ import { MetricCard } from '../components/MetricCard';
  * Can be used independently or within the AccountOverview tab container.
  * Displays ARR, seats, market position, usage metrics, and pricing opportunities.
  */
-export function PricingTab({ pricingInfo, customerName, onReview }: PricingTabProps) {
+export function PricingTab({ pricingInfo }: PricingTabProps) {
   return (
     <div className="max-w-3xl space-y-6">
       {/* Current Pricing Overview */}

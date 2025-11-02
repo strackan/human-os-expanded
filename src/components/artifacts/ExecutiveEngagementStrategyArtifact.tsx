@@ -91,7 +91,7 @@ export default function ExecutiveEngagementStrategyArtifact({
                 1
               </span>
               <label className="flex-1 text-sm font-medium text-gray-900">
-                What's your primary objective for this engagement?
+                What&apos;s your primary objective for this engagement?
               </label>
               <button
                 onClick={handleMicClick}
@@ -134,7 +134,7 @@ export default function ExecutiveEngagementStrategyArtifact({
                 2
               </span>
               <label className="flex-1 text-sm font-medium text-gray-900">
-                What tone should you strike?
+                What&apos;s the one key message you want to convey?
               </label>
               <button
                 onClick={handleMicClick}

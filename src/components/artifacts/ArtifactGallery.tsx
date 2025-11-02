@@ -1,18 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
-import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink, Settings, Menu } from 'lucide-react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
+import { ChevronRight, ChevronDown, Folder, FileCode2, Camera, Maximize2, Minimize2, Crop, Download, GripVertical, Plus, Save, X, Copy, Check, ExternalLink, Settings } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import componentRegistry, { ComponentItem } from './componentRegistry';
 import TemplateGroupManager from './workflows/components/TemplateGroupManager';
-import {
-  planningChecklistDemoConfig,
-  contactStrategyDemoConfig,
-  contractDemoConfig,
-  pricingAnalysisDemoConfig,
-  planSummaryDemoConfig,
-  allArtifactsMasterDemo
-} from './workflows/config/configs';
+// Config imports removed - not used directly in this component
 
 export default function ArtifactGallery() {
   const [activeTab, setActiveTab] = useState<'gallery' | 'groups'>('gallery');
@@ -41,7 +34,6 @@ export default function ArtifactGallery() {
     code: ''
   });
   const [isCreating, setIsCreating] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [isCopying, setIsCopying] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -159,9 +151,9 @@ export default function ArtifactGallery() {
 
   const captureScreenshot = async () => {
     if (!selectedComponent || !previewRef.current) return;
-    
+
     setIsCapturing(true);
-    
+
     try {
       // Use the browser's native screenshot capability as fallback
       if ('getDisplayMedia' in navigator.mediaDevices) {
@@ -170,11 +162,11 @@ export default function ArtifactGallery() {
           const stream = await navigator.mediaDevices.getDisplayMedia({
             video: true
           });
-          
+
           const video = document.createElement('video');
           video.srcObject = stream;
           video.play();
-          
+
           video.addEventListener('loadedmetadata', () => {
             const canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
@@ -185,15 +177,15 @@ export default function ArtifactGallery() {
               setCapturedCanvas(canvas);
               setCropArea({ x: 0, y: 0, width: canvas.width, height: canvas.height });
               setShowCropModal(true);
-              
+
               // Stop the stream
               stream.getTracks().forEach(track => track.stop());
             }
           });
-          
+
           setIsCapturing(false);
           return;
-        } catch (screenError) {
+        } catch {
           console.log('Screen capture not available, falling back to html2canvas');
         }
       }

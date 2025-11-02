@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
 import CustomerOverview from '../workflows/components/CustomerOverview';
 import Analytics from '../workflows/components/Analytics';
 import ChatInterface from '../workflows/components/ChatInterface';
@@ -14,15 +13,9 @@ const DynamicHDAI: React.FC = () => {
   const config: WorkflowConfig = pricingAnalysisDemoConfig;
 
   // Initialize with config defaults - force split mode to show all four quadrants
-  const [modalDimensions] = useState(config.layout.modalDimensions);
   const [statsHeight, setStatsHeight] = useState(config.layout.statsHeight || 45.3);
-  const [isSplitMode, setIsSplitMode] = useState(true); // Force split mode to show artifacts panel
-  const [chatWidth, setChatWidth] = useState(config.layout.chatWidth);
-  const [isStatsVisible, setIsStatsVisible] = useState(true);
-  const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set(['planning-checklist-renewal'])); // Show initial artifact
-  const [isDragging, setIsDragging] = useState(false);
+  const [isSplitMode] = useState(true); // Force split mode to show artifacts panel
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [showFinalSlide, setShowFinalSlide] = useState(false);
 
   // Determine if we're using slides or traditional config
   const isSlideBased = config.slides && config.slides.length > 0;
@@ -56,8 +49,7 @@ const DynamicHDAI: React.FC = () => {
 
   const startStatsResize = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const containerHeight = window.innerHeight;
       const newHeight = (e.clientY / containerHeight) * 100;
@@ -65,7 +57,6 @@ const DynamicHDAI: React.FC = () => {
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };

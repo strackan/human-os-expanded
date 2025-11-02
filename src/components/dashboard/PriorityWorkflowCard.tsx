@@ -28,39 +28,79 @@ export default function PriorityWorkflowCard({
 }: PriorityWorkflowCardProps) {
   const [dbWorkflow, setDbWorkflow] = useState<any>(null);
   const [loadingDb, setLoadingDb] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // NEW: Fetch priority workflow from database when userId provided
-  useEffect(() => {
-    if (userId && !providedTitle) {
-      loadPriorityWorkflowFromDatabase();
-    }
-  }, [userId, providedTitle]);
+  // REMOVED: useEffect that loaded on mount
+  // This was causing unnecessary DB queries on dashboard load
+  // Now we only load when the user clicks the card
 
   const loadPriorityWorkflowFromDatabase = async () => {
     if (!userId) return;
+
+    console.log('[PriorityWorkflowCard] loadPriorityWorkflowFromDatabase called');
+    console.time('[PriorityWorkflowCard] Total load time');
 
     setLoadingDb(true);
     try {
       const queryService = new WorkflowQueryService();
       const result = await queryService.getActiveWorkflows(userId);
 
+      console.log('[PriorityWorkflowCard] Query result:', {
+        success: result.success,
+        workflowCount: result.workflows?.length || 0
+      });
+
       if (result.success && result.workflows && result.workflows.length > 0) {
         // Get the highest priority workflow
         const sortedWorkflows = result.workflows.sort((a, b) => (b.priority_score || 0) - (a.priority_score || 0));
         setDbWorkflow(sortedWorkflows[0]);
+        console.log('[PriorityWorkflowCard] Set priority workflow:', sortedWorkflows[0]?.workflow_name);
+      } else {
+        console.log('[PriorityWorkflowCard] No workflows found');
       }
     } catch (err) {
       console.error('[PriorityWorkflowCard] Error loading workflow from database:', err);
     } finally {
       setLoadingDb(false);
+      console.timeEnd('[PriorityWorkflowCard] Total load time');
     }
   };
 
+  // Handle card click - load data first if needed
+  const handleCardClick = async () => {
+    console.log('[PriorityWorkflowCard] Card clicked');
+
+    // If we have provided data or already loaded from DB, launch immediately
+    if (providedTitle || dbWorkflow) {
+      console.log('[PriorityWorkflowCard] Data available, launching workflow');
+      onLaunch();
+      return;
+    }
+
+    // Otherwise, load from database first, then launch
+    if (!hasInteracted && userId) {
+      console.log('[PriorityWorkflowCard] First interaction, loading data...');
+      setHasInteracted(true);
+      await loadPriorityWorkflowFromDatabase();
+
+      // After loading, trigger launch if we got data
+      // (we'll need to use a useEffect to handle this since state update is async)
+    }
+  };
+
+  // Launch workflow automatically after data loads on first interaction
+  useEffect(() => {
+    if (hasInteracted && dbWorkflow && onLaunch) {
+      console.log('[PriorityWorkflowCard] Data loaded, auto-launching workflow');
+      onLaunch();
+    }
+  }, [dbWorkflow, hasInteracted]);
+
   // Check if no workflows are available
-  const hasNoWorkflows = !providedTitle && !dbWorkflow;
+  const hasNoWorkflows = !providedTitle && !dbWorkflow && hasInteracted;
 
   // Use provided data or database data
-  const workflowTitle = providedTitle || dbWorkflow?.workflow_name || 'No workflows available';
+  const workflowTitle = providedTitle || dbWorkflow?.workflow_name || 'Click to load workflow';
   const priority = providedPriority || (dbWorkflow?.priority_score >= 80 ? 'Critical' : dbWorkflow?.priority_score >= 60 ? 'High' : 'Medium') as any;
   const dueDate = providedDueDate || 'Today';
   const arr = providedArr;
@@ -139,7 +179,7 @@ export default function PriorityWorkflowCard({
 
   return (
     <div
-      onClick={onLaunch}
+      onClick={handleCardClick}
       className={`bg-white rounded-3xl p-10 border ${
         completed ? 'border-green-300 bg-green-50/30' : 'border-gray-200'
       } shadow-lg cursor-pointer hover:shadow-xl transition-all group relative ${className}`}

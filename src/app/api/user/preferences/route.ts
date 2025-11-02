@@ -50,7 +50,7 @@ interface UpdatePreferencesRequest {
 // GET - Get User Preferences
 // =====================================================
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';

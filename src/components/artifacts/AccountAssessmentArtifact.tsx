@@ -76,7 +76,7 @@ export default function AccountAssessmentArtifact({
                 1
               </span>
               <label className="flex-1 text-sm font-medium text-gray-900">
-                What's the opportunity score (1-10)?
+                What&apos;s the opportunity score (1-10)?
               </label>
               <button
                 onClick={handleMicClick}
@@ -124,7 +124,7 @@ export default function AccountAssessmentArtifact({
                 2
               </span>
               <label className="flex-1 text-sm font-medium text-gray-900">
-                What's the risk score (0-10)?
+                What&apos;s the risk score (0-10)?
               </label>
               <button
                 onClick={handleMicClick}
