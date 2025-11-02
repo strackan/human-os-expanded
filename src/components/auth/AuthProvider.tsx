@@ -40,22 +40,42 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     console.log('⏱️ [AUTH] Provider mounted at', new Date().toISOString())
 
     const getUser = async () => {
-      console.log('⏱️ [AUTH] Starting initial session fetch...')
+      console.log('⏱️ [AUTH] Starting initial session fetch...', {
+        timestamp: new Date().toISOString(),
+        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL
+      })
       const start = performance.now()
 
       try {
-        const { data: { session } } = await supabase.auth.getSession()
+        // Add timeout detection
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout after 30 seconds')), 30000)
+        )
+
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any
+
+        const duration = performance.now() - start
         setUser(session?.user ?? null)
+
         console.log('⏱️ [AUTH] Session fetch result:', {
           hasUser: !!session?.user,
           userEmail: session?.user?.email,
+          userId: session?.user?.id,
+          durationMs: duration.toFixed(2),
+          isSlowQuery: duration > 1000
         })
-      } catch (error) {
-        console.error('❌ [AUTH] Error loading user:', error)
+      } catch (error: any) {
+        const duration = performance.now() - start
+        console.error('❌ [AUTH] Error loading user:', {
+          error: error?.message || String(error),
+          isTimeout: error?.message?.includes('timeout'),
+          durationMs: duration.toFixed(2)
+        })
         setUser(null)
       } finally {
         const end = performance.now()
-        console.log(`⏱️ [AUTH] Initial session fetch took ${(end - start).toFixed(2)} ms`)
+        console.log(`⏱️ [AUTH] Initial session fetch completed in ${(end - start).toFixed(2)} ms`)
         setLoading(false)
       }
     }
