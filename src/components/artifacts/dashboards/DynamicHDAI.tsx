@@ -14,8 +14,11 @@ const DynamicHDAI: React.FC = () => {
 
   // Initialize with config defaults - force split mode to show all four quadrants
   const [statsHeight, setStatsHeight] = useState(config.layout.statsHeight || 45.3);
-  const [isSplitMode] = useState(true); // Force split mode to show artifacts panel
+  const [chatWidth] = useState(50); // 50% width for chat
+  const [isSplitMode, setIsSplitMode] = useState(true); // Force split mode to show artifacts panel
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+  const [isStatsVisible, setIsStatsVisible] = useState(true);
+  const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set());
 
   // Determine if we're using slides or traditional config
   const isSlideBased = config.slides && config.slides.length > 0;
