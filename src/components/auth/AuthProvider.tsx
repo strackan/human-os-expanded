@@ -59,21 +59,23 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     console.log('⏱️ [AUTH] Provider mounted at', new Date().toISOString())
 
     const getUser = async () => {
-      console.log('⏱️ [AUTH] Starting initial session fetch...')
+      console.log('⏱️ [AUTH] Starting initial user fetch...')
       const start = performance.now()
 
       try {
-        // Add timeout to prevent infinite hanging
-        const sessionPromise = supabase.auth.getSession()
+        // Use getUser() instead of getSession() to avoid LockManager sync issues
+        // getUser() makes a fresh request to Supabase Auth server every time
+        // getSession() can hang due to LockManager API synchronization across tabs
+        const userPromise = supabase.auth.getUser()
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Session fetch timeout after 10 seconds')), 10000)
+          setTimeout(() => reject(new Error('User fetch timeout after 10 seconds')), 10000)
         )
 
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise])
-        setUser(session?.user ?? null)
-        console.log('⏱️ [AUTH] Session fetch result:', {
-          hasUser: !!session?.user,
-          userEmail: session?.user?.email,
+        const { data: { user } } = await Promise.race([userPromise, timeoutPromise])
+        setUser(user ?? null)
+        console.log('⏱️ [AUTH] User fetch result:', {
+          hasUser: !!user,
+          userEmail: user?.email,
         })
 
         // TEMP: Workspace profile fetch disabled due to query hanging
@@ -87,6 +89,23 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         console.log('⚠️ [AUTH] Workspace profile fetch temporarily disabled')
       } catch (error) {
         console.error('❌ [AUTH] Error loading user:', error)
+
+        // If it's a timeout, try to clear corrupted auth state
+        if (error instanceof Error && error.message.includes('timeout')) {
+          console.warn('⚠️ [AUTH] Session fetch timed out - clearing potentially corrupted auth state')
+          try {
+            // Clear localStorage auth keys that might be corrupted
+            Object.keys(localStorage).forEach(key => {
+              if (key.includes('supabase') || key.includes('auth')) {
+                console.log('[AUTH] Clearing:', key)
+                localStorage.removeItem(key)
+              }
+            })
+          } catch (storageError) {
+            console.error('[AUTH] Failed to clear storage:', storageError)
+          }
+        }
+
         setUser(null)
         setWorkspaceProfile({
           company_id: null,
