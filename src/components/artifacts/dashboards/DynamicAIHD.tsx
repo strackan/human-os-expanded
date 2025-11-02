@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+// No icon imports needed
 import CustomerOverviewHD from '../workflows/components/CustomerOverviewHD';
 import AnalyticsHD from '../workflows/components/AnalyticsHD';
 import ChatInterfaceHD from '../workflows/components/ChatInterfaceHD';
@@ -11,11 +11,10 @@ import { dynamicChatAI } from '../workflows/config/configs/DynamicChatFixed';
 
 const DynamicAIHD: React.FC = () => {
   const [statsHeight, setStatsHeight] = useState(50); // 50% height for stats section
+  const [chatWidth] = useState(50); // 50% width for chat
   const [isSplitMode, setIsSplitMode] = useState(true); // Start with artifacts visible
-  const [chatWidth, setChatWidth] = useState(50); // Chat takes up 50% of lower half
   const [isStatsVisible, setIsStatsVisible] = useState(true);
   const [visibleArtifacts, setVisibleArtifacts] = useState<Set<string>>(new Set(['planning-checklist-renewal']));
-  const [isDragging, setIsDragging] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [showFinalSlide, setShowFinalSlide] = useState(false);
 
@@ -47,7 +46,7 @@ const DynamicAIHD: React.FC = () => {
     console.log('DynamicAIHD: Received action:', action);
 
     if (action.type === 'nextStep') {
-      const { stepId, stepTitle, artifactId, showMenu } = action.payload || {};
+      const { stepTitle, artifactId } = action.payload || {};
 
       // Show artifact if specified
       if (artifactId) {
@@ -72,8 +71,7 @@ const DynamicAIHD: React.FC = () => {
 
   const startStatsResize = (e: React.MouseEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const containerHeight = window.innerHeight;
       const newHeight = (e.clientY / containerHeight) * 100;
@@ -81,7 +79,6 @@ const DynamicAIHD: React.FC = () => {
     };
 
     const handleMouseUp = () => {
-      setIsDragging(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
