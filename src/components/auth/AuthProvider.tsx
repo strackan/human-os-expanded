@@ -51,8 +51,9 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   })
   const router = useRouter()
 
-  // Create Supabase client (no singleton needed - createBrowserClient handles it)
-  const supabase = createClient()
+  // Memoize Supabase client to prevent re-instantiation on every render
+  // This prevents infinite useEffect loops
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => {
     const mountTime = performance.now()
@@ -187,9 +188,15 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null)
         setLoading(false)
 
-        // Fetch workspace profile on auth state change
+        // TEMP: Workspace profile fetch disabled due to query hanging
+        // Set defaults instead of fetching from database
         if (session?.user) {
-          await fetchWorkspaceProfile(session.user.id)
+          console.log('⚠️ [AUTH] Workspace profile fetch disabled on auth state change')
+          setWorkspaceProfile({
+            company_id: null,
+            is_admin: false,
+            status: 1, // Default to Active
+          })
         } else {
           // Reset workspace profile on sign out
           setWorkspaceProfile({
@@ -211,7 +218,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
       console.log('⏱️ [AUTH] Provider unmounted at', new Date().toISOString())
     }
-  }, [router]) // Removed supabase from dependencies since it's memoized
+  }, []) // Empty deps - supabase and router are stable, prevents infinite loop
 
   const signOut = async () => {
     console.log('⏱️ [AUTH] Starting sign-out...')
