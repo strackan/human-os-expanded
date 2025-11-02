@@ -64,19 +64,27 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       const start = performance.now()
 
       try {
-        // Use getUser() instead of getSession() to avoid LockManager sync issues
-        // getUser() makes a fresh request to Supabase Auth server every time
-        // getSession() can hang due to LockManager API synchronization across tabs
-        const userPromise = supabase.auth.getUser()
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('User fetch timeout after 10 seconds')), 10000)
-        )
+        // STRATEGY: Use getSession() for initial load (fast, checks localStorage)
+        // Then optionally validate with getUser() if we have a session
+        console.log('⏱️ [AUTH] Step 1: Check local session...')
+        const { data: { session } } = await supabase.auth.getSession()
 
-        const { data: { user } } = await Promise.race([userPromise, timeoutPromise])
-        setUser(user ?? null)
+        if (!session) {
+          console.log('⏱️ [AUTH] No local session found, user not authenticated')
+          setUser(null)
+          setWorkspaceProfile({
+            company_id: null,
+            is_admin: false,
+            status: 2,
+          })
+          return
+        }
+
+        console.log('⏱️ [AUTH] Session found, setting user:', session.user.email)
+        setUser(session.user)
         console.log('⏱️ [AUTH] User fetch result:', {
-          hasUser: !!user,
-          userEmail: user?.email,
+          hasUser: !!session.user,
+          userEmail: session.user?.email,
         })
 
         // TEMP: Workspace profile fetch disabled due to query hanging
