@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Send, Save } from 'lucide-react';
+import { Send, Save, Sparkles } from 'lucide-react';
+import { EmailTypeSelector } from '@/components/ui/EmailTypeSelector';
+import type { EmailType, GenerateEmailResponse } from '@/types/email';
 
 interface EmailArtifactProps {
   to: string;
@@ -12,6 +14,8 @@ interface EmailArtifactProps {
   sendButtonLabel?: string;
   cc?: string;
   attachments?: string[];
+  customerId?: string; // For AI generation
+  enableAIGeneration?: boolean; // Flag to enable AI features
 }
 
 export default function EmailArtifact({
@@ -22,7 +26,9 @@ export default function EmailArtifact({
   onBack,
   sendButtonLabel = 'Send',
   cc,
-  attachments
+  attachments,
+  customerId,
+  enableAIGeneration = false,
 }: EmailArtifactProps) {
   const [emailTo, setEmailTo] = useState(to);
   const [emailSubject, setEmailSubject] = useState(subject);
@@ -33,6 +39,11 @@ export default function EmailArtifact({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  // AI Generation state
+  const [showEmailTypeSelector, setShowEmailTypeSelector] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // Typing animation effect
   useEffect(() => {
@@ -99,12 +110,93 @@ export default function EmailArtifact({
     }, 2000);
   };
 
+  // Handle AI email generation
+  const handleGenerateEmail = async (emailType: EmailType, customInstructions?: string) => {
+    if (!customerId) {
+      setGenerationError('Customer ID is required for AI generation');
+      return;
+    }
+
+    setIsGenerating(true);
+    setGenerationError(null);
+    setShowEmailTypeSelector(false);
+
+    try {
+      const response = await fetch('/api/workflows/email/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId,
+          emailType,
+          customInstructions,
+        }),
+      });
+
+      const data: GenerateEmailResponse = await response.json();
+
+      if (!data.success || !data.email) {
+        throw new Error(data.error || 'Failed to generate email');
+      }
+
+      // Set the generated email content
+      setEmailSubject(data.email.subject);
+      // The body will trigger typing animation via useEffect
+      setEmailBody(data.email.body);
+      setDisplayBody('');
+      setTypingComplete(false);
+
+      // Trigger typing animation manually
+      let index = 0;
+      const interval = setInterval(() => {
+        if (index < data.email!.body.length) {
+          setDisplayBody(data.email!.body.slice(0, index + 1));
+          index++;
+        } else {
+          setTypingComplete(true);
+          setEmailBody(data.email!.body);
+          clearInterval(interval);
+        }
+      }, 6);
+
+    } catch (error) {
+      console.error('Email generation error:', error);
+      setGenerationError(error instanceof Error ? error.message : 'Failed to generate email');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col bg-white relative">
       {/* Header */}
       <div className="px-8 py-4 border-b border-gray-100">
-        <h2 className="text-base font-medium text-gray-900">Compose Email</h2>
-        <p className="text-sm text-gray-500">Draft your response</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-medium text-gray-900">Compose Email</h2>
+            <p className="text-sm text-gray-500">Draft your response</p>
+          </div>
+
+          {/* AI Generation Button */}
+          {enableAIGeneration && customerId && !emailSent && (
+            <button
+              onClick={() => setShowEmailTypeSelector(true)}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Sparkles className="w-4 h-4" />
+              {isGenerating ? 'Generating...' : 'Generate with AI'}
+            </button>
+          )}
+        </div>
+
+        {/* Error Message */}
+        {generationError && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{generationError}</p>
+          </div>
+        )}
       </div>
 
       {/* Email Content */}
@@ -239,6 +331,16 @@ export default function EmailArtifact({
             <span className="font-medium">Message Sent!</span>
           </div>
         </div>
+      )}
+
+      {/* Email Type Selector Modal */}
+      {enableAIGeneration && (
+        <EmailTypeSelector
+          isOpen={showEmailTypeSelector}
+          onClose={() => setShowEmailTypeSelector(false)}
+          onSelect={handleGenerateEmail}
+          isLoading={isGenerating}
+        />
       )}
     </div>
   );
