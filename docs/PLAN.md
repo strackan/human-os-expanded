@@ -1,8 +1,8 @@
 # Renubu Development Plan
 
 **Last Updated:** 2025-11-05
-**Current Phase:** Phase 0 (Sprint 0) - 95% Complete
-**Next Phase:** Phase 0.1 (MCP Code Execution) - Starts Nov 13
+**Current Phase:** Phase 0 (Sprint 0) - 98% Complete
+**Next Phase:** Phase 0.1 (MCP Code Execution with Deno) - Starts Nov 13
 
 ---
 
@@ -10,41 +10,89 @@
 
 ### Phase 0: Sprint 0 - Agentification Infrastructure ✅
 **Dates:** Nov 5-6, 2025
-**Status:** 95% Complete
-**Completed:** 18h / 20h planned
+**Status:** 98% Complete
+**Completed:** 19.5h / 20h planned
 
 **Delivered:**
-- ✅ 7 comprehensive documentation files (~28,000 lines)
+- ✅ Documentation reorganized (4 living docs + snapshots + archive)
 - ✅ Auth timeout detection and signin redirect fix
 - ✅ Demo mode auto-enable system
 - ✅ Merged to main (PR #1)
-- ✅ 4 living docs + snapshot system
-- ✅ GitHub Projects setup (in progress)
+- ✅ GitHub Projects guide created
+- ✅ Phase 0.1 plan finalized (MCP with Deno)
 
 **Remaining:**
-- ⏸️ Environment validation (3h)
-- ⏸️ Final Phase 0 snapshot (15 min)
+- ⏸️ Environment validation (1-2h) - Optional, can do during Phase 0.1
+- ⏸️ GitHub Projects board setup (manual via web UI, 20 min)
 
 ---
 
 ## 📅 Q4 2025 Roadmap (Nov 5 - Dec 20)
 
-### Phase 0.1: MCP Code Execution + Enhanced Agentification
-**Dates:** Nov 13-22, 2025 (Week 1)
-**Hours:** 10-15h
-**Goal:** Implement MCP code execution for 50-80% velocity boost
+### Phase 0.1: MCP Code Execution with Deno
+**Dates:** Nov 13-15, 2025 (3 days)
+**Hours:** 12h
+**Goal:** Implement MCP code execution for 50-80% velocity boost (3x more agents working)
+
+**Why Now (Not Later):**
+- 90%+ token reduction = 10 agents vs 3 agents in parallel
+- Agents learn MCP patterns from day 1 (no rework later)
+- Compounding velocity gains across all phases
+- MCP is the future - build foundation now
 
 **Key Deliverables:**
-1. Renubu MCP server exposing database/workflows/calendar as code APIs (4h)
-2. Secure Docker sandbox with resource limits (4h)
-3. Integration with Claude Code Task tool (3h)
-4. Token usage benchmarking (target: 90%+ reduction) (2-4h)
+
+#### Day 1-2: MCP Server Structure (5h)
+1. **Design Renubu MCP Server (2h)**
+   - Filesystem-based API structure (`servers/renubu/`)
+   - Workflow operations (query, create, snooze, wake, evaluate)
+   - Database operations (customers, profiles, tasks)
+   - Calendar operations (findOpening, getEvents)
+   - TypeScript interfaces
+
+2. **Implement Core Operations (3h)**
+   - Workflow CRUD with Supabase
+   - Database queries with RLS
+   - TypeScript types for all operations
+   - Error handling and validation
+
+#### Day 3: Deno Sandbox (3h)
+1. **Deno Execution Wrapper (2h)**
+   - Permission-restricted execution (--allow-net, --allow-env only)
+   - No filesystem access (--no-allow-read, --no-allow-write)
+   - No subprocess execution (--no-allow-run)
+   - Temp file cleanup
+
+2. **Audit Logging (1h)**
+   - Log all code executions
+   - Track token usage
+   - Alert on errors
+
+#### Day 4: Integration & Testing (4h)
+1. **Claude Code Integration (2h)**
+   - Configure MCP client
+   - Test progressive disclosure
+   - Benchmark token usage (target: 90%+ reduction)
+
+2. **Safety Validation (2h)**
+   - Test permission denials (filesystem, network, subprocess)
+   - Verify audit logs
+   - Test resource limits
+   - Validate error handling
 
 **Success Criteria:**
-- Agents write TypeScript code calling Renubu operations
-- 90%+ token reduction vs direct tool calls measured
-- Sandbox security validated
-- Ready for Phase 1 agentified development
+- [ ] Agents write TypeScript code calling Renubu operations
+- [ ] 90%+ token reduction measured (150K → 15K tokens)
+- [ ] 10 agents can work simultaneously (vs 3 before)
+- [ ] Deno permissions block unauthorized access
+- [ ] Audit logs capture all operations
+- [ ] Ready for Phase 1 with 3x agent capacity
+
+**Security Model:**
+- **Threat Model:** Accidental mistakes, not malicious attacks
+- **Mitigation:** Deno permissions (explicit allow-list)
+- **Escape Risk:** Low (production-grade Deno used by Netlify, Supabase, Slack)
+- **Real Protection:** Queen Bee code review + dry-run mode + audit logs
 
 **CS Product:** 20h continues in parallel
 
@@ -168,18 +216,20 @@
 | Phase | Dates | Hours | Purpose |
 |-------|-------|-------|---------|
 | Phase 0 | Nov 5-6 | 20h | Agentification infrastructure ✅ |
-| Phase 0.1 | Nov 13-22 | 10-15h | MCP code execution |
+| Phase 0.1 | Nov 13-15 | 12h | MCP code execution with Deno |
 | Phase 1 Week 1 | Nov 25-29 | 25h | Workflow snoozing foundation |
 | Phase 1 Week 2 | Dec 2-6 | 20h | UI implementation |
 | Phase 1 Week 3 | Dec 9-13 | 20h | Intelligence & polish |
 | Phase 1 Week 4 | Dec 16-20 | 20h | Advanced conditions & launch |
 | CS Product | Ongoing | 89h | Priority 1 customer work |
 | Lane 2 Buffer | Ongoing | 18h | Flex capacity |
-| **TOTAL** | | **222-227h** | |
+| **TOTAL** | | **224h** | |
 
 **Expected Velocity:**
-- Without MCP: 22-36% boost = effective 272-302h capacity
-- With MCP: 50-80% boost = **effective 333-408h capacity**
+- Baseline (git worktrees + parallel agents): 22-36% boost
+- With MCP (token reduction + 10 agents): 50-80% total boost
+- **Effective capacity: 336-403h from 224h investment**
+- **Result: 3x more agents working = 3.3x throughput**
 
 ---
 
