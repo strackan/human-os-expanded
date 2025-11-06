@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { getDemoModeConfig } from '@/lib/demo-mode-config'
 
 interface AuthContextType {
   user: User | null
@@ -38,6 +39,31 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const mountTime = performance.now()
     console.log('⏱️ [AUTH] Provider mounted at', new Date().toISOString())
+
+    // Check if demo mode is enabled (auto-enabled on localhost, disabled on production)
+    const demoConfig = getDemoModeConfig()
+
+    if (demoConfig.enabled) {
+      // Auto-login as the configured demo user without Supabase auth
+      // This allows RLS policies to work correctly with real user data
+      const demoUser = {
+        id: demoConfig.userId,
+        email: demoConfig.userEmail,
+        user_metadata: {
+          full_name: 'Justin Stracity',
+          company_name: 'Renubu'
+        },
+        app_metadata: {},
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as User
+
+      console.log('🎮 [DEMO MODE] Auto-authenticated as', demoConfig.userEmail)
+      console.log('🎮 [DEMO MODE] Reason:', demoConfig.reason)
+      setUser(demoUser)
+      setLoading(false)
+      return
+    }
 
     const getUser = async () => {
       console.log('⏱️ [AUTH] Starting initial session fetch...', {

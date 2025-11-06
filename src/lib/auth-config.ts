@@ -7,13 +7,14 @@ export const AUTH_CONFIG = {
     '/', // Root landing page
     '/signin',
     '/create-user', // User creation page
-    '/auth/callback', 
+    '/auth/callback',
     '/auth/signout',
     '/auth/reset-password',
     '/auth/setup-password',
     '/clear-cookies.html',
     '/debug-auth', // Add debug page
     '/test-auth', // Add test page
+    '/test', // Test pages (including /test/calendar)
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml'

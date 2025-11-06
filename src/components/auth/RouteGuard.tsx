@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from './AuthProvider'
 import { isPublicRoute } from '@/lib/auth-config'
+import { getDemoModeConfig } from '@/lib/demo-mode-config'
 
 interface RouteGuardProps {
   children: React.ReactNode
@@ -14,22 +15,31 @@ export default function RouteGuard({ children }: RouteGuardProps) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Check if DEMO_MODE is enabled
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+  // Check if DEMO_MODE is enabled (auto-enabled on localhost)
+  const demoConfig = getDemoModeConfig()
 
   useEffect(() => {
-    console.log('🛡️ RouteGuard check:', { 
-      pathname, 
-      isPublicRoute: isPublicRoute(pathname), 
-      hasUser: !!user, 
+    console.log('🛡️ RouteGuard check:', {
+      pathname,
+      isPublicRoute: isPublicRoute(pathname),
+      hasUser: !!user,
       loading,
       userEmail: user?.email,
-      isDemoMode
+      demoMode: demoConfig.enabled,
+      demoReason: demoConfig.reason
     })
 
     // If DEMO_MODE is enabled, skip all auth checks
-    if (isDemoMode) {
+    if (demoConfig.enabled) {
       console.log('🎮 DEMO MODE: Skipping auth check for:', pathname)
+      console.log('🎮 DEMO MODE:', demoConfig.reason)
+      return
+    }
+
+    // Fix: redirect signed-in users away from /signin
+    if (user && pathname === '/signin') {
+      console.log('🛡️ Signed in user stuck on /signin, redirecting to /dashboard')
+      router.replace('/dashboard')
       return
     }
 
@@ -74,10 +84,10 @@ export default function RouteGuard({ children }: RouteGuardProps) {
     }
 
     console.log('🛡️ User authenticated, allowing access to:', pathname)
-  }, [user, loading, pathname, router, isDemoMode])
+  }, [user, loading, pathname, router, demoConfig.enabled, demoConfig.reason])
 
   // If DEMO_MODE is enabled, always render children
-  if (isDemoMode) {
+  if (demoConfig.enabled) {
     return <>{children}</>
   }
 

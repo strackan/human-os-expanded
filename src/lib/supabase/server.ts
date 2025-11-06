@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { shouldUseServiceRoleKey, getDemoModeStatus } from '@/lib/demo-mode-config'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -13,9 +14,20 @@ export async function createClient() {
     );
   }
 
+  // Check if we should use service role key (only in demo mode on localhost)
+  const useServiceRole = shouldUseServiceRoleKey();
+  const keyToUse = useServiceRole && process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? process.env.SUPABASE_SERVICE_ROLE_KEY
+    : supabaseKey;
+
+  if (useServiceRole) {
+    console.log('🎮 [DEMO MODE] Using service role key to bypass RLS (localhost only)');
+    console.log(getDemoModeStatus());
+  }
+
   return createServerClient(
     supabaseUrl,
-    supabaseKey,
+    keyToUse,
     {
       cookies: {
         getAll() {

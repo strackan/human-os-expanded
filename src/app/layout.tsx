@@ -15,8 +15,20 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Renubu",
-  description: "Contract Management Platform",
+  title: "Renubu - Expansion Intelligence Platform for Customer Success",
+  description: "Built For Growth. Designed For Value. The ultimate Expansion Intelligence Platform for Customer Success teams to drive revenue growth and customer retention.",
+  openGraph: {
+    title: "Renubu - Expansion Intelligence Platform for Customer Success",
+    description: "Built For Growth. Designed For Value. The ultimate Expansion Intelligence Platform for Customer Success teams.",
+    url: "https://www.renubu.com",
+    siteName: "Renubu",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Renubu - Expansion Intelligence Platform for Customer Success",
+    description: "Built For Growth. Designed For Value. The ultimate Expansion Intelligence Platform for Customer Success teams.",
+  },
 };
 
 export const dynamic = 'force-dynamic';
