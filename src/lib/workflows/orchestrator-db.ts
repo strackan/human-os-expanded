@@ -17,6 +17,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { WorkflowExecutionStatus, type WorkflowStatus } from '@/lib/constants/status-enums';
 
 // ============================================================================
 // Types
@@ -41,7 +42,7 @@ export interface WorkflowExecution {
   customer_id: string;
   assigned_csm_id: string | null;
   escalation_user_id: string | null;
-  status: 'not_started' | 'underway' | 'completed' | 'snoozed' | 'skipped';
+  status: WorkflowStatus;
   snooze_until: string | null;
   snooze_days: number | null;
   snoozed_at: string | null;
@@ -505,7 +506,7 @@ export async function createDemoWorkflowSequence(
         workflow_definition_id: def.id,
         customer_id: customerId,
         assigned_csm_id: csmId,
-        status: 'not_started',
+        status: WorkflowExecutionStatus.NOT_STARTED,
         priority_score: def.priority_weight, // Use definition's base priority
         is_demo: true,
         execution_data: {}

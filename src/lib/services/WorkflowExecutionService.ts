@@ -9,6 +9,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase';
+import { WorkflowExecutionStatus, type WorkflowStatus } from '@/lib/constants/status-enums';
 
 /**
  * Workflow Execution record
@@ -20,7 +21,7 @@ export interface WorkflowExecution {
   workflow_type?: string;
   customer_id: string;
   user_id: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'completed_with_pending_tasks' | 'snoozed' | 'abandoned';
+  status: WorkflowStatus;
   current_step_id?: string;
   current_step_index: number;
   total_steps: number;
@@ -45,7 +46,7 @@ export interface StepExecution {
   step_index: number;
   step_title: string;
   step_type?: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'skipped' | 'snoozed';
+  status: WorkflowStatus;
   branch_path: string[];
   metadata: Record<string, any>;
   started_at?: string;
@@ -84,7 +85,7 @@ export class WorkflowExecutionService {
         customer_id: params.customerId,
         user_id: params.userId,
         total_steps: params.totalSteps,
-        status: 'not_started',
+        status: WorkflowExecutionStatus.NOT_STARTED,
         current_step_index: 0,
         completed_steps_count: 0,
         skipped_steps_count: 0,
@@ -178,7 +179,7 @@ export class WorkflowExecutionService {
         .update({
           branch_path: updatedBranchPath,
           metadata: { ...existing.metadata, ...params.metadata },
-          status: 'in_progress'
+          status: WorkflowExecutionStatus.IN_PROGRESS
         })
         .eq('id', existing.id)
         .select()
@@ -200,7 +201,7 @@ export class WorkflowExecutionService {
           step_index: params.stepIndex,
           step_title: params.stepTitle,
           step_type: params.stepType,
-          status: 'in_progress',
+          status: WorkflowExecutionStatus.IN_PROGRESS,
           branch_path: params.branchValue ? [params.branchValue] : [],
           metadata: params.metadata || {},
           started_at: new Date().toISOString()
@@ -221,11 +222,11 @@ export class WorkflowExecutionService {
         .update({
           current_step_id: params.stepId,
           current_step_index: params.stepIndex,
-          status: 'in_progress',
+          status: WorkflowExecutionStatus.IN_PROGRESS,
           started_at: new Date().toISOString()
         })
         .eq('id', params.executionId)
-        .eq('status', 'not_started'); // Only update if not yet started
+        .eq('status', WorkflowExecutionStatus.NOT_STARTED); // Only update if not yet started
     }
 
     return stepExecution;
@@ -244,7 +245,7 @@ export class WorkflowExecutionService {
     const { error: stepError } = await supabase
       .from('workflow_step_executions')
       .update({
-        status: 'completed',
+        status: WorkflowExecutionStatus.COMPLETED,
         completed_at: new Date().toISOString()
       })
       .eq('workflow_execution_id', params.executionId)
@@ -278,7 +279,7 @@ export class WorkflowExecutionService {
         step_id: params.stepId,
         step_index: params.stepIndex,
         step_title: params.stepTitle,
-        status: 'skipped',
+        status: WorkflowExecutionStatus.SKIPPED,
         completed_at: new Date().toISOString()
       }, {
         onConflict: 'workflow_execution_id,step_id'
@@ -295,7 +296,7 @@ export class WorkflowExecutionService {
 
   /**
    * Complete entire workflow (checks for pending tasks)
-   * Phase 3.3: Now supports 'completed_with_pending_tasks' status
+   * Phase 3.3: Now supports WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS status
    */
   static async completeWorkflow(
     executionId: string,
@@ -306,7 +307,7 @@ export class WorkflowExecutionService {
     // Check if there are pending tasks for this workflow
     const hasPendingTasks = await this.hasPendingTasks(executionId, supabase);
 
-    const status = hasPendingTasks ? 'completed_with_pending_tasks' : 'completed';
+    const status = hasPendingTasks ? WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS : WorkflowExecutionStatus.COMPLETED;
 
     const { error } = await supabase
       .from('workflow_executions')
@@ -384,7 +385,7 @@ export class WorkflowExecutionService {
     const { error } = await supabase
       .from('workflow_executions')
       .update({
-        status: 'snoozed',
+        status: WorkflowExecutionStatus.SNOOZED,
         snoozed_until: params.snoozeUntil.toISOString()
       })
       .eq('id', params.executionId);
@@ -397,7 +398,7 @@ export class WorkflowExecutionService {
 
   /**
    * Get incomplete workflows for a customer
-   * Phase 3.3: Now includes 'completed_with_pending_tasks'
+   * Phase 3.3: Now includes WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS
    */
   static async getIncompleteWorkflows(
     customerId: string,
@@ -409,7 +410,7 @@ export class WorkflowExecutionService {
       .from('workflow_executions')
       .select('*')
       .eq('customer_id', customerId)
-      .in('status', ['not_started', 'in_progress', 'snoozed', 'completed_with_pending_tasks'])
+      .in('status', [WorkflowExecutionStatus.NOT_STARTED, 'in_progress', 'snoozed', WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS])
       .order('last_activity_at', { ascending: false });
 
     if (error) {
@@ -444,7 +445,7 @@ export class WorkflowExecutionService {
 
     if (!steps) return;
 
-    const completedCount = steps.filter(s => s.status === 'completed').length;
+    const completedCount = steps.filter(s => s.status === WorkflowExecutionStatus.COMPLETED).length;
     const skippedCount = steps.filter(s => s.status === 'skipped').length;
     const totalFinished = completedCount + skippedCount;
 

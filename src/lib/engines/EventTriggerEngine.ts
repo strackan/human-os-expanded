@@ -1,5 +1,6 @@
 import { EventService, Event } from '../services/EventService';
 import { ActionScoreService, ActionScore } from '../services/ActionScoreService';
+import { Severity } from '../constants/status-enums';
 
 export class EventTriggerEngine {
   static async checkAndCreateEvents(renewalId: string): Promise<Event[]> {
@@ -13,7 +14,7 @@ export class EventTriggerEngine {
       events.push(await EventService.createEvent({
         renewal_id: renewalId,
         event_type: 'critical_action_required',
-        event_severity: 'critical',
+        event_severity: Severity.CRITICAL,
         total_action_score: totalScore,
         trigger_threshold: 80,
         contributing_updates: activeScores.map(s => s.update_id),
@@ -30,7 +31,7 @@ export class EventTriggerEngine {
       events.push(await EventService.createEvent({
         renewal_id: renewalId,
         event_type: 'review_needed',
-        event_severity: 'high',
+        event_severity: Severity.HIGH,
         total_action_score: totalScore,
         trigger_threshold: 60,
         contributing_updates: activeScores.map(s => s.update_id),
@@ -47,7 +48,7 @@ export class EventTriggerEngine {
       events.push(await EventService.createEvent({
         renewal_id: renewalId,
         event_type: 'monitor_situation',
-        event_severity: 'medium',
+        event_severity: Severity.MEDIUM,
         total_action_score: totalScore,
         trigger_threshold: 40,
         contributing_updates: activeScores.map(s => s.update_id),

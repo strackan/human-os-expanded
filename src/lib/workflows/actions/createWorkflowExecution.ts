@@ -6,6 +6,7 @@
 
 import { createClient } from '@/lib/supabase/client';
 
+import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
 export interface CreateExecutionParams {
   workflowConfigId: string;
   workflowName: string;
@@ -39,7 +40,7 @@ export async function createWorkflowExecution(
       customer_id: params.customerId,
       user_id: params.userId,
       assigned_csm_id: params.assignedCsmId,
-      status: 'in_progress',
+      status: WorkflowExecutionStatus.IN_PROGRESS,
       current_step_id: 'step-0',
       current_step_index: 0,
       total_steps: params.totalSteps || 6,

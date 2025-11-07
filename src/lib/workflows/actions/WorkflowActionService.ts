@@ -11,28 +11,25 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { SchemaAwareService } from '@/lib/supabase/schema';
+import {
+  WorkflowExecutionStatus,
+  WorkflowActionType as ActionTypeEnum,
+  type WorkflowStatus
+} from '@/lib/constants/status-enums';
 
-export type WorkflowStatus =
-  | 'not_started'
-  | 'in_progress'
-  | 'completed'
-  | 'snoozed'
-  | 'abandoned'
-  | 'rejected'
-  | 'lost'
-  | 'skipped'
-  | 'escalated';
+// Re-export WorkflowStatus type from enums
+export { type WorkflowStatus } from '@/lib/constants/status-enums';
 
 export type WorkflowActionType =
-  | 'snooze'
-  | 'unsnooze'
-  | 'skip'
-  | 'escalate'
-  | 'resume'
-  | 'complete'
-  | 'reject'
-  | 'lose'
-  | 'start';
+  | ActionTypeEnum.SNOOZE
+  | ActionTypeEnum.UNSNOOZE
+  | ActionTypeEnum.SKIP
+  | ActionTypeEnum.ESCALATE
+  | ActionTypeEnum.RESUME
+  | ActionTypeEnum.COMPLETE
+  | ActionTypeEnum.REJECT
+  | ActionTypeEnum.LOSE
+  | ActionTypeEnum.START;
 
 export interface SnoozeOptions {
   until: Date;
@@ -88,7 +85,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'snoozed',
+          status: WorkflowExecutionStatus.SNOOZED,
           snooze_until: options.until.toISOString(),
           snooze_days: options.days,
           snoozed_at: new Date().toISOString(),
@@ -105,8 +102,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'snooze',
-          new_status: 'snoozed',
+          action_type: ActionTypeEnum.SNOOZE,
+          new_status: WorkflowExecutionStatus.SNOOZED,
           action_data: {
             until: options.until.toISOString(),
             days: options.days,
@@ -137,7 +134,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'in_progress',
+          status: WorkflowExecutionStatus.IN_PROGRESS,
           snooze_until: null,
           snooze_days: null,
           updated_at: new Date().toISOString(),
@@ -152,8 +149,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'unsnooze',
-          new_status: 'in_progress',
+          action_type: ActionTypeEnum.UNSNOOZE,
+          new_status: WorkflowExecutionStatus.IN_PROGRESS,
           action_data: {},
           notes: 'Workflow resumed from snooze',
         })
@@ -182,7 +179,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'skipped',
+          status: WorkflowExecutionStatus.SKIPPED,
           skip_reason: options.reason,
           skipped_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -197,8 +194,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'skip',
-          new_status: 'skipped',
+          action_type: ActionTypeEnum.SKIP,
+          new_status: WorkflowExecutionStatus.SKIPPED,
           action_data: { reason: options.reason },
           notes: options.reason,
         })
@@ -227,7 +224,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'escalated',
+          status: WorkflowExecutionStatus.ESCALATED,
           escalation_user_id: options.toUserId,
           escalated_from: fromUserId,
           escalated_at: new Date().toISOString(),
@@ -244,8 +241,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: fromUserId,
-          action_type: 'escalate',
-          new_status: 'escalated',
+          action_type: ActionTypeEnum.ESCALATE,
+          new_status: WorkflowExecutionStatus.ESCALATED,
           action_data: {
             to_user_id: options.toUserId,
             from_user_id: fromUserId,
@@ -277,7 +274,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'completed',
+          status: WorkflowExecutionStatus.COMPLETED,
           completed_at: new Date().toISOString(),
           completion_percentage: 100,
           updated_at: new Date().toISOString(),
@@ -292,8 +289,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'complete',
-          new_status: 'completed',
+          action_type: ActionTypeEnum.COMPLETE,
+          new_status: WorkflowExecutionStatus.COMPLETED,
           action_data: {},
           notes,
         })
@@ -321,7 +318,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'rejected',
+          status: WorkflowExecutionStatus.REJECTED,
           rejected_at: new Date().toISOString(),
           rejected_reason: options.reason,
           updated_at: new Date().toISOString(),
@@ -336,8 +333,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'reject',
-          new_status: 'rejected',
+          action_type: ActionTypeEnum.REJECT,
+          new_status: WorkflowExecutionStatus.REJECTED,
           action_data: { reason: options.reason },
           notes: options.reason,
         })
@@ -365,7 +362,7 @@ export class WorkflowActionService extends SchemaAwareService {
       const { error: updateError } = await this.client
         .from('workflow_executions')
         .update({
-          status: 'lost',
+          status: WorkflowExecutionStatus.LOST,
           lost_at: new Date().toISOString(),
           lost_reason: options.reason,
           updated_at: new Date().toISOString(),
@@ -380,8 +377,8 @@ export class WorkflowActionService extends SchemaAwareService {
         .insert({
           execution_id: executionId,
           performed_by: userId,
-          action_type: 'lose',
-          new_status: 'lost',
+          action_type: ActionTypeEnum.LOSE,
+          new_status: WorkflowExecutionStatus.LOST,
           action_data: { reason: options.reason },
           notes: options.reason,
         })

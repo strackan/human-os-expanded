@@ -12,6 +12,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { TaskStatus as TaskStatusEnum, Priority, type TaskStatusType, type PriorityLevel } from '@/lib/constants/status-enums';
 
 // =====================================================
 // Types
@@ -32,15 +33,11 @@ export type TaskType =
 
 export type TaskCategory = 'ai_generated' | 'csm_manual' | 'system';
 
-export type TaskStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'snoozed'
-  | 'completed'
-  | 'skipped'
-  | 'reassigned';
+// Re-export TaskStatus from enums
+export type TaskStatus = TaskStatusType;
 
-export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
+// Re-export TaskPriority from enums (excluding 'normal')
+export type TaskPriority = Exclude<PriorityLevel, typeof Priority.NORMAL>;
 
 export interface WorkflowTask {
   id: string;
@@ -147,7 +144,7 @@ export class WorkflowTaskService {
       taskCategory,
       action,
       description,
-      priority = 'medium',
+      priority = Priority.MEDIUM,
       metadata = {}
     } = params;
 
@@ -166,7 +163,7 @@ export class WorkflowTaskService {
         action,
         description,
         priority,
-        status: 'pending',
+        status: TaskStatusEnum.PENDING,
         metadata
         // first_snoozed_at and max_snooze_date are set automatically by trigger when first snoozed
       })
@@ -288,7 +285,7 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from('workflow_tasks')
       .update({
-        status: 'snoozed',
+        status: TaskStatusEnum.SNOOZED,
         snoozed_until: snoozedUntil.toISOString()
         // Trigger automatically:
         // - Sets first_snoozed_at (if null)
@@ -316,7 +313,7 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from('workflow_tasks')
       .update({
-        status: 'completed',
+        status: TaskStatusEnum.COMPLETED,
         completed_at: new Date().toISOString()
       })
       .eq('id', taskId)
@@ -341,7 +338,7 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from('workflow_tasks')
       .update({
-        status: 'skipped',
+        status: TaskStatusEnum.SKIPPED,
         skipped_at: new Date().toISOString(),
         skip_reason: reason
       })
@@ -379,7 +376,7 @@ export class WorkflowTaskService {
         reassigned_from: task.assigned_to,
         reassigned_at: new Date().toISOString(),
         reassignment_reason: reason,
-        status: 'reassigned'
+        status: TaskStatusEnum.REASSIGNED
       })
       .eq('id', taskId)
       .select()
@@ -614,7 +611,7 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from('workflow_tasks')
       .update({
-        status: 'pending',
+        status: TaskStatusEnum.PENDING,
         snoozed_until: null
       })
       .eq('id', taskId)

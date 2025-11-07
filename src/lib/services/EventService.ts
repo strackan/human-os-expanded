@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase';
+import { Severity, type SeverityLevel } from '@/lib/constants/status-enums';
 
 export interface Event {
   id: string;
   renewal_id: string;
   event_type: string;
-  event_severity: string;
+  event_severity: SeverityLevel;
   total_action_score?: number;
   trigger_threshold?: number;
   contributing_updates?: string[];
