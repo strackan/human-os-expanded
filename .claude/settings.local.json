@@ -30,7 +30,12 @@
       "Bash(vercel alias:*)",
       "Bash(vercel inspect:*)",
       "Bash(vercel ls:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git worktree:*)",
+      "Bash(test:*)",
+      "Bash(git diff:*)",
+      "Bash(/tmp/agent1-wes.ts)",
+      "Bash(/tmp/agent2-wes.ts)"
     ],
     "deny": [],
     "ask": []
