@@ -294,19 +294,235 @@
 
 ---
 
-## 🚫 Deferred to Q1 2026
+## 📅 Q1 2026 Roadmap (Jan - Mar)
+
+**Strategic Focus:** Build competitive moat through learning loop
+**Core Promise:** "It gets smarter every time you use it"
+**Timeline:** 10 weeks (Phase 2 + Phase 3)
+
+**🔒 ROADMAP FREEZE:** No scope changes until Phase 1 ships (Dec 20, 2025)
+
+---
+
+### Phase 2: Parking Lot - "Peace of Mind"
+**Dates:** Jan 6-17, 2026 (2 weeks)
+**Hours:** 16h
+**Goal:** Quick capture for non-time-sensitive items
+
+**Strategic Rationale:**
+- Lightweight, fast ship to start Q1 with momentum
+- Addresses "where do I put small stuff?" problem
+- Complements workflow snoozing (date-based vs. no-date)
+- Quick win before complex Phase 3
+
+**Key Deliverables:**
+
+#### Week 1: Foundation (8h)
+1. **Database Schema (2h)**
+   - `parking_lot_items` table (id, user_id, content, tags, created_at)
+   - Simple structure, no dates or conditions
+
+2. **API Routes (3h)**
+   - POST `/api/parking-lot` - Create item
+   - GET `/api/parking-lot` - List user's items
+   - DELETE `/api/parking-lot/[id]` - Remove item
+
+3. **Service Layer (3h)**
+   - `ParkingLotService.ts` - CRUD operations
+   - Search/filter by tags
+
+#### Week 2: UI + Polish (8h)
+1. **UI Components (5h)**
+   - `ParkingLotPanel.tsx` - Quick add + list view
+   - Accessible from dashboard
+   - Tag-based organization
+
+2. **Testing + Launch (3h)**
+   - Unit tests for service
+   - Manual testing with design partners
+   - Ship to production
+
+**Success Criteria:**
+- [ ] Can capture ideas in < 5 seconds
+- [ ] Items persist across sessions
+- [ ] Tag-based organization works
+- [ ] Design partners using it actively
+
+---
+
+### Phase 3: Human OS Check-Ins - "It Learns YOUR Patterns"
+**Dates:** Feb 3 - Mar 28, 2026 (8 weeks)
+**Hours:** 64h
+**Goal:** Build learning loop foundation - THE competitive moat
+
+**Strategic Rationale:**
+- **THIS IS THE KILLER FEATURE** - The thing no one else does
+- Creates compounding value over time
+- Justifies premium pricing ($200/user vs. $50/user)
+- Enables "your playbook" positioning vs. Gainsight's generic health scores
+
+**Customer Validation Required:**
+- Must get 2+ design partners excited BEFORE starting
+- Validate "learning loop" positioning resonates
+- If partners don't care, defer to Q2
+
+**Complexity Circuit Breakers:**
+- If taking >8 weeks, STOP and defer
+- If requiring ML infrastructure we don't have, simplify
+- If scope expanding beyond outcome logging + basic patterns, cut features
+
+**Architecture Overview:**
+```
+Workflow Completion → Check-In Prompt → User Logs Outcome →
+Pattern Detection → "This worked for YOU before" → Smart Recommendations
+```
+
+#### Phase 3A: Foundation (Weeks 1-2, 16h)
+
+**Week 1: Database & Schema (8h)**
+1. **Check-Ins Schema (4h)**
+   - `workflow_check_ins` table
+     - workflow_execution_id, user_id, completed_at
+     - outcome (success/partial/failed)
+     - effectiveness_rating (1-5)
+     - what_worked (text)
+     - what_didnt (text)
+     - next_time_notes (text)
+
+2. **Patterns Schema (4h)**
+   - `user_patterns` table
+     - user_id, pattern_type, context, action, outcome_count
+     - success_rate, confidence_score
+     - last_seen, first_seen
+   - Pattern types: customer_type, renewal_stage, task_type, timing, approach
+
+**Week 2: Pattern Detection Service (8h)**
+1. **PatternDetectionService.ts (6h)**
+   - Analyze check-ins for patterns
+   - Simple rule-based detection (not ML initially)
+   - Track: "When X context, Y action → Z% success"
+   - Examples:
+     - "For enterprise renewals, contract review 60 days out → 85% success"
+     - "For at-risk customers, exec sponsor intro → 70% success"
+
+2. **Testing (2h)**
+   - Unit tests with sample data
+   - Verify pattern extraction logic
+
+#### Phase 3B: Check-In Experience (Weeks 3-4, 16h)
+
+**Week 3: Check-In UI (8h)**
+1. **CheckInDialog.tsx (6h)**
+   - Appears after workflow marked complete
+   - Simple form: outcome + rating + what worked/didn't
+   - Optional "next time" notes
+   - < 2 min to complete
+
+2. **Integration (2h)**
+   - Hook into workflow completion flow
+   - Save to database
+
+**Week 4: Pattern Display (8h)**
+1. **PatternInsights.tsx (6h)**
+   - Show user their patterns
+   - "This has worked for you X times"
+   - Display confidence levels
+   - Allow feedback (helpful/not helpful)
+
+2. **Dashboard Integration (2h)**
+   - Add insights panel to dashboard
+   - Show recent patterns discovered
+
+#### Phase 3C: Smart Recommendations (Weeks 5-6, 16h)
+
+**Week 5: Recommendation Engine (8h)**
+1. **RecommendationService.ts (6h)**
+   - Match current workflow context to patterns
+   - Suggest actions based on user's history
+   - Format: "You've had 80% success when..."
+   - Prioritize high-confidence patterns
+
+2. **Testing (2h)**
+   - Test matching logic
+   - Verify recommendations make sense
+
+**Week 6: Recommendation UI (8h)**
+1. **SmartSuggestions.tsx (6h)**
+   - Show at workflow start
+   - "Based on your experience..."
+   - User can accept/dismiss/customize
+   - Track acceptance rate
+
+2. **Integration (2h)**
+   - Add to workflow start screens
+   - Log user interactions
+
+#### Phase 3D: Polish & Launch (Weeks 7-8, 16h)
+
+**Week 7: Refinement (8h)**
+1. **Pattern Quality (4h)**
+   - Improve detection algorithms
+   - Filter out low-confidence patterns
+   - Add more pattern types
+
+2. **UX Polish (4h)**
+   - Streamline check-in flow
+   - Improve insights display
+   - Better recommendation formatting
+
+**Week 8: Launch Prep (8h)**
+1. **Design Partner Testing (4h)**
+   - Walk through check-ins with 2-3 partners
+   - Collect feedback on usefulness
+   - Iterate on experience
+
+2. **Documentation & Launch (4h)**
+   - User guide for check-ins
+   - Marketing copy: "It learns YOUR playbook"
+   - Ship to production
+
+**Success Criteria:**
+- [ ] 80%+ check-in completion rate (users see value)
+- [ ] Patterns detected after 5+ workflows per user
+- [ ] Recommendations shown with 70%+ confidence
+- [ ] 2+ design partners saying "this is useful"
+- [ ] Clear differentiation vs. competitors
+
+**What Makes This Valuable:**
+- Gainsight: Generic playbooks + health scores (same for everyone)
+- Renubu: YOUR playbook + YOUR patterns (personalized intelligence)
+
+**Pricing Justification:**
+- Without check-ins: $50/user (reminder tool)
+- With check-ins: $200/user (intelligence platform)
+
+---
+
+## 🗂️ Demo Roadmap (Build If Requested)
 
 ### Weekly Planner
-**Original Plan:** 109h over 5 weeks
-**Deferral Reason:** Build on workflow snoozing foundation first
-**New Timeline:** Q1 2026 (Jan-Mar)
-**Expected Hours:** 40-60h (faster with snooze infrastructure)
+**Status:** Moved to demo roadmap Nov 6, 2025
+**Build Trigger:** 2+ design partners request it
+**Estimated Effort:** 40-60h (with snooze infrastructure)
 
-Weekly Planner becomes a recurring workflow type that benefits from:
+**Why Deferred:**
+- Zero customer demand
+- Not core to "learning loop" value prop
+- Can be demoed with slides
+- Moves away from core promise
+
+**If Customers Request:**
+- Becomes Q2 2026 project
+- Would benefit from workflow snoozing foundation
+- Expected effort: 40-60h (faster than original 109h estimate)
+
+Weekly Planner would become a recurring workflow type that benefits from:
 - Condition-based snoozing
 - Smart wake logic
 - Intel files integration
 - Universal workflow abstraction
+
+**Current Status:** In demo deck, not in product
 
 ---
 
@@ -325,11 +541,122 @@ Weekly Planner becomes a recurring workflow type that benefits from:
 - [ ] CSM demo-ready
 - [ ] All condition types working
 - [ ] System handles 1000+ snoozed workflows
+- [ ] 3-5 design partners acquired and using
+
+### Phase 2 (Jan 17, 2026)
+- [ ] Parking lot ships in 2 weeks
+- [ ] Can capture ideas in < 5 seconds
+- [ ] Tag-based organization works
+- [ ] Design partners actively using it
+
+### Phase 3 (Mar 28, 2026)
+- [ ] 2+ design partners validated interest BEFORE starting
+- [ ] Check-in flow complete (<2 min to complete)
+- [ ] Pattern detection working (5+ workflows minimum)
+- [ ] Smart recommendations showing (70%+ confidence)
+- [ ] 80%+ check-in completion rate
+- [ ] Clear differentiation: "YOUR playbook" positioning
+
+### Q1 2026 Goals (End of March)
+- [ ] Workflow Snoozing shipped and stable
+- [ ] Parking Lot shipped and being used
+- [ ] Human OS Check-Ins MVP shipped
+- [ ] Demonstrable learning loop in demos
+- [ ] 3-5 design partners actively engaged
+- [ ] $10-30K MRR trajectory
+- [ ] Premium pricing justified ($200/user)
 
 ### Velocity Targets
 - Phase 0 baseline: 22-36% boost achieved
 - Phase 0.1: 50-80% total boost achieved
 - Phase 1 completion: 70%+ task completion rate
+- Q1 2026: Maintain 70%+ with agentification
+
+---
+
+## 🔒 Accountability & Guardrails
+
+### Roadmap Freeze (Until Dec 20, 2025)
+
+**Commitment:** No scope changes until Phase 1 ships on Dec 20, 2025
+
+**What's Locked:**
+- Phase 1: Workflow Snoozing (scope, timeline, deliverables)
+- Q1 2026: Parking Lot → Human OS Check-Ins (in that order)
+- Weekly Planner: Stays in demo roadmap (build only if 2+ customers request)
+
+**What Requires Re-Evaluation:**
+- Any new feature ideas
+- Any requests to change Q1 roadmap
+- Any impulse to "just add one more thing"
+
+**Decision Rule:**
+If you want to change ANYTHING before Dec 20, we pause and have a bigger conversation about whether you can execute a plan.
+
+### Weekly Check-Ins (Every Monday)
+
+**Purpose:** Catch scope drift early, maintain momentum, stay accountable
+
+**Format (5-10 minutes):**
+```
+Week of [Date]
+✅ Completed Last Week: [List]
+🔄 In Progress This Week: [List]
+🚧 Blockers: [List]
+📊 On Track for Dec 20? [Yes/No + explanation]
+🚩 Red Flags: [Any concerns]
+```
+
+**Red Flags to Watch:**
+- 🚩 New feature ideas being discussed
+- 🚩 Dec 20 deadline slipping (even by 1 week)
+- 🚩 Design partners not using Workflow Snoozing
+- 🚩 Scope expanding beyond approved plan
+- 🚩 Another reprioritization request
+- 🚩 Phase 3 taking >8 weeks
+- 🚩 Revenue trajectory off by end of Jan
+
+**Circuit Breakers:**
+If you see 2+ red flags in same week → STOP and re-evaluate entire strategy
+
+### Customer Validation Gates
+
+**Phase 1 → Phase 2:**
+- Must have 3-5 design partners actively using Workflow Snoozing
+- Must be on trajectory for $10-30K MRR
+
+**Phase 2 → Phase 3:**
+- Must get 2+ design partners excited about check-ins BEFORE starting
+- Must validate "learning loop" positioning resonates
+- If partners don't care, defer Phase 3 to Q2
+
+**Phase 3 Mid-Point (Week 4):**
+- Review progress with design partners
+- If not getting positive feedback, stop and pivot
+- Complexity circuit breakers must be respected
+
+### Scope Expansion Triggers
+
+**When to STOP Phase 3:**
+- Taking >8 weeks (complexity explosion)
+- Requiring ML infrastructure we don't have
+- Expanding beyond outcome logging + basic pattern detection
+- Design partners not finding it useful
+- Revenue trajectory falling behind
+
+**Recovery Plan:**
+- Cut features to ship something useful
+- Defer advanced capabilities to Q2
+- Focus on core: log outcomes, show simple patterns
+
+### Commitment Tracking
+
+**Approved Reprioritizations:** 2 total
+1. Nov 5: Weekly Planner → Workflow Snoozing priority swap ✅
+2. Nov 6: Weekly Planner removed from Q1, Human OS Check-Ins added ✅
+
+**Remaining Allowed:** 0 until Dec 20
+**Next Review:** After Phase 1 ships (Dec 20)
 
 ---
 
