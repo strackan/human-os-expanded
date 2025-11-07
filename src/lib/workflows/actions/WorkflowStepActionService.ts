@@ -10,6 +10,11 @@
 
 import { createClient } from '@/lib/supabase/client';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  WorkflowStepStatus,
+  WorkflowActionType as ActionTypeEnum,
+  type StepStatus
+} from '@/lib/constants/status-enums';
 
 export interface StepSnoozeOptions {
   until: Date;
@@ -27,7 +32,7 @@ export interface StepState {
   step_id: string;
   step_index: number;
   step_label: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'snoozed' | 'skipped';
+  status: StepStatus;
   snooze_until: string | null;
   snooze_days: number | null;
   snoozed_at: string | null;
@@ -65,7 +70,7 @@ export class WorkflowStepActionService {
           step_id: stepId,
           step_index: stepIndex,
           step_label: stepLabel,
-          status: 'snoozed',
+          status: WorkflowStepStatus.SNOOZED,
           snooze_until: options.until.toISOString(),
           snooze_days: options.days,
           snoozed_at: new Date().toISOString(),
@@ -85,8 +90,8 @@ export class WorkflowStepActionService {
           step_index: stepIndex,
           step_label: stepLabel,
           performed_by: userId,
-          action_type: 'snooze',
-          new_status: 'snoozed',
+          action_type: ActionTypeEnum.SNOOZE,
+          new_status: WorkflowStepStatus.SNOOZED,
           action_data: {
             until: options.until.toISOString(),
             days: options.days,
@@ -118,7 +123,7 @@ export class WorkflowStepActionService {
       const { error: updateError } = await this.supabase
         .from('workflow_step_states')
         .update({
-          status: 'pending',
+          status: WorkflowStepStatus.PENDING,
           snooze_until: null,
           snooze_days: null,
           updated_at: new Date().toISOString(),
@@ -135,8 +140,8 @@ export class WorkflowStepActionService {
           execution_id: executionId,
           step_index: stepIndex,
           performed_by: userId,
-          action_type: 'unsnooze',
-          new_status: 'pending',
+          action_type: ActionTypeEnum.UNSNOOZE,
+          new_status: WorkflowStepStatus.PENDING,
         });
 
       if (actionError) throw actionError;
@@ -169,7 +174,7 @@ export class WorkflowStepActionService {
           step_id: stepId,
           step_index: stepIndex,
           step_label: stepLabel,
-          status: 'skipped',
+          status: WorkflowStepStatus.SKIPPED,
           skipped_at: new Date().toISOString(),
           skip_reason: options.reason,
           updated_at: new Date().toISOString(),
@@ -188,8 +193,8 @@ export class WorkflowStepActionService {
           step_index: stepIndex,
           step_label: stepLabel,
           performed_by: userId,
-          action_type: 'skip',
-          new_status: 'skipped',
+          action_type: ActionTypeEnum.SKIP,
+          new_status: WorkflowStepStatus.SKIPPED,
           action_data: { reason: options.reason },
           notes: options.reason,
         });

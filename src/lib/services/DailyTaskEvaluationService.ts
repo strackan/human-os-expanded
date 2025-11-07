@@ -13,6 +13,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { Priority } from '@/lib/constants/status-enums';
 import { WorkflowTaskService } from './WorkflowTaskService';
 import { NotificationService } from './NotificationService';
 
@@ -348,7 +349,7 @@ export class DailyTaskEvaluationService {
           notificationType: 'task_reassigned',
           title: 'Task Requires Manager Intervention',
           message: `Task "${task.action}" for ${customerName} requires immediate attention. Assigned CSM: ${profile.full_name}. This task type requires manual escalation and cannot be auto-skipped.`,
-          priority: 'urgent',
+          priority: Priority.URGENT,
           linkUrl: `/tasks/${task.id}`,
           linkText: 'Review Task',
           taskId: task.id,

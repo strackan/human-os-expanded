@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { Priority } from '@/lib/constants/status-enums';
 
 /**
  * WorkloadAnalysisService
@@ -488,7 +489,7 @@ export class WorkloadAnalysisService {
         customer_id: task.customer_id,
         suggested_duration_minutes: 30,
         due_date: task.due_date,
-        priority_score: task.priority === 'high' ? 70 : task.priority === 'medium' ? 50 : 30,
+        priority_score: task.priority === Priority.HIGH ? 70 : task.priority === Priority.MEDIUM ? 50 : 30,
         metadata: task,
       };
 

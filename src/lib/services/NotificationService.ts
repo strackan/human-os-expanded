@@ -27,6 +27,8 @@ export type NotificationType =
   | 'workflow_completed'
   | 'custom';
 
+import { Priority } from '@/lib/constants/status-enums';
+
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent';
 
 export interface InProductNotification {
@@ -77,7 +79,7 @@ export class NotificationService {
       notificationType,
       title,
       message,
-      priority = 'normal',
+      priority = Priority.NORMAL,
       linkUrl,
       linkText,
       taskId,
@@ -290,7 +292,7 @@ export class NotificationService {
     },
     supabase: SupabaseClient
   ): Promise<InProductNotification> {
-    const { userId, taskId, taskAction, customerName, priority = 'normal' } = params;
+    const { userId, taskId, taskAction, customerName, priority = Priority.NORMAL } = params;
 
     return this.createNotification(
       {
@@ -327,7 +329,7 @@ export class NotificationService {
         notificationType: 'task_snoozed_resurfaced',
         title: 'Snoozed Task Ready',
         message: `Your snoozed task is ready: ${taskAction} for ${customerName}`,
-        priority: 'high',
+        priority: Priority.HIGH,
         linkUrl: `/tasks/${taskId}`,
         linkText: 'View Task',
         taskId
@@ -356,7 +358,7 @@ export class NotificationService {
         notificationType: 'task_force_action_warning',
         title: 'Urgent: Task Deadline Reached',
         message: `Task "${taskAction}" for ${customerName} has reached the 7-day deadline. You must complete or skip this task within 24 hours or it will be auto-skipped.`,
-        priority: 'urgent',
+        priority: Priority.URGENT,
         linkUrl: `/tasks/${taskId}`,
         linkText: 'Take Action Now',
         taskId
@@ -385,7 +387,7 @@ export class NotificationService {
         notificationType: 'task_auto_skipped',
         title: 'Task Auto-Skipped',
         message: `Task "${taskAction}" for ${customerName} was automatically skipped after the 24-hour warning period.`,
-        priority: 'high',
+        priority: Priority.HIGH,
         linkUrl: `/tasks/${taskId}`,
         linkText: 'View Details',
         taskId
@@ -416,7 +418,7 @@ export class NotificationService {
         notificationType: 'task_reassigned',
         title: 'Task Reassigned to You',
         message: `Task "${taskAction}" for ${customerName} has been reassigned to you. Reason: ${reason}`,
-        priority: 'high',
+        priority: Priority.HIGH,
         linkUrl: `/tasks/${taskId}`,
         linkText: 'View Task',
         taskId,
@@ -451,7 +453,7 @@ export class NotificationService {
         notificationType: 'workflow_completed',
         title: 'Workflow Completed',
         message,
-        priority: hasPendingTasks ? 'high' : 'normal',
+        priority: hasPendingTasks ? Priority.HIGH : Priority.NORMAL,
         linkUrl: `/workflows/executions/${workflowExecutionId}`,
         linkText: hasPendingTasks ? 'View Pending Tasks' : 'View Details',
         workflowExecutionId,

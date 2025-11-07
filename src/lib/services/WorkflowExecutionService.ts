@@ -10,6 +10,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase';
 import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
+import { WorkflowExecutionStatus, type WorkflowStatus } from '@/lib/constants/status-enums';
 
 /**
  * Workflow Execution record
@@ -21,7 +22,7 @@ export interface WorkflowExecution {
   workflow_type?: string;
   customer_id: string;
   user_id: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'completed_with_pending_tasks' | 'snoozed' | 'abandoned';
+  status: WorkflowStatus;
   current_step_id?: string;
   current_step_index: number;
   total_steps: number;
@@ -46,7 +47,7 @@ export interface StepExecution {
   step_index: number;
   step_title: string;
   step_type?: string;
-  status: 'not_started' | 'in_progress' | 'completed' | 'skipped' | 'snoozed';
+  status: WorkflowStatus;
   branch_path: string[];
   metadata: Record<string, any>;
   started_at?: string;
@@ -79,6 +80,7 @@ export class WorkflowExecutionService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .insert({
+<<<<<<< HEAD
         [DB_COLUMNS.WORKFLOW_CONFIG_ID]: params.workflowConfigId,
         [DB_COLUMNS.WORKFLOW_NAME]: params.workflowName,
         [DB_COLUMNS.WORKFLOW_TYPE]: params.workflowType,
@@ -90,6 +92,19 @@ export class WorkflowExecutionService {
         [DB_COLUMNS.COMPLETED_STEPS_COUNT]: 0,
         [DB_COLUMNS.SKIPPED_STEPS_COUNT]: 0,
         [DB_COLUMNS.COMPLETION_PERCENTAGE]: 0,
+=======
+        workflow_config_id: params.workflowConfigId,
+        workflow_name: params.workflowName,
+        workflow_type: params.workflowType,
+        customer_id: params.customerId,
+        user_id: params.userId,
+        total_steps: params.totalSteps,
+        status: WorkflowExecutionStatus.NOT_STARTED,
+        current_step_index: 0,
+        completed_steps_count: 0,
+        skipped_steps_count: 0,
+        completion_percentage: 0,
+>>>>>>> phase-0.2/agent-2-status-enums
       })
       .select()
       .single();
@@ -177,9 +192,15 @@ export class WorkflowExecutionService {
       const { data, error } = await supabase
         .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
         .update({
+<<<<<<< HEAD
           [DB_COLUMNS.BRANCH_PATH]: updatedBranchPath,
           [DB_COLUMNS.METADATA]: { ...existing.metadata, ...params.metadata },
           [DB_COLUMNS.STATUS]: 'in_progress'
+=======
+          branch_path: updatedBranchPath,
+          metadata: { ...existing.metadata, ...params.metadata },
+          status: WorkflowExecutionStatus.IN_PROGRESS
+>>>>>>> phase-0.2/agent-2-status-enums
         })
         .eq(DB_COLUMNS.ID, existing.id)
         .select()
@@ -196,6 +217,7 @@ export class WorkflowExecutionService {
       const { data, error } = await supabase
         .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
         .insert({
+<<<<<<< HEAD
           [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: params.executionId,
           [DB_COLUMNS.STEP_ID]: params.stepId,
           [DB_COLUMNS.STEP_INDEX]: params.stepIndex,
@@ -205,6 +227,17 @@ export class WorkflowExecutionService {
           [DB_COLUMNS.BRANCH_PATH]: params.branchValue ? [params.branchValue] : [],
           [DB_COLUMNS.METADATA]: params.metadata || {},
           [DB_COLUMNS.STARTED_AT]: new Date().toISOString()
+=======
+          workflow_execution_id: params.executionId,
+          step_id: params.stepId,
+          step_index: params.stepIndex,
+          step_title: params.stepTitle,
+          step_type: params.stepType,
+          status: WorkflowExecutionStatus.IN_PROGRESS,
+          branch_path: params.branchValue ? [params.branchValue] : [],
+          metadata: params.metadata || {},
+          started_at: new Date().toISOString()
+>>>>>>> phase-0.2/agent-2-status-enums
         })
         .select()
         .single();
@@ -220,6 +253,7 @@ export class WorkflowExecutionService {
       await supabase
         .from(DB_TABLES.WORKFLOW_EXECUTIONS)
         .update({
+<<<<<<< HEAD
           [DB_COLUMNS.CURRENT_STEP_ID]: params.stepId,
           [DB_COLUMNS.CURRENT_STEP_INDEX]: params.stepIndex,
           [DB_COLUMNS.STATUS]: 'in_progress',
@@ -227,6 +261,15 @@ export class WorkflowExecutionService {
         })
         .eq(DB_COLUMNS.ID, params.executionId)
         .eq(DB_COLUMNS.STATUS, 'not_started'); // Only update if not yet started
+=======
+          current_step_id: params.stepId,
+          current_step_index: params.stepIndex,
+          status: WorkflowExecutionStatus.IN_PROGRESS,
+          started_at: new Date().toISOString()
+        })
+        .eq('id', params.executionId)
+        .eq('status', WorkflowExecutionStatus.NOT_STARTED); // Only update if not yet started
+>>>>>>> phase-0.2/agent-2-status-enums
     }
 
     return stepExecution;
@@ -245,8 +288,13 @@ export class WorkflowExecutionService {
     const { error: stepError } = await supabase
       .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .update({
+<<<<<<< HEAD
         [DB_COLUMNS.STATUS]: 'completed',
         [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
+=======
+        status: WorkflowExecutionStatus.COMPLETED,
+        completed_at: new Date().toISOString()
+>>>>>>> phase-0.2/agent-2-status-enums
       })
       .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, params.executionId)
       .eq(DB_COLUMNS.STEP_ID, params.stepId);
@@ -275,12 +323,21 @@ export class WorkflowExecutionService {
     const { error } = await supabase
       .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .upsert({
+<<<<<<< HEAD
         [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: params.executionId,
         [DB_COLUMNS.STEP_ID]: params.stepId,
         [DB_COLUMNS.STEP_INDEX]: params.stepIndex,
         [DB_COLUMNS.STEP_TITLE]: params.stepTitle,
         [DB_COLUMNS.STATUS]: 'skipped',
         [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
+=======
+        workflow_execution_id: params.executionId,
+        step_id: params.stepId,
+        step_index: params.stepIndex,
+        step_title: params.stepTitle,
+        status: WorkflowExecutionStatus.SKIPPED,
+        completed_at: new Date().toISOString()
+>>>>>>> phase-0.2/agent-2-status-enums
       }, {
         onConflict: `${DB_COLUMNS.WORKFLOW_EXECUTION_ID},${DB_COLUMNS.STEP_ID}`
       });
@@ -296,7 +353,7 @@ export class WorkflowExecutionService {
 
   /**
    * Complete entire workflow (checks for pending tasks)
-   * Phase 3.3: Now supports 'completed_with_pending_tasks' status
+   * Phase 3.3: Now supports WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS status
    */
   static async completeWorkflow(
     executionId: string,
@@ -307,7 +364,7 @@ export class WorkflowExecutionService {
     // Check if there are pending tasks for this workflow
     const hasPendingTasks = await this.hasPendingTasks(executionId, supabase);
 
-    const status = hasPendingTasks ? 'completed_with_pending_tasks' : 'completed';
+    const status = hasPendingTasks ? WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS : WorkflowExecutionStatus.COMPLETED;
 
     const { error } = await supabase
       .from(DB_TABLES.WORKFLOW_EXECUTIONS)
@@ -385,8 +442,13 @@ export class WorkflowExecutionService {
     const { error } = await supabase
       .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .update({
+<<<<<<< HEAD
         [DB_COLUMNS.STATUS]: 'snoozed',
         [DB_COLUMNS.SNOOZED_UNTIL]: params.snoozeUntil.toISOString()
+=======
+        status: WorkflowExecutionStatus.SNOOZED,
+        snoozed_until: params.snoozeUntil.toISOString()
+>>>>>>> phase-0.2/agent-2-status-enums
       })
       .eq(DB_COLUMNS.ID, params.executionId);
 
@@ -398,7 +460,7 @@ export class WorkflowExecutionService {
 
   /**
    * Get incomplete workflows for a customer
-   * Phase 3.3: Now includes 'completed_with_pending_tasks'
+   * Phase 3.3: Now includes WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS
    */
   static async getIncompleteWorkflows(
     customerId: string,
@@ -409,9 +471,15 @@ export class WorkflowExecutionService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .select('*')
+<<<<<<< HEAD
       .eq(DB_COLUMNS.CUSTOMER_ID, customerId)
       .in(DB_COLUMNS.STATUS, ['not_started', 'in_progress', 'snoozed', 'completed_with_pending_tasks'])
       .order(DB_COLUMNS.LAST_ACTIVITY_AT, { ascending: false });
+=======
+      .eq('customer_id', customerId)
+      .in('status', [WorkflowExecutionStatus.NOT_STARTED, 'in_progress', 'snoozed', WorkflowExecutionStatus.COMPLETED_WITH_PENDING_TASKS])
+      .order('last_activity_at', { ascending: false });
+>>>>>>> phase-0.2/agent-2-status-enums
 
     if (error) {
       console.error('Error fetching incomplete workflows:', error);
@@ -445,7 +513,7 @@ export class WorkflowExecutionService {
 
     if (!steps) return;
 
-    const completedCount = steps.filter(s => s.status === 'completed').length;
+    const completedCount = steps.filter(s => s.status === WorkflowExecutionStatus.COMPLETED).length;
     const skippedCount = steps.filter(s => s.status === 'skipped').length;
     const totalFinished = completedCount + skippedCount;
 
