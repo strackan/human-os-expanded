@@ -26,6 +26,7 @@ import {
   Calendar,
   User
 } from 'lucide-react';
+import { API_ROUTES, buildApiUrl } from '@/lib/constants/api-routes';
 
 // =====================================================
 // Types
@@ -279,7 +280,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
       if (customerId) params.append('customerId', customerId);
       params.append('status', 'active'); // pending, in_progress, snoozed
 
-      const response = await fetch(`/api/workflows/tasks?${params.toString()}`);
+      const response = await fetch(buildApiUrl(API_ROUTES.WORKFLOWS.TASKS.LIST, Object.fromEntries(params)));
 
       if (!response.ok) {
         // Try to get error details from response
@@ -316,7 +317,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
   const handleComplete = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/workflows/tasks/${taskId}`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.TASKS.BY_ID(taskId), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'complete' })
@@ -335,7 +336,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
   const handleSnooze = async (taskId: string, days: number) => {
     try {
-      const response = await fetch(`/api/workflows/tasks/${taskId}`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.TASKS.BY_ID(taskId), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'snooze', snoozeDays: days })
@@ -354,7 +355,7 @@ export const TaskPanel: React.FC<TaskPanelProps> = ({
 
   const handleSkip = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/workflows/tasks/${taskId}`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.TASKS.BY_ID(taskId), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'skip', skipReason: 'Skipped by user' })

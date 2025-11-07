@@ -25,6 +25,7 @@ import { AccountPlanIndicator } from './AccountPlanIndicator';
 import { AccountPlanType } from './AccountPlanSelector';
 import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
 import { createClient } from '@/lib/supabase';
+import { API_ROUTES } from '@/lib/constants/api-routes';
 
 // =====================================================
 // Types
@@ -125,7 +126,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   // Fetch customer info (name and account plan)
   const fetchCustomerInfo = async () => {
     try {
-      const response = await fetch(`/api/customers/${customerId}`);
+      const response = await fetch(API_ROUTES.CUSTOMERS.BY_ID(customerId));
       if (response.ok) {
         const { customer } = await response.json();
         setAccountPlan(customer.account_plan || null);
@@ -162,7 +163,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    const response = await fetch('/api/workflows/executions', {
+    const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.LIST, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -186,7 +187,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   };
 
   const loadExecution = async (executionId: string) => {
-    const response = await fetch(`/api/workflows/executions/${executionId}`);
+    const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.BY_ID(executionId));
     if (!response.ok) {
       throw new Error('Failed to load workflow execution');
     }
@@ -240,7 +241,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
       setIsSaving(true);
       setSaveError(null);
 
-      const response = await fetch(`/api/workflows/executions/${executionState.executionId}/steps`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.STEPS(executionState.executionId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -300,7 +301,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
     }));
 
     // Update backend with new current step (use current_step_index for existing schema)
-    await fetch(`/api/workflows/executions/${executionState.executionId}`, {
+    await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.BY_ID(executionState.executionId), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -323,7 +324,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
       }));
 
       // Mark step as completed (single API call)
-      const response = await fetch(`/api/workflows/executions/${executionState.executionId}/steps`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.STEPS(executionState.executionId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -350,7 +351,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
         }));
 
         // Update backend asynchronously (don't await)
-        fetch(`/api/workflows/executions/${executionState.executionId}`, {
+        fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.BY_ID(executionState.executionId), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ currentStep: nextStepIndex })
@@ -367,7 +368,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
   const completeWorkflow = async () => {
     try {
-      const response = await fetch(`/api/workflows/executions/${executionState.executionId}`, {
+      const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.BY_ID(executionState.executionId), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

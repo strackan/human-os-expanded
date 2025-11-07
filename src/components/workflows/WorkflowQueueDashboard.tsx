@@ -21,6 +21,7 @@ import { Play, Calendar, AlertTriangle, TrendingUp, ShieldAlert, Target, Filter,
 import { AccountPlanBadge, AccountPlanIndicator } from './AccountPlanIndicator';
 import { AccountPlanType } from './AccountPlanSelector';
 import { PriorityScoreBreakdown } from './PriorityScoreBreakdown';
+import { API_ROUTES } from '@/lib/constants/api-routes';
 
 // =====================================================
 // Types
@@ -101,8 +102,8 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
 
     try {
       const endpoint = csmId
-        ? `/api/workflows/queue/${csmId}`
-        : '/api/workflows/queue/me';
+        ? API_ROUTES.WORKFLOWS.QUEUE.BY_CSM(csmId)
+        : API_ROUTES.WORKFLOWS.QUEUE.ME;
 
       const response = await fetch(endpoint);
 

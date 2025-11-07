@@ -8,6 +8,7 @@
  */
 
 import { ChatBranch } from '@/components/workflows/BranchRenderer';
+import { API_ROUTES } from '@/lib/constants/api-routes';
 
 // Feature flag for mock mode (can be toggled for testing)
 const USE_MOCK_MODE = process.env.NEXT_PUBLIC_CHAT_MOCK_MODE === 'true';
@@ -190,7 +191,7 @@ export const fetchBranches = async (
 
   try {
     // Real API call
-    const response = await fetch(`/api/workflows/${workflowId}/branches?stepId=${stepId}`);
+    const response = await fetch(API_ROUTES.WORKFLOWS.BRANCHES(workflowId, stepId));
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -251,7 +252,7 @@ export const createThread = async (
 
   try {
     // Real API call
-    const response = await fetch('/api/workflows/chat/threads', {
+    const response = await fetch(API_ROUTES.WORKFLOWS.CHAT.THREADS, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -323,7 +324,7 @@ export const sendMessage = async (
 
   try {
     // Real API call
-    const response = await fetch(`/api/workflows/chat/threads/${threadId}/messages`, {
+    const response = await fetch(API_ROUTES.WORKFLOWS.CHAT.MESSAGES(threadId), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content })
@@ -424,7 +425,7 @@ export const executeAction = async (
 
   try {
     // Real API call
-    const response = await fetch('/api/workflows/actions/execute', {
+    const response = await fetch(API_ROUTES.WORKFLOWS.ACTIONS.EXECUTE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -482,7 +483,7 @@ export const getChatHistory = async (
 
   try {
     // Real API call
-    const response = await fetch(`/api/workflows/chat/threads/${threadId}/messages`);
+    const response = await fetch(API_ROUTES.WORKFLOWS.CHAT.MESSAGES(threadId));
 
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);

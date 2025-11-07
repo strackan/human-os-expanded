@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { API_ROUTES } from '@/lib/constants/api-routes'
 
 interface AuthUser {
   id: string
@@ -30,7 +31,7 @@ export function useAuth() {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }))
       
-      const response = await fetch('/api/auth/refresh', {
+      const response = await fetch(API_ROUTES.AUTH.REFRESH, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
