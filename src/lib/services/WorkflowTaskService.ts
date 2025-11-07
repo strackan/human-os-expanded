@@ -145,14 +145,13 @@ export class WorkflowTaskService {
       taskCategory,
       action,
       description,
-      priority = Priority.MEDIUM,
+      priority = 'medium',
       metadata = {}
     } = params;
 
     const { data, error} = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .insert({
-<<<<<<< HEAD
         [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: workflowExecutionId || null,
         [DB_COLUMNS.STEP_EXECUTION_ID]: stepExecutionId || null,
         [DB_COLUMNS.ORIGINAL_WORKFLOW_EXECUTION_ID]: originalWorkflowExecutionId || null,
@@ -165,24 +164,8 @@ export class WorkflowTaskService {
         [DB_COLUMNS.ACTION]: action,
         [DB_COLUMNS.DESCRIPTION]: description,
         [DB_COLUMNS.PRIORITY]: priority,
-        [DB_COLUMNS.STATUS]: 'pending',
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.PENDING,
         [DB_COLUMNS.METADATA]: metadata
-=======
-        workflow_execution_id: workflowExecutionId || null,
-        step_execution_id: stepExecutionId || null,
-        original_workflow_execution_id: originalWorkflowExecutionId || null,
-        customer_id: customerId,
-        assigned_to: assignedTo,
-        created_by: createdBy,
-        recommendation_id: recommendationId || null,
-        task_type: taskType,
-        task_category: taskCategory || null,
-        action,
-        description,
-        priority,
-        status: TaskStatusEnum.PENDING,
-        metadata
->>>>>>> phase-0.2/agent-2-status-enums
         // first_snoozed_at and max_snooze_date are set automatically by trigger when first snoozed
       })
       .select()
@@ -303,13 +286,8 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-<<<<<<< HEAD
-        [DB_COLUMNS.STATUS]: 'snoozed',
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.SNOOZED,
         [DB_COLUMNS.SNOOZED_UNTIL]: snoozedUntil.toISOString()
-=======
-        status: TaskStatusEnum.SNOOZED,
-        snoozed_until: snoozedUntil.toISOString()
->>>>>>> phase-0.2/agent-2-status-enums
         // Trigger automatically:
         // - Sets first_snoozed_at (if null)
         // - Sets max_snooze_date to first_snoozed_at + 7 days (if null)
@@ -336,13 +314,8 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-<<<<<<< HEAD
-        [DB_COLUMNS.STATUS]: 'completed',
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.COMPLETED,
         [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
-=======
-        status: TaskStatusEnum.COMPLETED,
-        completed_at: new Date().toISOString()
->>>>>>> phase-0.2/agent-2-status-enums
       })
       .eq(DB_COLUMNS.ID, taskId)
       .select()
@@ -366,15 +339,9 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-<<<<<<< HEAD
-        [DB_COLUMNS.STATUS]: 'skipped',
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.SKIPPED,
         [DB_COLUMNS.SKIPPED_AT]: new Date().toISOString(),
         [DB_COLUMNS.SKIP_REASON]: reason
-=======
-        status: TaskStatusEnum.SKIPPED,
-        skipped_at: new Date().toISOString(),
-        skip_reason: reason
->>>>>>> phase-0.2/agent-2-status-enums
       })
       .eq(DB_COLUMNS.ID, taskId)
       .select()
@@ -406,19 +373,11 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-<<<<<<< HEAD
         [DB_COLUMNS.ASSIGNED_TO]: newAssignee,
         [DB_COLUMNS.REASSIGNED_FROM]: task.assigned_to,
         [DB_COLUMNS.REASSIGNED_AT]: new Date().toISOString(),
         [DB_COLUMNS.REASSIGNMENT_REASON]: reason,
-        [DB_COLUMNS.STATUS]: 'reassigned'
-=======
-        assigned_to: newAssignee,
-        reassigned_from: task.assigned_to,
-        reassigned_at: new Date().toISOString(),
-        reassignment_reason: reason,
-        status: TaskStatusEnum.REASSIGNED
->>>>>>> phase-0.2/agent-2-status-enums
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.REASSIGNED
       })
       .eq(DB_COLUMNS.ID, taskId)
       .select()
@@ -653,13 +612,8 @@ export class WorkflowTaskService {
     const { data, error } = await supabase
       .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-<<<<<<< HEAD
-        [DB_COLUMNS.STATUS]: 'pending',
+        [DB_COLUMNS.STATUS]: TaskStatusEnum.PENDING,
         [DB_COLUMNS.SNOOZED_UNTIL]: null
-=======
-        status: TaskStatusEnum.PENDING,
-        snoozed_until: null
->>>>>>> phase-0.2/agent-2-status-enums
       })
       .eq(DB_COLUMNS.ID, taskId)
       .select()
