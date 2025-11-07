@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 export interface Stakeholder {
   name: string;
@@ -34,22 +35,22 @@ export async function fetchStakeholders(customerId: string): Promise<Stakeholder
     const supabase = createClient();
 
     const { data: contacts, error } = await supabase
-      .from('contacts')
+      .from(DB_TABLES.CONTACTS)
       .select(`
-        first_name,
-        last_name,
-        title,
-        email,
-        relationship_strength,
-        communication_style,
-        key_concerns,
-        leverage_points,
-        recent_interactions,
-        relationship_notes,
-        is_primary
+        ${DB_COLUMNS.FIRST_NAME},
+        ${DB_COLUMNS.LAST_NAME},
+        ${DB_COLUMNS.TITLE},
+        ${DB_COLUMNS.EMAIL},
+        ${DB_COLUMNS.RELATIONSHIP_STRENGTH},
+        ${DB_COLUMNS.COMMUNICATION_STYLE},
+        ${DB_COLUMNS.KEY_CONCERNS},
+        ${DB_COLUMNS.LEVERAGE_POINTS},
+        ${DB_COLUMNS.RECENT_INTERACTIONS},
+        ${DB_COLUMNS.RELATIONSHIP_NOTES},
+        ${DB_COLUMNS.IS_PRIMARY}
       `)
-      .eq('customer_id', customerId)
-      .order('is_primary', { ascending: false });
+      .eq(DB_COLUMNS.CUSTOMER_ID, customerId)
+      .order(DB_COLUMNS.IS_PRIMARY, { ascending: false });
 
     if (error) {
       console.error('[StakeholderProvider] Error fetching contacts:', error);

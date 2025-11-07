@@ -12,6 +12,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 // =====================================================
 // Types
@@ -152,22 +153,22 @@ export class WorkflowTaskService {
     } = params;
 
     const { data, error} = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .insert({
-        workflow_execution_id: workflowExecutionId || null,
-        step_execution_id: stepExecutionId || null,
-        original_workflow_execution_id: originalWorkflowExecutionId || null,
-        customer_id: customerId,
-        assigned_to: assignedTo,
-        created_by: createdBy,
-        recommendation_id: recommendationId || null,
-        task_type: taskType,
-        task_category: taskCategory || null,
-        action,
-        description,
-        priority,
-        status: 'pending',
-        metadata
+        [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: workflowExecutionId || null,
+        [DB_COLUMNS.STEP_EXECUTION_ID]: stepExecutionId || null,
+        [DB_COLUMNS.ORIGINAL_WORKFLOW_EXECUTION_ID]: originalWorkflowExecutionId || null,
+        [DB_COLUMNS.CUSTOMER_ID]: customerId,
+        [DB_COLUMNS.ASSIGNED_TO]: assignedTo,
+        [DB_COLUMNS.CREATED_BY]: createdBy,
+        [DB_COLUMNS.RECOMMENDATION_ID]: recommendationId || null,
+        [DB_COLUMNS.TASK_TYPE]: taskType,
+        [DB_COLUMNS.TASK_CATEGORY]: taskCategory || null,
+        [DB_COLUMNS.ACTION]: action,
+        [DB_COLUMNS.DESCRIPTION]: description,
+        [DB_COLUMNS.PRIORITY]: priority,
+        [DB_COLUMNS.STATUS]: 'pending',
+        [DB_COLUMNS.METADATA]: metadata
         // first_snoozed_at and max_snooze_date are set automatically by trigger when first snoozed
       })
       .select()
@@ -188,9 +189,9 @@ export class WorkflowTaskService {
     supabase: SupabaseClient
   ): Promise<WorkflowTask | null> {
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .select('*')
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .single();
 
     if (error) {
@@ -286,16 +287,16 @@ export class WorkflowTaskService {
 
     // Update task - trigger will handle first_snoozed_at, max_snooze_date, and snooze_count
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        status: 'snoozed',
-        snoozed_until: snoozedUntil.toISOString()
+        [DB_COLUMNS.STATUS]: 'snoozed',
+        [DB_COLUMNS.SNOOZED_UNTIL]: snoozedUntil.toISOString()
         // Trigger automatically:
         // - Sets first_snoozed_at (if null)
         // - Sets max_snooze_date to first_snoozed_at + 7 days (if null)
         // - Increments snooze_count
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -314,12 +315,12 @@ export class WorkflowTaskService {
     supabase: SupabaseClient
   ): Promise<WorkflowTask> {
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        status: 'completed',
-        completed_at: new Date().toISOString()
+        [DB_COLUMNS.STATUS]: 'completed',
+        [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -339,13 +340,13 @@ export class WorkflowTaskService {
     supabase: SupabaseClient
   ): Promise<WorkflowTask> {
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        status: 'skipped',
-        skipped_at: new Date().toISOString(),
-        skip_reason: reason
+        [DB_COLUMNS.STATUS]: 'skipped',
+        [DB_COLUMNS.SKIPPED_AT]: new Date().toISOString(),
+        [DB_COLUMNS.SKIP_REASON]: reason
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -373,15 +374,15 @@ export class WorkflowTaskService {
     }
 
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        assigned_to: newAssignee,
-        reassigned_from: task.assigned_to,
-        reassigned_at: new Date().toISOString(),
-        reassignment_reason: reason,
-        status: 'reassigned'
+        [DB_COLUMNS.ASSIGNED_TO]: newAssignee,
+        [DB_COLUMNS.REASSIGNED_FROM]: task.assigned_to,
+        [DB_COLUMNS.REASSIGNED_AT]: new Date().toISOString(),
+        [DB_COLUMNS.REASSIGNMENT_REASON]: reason,
+        [DB_COLUMNS.STATUS]: 'reassigned'
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -419,13 +420,13 @@ export class WorkflowTaskService {
     includeCompleted = false
   ): Promise<WorkflowTask[]> {
     let query = supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .select('*')
-      .eq('assigned_to', userId)
-      .order('created_at', { ascending: false });
+      .eq(DB_COLUMNS.ASSIGNED_TO, userId)
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false });
 
     if (!includeCompleted) {
-      query = query.in('status', ['pending', 'snoozed', 'in_progress']);
+      query = query.in(DB_COLUMNS.STATUS, ['pending', 'snoozed', 'in_progress']);
     }
 
     const { data, error } = await query;
@@ -460,11 +461,11 @@ export class WorkflowTaskService {
     }
 
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        surfaced_in_workflows: surfacedWorkflows
+        [DB_COLUMNS.SURFACED_IN_WORKFLOWS]: surfacedWorkflows
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -491,9 +492,9 @@ export class WorkflowTaskService {
 
     // Get task type configuration for grace period
     const { data: config } = await supabase
-      .from('task_type_config')
-      .select('auto_skip_enabled, auto_skip_grace_hours, requires_manual_escalation')
-      .eq('task_type', task.task_type)
+      .from(DB_TABLES.TASK_TYPE_CONFIG)
+      .select(`${DB_COLUMNS.AUTO_SKIP_ENABLED}, ${DB_COLUMNS.AUTO_SKIP_GRACE_HOURS}, ${DB_COLUMNS.REQUIRES_MANUAL_ESCALATION}`)
+      .eq(DB_COLUMNS.TASK_TYPE, task.task_type)
       .single();
 
     const graceHours = config?.auto_skip_grace_hours || 24;  // Default 24 hours
@@ -505,12 +506,12 @@ export class WorkflowTaskService {
       : null;
 
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        force_action: true,
-        auto_skip_at: autoSkipAt ? autoSkipAt.toISOString() : null
+        [DB_COLUMNS.FORCE_ACTION]: true,
+        [DB_COLUMNS.AUTO_SKIP_AT]: autoSkipAt ? autoSkipAt.toISOString() : null
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
@@ -537,9 +538,9 @@ export class WorkflowTaskService {
 
     // Get task type configuration
     const { data: config } = await supabase
-      .from('task_type_config')
-      .select('auto_skip_grace_hours')
-      .eq('task_type', task.task_type)
+      .from(DB_TABLES.TASK_TYPE_CONFIG)
+      .select(DB_COLUMNS.AUTO_SKIP_GRACE_HOURS)
+      .eq(DB_COLUMNS.TASK_TYPE, task.task_type)
       .single();
 
     const graceHours = config?.auto_skip_grace_hours || 24;
@@ -592,10 +593,10 @@ export class WorkflowTaskService {
     const now = new Date().toISOString();
 
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .select('*')
-      .eq('status', 'snoozed')
-      .lte('snoozed_until', now);
+      .eq(DB_COLUMNS.STATUS, 'snoozed')
+      .lte(DB_COLUMNS.SNOOZED_UNTIL, now);
 
     if (error) {
       throw new Error(`Failed to fetch snoozed tasks: ${error.message}`);
@@ -612,12 +613,12 @@ export class WorkflowTaskService {
     supabase: SupabaseClient
   ): Promise<WorkflowTask> {
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .update({
-        status: 'pending',
-        snoozed_until: null
+        [DB_COLUMNS.STATUS]: 'pending',
+        [DB_COLUMNS.SNOOZED_UNTIL]: null
       })
-      .eq('id', taskId)
+      .eq(DB_COLUMNS.ID, taskId)
       .select()
       .single();
 
