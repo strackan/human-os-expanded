@@ -11,6 +11,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { createContext as createSafeContext } from '@/utils/templateResolver';
+import { API_ROUTES } from '@/lib/constants/api-routes';
 
 // =====================================================
 // Types
@@ -111,7 +112,7 @@ export const WorkflowContextProvider: React.FC<WorkflowContextProviderProps> = (
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/workflows/context/${customerId}`);
+      const response = await fetch(API_ROUTES.WORKFLOWS.CONTEXT_BY_CUSTOMER(customerId));
 
       if (!response.ok) {
         throw new Error(`Failed to fetch context: ${response.statusText}`);

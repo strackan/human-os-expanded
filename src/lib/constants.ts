@@ -15,17 +15,10 @@ export const CUSTOMER_CONSTANTS = {
   DEFAULT_RISK_COLOR: 'yellow',
 } as const;
 
-// API endpoints
-export const API_ENDPOINTS = {
-  CUSTOMERS: '/api/customers',
-  CUSTOMER_BY_ID: (id: string) => `/api/customers/${id}`,
-  CUSTOMER_BY_KEY: (key: string) => `/api/customers/${key}`,
-  AUTH: {
-    SIGNIN: '/api/auth/signin',
-    SIGNOUT: '/api/auth/signout',
-    STATUS: '/api/auth/status',
-  },
-} as const;
+// API endpoints (now centralized in api-routes.ts)
+// Re-export for backward compatibility
+export { API_ROUTES } from './constants/api-routes';
+export { API_ROUTES as API_ENDPOINTS } from './constants/api-routes';
 
 // Chat workflow constants
 export const CHAT_CONSTANTS = {
