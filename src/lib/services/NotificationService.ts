@@ -12,6 +12,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 // =====================================================
 // Types
@@ -85,18 +86,18 @@ export class NotificationService {
     } = params;
 
     const { data, error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .insert({
-        user_id: userId,
-        notification_type: notificationType,
-        title,
-        message,
-        priority,
-        link_url: linkUrl || null,
-        link_text: linkText || null,
-        task_id: taskId || null,
-        workflow_execution_id: workflowExecutionId || null,
-        metadata
+        [DB_COLUMNS.USER_ID]: userId,
+        [DB_COLUMNS.NOTIFICATION_TYPE]: notificationType,
+        [DB_COLUMNS.TITLE]: title,
+        [DB_COLUMNS.MESSAGE]: message,
+        [DB_COLUMNS.PRIORITY]: priority,
+        [DB_COLUMNS.LINK_URL]: linkUrl || null,
+        [DB_COLUMNS.LINK_TEXT]: linkText || null,
+        [DB_COLUMNS.TASK_ID]: taskId || null,
+        [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: workflowExecutionId || null,
+        [DB_COLUMNS.METADATA]: metadata
         // is_read defaults to false
         // expires_at defaults to NOW() + 90 days
       })
@@ -118,10 +119,10 @@ export class NotificationService {
     supabase: SupabaseClient
   ): Promise<number> {
     const { count, error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('is_read', false);
+      .eq(DB_COLUMNS.USER_ID, userId)
+      .eq(DB_COLUMNS.IS_READ, false);
 
     if (error) {
       throw new Error(`Failed to get unread count: ${error.message}`);
@@ -139,11 +140,11 @@ export class NotificationService {
     limit?: number
   ): Promise<InProductNotification[]> {
     let query = supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .select('*')
-      .eq('user_id', userId)
-      .eq('is_read', false)
-      .order('created_at', { ascending: false });
+      .eq(DB_COLUMNS.USER_ID, userId)
+      .eq(DB_COLUMNS.IS_READ, false)
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false });
 
     if (limit) {
       query = query.limit(limit);
@@ -167,10 +168,10 @@ export class NotificationService {
     limit?: number
   ): Promise<InProductNotification[]> {
     let query = supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .eq(DB_COLUMNS.USER_ID, userId)
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false });
 
     if (limit) {
       query = query.limit(limit);
@@ -193,12 +194,12 @@ export class NotificationService {
     supabase: SupabaseClient
   ): Promise<InProductNotification> {
     const { data, error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .update({
-        is_read: true,
-        read_at: new Date().toISOString()
+        [DB_COLUMNS.IS_READ]: true,
+        [DB_COLUMNS.READ_AT]: new Date().toISOString()
       })
-      .eq('id', notificationId)
+      .eq(DB_COLUMNS.ID, notificationId)
       .select()
       .single();
 
@@ -217,13 +218,13 @@ export class NotificationService {
     supabase: SupabaseClient
   ): Promise<number> {
     const { data, error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .update({
-        is_read: true,
-        read_at: new Date().toISOString()
+        [DB_COLUMNS.IS_READ]: true,
+        [DB_COLUMNS.READ_AT]: new Date().toISOString()
       })
-      .eq('user_id', userId)
-      .eq('is_read', false)
+      .eq(DB_COLUMNS.USER_ID, userId)
+      .eq(DB_COLUMNS.IS_READ, false)
       .select();
 
     if (error) {
@@ -241,9 +242,9 @@ export class NotificationService {
     supabase: SupabaseClient
   ): Promise<void> {
     const { error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .delete()
-      .eq('id', notificationId);
+      .eq(DB_COLUMNS.ID, notificationId);
 
     if (error) {
       throw new Error(`Failed to delete notification: ${error.message}`);
@@ -260,9 +261,9 @@ export class NotificationService {
     const now = new Date().toISOString();
 
     const { data, error } = await supabase
-      .from('in_product_notifications')
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .delete()
-      .lt('expires_at', now)
+      .lt(DB_COLUMNS.EXPIRES_AT, now)
       .select();
 
     if (error) {

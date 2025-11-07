@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { fetchStakeholders, type Stakeholder } from './stakeholderProvider';
 import { fetchExpansionData, type ExpansionData } from './contractProvider';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 export interface CustomerContext {
   id: string;
@@ -82,9 +83,9 @@ export function useWorkflowContext(
 
         // Step 1: Fetch customer data (always needed)
         const { data: customerData, error: customerError } = await supabase
-          .from('customers')
+          .from(DB_TABLES.CUSTOMERS)
           .select('*')
-          .eq('id', customerId)
+          .eq(DB_COLUMNS.ID, customerId)
           .single();
 
         if (customerError || !customerData) {
@@ -173,9 +174,9 @@ export async function getWorkflowContext(
 
     // Fetch customer
     const { data: customerData, error: customerError } = await supabase
-      .from('customers')
+      .from(DB_TABLES.CUSTOMERS)
       .select('*')
-      .eq('id', customerId)
+      .eq(DB_COLUMNS.ID, customerId)
       .single();
 
     if (customerError || !customerData) {

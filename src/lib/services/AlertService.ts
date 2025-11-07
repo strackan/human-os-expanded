@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 export interface Alert {
   id: string;
@@ -21,9 +22,9 @@ export class AlertService {
 
   static async getRecentAlerts(limit: number = 50): Promise<Alert[]> {
     const { data, error } = await this.getClient()
-      .from('alerts')
+      .from(DB_TABLES.ALERTS)
       .select('*')
-      .order('created_at', { ascending: false })
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -32,10 +33,10 @@ export class AlertService {
 
   static async getUnprocessedAlerts(): Promise<Alert[]> {
     const { data, error } = await this.getClient()
-      .from('alerts')
+      .from(DB_TABLES.ALERTS)
       .select('*')
-      .is('processed_at', null)
-      .order('created_at', { ascending: false });
+      .is(DB_COLUMNS.PROCESSED_AT, null)
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false });
 
     if (error) throw error;
     return data;
@@ -43,7 +44,7 @@ export class AlertService {
 
   static async createAlert(alert: Omit<Alert, 'id' | 'created_at'>): Promise<Alert> {
     const { data, error } = await this.getClient()
-      .from('alerts')
+      .from(DB_TABLES.ALERTS)
       .insert(alert)
       .select()
       .single();
@@ -54,19 +55,19 @@ export class AlertService {
 
   static async markAlertAsProcessed(alertId: string): Promise<void> {
     const { error } = await this.getClient()
-      .from('alerts')
-      .update({ processed_at: new Date().toISOString() })
-      .eq('id', alertId);
+      .from(DB_TABLES.ALERTS)
+      .update({ [DB_COLUMNS.PROCESSED_AT]: new Date().toISOString() })
+      .eq(DB_COLUMNS.ID, alertId);
 
     if (error) throw error;
   }
 
   static async getAlertsByRenewalId(renewalId: string): Promise<Alert[]> {
     const { data, error } = await this.getClient()
-      .from('alerts')
+      .from(DB_TABLES.ALERTS)
       .select('*')
-      .eq('renewal_id', renewalId)
-      .order('created_at', { ascending: false });
+      .eq(DB_COLUMNS.RENEWAL_ID, renewalId)
+      .order(DB_COLUMNS.CREATED_AT, { ascending: false });
 
     if (error) throw error;
     return data;

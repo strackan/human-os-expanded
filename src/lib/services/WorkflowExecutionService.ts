@@ -9,6 +9,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 /**
  * Workflow Execution record
@@ -76,19 +77,19 @@ export class WorkflowExecutionService {
     const supabase = supabaseClient || createClient();
 
     const { data, error } = await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .insert({
-        workflow_config_id: params.workflowConfigId,
-        workflow_name: params.workflowName,
-        workflow_type: params.workflowType,
-        customer_id: params.customerId,
-        user_id: params.userId,
-        total_steps: params.totalSteps,
-        status: 'not_started',
-        current_step_index: 0,
-        completed_steps_count: 0,
-        skipped_steps_count: 0,
-        completion_percentage: 0,
+        [DB_COLUMNS.WORKFLOW_CONFIG_ID]: params.workflowConfigId,
+        [DB_COLUMNS.WORKFLOW_NAME]: params.workflowName,
+        [DB_COLUMNS.WORKFLOW_TYPE]: params.workflowType,
+        [DB_COLUMNS.CUSTOMER_ID]: params.customerId,
+        [DB_COLUMNS.USER_ID]: params.userId,
+        [DB_COLUMNS.TOTAL_STEPS]: params.totalSteps,
+        [DB_COLUMNS.STATUS]: 'not_started',
+        [DB_COLUMNS.CURRENT_STEP_INDEX]: 0,
+        [DB_COLUMNS.COMPLETED_STEPS_COUNT]: 0,
+        [DB_COLUMNS.SKIPPED_STEPS_COUNT]: 0,
+        [DB_COLUMNS.COMPLETION_PERCENTAGE]: 0,
       })
       .select()
       .single();
@@ -112,9 +113,9 @@ export class WorkflowExecutionService {
 
     // Get main execution
     const { data: execution, error: execError } = await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .select('*')
-      .eq('id', executionId)
+      .eq(DB_COLUMNS.ID, executionId)
       .single();
 
     if (execError) {
@@ -127,10 +128,10 @@ export class WorkflowExecutionService {
 
     // Get step executions
     const { data: steps, error: stepsError } = await supabase
-      .from('workflow_step_executions')
+      .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .select('*')
-      .eq('workflow_execution_id', executionId)
-      .order('step_index', { ascending: true });
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, executionId)
+      .order(DB_COLUMNS.STEP_INDEX, { ascending: true });
 
     if (stepsError) {
       console.error('Error fetching step executions:', stepsError);
@@ -159,10 +160,10 @@ export class WorkflowExecutionService {
 
     // Check if step execution already exists
     const { data: existing } = await supabase
-      .from('workflow_step_executions')
+      .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .select('*')
-      .eq('workflow_execution_id', params.executionId)
-      .eq('step_id', params.stepId)
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, params.executionId)
+      .eq(DB_COLUMNS.STEP_ID, params.stepId)
       .single();
 
     let stepExecution: StepExecution;
@@ -174,13 +175,13 @@ export class WorkflowExecutionService {
         : existing.branch_path;
 
       const { data, error } = await supabase
-        .from('workflow_step_executions')
+        .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
         .update({
-          branch_path: updatedBranchPath,
-          metadata: { ...existing.metadata, ...params.metadata },
-          status: 'in_progress'
+          [DB_COLUMNS.BRANCH_PATH]: updatedBranchPath,
+          [DB_COLUMNS.METADATA]: { ...existing.metadata, ...params.metadata },
+          [DB_COLUMNS.STATUS]: 'in_progress'
         })
-        .eq('id', existing.id)
+        .eq(DB_COLUMNS.ID, existing.id)
         .select()
         .single();
 
@@ -193,17 +194,17 @@ export class WorkflowExecutionService {
     } else {
       // Create new step execution
       const { data, error } = await supabase
-        .from('workflow_step_executions')
+        .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
         .insert({
-          workflow_execution_id: params.executionId,
-          step_id: params.stepId,
-          step_index: params.stepIndex,
-          step_title: params.stepTitle,
-          step_type: params.stepType,
-          status: 'in_progress',
-          branch_path: params.branchValue ? [params.branchValue] : [],
-          metadata: params.metadata || {},
-          started_at: new Date().toISOString()
+          [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: params.executionId,
+          [DB_COLUMNS.STEP_ID]: params.stepId,
+          [DB_COLUMNS.STEP_INDEX]: params.stepIndex,
+          [DB_COLUMNS.STEP_TITLE]: params.stepTitle,
+          [DB_COLUMNS.STEP_TYPE]: params.stepType,
+          [DB_COLUMNS.STATUS]: 'in_progress',
+          [DB_COLUMNS.BRANCH_PATH]: params.branchValue ? [params.branchValue] : [],
+          [DB_COLUMNS.METADATA]: params.metadata || {},
+          [DB_COLUMNS.STARTED_AT]: new Date().toISOString()
         })
         .select()
         .single();
@@ -217,15 +218,15 @@ export class WorkflowExecutionService {
 
       // Update workflow execution: set current step and status
       await supabase
-        .from('workflow_executions')
+        .from(DB_TABLES.WORKFLOW_EXECUTIONS)
         .update({
-          current_step_id: params.stepId,
-          current_step_index: params.stepIndex,
-          status: 'in_progress',
-          started_at: new Date().toISOString()
+          [DB_COLUMNS.CURRENT_STEP_ID]: params.stepId,
+          [DB_COLUMNS.CURRENT_STEP_INDEX]: params.stepIndex,
+          [DB_COLUMNS.STATUS]: 'in_progress',
+          [DB_COLUMNS.STARTED_AT]: new Date().toISOString()
         })
-        .eq('id', params.executionId)
-        .eq('status', 'not_started'); // Only update if not yet started
+        .eq(DB_COLUMNS.ID, params.executionId)
+        .eq(DB_COLUMNS.STATUS, 'not_started'); // Only update if not yet started
     }
 
     return stepExecution;
@@ -242,13 +243,13 @@ export class WorkflowExecutionService {
 
     // Update step execution
     const { error: stepError } = await supabase
-      .from('workflow_step_executions')
+      .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .update({
-        status: 'completed',
-        completed_at: new Date().toISOString()
+        [DB_COLUMNS.STATUS]: 'completed',
+        [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
       })
-      .eq('workflow_execution_id', params.executionId)
-      .eq('step_id', params.stepId);
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, params.executionId)
+      .eq(DB_COLUMNS.STEP_ID, params.stepId);
 
     if (stepError) {
       console.error('Error completing step:', stepError);
@@ -272,16 +273,16 @@ export class WorkflowExecutionService {
 
     // Upsert step execution with skipped status
     const { error } = await supabase
-      .from('workflow_step_executions')
+      .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
       .upsert({
-        workflow_execution_id: params.executionId,
-        step_id: params.stepId,
-        step_index: params.stepIndex,
-        step_title: params.stepTitle,
-        status: 'skipped',
-        completed_at: new Date().toISOString()
+        [DB_COLUMNS.WORKFLOW_EXECUTION_ID]: params.executionId,
+        [DB_COLUMNS.STEP_ID]: params.stepId,
+        [DB_COLUMNS.STEP_INDEX]: params.stepIndex,
+        [DB_COLUMNS.STEP_TITLE]: params.stepTitle,
+        [DB_COLUMNS.STATUS]: 'skipped',
+        [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString()
       }, {
-        onConflict: 'workflow_execution_id,step_id'
+        onConflict: `${DB_COLUMNS.WORKFLOW_EXECUTION_ID},${DB_COLUMNS.STEP_ID}`
       });
 
     if (error) {
@@ -309,13 +310,13 @@ export class WorkflowExecutionService {
     const status = hasPendingTasks ? 'completed_with_pending_tasks' : 'completed';
 
     const { error } = await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .update({
-        status,
-        completed_at: new Date().toISOString(),
-        completion_percentage: 100
+        [DB_COLUMNS.STATUS]: status,
+        [DB_COLUMNS.COMPLETED_AT]: new Date().toISOString(),
+        [DB_COLUMNS.COMPLETION_PERCENTAGE]: 100
       })
-      .eq('id', executionId);
+      .eq(DB_COLUMNS.ID, executionId);
 
     if (error) {
       console.error('Error completing workflow:', error);
@@ -334,10 +335,10 @@ export class WorkflowExecutionService {
     const supabase = supabaseClient || createClient();
 
     const { count, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .select('*', { count: 'exact', head: true })
-      .eq('workflow_execution_id', executionId)
-      .in('status', ['pending', 'snoozed', 'in_progress']);
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, executionId)
+      .in(DB_COLUMNS.STATUS, ['pending', 'snoozed', 'in_progress']);
 
     if (error) {
       console.error('Error checking pending tasks:', error);
@@ -358,11 +359,11 @@ export class WorkflowExecutionService {
     const supabase = supabaseClient || createClient();
 
     const { data, error } = await supabase
-      .from('workflow_tasks')
+      .from(DB_TABLES.WORKFLOW_TASKS)
       .select('*')
-      .eq('workflow_execution_id', executionId)
-      .in('status', ['pending', 'snoozed', 'in_progress'])
-      .order('created_at', { ascending: true });
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, executionId)
+      .in(DB_COLUMNS.STATUS, ['pending', 'snoozed', 'in_progress'])
+      .order(DB_COLUMNS.CREATED_AT, { ascending: true });
 
     if (error) {
       console.error('Error fetching pending tasks:', error);
@@ -382,12 +383,12 @@ export class WorkflowExecutionService {
     const supabase = supabaseClient || createClient();
 
     const { error } = await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .update({
-        status: 'snoozed',
-        snoozed_until: params.snoozeUntil.toISOString()
+        [DB_COLUMNS.STATUS]: 'snoozed',
+        [DB_COLUMNS.SNOOZED_UNTIL]: params.snoozeUntil.toISOString()
       })
-      .eq('id', params.executionId);
+      .eq(DB_COLUMNS.ID, params.executionId);
 
     if (error) {
       console.error('Error snoozing workflow:', error);
@@ -406,11 +407,11 @@ export class WorkflowExecutionService {
     const supabase = supabaseClient || createClient();
 
     const { data, error } = await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .select('*')
-      .eq('customer_id', customerId)
-      .in('status', ['not_started', 'in_progress', 'snoozed', 'completed_with_pending_tasks'])
-      .order('last_activity_at', { ascending: false });
+      .eq(DB_COLUMNS.CUSTOMER_ID, customerId)
+      .in(DB_COLUMNS.STATUS, ['not_started', 'in_progress', 'snoozed', 'completed_with_pending_tasks'])
+      .order(DB_COLUMNS.LAST_ACTIVITY_AT, { ascending: false });
 
     if (error) {
       console.error('Error fetching incomplete workflows:', error);
@@ -429,18 +430,18 @@ export class WorkflowExecutionService {
   ): Promise<void> {
     // Get workflow execution
     const { data: execution } = await supabase
-      .from('workflow_executions')
-      .select('total_steps')
-      .eq('id', executionId)
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
+      .select(DB_COLUMNS.TOTAL_STEPS)
+      .eq(DB_COLUMNS.ID, executionId)
       .single();
 
     if (!execution) return;
 
     // Count completed and skipped steps
     const { data: steps } = await supabase
-      .from('workflow_step_executions')
-      .select('status')
-      .eq('workflow_execution_id', executionId);
+      .from(DB_TABLES.WORKFLOW_STEP_EXECUTIONS)
+      .select(DB_COLUMNS.STATUS)
+      .eq(DB_COLUMNS.WORKFLOW_EXECUTION_ID, executionId);
 
     if (!steps) return;
 
@@ -452,12 +453,12 @@ export class WorkflowExecutionService {
 
     // Update workflow execution
     await supabase
-      .from('workflow_executions')
+      .from(DB_TABLES.WORKFLOW_EXECUTIONS)
       .update({
-        completed_steps_count: completedCount,
-        skipped_steps_count: skippedCount,
-        completion_percentage: completionPercentage
+        [DB_COLUMNS.COMPLETED_STEPS_COUNT]: completedCount,
+        [DB_COLUMNS.SKIPPED_STEPS_COUNT]: skippedCount,
+        [DB_COLUMNS.COMPLETION_PERCENTAGE]: completionPercentage
       })
-      .eq('id', executionId);
+      .eq(DB_COLUMNS.ID, executionId);
   }
 }

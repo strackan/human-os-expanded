@@ -5,6 +5,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 export interface ContractData {
   licenseCount: number;
@@ -207,9 +208,9 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
 
     // Fetch contract data from contract_matrix view (includes business terms)
     const { data: contractData, error: contractError } = await supabase
-      .from('contract_matrix')
+      .from(DB_TABLES.CONTRACT_MATRIX)
       .select('*')
-      .eq('customer_id', customerId)
+      .eq(DB_COLUMNS.CUSTOMER_ID, customerId)
       .single();
 
     if (contractError || !contractData) {
@@ -218,9 +219,9 @@ export async function fetchExpansionData(customerId: string): Promise<ExpansionD
 
     // Fetch customer properties (usage and market data)
     const { data: propsData, error: propsError } = await supabase
-      .from('customer_properties')
+      .from(DB_TABLES.CUSTOMER_PROPERTIES)
       .select('*')
-      .eq('customer_id', customerId)
+      .eq(DB_COLUMNS.CUSTOMER_ID, customerId)
       .single();
 
     if (propsError || !propsData) {

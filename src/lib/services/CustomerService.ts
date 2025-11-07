@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase';
 import { Customer, CustomerWithContact, Contact, CustomerFilters, CustomerSortOptions } from '../../types/customer';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
 export class CustomerService {
   /**
@@ -18,20 +19,20 @@ export class CustomerService {
       const supabase = supabaseClient || createClient();
       
       let query = supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .select(`
           *,
-          primary_contact:contacts!fk_public_contacts_customer_id (
-            id,
-            first_name,
-            last_name,
-            email,
-            phone,
-            title,
-            customer_id,
-            is_primary,
-            created_at,
-            updated_at
+          primary_contact:${DB_TABLES.CONTACTS}!fk_public_contacts_customer_id (
+            ${DB_COLUMNS.ID},
+            ${DB_COLUMNS.FIRST_NAME},
+            ${DB_COLUMNS.LAST_NAME},
+            ${DB_COLUMNS.EMAIL},
+            ${DB_COLUMNS.PHONE},
+            ${DB_COLUMNS.TITLE},
+            ${DB_COLUMNS.CUSTOMER_ID},
+            ${DB_COLUMNS.IS_PRIMARY},
+            ${DB_COLUMNS.CREATED_AT},
+            ${DB_COLUMNS.UPDATED_AT}
           )
         `, { count: 'exact' });
 
@@ -104,7 +105,7 @@ export class CustomerService {
       const supabase = supabaseClient || createClient();
       
       const { data, error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .select(`
           *,
           primary_contact:contacts!fk_public_contacts_customer_id (
@@ -158,7 +159,7 @@ export class CustomerService {
       
       // First, try to find by exact name match (for backward compatibility)
       let { data, error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .select(`
           *,
           primary_contact:contacts!fk_public_contacts_customer_id (
@@ -181,7 +182,7 @@ export class CustomerService {
       if (error && error.code === 'PGRST116') {
         // Try case-insensitive exact match first
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
-          .from('customers')
+          .from(DB_TABLES.CUSTOMERS)
           .select(`
             *,
             primary_contact:contacts!fk_public_contacts_customer_id (
@@ -206,7 +207,7 @@ export class CustomerService {
         } else {
           // Last resort: get only names and IDs to find by slug match (much more efficient)
           const { data: customerNames, error: namesError } = await supabase
-            .from('customers')
+            .from(DB_TABLES.CUSTOMERS)
             .select('id, name');
 
           if (!namesError && customerNames) {
@@ -217,7 +218,7 @@ export class CustomerService {
             if (foundCustomer) {
               // Now get the full customer data for the found customer
               const { data: fullCustomerData, error: fullCustomerError } = await supabase
-                .from('customers')
+                .from(DB_TABLES.CUSTOMERS)
                 .select(`
                   *,
                   primary_contact:contacts!fk_public_contacts_customer_id (
@@ -354,7 +355,7 @@ export class CustomerService {
       }
       
       const { data, error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .insert(customerData)
         .select()
         .single();
@@ -391,7 +392,7 @@ export class CustomerService {
       }
       
       const { data, error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .update({
           ...updates,
           updated_at: new Date().toISOString()
@@ -421,7 +422,7 @@ export class CustomerService {
       const supabase = supabaseClient || createClient();
       
       const { error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .delete()
         .eq('id', id);
 
@@ -449,7 +450,7 @@ export class CustomerService {
       const supabase = createClient();
       
       const { data, error } = await supabase
-        .from('customers')
+        .from(DB_TABLES.CUSTOMERS)
         .select('industry, health_score, current_arr');
 
       if (error) {
