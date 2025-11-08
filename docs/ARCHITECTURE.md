@@ -250,6 +250,95 @@ Optional: Check-in prompt (Phase 3)
 
 ---
 
+## Strategic Guardrails & Decision Log
+
+### Roadmap Management
+
+**Principle:** Ruthless prioritization over feature accumulation
+
+**Roadmap Freeze Policy:**
+- Active freeze periods during major releases
+- No scope changes without explicit discussion
+- New features → backlog (evaluated after current phase)
+- Prevents thrash, maintains momentum
+
+**Decision Rule:**
+> If you want to change the roadmap during a freeze period, we pause and have a bigger conversation about execution capability.
+
+### Weekly Accountability
+
+**Format (5-10 min):**
+```
+Week of [Date]
+✅ Completed Last Week: [List]
+🔄 In Progress This Week: [List]
+🚧 Blockers: [List]
+📊 On Track for Deadline? [Yes/No + explanation]
+🚩 Red Flags: [Any concerns]
+```
+
+**Red Flags to Watch:**
+- 🚩 New feature ideas during freeze
+- 🚩 Deadlines slipping
+- 🚩 Scope expanding beyond approved plan
+- 🚩 Design partners not using shipped features
+- 🚩 Phase taking significantly longer than estimated
+
+**Circuit Breakers:**
+> If you see 2+ red flags in same week → STOP and re-evaluate entire strategy
+
+### Customer Validation Gates
+
+**Phase Start Requirements:**
+- Must have clear customer pain point validated
+- Must have 2+ potential design partners interested
+- Must have measurable success criteria
+
+**Mid-Phase Checkpoints:**
+- Review customer feedback at week 4 (for 8-week phases)
+- If not getting positive signals, stop and pivot
+- Complexity circuit breakers must be respected
+
+**Phase Completion Requirements:**
+- Customer using the feature
+- Success criteria met
+- Ready for next design partner cohort
+
+### Scope Expansion Triggers
+
+**When to STOP a phase:**
+- Taking >2x original estimate
+- Requiring infrastructure we don't have
+- Expanding beyond original approved scope
+- Customers not finding it useful
+- Revenue trajectory falling behind
+
+**Recovery Plan:**
+- Cut features to ship something useful
+- Defer advanced capabilities to next phase
+- Focus on core value proposition
+- Document learnings
+
+### Historical Decisions
+
+**Major Reprioritizations:**
+1. **Nov 5, 2025:** Weekly Planner → Workflow Snoozing priority swap
+   - Reason: Customer validation, clearer value prop
+   - Impact: 40-60h effort reduction via shared infrastructure
+
+2. **Nov 6, 2025:** Weekly Planner removed from Q1, Human OS Check-Ins added
+   - Reason: Zero demand for Planner, high demand for learning loop
+   - Impact: Focused Q1 on competitive moat features
+
+**Architectural Decisions:**
+See individual sections above for:
+- Next.js 15 + React Server Components
+- Supabase for data + auth
+- MCP marketplace (walled garden)
+- Database-first documentation
+
+---
+
 ## Related Documentation
 
 - [SCHEMA.md](./SCHEMA.md) - Database schema details
@@ -257,6 +346,7 @@ Optional: Check-in prompt (Phase 3)
 - [MCP.md](./MCP.md) - MCP architecture
 - [LLM.md](./LLM.md) - AI strategy
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment architecture
+- [ROADMAP.md](./ROADMAP.md) - Product roadmap (auto-generated)
 
 ---
 

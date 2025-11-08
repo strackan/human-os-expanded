@@ -24,7 +24,8 @@
     "schema-diff": "node scripts/schema-diff-manager.js",
     "schema-diff-report": "node scripts/schema-diff-manager.js --report",
     "commit": "npx tsx scripts/commit-and-track.ts",
-    "snapshot": "npx tsx scripts/snapshot-release.ts"
+    "snapshot": "npx tsx scripts/snapshot-release.ts",
+    "roadmap": "npx tsx scripts/generate-roadmap.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

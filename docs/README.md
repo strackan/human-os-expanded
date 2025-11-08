@@ -23,15 +23,16 @@ Renubu uses a **database-first documentation approach** with **living documents*
 
 ### For AI Agents
 1. Read **[DEV-GUIDE.md](DEV-GUIDE.md)** (comprehensive agent guide)
-2. Check current **[PLAN.md](PLAN.md)** for active work
+2. Check **[ROADMAP.md](../ROADMAP.md)** for current release and features
 3. Review **[ARCHITECTURE.md](ARCHITECTURE.md)** for system design
-4. Set up git worktree and start coding
+4. Check GitHub Projects for task assignments
+5. Set up git worktree and start coding
 
 ### For Human Developers
-1. Read **[PLAN.md](PLAN.md)** for roadmap and status
-2. Check **[DEV-GUIDE.md](DEV-GUIDE.md)** Part II for local setup
-3. Review **[DEPLOYMENT.md](DEPLOYMENT.md)** for deployment process
-4. Check GitHub Projects for task assignments
+1. Read **[ROADMAP.md](../ROADMAP.md)** for product roadmap
+2. Check GitHub Projects for current sprint tasks
+3. Review **[DEV-GUIDE.md](DEV-GUIDE.md)** Part II for local setup
+4. Check **[DEPLOYMENT.md](DEPLOYMENT.md)** for deployment process
 
 ### For Customer Success
 1. Read **[ONBOARDING.md](ONBOARDING.md)** for customer onboarding playbooks
@@ -43,6 +44,12 @@ Renubu uses a **database-first documentation approach** with **living documents*
 ## 📖 Living Documents (11 Core Docs)
 
 These documents are **continuously updated** and represent the current state of the system:
+
+**Quick Navigation:**
+- 📊 [ROADMAP.md](../ROADMAP.md) - Product roadmap (auto-generated from database)
+- 📋 [FEATURES.md](FEATURES.md) - Feature catalog (auto-generated from database)
+- 🏗️ [ARCHITECTURE.md](ARCHITECTURE.md) - System design + strategic guardrails
+- 👨‍💻 [DEV-GUIDE.md](DEV-GUIDE.md) - Most comprehensive development guide
 
 ### Technical Documentation
 
@@ -116,19 +123,19 @@ These documents are **continuously updated** and represent the current state of 
 
 ## 📋 Other Maintained Docs
 
-These documents are also maintained but serve specific purposes:
+These documents serve specific purposes and are maintained separately:
+
+- **[ROADMAP.md](../ROADMAP.md)** - Auto-generated product roadmap
+  - Generated from `releases` and `features` database tables
+  - Shows current + planned releases
+  - Tree structure: Release → Features → Status
+  - **DO NOT EDIT MANUALLY** - Run `npm run roadmap` to regenerate
 
 - **[FEATURES.md](FEATURES.md)** - Auto-generated feature registry
   - Generated from `features` database table
   - Feature lifecycle (underway, planned, backlog, deferred, complete)
   - Business cases and success criteria
   - **DO NOT EDIT MANUALLY** - Update database instead
-
-- **[PLAN.md](PLAN.md)** - Current development plan
-  - Active phase status
-  - Timeline and milestones
-  - Success criteria
-  - Phase completion logs
 
 - **[GITHUB-PROJECTS-GUIDE.md](GITHUB-PROJECTS-GUIDE.md)** - GitHub Projects workflow
   - Issue templates

@@ -1,7 +1,7 @@
 # Development Guide - Renubu
 
-**Last Updated:** 2025-11-07
-**Version:** 0.1
+**Last Updated:** 2025-11-08
+**Version:** 0.2
 **Audience:** LLM Agents + Human Developers
 
 ---
@@ -10,6 +10,7 @@
 
 ### Part I: For LLM Agents
 - Quick Start for Agents
+- Project Planning & Roadmap
 - Codebase Navigation
 - Common Development Tasks
 - Code Patterns & Conventions
@@ -47,25 +48,213 @@ npm ls next react typescript  # Should show installed versions
 
 ### Before You Start Any Task
 
-1. **Read the plan:**
+1. **Check the roadmap:**
    ```bash
-   # Check current phase and priorities
-   cat docs/PLAN.md | head -50
+   # Check current release and priorities
+   cat ROADMAP.md | head -50
    ```
 
-2. **Check existing state:**
-   ```bash
-   cat docs/STATE.md  # What's already built
-   ```
+2. **Review GitHub Projects:**
+   - Check assigned issues and current sprint
+   - See task status and dependencies
+   - Available after Phase 0.2 setup
 
 3. **Review related docs:**
-   - `docs/ARCHITECTURE.md` - System design
+   - `docs/ARCHITECTURE.md` - System design + strategic guardrails
    - `docs/SCHEMA.md` - Database structure
    - `docs/API.md` - API reference
    - `docs/MCP.md` - MCP operations
    - `docs/LLM.md` - AI strategy
 
 4. **Understand the feature scope** - Check `features` table or `docs/FEATURES.md`
+
+---
+
+## 📊 Project Planning & Roadmap
+
+### Database-First Planning
+
+**Core Principle:** The database is the source of truth for all planning data.
+
+**Planning Tables:**
+- `releases` - Product versions (0.1, 0.2, 1.0, etc.)
+- `features` - Individual features linked to releases
+- `feature_statuses` - Status tracking (planned, underway, complete, etc.)
+- `release_statuses` - Release tracking (planning, in_progress, complete)
+
+**Why database-first?**
+- Single source of truth (no drift between docs and reality)
+- Enables auto-generation of roadmap files
+- Queryable history of all decisions
+- Can integrate with GitHub Projects via API
+
+### ROADMAP.md (Auto-Generated)
+
+**Purpose:** Quick-view product roadmap for humans and agents
+
+**Generation:**
+```bash
+npm run roadmap                    # Current + planned releases
+npm run roadmap -- --all           # All releases (including complete)
+npm run roadmap -- --version 0.1   # Specific version
+```
+
+**Structure:**
+```markdown
+## 🚀 Current Release: 0.2 - MCP Registry & Integrations
+- [ ] Feature 1 (8h) - Planned
+- [ ] Feature 2 (6h) - Underway
+
+## 📋 Planned Releases
+### 1.0 - Workflow Snoozing
+
+## ✅ Completed Releases
+### 0.1 - MCP Foundation
+```
+
+**⚠️ DO NOT EDIT ROADMAP.MD MANUALLY**
+- It's auto-generated from database
+- Update database, then regenerate
+
+**When to regenerate:**
+```bash
+# After adding/updating features in database
+npm run roadmap
+
+# After changing release status
+npm run roadmap
+
+# After completing a phase
+npm run roadmap
+```
+
+### GitHub Projects (Phase 0.2+)
+
+**Purpose:** Task-level tracking and sprint management
+
+**Views:**
+- **Kanban:** Visual workflow (Backlog → In Progress → Done)
+- **Table:** Spreadsheet view with filters
+- **Timeline:** Gantt-style timeline view
+
+**Workflow:**
+1. Features are tracked in database
+2. Tasks/issues are tracked in GitHub Projects
+3. Link issues to features via `github_issue_number` field
+
+**Creating Issues:**
+```bash
+# Use gh CLI
+gh issue create --title "Implement Google Calendar OAuth" \
+  --body "Part of Feature: google-calendar-integration" \
+  --label "feature" \
+  --assignee @me
+
+# Or use GitHub Projects UI
+```
+
+**Issue Templates:**
+- **Feature** - New feature implementation
+- **Bug** - Bug report
+- **Technical Debt** - Refactoring/cleanup
+- **Documentation** - Docs updates
+
+**Automation Rules:**
+- PR opened → Move to "In Progress"
+- PR merged → Move to "Done"
+- Issue closed → Move to "Done"
+
+### Planning Workflow
+
+**For New Features:**
+```sql
+-- 1. Add feature to database
+INSERT INTO features (title, slug, release_id, status_slug, ...)
+VALUES ('Google Calendar Integration', 'google-calendar', ...);
+
+-- 2. Regenerate roadmap
+npm run roadmap
+
+-- 3. Create GitHub issue
+gh issue create --title "Google Calendar Integration" ...
+
+-- 4. Link issue to feature (after Phase 0.2)
+UPDATE features
+SET github_issue_number = 123
+WHERE slug = 'google-calendar';
+```
+
+**For Release Planning:**
+```sql
+-- 1. Create release in database
+INSERT INTO releases (version, name, phase_number, status_slug, ...)
+VALUES ('0.3', 'Workflow Composition', 3, 'planning', ...);
+
+-- 2. Assign features to release
+UPDATE features
+SET release_id = (SELECT id FROM releases WHERE version = '0.3')
+WHERE slug IN ('workflow-templates', 'workflow-chaining');
+
+-- 3. Regenerate roadmap
+npm run roadmap
+```
+
+**For Status Updates:**
+```sql
+-- Update feature status
+UPDATE features
+SET status_slug = 'underway'
+WHERE slug = 'google-calendar';
+
+-- Regenerate roadmap to reflect changes
+npm run roadmap
+```
+
+### When to Update What
+
+**Update Database When:**
+- ✅ New feature defined
+- ✅ Feature status changes (planned → underway → complete)
+- ✅ Release created or status changes
+- ✅ Feature scope changes (effort, description)
+
+**Update GitHub Projects When:**
+- ✅ Breaking feature into tasks
+- ✅ Daily/weekly task status updates
+- ✅ Assigning work to team members
+- ✅ Sprint planning
+
+**Update Living Docs When:**
+- ✅ Architecture decisions made → `ARCHITECTURE.md`
+- ✅ Database schema changes → `SCHEMA.md`
+- ✅ API endpoints added → `API.md`
+- ✅ MCP operations added → `MCP.md`
+
+**Never Manually Edit:**
+- ❌ `ROADMAP.md` (auto-generated from database)
+- ❌ `FEATURES.md` (auto-generated from database)
+
+### Decision Framework (End of Phase 0.2)
+
+After evaluating GitHub Projects in Phase 0.2, we'll decide:
+
+**Option A: GitHub Projects Only**
+- Deprecate ROADMAP.md
+- Use GitHub Projects as single task tracking tool
+- Pros: Single tool, native GitHub integration
+- Cons: Lose markdown simplicity
+
+**Option B: ROADMAP.md Only**
+- Minimal GitHub Projects usage
+- ROADMAP.md as primary planning doc
+- Pros: Simple, version-controlled
+- Cons: Less real-time collaboration
+
+**Option C: Hybrid**
+- ROADMAP.md for high-level roadmap
+- GitHub Projects for sprint/task tracking
+- Pros: Best of both worlds
+- Cons: Maintain both systems
 
 ---
 
@@ -617,8 +806,7 @@ export default function Page() {
 ### When to Update Living Documents
 
 **After implementing a feature:**
-- Update `docs/PLAN.md` if feature affects roadmap
-- Update `docs/STATE.md` with what's now built
+- Update database + regenerate `ROADMAP.md` if feature affects roadmap
 - Update `docs/SCHEMA.md` if database changed
 - Update `docs/API.md` if endpoints added
 - Update `docs/MCP.md` if operations added
@@ -940,18 +1128,22 @@ console.log('[API] Processing request:', { userId, data });
 ## 📖 Further Reading
 
 **Internal Docs:**
-- `docs/ARCHITECTURE.md` - Deep dive on architecture
+- `ROADMAP.md` - Auto-generated product roadmap
+- `docs/FEATURES.md` - Complete feature catalog (auto-generated)
+- `docs/ARCHITECTURE.md` - Deep dive on architecture + strategic guardrails
 - `docs/SCHEMA.md` - Database schema reference
 - `docs/API.md` - API documentation
-- `docs/PLAN.md` - Current development plan
+- `docs/MCP.md` - MCP integration architecture
+- `docs/LLM.md` - AI strategy and agentification
 
 **External Resources:**
 - [Next.js Docs](https://nextjs.org/docs)
 - [Supabase Docs](https://supabase.com/docs)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+- [GitHub Projects Docs](https://docs.github.com/en/issues/planning-and-tracking-with-projects)
 
 ---
 
-**Last Updated:** 2025-11-07
-**Version:** 0.1
+**Last Updated:** 2025-11-08
+**Version:** 0.2
 **Note:** This is a living document. Update as processes evolve.
