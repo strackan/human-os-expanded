@@ -22,7 +22,8 @@
     "detect-schema": "node scripts/detect-schema.js",
     "smart-seed": "node scripts/smart-seed-selector.js",
     "schema-diff": "node scripts/schema-diff-manager.js",
-    "schema-diff-report": "node scripts/schema-diff-manager.js --report"
+    "schema-diff-report": "node scripts/schema-diff-manager.js --report",
+    "commit": "npx tsx scripts/commit-and-track.ts"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
