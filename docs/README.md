@@ -1,164 +1,288 @@
 # Renubu Documentation
 
-**Last Updated:** 2025-11-05
-**Status:** Phase 0 Complete, Ready for Phase 0.1
+**Last Updated:** 2025-11-08
+**Version:** 2.0 (Phase 0.1)
+**Status:** Database-First Documentation System
 
 ---
 
-## 📚 Start Here
+## 📚 Documentation System Overview
 
-### The 4 Essential Documents
+Renubu uses a **database-first documentation approach** with **living documents** that are continuously updated rather than versioned. All documentation is stored in the database with automatic versioning snapshots at release boundaries.
 
-Read these to understand everything about Renubu development:
+### Core Principles
 
-1. **[PLAN.md](PLAN.md)** - What we're building & when
-   - Current phase status
-   - Q4 2025 roadmap
-   - Week-by-week breakdown
-   - Success metrics
+1. **Single Source of Truth**: Database is authoritative
+2. **Living Documents**: Update in place, don't create new files
+3. **Auto-Snapshots**: Automatic versioning at phase boundaries
+4. **No File Proliferation**: Strict guidelines on creating new docs
 
-2. **[STATE.md](STATE.md)** - What exists right now
-   - Services, APIs, database schema
-   - What's working, what's not
-   - Recent changes
+---
 
-3. **[AGENT-GUIDE.md](AGENT-GUIDE.md)** - How to work here
-   - Quick start (5 min)
+## 🎯 Quick Start
+
+### For AI Agents
+1. Read **[DEV-GUIDE.md](DEV-GUIDE.md)** (comprehensive agent guide)
+2. Check current **[PLAN.md](PLAN.md)** for active work
+3. Review **[ARCHITECTURE.md](ARCHITECTURE.md)** for system design
+4. Set up git worktree and start coding
+
+### For Human Developers
+1. Read **[PLAN.md](PLAN.md)** for roadmap and status
+2. Check **[DEV-GUIDE.md](DEV-GUIDE.md)** Part II for local setup
+3. Review **[DEPLOYMENT.md](DEPLOYMENT.md)** for deployment process
+4. Check GitHub Projects for task assignments
+
+### For Customer Success
+1. Read **[ONBOARDING.md](ONBOARDING.md)** for customer onboarding playbooks
+2. Review **[CUSTOMERS.md](CUSTOMERS.md)** for customer-specific configs
+3. Check **[FEATURES.md](FEATURES.md)** for feature status and roadmap
+
+---
+
+## 📖 Living Documents (11 Core Docs)
+
+These documents are **continuously updated** and represent the current state of the system:
+
+### Technical Documentation
+
+1. **[ARTIFACTS.md](ARTIFACTS.md)** - UI component catalog and design patterns
+   - Artifact types (slides, forms, visualizations)
+   - Spa Aesthetic design system
+   - Usage statistics
+
+2. **[WORKFLOWS.md](WORKFLOWS.md)** - Workflow definitions and catalog
+   - Active workflows (Renewal, Account Planning)
+   - Planned workflows (Snoozing, Check-Ins)
+   - Workflow composition patterns
+
+3. **[ARCHITECTURE.md](ARCHITECTURE.md)** - System design and key decisions
+   - High-level architecture
+   - Technology stack
+   - Major architectural decisions
+   - MCP architecture
+
+4. **[SCHEMA.md](SCHEMA.md)** - Database schema reference
+   - All tables with descriptions
+   - RLS policies
+   - Migration best practices
+   - Index strategy
+
+5. **[API.md](API.md)** - API endpoint reference
+   - REST endpoints
+   - Server actions
+   - Request/response examples
+   - Authentication
+
+6. **[MCP.md](MCP.md)** - MCP integration architecture
+   - 8 core MCP operations
+   - Security model (walled garden)
+   - Marketplace tier structure
+   - Token efficiency strategies
+
+7. **[LLM.md](LLM.md)** - AI strategy and agentification
+   - Model selection (Haiku/Sonnet/Opus)
+   - Agentification results (32-47x speedup)
    - Communication protocols
-   - Git workflow
-   - Development environment
+   - Prompt engineering
 
-4. **[DEV-GUIDE.md](DEV-GUIDE.md)** - Technical architecture
-   - System architecture
-   - Agentification strategy
-   - Velocity tracking
-   - Code style & testing
+8. **[DEV-GUIDE.md](DEV-GUIDE.md)** - Development guide
+   - **Part I**: For LLM Agents (codebase navigation, patterns, pitfalls)
+   - **Part II**: For Human Developers (local setup, deployment)
+   - Most comprehensive guide for working in codebase
 
----
+### Operations Documentation
 
-## 🚀 Quick Start
+9. **[DEPLOYMENT.md](DEPLOYMENT.md)** - Deployment process and rollback
+   - Environment configs
+   - Release checklist
+   - Rollback procedures
+   - Monitoring and alerts
 
-**For New Agents:**
-1. Read the 4 documents above (15 min)
-2. Check GitHub Projects for your assignment
-3. Set up git worktree for your task
-4. Start coding!
+### Customer Success Documentation
 
-**For Humans:**
-1. Read PLAN.md to see current status
-2. Check GitHub Projects board
-3. Review open PRs if any
-4. Provide feedback in Google Chat
+10. **[ONBOARDING.md](ONBOARDING.md)** - Customer onboarding playbooks
+    - 3-phase onboarding process
+    - Customer personas
+    - Project plans (Standard/Fast-Track/Enterprise)
 
----
-
-## 📸 Historical Documentation
-
-### Snapshots (Point-in-Time Captures)
-
-Snapshots are FROZEN copies of the 4 living docs at major milestones:
-
-- **[2025-11-05-sprint-0/](snapshots/2025-11-05-sprint-0/)** - Phase 0 completion
-  - PLAN.md - Phase 0/0.1/1 roadmap
-  - STATE.md - Services, auth, database status
-  - AGENT-GUIDE.md - Communication & git workflow
-  - DEV-GUIDE.md - Agentification strategy
-
-**Future Snapshots:**
-- `2025-11-22-phase-0.1/` - After MCP implementation
-- `2025-12-20-phase-1/` - After Workflow Snoozing launch
-
-### Archive (Pre-Reorganization)
-
-**[archive/2025-11-pre-reorg/](archive/2025-11-pre-reorg/)** contains all pre-Nov 5 documentation:
-- Original Sprint 0 docs (AGENT-COMMUNICATION, AGENTIFICATION-STRATEGY, etc.)
-- Labs folder (Q4-2025-DEVELOPMENT-PLAN, WEEKLY-PLANNER-DEVELOPMENT-PLAN)
-- Technical docs, guides, planning docs
-
-**Don't look here unless:**
-- Researching historical decisions
-- Finding old technical details not in STATE.md
-- Comparing before/after of reorganization
+11. **[CUSTOMERS.md](CUSTOMERS.md)** - Customer-specific documentation
+    - Custom code and configurations
+    - Support history per customer
+    - Health indicators
+    - Feature requests
 
 ---
 
-## 📋 Documentation Rules
+## 📋 Other Maintained Docs
 
-### The 4 Living Docs Are Sacred
+These documents are also maintained but serve specific purposes:
 
-**DO:**
-- ✅ Update one of the 4 living docs when things change
-- ✅ Create snapshot before major phase transitions
-- ✅ Keep docs current (update "Last Updated" date)
+- **[FEATURES.md](FEATURES.md)** - Auto-generated feature registry
+  - Generated from `features` database table
+  - Feature lifecycle (underway, planned, backlog, deferred, complete)
+  - Business cases and success criteria
+  - **DO NOT EDIT MANUALLY** - Update database instead
 
-**DON'T:**
-- ❌ Create new root-level .md files
-- ❌ Create sub-folders besides `snapshots/` and `archive/`
-- ❌ Edit snapshot files (they're FROZEN)
-- ❌ Delete archive files
+- **[PLAN.md](PLAN.md)** - Current development plan
+  - Active phase status
+  - Timeline and milestones
+  - Success criteria
+  - Phase completion logs
 
-### When to Update Which Doc
+- **[GITHUB-PROJECTS-GUIDE.md](GITHUB-PROJECTS-GUIDE.md)** - GitHub Projects workflow
+  - Issue templates
+  - Label conventions
+  - Project board automation
 
-**Update PLAN.md when:**
-- Phase status changes
-- Timeline shifts
-- Priorities change
-- New features added/removed
+- **[README.md](README.md)** - This file (documentation index)
 
-**Update STATE.md when:**
-- Services added/removed
-- Database schema changes
-- Major features completed
-- Production deployment happens
+---
 
-**Update AGENT-GUIDE.md when:**
-- Processes change (git workflow, communication)
-- New tools added
-- Development environment changes
+## 📸 Documentation Versioning
 
-**Update DEV-GUIDE.md when:**
-- Architecture decisions made
-- New patterns established
-- Testing strategy changes
+### Database-First Snapshots
 
-### When to Create Snapshot
+At each release boundary, all living documents are automatically snapshotted using:
 
-**Create snapshot at:**
-- End of each phase (Sprint 0, Phase 0.1, Phase 1)
-- Before major pivots (like Weekly Planner → Workflow Snoozing)
-- Before breaking changes
-
-**How to create snapshot:**
 ```bash
-# Create folder with date and phase name
-mkdir docs/snapshots/2025-11-22-phase-0.1
+npm run snapshot -- <version> <release-date>
+```
 
-# Copy all 4 living docs
-cp docs/PLAN.md docs/STATE.md docs/AGENT-GUIDE.md docs/DEV-GUIDE.md \
-   docs/snapshots/2025-11-22-phase-0.1/
+**Example:**
+```bash
+npm run snapshot -- 0.1 2025-11-08
+```
 
-# Commit snapshot
-git add docs/snapshots/2025-11-22-phase-0.1/
-git commit -m "docs: Phase 0.1 snapshot"
+This:
+1. Inserts all 11 living docs into `documentation` table
+2. Creates versioned snapshot in `documentation_versions`
+3. Links to release in `releases` table
+
+### Snapshot Storage
+
+- **Database**: `documentation_versions` table (source of truth)
+- **Files**: `docs/snapshots/YYYY-MM-DD-phase-X/` (convenience copies)
+
+### Querying Historical Docs
+
+```sql
+-- Get docs at specific release
+SELECT * FROM documentation_versions
+WHERE release_id = (SELECT id FROM releases WHERE version = '0.1');
+
+-- Get all versions of a document
+SELECT version, content, created_at
+FROM documentation_versions
+WHERE slug = 'architecture'
+ORDER BY created_at DESC;
 ```
 
 ---
 
-## 🎯 Current Status (Nov 5, 2025)
+## ✍️ Documentation Rules
 
-**Phase:** Phase 0 (Sprint 0) - 95% Complete
+### When to Update Living Docs
 
-**What's Done:**
-- ✅ 4 living docs created
-- ✅ First snapshot (2025-11-05-sprint-0)
-- ✅ Old docs archived
-- ✅ Auth improvements merged to main
-- ✅ Demo mode working
+**Update immediately when:**
+- Architecture decisions are made → **ARCHITECTURE.md**
+- Database schema changes → **SCHEMA.md**
+- New API endpoints added → **API.md**
+- Workflow definitions change → **WORKFLOWS.md**
+- MCP operations added → **MCP.md**
+- Deployment process changes → **DEPLOYMENT.md**
 
-**What's Next:**
-- GitHub Projects setup (1h)
-- Environment validation (3h)
-- Phase 0.1 starts Nov 13 (MCP implementation)
+**Batch updates (end of phase) for:**
+- Artifact usage statistics → **ARTIFACTS.md**
+- Customer success playbooks → **ONBOARDING.md**
+- Model selection guidelines → **LLM.md**
+
+### DO
+
+✅ Update existing living documents
+✅ Keep "Last Updated" current
+✅ Use database as source of truth
+✅ Create snapshots at phase boundaries
+✅ Archive temporary files after consolidation
+
+### DON'T
+
+❌ Create new root-level .md files (use living docs)
+❌ Create sub-folders (except `archive/`, `snapshots/`, `demo-roadmap/`)
+❌ Edit FEATURES.md manually (generated from database)
+❌ Edit snapshot files (they're frozen)
+❌ Keep temporary planning docs in root
+
+---
+
+## 🗂️ Archive
+
+### Current Archive Structure
+
+- **[archive/2025-11-pre-reorg/](archive/2025-11-pre-reorg/)** - Pre-consolidation docs
+- **[archive/v0-pre-consolidation/](archive/v0-pre-consolidation/)** - Original automation docs
+- **[archive/phase-0.1-cleanup/](archive/phase-0.1-cleanup/)** - Phase 0.1 temporary files
+
+**When to look in archive:**
+- Researching historical decisions
+- Finding old technical details
+- Understanding evolution of features
+
+---
+
+## 🔄 Commit and Track Workflow
+
+### Standard Commits
+
+Use the commit-and-track script to keep database in sync:
+
+```bash
+git add .
+npm run commit -- -m "feat: add feature"
+```
+
+This commits to git AND logs metadata to database.
+
+### Phase Completion
+
+```bash
+npm run commit -- -m "release: Phase 0.1 complete" --phase
+```
+
+This:
+- Commits to git
+- Marks release complete in database
+- Updates all features to 'complete'
+- Sets `shipped_at` timestamps
+
+### New Release
+
+```bash
+npm run commit -- -m "start Phase 0.2" --release 0.2
+```
+
+Creates new release entry in database.
+
+**See:** [scripts/README-commit-and-track.md](../scripts/README-commit-and-track.md)
+
+---
+
+## 🎯 Current Status (Nov 8, 2025)
+
+**Phase:** 0.1 - MCP Foundation & Documentation
+**Status:** Complete, ready to snapshot
+
+**Completed in Phase 0.1:**
+- ✅ 11 living documents created
+- ✅ MCP server with 8 operations
+- ✅ Documentation database system
+- ✅ Feature tracking system
+- ✅ Commit-and-track automation
+- ✅ Phase 0.1 cleanup
+
+**Next:**
+- Snapshot Phase 0.1 documentation
+- Start Phase 0.2 (MCP Registry & Integrations)
 
 ---
 
@@ -166,37 +290,33 @@ git commit -m "docs: Phase 0.1 snapshot"
 
 **GitHub:**
 - Repository: https://github.com/Renew-Boo/renubu
-- Projects: [Workflow Snoozing Board](#) (to be created)
 - Issues: https://github.com/Renew-Boo/renubu/issues
 
 **Production:**
 - App: https://renubu-iota.vercel.app
-- Database: Supabase (staging instance)
-
-**Communication:**
-- Google Chat: "Renubu Dev Sync" space
-- Daily updates, blockers, quick questions
+- Database: Supabase (staging)
 
 ---
 
 ## ❓ FAQ
 
-**Q: I can't find information about [topic]. Where do I look?**
-A: Check the 4 living docs first. If not there, search `archive/2025-11-pre-reorg/` for historical context.
+**Q: Where do I find information about [topic]?**
+A: Check the 11 living docs first. Use search or consult the index above.
 
 **Q: Should I create a new .md file for my feature?**
-A: No. Update one of the 4 living docs instead. If your content doesn't fit, discuss with team first.
+A: No. Update one of the 11 living docs instead. If content doesn't fit anywhere, discuss with team first.
 
-**Q: How often should I update the docs?**
-A: After completing major tasks or at end of each phase. Minor updates can batch.
+**Q: How do I update FEATURES.md?**
+A: Don't edit the file. Update the `features` database table, then regenerate FEATURES.md.
 
-**Q: What if the docs are out of date?**
-A: Update them! That's the whole point of living documents. Just update the "Last Updated" date.
+**Q: When should I create a snapshot?**
+A: Snapshots are created automatically at release boundaries using `npm run snapshot`.
 
-**Q: Where are the weekly planner docs?**
-A: In `archive/2025-11-pre-reorg/labs/`. Weekly Planner is deferred to Q1 2026, so those docs are archived.
+**Q: What if a living doc is out of date?**
+A: Update it! Change the content and update the "Last Updated" date. That's the whole point.
 
 ---
 
-**Document Structure Version:** 1.0 (Nov 5, 2025)
-**Next Review:** After Phase 0.1 (Nov 22, 2025)
+**Documentation System Version:** 2.0 (Database-First)
+**Last Major Update:** 2025-11-08 (Phase 0.1 completion)
+**Next Review:** After Phase 0.2
