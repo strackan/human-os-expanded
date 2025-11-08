@@ -1,8 +1,17 @@
-# GitHub Projects Quick-Start Guide
+# GitHub Projects Guide
 
-**Last Updated:** 2025-11-05
-**For:** Justin (Human Lead)
-**Purpose:** How to use GitHub Projects with AI agents
+**Last Updated:** 2025-11-08
+**Version:** 0.2 (Phase 0.2 Evaluation)
+**Audience:** Team Members, AI Agents
+
+---
+
+## Overview
+
+This guide explains how Renubu uses GitHub Projects V2 for task management integrated with our database-first planning system.
+
+**Status:** Under evaluation during Phase 0.2
+**Decision Point:** End of Phase 0.2 (see Decision Framework below)
 
 ---
 
@@ -62,12 +71,11 @@ Think of it as **Trello inside GitHub** - a visual board where:
 
 ### Step 1: Create the Project (5 min)
 
-1. Go to https://github.com/Renew-Boo/renubu
-2. Click "Projects" tab
-3. Click "New project"
-4. Choose "Board" template
-5. Name it "Renubu Q4 2025"
-6. Click "Create"
+1. Go to https://github.com/Renew-Boo/renubu.web/projects
+2. Click "New project"
+3. Choose "Board" template
+4. Name it "Renubu Development"
+5. Click "Create"
 
 ### Step 2: Configure Columns (5 min)
 
@@ -115,6 +123,107 @@ Click "⋮" menu → "Workflows"
 - When assigned → Set Status to In Progress
 
 **Done! Project is ready.**
+
+---
+
+## 📝 Issue Templates
+
+We have 4 issue templates in `.github/ISSUE_TEMPLATE/`:
+
+### 1. Feature (`feature.yml`)
+**Use for:** New feature implementation
+
+**Key Fields:**
+- Feature Slug (links to database `features` table)
+- Release (0.2, 1.0, 2.0, 3.0)
+- Description & Acceptance Criteria
+- Estimated Effort (hours)
+
+### 2. Bug Report (`bug.yml`)
+**Use for:** Bug reports
+
+**Key Fields:**
+- Bug Description
+- Steps to Reproduce
+- Expected vs Actual Behavior
+- Severity (Critical, High, Medium, Low)
+
+### 3. Technical Debt (`technical-debt.yml`)
+**Use for:** Code cleanup, refactoring
+
+**Key Fields:**
+- Category (Code Quality, Performance, Security, etc.)
+- Current State vs Proposed Improvement
+- Priority
+
+### 4. Documentation (`documentation.yml`)
+**Use for:** Documentation updates
+
+**Key Fields:**
+- Documentation Type (Living Document, API Reference, etc.)
+- Affected File(s)
+
+---
+
+## 🔗 Database Integration
+
+### How It Works
+
+```
+Database (features table)
+    ↓
+ROADMAP.md (auto-generated)
+    ↓
+GitHub Issues (created from features)
+    ↓
+GitHub Projects (issues added to board)
+```
+
+### Linking Issues to Features
+
+**In Database:**
+```sql
+-- Add github_issue_number to features table
+ALTER TABLE features
+ADD COLUMN github_issue_number INTEGER;
+
+-- Link issue to feature
+UPDATE features
+SET github_issue_number = 123
+WHERE slug = 'google-calendar-integration';
+```
+
+**In GitHub Issue:**
+Use the "Feature Slug" field in the issue template to reference the database feature.
+
+### Workflow
+
+**1. Plan Feature in Database**
+```sql
+INSERT INTO features (title, slug, release_id, status_slug, effort_hrs)
+VALUES ('Google Calendar Integration', 'google-calendar', ..., 'planned', 8);
+```
+
+**2. Regenerate Roadmap**
+```bash
+npm run roadmap
+```
+
+**3. Create GitHub Issue**
+```bash
+gh issue create --template feature
+```
+Or use GitHub web UI with feature template.
+
+**4. Link Issue to Feature**
+```sql
+UPDATE features
+SET github_issue_number = <issue-number>
+WHERE slug = 'google-calendar';
+```
+
+**5. Add to Project**
+Issue auto-adds to project (if configured) or manually add.
 
 ---
 
@@ -475,11 +584,67 @@ Need it by Thursday afternoon.
 
 ---
 
+## 🎯 Decision Framework (End of Phase 0.2)
+
+### Purpose
+
+Phase 0.2 is an **evaluation phase** for GitHub Projects. We'll use it during the phase, then decide whether to keep it, deprecate it, or use a hybrid approach.
+
+### Metrics to Track
+
+**Effectiveness:**
+- Does Projects reduce planning overhead?
+- Is current status clearer than ROADMAP.md alone?
+- Do team members actually use it?
+
+**Integration:**
+- How hard is it to keep database ↔ ROADMAP.md ↔ Projects in sync?
+- Is the `github_issue_number` linking working well?
+- Are issue templates helping?
+
+**Adoption:**
+- Do AI agents find it useful or ignore it?
+- Does it improve collaboration?
+- Is it worth the maintenance burden?
+
+### Decision Options
+
+**Option A: GitHub Projects Only**
+- Deprecate ROADMAP.md
+- Use Projects as single task tracking tool
+- **Pros:** Native GitHub integration, real-time collaboration
+- **Cons:** Lose markdown simplicity, harder for AI agents
+
+**Option B: ROADMAP.md Only**
+- Minimal GitHub Projects usage
+- ROADMAP.md as primary planning doc
+- **Pros:** Simple, version-controlled, AI-friendly
+- **Cons:** Less real-time collaboration features
+
+**Option C: Hybrid (Likely Winner)**
+- ROADMAP.md for high-level roadmap (releases + features)
+- GitHub Projects for sprint/task tracking
+- **Pros:** Best of both worlds
+- **Cons:** Maintain both systems
+
+### Evaluation Criteria
+
+At end of Phase 0.2, answer:
+
+1. **Clarity:** Did Projects make current status clearer? (Yes/No)
+2. **Overhead:** How much time spent maintaining Projects? (hours/week)
+3. **Value:** Did Projects provide value beyond ROADMAP.md? (Yes/No)
+4. **Adoption:** Did team use Projects consistently? (%)
+5. **Recommendation:** Which option (A, B, or C)?
+
+---
+
 ## 🔗 Related Docs
 
-- `PLAN.md` - Current roadmap and phases
-- `AGENT-GUIDE.md` - How agents use GitHub Projects
-- `STATE.md` - What's currently built
+- [ROADMAP.md](../ROADMAP.md) - Auto-generated product roadmap
+- [FEATURES.md](FEATURES.md) - Complete feature catalog
+- [DEV-GUIDE.md](DEV-GUIDE.md) - Development guide with planning section
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Strategic guardrails
 
 ---
 

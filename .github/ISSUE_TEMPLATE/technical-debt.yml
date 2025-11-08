@@ -1,0 +1,77 @@
+name: Technical Debt
+description: Code cleanup, refactoring, or technical improvements
+title: "[Tech Debt] "
+labels: ["technical-debt"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for refactoring, code cleanup, or technical improvements.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be improved?
+      placeholder: Describe the technical debt or improvement needed
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What type of technical debt is this?
+      options:
+        - Code Quality - Refactoring, cleanup
+        - Performance - Optimization needed
+        - Security - Security improvement
+        - Testing - Add or improve tests
+        - Documentation - Code documentation
+        - Dependencies - Update or remove dependencies
+        - Architecture - Structural improvements
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-state
+    attributes:
+      label: Current State
+      description: What's the current implementation?
+      placeholder: Describe how it works now
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-state
+    attributes:
+      label: Proposed Improvement
+      description: How should it be improved?
+      placeholder: Describe the proposed solution
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgent is this?
+      options:
+        - High - Should address soon
+        - Medium - Nice to have
+        - Low - When we have time
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit
+      description: What's the value of fixing this?
+      placeholder: |
+        - Improved performance
+        - Better maintainability
+        - Reduced complexity
+    validations:
+      required: false

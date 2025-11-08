@@ -1,0 +1,75 @@
+name: Feature
+description: New feature implementation
+title: "[Feature] "
+labels: ["feature"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for implementing new features tracked in the database.
+
+  - type: input
+    id: feature-slug
+    attributes:
+      label: Feature Slug
+      description: The slug from the features table (e.g., google-calendar-integration)
+      placeholder: google-calendar-integration
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release
+      description: Which release is this feature part of?
+      options:
+        - 0.2 - MCP Registry & Integrations
+        - 1.0 - Workflow Snoozing
+        - 2.0 - Parking Lot
+        - 3.0 - Human OS Check-Ins
+        - Future
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this feature do?
+      placeholder: Describe the feature and its purpose
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What needs to be done for this to be complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: true
+
+  - type: input
+    id: effort
+    attributes:
+      label: Estimated Effort (hours)
+      description: How long will this take?
+      placeholder: "8"
+    validations:
+      required: false
+
+  - type: textarea
+    id: technical-notes
+    attributes:
+      label: Technical Notes
+      description: Any implementation details, dependencies, or considerations
+      placeholder: |
+        - Database changes needed
+        - API endpoints to create
+        - Dependencies on other features
+    validations:
+      required: false
