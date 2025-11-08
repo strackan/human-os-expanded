@@ -13,6 +13,10 @@ import { createClient } from '@supabase/supabase-js';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import { config } from 'dotenv';
+
+// Load environment variables from .env.local
+config({ path: path.join(process.cwd(), '.env.local') });
 
 // ============================================================================
 // CONFIGURATION
