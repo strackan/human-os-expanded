@@ -1,517 +1,957 @@
-# Renubu Development Guide
+# Development Guide - Renubu
 
-**Last Updated:** 2025-11-05
-**Purpose:** Technical architecture and development strategy
-**Audience:** Developers and AI agents
+**Last Updated:** 2025-11-07
+**Version:** 0.1
+**Audience:** LLM Agents + Human Developers
 
 ---
 
-## 🏗️ System Architecture
+## Table of Contents
 
-### Tech Stack
+### Part I: For LLM Agents
+- Quick Start for Agents
+- Codebase Navigation
+- Common Development Tasks
+- Code Patterns & Conventions
+- Testing & Validation
+- Commit & PR Guidelines
 
-**Frontend:**
-- Next.js 15.5.2 (App Router, React Server Components)
-- React 19.0.0
-- TypeScript 5.9.3
-- Tailwind CSS for styling
+### Part II: For Human Developers
+- Local Development Setup
+- Architecture Overview
+- Deployment Process
+- Debugging & Tools
+- Team Workflows
 
-**Backend:**
-- Next.js API Routes
-- Supabase (PostgreSQL + Auth + RLS)
-- Handlebars for templating
+---
 
-**Infrastructure:**
-- Vercel (hosting, edge functions)
-- GitHub (version control, CI/CD)
-- Docker (planned for MCP sandbox)
+# PART I: FOR LLM AGENTS
 
-**Development:**
-- pnpm package manager
-- Git worktrees for parallel development
-- Demo mode for local iteration
+**Purpose:** This section helps AI agents (Claude Code, future agents) work effectively in the Renubu codebase.
 
-### Project Structure
+---
+
+## 🚀 Quick Start for Agents
+
+### Environment Check
+```bash
+# Verify you're in the right place
+pwd  # Should be /path/to/renubu
+
+# Check git status
+git status  # Should be on main branch, clean working tree
+
+# Verify dependencies
+npm ls next react typescript  # Should show installed versions
+```
+
+### Before You Start Any Task
+
+1. **Read the plan:**
+   ```bash
+   # Check current phase and priorities
+   cat docs/PLAN.md | head -50
+   ```
+
+2. **Check existing state:**
+   ```bash
+   cat docs/STATE.md  # What's already built
+   ```
+
+3. **Review related docs:**
+   - `docs/ARCHITECTURE.md` - System design
+   - `docs/SCHEMA.md` - Database structure
+   - `docs/API.md` - API reference
+   - `docs/MCP.md` - MCP operations
+   - `docs/LLM.md` - AI strategy
+
+4. **Understand the feature scope** - Check `features` table or `docs/FEATURES.md`
+
+---
+
+## 📁 Codebase Navigation
+
+### Key Directories
 
 ```
 renubu/
 ├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── dashboard/         # Main dashboard
-│   │   ├── api/               # API routes
-│   │   └── layout.tsx         # Root layout
-│   ├── components/
-│   │   ├── auth/              # Authentication components
-│   │   ├── workflows/         # Workflow UI
-│   │   └── artifacts/         # Artifact components
-│   ├── lib/
-│   │   ├── services/          # Business logic services
+│   ├── app/                    # Next.js App Router (routes + pages)
+│   │   ├── (dashboard)/       # Main app (requires auth)
+│   │   ├── (auth)/            # Auth flows (signin, signup)
+│   │   └── api/               # API routes
+│   │
+│   ├── components/             # React components
+│   │   ├── artifacts/         # Workflow artifacts (UI outputs)
+│   │   ├── workflows/         # Workflow UI components
+│   │   ├── ui/                # Reusable UI components
+│   │   └── auth/              # Auth-related components
+│   │
+│   ├── lib/                    # Business logic & utilities
+│   │   ├── services/          # Service classes (database operations)
 │   │   ├── workflows/         # Workflow definitions
-│   │   ├── supabase/          # Database clients
-│   │   └── auth-config.ts     # Auth configuration
-│   └── config/                # Application config
+│   │   ├── constants/         # Centralized constants
+│   │   ├── supabase/          # Supabase clients
+│   │   └── utils/             # Helper functions
+│   │
+│   └── types/                  # TypeScript type definitions
+│
 ├── supabase/
-│   ├── migrations/            # Database migrations
-│   └── seed*.sql              # Seed data
-├── docs/                       # Documentation
-│   ├── PLAN.md               # Current plan
-│   ├── STATE.md              # Current state
-│   ├── AGENT-GUIDE.md        # Agent guide
-│   ├── DEV-GUIDE.md          # This file
-│   └── snapshots/            # Historical docs
-└── public/                    # Static assets
+│   └── migrations/             # Database migrations (SQL)
+│
+└── docs/                       # Documentation (living documents)
+    ├── ARCHITECTURE.md         # System architecture
+    ├── SCHEMA.md              # Database schema
+    ├── API.md                 # API reference
+    ├── MCP.md                 # MCP integration
+    ├── WORKFLOWS.md           # Workflow catalog
+    └── [others]
+```
+
+### Finding Specific Functionality
+
+**Need to work with workflows?**
+```
+src/lib/workflows/              # Workflow definitions
+src/lib/services/Workflow*.ts  # Workflow services
+src/components/workflows/       # Workflow UI
+```
+
+**Need to work with database?**
+```
+supabase/migrations/            # Schema changes
+src/lib/services/               # Data access layer
+src/lib/constants/database.ts  # Table/column constants
+```
+
+**Need to create UI components?**
+```
+src/components/ui/              # Reusable components
+src/components/artifacts/       # Workflow-specific UI
+```
+
+**Need to create API endpoints?**
+```
+src/app/api/                    # API routes
 ```
 
 ---
 
-## 🚀 Agentification Strategy
+## 🛠️ Common Development Tasks
 
-### Philosophy
+### Task 1: Add a New Database Table
 
-**Goal:** 50-80% velocity boost through AI-human collaboration
+**Steps:**
+1. Create migration file:
+   ```bash
+   # Naming: YYYYMMDDHHMMSS_descriptive_name.sql
+   touch supabase/migrations/20251107120000_my_new_table.sql
+   ```
 
-**Approach:** Three-tier orchestration model
+2. Write migration following pattern from `docs/SCHEMA.md`:
+   ```sql
+   CREATE TABLE my_table (
+     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+     user_id UUID REFERENCES auth.users(id),
+     -- columns...
+     created_at TIMESTAMPTZ DEFAULT NOW(),
+     updated_at TIMESTAMPTZ DEFAULT NOW()
+   );
 
-```
-┌─────────────────────┐
-│   Human (Justin)    │  Business validation, staging→prod approval
-└──────────┬──────────┘
-           │
-┌──────────▼──────────┐
-│  Queen Bee (Agent)  │  Task decomposition, code review, coordination
-└──────────┬──────────┘
-           │
-┌──────────▼──────────┐
-│ Workers (Agents 1-10)│ Execute tasks in git worktrees (parallel)
-└─────────────────────┘
-```
+   -- Enable RLS
+   ALTER TABLE my_table ENABLE ROW LEVEL SECURITY;
 
-### Three Tiers
+   -- RLS policy
+   CREATE POLICY "Users see own data"
+     ON my_table FOR SELECT
+     USING (user_id = auth.uid());
 
-**Tier 1: Human (Business Lead)**
-- Validates product direction
-- Makes final deployment decisions (staging → production)
-- Resolves ambiguous requirements
-- Design partner communication
+   -- Indexes
+   CREATE INDEX idx_my_table_user_id ON my_table(user_id);
 
-**Tier 2: Queen Bee Agent (Technical Lead)**
-- Reads master plan (GitHub Projects)
-- Decomposes large tasks into agent-friendly units
-- Assigns work to worker agents
-- Reviews all code before human review
-- Daily coordination and status updates
-- Identifies blockers and escalates
+   -- Trigger
+   CREATE TRIGGER my_table_updated_at
+     BEFORE UPDATE ON my_table
+     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+   ```
 
-**Tier 3: Worker Agents (Execution)**
-- Execute well-defined tasks
-- Work in isolated git worktrees (zero conflicts)
-- Create PRs linking to GitHub issues
-- Report completion to Queen Bee
-- Can work up to 10 agents in parallel
+3. Add constants to `src/lib/constants/database.ts`:
+   ```typescript
+   export const DB_TABLES = {
+     // ...existing
+     MY_TABLE: 'my_table',
+   };
 
-### Single Source of Truth
+   export const DB_COLUMNS = {
+     // ...existing
+     MY_COLUMN: 'my_column',
+   };
+   ```
 
-**GitHub Issues/Projects = Master Task List**
+4. Update `docs/SCHEMA.md` with table documentation
 
-Why not markdown?
-- ✅ API for programmatic access
-- ✅ Rich features (dependencies, labels, time tracking)
-- ✅ No merge conflicts
-- ✅ Visual boards for humans
-- ✅ Notifications and webhooks
+5. Test migration locally (if Docker available):
+   ```bash
+   npx supabase db reset
+   ```
 
-**Documents (4 living docs) = Strategy & Context**
-- PLAN.md - What & why
-- STATE.md - What exists
-- AGENT-GUIDE.md - How to work
-- DEV-GUIDE.md - Technical details
+### Task 2: Create a New Service
 
-### Git Worktrees for True Parallelism
+**Steps:**
+1. Create service file:
+   ```bash
+   touch src/lib/services/MyService.ts
+   ```
 
-**Problem:** Multiple agents editing same files = merge conflicts
+2. Follow service pattern:
+   ```typescript
+   import { SupabaseClient } from '@supabase/supabase-js';
+   import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
-**Solution:** Git worktrees = isolated directories
+   export class MyService {
+     private supabase: SupabaseClient;
 
-```bash
-# Main repo
-/renubu               (main branch)
+     constructor(supabase: SupabaseClient) {
+       this.supabase = supabase;
+     }
 
-# Agent worktrees
-/renubu-agent-1       (feature/snooze-dialog)
-/renubu-agent-2       (feature/condition-evaluator)
-/renubu-agent-3       (feature/api-routes)
+     async getMyData(userId: string) {
+       const { data, error } = await this.supabase
+         .from(DB_TABLES.MY_TABLE)
+         .select('*')
+         .eq(DB_COLUMNS.USER_ID, userId);
 
-# Each agent:
-# - Has own directory
-# - Works on own branch
-# - Zero conflicts with others
-# - Can run dev server on different ports
-```
+       if (error) throw error;
+       return data;
+     }
+   }
+   ```
 
-**Benefits:**
-- ✅ True parallelism (10 agents simultaneously)
-- ✅ Zero merge conflicts
-- ✅ Independent testing per agent
-- ✅ Clean context per task
+3. Use RLS-enforced queries (never use service role client from API routes)
 
-### Review Separation
+4. Add types in `src/types/` if needed
 
-**Why:** Agent reviewing its own code misses issues
+### Task 3: Create an API Route
 
-**Strategy:**
-- Worker Agent 1 writes code
-- Queen Bee Agent reviews code
-- Human does final review if needed
+**Steps:**
+1. Create route file:
+   ```bash
+   # For GET /api/my-route
+   touch src/app/api/my-route/route.ts
+   ```
 
-**Result:** 90% better code quality vs self-review
+2. Follow API pattern from `docs/API.md`:
+   ```typescript
+   import { NextRequest, NextResponse } from 'next/server';
+   import { createServerClient } from '@/lib/supabase/server';
+   import { MyService } from '@/lib/services/MyService';
 
-### Expected Velocity Gains
+   export async function GET(request: NextRequest) {
+     // 1. Auth check
+     const supabase = createServerClient();
+     const { data: { user } } = await supabase.auth.getUser();
+     if (!user) {
+       return NextResponse.json(
+         { error: 'Unauthorized' },
+         { status: 401 }
+       );
+     }
 
-**Phase 0 (Baseline):**
-- Git worktrees + parallel agents = 22-36% boost
-- Effective capacity: 272-302h from 220h investment
+     // 2. Execute logic
+     const service = new MyService(supabase);
+     const data = await service.getMyData(user.id);
 
-**Phase 0.1 (With MCP):**
-- Code execution + token reduction = additional 30-50%
-- Total boost: 50-80%
-- Effective capacity: 333-408h from 220h investment
+     // 3. Return response
+     return NextResponse.json({ data });
+   }
+   ```
 
-**Measurement:** See Velocity Tracking section below
+3. Add route to `docs/API.md`
 
----
+### Task 4: Create a React Component
 
-## 📊 Velocity Tracking
+**Steps:**
+1. Create component directory:
+   ```bash
+   mkdir -p src/components/my-component
+   touch src/components/my-component/MyComponent.tsx
+   touch src/components/my-component/index.ts
+   ```
 
-### Core Metrics
+2. Follow component pattern:
+   ```typescript
+   'use client';  // If needs interactivity
 
-**1. Velocity (How fast are we moving?)**
-```
-Velocity = (Work Completed) / (Calendar Time) × 100%
+   interface MyComponentProps {
+     data: MyData;
+     onUpdate?: (data: MyData) => void;
+   }
 
-Target: 122-136% (22-36% boost baseline)
-With MCP: 150-180% (50-80% boost)
+   export function MyComponent({ data, onUpdate }: MyComponentProps) {
+     // Component implementation
+     return (
+       <div className="...">
+         {/* JSX */}
+       </div>
+     );
+   }
+   ```
 
-Example:
-- Calendar time: 40 hours (1 week)
-- Work completed: 54 hours (with 35% boost)
-- Velocity: 135%
-```
+3. Export from index:
+   ```typescript
+   export { MyComponent } from './MyComponent';
+   ```
 
-**2. Accuracy (How good are our estimates?)**
-```
-Accuracy = 1 - |Actual - Estimated| / Estimated × 100%
+### Task 5: Add an MCP Operation (Phase 0.1+)
 
-Target: 80%+ average
+**Steps:**
+1. Add operation to `servers/renubu/src/operations/`:
+   ```typescript
+   export async function myOperation(param: string): Promise<Result> {
+     // Use Supabase client with RLS
+     const { data, error } = await supabase
+       .from(DB_TABLES.MY_TABLE)
+       .select('*')
+       .eq(DB_COLUMNS.ID, param);
 
-Example:
-- Estimated: 8h
-- Actual: 10h
-- Accuracy: 1 - |10-8|/8 × 100% = 75%
-```
+     if (error) throw error;
+     return data;
+   }
+   ```
 
-**3. Quality Score (How good is the code?)**
-```
-Quality Score = (Dimensions Passing) / 8 × 100%
+2. Register in `servers/renubu/src/index.ts`:
+   ```typescript
+   server.tool('myOperation', myOperation, {
+     description: 'Description of what this does',
+     permissions: ['read']  // or 'write', 'delete'
+   });
+   ```
 
-8 Dimensions:
-1. Correctness (works as intended)
-2. Maintainability (clean, understandable)
-3. Performance (fast enough)
-4. Security (no vulnerabilities)
-5. Test Coverage (60%+ critical paths)
-6. Documentation (clear comments)
-7. Style (follows conventions)
-8. Integration (works with existing code)
-
-Target: 85%+ (7/8 dimensions passing)
-```
-
-**4. Agent Utilization (Are agents working efficiently?)**
-```
-Agent Utilization = (Agent Hours Working) / (Agent Hours Available) × 100%
-
-Target: 70%+ (some downtime expected for reviews, coordination)
-```
-
-**5. Conflict Rate (Are worktrees working?)**
-```
-Conflict Rate = (PRs with Merge Conflicts) / (Total PRs) × 100%
-
-Target: <5% (worktrees should prevent conflicts)
-```
-
-### Tracking Process
-
-**Weekly Velocity Report (Every Friday):**
-
-```markdown
-📊 Weekly Velocity Report - Week of Nov 13
-
-🎯 Planned Work:
-- Task 1: SnoozeDialog (4h estimated)
-- Task 2: ConditionEvaluator (8h estimated)
-- Task 3: API routes (4h estimated)
-Total planned: 16h
-
-✅ Completed:
-- Task 1: 3.5h actual (DONE) ✅
-- Task 2: 9h actual (DONE) ✅
-Total completed: 12.5h
-
-🔄 In Progress:
-- Task 3: 2h spent, 2h remaining (50% done)
-
-📈 Metrics:
-- Velocity: 78% (12.5h / 16h)
-- Accuracy: 88% average
-- Quality: 90% (7.2/8 dimensions)
-- Agent Utilization: 75%
-- Conflict Rate: 0%
-
-💭 Insights:
-- ConditionEvaluator took longer due to edge cases
-- SnoozeDialog came in under estimate (reused components)
-- Zero conflicts with git worktrees working great
-
-🎯 Next Week Plan:
-- Task A: WorkflowDashboard (6h)
-- Task B: Intel integration (8h)
-- Task C: Testing (2h)
-Total: 16h
-```
-
-### Task Categorization
-
-**Agent-Friendly Tasks (70-85% completion rate):**
-- OAuth implementation
-- Database queries
-- Component structure
-- API routes
-- Test writing
-- Documentation
-
-**Human-Required Tasks (review and guidance needed):**
-- UX/UI design decisions
-- Complex state management
-- Performance optimization
-- Security review
-- Product direction
-
-### Hour Tracking Template
-
-```markdown
-| Task | Type | Estimate | Actual | Variance | Quality | Notes |
-|------|------|----------|--------|----------|---------|-------|
-| SnoozeDialog | Agent | 4h | 3.5h | -12.5% | 8/8 | Reused components |
-| ConditionEval | Agent | 8h | 9h | +12.5% | 7/8 | Edge cases complex |
-| API Routes | Agent | 4h | 4h | 0% | 8/8 | On target |
-```
+3. Update `docs/MCP.md` with operation documentation
 
 ---
 
-## 🔐 Security
+## 📋 Code Patterns & Conventions
 
-### Authentication
+### TypeScript Patterns
 
-**Supabase Auth:**
-- Email/password
-- OAuth providers (Google for calendar)
-- JWT tokens
-- Row Level Security (RLS)
-
-**Demo Mode:**
-- Only enabled on localhost
-- Service role key bypasses RLS
-- Force-disabled on production
-- Visual badge indicator
-
-**Best Practices:**
-- Always use RLS policies
-- Never expose service role key to client
-- Validate all API inputs
-- Use parameterized queries
-
-### API Security
-
-**All API routes should:**
-1. Validate authentication
-2. Check authorization (user owns resource)
-3. Validate input (Zod schemas)
-4. Sanitize output
-5. Rate limit (if needed)
-
-**Example:**
-```typescript
-export async function POST(request: NextRequest) {
-  // 1. Auth check
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  // 2. Input validation
-  const body = await request.json()
-  const schema = z.object({ workflowId: z.string().uuid() })
-  const validated = schema.parse(body)
-
-  // 3. Authorization check
-  const { data: workflow } = await supabase
-    .from('workflows')
-    .select('user_id')
-    .eq('id', validated.workflowId)
-    .single()
-
-  if (workflow?.user_id !== user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
-  // 4. Execute logic
-  // ...
-}
-```
-
----
-
-## 🧪 Testing Strategy
-
-### Test Pyramid
-
-```
-        /\
-       /  \  E2E Tests (Few)
-      /----\
-     /      \  Integration Tests (Some)
-    /--------\
-   /          \  Unit Tests (Many)
-  /____________\
-```
-
-**Unit Tests (60% of tests):**
-- Services, utilities, components
-- Fast, isolated, deterministic
-- Jest + React Testing Library
-
-**Integration Tests (30% of tests):**
-- API routes, database queries
-- Test with real database (staging)
-- Slower but high confidence
-
-**E2E Tests (10% of tests):**
-- Critical user flows
-- Playwright or Cypress
-- Slowest but catches UI issues
-
-### Coverage Targets
-
-**Critical Paths (60%+ coverage):**
-- Authentication flows
-- Workflow snooze logic
-- Condition evaluation
-- Payment/billing (when added)
-
-**Nice to Have (40%+ coverage):**
-- UI components
-- Dashboard views
-- Reporting
-
-### Running Tests
-
-```bash
-# Unit tests
-pnpm test
-
-# Watch mode
-pnpm test:watch
-
-# Coverage
-pnpm test:coverage
-
-# Integration tests
-pnpm test:integration
-
-# E2E tests
-pnpm test:e2e
-```
-
----
-
-## 🎨 Code Style
-
-### TypeScript
-
-**Use strict types:**
+**Always use strict types:**
 ```typescript
 // ✅ Good
 interface User {
-  id: string
-  email: string
-  name: string | null
+  id: string;
+  email: string;
+  name: string | null;
 }
 
 // ❌ Bad
 interface User {
-  id: any
-  email: string
-  name?: string
+  id: any;
+  email: string;
+  name?: string;
 }
 ```
 
-**Prefer const over let:**
+**Use const for immutable values:**
 ```typescript
 // ✅ Good
-const users = await getUsers()
+const users = await getUsers();
 
 // ❌ Bad
-let users = await getUsers()
+let users = await getUsers();
 ```
 
-### Components
-
-**Use functional components:**
+**Use enums from constants file:**
 ```typescript
+import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
+
 // ✅ Good
-export function SnoozeDialog({ workflowId }: Props) {
-  // ...
-}
+status: WorkflowExecutionStatus.SNOOZED
 
 // ❌ Bad
-export class SnoozeDialog extends React.Component {
+status: 'snoozed'
+```
+
+### Database Access Patterns
+
+**Always use constants:**
+```typescript
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
+
+// ✅ Good
+.from(DB_TABLES.WORKFLOW_EXECUTIONS)
+.eq(DB_COLUMNS.STATUS, WorkflowExecutionStatus.SNOOZED)
+
+// ❌ Bad
+.from('workflow_executions')
+.eq('status', 'snoozed')
+```
+
+**Always enforce RLS:**
+```typescript
+// ✅ Good - RLS automatically enforced
+const supabase = createServerClient();  // User's session
+const { data } = await supabase.from(DB_TABLES.WORKFLOWS).select('*');
+
+// ❌ Bad - Bypasses RLS (NEVER do this in API routes)
+const supabase = createServiceRoleClient();
+```
+
+### Component Patterns
+
+**Server Components by default:**
+```typescript
+// ✅ Good - Server Component
+export default async function MyPage() {
+  const data = await fetchData();
+  return <div>{data}</div>;
+}
+
+// Only use 'use client' when needed
+'use client';  // For onClick, useState, etc.
+```
+
+**Props interface:**
+```typescript
+interface MyComponentProps {
+  required: string;
+  optional?: number;
+  onEvent?: (data: Data) => void;
+}
+
+export function MyComponent({ required, optional, onEvent }: MyComponentProps) {
   // ...
 }
 ```
-
-**Co-locate files:**
-```
-components/
-  SnoozeDialog/
-    SnoozeDialog.tsx
-    SnoozeDialog.test.tsx
-    SnoozeDialog.module.css
-    index.ts
-```
-
-### Naming Conventions
-
-**Files:**
-- Components: `PascalCase.tsx`
-- Utilities: `camelCase.ts`
-- Types: `types.ts` or `types/index.ts`
-
-**Variables:**
-- Constants: `SCREAMING_SNAKE_CASE`
-- Variables: `camelCase`
-- Components: `PascalCase`
-- Types/Interfaces: `PascalCase`
 
 ---
 
-## 🔗 Related Documentation
+## 🧪 Testing & Validation
 
-- `PLAN.md` - Current development plan
-- `STATE.md` - What's currently built
-- `AGENT-GUIDE.md` - How to work here
-- `snapshots/` - Historical documentation
+### Before Committing
+
+**1. TypeScript Compilation:**
+```bash
+npx tsc --noEmit
+```
+**Must show:** 0 errors (ignore pre-existing errors in weekly-planner files)
+
+**2. Linting:**
+```bash
+npm run lint
+```
+
+**3. Build Check:**
+```bash
+npm run build
+```
+**Must complete:** Without errors
+
+**4. Manual Testing:**
+- Test the specific feature you built
+- Check auth flows still work
+- Verify database queries return expected data
+
+### Testing Checklist
+
+For any code change:
+- [ ] TypeScript compiles with 0 new errors
+- [ ] No console errors in browser
+- [ ] RLS policies work (can't access other users' data)
+- [ ] API returns correct HTTP status codes
+- [ ] UI renders correctly
+- [ ] Forms validate input
 
 ---
 
-**Document Status:** Living document (updated when architecture changes)
-**Next Update:** After Phase 0.1 (Nov 22) with MCP architecture details
+## 📝 Commit & PR Guidelines
+
+### Commit Message Format
+
+```
+type(scope): description
+
+Examples:
+feat(workflows): add snooze workflow operation
+fix(auth): resolve signin redirect loop
+docs(schema): update workflow_executions table description
+chore(deps): update next to 15.0.0
+```
+
+**Types:**
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation only
+- `style` - Code style (formatting, no logic change)
+- `refactor` - Code refactoring
+- `test` - Add or update tests
+- `chore` - Maintenance (deps, config, etc.)
+
+### Git Workflow
+
+**When working in main repo:**
+```bash
+# 1. Make changes
+# 2. Stage changes
+git add .
+
+# 3. Commit with descriptive message
+git commit -m "feat(mcp): add listSnoozedWorkflows operation"
+
+# 4. Push to origin
+git push origin main
+```
+
+**When using git worktrees (parallel agent work):**
+```bash
+# 1. Create worktree
+git worktree add ../renubu-agent-1 -b feature/my-feature
+
+# 2. Work in worktree
+cd ../renubu-agent-1
+# make changes
+
+# 3. Commit in worktree
+git add .
+git commit -m "feat: implement feature"
+
+# 4. Return to main repo
+cd ../renubu
+
+# 5. Merge branch
+git merge feature/my-feature
+
+# 6. Remove worktree
+git worktree remove ../renubu-agent-1
+```
+
+### Pull Request Template
+
+When creating PRs:
+```markdown
+## Summary
+Brief description of changes
+
+## Changes Made
+- Bullet list of specific changes
+
+## Testing
+- How this was tested
+- Manual test steps
+- Any new tests added
+
+## Related
+- Closes #123 (issue number)
+- Related to docs/PLAN.md Phase 1
+```
+
+---
+
+## 🔍 Common Pitfalls for Agents
+
+### Pitfall 1: Not Using Constants
+**Wrong:**
+```typescript
+.from('workflow_executions')
+.eq('status', 'snoozed')
+```
+**Right:**
+```typescript
+import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
+import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
+
+.from(DB_TABLES.WORKFLOW_EXECUTIONS)
+.eq(DB_COLUMNS.STATUS, WorkflowExecutionStatus.SNOOZED)
+```
+
+### Pitfall 2: Bypassing RLS
+**Wrong:**
+```typescript
+// NEVER use service role in API routes
+const supabase = createServiceRoleClient();
+```
+**Right:**
+```typescript
+// Always use user's session
+const supabase = createServerClient();
+```
+
+### Pitfall 3: Client/Server Component Confusion
+**Wrong:**
+```typescript
+// Server Component with onClick
+export default async function Page() {
+  return <button onClick={() => alert('hi')}>Click</button>;  // ERROR
+}
+```
+**Right:**
+```typescript
+// Use client component for interactivity
+'use client';
+
+export default function Page() {
+  return <button onClick={() => alert('hi')}>Click</button>;  // ✅
+}
+```
+
+### Pitfall 4: Creating New Files Instead of Updating
+**Wrong:**
+- Create `docs/phase-1-new-feature.md`
+- Create `docs/phase-1-api-reference.md`
+
+**Right:**
+- Update existing `docs/API.md` with new endpoints
+- Update existing `docs/WORKFLOWS.md` with new workflows
+
+### Pitfall 5: Not Reading Existing Docs
+**Before implementing anything:**
+1. Check `docs/ARCHITECTURE.md` - Is there already a pattern for this?
+2. Check `docs/SCHEMA.md` - Does the table already exist?
+3. Check `docs/API.md` - Is there already an endpoint?
+4. Check `docs/MCP.md` - Is there already an MCP operation?
+
+---
+
+## 📚 Documentation Guidelines
+
+### When to Update Living Documents
+
+**After implementing a feature:**
+- Update `docs/PLAN.md` if feature affects roadmap
+- Update `docs/STATE.md` with what's now built
+- Update `docs/SCHEMA.md` if database changed
+- Update `docs/API.md` if endpoints added
+- Update `docs/MCP.md` if operations added
+- Update `docs/WORKFLOWS.md` if workflows added
+- Update `docs/ARTIFACTS.md` if artifacts added
+
+**DO NOT create new markdown files unless:**
+- Completely new category (rare)
+- Temporary task decomposition (will be deleted at phase end)
+
+**Default action:** Update existing living documents, don't proliferate files
+
+---
+
+# PART II: FOR HUMAN DEVELOPERS
+
+**Purpose:** This section is for human engineers who need to set up local environment, understand architecture, and deploy.
+
+---
+
+## 💻 Local Development Setup
+
+### Prerequisites
+
+**Required:**
+- Node.js 18+ (recommend using nvm)
+- pnpm (package manager)
+- Git
+- Code editor (VS Code recommended)
+
+**Optional but Recommended:**
+- Docker Desktop (for local Supabase)
+- GitHub CLI (gh)
+
+### First-Time Setup
+
+**1. Clone Repository:**
+```bash
+git clone https://github.com/Renew-Boo/renubu.git
+cd renubu
+```
+
+**2. Install Dependencies:**
+```bash
+pnpm install
+```
+
+**3. Environment Variables:**
+```bash
+# Copy template
+cp .env.local.template .env.local
+
+# Edit with your values
+# Get Supabase credentials from Supabase dashboard
+```
+
+**Required env vars:**
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (for migrations only)
+
+**4. Database Setup (Optional - Local Supabase):**
+```bash
+# Start local Supabase (requires Docker)
+npx supabase start
+
+# Run migrations
+npx supabase db reset
+
+# Seed data
+npx supabase db seed
+```
+
+**5. Start Development Server:**
+```bash
+pnpm dev
+```
+
+Open http://localhost:3000
+
+### Development Workflow
+
+**Typical workflow:**
+```bash
+# 1. Pull latest
+git pull origin main
+
+# 2. Create feature branch
+git checkout -b feature/my-feature
+
+# 3. Make changes
+
+# 4. Test locally
+pnpm build  # Ensure builds
+pnpm lint   # Check linting
+
+# 5. Commit and push
+git add .
+git commit -m "feat: description"
+git push origin feature/my-feature
+
+# 6. Create PR on GitHub
+
+# 7. After approval, merge to main
+```
+
+---
+
+## 🏗️ Architecture Overview (Human Perspective)
+
+### Tech Stack Rationale
+
+**Why Next.js?**
+- Server-side rendering for performance
+- API routes for backend
+- File-based routing (simple)
+- Great developer experience
+
+**Why Supabase?**
+- PostgreSQL (battle-tested, powerful)
+- Built-in auth (saves weeks of work)
+- Row Level Security (security by default)
+- Realtime (future feature)
+- Good free tier
+
+**Why Vercel?**
+- Zero-config Next.js deployment
+- Edge functions
+- Automatic HTTPS
+- Preview deployments
+
+### System Architecture Diagram
+
+```
+┌─────────────┐
+│   Browser   │
+└──────┬──────┘
+       │
+       │ HTTPS
+       ▼
+┌─────────────────────────────────┐
+│   Vercel Edge Network           │
+│  ┌───────────────────────────┐ │
+│  │  Next.js App (SSR + API)  │ │
+│  └───────────┬───────────────┘ │
+└──────────────┼─────────────────┘
+               │
+               │ PostgreSQL Protocol
+               ▼
+       ┌───────────────┐
+       │   Supabase    │
+       │ ┌───────────┐ │
+       │ │PostgreSQL │ │
+       │ └───────────┘ │
+       │ ┌───────────┐ │
+       │ │   Auth    │ │
+       │ └───────────┘ │
+       └───────────────┘
+```
+
+### Key Architectural Decisions
+
+**Decision 1: Monorepo vs Separate Repos**
+- **Choice:** Monorepo
+- **Why:** Simpler, faster iteration, shared types
+
+**Decision 2: App Router vs Pages Router**
+- **Choice:** App Router (Next.js 13+)
+- **Why:** Server Components, better DX, future-proof
+
+**Decision 3: Client-Side vs Server-Side Data Fetching**
+- **Choice:** Server-side (Server Components)
+- **Why:** Better performance, SEO, security
+
+**Decision 4: REST vs GraphQL**
+- **Choice:** REST (for now)
+- **Why:** Simpler, Supabase supports it natively
+
+---
+
+## 🚀 Deployment Process
+
+### Environments
+
+**Local (localhost:3000)**
+- For development
+- Can use demo mode
+- Local or cloud Supabase
+
+**Preview (Vercel)**
+- Auto-deployed on PR
+- Uses production Supabase (separate project)
+- For testing before merge
+
+**Production (app.renubu.com)**
+- Deployed on merge to main
+- Production Supabase
+- Monitored
+
+### Deployment Steps
+
+**Automated (Vercel):**
+1. Push to main branch
+2. Vercel detects change
+3. Builds and deploys automatically
+4. Live in ~2 minutes
+
+**Manual (if needed):**
+```bash
+# Deploy to production
+vercel --prod
+
+# Deploy preview
+vercel
+```
+
+### Environment Variables
+
+**Set in Vercel Dashboard:**
+- Production: Set once, applies to all production deploys
+- Preview: Separate values for preview deploys
+
+**Never commit:**
+- API keys
+- Database credentials
+- Service role keys
+
+### Database Migrations
+
+**Production migration process:**
+```bash
+# 1. Test locally first
+npx supabase db reset  # Applies all migrations
+
+# 2. Deploy to Supabase production
+npx supabase db push
+
+# 3. Verify schema
+npx supabase db diff
+```
+
+**⚠️ Always backup before production migration**
+
+---
+
+## 🐛 Debugging & Tools
+
+### Browser DevTools
+
+**React DevTools:**
+- Install extension
+- Inspect component tree
+- Check props/state
+
+**Network Tab:**
+- See API calls
+- Check request/response
+- Verify auth headers
+
+### Logging
+
+**Client-side:**
+```typescript
+console.log('Debug:', data);
+console.error('Error:', error);
+```
+
+**Server-side:**
+```typescript
+console.log('[API] Processing request:', { userId, data });
+```
+
+**Production:** Logs appear in Vercel dashboard
+
+### Common Issues
+
+**Issue: "Unauthenticated" errors**
+- Check session cookie exists
+- Verify Supabase URL/keys in env
+- Check RLS policies
+
+**Issue: Build fails**
+- Check TypeScript errors: `npx tsc --noEmit`
+- Check for unused imports
+- Verify all dependencies installed
+
+**Issue: Database query fails**
+- Check RLS policies (might be blocking)
+- Verify table/column names
+- Check user has permission
+
+---
+
+## 👥 Team Workflows
+
+### Code Review
+
+**What to check:**
+- [ ] Code follows conventions (see Part I)
+- [ ] TypeScript compiles
+- [ ] No security issues (RLS bypassed, etc.)
+- [ ] Tests pass
+- [ ] Documentation updated
+
+### Communication
+
+**Slack Channels:**
+- #dev - Development discussion
+- #product - Product feedback
+- #bugs - Bug reports
+
+**GitHub:**
+- Issues for bugs/features
+- PRs for code review
+- Discussions for big decisions
+
+---
+
+## 📖 Further Reading
+
+**Internal Docs:**
+- `docs/ARCHITECTURE.md` - Deep dive on architecture
+- `docs/SCHEMA.md` - Database schema reference
+- `docs/API.md` - API documentation
+- `docs/PLAN.md` - Current development plan
+
+**External Resources:**
+- [Next.js Docs](https://nextjs.org/docs)
+- [Supabase Docs](https://supabase.com/docs)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
+
+---
+
+**Last Updated:** 2025-11-07
+**Version:** 0.1
+**Note:** This is a living document. Update as processes evolve.
