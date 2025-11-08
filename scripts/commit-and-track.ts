@@ -344,23 +344,35 @@ async function main() {
     return;
   }
 
-  // Perform git commit
-  console.log('\n📝 Committing to git...');
-  const commitHash = gitCommit(options.message);
+  let commitHash: string | null = null;
   const branch = getCurrentBranch();
-  console.log(`   ${commitHash.substring(0, 8)} on ${branch}`);
 
-  // Log to database
-  await logCommitToDatabase(commitHash, metadata, stats, branch);
+  // Only commit if there are changes
+  if (stats.filesChanged > 0) {
+    console.log('\n📝 Committing to git...');
+    commitHash = gitCommit(options.message);
+    console.log(`   ${commitHash.substring(0, 8)} on ${branch}`);
+
+    // Log to database
+    await logCommitToDatabase(commitHash, metadata, stats, branch);
+  } else {
+    console.log('\n📝 No changes to commit (working tree clean)');
+
+    // For phase/release operations, we still want to update database
+    if (!options.phase && !options.release) {
+      console.log('❌ Nothing to do - no changes and no phase/release operation');
+      return;
+    }
+  }
 
   // Handle phase completion
   if (options.phase) {
-    await markPhaseComplete(commitHash);
+    await markPhaseComplete(commitHash || 'manual');
   }
 
   // Handle release creation
   if (options.release) {
-    await createRelease(options.release, commitHash);
+    await createRelease(options.release, commitHash || 'manual');
   }
 
   console.log('\n✅ Done!\n');
