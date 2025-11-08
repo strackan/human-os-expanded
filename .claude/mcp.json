@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "renubu": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "cwd": "servers/renubu",
+      "env": {
+        "SUPABASE_URL": "https://amugmkrihnjsxlpwdzcy.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtdWdta3JpaG5qc3hscHdkemN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1MDY4OTIsImV4cCI6MjA3NzA4Mjg5Mn0.LWo-9mFBuC1BYO4Z29hJpNhXukUrqo-3h0d3vlAAJ1c"
+      }
+    }
+  }
+}
