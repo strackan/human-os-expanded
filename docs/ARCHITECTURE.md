@@ -483,10 +483,307 @@ Classification informs role fit recommendations and bench organization.
 - AI analysis engine (16h)
 - Dashboard (deferred to Phase 5)
 
-**Phases 5-6 (Future):**
-- Email automation
-- Advanced filtering
-- Multi-round interview support
+**Phases 5-6 (Release 1.5 Future):**
+- Dashboard (Phase 5): 8h
+- Email automation (Phase 6): 8h
+
+---
+
+## Release 1.6: Return Visit System - Longitudinal Intelligence
+
+**Strategic Context:**
+Transforms Talent Orchestration from one-time screening into ongoing relationship intelligence.
+Implements "Guy for That" for recruiting - track people over time, remember context, build relationships.
+
+**Timeline:** Q1 2026 (Mar 2 - Mar 21, 2026)
+**Effort:** 24 hours (Phase 7)
+
+**Core Concept:**
+Candidates return for check-ins (3-6 months later). System:
+- Remembers all previous interactions
+- References specific details (projects, life context, personal updates)
+- Updates intelligence file with new information
+- Tracks relationship evolution over time
+- Calculates relationship strength (cold/warm/hot)
+
+**Makes candidates say:** "It actually remembered me. No one does that."
+
+### Intelligence File Architecture
+
+**Purpose:** Synthesized profile that evolves over time across all sessions
+
+**Structure:**
+```typescript
+interface IntelligenceFile {
+  // Identity
+  name: string;
+  email: string;
+  linkedin_url?: string;
+
+  // Professional Profile (evolving)
+  current_role: string;
+  company: string;
+  career_trajectory: Array<{
+    role: string;
+    company: string;
+    timeframe: string;
+    learned_from_session: string; // which session revealed this
+  }>;
+
+  // Skills & Expertise (evolving)
+  technical_skills: string[];
+  domain_expertise: string[];
+  skill_evolution: Array<{
+    skill: string;
+    added_date: string;
+    proficiency: 'learning' | 'competent' | 'expert';
+  }>;
+
+  // Projects & Artifacts (accumulating)
+  projects: Array<{
+    name: string;
+    url?: string;
+    description: string;
+    status: 'active' | 'completed' | 'abandoned';
+    learned_from_session: string;
+  }>;
+
+  // Personal Context (for relationship building)
+  life_context: {
+    location?: string;
+    family?: string[]; // ["Lucy (7)", "Marcus (4)"]
+    hobbies?: string[];
+    last_updated: string;
+  };
+
+  // Motivations & Goals (evolving)
+  current_motivation: {
+    seeking: string; // "founding role", "consulting", "exploring"
+    ideal_role: string;
+    deal_breakers: string[];
+    must_haves: string[];
+    updated: string;
+  };
+
+  // Relationship Metadata
+  first_contact: string;
+  last_contact: string;
+  total_sessions: number;
+  relationship_strength: 'cold' | 'warm' | 'hot';
+
+  // Session Summaries
+  session_timeline: Array<{
+    session_id: string;
+    date: string;
+    type: 'initial' | 'check_in' | 'deep_dive';
+    key_updates: string[];
+    sentiment: 'excited' | 'exploring' | 'frustrated' | 'content';
+  }>;
+
+  // AI's Understanding (meta)
+  archetype: string;
+  archetype_confidence: 'high' | 'medium' | 'low';
+  strengths: string[];
+  growth_areas: string[];
+  best_fit_at_renubu: string[];
+}
+```
+
+### Session Types
+
+**1. Initial Interview**
+- Full 11-dimension assessment
+- 20 minutes, ~15 exchanges
+- Creates first intelligence file
+- Sets baseline understanding
+- Stores in `interview_sessions` table with type='initial'
+
+**2. Check-In**
+- 5-10 minutes, lighter conversation
+- References previous sessions
+- Updates intelligence file
+- Tracks changes and evolution
+- Strengthens relationship
+- Stores in `interview_sessions` table with type='check_in'
+
+**3. Deep Dive (Future)**
+- Technical/role-specific assessment
+- Project-based evaluation
+- Final interview round
+- Stores in `interview_sessions` table with type='deep_dive'
+
+### Data Architecture
+
+**New Tables:**
+```sql
+interview_sessions (
+  id UUID,
+  candidate_id UUID REFERENCES candidates(id),
+  session_type TEXT, -- 'initial', 'check_in', 'deep_dive'
+  transcript JSONB,
+  analysis JSONB,
+  updates JSONB, -- what changed since last session
+  session_date TIMESTAMPTZ,
+  duration_minutes INTEGER,
+  key_insights TEXT[],
+  sentiment TEXT
+)
+```
+
+**Enhanced Candidates Table:**
+```sql
+candidates (
+  -- Existing columns...
+
+  -- NEW: Longitudinal tracking
+  intelligence_file JSONB, -- synthesized profile across all sessions
+  last_check_in TIMESTAMPTZ,
+  check_in_count INTEGER,
+  relationship_strength TEXT -- 'cold', 'warm', 'hot'
+)
+```
+
+### Relationship Strength Calculation
+
+**Algorithm:**
+```typescript
+function calculateRelationshipStrength(candidate): 'cold' | 'warm' | 'hot' {
+  const daysSinceContact = daysAgo(candidate.last_check_in);
+  const sessionCount = candidate.check_in_count + 1; // +1 for initial
+  const isActivelySeeking = candidate.intelligence_file.current_motivation.seeking !== 'just staying connected';
+
+  if (daysSinceContact > 180 || sessionCount === 1) {
+    return 'cold';
+  }
+
+  if (sessionCount >= 3 && daysSinceContact <= 90 && isActivelySeeking) {
+    return 'hot';
+  }
+
+  if (sessionCount >= 2 || daysSinceContact <= 180) {
+    return 'warm';
+  }
+
+  return 'cold';
+}
+```
+
+**Criteria:**
+- **Cold:** >6 months since contact OR only 1 session
+- **Warm:** 2-3 sessions OR contacted within 6 months
+- **Hot:** 3+ sessions AND contacted within 3 months AND actively seeking
+
+### Return Visit Flow
+
+```
+1. Candidate visits /join
+2. Sees "Already interviewed?" → clicks "Continue your conversation"
+3. Redirects to /join/returning
+4. Enters email for lookup
+5. System finds candidate + loads intelligence file
+6. Creates new workflow_execution (type: 'talent_check_in')
+7. Creates new interview_session (type: 'check_in')
+8. AI greets warmly with specific personal details:
+   "Hey Giselle! Great to see you again. How are Lucy and Marcus doing?
+    Last time we talked in June, you were building that SaaS analytics tool..."
+9. 5-10 minute check-in conversation
+10. Extracts updates from conversation
+11. Updates intelligence_file with changes
+12. Calculates new relationship_strength
+13. Creates interview_session record
+14. Reassesses fit, notifies if opportunity exists
+```
+
+### New Services
+
+**IntelligenceFileService:**
+```typescript
+class IntelligenceFileService {
+  // Synthesize intelligence file from all sessions
+  async synthesizeIntelligenceFile(candidateId: string): Promise<IntelligenceFile>;
+
+  // Load context for check-in conversation prompt
+  async getCheckInContext(candidateId: string): Promise<string>;
+
+  // Update file after check-in session
+  async updateFromSession(candidateId: string, sessionId: string): Promise<void>;
+
+  // Calculate relationship strength
+  async calculateRelationshipStrength(candidateId: string): Promise<'cold' | 'warm' | 'hot'>;
+}
+```
+
+**InterviewSessionService:**
+```typescript
+class InterviewSessionService {
+  // Create new session
+  async createSession(candidateId: string, type: SessionType): Promise<InterviewSession>;
+
+  // Get all sessions for candidate
+  async getSessionsForCandidate(candidateId: string): Promise<InterviewSession[]>;
+
+  // Get latest session
+  async getLatestSession(candidateId: string): Promise<InterviewSession | null>;
+
+  // Extract key insights from session
+  async extractInsights(sessionId: string): Promise<string[]>;
+}
+```
+
+### New Components
+
+**Pages:**
+- `/join/returning/page.tsx` - Email lookup for return visits
+- Enhanced `/join/page.tsx` - Adds "Already interviewed?" section
+
+**Components:**
+- `IntelligenceTimeline.tsx` - Session history visualization
+- `EmailLookup.tsx` - Return visit email lookup form
+- `CheckInSlide.tsx` - Check-in conversation workflow slide
+
+**Prompts:**
+- `check-in-prompts.ts` - Return visit conversation logic
+
+### Success Metrics
+
+**Return Visit Indicators:**
+- % of candidates who return for check-ins
+- Average time between check-ins
+- Relationship strength distribution (target: 40% warm, 10% hot)
+- Quality of intelligence file synthesis
+- Hiring rate from returning candidates vs. new
+
+**Quality Indicators:**
+- Returning candidates say "it actually remembered me"
+- Check-ins feel natural, not robotic
+- Intelligence files capture meaningful evolution
+- Candidates want to come back in 3-6 months
+- Dashboard shows rich relationship history
+
+**MVP Complete When:**
+- Email lookup finds existing candidates
+- Intelligence file loads with all session history
+- Check-in conversation references specific previous details
+- Session creates new interview_session record
+- Intelligence file updates after check-in
+- Relationship strength calculates correctly
+- Timeline view shows all sessions
+- Dashboard shows "last check-in" date
+
+### Privacy & Compliance
+
+**Additional Considerations for Longitudinal Data:**
+- Clear data retention policy (how long do we keep old sessions?)
+- Candidate ability to view/export their intelligence file
+- Candidate ability to request deletion (GDPR right to be forgotten)
+- Transparency about what we remember and why
+- Regular audits of intelligence file accuracy
+
+**Implementation:**
+- Provide `/api/me/intelligence-file` endpoint for candidates to view their data
+- Implement data export in JSON format
+- Implement deletion with cascade to interview_sessions
+- Add "last reviewed" timestamp to intelligence file
 
 ---
 

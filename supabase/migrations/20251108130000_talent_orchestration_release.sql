@@ -132,6 +132,183 @@ WHERE version = '2.0'; -- Push Parking Lot to March
 
 UPDATE releases
 SET
-  planned_start = '2026-04-01',
+  planned_start = '2026-04-14',
   planned_end = '2026-05-31'
-WHERE version = '3.0'; -- Push Human OS Check-Ins to Apr-May
+WHERE version = '3.0'; -- Push Human OS Check-Ins to mid-Apr through May
+
+-- ============================================================================
+-- RELEASE 1.6: RETURN VISIT SYSTEM - LONGITUDINAL INTELLIGENCE
+-- ============================================================================
+-- Phase 7 from updated spec: Transform one-time screening into ongoing
+-- relationship intelligence. Email lookup, intelligence file synthesis,
+-- check-in conversations, session timeline views.
+-- Timeline: Q1 2026 (Mar 2 - Mar 21, 2026)
+-- ============================================================================
+
+-- Interview Sessions Table (multiple sessions per candidate)
+CREATE TABLE IF NOT EXISTS interview_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  session_type TEXT NOT NULL CHECK (session_type IN ('initial', 'check_in', 'deep_dive')),
+  transcript JSONB, -- conversation for this session [{role, content, timestamp}]
+  analysis JSONB, -- analysis snapshot for this session
+  updates JSONB, -- what changed since last session
+  session_date TIMESTAMPTZ DEFAULT NOW(),
+  duration_minutes INTEGER,
+  questions_asked INTEGER,
+  key_insights TEXT[],
+  sentiment TEXT CHECK (sentiment IN ('excited', 'exploring', 'frustrated', 'content', NULL)),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add longitudinal tracking columns to candidates table
+DO $$
+BEGIN
+  -- Intelligence file: synthesized context across all sessions
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'intelligence_file'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN intelligence_file JSONB;
+  END IF;
+
+  -- Last check-in tracking
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'last_check_in'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN last_check_in TIMESTAMPTZ;
+  END IF;
+
+  -- Check-in count
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'check_in_count'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN check_in_count INTEGER DEFAULT 0;
+  END IF;
+
+  -- Relationship strength: cold/warm/hot
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'relationship_strength'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN relationship_strength TEXT DEFAULT 'cold'
+      CHECK (relationship_strength IN ('cold', 'warm', 'hot'));
+  END IF;
+END $$;
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_candidates_email ON candidates(email);
+CREATE INDEX IF NOT EXISTS idx_candidates_relationship ON candidates(relationship_strength);
+CREATE INDEX IF NOT EXISTS idx_sessions_candidate ON interview_sessions(candidate_id, session_date DESC);
+CREATE INDEX IF NOT EXISTS idx_sessions_type ON interview_sessions(session_type);
+CREATE INDEX IF NOT EXISTS idx_sessions_date ON interview_sessions(session_date DESC);
+
+-- RLS Policies for interview_sessions
+ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see sessions for their candidates"
+  ON interview_sessions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = interview_sessions.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins see all sessions"
+  ON interview_sessions FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users create sessions for their candidates"
+  ON interview_sessions FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = interview_sessions.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins create all sessions"
+  ON interview_sessions FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Add updated_at trigger for interview_sessions
+CREATE TRIGGER interview_sessions_updated_at
+  BEFORE UPDATE ON interview_sessions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for documentation
+COMMENT ON TABLE interview_sessions IS 'Multiple interview sessions per candidate for longitudinal tracking. Enables return visits and relationship intelligence.';
+COMMENT ON COLUMN candidates.intelligence_file IS 'Synthesized profile that evolves over time across all sessions. Includes career trajectory, skills evolution, personal context, motivations, and relationship metadata.';
+COMMENT ON COLUMN candidates.relationship_strength IS 'Calculated based on recency, frequency, and engagement quality: cold (>6mo or 1 session), warm (2-3 sessions or <6mo), hot (3+ sessions AND <3mo AND actively seeking).';
+
+-- Insert Release 1.6
+INSERT INTO releases (
+  version,
+  name,
+  phase_number,
+  status_id,
+  planned_start,
+  planned_end,
+  description
+) VALUES (
+  '1.6',
+  'Return Visit System - Longitudinal Intelligence',
+  16, -- Phase 1.6
+  (SELECT id FROM release_statuses WHERE slug = 'planning'),
+  '2026-03-02',
+  '2026-03-21',
+  'Email lookup for returning candidates, intelligence file synthesis across sessions, check-in conversations, session timeline views. Transforms one-time screening into ongoing relationship intelligence. "Guy for That" applied to recruiting - track people over time, remember context, build relationships.'
+);
+
+-- Add Release 1.6 features
+DO $$
+DECLARE
+  release_1_6_id UUID;
+BEGIN
+  SELECT id INTO release_1_6_id FROM releases WHERE version = '1.6';
+
+  -- Feature: Return Visit System (Phase 7)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-return-visits',
+    'Return Visit System - Longitudinal Intelligence',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_6_id,
+    1,
+    24,
+    'Email lookup for returning candidates (/join/returning), intelligence file synthesis across all sessions, check-in conversation mode (5-10 min lighter conversations), session timeline visualization. Enables longitudinal tracking: remember previous interactions, reference specific details, update intelligence file with changes, track relationship evolution, calculate relationship strength (cold/warm/hot). Transforms talent acquisition into relationship management. Makes candidates say "it actually remembered me." Success metrics: % returning candidates, avg time between check-ins, relationship strength distribution, hiring rate from returning vs new.'
+  );
+END $$;
+
+-- Update Parking Lot timeline (pushed by 1.6)
+UPDATE releases
+SET
+  planned_start = '2026-03-24',
+  planned_end = '2026-04-12'
+WHERE version = '2.0'; -- Push Parking Lot to late March
