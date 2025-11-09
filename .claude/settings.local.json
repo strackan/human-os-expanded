@@ -36,7 +36,9 @@
       "Bash(git diff:*)",
       "Bash(/tmp/agent1-wes.ts)",
       "Bash(/tmp/agent2-wes.ts)",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(gh issue create:*)",
+      "Bash(gh repo view:*)"
     ],
     "deny": [],
     "ask": []
