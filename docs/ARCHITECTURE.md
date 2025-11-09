@@ -1,7 +1,7 @@
 # Architecture - Renubu System Design
 
-**Last Updated:** 2025-11-07
-**Version:** 0.1
+**Last Updated:** 2025-11-08
+**Version:** 1.5 (Talent Orchestration added)
 **Audience:** Internal (Engineers, Technical Leads)
 
 ---
@@ -336,6 +336,157 @@ See individual sections above for:
 - Supabase for data + auth
 - MCP marketplace (walled garden)
 - Database-first documentation
+
+3. **Nov 8, 2025:** Talent Orchestration System (Release 1.5)
+   - Strategy: Dogfood-first, productize-later
+   - Purpose: Hire founding operator + validate workflow orchestration
+   - Timeline: Q1 2026 (Jan 6 - Feb 28)
+   - Impact: Pushes Parking Lot to Mar, Human OS to Apr-May
+
+---
+
+## Release 1.5: Talent Orchestration System
+
+**Strategic Context:**
+First comprehensive workflow template, built to hire Renubu's founding operator while proving the product works.
+
+**Core Architecture:**
+
+### Interview System Design
+
+**Philosophy:**
+- Conversational AI (not rigid script)
+- Adaptive questioning based on responses
+- Coverage guarantees across 11 dimensions
+- Real-time transcript storage
+
+**11 Assessment Dimensions:**
+1. IQ / Problem-solving
+2. Personality type
+3. Motivation style
+4. Work history quality
+5. Passions/dreams alignment
+6. Culture fit (absurdity tolerance, vulnerability, chaos comfort)
+7. Technical ability
+8. GTM aptitude
+9. Emotional intelligence
+10. Empathy profile
+11. Self-awareness
+
+**AI Model Strategy:**
+- Primary: Anthropic Claude Sonnet 4.5
+- Interview conductor: Conversational, adaptive, time-aware (~20 min)
+- Analysis engine: Multi-pass (dimension scoring → archetype → flags → recommendation)
+- Streaming: Real-time chat interface with incremental responses
+
+### Data Architecture
+
+**New Tables:**
+```sql
+candidates (
+  interview_transcript JSONB,  -- Full conversation [{role, content, timestamp}]
+  analysis JSONB,               -- AI scores and insights
+  archetype TEXT,               -- Primary classification
+  overall_score INTEGER,        -- 0-100 weighted composite
+  dimensions JSONB              -- Multi-dimensional scores
+)
+
+talent_bench (
+  archetype_primary TEXT,
+  archetype_confidence TEXT,    -- 'high', 'medium', 'low'
+  best_fit_roles TEXT[]
+)
+```
+
+**Integration with Existing:**
+- Leverages `workflow_executions` for interview sessions
+- Uses `workflow_tasks` for follow-up actions
+- Extends `profiles` for interviewer/hiring manager roles
+- RLS policies for multi-tenant candidate data
+
+### Component Reuse Strategy
+
+**What We're Reusing:**
+- Form artifacts (application intake)
+- Workflow orchestration patterns
+- Auth & RLS infrastructure
+- Service layer patterns
+
+**What's Net New:**
+- Transcription capability (real-time chat with AI)
+- Multi-pass analysis engine
+- Candidate assessment visualization
+- Interview conversation management
+
+**Decision Rationale:**
+Don't force-fit workflows where they don't belong. Use form artifacts heavily, add transcription as new primitive. Build clean interview-specific services rather than contorting existing workflow engine.
+
+### Routing Logic
+
+```typescript
+Scoring Weights (overall_score):
+- IQ: 20%
+- Culture Fit: 15%
+- Execution Bias: 15%
+- Technical OR GTM (higher): 15%
+- Emotional Intelligence: 10%
+- Work History: 10%
+- Self-Awareness: 10%
+- Remaining dimensions: 5%
+
+Routing:
+- Score ≥90 + Culture≥80 → Top 1% (immediate contact)
+- Score ≥75 + no red flags → Top 10% (benched)
+- Otherwise → Pass (polite rejection)
+```
+
+### Archetype Classification
+
+**6 Primary Archetypes:**
+1. Technical Builder
+2. GTM Operator
+3. Creative Strategist
+4. Execution Machine
+5. Generalist Orchestrator
+6. Domain Expert
+
+Classification informs role fit recommendations and bench organization.
+
+### Privacy & Compliance
+
+**Considerations:**
+- GDPR/CCPA compliance for candidate data
+- Data retention policies (transcripts, recordings)
+- Bias detection in AI analysis
+- Audit trail for all routing decisions
+- Candidate data more sensitive than customer data
+
+**Implementation:**
+- Encrypt interview transcripts at rest
+- Anonymize data in analytics
+- Regular bias audits of AI scoring
+- Clear data deletion process
+- Candidate access to their own data
+
+### Success Metrics
+
+**MVP Complete When:**
+- Candidates say "felt like real conversation"
+- Top-scored candidates actually impressive
+- No false negatives (missing great people)
+- Dashboard usable without training
+- Analysis completes in <30 seconds
+
+**Phase 1-4 Deliverables (Q1 2026):**
+- Database schema + services (16h)
+- Landing page + interview experience (48h)
+- AI analysis engine (16h)
+- Dashboard (deferred to Phase 5)
+
+**Phases 5-6 (Future):**
+- Email automation
+- Advanced filtering
+- Multi-round interview support
 
 ---
 

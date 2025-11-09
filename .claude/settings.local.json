@@ -38,7 +38,8 @@
       "Bash(/tmp/agent2-wes.ts)",
       "Bash(git config:*)",
       "Bash(gh issue create:*)",
-      "Bash(gh repo view:*)"
+      "Bash(gh repo view:*)",
+      "Bash(npm run roadmap:*)"
     ],
     "deny": [],
     "ask": []
