@@ -232,31 +232,90 @@ Total: ~15,000 tokens per task
 ## Marketplace Architecture (Phase 0.2+)
 
 ### Database Schema
+
+**Implementation:** See `20251112000000_mcp_registry_infrastructure.sql`
+
+#### Table: `mcp_integrations`
+Registry of available marketplace integrations (Google Calendar, Slack, Gmail, etc.)
+
 ```sql
-CREATE TABLE mcp_servers (
+CREATE TABLE mcp_integrations (
   id UUID PRIMARY KEY,
-  name TEXT NOT NULL,
-  category TEXT,
-  connection_type TEXT,
-  connection_config JSONB,
-  status TEXT,
-  enabled BOOLEAN DEFAULT false
+  slug TEXT UNIQUE NOT NULL,            -- 'google-calendar', 'slack'
+  name TEXT NOT NULL,                   -- 'Google Calendar'
+  category TEXT NOT NULL,               -- 'calendar', 'communication', 'email'
+  connection_type TEXT NOT NULL,        -- 'oauth2', 'api_key', 'webhook'
+  oauth_provider TEXT,                  -- 'google', 'slack'
+  oauth_scopes TEXT[],                  -- Required OAuth scopes
+  status TEXT DEFAULT 'disabled',       -- 'disabled', 'enabled', 'deprecated'
+  approval_required BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ
 );
 ```
 
+#### Table: `user_integrations`
+Tracks which users have which integrations installed
+
+```sql
+CREATE TABLE user_integrations (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id),
+  integration_id UUID REFERENCES mcp_integrations(id),
+  status TEXT DEFAULT 'pending',        -- 'pending', 'active', 'error', 'revoked'
+  installed_at TIMESTAMPTZ,
+  last_used_at TIMESTAMPTZ,
+  config JSONB,                         -- User-specific config
+  error_message TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ
+);
+```
+
+#### Table: `oauth_tokens`
+Encrypted storage for OAuth tokens (AES-256 via pgcrypto)
+
+```sql
+CREATE TABLE oauth_tokens (
+  id UUID PRIMARY KEY,
+  user_integration_id UUID REFERENCES user_integrations(id),
+  user_id UUID REFERENCES auth.users(id),
+  access_token_encrypted BYTEA NOT NULL,
+  refresh_token_encrypted BYTEA,
+  token_type TEXT DEFAULT 'Bearer',
+  expires_at TIMESTAMPTZ,
+  scope TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  deleted_at TIMESTAMPTZ
+);
+```
+
+**Security:**
+- All tokens encrypted at rest using `pgp_sym_encrypt()`
+- Helper functions: `encrypt_oauth_token()`, `decrypt_oauth_token()`
+- RLS policies ensure users only access their own tokens
+- Encryption key stored in environment variables (never in database)
+
 ### Admin Approval Workflow
 ```
-Renubu adds Slack to marketplace
+Renubu adds Slack to marketplace (via migration)
     ↓
-Auto-appears in Admin > MCP Servers
+Auto-appears in mcp_integrations table
     ↓
-Status: DISABLED (default)
+Status: DISABLED (default, approval_required=true)
     ↓
-Admin reviews capabilities
+Admin reviews capabilities in Admin UI
     ↓
-Admin toggles ON → Available to agents
+Admin sets status='enabled' → Available to all users
     ↓
-Admin can toggle OFF anytime
+Users can install via marketplace
+    ↓
+OAuth flow stores encrypted tokens in oauth_tokens
+    ↓
+Admin can set status='disabled' anytime
 ```
 
 ### Server Tiers (Future)
@@ -319,10 +378,13 @@ console.log(`Token reduction: ${reduction.toFixed(1)}%`);
 - TypeScript SDK + Deno sandbox
 - Walled garden security model
 
-### Phase 0.2 (Next Week)
-- MCP registry table (`mcp_servers`)
-- Admin UI for enable/disable
-- Google Email + Calendar + Slack servers
+### Phase 0.2 (In Progress) 🚧
+- ✅ MCP registry tables (`mcp_integrations`, `user_integrations`, `oauth_tokens`)
+- ✅ OAuth token encryption (pgcrypto)
+- ✅ RLS policies for multi-tenant security
+- ⏳ Admin UI for enable/disable
+- ⏳ Google Email + Calendar + Slack servers
+- ⏳ OAuth flow implementation
 
 ### Phase 0.3 (Before Phase 1)
 - Marketplace expansion (HubSpot, Salesforce, Notion, etc.)

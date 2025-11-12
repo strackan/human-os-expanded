@@ -130,6 +130,33 @@ This document catalogs all database tables, their relationships, Row Level Secur
 - **RLS:** Authenticated users can read
 - **Migration:** `20251107000001_features_tracking.sql`
 
+### MCP Registry (Phase 0.2)
+
+#### `mcp_integrations`
+- **Purpose:** Registry of available MCP integrations in marketplace
+- **Key Columns:** id, slug, name, category, connection_type, status
+- **RLS:** Authenticated users can read enabled integrations, admins can manage all
+- **Status Values:** disabled, enabled, deprecated
+- **Connection Types:** oauth2, api_key, webhook
+- **Migration:** `20251112000000_mcp_registry_infrastructure.sql`
+
+#### `user_integrations`
+- **Purpose:** Tracks which users have which integrations installed
+- **Key Columns:** id, user_id, integration_id, status, installed_at
+- **RLS:** Users see only their own integrations, admins see all
+- **Status Values:** pending, active, error, revoked
+- **Relationships:** References auth.users and mcp_integrations
+- **Migration:** `20251112000000_mcp_registry_infrastructure.sql`
+
+#### `oauth_tokens`
+- **Purpose:** Encrypted storage for OAuth access and refresh tokens
+- **Key Columns:** id, user_integration_id, access_token_encrypted, refresh_token_encrypted
+- **RLS:** Users can only access their own tokens
+- **Security:** Tokens encrypted at rest using pgcrypto (AES-256)
+- **Relationships:** References user_integrations and auth.users
+- **Migration:** `20251112000000_mcp_registry_infrastructure.sql`
+- **Helper Functions:** `encrypt_oauth_token()`, `decrypt_oauth_token()`
+
 ---
 
 ## RLS Policy Patterns

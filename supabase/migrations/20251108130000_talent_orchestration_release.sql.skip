@@ -57,6 +57,14 @@ BEGIN
     category_id,
     release_id,
     priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-interview-experience',
+    'Interview Experience',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
     2,
     48,
     'Landing page (/join) + conversational AI interview experience. Adaptive questioning across 11 dimensions (IQ, personality, motivation, work history, culture fit, technical, GTM, EQ, empathy, self-awareness, passions). Real-time chat interface with Claude Sonnet 4.5. Transcript storage for analysis.'
@@ -70,6 +78,14 @@ BEGIN
     category_id,
     release_id,
     priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-ai-analysis',
+    'AI Analysis Engine',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ai'),
+    release_1_5_id,
     3,
     16,
     'Multi-pass AI analysis: dimension scoring (0-100), archetype classification (6 types), red/green flag detection, overall recommendation. Automated routing: top 1% priority contact, top 10% benched, others passed. Analysis completes in <30 seconds.'
@@ -83,6 +99,14 @@ BEGIN
     category_id,
     release_id,
     priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-candidate-dashboard',
+    'Candidate Dashboard',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
     4,
     8,
     'Talent pipeline dashboard with filtering (tier, archetype, score), detailed candidate profiles, transcript viewer with highlights, bench management. Enables efficient candidate review and talent pool curation.'
@@ -96,6 +120,14 @@ BEGIN
     category_id,
     release_id,
     priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-email-automation',
+    'Email Automation',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'automation'),
+    release_1_5_id,
     5,
     8,
     'Automated email notifications based on routing: top 1% (immediate contact), benched (on radar), passed (polite rejection). Template personalization with AI-generated highlights. No emails in dev/staging.'
@@ -109,6 +141,14 @@ BEGIN
     category_id,
     release_id,
     priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-landing-page',
+    'Landing Page & Workflow Init',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
     1,
     8,
     'Public landing page at /join with hero section, founder video embed, application form (name, email, LinkedIn, referral source). Creates workflow_execution + candidate on submit. Redirects to interview experience.'
