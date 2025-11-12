@@ -100,11 +100,34 @@ export class EmailOrchestrationService {
     supabaseClient?: SupabaseClient
   ): Promise<EmailCustomerContext> {
     try {
-      // Fetch customer with primary contact
-      const customer = await CustomerService.getCustomerById(customerId, supabaseClient);
+      // Demo mode: Use mock customer data
+      const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
-      if (!customer) {
-        throw new Error(`Customer not found: ${customerId}`);
+      let customer: any;
+
+      if (isDemoMode) {
+        // Mock customer for demo/testing
+        customer = {
+          id: customerId,
+          company_name: 'Acme Corporation',
+          current_arr: 185000,
+          health_score: 75,
+          renewal_date: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000).toISOString(), // 120 days from now
+          primary_contact: {
+            id: 'demo-contact-id',
+            first_name: 'Jane',
+            last_name: 'Smith',
+            email: 'jane.smith@acme.com',
+            title: 'VP of Operations',
+          },
+        };
+      } else {
+        // Fetch customer with primary contact
+        customer = await CustomerService.getCustomerById(customerId, supabaseClient);
+
+        if (!customer) {
+          throw new Error(`Customer not found: ${customerId}`);
+        }
       }
 
       // Calculate days until renewal
