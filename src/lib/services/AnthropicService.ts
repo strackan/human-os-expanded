@@ -2,10 +2,11 @@
  * Anthropic Service
  *
  * Handles integration with Anthropic's Claude API for AI-powered email generation.
- * Uses Claude 3.5 Haiku for fast, cost-effective email composition.
+ * Uses Claude Haiku 4.5 for fast, cost-effective email composition.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { CLAUDE_HAIKU_CURRENT } from '@/lib/constants/claude-models';
 
 export interface AnthropicCompletionParams {
   prompt: string;
@@ -46,6 +47,7 @@ export class AnthropicService {
     try {
       // Validate API key
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+
       if (!apiKey) {
         throw new Error(
           'Anthropic API key not found. Set CLAUDE_API_KEY or ANTHROPIC_API_KEY in environment.'
@@ -58,7 +60,7 @@ export class AnthropicService {
       });
 
       // Set defaults
-      const model = params.model || 'claude-haiku-4-5-20251001'; // Haiku 4.5
+      const model = params.model || CLAUDE_HAIKU_CURRENT;
       const maxTokens = params.maxTokens || 1024; // Reasonable for emails
       const temperature = params.temperature ?? 0.7; // Balanced creativity
       const systemPrompt = params.systemPrompt || 'You are a professional Customer Success Manager writing emails to customers.';
@@ -132,7 +134,7 @@ export class AnthropicService {
 
       const client = new Anthropic({ apiKey });
 
-      const model = params.model || 'claude-haiku-4-5-20251001';
+      const model = params.model || CLAUDE_HAIKU_CURRENT;
       const maxTokens = params.maxTokens || 1024;
       const temperature = params.temperature ?? 0.7;
       const systemPrompt = params.systemPrompt || 'You are a professional Customer Success Manager writing emails to customers.';

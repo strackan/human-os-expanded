@@ -153,11 +153,24 @@ input[type="tel"],
 input[type="url"],
 textarea,
 select {
-  color: rgb(17 24 39) !important; /* gray-900 for input text */
+  color: rgb(17 24 39); /* gray-900 for input text in light mode */
+}
+
+@media (prefers-color-scheme: dark) {
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    color: rgb(243 244 246); /* gray-100 for input text in dark mode */
+  }
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: rgb(156 163 175) !important; /* gray-400 for placeholder */
+  color: rgb(156 163 175); /* gray-400 for placeholder */
   opacity: 1;
 }

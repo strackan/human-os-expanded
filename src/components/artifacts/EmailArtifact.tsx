@@ -204,32 +204,32 @@ export default function EmailArtifact({
         <div className="space-y-4 max-w-2xl">
           {/* To */}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">To</label>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">To</label>
             <input
               type="text"
               value={emailTo}
               onChange={(e) => setEmailTo(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
             />
           </div>
 
           {/* Subject */}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Subject</label>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Subject</label>
             <input
               type="text"
               value={emailSubject}
               onChange={(e) => setEmailSubject(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-900"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
             />
           </div>
 
           {/* Email Body */}
           <div>
-            <label className="text-xs font-medium text-gray-700 mb-1 block">Message</label>
+            <label className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 block">Message</label>
             {typingComplete ? (
               <div
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 leading-relaxed min-h-[336px] whitespace-pre-wrap cursor-text"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 leading-relaxed min-h-[336px] whitespace-pre-wrap cursor-text"
                 dangerouslySetInnerHTML={{ __html: formatTextToHTML(emailBody) }}
                 contentEditable
                 suppressContentEditableWarning
@@ -237,7 +237,7 @@ export default function EmailArtifact({
               />
             ) : (
               <div
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm text-gray-900 leading-relaxed min-h-[336px] whitespace-pre-wrap"
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 leading-relaxed min-h-[336px] whitespace-pre-wrap"
                 dangerouslySetInnerHTML={{ __html: formatTextToHTML(displayBody) + '<span className="inline-block w-0.5 h-4 bg-blue-600 animate-pulse ml-0.5">|</span>' }}
               />
             )}
