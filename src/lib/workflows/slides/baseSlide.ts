@@ -218,9 +218,11 @@ export interface SlideDefinition {
   name: string;
 
   /**
-   * Slide category for organization
+   * Slide category for organization (module-specific)
+   * CS module: 'common', 'risk', 'opportunity', 'strategic', 'renewal', 'action'
+   * Productivity module: 'planner', 'gtd', 'capture', 'review'
    */
-  category: 'common' | 'risk' | 'opportunity' | 'strategic' | 'renewal' | 'action';
+  category: string;
 
   /**
    * Description of what this slide does
@@ -290,9 +292,11 @@ export interface SlideDefinitionV2 {
   stepMapping: string;
 
   /**
-   * Slide category for organization
+   * Slide category for organization (module-specific)
+   * CS module: 'common', 'risk', 'opportunity', 'strategic', 'renewal', 'action'
+   * Productivity module: 'planner', 'gtd', 'capture', 'review'
    */
-  category: 'common' | 'risk' | 'opportunity' | 'strategic' | 'renewal' | 'action';
+  category: string;
 
   /**
    * Estimated time to complete (minutes)
@@ -358,9 +362,16 @@ export interface WorkflowComposition {
   name: string;
 
   /**
-   * Category for scoring/prioritization (NOT for structure determination)
+   * Module ID - defines which product domain this workflow belongs to
+   * @example 'customer-success', 'productivity'
    */
-  category: 'risk' | 'opportunity' | 'strategic' | 'renewal';
+  moduleId: string;
+
+  /**
+   * Category for scoring/prioritization (module-specific)
+   * Valid categories depend on the moduleId
+   */
+  category: string;
 
   /**
    * Description

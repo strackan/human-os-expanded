@@ -42,6 +42,17 @@ INSERT INTO features (
   6
 );
 
+-- Ensure releases has updated_at column before updating
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'releases' AND column_name = 'updated_at'
+  ) THEN
+    ALTER TABLE releases ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+  END IF;
+END $$;
+
 -- Update release 0.2 status to in_progress
 UPDATE releases
 SET status_id = (SELECT id FROM release_statuses WHERE slug = 'in_progress')

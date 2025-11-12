@@ -13,6 +13,7 @@ import { WorkflowComposition } from '../slides/baseSlide';
 export const obsidianBlackRenewalComposition: WorkflowComposition = {
   id: 'obsidian-black-renewal',
   name: 'Obsidian Black Renewal',
+  moduleId: 'customer-success',
   category: 'renewal',
   description: 'Renewal workflow using V2 template-based architecture',
 

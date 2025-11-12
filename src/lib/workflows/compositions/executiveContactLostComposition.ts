@@ -19,6 +19,7 @@ import { WorkflowComposition } from '../slides/baseSlide';
 export const executiveContactLostComposition: WorkflowComposition = {
   id: 'exec-contact-lost',
   name: 'Executive Contact Lost',
+  moduleId: 'customer-success',
   category: 'risk',
   description: 'Workflow for managing risk when a key executive contact departs',
 

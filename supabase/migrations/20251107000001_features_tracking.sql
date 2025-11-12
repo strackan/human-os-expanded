@@ -7,7 +7,7 @@
 -- ============================================================================
 
 CREATE TABLE features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Identity
   slug TEXT UNIQUE NOT NULL,              -- e.g., "workflow-snoozing", "custom-mcp-servers"
@@ -67,7 +67,7 @@ CREATE TRIGGER features_updated_at
 -- ============================================================================
 
 CREATE TABLE feature_updates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
 
   -- Update type

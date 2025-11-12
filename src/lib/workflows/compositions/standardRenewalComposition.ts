@@ -18,6 +18,7 @@ import { WorkflowComposition } from '../slides/baseSlide';
 export const standardRenewalComposition: WorkflowComposition = {
   id: 'standard-renewal',
   name: 'Standard Renewal',
+  moduleId: 'customer-success',
   category: 'renewal',
   description: 'Standard workflow for customer renewal planning',
 

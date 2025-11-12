@@ -49,6 +49,7 @@ export function example2_ValidateComposition() {
   const badComposition = {
     id: 'bad-workflow',
     name: 'Bad Workflow',
+    moduleId: 'customer-success',
     category: 'risk' as const,
     description: 'A bad workflow for testing validation',
     slideSequence: ['greeting', 'nonexistent-slide', 'workflow-summary'],

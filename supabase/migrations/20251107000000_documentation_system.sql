@@ -7,7 +7,7 @@
 -- ============================================================================
 
 CREATE TABLE documentation (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Identity
   slug TEXT UNIQUE NOT NULL,              -- e.g., "workflow-snoozing-overview"
@@ -70,7 +70,7 @@ CREATE TRIGGER documentation_updated_at
 -- ============================================================================
 
 CREATE TABLE documentation_versions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   doc_id UUID NOT NULL REFERENCES documentation(id) ON DELETE CASCADE,
 
   -- Version snapshot
@@ -95,7 +95,7 @@ CREATE INDEX idx_documentation_versions_version_label ON documentation_versions(
 -- ============================================================================
 
 CREATE TABLE help_articles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   doc_id UUID REFERENCES documentation(id), -- Links to internal doc
 
   -- Customer-friendly metadata
@@ -132,7 +132,7 @@ CREATE INDEX idx_help_articles_published_at ON help_articles(published_at);
 -- ============================================================================
 
 CREATE TABLE releases (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Release identity
   version TEXT UNIQUE NOT NULL,           -- "0.1", "0.2", "1.0", "2.0"

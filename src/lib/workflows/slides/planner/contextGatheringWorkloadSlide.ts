@@ -83,7 +83,7 @@ One moment...`,
 
 🚨 **CUSTOMER PRIORITIES** ({{workload.renewals.length}})
 {{#each workload.renewals}}
-• {{customer_name}} - Renewal in {{days_until_renewal}} days (${{arr}})
+• {{customer_name}} - Renewal in {{days_until_renewal}} days (${{current_arr}})
 {{/each}}
 {{#if workload.priorities.length}}
 {{#each workload.priorities}}

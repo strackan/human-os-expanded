@@ -6,8 +6,8 @@
 -- ============================================================================
 
 -- Feature Statuses
-CREATE TABLE feature_statuses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS feature_statuses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
@@ -22,11 +22,12 @@ INSERT INTO feature_statuses (slug, name, description, sort_order) VALUES
   ('deferred', 'Deferred', 'Postponed with specific conditions to revisit', 4),
   ('complete', 'Complete', 'Shipped and available in production', 5),
   ('rejected', 'Rejected', 'Declined or decided not to pursue', 6),
-  ('deprecated', 'Deprecated', 'Previously shipped but removed from product', 7);
+  ('deprecated', 'Deprecated', 'Previously shipped but removed from product', 7)
+ON CONFLICT (slug) DO NOTHING;
 
 -- Feature Categories
-CREATE TABLE feature_categories (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS feature_categories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
@@ -40,11 +41,12 @@ INSERT INTO feature_categories (slug, name, description) VALUES
   ('ux', 'UX', 'User experience improvements'),
   ('infrastructure', 'Infrastructure', 'Platform and backend capabilities'),
   ('artifacts', 'Artifacts', 'Reusable UI components and templates'),
-  ('views_dashboards', 'Views & Dashboards', 'New pages, layouts, and dashboard features');
+  ('views_dashboards', 'Views & Dashboards', 'New pages, layouts, and dashboard features')
+ON CONFLICT (slug) DO NOTHING;
 
 -- Release Statuses
-CREATE TABLE release_statuses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS release_statuses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
@@ -56,17 +58,18 @@ INSERT INTO release_statuses (slug, name, description, sort_order) VALUES
   ('planning', 'Planning', 'Release is being planned', 1),
   ('in_progress', 'In Progress', 'Release work is underway', 2),
   ('complete', 'Complete', 'Release has shipped to production', 3),
-  ('cancelled', 'Cancelled', 'Release was cancelled', 4);
+  ('cancelled', 'Cancelled', 'Release was cancelled', 4)
+ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================================================
 -- RELEASES TABLE
 -- ============================================================================
 
-CREATE TABLE releases (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+CREATE TABLE IF NOT EXISTS releases (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   version TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
-  status_id UUID NOT NULL REFERENCES release_statuses(id),
+  status_id UUID REFERENCES release_statuses(id),
 
   -- Internal phase tracking (lightweight grouping)
   phase_number INTEGER,
@@ -84,14 +87,54 @@ CREATE TABLE releases (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create trigger for updated_at
+-- Add columns if they don't exist (for existing releases table from documentation_system.sql)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'name') THEN
+    ALTER TABLE releases ADD COLUMN name TEXT NOT NULL DEFAULT '';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'status_id') THEN
+    ALTER TABLE releases ADD COLUMN status_id UUID REFERENCES release_statuses(id);
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'phase_number') THEN
+    ALTER TABLE releases ADD COLUMN phase_number INTEGER;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'planned_start') THEN
+    ALTER TABLE releases ADD COLUMN planned_start DATE;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'planned_end') THEN
+    ALTER TABLE releases ADD COLUMN planned_end DATE;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'actual_shipped') THEN
+    ALTER TABLE releases ADD COLUMN actual_shipped TIMESTAMPTZ;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'description') THEN
+    ALTER TABLE releases ADD COLUMN description TEXT;
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'releases' AND column_name = 'release_notes') THEN
+    ALTER TABLE releases ADD COLUMN release_notes TEXT;
+  END IF;
+END $$;
+
+-- Create trigger for updated_at (if not exists)
+DROP TRIGGER IF EXISTS update_releases_updated_at ON releases;
 CREATE TRIGGER update_releases_updated_at
   BEFORE UPDATE ON releases
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+-- Update release_date constraint to allow NULL
+ALTER TABLE releases ALTER COLUMN release_date DROP NOT NULL;
+
 -- Initial releases
-INSERT INTO releases (version, name, status_id, phase_number, planned_start, actual_shipped, description) VALUES
+INSERT INTO releases (version, name, status_id, phase_number, planned_start, actual_shipped, description, release_date) VALUES
   (
     '0.0',
     'Sprint 0: Auth & Infrastructure',
@@ -99,7 +142,8 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     0,
     '2025-11-01',
     '2025-11-05',
-    'Force-enable demo mode, auth debugging, timeout detection, signin redirect fixes'
+    'Force-enable demo mode, auth debugging, timeout detection, signin redirect fixes',
+    '2025-11-05'
   ),
   (
     '0.1',
@@ -108,7 +152,8 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     0,
     '2025-11-06',
     '2025-11-08',
-    'MCP server with 8 core operations, documentation system, feature tracking, 11 living documents'
+    'MCP server with 8 core operations, documentation system, feature tracking, 11 living documents',
+    '2025-11-08'
   ),
   (
     '0.2',
@@ -117,7 +162,8 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     0,
     '2026-01-01',
     NULL,
-    'Google Calendar, Slack, Gmail integrations via MCP marketplace'
+    'Google Calendar, Slack, Gmail integrations via MCP marketplace',
+    NULL
   ),
   (
     '1.0',
@@ -126,7 +172,8 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     1,
     '2025-11-25',
     NULL,
-    'Core product promise: condition-based workflow snoozing with smart wake logic'
+    'Core product promise: condition-based workflow snoozing with smart wake logic',
+    NULL
   ),
   (
     '2.0',
@@ -135,7 +182,8 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     2,
     '2026-01-06',
     NULL,
-    'Quick capture for non-time-sensitive ideas without cluttering active workflows'
+    'Quick capture for non-time-sensitive ideas without cluttering active workflows',
+    NULL
   ),
   (
     '3.0',
@@ -144,8 +192,10 @@ INSERT INTO releases (version, name, status_id, phase_number, planned_start, act
     3,
     '2026-02-03',
     NULL,
-    'Learning loop: system discovers what works for each user. Premium pricing justification.'
-  );
+    'Learning loop: system discovers what works for each user. Premium pricing justification.',
+    NULL
+  )
+ON CONFLICT (version) DO NOTHING;
 
 -- ============================================================================
 -- UPDATE FEATURES TABLE
@@ -157,7 +207,7 @@ DROP TABLE IF EXISTS features CASCADE;
 
 -- Create updated features table
 CREATE TABLE features (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT UNIQUE NOT NULL,
   title TEXT NOT NULL,
 
@@ -211,7 +261,7 @@ CREATE INDEX idx_features_category ON features(category_id);
 -- ============================================================================
 
 CREATE TABLE feature_updates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   feature_id UUID NOT NULL REFERENCES features(id) ON DELETE CASCADE,
 
   -- Track what changed

@@ -124,6 +124,7 @@ export async function composeFromDatabase(
   const composition: WorkflowComposition = {
     id: workflowDef.workflow_id,
     name: workflowDef.name,
+    moduleId: (workflowDef as any).module_id || 'customer-success', // Default to CS module for legacy workflows
     category: workflowDef.workflow_type as any,
     description: workflowDef.description || '',
     slideSequence: workflowDef.slide_sequence || [],

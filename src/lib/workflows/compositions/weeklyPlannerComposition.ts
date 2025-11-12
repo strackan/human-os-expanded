@@ -15,7 +15,8 @@ import { WorkflowComposition } from '../slides/baseSlide';
 export const weeklyPlannerComposition: WorkflowComposition = {
   id: 'weekly-planning',
   name: 'Weekly Planning',
-  category: 'personal', // New category for personal productivity
+  moduleId: 'productivity',
+  category: 'planner',
   description: 'AI-guided weekly planning with integrated work commitments',
 
   /**
@@ -91,13 +92,13 @@ export const weeklyPlannerComposition: WorkflowComposition = {
       placeholder: 'Tell me about your week...',
       aiGreeting: "Let's plan your week! I've pulled your work commitments and I'm ready to help you schedule everything.",
     },
-    // Weekly planning specific settings
-    recurring: {
-      enabled: true,
-      pattern: 'weekly',
-      defaultDay: 'sunday',
-      defaultTime: '18:00',
-      timezone: 'auto', // Use user's timezone
-    },
+    // TODO: Re-enable when recurring workflow type support is added
+    // recurring: {
+    //   enabled: true,
+    //   pattern: 'weekly',
+    //   defaultDay: 'sunday',
+    //   defaultTime: '18:00',
+    //   timezone: 'auto', // Use user's timezone
+    // },
   }
 };

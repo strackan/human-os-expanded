@@ -5,6 +5,9 @@
 -- Drop the restrictive policy
 DROP POLICY IF EXISTS "Users can view profiles in their company" ON public.profiles;
 
+-- Drop and recreate policy to be idempotent
+DROP POLICY IF EXISTS "Users can view their own profile and company profiles" ON public.profiles;
+
 -- Create a more permissive policy that allows:
 -- 1. Users to always view their own profile (needed for auth to work)
 -- 2. Users to view other profiles in their company

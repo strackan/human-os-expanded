@@ -58,6 +58,7 @@ async function testV2Workflow() {
     const composition = {
       id: workflow.workflow_id,
       name: workflow.name,
+      moduleId: (workflow as any).module_id || 'customer-success',
       category: workflow.workflow_type as 'renewal',
       description: workflow.description || '',
       slideSequence: workflow.slide_sequence,

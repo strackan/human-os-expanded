@@ -2,7 +2,7 @@
 -- Logs all git commits with metadata for auditability
 
 CREATE TABLE commits (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   hash TEXT UNIQUE NOT NULL,
   message TEXT NOT NULL,
   type TEXT,  -- feat, fix, docs, refactor, etc.
