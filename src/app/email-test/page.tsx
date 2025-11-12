@@ -10,11 +10,12 @@
 import React, { useState } from 'react';
 import EmailArtifact from '@/components/artifacts/EmailArtifact';
 
-// Demo customer IDs (Obsidian Black and others from seed data)
+// Demo customer IDs - Using actual UUIDs for API compatibility
+// Note: These should match customers in your database
 const DEMO_CUSTOMERS = [
-  { id: 'obsidian-black-demo-id', name: 'Obsidian Black' },
-  { id: 'test-customer-1', name: 'Test Customer 1' },
-  { id: 'test-customer-2', name: 'Test Customer 2' },
+  { id: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac', name: 'Demo Customer (Justin)' },
+  { id: '00000000-0000-0000-0000-000000000001', name: 'Test Customer 1' },
+  { id: '00000000-0000-0000-0000-000000000002', name: 'Test Customer 2' },
 ];
 
 export default function EmailTestPage() {
