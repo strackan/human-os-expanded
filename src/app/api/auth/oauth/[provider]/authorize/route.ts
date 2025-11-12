@@ -9,14 +9,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { OAuthService } from '@/lib/services/OAuthService';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { provider: string } }
+  { params }: { params: Promise<{ provider: string }> }
 ) {
   try {
-    const { provider } = params;
+    const { provider } = await params;
     const searchParams = request.nextUrl.searchParams;
     const integrationSlug = searchParams.get('integration');
 
@@ -29,20 +29,32 @@ export async function GET(
 
     // Get authenticated user
     const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Please sign in.' },
-        { status: 401 }
-      );
+    // Support demo mode
+    let userId: string;
+    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+    if (demoMode && process.env.NEXT_PUBLIC_DEMO_USER_ID) {
+      userId = process.env.NEXT_PUBLIC_DEMO_USER_ID;
+    } else {
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Unauthorized. Please sign in.' },
+          { status: 401 }
+        );
+      }
+
+      userId = user.id;
     }
 
-    // Check if integration exists and is enabled
-    const { data: integration, error: integrationError } = await supabase
+    // Check if integration exists and is enabled (use service role to bypass RLS)
+    const serviceSupabase = createServiceRoleClient();
+    const { data: integration, error: integrationError } = await serviceSupabase
       .from('mcp_integrations')
       .select('*')
       .eq('slug', integrationSlug)
@@ -66,11 +78,11 @@ export async function GET(
       );
     }
 
-    // Check if user already has this integration
-    const { data: existingIntegration } = await supabase
+    // Check if user already has this integration (use service role to bypass RLS)
+    const { data: existingIntegration } = await serviceSupabase
       .from('user_integrations')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .eq('integration_id', integration.id)
       .is('deleted_at', null)
       .single();
@@ -80,7 +92,7 @@ export async function GET(
     if (existingIntegration) {
       // Update existing integration to pending
       userIntegrationId = existingIntegration.id;
-      await supabase
+      await serviceSupabase
         .from('user_integrations')
         .update({
           status: 'pending',
@@ -89,10 +101,10 @@ export async function GET(
         .eq('id', userIntegrationId);
     } else {
       // Create new user integration record
-      const { data: newIntegration, error: createError } = await supabase
+      const { data: newIntegration, error: createError } = await serviceSupabase
         .from('user_integrations')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           integration_id: integration.id,
           status: 'pending',
         })
@@ -100,8 +112,9 @@ export async function GET(
         .single();
 
       if (createError || !newIntegration) {
+        console.error('[OAuth Authorize] Failed to create user integration:', createError);
         return NextResponse.json(
-          { error: 'Failed to create integration record' },
+          { error: `Failed to create integration record: ${createError?.message || 'Unknown error'}` },
           { status: 500 }
         );
       }
@@ -117,7 +130,7 @@ export async function GET(
     const authUrl = await OAuthService.getAuthorizationUrl(
       provider,
       integrationSlug,
-      user.id,
+      userId,
       redirectUri
     );
 
