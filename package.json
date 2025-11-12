@@ -28,6 +28,7 @@
     "roadmap": "npx tsx scripts/generate-roadmap.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-popover": "^1.1.13",
     "@supabase/ssr": "^0.6.1",

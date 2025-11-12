@@ -148,6 +148,8 @@ export default function CommunicationsArtifactRenderer({
           to={props.to || emailContent.recipients}
           subject={props.subject || emailContent.subject}
           body={props.body || emailContent.body}
+          customerId={customer?.id}
+          enableAIGeneration={true}
           onCompose={() => {
             onUpdateState('emailSent', true);
             onNext();
