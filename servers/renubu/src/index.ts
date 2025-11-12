@@ -34,6 +34,35 @@ import {
   createWorkflowExecution,
   logCheckIn
 } from './operations/checkins.js';
+import {
+  listCalendarEvents,
+  createCalendarEvent,
+  updateCalendarEvent,
+  deleteCalendarEvent,
+  findNextOpening,
+  getUpcomingEvents
+} from './operations/calendar.js';
+import {
+  sendEmail,
+  listMessages,
+  getMessage,
+  getUnreadCount,
+  markAsRead,
+  markAsUnread,
+  getProfile
+} from './operations/gmail.js';
+import {
+  postMessage,
+  updateMessage,
+  deleteMessage,
+  listChannels,
+  getChannelInfo,
+  sendDirectMessage,
+  listUsers,
+  getUserInfo,
+  addReaction,
+  getWorkspaceInfo
+} from './operations/slack.js';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -231,6 +260,637 @@ const TOOLS: Tool[] = [
       },
       required: ['workflowId', 'outcome']
     }
+  },
+  // Google Calendar Operations
+  {
+    name: 'calendar.listEvents',
+    description: 'List calendar events for a date range. Returns event details including times, attendees, and descriptions.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        startDate: {
+          type: 'string',
+          description: 'Start date (ISO 8601 format, optional)'
+        },
+        endDate: {
+          type: 'string',
+          description: 'End date (ISO 8601 format, optional)'
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of events to return (default: 10)',
+          default: 10
+        }
+      },
+      required: ['userId']
+    }
+  },
+  {
+    name: 'calendar.createEvent',
+    description: 'Create a new calendar event with title, time, and optional attendees.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        event: {
+          type: 'object',
+          description: 'Event details',
+          properties: {
+            summary: {
+              type: 'string',
+              description: 'Event title/summary'
+            },
+            description: {
+              type: 'string',
+              description: 'Event description (optional)'
+            },
+            location: {
+              type: 'string',
+              description: 'Event location (optional)'
+            },
+            start: {
+              type: 'object',
+              description: 'Event start time',
+              properties: {
+                dateTime: {
+                  type: 'string',
+                  description: 'Start date/time (ISO 8601)'
+                },
+                timeZone: {
+                  type: 'string',
+                  description: 'Timezone (optional, e.g., "America/Los_Angeles")'
+                }
+              },
+              required: ['dateTime']
+            },
+            end: {
+              type: 'object',
+              description: 'Event end time',
+              properties: {
+                dateTime: {
+                  type: 'string',
+                  description: 'End date/time (ISO 8601)'
+                },
+                timeZone: {
+                  type: 'string',
+                  description: 'Timezone (optional)'
+                }
+              },
+              required: ['dateTime']
+            },
+            attendees: {
+              type: 'array',
+              description: 'Event attendees (optional)',
+              items: {
+                type: 'object',
+                properties: {
+                  email: {
+                    type: 'string',
+                    description: 'Attendee email'
+                  },
+                  displayName: {
+                    type: 'string',
+                    description: 'Attendee name (optional)'
+                  }
+                },
+                required: ['email']
+              }
+            }
+          },
+          required: ['summary', 'start', 'end']
+        }
+      },
+      required: ['userId', 'event']
+    }
+  },
+  {
+    name: 'calendar.updateEvent',
+    description: 'Update an existing calendar event (time, title, attendees, etc.).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        eventId: {
+          type: 'string',
+          description: 'Event ID to update'
+        },
+        updates: {
+          type: 'object',
+          description: 'Event updates (same structure as createEvent)'
+        }
+      },
+      required: ['userId', 'eventId', 'updates']
+    }
+  },
+  {
+    name: 'calendar.deleteEvent',
+    description: 'Delete a calendar event.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        eventId: {
+          type: 'string',
+          description: 'Event ID to delete'
+        }
+      },
+      required: ['userId', 'eventId']
+    }
+  },
+  {
+    name: 'calendar.findNextOpening',
+    description: 'Find next available time slot(s) in calendar. Intelligently searches for open slots that fit the requested duration, respecting working hours and existing events. Perfect for scheduling meetings.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        durationMinutes: {
+          type: 'number',
+          description: 'Duration in minutes (e.g., 30 for 30-minute meeting)'
+        },
+        afterDate: {
+          type: 'string',
+          description: 'Start searching after this date/time (ISO 8601)'
+        },
+        options: {
+          type: 'object',
+          description: 'Optional search parameters',
+          properties: {
+            workingHours: {
+              type: 'object',
+              description: 'Working hours constraint (default: 9am-5pm)',
+              properties: {
+                start: {
+                  type: 'string',
+                  description: 'Start time in HH:MM format (e.g., "09:00")'
+                },
+                end: {
+                  type: 'string',
+                  description: 'End time in HH:MM format (e.g., "17:00")'
+                }
+              }
+            },
+            businessDaysOnly: {
+              type: 'boolean',
+              description: 'Only search Mon-Fri (default: true)'
+            },
+            returnMultipleOptions: {
+              type: 'number',
+              description: 'Number of available slots to return (default: 1)'
+            },
+            calendarId: {
+              type: 'string',
+              description: 'Calendar ID (default: "primary")'
+            }
+          }
+        }
+      },
+      required: ['userId', 'durationMinutes', 'afterDate']
+    }
+  },
+  {
+    name: 'calendar.getUpcomingEvents',
+    description: 'Get upcoming events starting from now. Quick way to see what\'s on the calendar today/soon.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        count: {
+          type: 'number',
+          description: 'Number of events to return (default: 5)',
+          default: 5
+        }
+      },
+      required: ['userId']
+    }
+  },
+  // Gmail Operations
+  {
+    name: 'gmail.sendEmail',
+    description: 'Send an email via Gmail. Supports TO, CC, BCC, HTML/plain text, and reply-to.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        params: {
+          type: 'object',
+          description: 'Email parameters',
+          properties: {
+            to: {
+              description: 'Recipient email(s) - single string or array',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ]
+            },
+            subject: {
+              type: 'string',
+              description: 'Email subject line'
+            },
+            body: {
+              type: 'string',
+              description: 'Email body content'
+            },
+            cc: {
+              description: 'CC recipient(s) - single string or array (optional)',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ]
+            },
+            bcc: {
+              description: 'BCC recipient(s) - single string or array (optional)',
+              oneOf: [
+                { type: 'string' },
+                { type: 'array', items: { type: 'string' } }
+              ]
+            },
+            replyTo: {
+              type: 'string',
+              description: 'Reply-to email address (optional)'
+            },
+            html: {
+              type: 'boolean',
+              description: 'If true, body is HTML; if false, plain text (default: false)'
+            }
+          },
+          required: ['to', 'subject', 'body']
+        }
+      },
+      required: ['userId', 'params']
+    }
+  },
+  {
+    name: 'gmail.listMessages',
+    description: 'List/search Gmail messages. Use query parameter for advanced search (e.g., "is:unread", "from:example@gmail.com").',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        query: {
+          type: 'string',
+          description: 'Gmail search query (optional, e.g., "is:unread", "from:user@example.com")'
+        },
+        maxResults: {
+          type: 'number',
+          description: 'Maximum number of messages to return (default: 10)',
+          default: 10
+        }
+      },
+      required: ['userId']
+    }
+  },
+  {
+    name: 'gmail.getMessage',
+    description: 'Get full details of a specific email message by ID.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        messageId: {
+          type: 'string',
+          description: 'Gmail message ID'
+        },
+        format: {
+          type: 'string',
+          enum: ['full', 'metadata', 'minimal', 'raw'],
+          description: 'Response format (default: "full")',
+          default: 'full'
+        }
+      },
+      required: ['userId', 'messageId']
+    }
+  },
+  {
+    name: 'gmail.getUnreadCount',
+    description: 'Get count of unread emails in inbox.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        }
+      },
+      required: ['userId']
+    }
+  },
+  {
+    name: 'gmail.markAsRead',
+    description: 'Mark an email message as read.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        messageId: {
+          type: 'string',
+          description: 'Gmail message ID'
+        }
+      },
+      required: ['userId', 'messageId']
+    }
+  },
+  {
+    name: 'gmail.markAsUnread',
+    description: 'Mark an email message as unread.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        messageId: {
+          type: 'string',
+          description: 'Gmail message ID'
+        }
+      },
+      required: ['userId', 'messageId']
+    }
+  },
+  {
+    name: 'gmail.getProfile',
+    description: 'Get Gmail account profile information (email address, message/thread counts).',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        }
+      },
+      required: ['userId']
+    }
+  },
+  // Slack Operations
+  {
+    name: 'slack.postMessage',
+    description: 'Post a message to a Slack channel. Supports plain text, Block Kit blocks, threads, and custom formatting.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        message: {
+          type: 'object',
+          description: 'Message details',
+          properties: {
+            channel: {
+              type: 'string',
+              description: 'Channel ID (e.g., "C123ABC456")'
+            },
+            text: {
+              type: 'string',
+              description: 'Message text'
+            },
+            blocks: {
+              type: 'array',
+              description: 'Optional Block Kit blocks for rich formatting'
+            },
+            thread_ts: {
+              type: 'string',
+              description: 'Optional thread timestamp to reply in thread'
+            },
+            username: {
+              type: 'string',
+              description: 'Optional custom username'
+            },
+            icon_emoji: {
+              type: 'string',
+              description: 'Optional emoji icon (e.g., ":robot_face:")'
+            }
+          },
+          required: ['channel', 'text']
+        }
+      },
+      required: ['userId', 'message']
+    }
+  },
+  {
+    name: 'slack.updateMessage',
+    description: 'Update an existing Slack message.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        channel: {
+          type: 'string',
+          description: 'Channel ID'
+        },
+        ts: {
+          type: 'string',
+          description: 'Message timestamp (from postMessage response)'
+        },
+        text: {
+          type: 'string',
+          description: 'New message text'
+        },
+        blocks: {
+          type: 'array',
+          description: 'Optional new Block Kit blocks'
+        }
+      },
+      required: ['userId', 'channel', 'ts', 'text']
+    }
+  },
+  {
+    name: 'slack.deleteMessage',
+    description: 'Delete a Slack message.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        channel: {
+          type: 'string',
+          description: 'Channel ID'
+        },
+        ts: {
+          type: 'string',
+          description: 'Message timestamp'
+        }
+      },
+      required: ['userId', 'channel', 'ts']
+    }
+  },
+  {
+    name: 'slack.listChannels',
+    description: 'List channels in the Slack workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        types: {
+          type: 'string',
+          description: 'Channel types comma-separated (default: "public_channel,private_channel")',
+          default: 'public_channel,private_channel'
+        },
+        limit: {
+          type: 'number',
+          description: 'Max channels to return (default: 100)',
+          default: 100
+        }
+      },
+      required: ['userId']
+    }
+  },
+  {
+    name: 'slack.getChannelInfo',
+    description: 'Get detailed information about a specific Slack channel.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        channel: {
+          type: 'string',
+          description: 'Channel ID'
+        }
+      },
+      required: ['userId', 'channel']
+    }
+  },
+  {
+    name: 'slack.sendDirectMessage',
+    description: 'Send a direct message (DM) to a Slack user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        slackUserId: {
+          type: 'string',
+          description: 'Slack user ID to send DM to'
+        },
+        text: {
+          type: 'string',
+          description: 'Message text'
+        }
+      },
+      required: ['userId', 'slackUserId', 'text']
+    }
+  },
+  {
+    name: 'slack.listUsers',
+    description: 'List users in the Slack workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        limit: {
+          type: 'number',
+          description: 'Max users to return (default: 100)',
+          default: 100
+        }
+      },
+      required: ['userId']
+    }
+  },
+  {
+    name: 'slack.getUserInfo',
+    description: 'Get detailed information about a specific Slack user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        slackUserId: {
+          type: 'string',
+          description: 'Slack user ID'
+        }
+      },
+      required: ['userId', 'slackUserId']
+    }
+  },
+  {
+    name: 'slack.addReaction',
+    description: 'Add an emoji reaction to a Slack message.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        },
+        channel: {
+          type: 'string',
+          description: 'Channel ID'
+        },
+        timestamp: {
+          type: 'string',
+          description: 'Message timestamp'
+        },
+        emoji: {
+          type: 'string',
+          description: 'Emoji name without colons (e.g., "thumbsup", "heart", "rocket")'
+        }
+      },
+      required: ['userId', 'channel', 'timestamp', 'emoji']
+    }
+  },
+  {
+    name: 'slack.getWorkspaceInfo',
+    description: 'Get information about the connected Slack workspace.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        userId: {
+          type: 'string',
+          description: 'User ID'
+        }
+      },
+      required: ['userId']
+    }
   }
 ];
 
@@ -365,6 +1025,320 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: JSON.stringify({ success: true, message: 'Check-in logged successfully' })
+            }
+          ]
+        };
+      }
+
+      // Google Calendar Operations
+      case 'calendar.listEvents': {
+        const { userId, startDate, endDate, maxResults } = args as any;
+        const result = await listCalendarEvents(
+          supabase,
+          userId,
+          startDate,
+          endDate,
+          maxResults
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'calendar.createEvent': {
+        const { userId, event } = args as any;
+        const result = await createCalendarEvent(supabase, userId, event);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'calendar.updateEvent': {
+        const { userId, eventId, updates } = args as any;
+        const result = await updateCalendarEvent(supabase, userId, eventId, updates);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'calendar.deleteEvent': {
+        const { userId, eventId } = args as any;
+        await deleteCalendarEvent(supabase, userId, eventId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, message: 'Event deleted successfully' })
+            }
+          ]
+        };
+      }
+
+      case 'calendar.findNextOpening': {
+        const { userId, durationMinutes, afterDate, options } = args as any;
+        const result = await findNextOpening(
+          supabase,
+          userId,
+          durationMinutes,
+          afterDate,
+          options || {}
+        );
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'calendar.getUpcomingEvents': {
+        const { userId, count } = args as any;
+        const result = await getUpcomingEvents(supabase, userId, count || 5);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      // Gmail Operations
+      case 'gmail.sendEmail': {
+        const { userId, params } = args as any;
+        const result = await sendEmail(supabase, userId, params);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.listMessages': {
+        const { userId, query, maxResults } = args as any;
+        const result = await listMessages(supabase, userId, query, maxResults);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.getMessage': {
+        const { userId, messageId, format } = args as any;
+        const result = await getMessage(supabase, userId, messageId, format);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.getUnreadCount': {
+        const { userId } = args as any;
+        const result = await getUnreadCount(supabase, userId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.markAsRead': {
+        const { userId, messageId } = args as any;
+        const result = await markAsRead(supabase, userId, messageId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.markAsUnread': {
+        const { userId, messageId } = args as any;
+        const result = await markAsUnread(supabase, userId, messageId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'gmail.getProfile': {
+        const { userId } = args as any;
+        const result = await getProfile(supabase, userId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      // Slack Operations
+      case 'slack.postMessage': {
+        const { userId, message } = args as any;
+        const result = await postMessage(supabase, userId, message);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.updateMessage': {
+        const { userId, channel, ts, text, blocks } = args as any;
+        await updateMessage(supabase, userId, channel, ts, text, blocks);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, message: 'Message updated successfully' })
+            }
+          ]
+        };
+      }
+
+      case 'slack.deleteMessage': {
+        const { userId, channel, ts } = args as any;
+        await deleteMessage(supabase, userId, channel, ts);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, message: 'Message deleted successfully' })
+            }
+          ]
+        };
+      }
+
+      case 'slack.listChannels': {
+        const { userId, types, limit } = args as any;
+        const result = await listChannels(supabase, userId, types, limit);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.getChannelInfo': {
+        const { userId, channel } = args as any;
+        const result = await getChannelInfo(supabase, userId, channel);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.sendDirectMessage': {
+        const { userId, slackUserId, text } = args as any;
+        const result = await sendDirectMessage(supabase, userId, slackUserId, text);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.listUsers': {
+        const { userId, limit } = args as any;
+        const result = await listUsers(supabase, userId, limit);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.getUserInfo': {
+        const { userId, slackUserId } = args as any;
+        const result = await getUserInfo(supabase, userId, slackUserId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
+            }
+          ]
+        };
+      }
+
+      case 'slack.addReaction': {
+        const { userId, channel, timestamp, emoji } = args as any;
+        await addReaction(supabase, userId, channel, timestamp, emoji);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({ success: true, message: 'Reaction added successfully' })
+            }
+          ]
+        };
+      }
+
+      case 'slack.getWorkspaceInfo': {
+        const { userId } = args as any;
+        const result = await getWorkspaceInfo(supabase, userId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(result, null, 2)
             }
           ]
         };

@@ -133,6 +133,158 @@ The Model Context Protocol enables AI agents to interact with Renubu's operation
 **Returns:** Success confirmation
 **Security:** Workflow owner only
 
+### Google Calendar Operations (Phase 0.2)
+
+#### `calendar.listEvents(userId: string, startDate?, endDate?, maxResults?)`
+**Purpose:** List calendar events for a date range
+**Returns:** Array of calendar events with times, attendees, locations
+**Security:** User's calendar only (RLS-enforced)
+
+#### `calendar.createEvent(userId: string, event: CalendarEvent)`
+**Purpose:** Create a new calendar event with title, time, attendees
+**Returns:** Created event object with event ID
+**Security:** User's calendar only
+
+#### `calendar.updateEvent(userId: string, eventId: string, updates: Partial<CalendarEvent>)`
+**Purpose:** Update an existing calendar event (time, title, attendees)
+**Returns:** Updated event object
+**Security:** User's events only
+
+#### `calendar.deleteEvent(userId: string, eventId: string)`
+**Purpose:** Delete a calendar event
+**Returns:** Success confirmation
+**Security:** User's events only
+
+#### `calendar.findNextOpening(userId: string, durationMinutes: number, afterDate: string, options?)`
+**Purpose:** Find next available time slot(s) in calendar
+**Algorithm:**
+1. Fetch calendar events for next 7 days
+2. Build "busy slots" array from events
+3. Iterate through business hours in 15-min increments
+4. Find slots where [slot_start, slot_start + duration] has no overlap
+5. Return requested number of available slots
+
+**Options:**
+- `workingHours`: `{start: "09:00", end: "17:00"}` (default)
+- `businessDaysOnly`: `true` (skip weekends)
+- `returnMultipleOptions`: Number of slots to return (default: 1)
+
+**Returns:** Array of time slots `[{start: ISO8601, end: ISO8601}]`
+**Security:** User's calendar only
+
+**Example:**
+```typescript
+// Find next 3 available 30-minute slots after 2pm
+await calendar.findNextOpening(userId, 30, '2025-11-12T14:00:00Z', {
+  returnMultipleOptions: 3
+});
+// Returns: [
+//   { start: '2025-11-12T15:30:00Z', end: '2025-11-12T16:00:00Z' },
+//   { start: '2025-11-13T09:00:00Z', end: '2025-11-13T09:30:00Z' },
+//   { start: '2025-11-13T11:00:00Z', end: '2025-11-13T11:30:00Z' }
+// ]
+```
+
+#### `calendar.getUpcomingEvents(userId: string, count?)`
+**Purpose:** Get upcoming events starting from now
+**Returns:** Next N events (default: 5)
+**Security:** User's calendar only
+
+### Gmail Operations (Phase 0.2)
+
+#### `gmail.sendEmail(userId: string, params: SendEmailParams)`
+**Purpose:** Send an email via Gmail
+**Params:** `{to, subject, body, cc?, bcc?, replyTo?, html?}`
+**Returns:** Sent message object with message ID
+**Security:** User's Gmail account only
+
+#### `gmail.listMessages(userId: string, query?, maxResults?)`
+**Purpose:** List/search Gmail messages
+**Query:** Gmail search syntax (e.g., `"is:unread"`, `"from:user@example.com"`)
+**Returns:** Array of message summaries
+**Security:** User's Gmail only
+
+#### `gmail.getMessage(userId: string, messageId: string, format?)`
+**Purpose:** Get full details of a specific email message
+**Format:** `full`, `metadata`, `minimal`, or `raw` (default: `full`)
+**Returns:** Complete message object with headers, body, attachments
+**Security:** User's messages only
+
+#### `gmail.getUnreadCount(userId: string)`
+**Purpose:** Get count of unread emails in inbox
+**Returns:** `{count: number}`
+**Security:** User's Gmail only
+
+#### `gmail.markAsRead(userId: string, messageId: string)`
+**Purpose:** Mark an email message as read
+**Returns:** Updated message object
+**Security:** User's messages only
+
+#### `gmail.markAsUnread(userId: string, messageId: string)`
+**Purpose:** Mark an email message as unread
+**Returns:** Updated message object
+**Security:** User's messages only
+
+#### `gmail.getProfile(userId: string)`
+**Purpose:** Get Gmail account profile information
+**Returns:** `{emailAddress, messagesTotal, threadsTotal}`
+**Security:** User's account only
+
+### Slack Operations (Phase 0.2)
+
+#### `slack.postMessage(userId: string, message: SlackMessage)`
+**Purpose:** Post a message to a Slack channel
+**Message:** `{channel, text, blocks?, thread_ts?, username?, icon_emoji?}`
+**Returns:** `{ts: timestamp, channel: channelId}` for message reference
+**Security:** User's connected workspace only
+
+#### `slack.updateMessage(userId: string, channel: string, ts: string, text: string, blocks?)`
+**Purpose:** Update an existing Slack message
+**Returns:** Success confirmation
+**Security:** User's messages only
+
+#### `slack.deleteMessage(userId: string, channel: string, ts: string)`
+**Purpose:** Delete a Slack message
+**Returns:** Success confirmation
+**Security:** User's messages only
+
+#### `slack.listChannels(userId: string, types?, limit?)`
+**Purpose:** List channels in the Slack workspace
+**Types:** `'public_channel,private_channel'` (default)
+**Returns:** Array of channel objects with names and IDs
+**Security:** User's workspace only
+
+#### `slack.getChannelInfo(userId: string, channel: string)`
+**Purpose:** Get detailed information about a specific Slack channel
+**Returns:** Channel object with metadata
+**Security:** User's workspace only
+
+#### `slack.sendDirectMessage(userId: string, slackUserId: string, text: string)`
+**Purpose:** Send a direct message (DM) to a Slack user
+**Returns:** `{ts, channel}` for message reference
+**Security:** User's workspace only
+
+#### `slack.listUsers(userId: string, limit?)`
+**Purpose:** List users in the Slack workspace
+**Returns:** Array of user objects with names, emails, profiles
+**Security:** User's workspace only
+
+#### `slack.getUserInfo(userId: string, slackUserId: string)`
+**Purpose:** Get detailed information about a specific Slack user
+**Returns:** User object with profile details
+**Security:** User's workspace only
+
+#### `slack.addReaction(userId: string, channel: string, timestamp: string, emoji: string)`
+**Purpose:** Add an emoji reaction to a Slack message
+**Emoji:** Name without colons (e.g., `"thumbsup"`, `"rocket"`)
+**Returns:** Success confirmation
+**Security:** User's workspace only
+
+#### `slack.getWorkspaceInfo(userId: string)`
+**Purpose:** Get information about the connected Slack workspace
+**Returns:** `{user_id, team_id, team, url}`
+**Security:** User's connected workspace only
+
 ---
 
 ## Security Model
@@ -378,13 +530,15 @@ console.log(`Token reduction: ${reduction.toFixed(1)}%`);
 - TypeScript SDK + Deno sandbox
 - Walled garden security model
 
-### Phase 0.2 (In Progress) 🚧
+### Phase 0.2 (Complete) ✅
 - ✅ MCP registry tables (`mcp_integrations`, `user_integrations`, `oauth_tokens`)
 - ✅ OAuth token encryption (pgcrypto)
 - ✅ RLS policies for multi-tenant security
-- ⏳ Admin UI for enable/disable
-- ⏳ Google Email + Calendar + Slack servers
-- ⏳ OAuth flow implementation
+- ✅ OAuth flow implementation (authorization + callback routes)
+- ✅ Google Calendar MCP operations (6 operations)
+- ✅ Gmail MCP operations (7 operations)
+- ✅ Slack MCP operations (10 operations)
+- ⏳ Admin UI for enable/disable (future)
 
 ### Phase 0.3 (Before Phase 1)
 - Marketplace expansion (HubSpot, Salesforce, Notion, etc.)
