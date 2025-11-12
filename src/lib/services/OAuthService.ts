@@ -8,6 +8,7 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { encrypt, decrypt } from '@/lib/utils/crypto';
 import type {
   OAuthProvider,
   OAuthCredentials,
@@ -251,31 +252,12 @@ export class OAuthService {
       ? new Date(Date.now() + credentials.expires_in * 1000).toISOString()
       : null;
 
-    // Encrypt tokens using database function
-    const { data: encryptedAccess, error: accessError } = await supabase.rpc(
-      'encrypt_oauth_token',
-      {
-        token: credentials.access_token,
-        encryption_key: encryptionKey,
-      }
-    );
-
-    if (accessError) {
-      throw new Error(`Failed to encrypt access token: ${accessError.message}`);
-    }
+    // Encrypt tokens using Node.js crypto
+    const encryptedAccess = encrypt(credentials.access_token, encryptionKey);
 
     let encryptedRefresh = null;
     if (credentials.refresh_token) {
-      const { data, error } = await supabase.rpc('encrypt_oauth_token', {
-        token: credentials.refresh_token,
-        encryption_key: encryptionKey,
-      });
-
-      if (error) {
-        throw new Error(`Failed to encrypt refresh token: ${error.message}`);
-      }
-
-      encryptedRefresh = data;
+      encryptedRefresh = encrypt(credentials.refresh_token, encryptionKey);
     }
 
     // Upsert token record
@@ -334,32 +316,13 @@ export class OAuthService {
       throw new Error('OAUTH_ENCRYPTION_KEY not configured');
     }
 
-    // Decrypt access token
-    const { data: accessToken, error: accessError } = await supabase.rpc(
-      'decrypt_oauth_token',
-      {
-        encrypted_token: token.access_token_encrypted,
-        encryption_key: encryptionKey,
-      }
-    );
-
-    if (accessError) {
-      throw new Error(`Failed to decrypt access token: ${accessError.message}`);
-    }
+    // Decrypt access token using Node.js crypto
+    const accessToken = decrypt(token.access_token_encrypted, encryptionKey);
 
     // Decrypt refresh token if present
     let refreshToken = null;
     if (token.refresh_token_encrypted) {
-      const { data, error } = await supabase.rpc('decrypt_oauth_token', {
-        encrypted_token: token.refresh_token_encrypted,
-        encryption_key: encryptionKey,
-      });
-
-      if (error) {
-        throw new Error(`Failed to decrypt refresh token: ${error.message}`);
-      }
-
-      refreshToken = data;
+      refreshToken = decrypt(token.refresh_token_encrypted, encryptionKey);
     }
 
     return {
