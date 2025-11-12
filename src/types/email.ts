@@ -87,7 +87,15 @@ export interface GenerateEmailResponse {
   success: boolean;
   email?: GeneratedEmail;
   error?: string;
-  errorCode?: 'INVALID_CUSTOMER' | 'API_ERROR' | 'RATE_LIMIT' | 'INVALID_TYPE';
+  errorCode?:
+    | 'INVALID_CUSTOMER'
+    | 'API_ERROR'
+    | 'RATE_LIMIT'
+    | 'INVALID_TYPE'
+    | 'MISSING_CUSTOMER_ID'
+    | 'MISSING_EMAIL_TYPE'
+    | 'UNAUTHORIZED'
+    | 'UNKNOWN_ERROR';
 }
 
 /**
