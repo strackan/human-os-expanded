@@ -1,15 +1,33 @@
 'use client'
 
 import { useAuth } from '@/components/auth/AuthProvider'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 export default function SettingsPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
-  
+  const searchParams = useSearchParams()
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+
   // Check if DEMO_MODE is enabled
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
+
+  // Handle success/error notifications from URL params
+  useEffect(() => {
+    const success = searchParams.get('success')
+    const error = searchParams.get('error')
+
+    if (success) {
+      setNotification({ type: 'success', message: success })
+      // Clear URL params after reading
+      router.replace('/settings')
+    } else if (error) {
+      setNotification({ type: 'error', message: error })
+      // Clear URL params after reading
+      router.replace('/settings')
+    }
+  }, [searchParams, router])
 
   useEffect(() => {
     // Skip auth check if in DEMO_MODE
@@ -30,6 +48,27 @@ export default function SettingsPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+
+          {notification && (
+            <div
+              className={`mt-4 p-4 rounded-md ${
+                notification.type === 'success'
+                  ? 'bg-green-50 border border-green-200 text-green-800'
+                  : 'bg-red-50 border border-red-200 text-red-800'
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <p className="text-sm">{notification.message}</p>
+                <button
+                  onClick={() => setNotification(null)}
+                  className="ml-4 text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
             🎮 Demo Mode Active - Showing sample data
           </div>
@@ -131,6 +170,26 @@ export default function SettingsPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-600 mt-2">Manage your account settings and preferences</p>
+
+        {notification && (
+          <div
+            className={`mt-4 p-4 rounded-md ${
+              notification.type === 'success'
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-red-50 border border-red-200 text-red-800'
+            }`}
+          >
+            <div className="flex justify-between items-start">
+              <p className="text-sm">{notification.message}</p>
+              <button
+                onClick={() => setNotification(null)}
+                className="ml-4 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white shadow rounded-lg">
