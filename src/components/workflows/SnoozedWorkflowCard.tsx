@@ -16,10 +16,11 @@
  */
 
 import React, { useState } from 'react';
-import { Bell, Eye, AlertCircle, TrendingUp } from 'lucide-react';
+import { Bell, Eye, AlertCircle, TrendingUp, XCircle, RefreshCw } from 'lucide-react';
 import { TriggerDisplay } from './triggers/TriggerDisplay';
 import { WakeTrigger } from '@/types/wake-triggers';
 import { formatDistanceToNow, parseISO } from 'date-fns';
+import type { ReviewStatus } from '@/types/review-triggers';
 
 // =====================================================
 // Types
@@ -284,6 +285,94 @@ export const SnoozedWorkflowsList: React.FC<SnoozedWorkflowsListProps> = ({
           onViewDetails={onViewDetails}
         />
       ))}
+    </div>
+  );
+};
+
+// =====================================================
+// Review Status Badge Components (for workflow cards)
+// =====================================================
+
+export interface ReviewStatusBadgeProps {
+  status: ReviewStatus;
+  iteration?: number;
+  className?: string;
+}
+
+/**
+ * Badge showing review/rejection status for workflow cards
+ */
+export const ReviewStatusBadge: React.FC<ReviewStatusBadgeProps> = ({
+  status,
+  iteration = 1,
+  className = '',
+}) => {
+  switch (status) {
+    case 'rejected':
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 border border-red-200 rounded ${className}`}>
+          <XCircle className="w-3 h-3" />
+          Rejected
+          {iteration > 1 && ` (Iter. ${iteration})`}
+        </span>
+      );
+    case 'pending':
+      if (iteration > 1) {
+        // Re-submitted for review
+        return (
+          <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-orange-100 text-orange-700 border border-orange-200 rounded ${className}`}>
+            <RefreshCw className="w-3 h-3" />
+            Re-Submitted (Iter. {iteration})
+          </span>
+        );
+      }
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 border border-blue-200 rounded ${className}`}>
+          <AlertCircle className="w-3 h-3" />
+          Pending Review
+        </span>
+      );
+    case 'approved':
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 border border-green-200 rounded ${className}`}>
+          Approved
+        </span>
+      );
+    case 'changes_requested':
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold bg-yellow-100 text-yellow-700 border border-yellow-200 rounded ${className}`}>
+          <AlertCircle className="w-3 h-3" />
+          Changes Requested
+        </span>
+      );
+    default:
+      return null;
+  }
+};
+
+/**
+ * Compact rejection indicator for workflow list views
+ */
+export interface RejectionIndicatorProps {
+  reviewerName?: string;
+  rejectedAt?: string;
+  className?: string;
+}
+
+export const RejectionIndicator: React.FC<RejectionIndicatorProps> = ({
+  reviewerName,
+  rejectedAt,
+  className = '',
+}) => {
+  const timeAgo = rejectedAt ? formatDistanceToNow(parseISO(rejectedAt), { addSuffix: true }) : 'recently';
+
+  return (
+    <div
+      className={`inline-flex items-center gap-1 text-xs text-red-700 ${className}`}
+      title={`Rejected by ${reviewerName || 'reviewer'} ${timeAgo}`}
+    >
+      <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+      <span className="font-medium">Rejected</span>
     </div>
   );
 };
