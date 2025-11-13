@@ -18,7 +18,6 @@ import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { getSnoozedWorkflows, wakeWorkflowNow } from '@/lib/api/workflow-triggers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import confetti from 'canvas-confetti';
 import { WorkflowExecution } from '@/types';
 
@@ -209,9 +208,9 @@ export default function SnoozeTestPage() {
                 Test trigger-based workflow snoozing with date and event conditions
               </p>
             </div>
-            <Badge variant="outline" className="text-lg px-4 py-2">
+            <span className="inline-flex items-center gap-2 text-lg px-4 py-2 rounded-full border-2 border-purple-300 bg-purple-50 text-purple-700 font-medium">
               🧪 Test Mode
-            </Badge>
+            </span>
           </div>
         </div>
 
