@@ -17,11 +17,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Calendar, AlertTriangle, TrendingUp, ShieldAlert, Target, Filter, ChevronDown } from 'lucide-react';
+import { Play, Calendar, AlertTriangle, TrendingUp, ShieldAlert, Target, Filter, ChevronDown, Clock } from 'lucide-react';
 import { AccountPlanBadge, AccountPlanIndicator } from './AccountPlanIndicator';
 import { AccountPlanType } from './AccountPlanSelector';
 import { PriorityScoreBreakdown } from './PriorityScoreBreakdown';
 import { API_ROUTES } from '@/lib/constants/api-routes';
+import { SnoozedWorkflowsList, type SnoozedWorkflow } from './SnoozedWorkflowCard';
+import { WorkflowActionService } from '@/lib/workflows/actions';
 
 // =====================================================
 // Types
@@ -75,10 +77,14 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
   onLaunchWorkflow,
   className = ''
 }) => {
+  const [activeTab, setActiveTab] = useState<'active' | 'snoozed'>('active');
   const [workflows, setWorkflows] = useState<WorkflowQueueItem[]>([]);
   const [filteredWorkflows, setFilteredWorkflows] = useState<WorkflowQueueItem[]>([]);
+  const [snoozedWorkflows, setSnoozedWorkflows] = useState<SnoozedWorkflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [snoozedLoading, setSnoozedLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [snoozedError, setSnoozedError] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     workflowType: 'all',
@@ -90,6 +96,13 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
   useEffect(() => {
     fetchWorkflowQueue();
   }, [csmId]);
+
+  // Fetch snoozed workflows when tab changes
+  useEffect(() => {
+    if (activeTab === 'snoozed') {
+      fetchSnoozedWorkflows();
+    }
+  }, [activeTab, csmId]);
 
   // Apply filters whenever workflows or filters change
   useEffect(() => {
@@ -123,6 +136,34 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
     }
   };
 
+  const fetchSnoozedWorkflows = async () => {
+    setSnoozedLoading(true);
+    setSnoozedError(null);
+
+    try {
+      // For now, use API route - Agent 2 should create this endpoint
+      const endpoint = csmId
+        ? `/api/workflows/snoozed?userId=${csmId}`
+        : '/api/workflows/snoozed';
+
+      const response = await fetch(endpoint);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch snoozed workflows (${response.status})`);
+      }
+
+      const data = await response.json();
+      setSnoozedWorkflows(data.workflows || []);
+      console.log('[WorkflowQueueDashboard] Loaded snoozed workflows:', data.workflows?.length || 0);
+    } catch (err) {
+      console.error('[WorkflowQueueDashboard] Error fetching snoozed workflows:', err);
+      setSnoozedError(err instanceof Error ? err.message : 'Failed to load snoozed workflows');
+    } finally {
+      setSnoozedLoading(false);
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...workflows];
 
@@ -142,6 +183,35 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
     }
 
     setFilteredWorkflows(filtered);
+  };
+
+  const handleWakeNow = async (workflowId: string) => {
+    try {
+      const service = new WorkflowActionService();
+      // Get user ID from context or use csmId
+      const userId = csmId || 'current-user'; // This should be from auth context
+      const result = await service.resumeWorkflow(workflowId, userId);
+
+      if (result.success) {
+        // Refresh both lists
+        fetchSnoozedWorkflows();
+        fetchWorkflowQueue();
+      } else {
+        throw new Error(result.error || 'Failed to wake workflow');
+      }
+    } catch (error) {
+      console.error('[WorkflowQueueDashboard] Error waking workflow:', error);
+      throw error;
+    }
+  };
+
+  const handleViewDetails = (workflowId: string) => {
+    // Navigate to workflow details or open modal
+    // This would typically use router or call onLaunchWorkflow
+    const workflow = snoozedWorkflows.find(w => w.id === workflowId);
+    if (workflow && onLaunchWorkflow) {
+      onLaunchWorkflow(workflowId, workflow.customerId);
+    }
   };
 
   const handleFilterChange = (key: keyof Filters, value: any) => {
@@ -217,30 +287,54 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className}`}>
-      {/* Header */}
+      {/* Header with Tabs */}
       <div className="p-6 border-b border-gray-200">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Workflow Queue</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {filteredWorkflows.length} workflow{filteredWorkflows.length !== 1 ? 's' : ''} prioritized by urgency and impact
-            </p>
+          <div className="flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Workflow Queue</h2>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-2 border-b border-gray-200">
+              <button
+                onClick={() => setActiveTab('active')}
+                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'active'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Active ({filteredWorkflows.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('snoozed')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                  activeTab === 'snoozed'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                Snoozed ({snoozedWorkflows.length})
+              </button>
+            </div>
           </div>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-              showFilters ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span className="text-sm font-medium">Filters</span>
-            <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
-          </button>
+          {activeTab === 'active' && (
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
+                showFilters ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-sm font-medium">Filters</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
 
-        {/* Filter Controls */}
-        {showFilters && (
+        {/* Filter Controls (only for active tab) */}
+        {activeTab === 'active' && showFilters && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
             {/* Workflow Type Filter */}
             <div>
@@ -292,9 +386,11 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
         )}
       </div>
 
-      {/* Workflow List */}
-      <div className="divide-y divide-gray-100">
-        {filteredWorkflows.length === 0 ? (
+      {/* Content Area */}
+      {activeTab === 'active' ? (
+        /* Active Workflows List */
+        <div className="divide-y divide-gray-100">
+          {filteredWorkflows.length === 0 ? (
           <div className="text-center py-12">
             <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500 text-sm">
@@ -368,8 +464,20 @@ export const WorkflowQueueDashboard: React.FC<WorkflowQueueDashboardProps> = ({
               </div>
             );
           })
-        )}
-      </div>
+          )}
+        </div>
+      ) : (
+        /* Snoozed Workflows List */
+        <div className="p-6">
+          <SnoozedWorkflowsList
+            workflows={snoozedWorkflows}
+            onWakeNow={handleWakeNow}
+            onViewDetails={handleViewDetails}
+            loading={snoozedLoading}
+            error={snoozedError || undefined}
+          />
+        </div>
+      )}
     </div>
   );
 };
