@@ -73,8 +73,8 @@ export default function Workflows() {
             </div>
           </Link>
           {/* Original Workflow */}
-          <Link 
-            href="/renewals-hq" 
+          <Link
+            href="/renewals-hq"
             className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
           >
             <div className="bg-gradient-to-r from-gray-700 to-gray-900 text-white py-3 px-4">
@@ -83,6 +83,20 @@ export default function Workflows() {
             <div className="p-4">
               <p className="text-sm text-gray-600">
                 The standard renewals workflow example.
+              </p>
+            </div>
+          </Link>
+          {/* Snooze Test Page - Phase 1.0 */}
+          <Link
+            href="/test-snooze"
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow border-2 border-purple-300"
+          >
+            <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4">
+              <h2 className="font-bold">🧪 Snooze Testing</h2>
+            </div>
+            <div className="p-4">
+              <p className="text-sm text-gray-600">
+                Test Phase 1.0 trigger-based workflow snoozing (date + event triggers).
               </p>
             </div>
           </Link>
