@@ -34,6 +34,11 @@ export const DB_TABLES = {
   // Data views
   CONTRACT_MATRIX: 'contract_matrix',
   CUSTOMER_PROPERTIES: 'customer_properties',
+
+  // Talent Orchestration tables (Release 1.5 & 1.6)
+  CANDIDATES: 'candidates',
+  TALENT_BENCH: 'talent_bench',
+  INTERVIEW_SESSIONS: 'interview_sessions',
 } as const;
 
 // =====================================================
@@ -187,6 +192,32 @@ export const DB_COLUMNS = {
   PRICE_GAP: 'price_gap',
   SIMILAR_CUSTOMER_RANGE: 'similar_customer_range',
   OPPORTUNITY_VALUE: 'opportunity_value',
+
+  // Talent Orchestration columns (Release 1.5 & 1.6)
+  LINKEDIN_URL: 'linkedin_url',
+  REFERRAL_SOURCE: 'referral_source',
+  INTERVIEW_TRANSCRIPT: 'interview_transcript',
+  ANALYSIS: 'analysis',
+  ARCHETYPE: 'archetype',
+  OVERALL_SCORE: 'overall_score',
+  DIMENSIONS: 'dimensions',
+  TIER: 'tier',
+  FLAGS: 'flags',
+  INTELLIGENCE_FILE: 'intelligence_file',
+  LAST_CHECK_IN: 'last_check_in',
+  CHECK_IN_COUNT: 'check_in_count',
+  SESSION_TYPE: 'session_type',
+  SESSION_DATE: 'session_date',
+  DURATION_MINUTES: 'duration_minutes',
+  QUESTIONS_ASKED: 'questions_asked',
+  KEY_INSIGHTS: 'key_insights',
+  SENTIMENT: 'sentiment',
+  UPDATES: 'updates',
+  CANDIDATE_ID: 'candidate_id',
+  ARCHETYPE_PRIMARY: 'archetype_primary',
+  ARCHETYPE_CONFIDENCE: 'archetype_confidence',
+  BEST_FIT_ROLES: 'best_fit_roles',
+  BENCHED_AT: 'benched_at',
 } as const;
 
 // =====================================================
