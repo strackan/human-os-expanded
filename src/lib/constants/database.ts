@@ -22,6 +22,8 @@ export const DB_TABLES = {
   WORKFLOW_STEP_EXECUTIONS: 'workflow_step_executions',
   WORKFLOW_TASKS: 'workflow_tasks',
   WORKFLOW_WAKE_TRIGGERS: 'workflow_wake_triggers',
+  WORKFLOW_SKIP_TRIGGERS: 'workflow_skip_triggers',
+  WORKFLOW_ESCALATE_TRIGGERS: 'workflow_escalate_triggers',
   WORKFLOW_ACTIONS: 'workflow_actions',
 
   // Alert and notification tables
@@ -39,6 +41,14 @@ export const DB_TABLES = {
   CANDIDATES: 'candidates',
   TALENT_BENCH: 'talent_bench',
   INTERVIEW_SESSIONS: 'interview_sessions',
+
+  // String-Tie tables (Release 1.4)
+  STRING_TIES: 'string_ties',
+  USER_SETTINGS: 'user_settings',
+
+  // Automation Rules tables (Release 1.4)
+  AUTOMATION_RULES: 'automation_rules',
+  AUTOMATION_RULE_EXECUTIONS: 'automation_rule_executions',
 } as const;
 
 // =====================================================
@@ -242,6 +252,8 @@ export type TableName = {
   readonly WORKFLOW_STEP_EXECUTIONS: 'workflow_step_executions';
   readonly WORKFLOW_TASKS: 'workflow_tasks';
   readonly WORKFLOW_WAKE_TRIGGERS: 'workflow_wake_triggers';
+  readonly WORKFLOW_SKIP_TRIGGERS: 'workflow_skip_triggers';
+  readonly WORKFLOW_ESCALATE_TRIGGERS: 'workflow_escalate_triggers';
   readonly WORKFLOW_ACTIONS: 'workflow_actions';
   readonly ALERTS: 'alerts';
   readonly IN_PRODUCT_NOTIFICATIONS: 'in_product_notifications';
