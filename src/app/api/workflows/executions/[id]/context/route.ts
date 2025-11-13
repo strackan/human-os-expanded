@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
@@ -20,18 +20,28 @@ export async function GET(
     const resolvedParams = await params;
     const executionId = resolvedParams.id;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
       );
     }
 
@@ -49,6 +59,7 @@ export async function GET(
         customer:customers (
           id,
           name,
+          company_id,
           industry,
           size,
           arr,
@@ -77,9 +88,17 @@ export async function GET(
 
     const customerId = execution.customer_id;
 
-    // Handle potential array from foreign key join
+    // Handle potential array from foreign key join and verify ownership
     const rawCustomer = execution.customer;
     const customerFromDb = rawCustomer ? (Array.isArray(rawCustomer) ? rawCustomer[0] : rawCustomer) : null;
+
+    // Verify customer belongs to user's company
+    if (customerFromDb && customerFromDb.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Workflow execution not found' },
+        { status: 404 }
+      );
+    }
 
     // For demo: If customer data is missing, use mock data
     const customerData = customerFromDb || {

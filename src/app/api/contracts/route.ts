@@ -1,53 +1,43 @@
-// src/app/api/contracts/route.ts
-import { createServerClient } from '@supabase/ssr'
+// src/app/api/contracts/route.ts - SECURED with multi-tenant isolation
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { createServiceRoleClient } from '@/lib/supabase-server'
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
+    // 1. Authenticate user
+    const supabase = createServiceRoleClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              )
-            } catch {
-              // Can be ignored for route handlers
-            }
-          },
-        },
-      }
-    )
-
-    // Check authentication
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-
-    if (userError || !user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get contracts with customer details
+    // 2. Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: 'No company associated with user' }, { status: 403 })
+    }
+
+    // 3. Get contracts for customers that belong to user's company
     const { data, error } = await supabase
       .from('contracts')
       .select(`
         *,
-        customers (
+        customers!inner (
           id,
           name,
           industry,
           health_score,
-          current_arr
+          current_arr,
+          company_id
         )
       `)
+      .eq('customers.company_id', profile.company_id)
       .order('end_date', { ascending: true })
 
     if (error) {
@@ -64,6 +54,7 @@ export async function GET() {
 }
 
 // Temporary shim: if anything issues POST, reuse GET so you don't get 405s
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function POST(_request: Request) {
   return GET();
 }

@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { WorkflowTaskService, CreateTaskParams } from '@/lib/services/WorkflowTaskService';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function POST(
   request: NextRequest,
@@ -19,18 +19,42 @@ export async function POST(
     const resolvedParams = await params;
     const executionId = resolvedParams.id;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify execution ownership via customer
+    const { data: execution } = await supabase
+      .from('workflow_executions')
+      .select('*, customer:customers!workflow_executions_customer_id_fkey(id, company_id)')
+      .eq('id', executionId)
+      .single();
+
+    if (!execution || execution.customer?.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Workflow execution not found' },
+        { status: 404 }
       );
     }
 
@@ -55,6 +79,20 @@ export async function POST(
       return NextResponse.json(
         { error: 'Missing required fields: customerId, assignedTo, taskType, action, description' },
         { status: 400 }
+      );
+    }
+
+    // Verify customer in request matches execution's customer and belongs to user's company
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id, company_id')
+      .eq('id', customerId)
+      .single();
+
+    if (!customer || customer.company_id !== profile.company_id || customerId !== execution.customer_id) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
       );
     }
 

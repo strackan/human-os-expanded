@@ -34,8 +34,8 @@ export async function PATCH(
       );
     }
 
-    // Mark as read
-    const notification = await NotificationService.markAsRead(notificationId, supabase);
+    // Mark as read (with user verification for security)
+    const notification = await NotificationService.markAsRead(notificationId, user.id, supabase);
 
     return NextResponse.json({
       notification,

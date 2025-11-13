@@ -193,8 +193,29 @@ export class NotificationService {
    */
   static async markAsRead(
     notificationId: string,
+    userId: string,
     supabase: SupabaseClient
   ): Promise<InProductNotification> {
+    // CRITICAL: First verify notification belongs to user
+    const { data: notification, error: fetchError } = await supabase
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
+      .select('id, user_id')
+      .eq(DB_COLUMNS.ID, notificationId)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch notification: ${fetchError.message}`);
+    }
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    if (notification.user_id !== userId) {
+      throw new Error('Unauthorized: Notification does not belong to user');
+    }
+
+    // Now safe to mark as read with double protection
     const { data, error } = await supabase
       .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .update({
@@ -202,6 +223,7 @@ export class NotificationService {
         [DB_COLUMNS.READ_AT]: new Date().toISOString()
       })
       .eq(DB_COLUMNS.ID, notificationId)
+      .eq(DB_COLUMNS.USER_ID, userId) // Double protection
       .select()
       .single();
 
@@ -241,12 +263,34 @@ export class NotificationService {
    */
   static async deleteNotification(
     notificationId: string,
+    userId: string,
     supabase: SupabaseClient
   ): Promise<void> {
+    // CRITICAL: First verify notification belongs to user
+    const { data: notification, error: fetchError } = await supabase
+      .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
+      .select('id, user_id')
+      .eq(DB_COLUMNS.ID, notificationId)
+      .single();
+
+    if (fetchError) {
+      throw new Error(`Failed to fetch notification: ${fetchError.message}`);
+    }
+
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+
+    if (notification.user_id !== userId) {
+      throw new Error('Unauthorized: Notification does not belong to user');
+    }
+
+    // Now safe to delete with double protection
     const { error } = await supabase
       .from(DB_TABLES.IN_PRODUCT_NOTIFICATIONS)
       .delete()
-      .eq(DB_COLUMNS.ID, notificationId);
+      .eq(DB_COLUMNS.ID, notificationId)
+      .eq(DB_COLUMNS.USER_ID, userId); // Double protection
 
     if (error) {
       throw new Error(`Failed to delete notification: ${error.message}`);

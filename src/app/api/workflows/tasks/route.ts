@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import { validateQueryParams, validateRequest, CreateWorkflowTaskSchema, z } from '@/lib/validation';
 
 // Query schema for GET endpoint
@@ -36,31 +36,37 @@ export async function GET(request: NextRequest) {
 
     const { status, customerId, workflowExecutionId, limit = 50 } = validation.data;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
+    // Authenticate user
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Get current user (skip auth check in demo mode)
-    let user = null;
-    if (!demoMode && !authBypassEnabled) {
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-
-      if (authError || !authUser) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        );
-      }
-      user = authUser;
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    // Build query
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Build query - join with customers to filter by company_id
     let query = supabase
       .from('workflow_tasks')
       .select(`
         *,
-        customer:customers(id, name),
+        customer:customers!workflow_tasks_customer_id_fkey(id, name, company_id),
         assigned_user:profiles!workflow_tasks_assigned_to_fkey(id, full_name, email),
         created_user:profiles!workflow_tasks_created_by_fkey(id, full_name, email),
         workflow_execution:workflow_executions!workflow_tasks_workflow_execution_id_fkey(id, status),
@@ -69,10 +75,8 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    // Only filter by assigned_to if we have a user (not in demo mode)
-    if (user) {
-      query = query.eq('assigned_to', user.id);
-    }
+    // Filter by assigned_to user
+    query = query.eq('assigned_to', user.id);
 
     // Apply filters
     if (status) {
@@ -99,8 +103,14 @@ export async function GET(request: NextRequest) {
       throw new Error(`Failed to fetch tasks: ${error.message}`);
     }
 
+    // Filter tasks to only those whose customer belongs to user's company
+    const filteredTasks = tasks.filter(task => {
+      const customer = Array.isArray(task.customer) ? task.customer[0] : task.customer;
+      return customer?.company_id === profile.company_id;
+    });
+
     // Calculate derived fields
-    const enrichedTasks = tasks.map(task => {
+    const enrichedTasks = filteredTasks.map(task => {
       let daysUntilDeadline = null;
       if (task.max_snooze_date) {
         const deadline = new Date(task.max_snooze_date);
@@ -167,21 +177,44 @@ export async function POST(request: NextRequest) {
       taskCategory = 'csm_manual',
       assignedTo,
       metadata = {},
-      dueDate,
     } = validation.data;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify customer ownership
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id, company_id')
+      .eq('id', customerId)
+      .single();
+
+    if (!customer || customer.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
       );
     }
 

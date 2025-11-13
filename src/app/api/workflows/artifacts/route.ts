@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 // =====================================================
 // POST - Create/Save Artifact
@@ -19,18 +19,28 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 
 export async function POST(request: NextRequest) {
   try {
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
       );
     }
 
@@ -52,6 +62,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required fields: taskId, artifactType, title, content' },
         { status: 400 }
+      );
+    }
+
+    // Verify task ownership via customer
+    const { data: task } = await supabase
+      .from('workflow_tasks')
+      .select('*, customer:customers!workflow_tasks_customer_id_fkey(id, company_id)')
+      .eq('id', taskId)
+      .single();
+
+    if (!task || task.customer?.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
       );
     }
 
@@ -127,18 +151,42 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify task ownership via customer
+    const { data: task } = await supabase
+      .from('workflow_tasks')
+      .select('*, customer:customers!workflow_tasks_customer_id_fkey(id, company_id)')
+      .eq('id', taskId)
+      .single();
+
+    if (!task || task.customer?.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Task not found' },
+        { status: 404 }
       );
     }
 

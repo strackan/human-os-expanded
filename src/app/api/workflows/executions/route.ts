@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { WorkflowExecutionService } from '@/lib/services/WorkflowExecutionService';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import { validateRequest, CreateWorkflowExecutionSchema, z } from '@/lib/validation';
 
 // Extended schema for this endpoint (includes additional fields)
@@ -38,26 +38,43 @@ export async function POST(request: NextRequest) {
       totalSteps
     } = validation.data;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
+    // Authenticate user
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    // Get current user (skip auth check in demo mode)
-    let userId: string;
-    if (demoMode || authBypassEnabled) {
-      // Use demo user ID in demo mode
-      userId = '00000000-0000-0000-0000-000000000000'; // Demo user placeholder
-    } else {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 401 }
-        );
-      }
-      userId = user.id;
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify customer ownership
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('id, company_id')
+      .eq('id', customerId)
+      .single();
+
+    if (!customer || customer.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
+      );
     }
 
     // Create workflow execution
@@ -66,7 +83,7 @@ export async function POST(request: NextRequest) {
       workflowName,
       workflowType,
       customerId,
-      userId: userId,
+      userId: user.id,
       totalSteps
     }, supabase);
 

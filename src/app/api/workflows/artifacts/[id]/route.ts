@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 // =====================================================
 // GET - Fetch Single Artifact
@@ -26,12 +26,8 @@ export async function GET(
     const resolvedParams = await params;
     const artifactId = resolvedParams.id;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -41,14 +37,34 @@ export async function GET(
       );
     }
 
-    // Get artifact
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Get artifact with task and customer relationship
     const { data: artifact, error: artifactError } = await supabase
       .from('workflow_task_artifacts')
-      .select('*')
+      .select(`
+        *,
+        task:workflow_tasks!workflow_task_artifacts_task_id_fkey(
+          id,
+          customer:customers!workflow_tasks_customer_id_fkey(id, company_id)
+        )
+      `)
       .eq('id', artifactId)
       .single();
 
-    if (artifactError || !artifact) {
+    if (artifactError || !artifact || artifact.task?.customer?.company_id !== profile.company_id) {
       return NextResponse.json(
         { error: 'Artifact not found' },
         { status: 404 }
@@ -99,18 +115,48 @@ export async function PATCH(
 
     const { title, content, metadata, isApproved } = body;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify artifact ownership via task->customer
+    const { data: existingArtifact } = await supabase
+      .from('workflow_task_artifacts')
+      .select(`
+        *,
+        task:workflow_tasks!workflow_task_artifacts_task_id_fkey(
+          id,
+          customer:customers!workflow_tasks_customer_id_fkey(id, company_id)
+        )
+      `)
+      .eq('id', artifactId)
+      .single();
+
+    if (!existingArtifact || existingArtifact.task?.customer?.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Artifact not found' },
+        { status: 404 }
       );
     }
 
@@ -193,18 +239,48 @@ export async function DELETE(
     const resolvedParams = await params;
     const artifactId = resolvedParams.id;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Get current user
+    // Authenticate user
+    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        { error: 'No company associated with user' },
+        { status: 403 }
+      );
+    }
+
+    // Verify artifact ownership before deletion
+    const { data: artifact } = await supabase
+      .from('workflow_task_artifacts')
+      .select(`
+        *,
+        task:workflow_tasks!workflow_task_artifacts_task_id_fkey(
+          id,
+          customer:customers!workflow_tasks_customer_id_fkey(id, company_id)
+        )
+      `)
+      .eq('id', artifactId)
+      .single();
+
+    if (!artifact || artifact.task?.customer?.company_id !== profile.company_id) {
+      return NextResponse.json(
+        { error: 'Artifact not found' },
+        { status: 404 }
       );
     }
 
