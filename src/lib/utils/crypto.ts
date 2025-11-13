@@ -27,6 +27,13 @@ function deriveKey(password: string, salt: Buffer): Buffer {
  * @returns Base64-encoded encrypted data (salt:iv:tag:ciphertext)
  */
 export function encrypt(text: string, password: string): string {
+  if (!text) {
+    throw new Error('Cannot encrypt: text is undefined or empty');
+  }
+  if (!password) {
+    throw new Error('Cannot encrypt: password is undefined or empty');
+  }
+
   // Generate random salt and IV
   const salt = crypto.randomBytes(SALT_LENGTH);
   const iv = crypto.randomBytes(IV_LENGTH);
