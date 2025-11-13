@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { User, Mail, Edit2, UserX, RefreshCw, Check, X, Building, Briefcase, Code, Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import { User, Mail, Edit2, UserX, RefreshCw, Check, Building, Briefcase, Code, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 export interface Contact {
@@ -25,7 +25,6 @@ export interface ContactStrategyProps {
   onContactReplace?: (contactId: string, newContact: Contact) => void;
   onAcceptStrategy?: () => void;
   onNewStrategy?: () => void;
-  onReachOut?: (contactId: string) => void;
   showActions?: boolean;
   isLoading?: boolean;
 }
@@ -39,7 +38,6 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
   onContactReplace,
   onAcceptStrategy,
   onNewStrategy,
-  onReachOut,
   showActions = true,
   isLoading = false
 }) => {
@@ -388,12 +386,6 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
               >
                 <RefreshCw size={16} />
                 Generate New Strategy
-              </button>
-
-              <button
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
-                Skip for Now
               </button>
             </div>
           </>
