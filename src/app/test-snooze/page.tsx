@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Phase 1.0 Snooze Testing Page
+ * Phase 1.0 Snooze Testing Page - Simplified
  *
  * Standalone test environment for trigger-based workflow snoozing.
  * Tests: date triggers, event triggers, snooze modal, snoozed workflow display
@@ -16,8 +16,7 @@ import { registerWorkflowConfig } from '@/config/workflows/index';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { getSnoozedWorkflows, wakeWorkflowNow } from '@/lib/api/workflow-triggers';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Button from '@/components/ui/Button';
 import confetti from 'canvas-confetti';
 import { WorkflowExecution } from '@/types';
 import { SnoozedWorkflow } from '@/components/workflows/SnoozedWorkflowCard';
@@ -91,8 +90,6 @@ export default function SnoozeTestPage() {
     setTestScenario(scenario);
 
     try {
-      console.log(`[SnoozeTest] Launching test workflow for scenario: ${scenario}`);
-
       const workflowId = 'obsidian-black-renewal';
       const customerId = '550e8400-e29b-41d4-a716-446655440001';
 
@@ -135,8 +132,6 @@ export default function SnoozeTestPage() {
         throw new Error(result.error || 'Failed to create workflow execution');
       }
 
-      console.log('[SnoozeTest] Workflow execution created:', result.executionId);
-
       setExecutionId(result.executionId);
       setActiveWorkflow({
         workflowId,
@@ -157,8 +152,6 @@ export default function SnoozeTestPage() {
     setTaskModeOpen(false);
     setActiveWorkflow(null);
     setExecutionId(null);
-
-    // Refresh snoozed workflows list
     fetchSnoozedWorkflows();
   };
 
@@ -183,11 +176,9 @@ export default function SnoozeTestPage() {
   };
 
   const handleViewDetails = async (workflowId: string) => {
-    // Find the workflow in snoozed list
     const workflow = snoozedWorkflows.find(w => w.id === workflowId);
     if (!workflow) return;
 
-    // Reopen in task mode
     setExecutionId(workflowId);
     setActiveWorkflow({
       workflowId: workflow.workflow_id || 'obsidian-black-renewal',
@@ -201,17 +192,13 @@ export default function SnoozeTestPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>Please sign in to test snooze functionality</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild className="w-full">
-              <a href="/signin">Sign In</a>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md">
+          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <p className="text-gray-600 mb-6">Please sign in to test snooze functionality</p>
+          <Button className="w-full">
+            <a href="/signin" className="block w-full">Sign In</a>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -264,24 +251,15 @@ export default function SnoozeTestPage() {
         <div className="space-y-6">
           {/* Launch Tab */}
           {activeTab === 'launch' && (
-            <>
-            <Card>
-              <CardHeader>
-                <CardTitle>Test Scenarios</CardTitle>
-                <CardDescription>
-                  Launch workflows to test different snooze scenarios
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Date-Only Snooze */}
-                <Card className="border-2 hover:border-blue-500 transition-colors">
-                  <CardHeader>
-                    <CardTitle className="text-lg">📅 Date-Only Snooze</CardTitle>
-                    <CardDescription>
-                      Test basic date-based snoozing (existing functionality)
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+            <div className="space-y-6">
+              {/* Test Scenarios */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-bold mb-4">Test Scenarios</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Date-Only */}
+                  <div className="border-2 border-blue-500 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h3 className="text-lg font-bold mb-2">📅 Date-Only Snooze</h3>
+                    <p className="text-sm text-gray-600 mb-4">Test basic date-based snoozing (existing functionality)</p>
                     <Button
                       onClick={() => handleLaunchTestWorkflow('Date-Only')}
                       disabled={loading}
@@ -289,159 +267,60 @@ export default function SnoozeTestPage() {
                     >
                       Launch Test Workflow
                     </Button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      • Snooze until specific date<br/>
-                      • Simple mode in snooze modal
-                    </p>
-                  </CardContent>
-                </Card>
+                  </div>
 
-                {/* Date + Event Trigger */}
-                <Card className="border-2 hover:border-purple-500 transition-colors">
-                  <CardHeader>
-                    <CardTitle className="text-lg">⚡ Date + Event Triggers</CardTitle>
-                    <CardDescription>
-                      Test smart snoozing with multiple triggers (NEW)
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
+                  {/* Smart Snooze */}
+                  <div className="border-2 border-purple-500 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h3 className="text-lg font-bold mb-2">⚡ Date + Event Triggers</h3>
+                    <p className="text-sm text-gray-600 mb-4">Test smart snoozing with multiple triggers (NEW)</p>
                     <Button
                       onClick={() => handleLaunchTestWorkflow('Smart Snooze')}
                       disabled={loading}
-                      variant="default"
-                      className="w-full bg-purple-600 hover:bg-purple-700"
-                    >
-                      Launch Test Workflow
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      • Date OR event triggers<br/>
-                      • Wake on customer login<br/>
-                      • Wake on usage threshold
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Load Testing */}
-                <Card className="border-2 hover:border-green-500 transition-colors">
-                  <CardHeader>
-                    <CardTitle className="text-lg">🚀 Batch Processing</CardTitle>
-                    <CardDescription>
-                      Test multiple workflows for load testing
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={() => {
-                        // Launch 5 workflows quickly
-                        for (let i = 0; i < 5; i++) {
-                          setTimeout(() => {
-                            handleLaunchTestWorkflow(`Batch Test ${i + 1}`);
-                          }, i * 1000);
-                        }
-                      }}
-                      disabled={loading}
-                      variant="outline"
-                      className="w-full"
-                    >
-                      Launch 5 Test Workflows
-                    </Button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      • Tests batch evaluation<br/>
-                      • Performance with multiple workflows
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Edge Cases */}
-                <Card className="border-2 hover:border-orange-500 transition-colors">
-                  <CardHeader>
-                    <CardTitle className="text-lg">🔧 Edge Cases</CardTitle>
-                    <CardDescription>
-                      Test error handling and edge scenarios
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={() => handleLaunchTestWorkflow('Edge Case')}
-                      disabled={loading}
-                      variant="outline"
+                      variant="primary"
                       className="w-full"
                     >
                       Launch Test Workflow
                     </Button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      • Invalid triggers<br/>
-                      • Past dates<br/>
-                      • Conflicting conditions
-                    </p>
-                  </CardContent>
-                </Card>
-              </CardContent>
-            </Card>
+                  </div>
+                </div>
+              </div>
 
-            {/* Testing Instructions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Testing Instructions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-2">1. Launch a Test Workflow</h3>
-                  <p className="text-sm text-gray-600">
-                    Click any scenario above to launch the Obsidian Black renewal workflow
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">2. Click Snooze Button</h3>
-                  <p className="text-sm text-gray-600">
-                    In the workflow, find the "Review Later" or snooze button to test the enhanced snooze modal
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">3. Configure Triggers</h3>
-                  <p className="text-sm text-gray-600">
-                    Test both "Simple" (date-only) and "Smart" (date + event) modes
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">4. View Snoozed Workflows</h3>
-                  <p className="text-sm text-gray-600">
-                    Switch to "Snoozed Workflows" tab to see your snoozed workflows with trigger status
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2">5. Test Wake Now</h3>
-                  <p className="text-sm text-gray-600">
-                    Use "Wake Now" button to manually wake a snoozed workflow (CSM override)
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            </>
+              {/* Instructions */}
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <h2 className="text-2xl font-bold mb-4">Testing Instructions</h2>
+                <ol className="space-y-3 text-gray-700">
+                  <li className="flex gap-3">
+                    <span className="font-bold text-blue-600">1.</span>
+                    <span>Launch a test workflow using the buttons above</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold text-blue-600">2.</span>
+                    <span>Click the snooze button in the workflow</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold text-blue-600">3.</span>
+                    <span>Configure date and/or event triggers</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="font-bold text-blue-600">4.</span>
+                    <span>Switch to "Snoozed Workflows" tab to see results</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
           )}
 
           {/* Snoozed Workflows Tab */}
           {activeTab === 'snoozed' && (
-            <>
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Snoozed Workflows</CardTitle>
-                    <CardDescription>
-                      Workflows waiting for triggers to fire
-                    </CardDescription>
-                  </div>
-                  <Button
-                    onClick={fetchSnoozedWorkflows}
-                    variant="outline"
-                    size="sm"
-                  >
+            <div className="space-y-6">
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-bold">Snoozed Workflows</h2>
+                  <Button onClick={fetchSnoozedWorkflows} size="sm">
                     🔄 Refresh
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
+
                 {snoozedWorkflows.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <p className="text-lg mb-2">No snoozed workflows</p>
@@ -454,30 +333,8 @@ export default function SnoozeTestPage() {
                     onViewDetails={handleViewDetails}
                   />
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Trigger Evaluation Info */}
-            <Card className="border-blue-200 bg-blue-50">
-              <CardHeader>
-                <CardTitle className="text-blue-900">ℹ️ Trigger Evaluation</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-blue-800 space-y-2">
-                <p>
-                  <strong>Daily Evaluation:</strong> Triggers are evaluated once per day by the cron job
-                </p>
-                <p>
-                  <strong>Date Triggers:</strong> Check if current date/time has passed the trigger date
-                </p>
-                <p>
-                  <strong>Event Triggers:</strong> Check system events (customer login, usage thresholds, etc.)
-                </p>
-                <p>
-                  <strong>Auto-refresh:</strong> This page refreshes snoozed workflows every 30 seconds
-                </p>
-              </CardContent>
-            </Card>
-            </>
+              </div>
+            </div>
           )}
         </div>
       </div>

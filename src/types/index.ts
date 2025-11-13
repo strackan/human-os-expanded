@@ -33,4 +33,5 @@ export interface ChatMessage {
 export * from './mcp';
 export * from './customer';
 export * from './email';
-export * from './wake-triggers'; 
+export * from './wake-triggers';
+export * from './talent'; 

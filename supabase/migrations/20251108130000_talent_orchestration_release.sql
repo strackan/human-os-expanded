@@ -2,6 +2,138 @@
 -- Strategic dogfooding initiative for hiring + workflow validation
 -- Timeline: Q1 2026 (Jan 6 - Feb 28, 2026)
 
+-- ============================================================================
+-- DATABASE TABLES FOR TALENT ORCHESTRATION
+-- ============================================================================
+
+-- Candidates Table
+CREATE TABLE IF NOT EXISTS candidates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Basic Info
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  linkedin_url TEXT,
+  referral_source TEXT,
+
+  -- Interview Data
+  interview_transcript JSONB, -- [{role, content, timestamp}]
+  analysis JSONB, -- AI scores and insights
+
+  -- Classification
+  archetype TEXT, -- 6 types: Technical Builder, GTM Operator, Creative Strategist, Execution Machine, Generalist Orchestrator, Domain Expert
+  overall_score INTEGER CHECK (overall_score >= 0 AND overall_score <= 100), -- 0-100 weighted composite
+  dimensions JSONB, -- 11-dimension scores: IQ, personality, motivation, work_history, passions, culture_fit, technical, gtm, eq, empathy, self_awareness
+
+  -- Routing
+  tier TEXT CHECK (tier IN ('top_1', 'benched', 'passed', NULL)), -- top_1: top 1%, benched: talent pool, passed: polite rejection
+  flags JSONB, -- {red_flags: [], green_flags: []}
+
+  -- Status
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'interviewed', 'contacted', 'hired', 'passed')),
+
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Ensure unique email per user
+  UNIQUE(user_id, email)
+);
+
+-- Talent Bench Table (curated talent pool)
+CREATE TABLE IF NOT EXISTS talent_bench (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  archetype_primary TEXT NOT NULL,
+  archetype_confidence TEXT DEFAULT 'medium' CHECK (archetype_confidence IN ('high', 'medium', 'low')),
+  best_fit_roles TEXT[] DEFAULT '{}',
+  benched_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Ensure candidate is only on bench once
+  UNIQUE(candidate_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_candidates_user_id ON candidates(user_id);
+CREATE INDEX IF NOT EXISTS idx_candidates_email ON candidates(user_id, email);
+CREATE INDEX IF NOT EXISTS idx_candidates_tier ON candidates(tier);
+CREATE INDEX IF NOT EXISTS idx_candidates_archetype ON candidates(archetype);
+CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status);
+CREATE INDEX IF NOT EXISTS idx_talent_bench_candidate ON talent_bench(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_talent_bench_archetype ON talent_bench(archetype_primary);
+
+-- RLS Policies for candidates
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see own candidates"
+  ON candidates FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Admins see all candidates"
+  ON candidates FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users create own candidates"
+  ON candidates FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users update own candidates"
+  ON candidates FOR UPDATE
+  USING (user_id = auth.uid());
+
+-- RLS Policies for talent_bench
+ALTER TABLE talent_bench ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see bench for their candidates"
+  ON talent_bench FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = talent_bench.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins see all bench"
+  ON talent_bench FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users manage bench for their candidates"
+  ON talent_bench FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = talent_bench.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+-- Triggers for updated_at
+CREATE TRIGGER candidates_updated_at
+  BEFORE UPDATE ON candidates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for documentation
+COMMENT ON TABLE candidates IS 'Candidates from talent orchestration interviews. Each candidate gets 11-dimension assessment, archetype classification, and automated routing.';
+COMMENT ON TABLE talent_bench IS 'Curated talent pool of high-potential candidates. Top 10% who are benched for future opportunities.';
+
+-- ============================================================================
+-- RELEASE DATA
+-- ============================================================================
+
 -- Insert Release 1.5
 INSERT INTO releases (
   version,
