@@ -5,22 +5,26 @@
 
 ---
 
-## 📋 Planned Releases
+## 🚀 Current Release
 
 ### 0.2 - MCP Registry & Integrations
 
-**Status:** Planning
+**Status:** In progress
 **Timeline:** Timeline TBD
 
 Google Calendar, Slack, Gmail integrations via MCP marketplace
 
-**Features:** 3 | **Total Effort:** 22h
+**Features:** 5 | **Total Effort:** 44h
 
+- [x] **AI-Powered Email Orchestration** (20h) - Complete
 - [ ] **Google Calendar Integration** (8h) - Planned
 - [ ] **Slack Integration** (8h) - Planned
 - [ ] **Google Email (Gmail) Integration** (6h) - Planned
+- [ ] **GitHub Projects Evaluation** (2h) - Planned
 
 ---
+
+## 📋 Planned Releases
 
 ### 1.0 - Workflow Snoozing
 

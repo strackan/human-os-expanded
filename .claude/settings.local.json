@@ -40,7 +40,14 @@
       "Bash(gh issue create:*)",
       "Bash(gh repo view:*)",
       "Bash(npm run roadmap:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh issue comment:*)",
+      "Bash(vercel env add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(vercel:*)",
+      "Bash(printf:*)"
     ],
     "deny": [],
     "ask": []

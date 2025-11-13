@@ -29,7 +29,7 @@ export async function GET(
 
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
       return NextResponse.redirect(
-        `${baseUrl}/settings/integrations?error=${encodeURIComponent(errorDescription)}`
+        `${baseUrl}/settings?error=${encodeURIComponent(errorDescription)}`
       );
     }
 
@@ -108,7 +108,7 @@ export async function GET(
 
     // Redirect to success page
     return NextResponse.redirect(
-      `${baseUrl}/settings/integrations?success=${encodeURIComponent(integration.name + ' connected successfully')}`
+      `${baseUrl}/settings?success=${encodeURIComponent(integration.name + ' connected successfully')}`
     );
   } catch (error) {
     console.error('[OAuth Callback] Error:', error);
@@ -118,7 +118,7 @@ export async function GET(
     // Redirect to error page
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     return NextResponse.redirect(
-      `${baseUrl}/settings/integrations?error=${encodeURIComponent('Failed to connect: ' + message)}`
+      `${baseUrl}/settings?error=${encodeURIComponent('Failed to connect: ' + message)}`
     );
   }
 }
