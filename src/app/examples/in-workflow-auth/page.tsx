@@ -15,6 +15,14 @@ export default function InWorkflowAuthDemo() {
   const [scenario, setScenario] = useState<'modal' | 'sidebar' | 'step' | 'simple'>('simple');
   const [showAuth, setShowAuth] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [forceShowAuth, setForceShowAuth] = useState(false); // Demo mode: force show auth
+
+  const handleSignOut = async () => {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   if (isLoading) {
     return (
@@ -28,24 +36,42 @@ export default function InWorkflowAuthDemo() {
   }
 
   // Simple scenario
-  if (scenario === 'simple' && !isAuthenticated) {
+  if (scenario === 'simple' && (!isAuthenticated || forceShowAuth)) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4">
         <div className="max-w-md mx-auto">
+          {forceShowAuth && isAuthenticated && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Demo Mode:</strong> You're actually already signed in as <strong>{user?.email}</strong>,
+                but showing the auth form for demo purposes.
+              </p>
+            </div>
+          )}
+
           <InWorkflowAuth
             title="Welcome to Renubu"
             description="Sign in to access workflow demos and examples"
             onAuthSuccess={(user) => {
               console.log('✅ User authenticated:', user.email);
+              setForceShowAuth(false); // Exit demo mode after auth
             }}
           />
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <button
               onClick={() => setScenario('modal')}
-              className="text-sm text-indigo-600 hover:text-indigo-500"
+              className="block w-full text-sm text-indigo-600 hover:text-indigo-500"
             >
               Try other scenarios →
             </button>
+            {isAuthenticated && !forceShowAuth && (
+              <button
+                onClick={() => setForceShowAuth(false)}
+                className="block w-full text-sm text-gray-600 hover:text-gray-700"
+              >
+                Exit demo mode
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -366,18 +392,30 @@ export default function InWorkflowAuthDemo() {
             </div>
           </div>
 
-          <div className="border-t pt-6">
-            <button
-              onClick={async () => {
-                const { createClient } = await import('@/lib/supabase/client');
-                const supabase = createClient();
-                await supabase.auth.signOut();
-                window.location.reload();
-              }}
-              className="text-sm text-red-600 hover:text-red-500"
-            >
-              Sign Out
-            </button>
+          <div className="border-t pt-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Demo Controls:</h3>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setForceShowAuth(true);
+                    setScenario('simple');
+                  }}
+                  className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 text-sm"
+                >
+                  Show Auth Form (Demo Mode)
+                </button>
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 text-sm"
+                >
+                  Sign Out
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Use "Show Auth Form" to test the authentication UI while logged in
+              </p>
+            </div>
           </div>
         </div>
       </div>
