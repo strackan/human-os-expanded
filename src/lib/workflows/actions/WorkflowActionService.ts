@@ -16,6 +16,7 @@ import {
   WorkflowActionType as ActionTypeEnum,
   type WorkflowStatus
 } from '@/lib/constants/status-enums';
+import type { WakeTrigger } from '@/types/wake-triggers';
 
 // Re-export WorkflowStatus type from enums
 export { type WorkflowStatus } from '@/lib/constants/status-enums';
@@ -119,6 +120,94 @@ export class WorkflowActionService extends SchemaAwareService {
       return { success: true, actionId: action.id };
     } catch (error: any) {
       console.error('[WorkflowActionService] Snooze error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Snooze a workflow with wake triggers
+   * Enhanced version that supports event-based wake conditions
+   */
+  async snoozeWorkflowWithTriggers(
+    executionId: string,
+    userId: string,
+    triggers: WakeTrigger[]
+  ): Promise<{ success: boolean; actionId?: string; error?: string }> {
+    try {
+      if (!triggers || triggers.length === 0) {
+        throw new Error('At least one trigger is required');
+      }
+
+      // Find the date trigger to set snooze_until
+      const dateTrigger = triggers.find(t => t.type === 'date');
+      if (!dateTrigger) {
+        throw new Error('At least one date trigger is required');
+      }
+
+      const snoozeUntil = new Date((dateTrigger.config as any).date);
+
+      // Update workflow_executions with triggers
+      const { error: updateError } = await this.client
+        .from('workflow_executions')
+        .update({
+          status: WorkflowExecutionStatus.SNOOZED,
+          snooze_until: snoozeUntil.toISOString(),
+          snoozed_at: new Date().toISOString(),
+          wake_triggers: triggers,
+          last_evaluated_at: null,
+          trigger_fired_at: null,
+          fired_trigger_type: null,
+          updated_at: new Date().toISOString(),
+          last_activity_at: new Date().toISOString(),
+        })
+        .eq('id', executionId);
+
+      if (updateError) throw updateError;
+
+      // Create wake_triggers records for tracking
+      const triggerRecords = triggers.map(trigger => ({
+        workflow_execution_id: executionId,
+        trigger_type: trigger.type,
+        trigger_config: trigger.config,
+        is_fired: false,
+        evaluated_at: null,
+        evaluation_count: 0,
+        fired_at: null,
+        error_message: null,
+      }));
+
+      const { error: triggerInsertError } = await this.client
+        .from('workflow_wake_triggers')
+        .insert(triggerRecords);
+
+      if (triggerInsertError) {
+        console.error('[WorkflowActionService] Failed to create trigger records:', triggerInsertError);
+        // Don't fail the snooze if trigger records fail - they're for tracking only
+      }
+
+      // Record action
+      const { data: action, error: actionError } = await this.client
+        .from('workflow_actions')
+        .insert({
+          execution_id: executionId,
+          performed_by: userId,
+          action_type: ActionTypeEnum.SNOOZE,
+          new_status: WorkflowExecutionStatus.SNOOZED,
+          action_data: {
+            until: snoozeUntil.toISOString(),
+            triggers: triggers,
+            triggerCount: triggers.length,
+          },
+          notes: `Snoozed with ${triggers.length} trigger(s)`,
+        })
+        .select('id')
+        .single();
+
+      if (actionError) throw actionError;
+
+      return { success: true, actionId: action.id };
+    } catch (error: any) {
+      console.error('[WorkflowActionService] Snooze with triggers error:', error);
       return { success: false, error: error.message };
     }
   }

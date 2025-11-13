@@ -32,4 +32,5 @@ export interface ChatMessage {
 // Re-export MCP types
 export * from './mcp';
 export * from './customer';
-export * from './email'; 
+export * from './email';
+export * from './wake-triggers'; 
