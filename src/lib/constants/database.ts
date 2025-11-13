@@ -21,6 +21,8 @@ export const DB_TABLES = {
   WORKFLOW_EXECUTIONS: 'workflow_executions',
   WORKFLOW_STEP_EXECUTIONS: 'workflow_step_executions',
   WORKFLOW_TASKS: 'workflow_tasks',
+  WORKFLOW_WAKE_TRIGGERS: 'workflow_wake_triggers',
+  WORKFLOW_ACTIONS: 'workflow_actions',
 
   // Alert and notification tables
   ALERTS: 'alerts',
@@ -102,6 +104,10 @@ export const DB_COLUMNS = {
   COMPLETED_STEPS_COUNT: 'completed_steps_count',
   SKIPPED_STEPS_COUNT: 'skipped_steps_count',
   COMPLETION_PERCENTAGE: 'completion_percentage',
+  WAKE_TRIGGERS: 'wake_triggers',
+  LAST_EVALUATED_AT: 'last_evaluated_at',
+  TRIGGER_FIRED_AT: 'trigger_fired_at',
+  FIRED_TRIGGER_TYPE: 'fired_trigger_type',
 
   // Step execution columns
   STEP_INDEX: 'step_index',
@@ -204,6 +210,8 @@ export type TableName = {
   readonly WORKFLOW_EXECUTIONS: 'workflow_executions';
   readonly WORKFLOW_STEP_EXECUTIONS: 'workflow_step_executions';
   readonly WORKFLOW_TASKS: 'workflow_tasks';
+  readonly WORKFLOW_WAKE_TRIGGERS: 'workflow_wake_triggers';
+  readonly WORKFLOW_ACTIONS: 'workflow_actions';
   readonly ALERTS: 'alerts';
   readonly IN_PRODUCT_NOTIFICATIONS: 'in_product_notifications';
   readonly TASK_TYPE_CONFIG: 'task_type_config';
