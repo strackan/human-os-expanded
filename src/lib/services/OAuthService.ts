@@ -162,8 +162,6 @@ export class OAuthService {
 
     const data = await response.json();
 
-    console.log('[OAuth] Token exchange response:', JSON.stringify(data, null, 2));
-
     if (!data.access_token) {
       throw new Error(`No access_token in response: ${JSON.stringify(data)}`);
     }
