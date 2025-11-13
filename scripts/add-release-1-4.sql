@@ -1,5 +1,5 @@
 -- ============================================================================
--- Add Release 1.4: Flow Mode Extended Functionality
+-- Add Release 1.4: Event-Driven Automation & String-Tie
 -- ============================================================================
 
 BEGIN;
@@ -26,18 +26,18 @@ BEGIN
     description
   ) VALUES (
     '1.4',
-    'Flow Mode Extended Functionality',
+    'Event-Driven Automation & String-Tie',
     v_planning_status_id,
     14, -- Phase number
     '2026-02-02',
-    '2026-02-27',
-    'Complete the flow control vision: event-based triggers, complex logic (AND/OR), trigger editing, and real-time evaluation for all three methods (Snooze, Skip, Escalate). Transforms flow control from basic automation to intelligent orchestration.'
+    '2026-03-20',
+    'Proactive automation: Event-Driven Workflow Launcher automatically creates workflows when external events occur, String-Tie provides voice-first lightweight reminders, and Review Rejection completes the review workflow cycle. Transforms platform from user-driven to system-assisted.'
   )
   RETURNING id INTO v_release_id;
 
   RAISE NOTICE 'Created release 1.4 with ID: %', v_release_id;
 
-  -- Feature 1: Event-Based Triggers (Cross-Method)
+  -- Feature 1: Event-Driven Workflow Launcher
   INSERT INTO features (
     release_id,
     slug,
@@ -49,18 +49,18 @@ BEGIN
     business_case
   ) VALUES (
     v_release_id,
-    'event-based-triggers-cross-method',
-    'Event-Based Triggers (Cross-Method)',
+    'event-driven-workflow-launcher',
+    'Event-Driven Workflow Launcher',
     v_planned_status_id,
     (SELECT id FROM feature_categories WHERE slug = 'flow-control' LIMIT 1),
     1,
-    32,
-    'Enable Snooze, Skip, and Escalate to wake/trigger based on real-world events: Gmail emails, Slack messages, Calendar events, CRM changes. Moves beyond date-only triggers to event-driven orchestration. Includes webhook receivers, event matching logic, and UI components.'
+    50,
+    'Automatically launch workflows when external events occur. Pattern: "When [person/company] does [event] → Launch [workflow]". Supports 6 event sources: SQL queries, Slack (MCP), Gmail, Calendar, CRM, Email. Simple 2-condition AND/OR logic. Cron and webhook-based evaluation. Audit trail for all triggered workflows. Dashboard at /automation-rules with visual rule builder.'
   );
 
-  RAISE NOTICE 'Created feature: Event-Based Triggers';
+  RAISE NOTICE 'Created feature: Event-Driven Workflow Launcher';
 
-  -- Feature 2: Complex Trigger Logic (AND/OR Operators)
+  -- Feature 2: String-Tie Standalone Reminder System
   INSERT INTO features (
     release_id,
     slug,
@@ -72,18 +72,18 @@ BEGIN
     business_case
   ) VALUES (
     v_release_id,
-    'complex-trigger-logic-and-or',
-    'Complex Trigger Logic (AND/OR Operators)',
+    'string-tie-standalone',
+    'String-Tie Standalone Reminder System',
     v_planned_status_id,
     (SELECT id FROM feature_categories WHERE slug = 'flow-control' LIMIT 1),
     2,
-    24,
-    'Support sophisticated multi-condition flows with AND/OR logic trees. Examples: "Snooze until Monday AND customer responds" or "Escalate if no response within 48h OR health score drops". Includes visual logic builder UI and tree evaluation engine.'
+    50,
+    'Voice-first lightweight reminder system completely separate from workflows. "Tie a string around your finger" for quick personal reminders. Voice dictation using Web Speech API, LLM parses natural language (no follow-up questions). Magic snippet "TIE_A_STRING" works globally in any chat. Dashboard at /string-ties. Notifications via in-app, email, push, Slack.'
   );
 
-  RAISE NOTICE 'Created feature: Complex Trigger Logic';
+  RAISE NOTICE 'Created feature: String-Tie Standalone';
 
-  -- Feature 3: Real-Time Trigger Evaluation
+  -- Feature 3: Review Rejection Enhancement
   INSERT INTO features (
     release_id,
     slug,
@@ -95,42 +95,20 @@ BEGIN
     business_case
   ) VALUES (
     v_release_id,
-    'real-time-trigger-evaluation',
-    'Real-Time Trigger Evaluation',
+    'review-rejection-enhancement',
+    'Review Rejection Enhancement',
     v_planned_status_id,
     (SELECT id FROM feature_categories WHERE slug = 'flow-control' LIMIT 1),
     3,
     20,
-    'Replace daily cron with webhook-based real-time evaluation for sub-5-second event-to-surface latency. Essential for event triggers to be useful. Includes webhook infrastructure, signature validation, and performance optimization.'
+    'Complete the review workflow cycle by adding formal rejection capability. Reviewers can reject with required comments, workflows return to original user (still suspended), users address feedback and re-submit, iteration tracking with full history. Notifications on rejection and re-submission. UI updates: Reject button, rejection banner, iteration badge, history accordion.'
   );
 
-  RAISE NOTICE 'Created feature: Real-Time Evaluation';
-
-  -- Feature 4: Trigger Editing (Bonus)
-  INSERT INTO features (
-    release_id,
-    slug,
-    title,
-    status_id,
-    category_id,
-    priority,
-    effort_hrs,
-    business_case
-  ) VALUES (
-    v_release_id,
-    'trigger-editing-bonus',
-    'Trigger Editing (Nice-to-Have)',
-    v_planned_status_id,
-    (SELECT id FROM feature_categories WHERE slug = 'flow-control' LIMIT 1),
-    4,
-    16,
-    'Allow users to modify triggers on snoozed/skipped/escalated items without waking them. Nice-to-have that improves UX but not critical for 1.4. Include if time permits in Week 4.'
-  );
-
-  RAISE NOTICE 'Created feature: Trigger Editing';
+  RAISE NOTICE 'Created feature: Review Rejection Enhancement';
 
   RAISE NOTICE '✅ Release 1.4 successfully added to database';
-  RAISE NOTICE 'Total effort: 92 hours (primary) + 16 hours (bonus) = 108 hours';
+  RAISE NOTICE 'Total effort: 120 hours across 3 features (6+ weeks)';
+  RAISE NOTICE 'Focus: Proactive automation, lightweight reminders, complete review cycle';
 END $$;
 
 COMMIT;
