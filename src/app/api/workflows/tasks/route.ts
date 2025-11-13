@@ -9,6 +9,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { validateQueryParams, validateRequest, CreateWorkflowTaskSchema, z } from '@/lib/validation';
+
+// Query schema for GET endpoint
+const WorkflowTaskQuerySchema = z.object({
+  status: z.string().optional(),
+  customerId: z.string().uuid().optional(),
+  workflowExecutionId: z.string().uuid().optional(),
+  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
+});
 
 // =====================================================
 // GET - Fetch tasks for current user
@@ -16,11 +25,16 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status'); // pending, snoozed, in_progress, completed, skipped
-    const customerId = searchParams.get('customerId');
-    const workflowExecutionId = searchParams.get('workflowExecutionId');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    // Validate query parameters
+    const validation = validateQueryParams(request, WorkflowTaskQuerySchema);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { status, customerId, workflowExecutionId, limit = 50 } = validation.data;
 
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
@@ -124,8 +138,38 @@ export async function GET(request: NextRequest) {
 // POST - Create a new task
 // =====================================================
 
+// Extended schema for this endpoint
+const ExtendedWorkflowTaskSchema = CreateWorkflowTaskSchema.extend({
+  stepExecutionId: z.string().uuid().optional(),
+  taskCategory: z.string().optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
+    // Validate request body
+    const validation = await validateRequest(request, ExtendedWorkflowTaskSchema);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const {
+      workflowExecutionId,
+      stepExecutionId,
+      customerId,
+      taskType,
+      action,
+      description,
+      priority = 'medium',
+      taskCategory = 'csm_manual',
+      assignedTo,
+      metadata = {},
+      dueDate,
+    } = validation.data;
+
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
@@ -138,29 +182,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
-      );
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const {
-      workflowExecutionId,
-      stepExecutionId,
-      customerId,
-      taskType,
-      action,
-      description,
-      priority = 'medium',
-      taskCategory = 'csm_manual',
-      assignedTo,
-      metadata = {}
-    } = body;
-
-    // Validate required fields
-    if (!customerId || !taskType || !action || !description) {
-      return NextResponse.json(
-        { error: 'Missing required fields: customerId, taskType, action, description' },
-        { status: 400 }
       );
     }
 

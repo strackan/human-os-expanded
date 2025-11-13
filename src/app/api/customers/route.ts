@@ -1,36 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { validateQueryParams, validateRequest, CustomerQuerySchema, CreateCustomerSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    
-    // Extract all possible filter parameters
-    const search = searchParams.get('search') || '';
-    const industry = searchParams.get('industry') || '';
-    const healthScoreMin = searchParams.get('healthScoreMin');
-    const healthScoreMax = searchParams.get('healthScoreMax');
-    const minARR = searchParams.get('minARR');
-    
-    const sort = searchParams.get('sort') || 'name';
-    const order = searchParams.get('order') === 'desc' ? 'desc' : 'asc';
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '25', 10);
+    // Validate query parameters
+    const validation = validateQueryParams(request, CustomerQuerySchema);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const {
+      search = '',
+      industry = '',
+      healthScoreMin,
+      healthScoreMax,
+      minARR,
+      sort = 'name',
+      order = 'asc',
+      page = 1,
+      pageSize = 25,
+    } = validation.data;
 
     // Build comprehensive filters object
     const filters: any = {};
     if (search) filters.search = search;
     if (industry) filters.industry = industry;
-    if (healthScoreMin) filters.health_score_min = Number(healthScoreMin);
-    if (healthScoreMax) filters.health_score_max = Number(healthScoreMax);
-    if (minARR) filters.current_arr_min = Number(minARR);
+    if (healthScoreMin) filters.health_score_min = healthScoreMin;
+    if (healthScoreMax) filters.health_score_max = healthScoreMax;
+    if (minARR) filters.current_arr_min = minARR;
 
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-    const sortOptions = { field: sort as any, direction: order as 'asc' | 'desc' };
+    const sortOptions = { field: sort as any, direction: order };
     
     console.log('🔍 API route calling CustomerService with filters:', filters);
     console.log('🔍 Demo mode:', demoMode, '| Auth bypass:', authBypassEnabled);
@@ -61,28 +69,29 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-
-    // Validate required fields
-    if (!body.name) {
+    // Validate request body
+    const validation = await validateRequest(request, CreateCustomerSchema);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Customer name is required' },
+        { error: validation.error },
         { status: 400 }
       );
     }
+
+    const { name, domain, industry, healthScore, renewalDate, currentArr, assignedTo } = validation.data;
 
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
     const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
     const newCustomer = await CustomerService.createCustomer({
-      name: body.name,
-      domain: body.domain || '',
-      industry: body.industry || '',
-      health_score: body.health_score || 50,
-      renewal_date: body.renewal_date || new Date().toISOString().split('T')[0],
-      current_arr: body.current_arr ? parseFloat(body.current_arr) : 0,
-      assigned_to: body.assigned_to || null
+      name,
+      domain: domain || '',
+      industry: industry || '',
+      health_score: healthScore || 50,
+      renewal_date: renewalDate || new Date().toISOString().split('T')[0],
+      current_arr: currentArr || 0,
+      assigned_to: assignedTo || undefined
     }, supabase);
 
     return NextResponse.json(

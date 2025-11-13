@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CandidateService } from '@/lib/services/CandidateService';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { validateRequest, z, CommonValidators } from '@/lib/validation';
+
+// Simplified schema for public candidate creation
+const PublicCandidateSchema = z.object({
+  name: CommonValidators.nonEmptyString(),
+  email: CommonValidators.email(),
+  linkedin_url: CommonValidators.url().optional(),
+  referral_source: z.string().optional(),
+});
 
 /**
  * POST /api/talent/candidates
@@ -12,25 +21,16 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, linkedin_url, referral_source } = body;
-
-    // Validate required fields
-    if (!name || !email) {
+    // Validate request body
+    const validation = await validateRequest(request, PublicCandidateSchema);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'Name and email are required' },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
+    const { name, email, linkedin_url, referral_source } = validation.data;
 
     // Use service role client for public candidate creation
     const supabase = createServiceRoleClient();
