@@ -26,19 +26,21 @@ export class EmailOrchestrationService {
    * Generate an AI-powered email for a customer
    *
    * @param params - Email generation parameters
+   * @param companyId - Company ID for tenant isolation
    * @param supabaseClient - Optional Supabase client
    * @returns Generated email with metadata
    * @throws Error if customer not found or generation fails
    */
   static async generateEmail(
     params: GenerateEmailRequest,
+    companyId: string,
     supabaseClient?: SupabaseClient
   ): Promise<GeneratedEmail> {
     const { customerId, emailType, recipientContactId, customInstructions } = params;
 
     try {
       // 1. Fetch customer context
-      const context = await this.fetchCustomerContext(customerId, recipientContactId, supabaseClient);
+      const context = await this.fetchCustomerContext(customerId, companyId, recipientContactId, supabaseClient);
 
       if (!context.customer) {
         throw new Error(`Customer not found: ${customerId}`);
@@ -90,12 +92,14 @@ export class EmailOrchestrationService {
    * Fetch comprehensive customer context for email generation
    *
    * @param customerId - Customer ID
+   * @param companyId - Company ID for tenant isolation
    * @param recipientContactId - Optional specific contact ID
    * @param supabaseClient - Optional Supabase client
    * @returns Customer context for email generation
    */
   static async fetchCustomerContext(
     customerId: string,
+    companyId: string,
     recipientContactId?: string,
     supabaseClient?: SupabaseClient
   ): Promise<EmailCustomerContext> {
@@ -122,8 +126,8 @@ export class EmailOrchestrationService {
           },
         };
       } else {
-        // Fetch customer with primary contact
-        customer = await CustomerService.getCustomerById(customerId, supabaseClient);
+        // Fetch customer with primary contact (with company_id filter for security)
+        customer = await CustomerService.getCustomerById(customerId, companyId, supabaseClient);
 
         if (!customer) {
           throw new Error(`Customer not found: ${customerId}`);

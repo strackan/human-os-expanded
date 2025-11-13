@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { EmailOrchestrationService } from '@/lib/services/EmailOrchestrationService';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import type { GenerateEmailRequest, GenerateEmailResponse, EmailType } from '@/types/email';
 
 /**
@@ -97,36 +97,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Auth handling - support demo mode
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+    // Get authenticated user and company_id
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    const supabase =
-      demoMode || authBypassEnabled
-        ? createServiceRoleClient()
-        : await createServerSupabaseClient();
+    if (authError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized. Please sign in.',
+          errorCode: 'UNAUTHORIZED',
+        } as GenerateEmailResponse,
+        { status: 401 }
+      );
+    }
 
-    // Optional: Verify user is authenticated (if not in demo mode)
-    if (!demoMode && !authBypassEnabled) {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
 
-      if (authError || !user) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: 'Unauthorized. Please sign in.',
-            errorCode: 'UNAUTHORIZED',
-          } as GenerateEmailResponse,
-          { status: 401 }
-        );
-      }
+    if (!profile?.company_id) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'No company associated with user',
+          errorCode: 'NO_COMPANY',
+        } as GenerateEmailResponse,
+        { status: 403 }
+      );
     }
 
     // Generate email
-    console.log(`[Email Generation] Starting for customer ${customerId}, type: ${emailType}`);
+    console.log(`[Email Generation] Starting for customer ${customerId}, type: ${emailType}, company: ${profile.company_id}`);
 
     const email = await EmailOrchestrationService.generateEmail(
       {
@@ -135,6 +140,7 @@ export async function POST(request: NextRequest) {
         recipientContactId,
         customInstructions,
       },
+      profile.company_id,
       supabase
     );
 

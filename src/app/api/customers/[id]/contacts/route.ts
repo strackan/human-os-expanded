@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 
 /**
  * GET /api/customers/[id]/contacts
@@ -12,12 +12,39 @@ export async function GET(
   try {
     const resolvedParams = await params;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled)
-      ? createServiceRoleClient()
-      : await createServerSupabaseClient();
+    // Get authenticated user and company_id
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: 'No company associated with user' }, { status: 403 });
+    }
+
+    // First verify customer belongs to user's company
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('id', resolvedParams.id)
+      .eq('company_id', profile.company_id)
+      .single();
+
+    if (customerError || !customer) {
+      return NextResponse.json(
+        { error: 'Customer not found' },
+        { status: 404 }
+      );
+    }
 
     const { data, error } = await supabase
       .from('contacts')

@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase-server';
 import { validateQueryParams, validateRequest, CustomerQuerySchema, CreateCustomerSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
@@ -44,15 +44,30 @@ export async function GET(request: NextRequest) {
     if (healthScoreMax) filters.health_score_max = healthScoreMax;
     if (minARR) filters.current_arr_min = minARR;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
+    // Get authenticated user and company_id
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: 'No company associated with user' }, { status: 403 });
+    }
+
     const sortOptions = { field: sort as any, direction: order };
-    
+
     console.log('🔍 API route calling CustomerService with filters:', filters);
-    console.log('🔍 Demo mode:', demoMode, '| Auth bypass:', authBypassEnabled);
-    const result = await CustomerService.getCustomers(filters, sortOptions, page, pageSize, supabase);
+    console.log('🔍 Company ID:', profile.company_id);
+    const result = await CustomerService.getCustomers(profile.company_id, filters, sortOptions, page, pageSize, supabase);
 
     return NextResponse.json({
       customers: result.customers,
@@ -90,10 +105,25 @@ export async function POST(request: NextRequest) {
 
     const { name, domain, industry, healthScore, renewalDate, currentArr, assignedTo } = validation.data;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
+    // Get authenticated user and company_id
+    const supabase = createServiceRoleClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user's company_id from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.company_id) {
+      return NextResponse.json({ error: 'No company associated with user' }, { status: 403 });
+    }
+
     const newCustomer = await CustomerService.createCustomer({
       name,
       domain: domain || '',
@@ -102,7 +132,7 @@ export async function POST(request: NextRequest) {
       renewal_date: renewalDate || new Date().toISOString().split('T')[0],
       current_arr: currentArr || 0,
       assigned_to: assignedTo || undefined
-    }, supabase);
+    }, profile.company_id, supabase);
 
     return NextResponse.json(
       { customer: newCustomer, message: 'Customer created successfully' },

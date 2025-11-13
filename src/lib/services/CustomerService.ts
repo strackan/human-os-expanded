@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase';
-import { Customer, CustomerWithContact, Contact, CustomerFilters, CustomerSortOptions } from '../../types/customer';
+import { Customer, CustomerWithContact, CustomerFilters, CustomerSortOptions } from '../../types/customer';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 
@@ -8,6 +8,7 @@ export class CustomerService {
    * Get all customers with optional filtering and pagination
    */
   static async getCustomers(
+    companyId: string,
     filters: CustomerFilters = {},
     sort: CustomerSortOptions = { field: 'name', direction: 'asc' },
     page: number = 1,
@@ -17,7 +18,7 @@ export class CustomerService {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
       let query = supabase
         .from(DB_TABLES.CUSTOMERS)
         .select(`
@@ -34,7 +35,8 @@ export class CustomerService {
             ${DB_COLUMNS.CREATED_AT},
             ${DB_COLUMNS.UPDATED_AT}
           )
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .eq('company_id', companyId);
 
       // Apply filters
       if (filters.industry) {
@@ -99,11 +101,11 @@ export class CustomerService {
   /**
    * Get a single customer by ID with related data
    */
-  static async getCustomerById(id: string, supabaseClient?: SupabaseClient): Promise<CustomerWithContact | null> {
+  static async getCustomerById(id: string, companyId: string, supabaseClient?: SupabaseClient): Promise<CustomerWithContact | null> {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
       const { data, error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
         .select(`
@@ -122,6 +124,7 @@ export class CustomerService {
           )
         `)
         .eq('id', id)
+        .eq('company_id', companyId)
         .single();
 
       if (error) {
@@ -152,11 +155,11 @@ export class CustomerService {
   /**
    * Get a customer by customer key (URL-friendly name)
    */
-  static async getCustomerByKey(customerKey: string, supabaseClient?: SupabaseClient): Promise<CustomerWithContact | null> {
+  static async getCustomerByKey(customerKey: string, companyId: string, supabaseClient?: SupabaseClient): Promise<CustomerWithContact | null> {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
       // First, try to find by exact name match (for backward compatibility)
       let { data, error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
@@ -176,6 +179,7 @@ export class CustomerService {
           )
         `)
         .eq('name', customerKey)
+        .eq('company_id', companyId)
         .single();
 
       // If not found by exact match, try case-insensitive match for common variations
@@ -199,6 +203,7 @@ export class CustomerService {
             )
           `)
           .ilike('name', customerKey)
+          .eq('company_id', companyId)
           .single();
 
         if (!caseInsensitiveError && caseInsensitiveData) {
@@ -208,7 +213,8 @@ export class CustomerService {
           // Last resort: get only names and IDs to find by slug match (much more efficient)
           const { data: customerNames, error: namesError } = await supabase
             .from(DB_TABLES.CUSTOMERS)
-            .select('id, name');
+            .select('id, name')
+            .eq('company_id', companyId);
 
           if (!namesError && customerNames) {
             const foundCustomer = customerNames.find(customer => 
@@ -235,6 +241,7 @@ export class CustomerService {
                   )
                 `)
                 .eq('id', foundCustomer.id)
+                .eq('company_id', companyId)
                 .single();
 
               if (!fullCustomerError && fullCustomerData) {
@@ -284,10 +291,10 @@ export class CustomerService {
   /**
    * Check if a customer name/slug conflicts with existing customers
    */
-  static async checkSlugConflict(name: string, excludeId?: string, supabaseClient?: SupabaseClient): Promise<boolean> {
+  static async checkSlugConflict(name: string, companyId: string, excludeId?: string, supabaseClient?: SupabaseClient): Promise<boolean> {
     try {
       const slug = this.createSlug(name);
-      const existingCustomer = await this.getCustomerByKey(slug, supabaseClient);
+      const existingCustomer = await this.getCustomerByKey(slug, companyId, supabaseClient);
       
       // If no existing customer found, no conflict
       if (!existingCustomer) {
@@ -309,13 +316,13 @@ export class CustomerService {
   /**
    * Generate alternative customer names when conflicts occur
    */
-  static async generateAlternativeName(baseName: string, excludeId?: string, supabaseClient?: SupabaseClient): Promise<string> {
+  static async generateAlternativeName(baseName: string, companyId: string, excludeId?: string, supabaseClient?: SupabaseClient): Promise<string> {
     try {
       let counter = 1;
       let alternativeName = baseName;
-      
+
       // Keep trying until we find a non-conflicting name
-      while (await this.checkSlugConflict(alternativeName, excludeId, supabaseClient)) {
+      while (await this.checkSlugConflict(alternativeName, companyId, excludeId, supabaseClient)) {
         counter++;
         alternativeName = `${baseName} ${counter}`;
         
@@ -335,28 +342,34 @@ export class CustomerService {
   /**
    * Create a new customer
    */
-  static async createCustomer(customerData: Partial<Customer>, supabaseClient?: SupabaseClient): Promise<Customer> {
+  static async createCustomer(customerData: Partial<Customer>, companyId: string, supabaseClient?: SupabaseClient): Promise<Customer> {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
       // Validate that customer name is provided
       if (!customerData.name) {
         throw new Error('Customer name is required');
       }
-      
+
       // Check for slug uniqueness before creating
-      const hasConflict = await this.checkSlugConflict(customerData.name, undefined, supabase);
-      
+      const hasConflict = await this.checkSlugConflict(customerData.name, companyId, undefined, supabase);
+
       if (hasConflict) {
         const slug = this.createSlug(customerData.name);
-        const suggestedName = await this.generateAlternativeName(customerData.name, undefined, supabase);
+        const suggestedName = await this.generateAlternativeName(customerData.name, companyId, undefined, supabase);
         throw new Error(`A customer with a similar name already exists. The URL slug "${slug}" is already taken. Suggested alternative: "${suggestedName}"`);
       }
-      
+
+      // Ensure company_id is set
+      const dataWithCompany = {
+        ...customerData,
+        company_id: companyId
+      };
+
       const { data, error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
-        .insert(customerData)
+        .insert(dataWithCompany)
         .select()
         .single();
 
@@ -375,22 +388,28 @@ export class CustomerService {
   /**
    * Update an existing customer
    */
-  static async updateCustomer(id: string, updates: Partial<Customer>, supabaseClient?: SupabaseClient): Promise<Customer> {
+  static async updateCustomer(id: string, companyId: string, updates: Partial<Customer>, supabaseClient?: SupabaseClient): Promise<Customer> {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
+      // First verify customer belongs to company
+      const existingCustomer = await this.getCustomerById(id, companyId, supabase);
+      if (!existingCustomer) {
+        throw new Error('Customer not found or does not belong to your company');
+      }
+
       // If name is being updated, check for slug conflicts
       if (updates.name) {
-        const hasConflict = await this.checkSlugConflict(updates.name, id);
-        
+        const hasConflict = await this.checkSlugConflict(updates.name, companyId, id, supabase);
+
         if (hasConflict) {
           const slug = this.createSlug(updates.name);
-          const suggestedName = await this.generateAlternativeName(updates.name, id);
+          const suggestedName = await this.generateAlternativeName(updates.name, companyId, id, supabase);
           throw new Error(`A customer with a similar name already exists. The URL slug "${slug}" is already taken. Suggested alternative: "${suggestedName}"`);
         }
       }
-      
+
       const { data, error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
         .update({
@@ -398,6 +417,7 @@ export class CustomerService {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
+        .eq('company_id', companyId)
         .select()
         .single();
 
@@ -416,15 +436,22 @@ export class CustomerService {
   /**
    * Delete a customer
    */
-  static async deleteCustomer(id: string, supabaseClient?: SupabaseClient): Promise<void> {
+  static async deleteCustomer(id: string, companyId: string, supabaseClient?: SupabaseClient): Promise<void> {
     try {
       // Use provided client or create a new one
       const supabase = supabaseClient || createClient();
-      
+
+      // First verify customer belongs to company
+      const existingCustomer = await this.getCustomerById(id, companyId, supabase);
+      if (!existingCustomer) {
+        throw new Error('Customer not found or does not belong to your company');
+      }
+
       const { error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('company_id', companyId);
 
       if (error) {
         console.error('Error deleting customer:', error);
@@ -439,19 +466,20 @@ export class CustomerService {
   /**
    * Get customer statistics
    */
-  static async getCustomerStats(): Promise<{
+  static async getCustomerStats(companyId: string, supabaseClient?: SupabaseClient): Promise<{
     total: number;
     byIndustry: Record<string, number>;
     averageHealthScore: number;
     totalARR: number;
   }> {
     try {
-      // Use the authenticated client from the AuthProvider
-      const supabase = createClient();
-      
+      // Use provided client or create a new one
+      const supabase = supabaseClient || createClient();
+
       const { data, error } = await supabase
         .from(DB_TABLES.CUSTOMERS)
-        .select('industry, health_score, current_arr');
+        .select('industry, health_score, current_arr')
+        .eq('company_id', companyId);
 
       if (error) {
         console.error('Error fetching customer stats:', error);
