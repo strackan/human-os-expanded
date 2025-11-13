@@ -1,6 +1,6 @@
 # Renubu Product Roadmap
 
-**Last Generated:** 2025-11-12
+**Last Generated:** 2025-11-13
 **Source:** Auto-generated from database (releases + features tables)
 
 ---
@@ -88,4 +88,4 @@ npm run roadmap -- --all          # Show all releases
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Strategic guardrails & decisions
 - Database: `releases` and `features` tables
 
-**Last Updated:** 2025-11-12
+**Last Updated:** 2025-11-13
