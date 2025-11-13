@@ -73,7 +73,7 @@ export default function ReturningPage() {
 
       // Candidate found! Redirect to session with their intelligence file
       if (data.candidate) {
-        const { id, companyId, sessionCount, relationshipStrength } = data.candidate;
+        const { id, sessionCount, relationshipStrength } = data.candidate;
 
         // Determine session type based on history
         const sessionType = sessionCount && sessionCount > 0 ? 'check_in' : 'initial';
@@ -89,9 +89,8 @@ export default function ReturningPage() {
           isReturning: true,
         }));
 
-        // Redirect to interview session
-        // TODO: Update this URL to match your interview session route
-        router.push(`/interview/${companyId}?candidateId=${id}&sessionType=${sessionType}`);
+        // Redirect to check-in session
+        router.push(`/join/check-in?candidateId=${id}&sessionType=${sessionType}`);
       }
     } catch (err) {
       console.error('Candidate lookup error:', err);
