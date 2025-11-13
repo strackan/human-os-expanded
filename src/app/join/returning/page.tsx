@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * Return Visit Page (Placeholder)
+ * Return Visit Page
  *
  * Email lookup for returning candidates - Release 1.6 feature
  * Allows candidates to continue their conversation after initial interview
@@ -10,20 +10,94 @@
  */
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface CandidateLookupResponse {
+  success: boolean;
+  found: boolean;
+  candidate?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    companyId: string;
+    intelligenceFile: Record<string, unknown>;
+    checkInCount: number;
+    lastCheckIn: string | null;
+    relationshipStrength: 'cold' | 'warm' | 'hot';
+  };
+  sessions?: Record<string, unknown>[];
+  sessionCount?: number;
+  message?: string;
+  error?: string;
+}
 
 export default function ReturningPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSearching(true);
+    setError(null);
 
-    // TODO: Implement email lookup in Sprint 4 (Release 1.6)
-    setTimeout(() => {
+    try {
+      // Call the candidate lookup API
+      const response = await fetch('/api/candidates/lookup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data: CandidateLookupResponse = await response.json();
+
+      if (!data.success) {
+        setError(data.error || 'Failed to look up candidate');
+        setIsSearching(false);
+        return;
+      }
+
+      if (!data.found) {
+        // New candidate - redirect to initial application
+        setError('No previous sessions found. Redirecting to application...');
+        setTimeout(() => {
+          router.push('/join');
+        }, 1500);
+        return;
+      }
+
+      // Candidate found! Redirect to session with their intelligence file
+      if (data.candidate) {
+        const { id, companyId, sessionCount, relationshipStrength } = data.candidate;
+
+        // Determine session type based on history
+        const sessionType = sessionCount && sessionCount > 0 ? 'check_in' : 'initial';
+
+        // Store candidate context in sessionStorage for the interview
+        sessionStorage.setItem('returning_candidate', JSON.stringify({
+          candidateId: id,
+          email: data.candidate.email,
+          firstName: data.candidate.firstName,
+          lastName: data.candidate.lastName,
+          sessionCount,
+          relationshipStrength,
+          isReturning: true,
+        }));
+
+        // Redirect to interview session
+        // TODO: Update this URL to match your interview session route
+        router.push(`/interview/${companyId}?candidateId=${id}&sessionType=${sessionType}`);
+      }
+    } catch (err) {
+      console.error('Candidate lookup error:', err);
+      setError('An unexpected error occurred. Please try again.');
       setIsSearching(false);
-      alert('Return visit feature coming in Release 1.6 (Sprint 4)');
-    }, 1000);
+    }
   };
 
   return (
@@ -52,15 +126,32 @@ export default function ReturningPage() {
                 required
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="jane@example.com"
+                disabled={isSearching}
               />
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-800 font-medium">
-                🚧 Coming in Release 1.6 - Sprint 4 (Weeks 7-8)
+            {error && (
+              <div className={`border rounded-md p-4 ${
+                error.includes('Redirecting')
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-red-50 border-red-200'
+              }`}>
+                <p className={`text-sm font-medium ${
+                  error.includes('Redirecting')
+                    ? 'text-blue-800'
+                    : 'text-red-800'
+                }`}>
+                  {error}
+                </p>
+              </div>
+            )}
+
+            <div className="bg-green-50 border border-green-200 rounded-md p-4">
+              <p className="text-sm text-green-800 font-medium">
+                ✅ Release 1.6 - Return Visit System Active
               </p>
-              <p className="text-xs text-blue-600 mt-1">
-                Longitudinal intelligence: We'll remember your previous conversations and
+              <p className="text-xs text-green-600 mt-1">
+                Longitudinal intelligence: We&apos;ll remember your previous conversations and
                 reference specific details when you return.
               </p>
             </div>
@@ -89,9 +180,9 @@ export default function ReturningPage() {
           <ul className="space-y-2 text-sm text-gray-600">
             <li>✓ Intelligence file synthesizes all your sessions</li>
             <li>✓ Check-in conversations (5-10 min lighter format)</li>
-            <li>✓ System remembers: "Hey Jane! How are Lucy and Marcus?"</li>
+            <li>✓ System remembers: &ldquo;Hey Jane! How are Lucy and Marcus?&rdquo;</li>
             <li>✓ Tracks relationship evolution (cold/warm/hot)</li>
-            <li>✓ "It actually remembered me. No one does that."</li>
+            <li>✓ &ldquo;It actually remembered me. No one does that.&rdquo;</li>
           </ul>
         </div>
       </div>
