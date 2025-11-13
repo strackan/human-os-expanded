@@ -18,7 +18,6 @@ import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { getSnoozedWorkflows, wakeWorkflowNow } from '@/lib/api/workflow-triggers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import confetti from 'canvas-confetti';
 import { WorkflowExecution } from '@/types';
@@ -36,6 +35,7 @@ export default function SnoozeTestPage() {
   const [snoozedWorkflows, setSnoozedWorkflows] = useState<WorkflowExecution[]>([]);
   const [loading, setLoading] = useState(false);
   const [testScenario, setTestScenario] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<'launch' | 'snoozed'>('launch');
 
   const userId = user?.id;
 
@@ -215,16 +215,35 @@ export default function SnoozeTestPage() {
           </div>
         </div>
 
-        <Tabs defaultValue="launch" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="launch">Launch Test Workflows</TabsTrigger>
-            <TabsTrigger value="snoozed">
-              Snoozed Workflows ({snoozedWorkflows.length})
-            </TabsTrigger>
-          </TabsList>
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-lg shadow-sm p-1 mb-6 flex gap-1">
+          <button
+            onClick={() => setActiveTab('launch')}
+            className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${
+              activeTab === 'launch'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Launch Test Workflows
+          </button>
+          <button
+            onClick={() => setActiveTab('snoozed')}
+            className={`flex-1 px-4 py-3 rounded-md font-medium transition-all ${
+              activeTab === 'snoozed'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            Snoozed Workflows ({snoozedWorkflows.length})
+          </button>
+        </div>
 
+        {/* Tab Content */}
+        <div className="space-y-6">
           {/* Launch Tab */}
-          <TabsContent value="launch" className="space-y-6">
+          {activeTab === 'launch' && (
+            <>
             <Card>
               <CardHeader>
                 <CardTitle>Test Scenarios</CardTitle>
@@ -377,10 +396,12 @@ export default function SnoozeTestPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+            </>
+          )}
 
           {/* Snoozed Workflows Tab */}
-          <TabsContent value="snoozed" className="space-y-6">
+          {activeTab === 'snoozed' && (
+            <>
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -435,8 +456,9 @@ export default function SnoozeTestPage() {
                 </p>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Task Mode Modal */}
