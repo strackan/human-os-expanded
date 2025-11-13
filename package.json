@@ -25,7 +25,8 @@
     "schema-diff-report": "node scripts/schema-diff-manager.js --report",
     "commit": "npx tsx scripts/commit-and-track.ts",
     "snapshot": "npx tsx scripts/snapshot-release.ts",
-    "roadmap": "npx tsx scripts/generate-roadmap.ts"
+    "roadmap": "npx tsx scripts/generate-roadmap.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
@@ -62,7 +63,14 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.6",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }
