@@ -1,3 +1,13 @@
+/**
+ * Customers API Route
+ *
+ * 🤖 AGENT REMINDER: This route demonstrates best practices:
+ * ✅ Input validation with Zod schemas
+ * ✅ Type-safe validated data
+ * ✅ Error handling with proper status codes
+ * ✅ See src/lib/validation/TEMPLATES.md for more patterns
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';

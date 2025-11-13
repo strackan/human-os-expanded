@@ -3,10 +3,16 @@
  *
  * Runtime validation utilities using Zod for API routes.
  * Prevents invalid data from entering the system.
+ *
+ * 🤖 AGENT REMINDER:
+ * - Creating a new API route? Read src/lib/validation/TEMPLATES.md first
+ * - Need validation patterns? See .claude/QA-GUIDE.md
+ * - Always validate user input before database operations
+ * - Run /verify before committing to check for errors
  */
 
 import { NextRequest } from 'next/server';
-import { z, ZodSchema } from 'zod';
+import { z } from 'zod';
 
 /**
  * Validation result type
@@ -57,7 +63,7 @@ export async function validateRequest<T extends z.ZodTypeAny>(
       success: true,
       data: result.data,
     };
-  } catch (error) {
+  } catch {
     return {
       success: false,
       error: 'Invalid JSON in request body',

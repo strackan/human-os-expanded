@@ -1,4 +1,15 @@
 // src/lib/supabase-server.ts (SERVER ONLY)
+
+/**
+ * 🤖 AGENT REMINDER - CRITICAL SECURITY:
+ * When querying with these clients, ALWAYS filter by user_id or organization_id!
+ *
+ * ❌ BAD:  .from('customers').select('*')
+ * ✅ GOOD: .from('customers').select('*').eq('user_id', userId)
+ *
+ * See .claude/QA-GUIDE.md section 4 for security checklist
+ */
+
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
