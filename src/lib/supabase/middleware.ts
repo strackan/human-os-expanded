@@ -50,9 +50,10 @@ export async function updateSession(request: NextRequest) {
   const isAuthRoute = pathname === '/signin'
   const isCallbackRoute = pathname === '/auth/callback'
   const isHeroRoute = pathname === '/hero'
-  const isPublicRoute = pathname === '/' || isAuthRoute || isCallbackRoute || isHeroRoute
+  const isJoinRoute = pathname.startsWith('/join') // Public careers/talent application pages
+  const isPublicRoute = pathname === '/' || isAuthRoute || isCallbackRoute || isHeroRoute || isJoinRoute
 
-  console.log("🧐 [Middleware] Route check:", { pathname, isAuthRoute, isCallbackRoute, isPublicRoute })
+  console.log("🧐 [Middleware] Route check:", { pathname, isAuthRoute, isCallbackRoute, isJoinRoute, isPublicRoute })
 
   if (!user && !isPublicRoute) {
     console.log("🧐 [Middleware] No user and not public → redirecting to /signin")

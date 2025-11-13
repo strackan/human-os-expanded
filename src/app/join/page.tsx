@@ -37,23 +37,30 @@ export default function JoinPage() {
         throw new Error('Please provide your name and email');
       }
 
-      // For public signup, we'll use a system user ID
-      // In production, you might want to create an anonymous user or use a service account
-      const SYSTEM_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'system';
+      // For public signup, candidates will be associated with a system/talent user
+      // This allows public access without requiring authentication upfront
+      const TALENT_SYSTEM_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || '00000000-0000-0000-0000-000000000000';
 
-      const supabase = createClient();
-
-      // Create candidate
-      const candidate = await CandidateService.createCandidate(
-        {
+      // Create server-side API call to avoid exposing service role key
+      const response = await fetch('/api/talent/candidates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           name: formData.name,
           email: formData.email,
           linkedin_url: formData.linkedin_url || undefined,
           referral_source: formData.referral_source || undefined,
-        },
-        SYSTEM_USER_ID,
-        supabase
-      );
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create candidate');
+      }
+
+      const { candidate } = await response.json();
 
       // TODO: Create workflow_execution for interview tracking
       // This will be implemented in the next phase
