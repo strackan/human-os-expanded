@@ -324,7 +324,7 @@ export class OAuthService {
     const accessToken = decrypt(token.access_token_encrypted, encryptionKey);
 
     // Decrypt refresh token if present
-    let refreshToken = null;
+    let refreshToken: string | undefined = undefined;
     if (token.refresh_token_encrypted) {
       refreshToken = decrypt(token.refresh_token_encrypted, encryptionKey);
     }

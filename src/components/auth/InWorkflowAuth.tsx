@@ -168,13 +168,15 @@ export default function InWorkflowAuth({
         }
 
         // Optional: Monitor popup closure
-        const checkPopup = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkPopup);
-            setIsLoading(false);
-            console.log('OAuth popup closed');
-          }
-        }, 500);
+        if (popup) {
+          const checkPopup = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkPopup);
+              setIsLoading(false);
+              console.log('OAuth popup closed');
+            }
+          }, 500);
+        }
       }
     } catch (error: any) {
       console.error('Google sign in error:', error);
