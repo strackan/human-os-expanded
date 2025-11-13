@@ -21,6 +21,8 @@ export const DB_TABLES = {
   WORKFLOW_EXECUTIONS: 'workflow_executions',
   WORKFLOW_STEP_EXECUTIONS: 'workflow_step_executions',
   WORKFLOW_TASKS: 'workflow_tasks',
+  WORKFLOW_WAKE_TRIGGERS: 'workflow_wake_triggers',
+  WORKFLOW_ACTIONS: 'workflow_actions',
 
   // Alert and notification tables
   ALERTS: 'alerts',
