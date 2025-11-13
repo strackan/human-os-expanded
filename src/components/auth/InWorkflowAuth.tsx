@@ -159,8 +159,10 @@ export default function InWorkflowAuth({
 
         // Check if popup was blocked
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-          console.warn('⚠️ Popup blocked - OAuth will open in current window');
-          setError('Popup blocked. OAuth will open in this window. You\'ll be redirected back after sign in.');
+          console.warn('⚠️ Popup blocked - OAuth will open in current window (this is fine)');
+          // Show a brief informational message, then clear it
+          setMessage('Opening authentication in this window...');
+          setTimeout(() => setMessage(null), 2000);
           // Don't throw - let the OAuth continue in the current window
           // The callback will handle returning to the right place
         }
