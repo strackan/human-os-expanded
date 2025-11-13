@@ -20,6 +20,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import confetti from 'canvas-confetti';
 import { WorkflowExecution } from '@/types';
+import { SnoozedWorkflow } from '@/components/workflows/SnoozedWorkflowCard';
+
+// Helper to transform WorkflowExecution to SnoozedWorkflow
+const transformToSnoozedWorkflow = (execution: WorkflowExecution): SnoozedWorkflow => {
+  return {
+    id: execution.id,
+    workflowName: execution.workflow_name || execution.title || 'Workflow',
+    workflowType: execution.workflow_type || 'unknown',
+    customerName: execution.customer_name || 'Unknown Customer',
+    customerId: execution.customer_id || '',
+    snoozedAt: execution.snoozed_at || execution.created_at,
+    snoozedBy: execution.user_id || '',
+    snoozedByName: execution.assigned_to_name || undefined,
+    status: execution.status,
+    priorityScore: execution.priority_score || undefined,
+    wake_triggers: execution.wake_triggers as any,
+    trigger_fired_at: execution.trigger_fired_at || undefined,
+    fired_trigger_type: execution.fired_trigger_type || undefined,
+    last_evaluated_at: execution.last_evaluated_at || undefined,
+    metadata: execution.metadata || undefined,
+  };
+};
 
 export default function SnoozeTestPage() {
   const { user } = useAuth();
@@ -427,7 +449,7 @@ export default function SnoozeTestPage() {
                   </div>
                 ) : (
                   <SnoozedWorkflowsList
-                    workflows={snoozedWorkflows}
+                    workflows={snoozedWorkflows.map(transformToSnoozedWorkflow)}
                     onWakeNow={handleWakeNow}
                     onViewDetails={handleViewDetails}
                   />
