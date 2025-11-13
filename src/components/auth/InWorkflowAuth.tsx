@@ -56,6 +56,40 @@ export default function InWorkflowAuth({
 
   const supabase = createClient();
 
+  // Check if user just returned from OAuth (when popup was blocked)
+  useEffect(() => {
+    const checkOAuthReturn = async () => {
+      const returnUrl = sessionStorage.getItem('oauth_return_url');
+
+      // If we have a stored return URL, user just returned from OAuth
+      if (returnUrl) {
+        console.log('✅ Detected OAuth return, checking session...');
+        sessionStorage.removeItem('oauth_return_url');
+        sessionStorage.removeItem('oauth_return_origin');
+
+        // Check if authentication succeeded
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          console.error('❌ Error checking session after OAuth return:', error);
+          setError('Failed to restore session. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          console.log('✅ OAuth successful, user authenticated:', session.user.email);
+          onAuthSuccess?.(session.user);
+        } else {
+          console.log('⚠️ No session found after OAuth return');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkOAuthReturn();
+  }, [supabase, onAuthSuccess]);
+
   // Listen for OAuth popup completion
   useEffect(() => {
     const handleOAuthMessage = async (event: MessageEvent) => {
@@ -97,8 +131,13 @@ export default function InWorkflowAuth({
       setIsLoading(true);
       setError(null);
 
-      // Build OAuth URL with popup mode
-      const redirectUrl = `${window.location.origin}/auth/callback?mode=popup`;
+      // Store current location for return after OAuth
+      // This ensures we return to the correct origin (localhost, staging, or prod)
+      sessionStorage.setItem('oauth_return_url', window.location.href);
+      sessionStorage.setItem('oauth_return_origin', window.location.origin);
+
+      // Build OAuth URL with popup mode and return URL
+      const redirectUrl = `${window.location.origin}/auth/callback?mode=popup&returnUrl=${encodeURIComponent(window.location.href)}`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -118,8 +157,12 @@ export default function InWorkflowAuth({
           'width=600,height=700,left=200,top=100'
         );
 
-        if (!popup) {
-          throw new Error('Popup blocked. Please allow popups for this site.');
+        // Check if popup was blocked
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          console.warn('⚠️ Popup blocked - OAuth will open in current window');
+          setError('Popup blocked. OAuth will open in this window. You\'ll be redirected back after sign in.');
+          // Don't throw - let the OAuth continue in the current window
+          // The callback will handle returning to the right place
         }
 
         // Optional: Monitor popup closure

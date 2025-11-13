@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/dashboard'
   const mode = requestUrl.searchParams.get('mode') // 'popup' for in-workflow auth
+  const returnUrl = requestUrl.searchParams.get('returnUrl') // Where to return after OAuth
   const origin = requestUrl.origin
 
   console.log('🔐 [AUTH CALLBACK] Route hit', {
@@ -16,6 +17,7 @@ export async function GET(request: NextRequest) {
     origin,
     next,
     mode,
+    returnUrl,
     url: requestUrl.toString()
   })
 
@@ -67,6 +69,8 @@ export async function GET(request: NextRequest) {
 
         // If popup mode, send error message to parent
         if (mode === 'popup') {
+          const errorFallbackUrl = returnUrl || `${origin}/signin?error=auth_failed`;
+
           return new NextResponse(
             `<!DOCTYPE html>
             <html>
@@ -82,7 +86,8 @@ export async function GET(request: NextRequest) {
                     );
                     setTimeout(() => window.close(), 1000);
                   } else {
-                    window.location.href = '${origin}/signin?error=auth_failed';
+                    // Return to original page with error
+                    window.location.href = '${errorFallbackUrl}';
                   }
                 </script>
                 <div style="font-family: system-ui; padding: 20px; text-align: center;">
@@ -135,6 +140,10 @@ export async function GET(request: NextRequest) {
       // If popup mode, return HTML that sends message to parent and closes
       if (mode === 'popup') {
         console.log('🔐 [AUTH CALLBACK] Popup mode detected, sending message to parent window')
+
+        // Determine where to redirect if not in popup context
+        const fallbackUrl = returnUrl || redirectUrl;
+
         return new NextResponse(
           `<!DOCTYPE html>
           <html>
@@ -152,13 +161,16 @@ export async function GET(request: NextRequest) {
                   // Close popup after brief delay
                   setTimeout(() => window.close(), 500);
                 } else {
-                  // Fallback if popup context is lost
-                  window.location.href = '${redirectUrl}';
+                  // Fallback if popup context is lost (popup was blocked)
+                  // Return to the original page where OAuth was initiated
+                  console.log('🔐 [AUTH CALLBACK] No popup context, redirecting to:', '${fallbackUrl}');
+                  window.location.href = '${fallbackUrl}';
                 }
               </script>
               <div style="font-family: system-ui; padding: 20px; text-align: center;">
                 <h2>✓ Authentication successful!</h2>
                 <p>This window will close automatically...</p>
+                <p style="font-size: 12px; color: #666; margin-top: 20px;">If this window doesn't close, you'll be redirected back to your workflow...</p>
               </div>
             </body>
           </html>`,
