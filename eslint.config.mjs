@@ -13,10 +13,12 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
-      // Temporarily disable problematic rules to get dev server running
-      "@typescript-eslint/no-unused-vars": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "react/no-unescaped-entities": "warn",
+      // QA Infrastructure: Upgraded rules from warn to error (Day 2)
+      "@typescript-eslint/no-unused-vars": "error", // Upgraded: no unused variables allowed
+      "react/no-unescaped-entities": "error", // Upgraded: no unescaped quotes/chars
+
+      // TODO: Upgrade to error once existing violations are fixed (50+ instances)
+      "@typescript-eslint/no-explicit-any": "warn", // Keep as warn for gradual migration
     },
   },
 ];
