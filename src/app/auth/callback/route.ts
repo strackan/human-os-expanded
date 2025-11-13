@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/dashboard'
+  const mode = requestUrl.searchParams.get('mode') // 'popup' for in-workflow auth
   const origin = requestUrl.origin
 
   console.log('🔐 [AUTH CALLBACK] Route hit', {
@@ -14,6 +15,7 @@ export async function GET(request: NextRequest) {
     hasCode: !!code,
     origin,
     next,
+    mode,
     url: requestUrl.toString()
   })
 
@@ -62,6 +64,40 @@ export async function GET(request: NextRequest) {
           status: error.status,
           durationMs: exchangeDuration.toFixed(2)
         })
+
+        // If popup mode, send error message to parent
+        if (mode === 'popup') {
+          return new NextResponse(
+            `<!DOCTYPE html>
+            <html>
+              <head>
+                <title>Authentication Failed</title>
+              </head>
+              <body>
+                <script>
+                  if (window.opener) {
+                    window.opener.postMessage(
+                      { type: 'OAUTH_ERROR', error: '${error.message || 'Authentication failed'}' },
+                      '${origin}'
+                    );
+                    setTimeout(() => window.close(), 1000);
+                  } else {
+                    window.location.href = '${origin}/signin?error=auth_failed';
+                  }
+                </script>
+                <div style="font-family: system-ui; padding: 20px; text-align: center;">
+                  <h2>✗ Authentication failed</h2>
+                  <p>This window will close automatically...</p>
+                </div>
+              </body>
+            </html>`,
+            {
+              status: 200,
+              headers: { 'Content-Type': 'text/html' },
+            }
+          )
+        }
+
         return NextResponse.redirect(`${origin}/signin?error=auth_failed`)
       }
 
@@ -92,8 +128,46 @@ export async function GET(request: NextRequest) {
 
       console.log('🔐 [AUTH CALLBACK] Redirecting to:', {
         redirectUrl,
+        mode,
         totalDurationMs: (performance.now() - startTime).toFixed(2)
       })
+
+      // If popup mode, return HTML that sends message to parent and closes
+      if (mode === 'popup') {
+        console.log('🔐 [AUTH CALLBACK] Popup mode detected, sending message to parent window')
+        return new NextResponse(
+          `<!DOCTYPE html>
+          <html>
+            <head>
+              <title>Authentication Successful</title>
+            </head>
+            <body>
+              <script>
+                // Send success message to parent window
+                if (window.opener) {
+                  window.opener.postMessage(
+                    { type: 'OAUTH_SUCCESS' },
+                    '${origin}'
+                  );
+                  // Close popup after brief delay
+                  setTimeout(() => window.close(), 500);
+                } else {
+                  // Fallback if popup context is lost
+                  window.location.href = '${redirectUrl}';
+                }
+              </script>
+              <div style="font-family: system-ui; padding: 20px; text-align: center;">
+                <h2>✓ Authentication successful!</h2>
+                <p>This window will close automatically...</p>
+              </div>
+            </body>
+          </html>`,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/html' },
+          }
+        )
+      }
 
       return NextResponse.redirect(redirectUrl)
     } catch (err: any) {
