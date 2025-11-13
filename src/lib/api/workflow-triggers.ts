@@ -5,7 +5,7 @@
  * These functions call the API routes created by Agent 2.
  */
 
-import type { WakeTrigger } from '@/types/wake-triggers';
+import type { WakeTrigger, TriggerLogic } from '@/types/wake-triggers';
 
 // =====================================================
 // Types
@@ -15,6 +15,7 @@ export interface SnoozeWithTriggersRequest {
   workflowId: string;
   userId: string;
   triggers: WakeTrigger[];
+  logic?: TriggerLogic;
 }
 
 export interface SnoozeWithTriggersResponse {
@@ -66,7 +67,8 @@ export interface WakeNowResponse {
 export async function snoozeWithTriggers(
   workflowId: string,
   userId: string,
-  triggers: WakeTrigger[]
+  triggers: WakeTrigger[],
+  logic?: TriggerLogic
 ): Promise<SnoozeWithTriggersResponse> {
   try {
     const response = await fetch('/api/workflows/snooze-with-triggers', {
@@ -78,6 +80,7 @@ export async function snoozeWithTriggers(
         workflowId,
         userId,
         triggers,
+        logic: logic || 'OR', // Default to OR for backward compatibility
       }),
     });
 
@@ -108,6 +111,8 @@ export async function getSnoozedWorkflows(
       ? `/api/workflows/snoozed?userId=${userId}`
       : '/api/workflows/snoozed';
 
+    console.log('[API] getSnoozedWorkflows - Fetching from URL:', url);
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
@@ -115,12 +120,19 @@ export async function getSnoozedWorkflows(
       },
     });
 
+    console.log('[API] getSnoozedWorkflows - Response status:', response.status, response.statusText);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error('[API] getSnoozedWorkflows - Error response:', errorData);
       throw new Error(errorData.error || `Failed to fetch snoozed workflows (${response.status})`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log('[API] getSnoozedWorkflows - Response data:', data);
+    console.log('[API] getSnoozedWorkflows - Has workflows array?', !!data.workflows, 'Count:', data.count);
+
+    return data;
   } catch (error) {
     console.error('[API] Get snoozed workflows error:', error);
     throw error;

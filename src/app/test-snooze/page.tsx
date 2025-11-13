@@ -18,8 +18,29 @@ import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { getSnoozedWorkflows, wakeWorkflowNow } from '@/lib/api/workflow-triggers';
 import Button from '@/components/ui/Button';
 import confetti from 'canvas-confetti';
-import { WorkflowExecution } from '@/types';
 import { SnoozedWorkflow } from '@/components/workflows/SnoozedWorkflowCard';
+
+// Local type for workflow execution
+interface WorkflowExecution {
+  id: string;
+  workflow_id?: string;
+  workflow_name?: string | null;
+  workflow_type?: string | null;
+  title?: string | null;
+  customer_id?: string | null;
+  customer_name?: string | null;
+  user_id?: string | null;
+  status?: string;
+  snoozed_at?: string | null;
+  created_at?: string;
+  assigned_to_name?: string | null;
+  priority_score?: number | null;
+  wake_triggers?: any;
+  trigger_fired_at?: string | null;
+  fired_trigger_type?: string | null;
+  last_evaluated_at?: string | null;
+  metadata?: any;
+}
 
 // Helper to transform WorkflowExecution to SnoozedWorkflow
 const transformToSnoozedWorkflow = (execution: WorkflowExecution): SnoozedWorkflow => {
@@ -54,6 +75,7 @@ export default function SnoozeTestPage() {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [snoozedWorkflows, setSnoozedWorkflows] = useState<WorkflowExecution[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [testScenario, setTestScenario] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'launch' | 'snoozed'>('launch');
 
@@ -61,13 +83,26 @@ export default function SnoozeTestPage() {
 
   // Fetch snoozed workflows
   const fetchSnoozedWorkflows = async () => {
-    if (!userId) return;
+    if (!userId) {
+      console.log('[SnoozeTest] fetchSnoozedWorkflows - no userId, skipping');
+      return;
+    }
 
     try {
-      const workflows = await getSnoozedWorkflows(userId);
-      setSnoozedWorkflows(workflows);
+      console.log('[SnoozeTest] Fetching snoozed workflows for userId:', userId);
+      setFetchError(null);
+      const response = await getSnoozedWorkflows(userId);
+      console.log('[SnoozeTest] getSnoozedWorkflows response:', response);
+      console.log('[SnoozeTest] Response type:', typeof response, 'Has workflows?', !!response?.workflows);
+
+      // Extract workflows array from response object
+      const workflowArray = Array.isArray(response?.workflows) ? response.workflows : [];
+      console.log('[SnoozeTest] Setting snoozed workflows state with', workflowArray.length, 'items');
+      setSnoozedWorkflows(workflowArray);
     } catch (error) {
       console.error('[SnoozeTest] Error fetching snoozed workflows:', error);
+      setFetchError(error instanceof Error ? error.message : 'Failed to fetch snoozed workflows');
+      setSnoozedWorkflows([]); // Ensure it's always an array on error
     }
   };
 
@@ -118,15 +153,15 @@ export default function SnoozeTestPage() {
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
 
       // Create workflow execution
-      const result = await createWorkflowExecution(
+      const result = await createWorkflowExecution({
         userId,
-        workflowId,
+        workflowConfigId: workflowId,
+        workflowName: 'Obsidian Black Renewal',
+        workflowType: 'renewal',
         customerId,
-        {
-          title: `${scenario} Test - Obsidian Black Renewal`,
-          description: `Testing snooze functionality: ${scenario}`,
-        }
-      );
+        assignedCsmId: userId, // Assign to the same user for testing
+        totalSteps: 6,
+      });
 
       if (!result.success || !result.executionId) {
         throw new Error(result.error || 'Failed to create workflow execution');
@@ -254,12 +289,12 @@ export default function SnoozeTestPage() {
             <div className="space-y-6">
               {/* Test Scenarios */}
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Test Scenarios</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Test Scenarios</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Date-Only */}
                   <div className="border-2 border-blue-500 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <h3 className="text-lg font-bold mb-2">📅 Date-Only Snooze</h3>
-                    <p className="text-sm text-gray-600 mb-4">Test basic date-based snoozing (existing functionality)</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">📅 Date-Only Snooze</h3>
+                    <p className="text-sm text-gray-700 mb-4">Test basic date-based snoozing (existing functionality)</p>
                     <Button
                       onClick={() => handleLaunchTestWorkflow('Date-Only')}
                       disabled={loading}
@@ -271,8 +306,8 @@ export default function SnoozeTestPage() {
 
                   {/* Smart Snooze */}
                   <div className="border-2 border-purple-500 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <h3 className="text-lg font-bold mb-2">⚡ Date + Event Triggers</h3>
-                    <p className="text-sm text-gray-600 mb-4">Test smart snoozing with multiple triggers (NEW)</p>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">⚡ Date + Event Triggers</h3>
+                    <p className="text-sm text-gray-700 mb-4">Test smart snoozing with multiple triggers (NEW)</p>
                     <Button
                       onClick={() => handleLaunchTestWorkflow('Smart Snooze')}
                       disabled={loading}
@@ -287,7 +322,7 @@ export default function SnoozeTestPage() {
 
               {/* Instructions */}
               <div className="bg-white rounded-lg shadow-lg p-6">
-                <h2 className="text-2xl font-bold mb-4">Testing Instructions</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Testing Instructions</h2>
                 <ol className="space-y-3 text-gray-700">
                   <li className="flex gap-3">
                     <span className="font-bold text-blue-600">1.</span>
@@ -315,13 +350,18 @@ export default function SnoozeTestPage() {
             <div className="space-y-6">
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Snoozed Workflows</h2>
+                  <h2 className="text-2xl font-bold text-gray-900">Snoozed Workflows</h2>
                   <Button onClick={fetchSnoozedWorkflows} size="sm">
                     🔄 Refresh
                   </Button>
                 </div>
 
-                {snoozedWorkflows.length === 0 ? (
+                {fetchError ? (
+                  <div className="text-center py-12 text-red-600">
+                    <p className="text-lg mb-2">Error loading snoozed workflows</p>
+                    <p className="text-sm">{fetchError}</p>
+                  </div>
+                ) : snoozedWorkflows.length === 0 ? (
                   <div className="text-center py-12 text-gray-500">
                     <p className="text-lg mb-2">No snoozed workflows</p>
                     <p className="text-sm">Launch a test workflow and snooze it to see it here</p>
@@ -343,12 +383,12 @@ export default function SnoozeTestPage() {
       {taskModeOpen && activeWorkflow && executionId && (
         <TaskModeFullscreen
           workflowId={activeWorkflow.workflowId}
-          title={activeWorkflow.title}
+          workflowTitle={activeWorkflow.title}
           customerId={activeWorkflow.customerId}
           customerName={activeWorkflow.customerName}
           executionId={executionId}
+          userId={userId}
           onClose={handleCloseTaskMode}
-          onComplete={handleCompleteWorkflow}
         />
       )}
     </div>

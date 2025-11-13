@@ -98,6 +98,7 @@ export function useTaskModeState({
     type: 'skip' | 'snooze' | null;
     stepIndex: number | null;
   }>({ type: null, stepIndex: null });
+  const [isSnoozeModalOpen, setIsSnoozeModalOpen] = useState(false);
 
   // ============================================================
   // CHAT STATE
@@ -111,6 +112,15 @@ export function useTaskModeState({
   // ============================================================
   // NAVIGATION HANDLERS
   // ============================================================
+
+  // Helper: Get the next non-snoozed/non-skipped slide
+  const getNextAvailableSlide = useCallback(() => {
+    let nextIndex = currentSlideIndex + 1;
+    while (nextIndex < slides.length && (skippedSlides.has(nextIndex) || snoozedSlides.has(nextIndex))) {
+      nextIndex++;
+    }
+    return nextIndex < slides.length ? { index: nextIndex, slide: slides[nextIndex] } : null;
+  }, [currentSlideIndex, slides, skippedSlides, snoozedSlides]);
 
   const goToNextSlide = useCallback(() => {
     if (currentSlideIndex < slides.length - 1) {
@@ -180,21 +190,15 @@ export function useTaskModeState({
   }, [sequenceInfo, onClose, showToast]);
 
   const handleSnooze = useCallback(() => {
-    showToast({
-      message: "No problem, I'll remind you in a few days.",
-      type: 'info',
-      icon: 'clock',
-      duration: 3000
-    });
+    // Open the snooze modal to configure triggers
+    console.log('[useTaskModeState] handleSnooze called - opening modal');
+    setIsSnoozeModalOpen(true);
+  }, []);
 
-    setTimeout(() => {
-      if (sequenceInfo) {
-        sequenceInfo.onNextWorkflow();
-      } else {
-        onClose();
-      }
-    }, 1500);
-  }, [sequenceInfo, onClose, showToast]);
+  const closeSnoozeModal = useCallback(() => {
+    console.log('[useTaskModeState] closeSnoozeModal called');
+    setIsSnoozeModalOpen(false);
+  }, []);
 
   const handleSkip = useCallback(() => {
     showToast({
@@ -464,9 +468,11 @@ export function useTaskModeState({
   }, [currentBranch, currentSlide, handleBranchNavigation]);
 
   const handleButtonClick = useCallback((buttonValue: string) => {
+    console.log('[useTaskModeState] handleButtonClick called with value:', buttonValue);
     if (buttonValue === 'start') {
       goToNextSlide();
     } else if (buttonValue === 'snooze') {
+      console.log('[useTaskModeState] Button value is "snooze" - calling handleSnooze');
       handleSnooze();
     } else if (buttonValue === 'skip') {
       handleSkip();
@@ -575,6 +581,11 @@ export function useTaskModeState({
     setShowArtifacts(hasVisibleArtifacts);
   }, [currentSlideIndex, currentSlide, currentBranch]);
 
+  // Debug: Log snooze modal state changes
+  useEffect(() => {
+    console.log('[useTaskModeState] isSnoozeModalOpen changed to:', isSnoozeModalOpen);
+  }, [isSnoozeModalOpen]);
+
   // ============================================================
   // RETURN STATE & HANDLERS
   // ============================================================
@@ -594,6 +605,8 @@ export function useTaskModeState({
     slides,
     currentSlideIndex,
     completedSlides,
+    skippedSlides,
+    snoozedSlides,
     workflowState,
     chatMessages,
     chatInputValue,
@@ -612,6 +625,7 @@ export function useTaskModeState({
     goToNextSlide,
     goToPreviousSlide,
     goToSlide,
+    getNextAvailableSlide,
 
     // Chat
     sendMessage: handleSendMessage,
@@ -639,5 +653,13 @@ export function useTaskModeState({
     skipStep,
     snoozeStep,
     setConfirmationModal,
+
+    // Snooze Modal
+    isSnoozeModalOpen,
+    closeSnoozeModal,
+
+    // Direct state setters for syncing with external sources
+    setSnoozedSlides,
+    setSkippedSlides,
   };
 }

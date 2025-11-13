@@ -42,6 +42,7 @@ interface ChatRendererProps {
   onBranchNavigation: (branchName: string, value?: any) => void;
   onComponentValueChange: (componentId: string, value: any) => void;
   onButtonClick?: (buttonValue: string) => void;
+  getNextButtonLabel?: (originalLabel: string, buttonValue: string) => string;
 }
 
 export default function ChatRenderer({
@@ -52,7 +53,8 @@ export default function ChatRenderer({
   onSendMessage,
   onBranchNavigation,
   onComponentValueChange,
-  onButtonClick
+  onButtonClick,
+  getNextButtonLabel
 }: ChatRendererProps) {
   const [pendingComponentValue, setPendingComponentValue] = useState<any>(null);
   const [currentComponentId, setCurrentComponentId] = useState<string | null>(null);
@@ -446,17 +448,24 @@ export default function ChatRenderer({
 
     return (
       <div className="flex gap-3 mt-4">
-        {sortedButtons.map((button, index) => (
-          <button
-            key={index}
-            onClick={() => onButtonClick?.(button.value)}
-            className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md ${
-              button['label-background'] || 'bg-purple-600 hover:bg-purple-700'
-            } ${button['label-text'] || 'text-white'}`}
-          >
-            {button.label}
-          </button>
-        ))}
+        {sortedButtons.map((button, index) => {
+          // Get dynamic button label (if callback provided)
+          const displayLabel = getNextButtonLabel
+            ? getNextButtonLabel(button.label, button.value)
+            : button.label;
+
+          return (
+            <button
+              key={index}
+              onClick={() => onButtonClick?.(button.value)}
+              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md ${
+                button['label-background'] || 'bg-purple-600 hover:bg-purple-700'
+              } ${button['label-text'] || 'text-white'}`}
+            >
+              {displayLabel}
+            </button>
+          );
+        })}
       </div>
     );
   };

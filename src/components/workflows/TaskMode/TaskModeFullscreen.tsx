@@ -32,6 +32,10 @@ import { getWorkflowSequence } from '@/config/workflowSequences';
 import { Mic, Paperclip } from 'lucide-react';
 import { StepSnoozeModal, StepSkipModal } from '@/components/workflows/StepActionModals';
 import { WorkflowStepActionService } from '@/lib/workflows/actions/WorkflowStepActionService';
+import { EnhancedSnoozeModal } from '@/components/workflows/EnhancedSnoozeModal';
+import { snoozeWithTriggers } from '@/lib/api/workflow-triggers';
+import type { WakeTrigger, TriggerLogic } from '@/types/wake-triggers';
+import { useToast } from '@/components/ui/ToastProvider';
 
 interface TaskModeFullscreenProps {
   workflowId: string;
@@ -66,6 +70,9 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     sequenceInfo
   } = props;
 
+  // Toast notifications
+  const { showToast } = useToast();
+
   // Get all state and handlers from the hook
   const state = useTaskModeState({
     workflowId,
@@ -78,6 +85,11 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   // Step-level action modal state
   const [showStepSnoozeModal, setShowStepSnoozeModal] = useState<number | null>(null);
   const [showStepSkipModal, setShowStepSkipModal] = useState<number | null>(null);
+
+  // Debug: Log step snooze modal state changes
+  useEffect(() => {
+    console.log('[TaskModeFullscreen] showStepSnoozeModal changed to:', showStepSnoozeModal);
+  }, [showStepSnoozeModal]);
 
   // Step states from database
   const [stepStates, setStepStates] = useState<Record<number, any>>({});
@@ -108,6 +120,78 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     reloadStepStates();
   }, [executionId]);
 
+  // Sync snoozedSlides and skippedSlides Sets with database stepStates
+  // This ensures navigation logic skips snoozed/skipped steps correctly
+  useEffect(() => {
+    const snoozedIndices = new Set<number>();
+    const skippedIndices = new Set<number>();
+
+    Object.entries(stepStates).forEach(([indexStr, stepState]) => {
+      const index = parseInt(indexStr, 10);
+      if (stepState.status === 'snoozed') {
+        snoozedIndices.add(index);
+      } else if (stepState.status === 'skipped') {
+        skippedIndices.add(index);
+      }
+    });
+
+    // Update the Sets in the hook state
+    state.setSnoozedSlides(snoozedIndices);
+    state.setSkippedSlides(skippedIndices);
+
+    console.log('[TaskModeFullscreen] Synced step states - snoozed:', Array.from(snoozedIndices), 'skipped:', Array.from(skippedIndices));
+  }, [stepStates, state.setSnoozedSlides, state.setSkippedSlides]);
+
+  // Handle workflow-level snooze with triggers
+  const handleWorkflowSnooze = async (triggers: WakeTrigger[], logic?: TriggerLogic) => {
+    if (!executionId || !userId) {
+      console.error('[TaskModeFullscreen] Cannot snooze: missing executionId or userId');
+      return;
+    }
+
+    try {
+      console.log('[TaskModeFullscreen] Snoozing workflow with triggers:', triggers, 'logic:', logic);
+      console.log('[TaskModeFullscreen] Using executionId:', executionId, 'userId:', userId);
+      const result = await snoozeWithTriggers(executionId, userId, triggers, logic);
+      console.log('[TaskModeFullscreen] Snooze API response:', JSON.stringify(result, null, 2));
+
+      if (result.success) {
+        console.log('[TaskModeFullscreen] Workflow snoozed successfully - should now have status=snoozed');
+        state.closeSnoozeModal();
+
+        // Format the wake date for display
+        const dateTrigger = triggers.find(t => t.type === 'date');
+        const wakeDate = dateTrigger
+          ? new Date((dateTrigger.config as any).date).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })
+          : 'when conditions are met';
+
+        // Show success toast
+        showToast({
+          message: `Workflow snoozed successfully! I'll remind you on ${wakeDate}.`,
+          type: 'success',
+          icon: 'check',
+          duration: 4000
+        });
+
+        // Close workflow after brief delay
+        setTimeout(() => {
+          onClose(); // Close the workflow
+        }, 1000);
+      } else {
+        console.error('[TaskModeFullscreen] Failed to snooze workflow:', result.error);
+        alert(`Failed to snooze workflow: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('[TaskModeFullscreen] Error snoozing workflow:', error);
+      alert('Failed to snooze workflow');
+    }
+  };
+
   // Resize handling effect (must be before early returns)
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -120,7 +204,8 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     const handleMouseMove = (e: MouseEvent) => {
       const windowWidth = window.innerWidth;
       const newWidth = ((windowWidth - e.clientX) / windowWidth) * 100;
-      const constrainedWidth = Math.min(Math.max(newWidth, 30), 70);
+      // Constrain artifact panel to 35-60% to ensure chat panel has at least 40% for input
+      const constrainedWidth = Math.min(Math.max(newWidth, 35), 60);
       state.setArtifactsPanelWidth(constrainedWidth);
     };
 
@@ -245,17 +330,71 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
       }
     };
 
+    // Check if current step is snoozed
+    const currentStepState = stepStates[state.currentSlideIndex];
+    const isCurrentStepSnoozed = currentStepState?.status === 'snoozed';
+    const snoozeUntil = currentStepState?.snooze_until ? new Date(currentStepState.snooze_until) : null;
+
+    // Callback to get dynamic button label based on next available slide
+    const getNextButtonLabel = (originalLabel: string, buttonValue: string) => {
+      // Only modify "next" buttons (start, continue, next, proceed)
+      const isNextButton = ['start', 'continue', 'next', 'proceed'].some(
+        val => buttonValue.toLowerCase().includes(val) || originalLabel.toLowerCase().includes(val)
+      );
+
+      if (!isNextButton) {
+        return originalLabel; // Keep original label for non-next buttons (e.g., "Back", "Skip")
+      }
+
+      // Get the next available slide
+      const nextAvailable = state.getNextAvailableSlide();
+
+      // If next slide has a previousButton property, use it
+      if (nextAvailable?.slide?.previousButton) {
+        return nextAvailable.slide.previousButton;
+      }
+
+      // Otherwise return original label
+      return originalLabel;
+    };
+
     return (
-      <ChatRenderer
-        currentSlide={state.currentSlide}
-        chatMessages={state.chatMessages}
-        workflowState={state.workflowState}
-        customerName={customerName}
-        onSendMessage={state.sendMessage}
-        onBranchNavigation={state.handleBranchNavigation}
-        onComponentValueChange={state.handleComponentValueChange}
-        onButtonClick={handleChatButtonClick}
-      />
+      <div className="relative h-full">
+        <div className={isCurrentStepSnoozed ? 'opacity-30 pointer-events-none' : ''}>
+          <ChatRenderer
+            currentSlide={state.currentSlide}
+            chatMessages={state.chatMessages}
+            workflowState={state.workflowState}
+            customerName={customerName}
+            onSendMessage={state.sendMessage}
+            onBranchNavigation={state.handleBranchNavigation}
+            onComponentValueChange={state.handleComponentValueChange}
+            onButtonClick={handleChatButtonClick}
+            getNextButtonLabel={getNextButtonLabel}
+          />
+        </div>
+
+        {/* Snoozed Step Overlay */}
+        {isCurrentStepSnoozed && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-white rounded-lg shadow-xl p-8 max-w-md text-center border-2 border-gray-300">
+              <div className="text-6xl mb-4">💤</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Task Snoozed</h3>
+              <p className="text-gray-600 mb-4">Check back later.</p>
+              {snoozeUntil && (
+                <p className="text-sm text-gray-500">
+                  Snoozed until {snoozeUntil.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -339,6 +478,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
             onStepClick={state.goToSlide}
             onToggleStepActionMenu={state.setStepActionMenu}
             onSnoozeStep={(index) => {
+              console.log('[TaskModeFullscreen] onSnoozeStep called for index:', index);
               setShowStepSnoozeModal(index);
               state.setStepActionMenu(null);
             }}
@@ -399,7 +539,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
                       }
                     }}
                     placeholder={state.config.chat?.placeholder || 'Type a message...'}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    className="flex-1 min-w-[200px] px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                   <button
                     onClick={() => {
@@ -493,6 +633,19 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               }}
             />
           )}
+
+          {/* Workflow-level Snooze Modal with Triggers */}
+          {(() => {
+            console.log('[TaskModeFullscreen] Rendering snooze modal area - executionId:', executionId, 'isOpen:', state.isSnoozeModalOpen);
+            return executionId ? (
+              <EnhancedSnoozeModal
+                workflowId={executionId}
+                isOpen={state.isSnoozeModalOpen}
+                onClose={state.closeSnoozeModal}
+                onSnooze={handleWorkflowSnooze}
+              />
+            ) : null;
+          })()}
         </div>
       </div>
     </TaskModeContext.Provider>

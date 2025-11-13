@@ -12,6 +12,13 @@
 // =====================================================
 
 /**
+ * How multiple triggers should be combined
+ * - 'OR': Wake when ANY trigger fires (default for backward compatibility)
+ * - 'AND': Wake only when ALL triggers have fired
+ */
+export type TriggerLogic = 'OR' | 'AND';
+
+/**
  * Unified trigger interface
  * All triggers (date and event) share this base structure
  */
@@ -93,6 +100,7 @@ export interface WorkflowWakeTrigger {
 export interface WorkflowExecutionWithTriggers {
   id: string;
   wake_triggers: WakeTrigger[];
+  wake_trigger_logic?: TriggerLogic; // How to combine triggers (defaults to 'OR')
   last_evaluated_at: string | null;
   trigger_fired_at: string | null;
   fired_trigger_type: 'date' | 'event' | null;

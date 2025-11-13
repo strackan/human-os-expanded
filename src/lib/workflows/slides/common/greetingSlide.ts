@@ -119,7 +119,7 @@ export const greetingSlide: SlideBuilder = createSlideBuilder(
           buttons,
           nextBranches: {
             'start': 'proceed',
-            'snooze': 'handle-snooze',
+            // 'snooze' removed - will fall through to handleButtonClick which opens EnhancedSnoozeModal
           }
         },
         branches: {
@@ -127,10 +127,7 @@ export const greetingSlide: SlideBuilder = createSlideBuilder(
             response: "Great! Let's dive in.",
             actions: ['nextSlide']
           },
-          'handle-snooze': {
-            response: "No problem, I'll remind you later.",
-            actions: ['closeWorkflow']
-          }
+          // 'handle-snooze' branch removed - snooze is now handled by handleButtonClick → handleSnooze
         }
       },
 

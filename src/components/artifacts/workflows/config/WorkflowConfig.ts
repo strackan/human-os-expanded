@@ -208,6 +208,7 @@ export interface WorkflowSlide {
   showSideMenu?: boolean; // Auto-open side menu when entering this slide
   customerOverview?: CustomerOverviewConfig; // Optional override for top-left section (sticky across subsequent slides)
   analytics?: AnalyticsConfigOrTemplate; // Optional override for top-right section (sticky across subsequent slides)
+  previousButton?: string; // Button text that should appear on the PREVIOUS step to launch THIS step (e.g., "Let's draft the quote", "Review the reports")
   chat: {
     initialMessage?: {
       text: string;

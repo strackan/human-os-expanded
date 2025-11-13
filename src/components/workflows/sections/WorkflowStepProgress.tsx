@@ -86,12 +86,12 @@ export default function WorkflowStepProgress({
                         ${isActive && !isSnoozed && !isSkipped ? 'bg-blue-600 text-white ring-4 ring-blue-200' : ''}
                         ${isCompleted && !isSnoozed && !isSkipped ? 'bg-green-600 text-white' : ''}
                         ${isUpcoming && !isSnoozed && !isSkipped ? 'bg-gray-200 text-gray-500' : ''}
-                        ${isSnoozed ? 'bg-orange-50 text-orange-700 border-2 border-orange-400' : ''}
+                        ${isSnoozed ? 'bg-gray-100 text-gray-400 border-2 border-gray-300 opacity-60' : ''}
                         ${isSkipped ? 'bg-gray-100 text-gray-300 border-2 border-gray-300 opacity-60' : ''}
                       `}
                     >
                       {isSnoozed ? (
-                        <span className="text-lg">💤</span>
+                        <span className="text-lg opacity-50">💤</span>
                       ) : isSkipped ? (
                         <span className="text-gray-300">—</span>
                       ) : isCompleted ? (
@@ -103,7 +103,7 @@ export default function WorkflowStepProgress({
 
                     {/* Snooze badge - smaller, bottom-right */}
                     {isSnoozed && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gray-400 rounded-full flex items-center justify-center shadow-sm">
                         <Clock className="w-2.5 h-2.5 text-white" />
                       </div>
                     )}
@@ -122,13 +122,13 @@ export default function WorkflowStepProgress({
                       ${isActive && !isSnoozed && !isSkipped ? 'text-blue-600' : ''}
                       ${isCompleted && !isSnoozed && !isSkipped ? 'text-green-600' : ''}
                       ${isUpcoming && !isSnoozed && !isSkipped ? 'text-gray-500' : ''}
-                      ${isSnoozed ? 'text-orange-600 italic' : ''}
+                      ${isSnoozed ? 'text-gray-400 line-through opacity-60' : ''}
                       ${isSkipped ? 'text-gray-300 line-through opacity-60' : ''}
                     `}
                   >
                     {slide.label}
                     {isSnoozed && snoozeUntil && (
-                      <div className="text-xs text-orange-500 mt-0.5">
+                      <div className="text-xs text-gray-400 mt-0.5">
                         Until {snoozeUntil.toLocaleDateString()}
                       </div>
                     )}
@@ -150,6 +150,7 @@ export default function WorkflowStepProgress({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        console.log('[WorkflowStepProgress] Snooze step button clicked for index:', index);
                         onSnoozeStep(index);
                       }}
                       className="p-1.5 text-orange-600 hover:bg-orange-50 rounded transition-colors"
@@ -176,7 +177,7 @@ export default function WorkflowStepProgress({
                   <div
                     className={`h-1 rounded ${
                       isSnoozed
-                        ? 'bg-orange-300'
+                        ? 'bg-gray-300'
                         : isSkipped
                         ? 'bg-gray-300'
                         : isCompleted

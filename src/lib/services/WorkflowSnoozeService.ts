@@ -71,13 +71,16 @@ export class WorkflowSnoozeService {
     userId: string
   ): Promise<void> {
     try {
+      console.log(`[WorkflowSnoozeService] Starting snooze for workflow ${workflowId}, user ${userId}`);
+      console.log(`[WorkflowSnoozeService] Triggers:`, JSON.stringify(triggers, null, 2));
+
       // Validate inputs
       if (!triggers || triggers.length === 0) {
         throw new Error('At least one trigger is required');
       }
 
       // Update workflow execution with triggers
-      const { error: updateError } = await this.supabase
+      const { data, error: updateError } = await this.supabase
         .from(DB_TABLES.WORKFLOW_EXECUTIONS)
         .update({
           [DB_COLUMNS.STATUS]: WorkflowExecutionStatus.SNOOZED,
@@ -86,10 +89,17 @@ export class WorkflowSnoozeService {
           trigger_fired_at: null, // Clear any previous trigger
           fired_trigger_type: null
         })
-        .eq(DB_COLUMNS.ID, workflowId);
+        .eq(DB_COLUMNS.ID, workflowId)
+        .select();
+
+      console.log(`[WorkflowSnoozeService] Update result:`, { data, error: updateError });
 
       if (updateError) {
         throw new Error(`Failed to snooze workflow: ${updateError.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        console.warn(`[WorkflowSnoozeService] No rows updated for workflow ${workflowId}`);
       }
 
       // Log the snooze action
@@ -98,7 +108,7 @@ export class WorkflowSnoozeService {
         trigger_types: triggers.map(t => t.type)
       });
 
-      console.log(`[WorkflowSnoozeService] Snoozed workflow ${workflowId} with ${triggers.length} triggers`);
+      console.log(`[WorkflowSnoozeService] Successfully snoozed workflow ${workflowId} with ${triggers.length} triggers`);
     } catch (error) {
       console.error('[WorkflowSnoozeService] Error snoozing workflow:', error);
       throw error;
@@ -342,6 +352,9 @@ export class WorkflowSnoozeService {
     includeTriggered: boolean = false
   ): Promise<WorkflowExecutionWithTriggers[]> {
     try {
+      console.log(`[WorkflowSnoozeService] getSnoozedWorkflows for user: ${userId}, includeTriggered: ${includeTriggered}`);
+      console.log(`[WorkflowSnoozeService] Query status filter: ${WorkflowExecutionStatus.SNOOZED}`);
+
       let query = this.supabase
         .from(DB_TABLES.WORKFLOW_EXECUTIONS)
         .select(`
@@ -361,6 +374,11 @@ export class WorkflowSnoozeService {
       }
 
       const { data, error } = await query;
+
+      console.log(`[WorkflowSnoozeService] getSnoozedWorkflows result:`, { count: data?.length, error });
+      if (data && data.length > 0) {
+        console.log(`[WorkflowSnoozeService] Found snoozed workflows:`, data.map(w => ({ id: w.id, status: w.status, wake_triggers: w.wake_triggers })));
+      }
 
       if (error) {
         throw new Error(`Failed to get snoozed workflows: ${error.message}`);
