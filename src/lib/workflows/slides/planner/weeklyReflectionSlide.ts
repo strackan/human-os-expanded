@@ -99,7 +99,7 @@ Ready to plan this week with these insights in mind?`,
                 'label-text': 'text-white'
               }
             ],
-            actions: ['saveReflection', 'nextSlide'],
+            actions: ['goToNextSlide'],
           }
         }
       },

@@ -111,7 +111,7 @@ I'll check in with you:
 
           'back-to-planning': {
             response: 'No problem! Let\'s adjust your plan.',
-            actions: ['previousSlide'],
+            actions: ['goToPreviousSlide'],
           },
 
           'finalize': {
@@ -125,11 +125,10 @@ ${setupCheckIns ? `Check-ins scheduled - I'll keep you on track!` : ''}
 Let me show you the final plan...`,
             delay: 1,
             actions: [
-              'saveCommitments',
               generateCalendarEvents ? 'createCalendarEvents' : null,
               setupCheckIns ? 'scheduleCheckIns' : null,
-              'nextSlide'
-            ].filter(Boolean),
+              'goToNextSlide'
+            ].filter(Boolean) as Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow' | 'navigateToBranch'>,
           }
         }
       },

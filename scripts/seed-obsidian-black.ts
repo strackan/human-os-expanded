@@ -46,9 +46,6 @@ async function seedObsidianBlack() {
       health_score: 64, // 6.4/10
       current_arr: 185000.00,
       renewal_date: '2026-04-15',
-      is_demo: true,
-      primary_contact_name: 'Marcus Castellan',
-      primary_contact_email: 'marcus.castellan@obsidianblack.ops',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
@@ -101,7 +98,6 @@ async function seedObsidianBlack() {
       phone: '+1 (555) 0100',
       title: 'Chief Operating Officer',
       is_primary: true,
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {
@@ -127,7 +123,6 @@ async function seedObsidianBlack() {
       phone: '+1 (555) 0101',
       title: 'VP of Technical Operations',
       is_primary: false,
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {
@@ -153,7 +148,6 @@ async function seedObsidianBlack() {
       phone: '+1 (555) 0102',
       title: 'Director of Strategic Initiatives',
       is_primary: false,
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {
@@ -179,7 +173,6 @@ async function seedObsidianBlack() {
       phone: '+1 (555) 0103',
       title: 'Operations Manager',
       is_primary: false,
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {
@@ -211,7 +204,6 @@ async function seedObsidianBlack() {
       status: 'active',
       auto_renewal: false,
       notes: '3-year contract, 99.5% uptime SLA, critical coordination platform',
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {
@@ -250,7 +242,6 @@ async function seedObsidianBlack() {
       next_action_date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
       notes: 'Account at moderate risk. Operation Blackout ($85K loss) damaged trust. Marcus disengaged for 90 days. Elena evaluating 3 competitors. High expansion potential with Elena initiative.',
       current_phase: 'planning',
-      is_demo: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }, {

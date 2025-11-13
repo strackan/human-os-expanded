@@ -106,7 +106,6 @@ It includes:
 • Goal progress tracking
 
 Download started.`,
-            actions: ['exportToExcel'],
             delay: 2,
             nextBranchOnText: 'workflow-complete',
           },
@@ -120,7 +119,7 @@ Remember:
 • Celebrate progress, not just completion
 
 See you at the mid-week check-in! 👋`,
-            actions: ['completeWorkflow', 'showConfetti'],
+            actions: ['showFinalSlide'],
           }
         }
       },
@@ -130,7 +129,7 @@ See you at the mid-week check-in! 👋`,
           artifactTypes.includes('weekly-plan') ? {
             id: 'weekly-plan-calendar',
             title: 'Weekly Plan',
-            type: 'custom',
+            type: 'custom' as const,
             visible: true,
             data: {
               componentType: 'WeeklyPlanArtifact',
@@ -145,7 +144,7 @@ See you at the mid-week check-in! 👋`,
           artifactTypes.includes('focus-document') ? {
             id: 'focus-document',
             title: 'Focus Document',
-            type: 'custom',
+            type: 'custom' as const,
             visible: true,
             data: {
               componentType: 'FocusDocumentArtifact',
@@ -159,7 +158,7 @@ See you at the mid-week check-in! 👋`,
           artifactTypes.includes('workload-dashboard') ? {
             id: 'workload-dashboard',
             title: 'Customer Timeline',
-            type: 'custom',
+            type: 'custom' as const,
             visible: true,
             data: {
               componentType: 'WorkloadDashboardArtifact',
@@ -170,7 +169,7 @@ See you at the mid-week check-in! 👋`,
               }
             }
           } : null,
-        ].filter(Boolean)
+        ].filter((section): section is NonNullable<typeof section> => section !== null)
       },
 
       // Post-completion actions

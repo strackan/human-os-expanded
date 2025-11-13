@@ -183,7 +183,8 @@ How does this look?`,
                 'label-text': 'text-white'
               }
             ],
-            actions: ['showScheduleArtifact'],
+            actions: ['showArtifact'],
+            artifactId: 'proposed-schedule',
             nextBranches: {
               'accept': 'schedule-accepted',
               'adjust': 'manual-adjustments',
@@ -194,7 +195,8 @@ How does this look?`,
             response: `You can drag tasks onto your calendar, or I can suggest times for specific tasks.
 
 Just click on a task and I'll find the next best opening for it.`,
-            actions: ['showInteractiveScheduler'],
+            actions: ['showArtifact'],
+            artifactId: 'proposed-schedule',
             nextBranchOnText: 'schedule-accepted',
           },
 
@@ -205,7 +207,8 @@ Just click on a task and I'll find the next best opening for it.`,
 • Remove tasks you want to defer
 
 Click "Done" when ready.`,
-            actions: ['showEditableScheduler'],
+            actions: ['showArtifact'],
+            artifactId: 'proposed-schedule',
             nextBranchOnText: 'schedule-accepted',
           },
 
@@ -219,7 +222,7 @@ Summary:
 • {{focus_blocks_used}} focus blocks utilized
 
 Ready to finalize your commitments?`,
-            actions: ['saveSchedule', 'nextSlide'],
+            actions: ['goToNextSlide'],
           }
         }
       },

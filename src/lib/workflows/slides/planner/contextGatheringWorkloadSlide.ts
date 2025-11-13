@@ -83,7 +83,7 @@ One moment...`,
 
 🚨 **CUSTOMER PRIORITIES** ({{workload.renewals.length}})
 {{#each workload.renewals}}
-• {{customer_name}} - Renewal in {{days_until_renewal}} days (${{current_arr}})
+• {{customer_name}} - Renewal in {{days_until_renewal}} days (${'{{current_arr}}'})
 {{/each}}
 {{#if workload.priorities.length}}
 {{#each workload.priorities}}
@@ -105,7 +105,8 @@ One moment...`,
 
 **Which items should we prioritize this week?**`,
             delay: 2, // Give time for workload to load
-            actions: ['showWorkloadArtifact'],
+            actions: ['showArtifact'],
+            artifactId: 'workload-breakdown',
             storeAs: 'selected_priorities',
             nextBranchOnText: 'selection-made',
           },
@@ -117,12 +118,12 @@ One moment...`,
 • {{this.title}}{{/each}}
 
 Let's move on to planning the rest of your week.`,
-            actions: ['nextSlide']
+            actions: ['goToNextSlide']
           },
 
           'skip-to-personal': {
             response: "No problem! Let's focus on your personal goals for the week.",
-            actions: ['nextSlide']
+            actions: ['goToNextSlide']
           }
         }
       },
