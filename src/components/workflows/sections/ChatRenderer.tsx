@@ -43,6 +43,7 @@ interface ChatRendererProps {
   onComponentValueChange: (componentId: string, value: any) => void;
   onButtonClick?: (buttonValue: string) => void;
   getNextButtonLabel?: (originalLabel: string, buttonValue: string) => string;
+  getPreviousButtonLabel?: (originalLabel: string, buttonValue: string) => string;
 }
 
 export default function ChatRenderer({
@@ -54,7 +55,8 @@ export default function ChatRenderer({
   onBranchNavigation,
   onComponentValueChange,
   onButtonClick,
-  getNextButtonLabel
+  getNextButtonLabel,
+  getPreviousButtonLabel
 }: ChatRendererProps) {
   const [pendingComponentValue, setPendingComponentValue] = useState<any>(null);
   const [currentComponentId, setCurrentComponentId] = useState<string | null>(null);
@@ -449,10 +451,21 @@ export default function ChatRenderer({
     return (
       <div className="flex gap-3 mt-4">
         {sortedButtons.map((button, index) => {
-          // Get dynamic button label (if callback provided)
-          const displayLabel = getNextButtonLabel
-            ? getNextButtonLabel(button.label, button.value)
-            : button.label;
+          // Get dynamic button label (try both previous and next button label callbacks)
+          let displayLabel = button.label;
+
+          // Try getPreviousButtonLabel first (for back buttons)
+          if (getPreviousButtonLabel) {
+            const prevLabel = getPreviousButtonLabel(button.label, button.value);
+            if (prevLabel !== button.label) {
+              displayLabel = prevLabel;
+            }
+          }
+
+          // If still unchanged, try getNextButtonLabel (for forward buttons)
+          if (displayLabel === button.label && getNextButtonLabel) {
+            displayLabel = getNextButtonLabel(button.label, button.value);
+          }
 
           return (
             <button

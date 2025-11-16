@@ -49,7 +49,20 @@
       "Bash(vercel:*)",
       "Bash(printf:*)",
       "Bash(node_modules/.bin/tsc:*)",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(tee:*)",
+      "Bash(npx husky:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill //F //PID 31492)",
+      "Bash(taskkill //F //PID 8420)",
+      "Bash(taskkill //F //PID 36760)",
+      "Bash(npm run dev:*)",
+      "Bash(psql:*)",
+      "Bash(STAGING_DATABASE_URL=\"postgresql://postgres:lYjjq0p76p9h6dFB@db.amugmkrihnjsxlpwdzcy.supabase.co:5432/postgres\" npx tsx:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npx lint-staged)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

@@ -160,6 +160,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for automatic timestamp updates
+DROP TRIGGER IF EXISTS workflow_wake_triggers_updated_at ON public.workflow_wake_triggers;
+
 CREATE TRIGGER workflow_wake_triggers_updated_at
     BEFORE UPDATE ON public.workflow_wake_triggers
     FOR EACH ROW
@@ -169,9 +171,12 @@ CREATE TRIGGER workflow_wake_triggers_updated_at
 -- SECTION 7: CREATE HELPER FUNCTIONS FOR TRIGGER EVALUATION
 -- ============================================================================
 
+-- Drop existing function if signature has changed
+DROP FUNCTION IF EXISTS public.get_snoozed_workflows_for_evaluation(INTEGER);
+
 -- Function to get all snoozed workflows that need trigger evaluation
 -- This is called by the cron job (Agent 2)
-CREATE OR REPLACE FUNCTION public.get_snoozed_workflows_for_evaluation(
+CREATE FUNCTION public.get_snoozed_workflows_for_evaluation(
   p_evaluation_interval_minutes INTEGER DEFAULT 5
 )
 RETURNS TABLE (

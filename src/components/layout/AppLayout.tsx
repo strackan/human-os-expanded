@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import QuickCapturePopover from '@/components/string-ties/QuickCapturePopover';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -157,6 +158,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Right: Icons */}
             <div className="flex items-center gap-6">
+              {/* String-Tie Quick Capture */}
+              <QuickCapturePopover />
+
               {/* Check In - Coffee Mug Icon */}
               <button
                 type="button"

@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { X, Clock } from 'lucide-react';
+import { X, Clock, Shield } from 'lucide-react';
 import { WorkflowSlide } from '@/components/artifacts/workflows/config/WorkflowConfig';
 
 interface WorkflowStepProgressProps {
@@ -23,6 +23,7 @@ interface WorkflowStepProgressProps {
   onToggleStepActionMenu: (index: number | null) => void;
   onSnoozeStep: (index: number) => void;
   onSkipStep: (index: number) => void;
+  onReviewStep: (index: number) => void;
 }
 
 export default function WorkflowStepProgress({
@@ -34,7 +35,8 @@ export default function WorkflowStepProgress({
   onStepClick,
   onToggleStepActionMenu,
   onSnoozeStep,
-  onSkipStep
+  onSkipStep,
+  onReviewStep
 }: WorkflowStepProgressProps) {
   return (
     <div className="w-full px-6 py-6 border-b bg-gray-50" id="step-progress-bar">
@@ -140,7 +142,7 @@ export default function WorkflowStepProgress({
                   </div>
                 </button>
 
-                {/* Skip/Snooze Actions */}
+                {/* Step Actions: Snooze / Skip / Review */}
                 {showActions && index > 0 && (
                   <div
                     className="absolute -top-14 left-1/2 -translate-x-1/2 flex gap-1 bg-white rounded-lg shadow-lg border border-gray-200 p-1 z-10 animate-fade-in"
@@ -167,6 +169,17 @@ export default function WorkflowStepProgress({
                       title="Skip this step"
                     >
                       <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        console.log('[WorkflowStepProgress] Review step button clicked for index:', index);
+                        onReviewStep(index);
+                      }}
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Request review for this step"
+                    >
+                      <Shield className="w-4 h-4" />
                     </button>
                   </div>
                 )}

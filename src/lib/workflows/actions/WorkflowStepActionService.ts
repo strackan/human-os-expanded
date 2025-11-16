@@ -210,6 +210,62 @@ export class WorkflowStepActionService {
   }
 
   /**
+   * Request review for a workflow step
+   * Review-only semantics: Original user keeps ownership but step is blocked until approved
+   */
+  async requestStepReview(
+    executionId: string,
+    stepIndex: number,
+    stepId: string,
+    stepLabel: string,
+    userId: string,
+    reviewerId: string,
+    reason?: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      // Update the step in workflow_step_executions table with review request
+      const { error: updateError } = await this.supabase
+        .from('workflow_step_executions')
+        .update({
+          review_required_from: reviewerId,
+          review_status: 'pending',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('workflow_execution_id', executionId)
+        .eq('step_index', stepIndex);
+
+      if (updateError) {
+        console.warn('[WorkflowStepActionService] Could not update workflow_step_executions, may not exist yet:', updateError);
+      }
+
+      // Record action in audit log
+      const { error: actionError } = await this.supabase
+        .from('workflow_step_actions')
+        .insert({
+          execution_id: executionId,
+          step_id: stepId,
+          step_index: stepIndex,
+          step_label: stepLabel,
+          performed_by: userId,
+          action_type: 'request_review' as any, // Will add to enum later if needed
+          action_data: {
+            reviewer_id: reviewerId,
+            reason,
+          },
+          notes: reason,
+        });
+
+      if (actionError) throw actionError;
+
+      console.log('[WorkflowStepActionService] Step review requested:', { executionId, stepIndex, reviewerId });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[WorkflowStepActionService] Request step review error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
    * Get step states for a workflow execution
    */
   async getStepStates(

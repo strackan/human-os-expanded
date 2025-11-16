@@ -27,6 +27,7 @@ export interface CandidateDimensions {
   passions: number;
   culture_fit: number;
   technical: number;
+  ai_readiness: number; // NEW for Release 0.1.7 CS Assessment
   gtm: number;
   eq: number;
   empathy: number;

@@ -99,6 +99,7 @@ export function useTaskModeState({
     stepIndex: number | null;
   }>({ type: null, stepIndex: null });
   const [isSnoozeModalOpen, setIsSnoozeModalOpen] = useState(false);
+  const [isEscalateModalOpen, setIsEscalateModalOpen] = useState(false);
 
   // ============================================================
   // CHAT STATE
@@ -120,6 +121,15 @@ export function useTaskModeState({
       nextIndex++;
     }
     return nextIndex < slides.length ? { index: nextIndex, slide: slides[nextIndex] } : null;
+  }, [currentSlideIndex, slides, skippedSlides, snoozedSlides]);
+
+  // Helper: Get the previous non-snoozed/non-skipped slide
+  const getPreviousAvailableSlide = useCallback(() => {
+    let prevIndex = currentSlideIndex - 1;
+    while (prevIndex >= 0 && (skippedSlides.has(prevIndex) || snoozedSlides.has(prevIndex))) {
+      prevIndex--;
+    }
+    return prevIndex >= 0 ? { index: prevIndex, slide: slides[prevIndex] } : null;
   }, [currentSlideIndex, slides, skippedSlides, snoozedSlides]);
 
   const goToNextSlide = useCallback(() => {
@@ -154,9 +164,18 @@ export function useTaskModeState({
 
   const goToPreviousSlide = useCallback(() => {
     if (currentSlideIndex > 0) {
-      setCurrentSlideIndex(currentSlideIndex - 1);
+      // Find the previous slide that hasn't been skipped or snoozed
+      let prevIndex = currentSlideIndex - 1;
+      while (prevIndex >= 0 && (skippedSlides.has(prevIndex) || snoozedSlides.has(prevIndex))) {
+        prevIndex--;
+      }
+
+      // If we found a valid previous slide, navigate to it
+      if (prevIndex >= 0) {
+        setCurrentSlideIndex(prevIndex);
+      }
     }
-  }, [currentSlideIndex]);
+  }, [currentSlideIndex, skippedSlides, snoozedSlides]);
 
   const goToSlide = useCallback((index: number) => {
     if (completedSlides.has(index)) {
@@ -198,6 +217,17 @@ export function useTaskModeState({
   const closeSnoozeModal = useCallback(() => {
     console.log('[useTaskModeState] closeSnoozeModal called');
     setIsSnoozeModalOpen(false);
+  }, []);
+
+  const handleEscalate = useCallback(() => {
+    // Open the escalate modal to configure escalation
+    console.log('[useTaskModeState] handleEscalate called - opening modal');
+    setIsEscalateModalOpen(true);
+  }, []);
+
+  const closeEscalateModal = useCallback(() => {
+    console.log('[useTaskModeState] closeEscalateModal called');
+    setIsEscalateModalOpen(false);
   }, []);
 
   const handleSkip = useCallback(() => {
@@ -626,6 +656,7 @@ export function useTaskModeState({
     goToPreviousSlide,
     goToSlide,
     getNextAvailableSlide,
+    getPreviousAvailableSlide,
 
     // Chat
     sendMessage: handleSendMessage,
@@ -657,6 +688,11 @@ export function useTaskModeState({
     // Snooze Modal
     isSnoozeModalOpen,
     closeSnoozeModal,
+
+    // Escalate Modal
+    isEscalateModalOpen,
+    handleEscalate,
+    closeEscalateModal,
 
     // Direct state setters for syncing with external sources
     setSnoozedSlides,

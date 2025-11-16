@@ -86,10 +86,16 @@ export function useWorkflowContext(
           .from(DB_TABLES.CUSTOMERS)
           .select('*')
           .eq(DB_COLUMNS.ID, customerId)
-          .single();
+          .maybeSingle();
 
-        if (customerError || !customerData) {
-          throw new Error(`Failed to fetch customer: ${customerError?.message || 'Customer not found'}`);
+        if (customerError) {
+          console.error('[WorkflowContext] Customer query error:', customerError);
+          throw new Error(`Failed to fetch customer: ${customerError.message}`);
+        }
+
+        if (!customerData) {
+          console.error('[WorkflowContext] Customer not found:', customerId);
+          throw new Error(`Customer not found with ID: ${customerId}`);
         }
 
         const customer: CustomerContext = {

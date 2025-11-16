@@ -14,7 +14,8 @@ import {
   CurrencyDollarIcon,
   BellAlertIcon,
   CalendarDaysIcon,
-  ClipboardDocumentCheckIcon
+  ClipboardDocumentCheckIcon,
+  RectangleStackIcon
 } from '@heroicons/react/24/outline';
 
 interface NavItem {
@@ -59,6 +60,12 @@ const primaryNavigation: NavItem[] = [
 
 // Secondary navigation (additional features - shown lower with transparency)
 const secondaryNavigation: NavItem[] = [
+  {
+    name: 'Parking Lot',
+    href: '/parking-lot',
+    icon: RectangleStackIcon,
+    description: 'Idea capture and parking lot'
+  },
   {
     name: 'Tasks',
     href: '/tasks/do',
