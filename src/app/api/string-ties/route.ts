@@ -92,38 +92,59 @@ export async function POST(request: NextRequest) {
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !user) {
+    // Demo mode support
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+    const demoUserId = process.env.NEXT_PUBLIC_DEMO_USER_ID;
+
+    let userId: string | null = null;
+
+    if (isDemoMode && demoUserId) {
+      console.log('[String-Tie Create] Demo mode enabled, using demo user:', demoUserId);
+      userId = demoUserId;
+    } else if (authError || !user) {
+      console.error('[String-Tie Create] Auth error:', authError);
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
+    } else {
+      userId = user.id;
     }
 
     // Parse request body
     const body = await request.json();
-    const { content, source } = body;
+    const { content, source, reminderText, offsetMinutes, priority } = body;
 
-    // Validate inputs
-    if (!content || typeof content !== 'string') {
-      return NextResponse.json(
-        { error: 'content is required and must be a string' },
-        { status: 400 }
-      );
-    }
-
-    if (!source || !isValidStringTieSource(source)) {
-      return NextResponse.json(
-        { error: 'source is required and must be one of: manual, chat_magic_snippet, voice' },
-        { status: 400 }
-      );
-    }
-
-    // Create string tie
+    // Handle two formats: old (content/source) and new (reminderText/offsetMinutes)
+    let stringTie;
     const service = new StringTieService(supabase);
-    const stringTie = await service.create(user.id, {
-      content,
-      source
-    });
+
+    if (reminderText && offsetMinutes !== undefined) {
+      // New format from test page
+      console.log('[String-Tie Create] Creating reminder:', { reminderText, offsetMinutes, priority });
+      stringTie = await service.createFromParsed(userId!, {
+        reminderText,
+        offsetMinutes,
+        priority: priority || 'medium'
+      });
+    } else if (content) {
+      // Old format
+      if (!source || !isValidStringTieSource(source)) {
+        return NextResponse.json(
+          { error: 'source is required and must be one of: manual, chat_magic_snippet, voice' },
+          { status: 400 }
+        );
+      }
+      stringTie = await service.create(userId!, {
+        content,
+        source
+      });
+    } else {
+      return NextResponse.json(
+        { error: 'Either content or reminderText is required' },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

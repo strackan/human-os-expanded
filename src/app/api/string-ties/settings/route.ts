@@ -15,7 +15,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
  * GET /api/string-ties/settings
  * Get user's string tie settings (e.g., default offset)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
 
