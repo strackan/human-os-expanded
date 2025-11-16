@@ -9,7 +9,7 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { StringTieParser } from './StringTieParser';
-import { StringTie, CreateStringTieInput, StringTieFilters } from '@/types/string-ties';
+import { StringTie, StringTieFilters } from '@/types/string-ties';
 import { DB_TABLES } from '@/lib/constants/database';
 
 // =====================================================
@@ -509,6 +509,58 @@ export class StringTieService {
       console.log(`[StringTieService] Successfully set default offset for user ${userId}`);
     } catch (error) {
       console.error('[StringTieService] Error setting user default offset:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a string tie from already-parsed reminder data
+   * Used when caller has already run LLM parsing
+   *
+   * @param userId - User ID creating the reminder
+   * @param parsed - Pre-parsed reminder data
+   * @returns Created string tie
+   */
+  async createFromParsed(
+    userId: string,
+    parsed: {
+      reminderText: string;
+      offsetMinutes: number;
+      priority?: 'low' | 'medium' | 'high';
+    }
+  ): Promise<StringTie> {
+    try {
+      console.log(`[StringTieService] Creating string tie from parsed data for user ${userId}`);
+      console.log(`[StringTieService] Parsed:`, parsed);
+
+      // Calculate remind_at timestamp
+      const remindAt = new Date(Date.now() + parsed.offsetMinutes * 60 * 1000);
+
+      // Insert into database
+      const { data, error } = await this.supabase
+        .from(DB_TABLES.STRING_TIES)
+        .insert({
+          user_id: userId,
+          content: parsed.reminderText, // Use reminder text as content
+          reminder_text: parsed.reminderText,
+          remind_at: remindAt.toISOString(),
+          source: 'manual', // Assume manual for pre-parsed reminders
+          default_offset_minutes: parsed.offsetMinutes,
+          reminded: false,
+          dismissed_at: null
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create string tie: ${error.message}`);
+      }
+
+      console.log(`[StringTieService] Created string tie:`, data);
+
+      return data as StringTie;
+    } catch (error) {
+      console.error('[StringTieService] Error creating string tie from parsed:', error);
       throw error;
     }
   }
