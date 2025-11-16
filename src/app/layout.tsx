@@ -11,6 +11,8 @@ import { PageTransitionProvider } from "../components/layout/PageTransitionConte
 import AuthProvider from "@/components/auth/AuthProvider";
 import RouteGuard from "@/components/auth/RouteGuard";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
+import VersionIndicator from "@/components/layout/VersionIndicator";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -44,22 +46,25 @@ export default function RootLayout({
         <Script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous" strategy="beforeInteractive" />
       </head>
       <body className={inter.className}>
-        <ToastProvider>
-          <AuthProvider>
-            <RouteGuard>
-              <ChatProvider>
-                <DateProvider>
-                  <PageTransitionProvider>
-                    <AppLayout>
-                      {children}
-                      <GlobalChat />
-                    </AppLayout>
-                  </PageTransitionProvider>
-                </DateProvider>
-              </ChatProvider>
-            </RouteGuard>
-          </AuthProvider>
-        </ToastProvider>
+        <QueryProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <RouteGuard>
+                <ChatProvider>
+                  <DateProvider>
+                    <PageTransitionProvider>
+                      <AppLayout>
+                        {children}
+                        <GlobalChat />
+                        <VersionIndicator />
+                      </AppLayout>
+                    </PageTransitionProvider>
+                  </DateProvider>
+                </ChatProvider>
+              </RouteGuard>
+            </AuthProvider>
+          </ToastProvider>
+        </QueryProvider>
       </body>
     </html>
   );
