@@ -26,6 +26,7 @@
     "commit": "npx tsx scripts/commit-and-track.ts",
     "snapshot": "npx tsx scripts/snapshot-release.ts",
     "roadmap": "npx tsx scripts/generate-roadmap.ts",
+    "parking-lot:evaluate": "npx tsx scripts/evaluate-parking-lot-triggers.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -34,6 +35,7 @@
     "@radix-ui/react-popover": "^1.1.13",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
+    "@tanstack/react-query": "^5.90.9",
     "@types/handlebars": "^4.0.40",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
