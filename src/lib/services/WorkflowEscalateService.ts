@@ -10,9 +10,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
+import { FEATURE_FLAGS } from '@/lib/constants/feature-flags';
 import { EscalateTrigger } from '@/types/escalate-triggers';
 import { EscalateTriggerEvaluator } from './EscalateTriggerEvaluator';
+import { EscalateTriggerEvaluatorV2 } from './triggers/EscalateTriggerEvaluatorV2';
 import { WorkflowExecution } from './WorkflowExecutionService';
+
+// Select evaluator based on feature flag
+const Evaluator = FEATURE_FLAGS.USE_BASE_TRIGGER_EVALUATOR
+  ? EscalateTriggerEvaluatorV2
+  : EscalateTriggerEvaluator;
 
 // =====================================================
 // Types
@@ -224,8 +231,8 @@ export class WorkflowEscalateService {
         return { notified: false };
       }
 
-      // Evaluate all triggers using EscalateTriggerEvaluator
-      const evaluationResult = await EscalateTriggerEvaluator.evaluateAllTriggers(
+      // Evaluate all triggers using selected Evaluator (based on feature flag)
+      const evaluationResult = await Evaluator.evaluateAllTriggers(
         workflow.id,
         triggers,
         this.supabase
@@ -233,7 +240,7 @@ export class WorkflowEscalateService {
 
       // Log each trigger evaluation to workflow_escalate_triggers table
       for (const { trigger, result } of evaluationResult.evaluationResults) {
-        await EscalateTriggerEvaluator.logTriggerEvaluation(
+        await Evaluator.logTriggerEvaluation(
           workflow.id,
           trigger,
           result,
@@ -242,7 +249,7 @@ export class WorkflowEscalateService {
       }
 
       // Update escalate_last_evaluated_at
-      await EscalateTriggerEvaluator.updateWorkflowWithEvaluationResults(
+      await Evaluator.updateWorkflowWithEvaluationResults(
         workflow.id,
         evaluationResult.shouldNotify,
         evaluationResult.firedTrigger,

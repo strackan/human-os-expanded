@@ -59,6 +59,7 @@ export interface DynamicChatButton {
   value: string;
   'label-background'?: string;
   'label-text'?: string;
+  completeStep?: string; // Step ID to mark as complete when button is clicked
 }
 
 // Inline component types for chat

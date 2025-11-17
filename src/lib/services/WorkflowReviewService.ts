@@ -11,9 +11,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
+import { FEATURE_FLAGS } from '@/lib/constants/feature-flags';
 import { ReviewTrigger, TriggerEvaluationResult, ReviewStatus } from '@/types/review-triggers';
 import { ReviewTriggerEvaluator } from './ReviewTriggerEvaluator';
+import { ReviewTriggerEvaluatorV2 } from './triggers/ReviewTriggerEvaluatorV2';
 import { WorkflowExecution } from './WorkflowExecutionService';
+
+// Select evaluator based on feature flag
+const Evaluator = FEATURE_FLAGS.USE_BASE_TRIGGER_EVALUATOR
+  ? ReviewTriggerEvaluatorV2
+  : ReviewTriggerEvaluator;
 
 // =====================================================
 // Types
@@ -229,8 +236,8 @@ export class WorkflowReviewService {
         return { notified: false };
       }
 
-      // Evaluate all triggers using ReviewTriggerEvaluator
-      const evaluationResult = await ReviewTriggerEvaluator.evaluateAllTriggers(
+      // Evaluate all triggers using selected Evaluator (based on feature flag)
+      const evaluationResult = await Evaluator.evaluateAllTriggers(
         workflow.id,
         triggers,
         this.supabase
@@ -238,7 +245,7 @@ export class WorkflowReviewService {
 
       // Log each trigger evaluation to workflow_review_triggers table
       for (const { trigger, result } of evaluationResult.evaluationResults) {
-        await ReviewTriggerEvaluator.logTriggerEvaluation(
+        await Evaluator.logTriggerEvaluation(
           workflow.id,
           trigger,
           result,
@@ -247,7 +254,7 @@ export class WorkflowReviewService {
       }
 
       // Update review_last_evaluated_at
-      await ReviewTriggerEvaluator.updateWorkflowWithEvaluationResults(
+      await Evaluator.updateWorkflowWithEvaluationResults(
         workflow.id,
         evaluationResult.shouldNotify,
         evaluationResult.firedTrigger,

@@ -62,7 +62,9 @@
       "Bash(STAGING_DATABASE_URL=\"postgresql://postgres:lYjjq0p76p9h6dFB@db.amugmkrihnjsxlpwdzcy.supabase.co:5432/postgres\" npx tsx:*)",
       "Bash(npx eslint:*)",
       "Bash(npx lint-staged)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(set NEXT_PUBLIC_SUPABASE_URL=https://amugmkrihnjsxlpwdzcy.supabase.co:*)",
+      "Bash(set:*)"
     ],
     "deny": [],
     "ask": []

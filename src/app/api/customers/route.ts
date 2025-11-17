@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 import { validateQueryParams, validateRequest, CustomerQuerySchema, CreateCustomerSchema } from '@/lib/validation';
 
 export async function GET(request: NextRequest) {
@@ -44,15 +44,24 @@ export async function GET(request: NextRequest) {
     if (healthScoreMax) filters.health_score_max = healthScoreMax;
     if (minARR) filters.current_arr_min = minARR;
 
-    // Get authenticated user and company_id
-    const supabase = createServiceRoleClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Check if demo mode or auth bypass is enabled (following renubu.demo pattern)
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+
+    // Get authenticated user first (always use server client for auth)
+    const authSupabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's company_id from profiles
+    // Use service role client for database queries in demo mode to bypass RLS
+    const supabase = (isDemoMode || authBypassEnabled)
+      ? createServiceRoleClient()
+      : authSupabase;
+
+    // Get user's company_id from profiles (using service role in demo mode bypasses RLS)
     const { data: profile } = await supabase
       .from('profiles')
       .select('company_id')
@@ -67,6 +76,7 @@ export async function GET(request: NextRequest) {
 
     console.log('🔍 API route calling CustomerService with filters:', filters);
     console.log('🔍 Company ID:', profile.company_id);
+    console.log('🎮 Using service role client:', isDemoMode || authBypassEnabled);
     const result = await CustomerService.getCustomers(profile.company_id, filters, sortOptions, page, pageSize, supabase);
 
     return NextResponse.json({
@@ -83,8 +93,8 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : 'No stack trace'
     });
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch customers', 
+      {
+        error: 'Failed to fetch customers',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
@@ -105,15 +115,24 @@ export async function POST(request: NextRequest) {
 
     const { name, domain, industry, healthScore, renewalDate, currentArr, assignedTo } = validation.data;
 
-    // Get authenticated user and company_id
-    const supabase = createServiceRoleClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Check if demo mode or auth bypass is enabled (following renubu.demo pattern)
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+
+    // Get authenticated user first (always use server client for auth)
+    const authSupabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's company_id from profiles
+    // Use service role client for database queries in demo mode to bypass RLS
+    const supabase = (isDemoMode || authBypassEnabled)
+      ? createServiceRoleClient()
+      : authSupabase;
+
+    // Get user's company_id from profiles (using service role in demo mode bypasses RLS)
     const { data: profile } = await supabase
       .from('profiles')
       .select('company_id')

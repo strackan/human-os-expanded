@@ -1,18 +1,31 @@
 /**
- * TaskMode - Modular Architecture
+ * TaskMode - Feature Flag Router
  *
- * This is the new refactored version of TaskModeFullscreen-v3.
+ * Routes between V1 (monolithic) and V2 (modular) based on feature flag.
  *
- * Export facade to maintain backward compatibility with existing imports.
- * Components can continue to import from the same path:
- *   import TaskModeFullscreen from '@/components/workflows/TaskModeFullscreen-v3'
+ * V1 (TaskModeFullscreen.tsx): 1,151 lines - Original monolithic component
+ * V2 (TaskModeFullscreenV2.tsx): ~350 lines - Modular architecture with 6 child components
  *
- * Will now resolve to the modular version.
+ * Feature flag: USE_MODULAR_TASK_MODE
+ * - false (default): Use V1 for safety
+ * - true: Use V2 for improved maintainability
+ *
+ * Rollback: Set NEXT_PUBLIC_USE_MODULAR_TASK_MODE=false in .env.local
  */
 
-export { default } from './TaskModeFullscreen';
+import { FEATURE_FLAGS } from '@/lib/constants/feature-flags';
+import TaskModeFullscreenV1 from './TaskModeFullscreen';
+import TaskModeFullscreenV2 from './TaskModeFullscreenV2';
+
+// Export the appropriate version based on feature flag
+export default FEATURE_FLAGS.USE_MODULAR_TASK_MODE
+  ? TaskModeFullscreenV2
+  : TaskModeFullscreenV1;
+
+// Always export context and hooks
 export { default as TaskModeContext, useTaskModeContext } from './TaskModeContext';
 export { useTaskModeState } from './hooks/useTaskModeState';
+export { useTaskModeStateV2 } from './hooks/useTaskModeStateV2';
 
 // Re-export types
 export type { TaskModeContextValue } from './TaskModeContext';

@@ -44,24 +44,78 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     const demoConfig = getDemoModeConfig()
 
     if (demoConfig.enabled) {
-      // Auto-login as the configured demo user without Supabase auth
-      // This allows RLS policies to work correctly with real user data
-      const demoUser = {
-        id: demoConfig.userId,
-        email: demoConfig.userEmail,
-        user_metadata: {
-          full_name: 'Justin Stracity',
-          company_name: 'Renubu'
-        },
-        app_metadata: {},
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
-      } as User
+      // Auto-login as the configured demo user WITH real Supabase session
+      // Following renubu.demo pattern: check for existing session first
+      const autoDemoLogin = async () => {
+        try {
+          // First check if there's already a session (optimization from renubu.demo)
+          const { data: { session } } = await supabase.auth.getSession()
 
-      console.log('🎮 [DEMO MODE] Auto-authenticated as', demoConfig.userEmail)
-      console.log('🎮 [DEMO MODE] Reason:', demoConfig.reason)
-      setUser(demoUser)
-      setLoading(false)
+          // If session exists, use it and skip demo login
+          if (session?.user) {
+            console.log('✅ [DEMO MODE] Existing session found:', session.user.email)
+            setUser(session.user)
+            setLoading(false)
+            return
+          }
+
+          // No session exists, attempt demo auto-login
+          const demoEmail = process.env.NEXT_PUBLIC_DEMO_USER_EMAIL || 'justin@renubu.com'
+          const demoPassword = process.env.NEXT_PUBLIC_DEMO_USER_PASSWORD
+
+          if (!demoPassword) {
+            console.error('❌ [DEMO MODE] NEXT_PUBLIC_DEMO_USER_PASSWORD not configured')
+            console.log('🎮 [DEMO MODE] Falling back to fake user (API calls will fail)')
+            const demoUser = {
+              id: demoConfig.userId,
+              email: demoConfig.userEmail,
+              user_metadata: { full_name: 'Justin Stracity', company_name: 'Renubu' },
+              app_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString(),
+            } as User
+            setUser(demoUser)
+            setLoading(false)
+            return
+          }
+
+          console.log('🎮 [DEMO MODE] No session found, signing in as', demoEmail)
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email: demoEmail,
+            password: demoPassword,
+          })
+
+          if (error) {
+            console.error('❌ [DEMO MODE] Sign-in failed:', error.message)
+            console.log('🎮 [DEMO MODE] Falling back to fake user (API calls will fail)')
+            const demoUser = {
+              id: demoConfig.userId,
+              email: demoConfig.userEmail,
+              user_metadata: { full_name: 'Justin Stracity', company_name: 'Renubu' },
+              app_metadata: {},
+              aud: 'authenticated',
+              created_at: new Date().toISOString(),
+            } as User
+            setUser(demoUser)
+            setLoading(false)
+            return
+          }
+
+          if (data.user) {
+            console.log('✅ [DEMO MODE] Auto-authenticated with real session:', demoEmail)
+            console.log('🎮 [DEMO MODE] Reason:', demoConfig.reason)
+            console.log('🎮 [DEMO MODE] Session established - API calls will work')
+            setUser(data.user)
+            setLoading(false)
+            return
+          }
+        } catch (err) {
+          console.error('❌ [DEMO MODE] Unexpected error:', err)
+          setLoading(false)
+        }
+      }
+
+      autoDemoLogin()
       return
     }
 

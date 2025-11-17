@@ -1,7 +1,40 @@
 import { WorkflowConfig, WorkflowSlide, DynamicChatBranch } from '../WorkflowConfig';
+import { FEATURE_FLAGS } from '@/lib/constants/feature-flags';
 
-// Slide-based workflow configuration
-export const dynamicChatSlides: WorkflowSlide[] = [
+// Modular workflow system (when feature flag is enabled)
+let modularSlides: WorkflowSlide[] | null = null;
+
+/**
+ * Get workflow slides using feature flag
+ * - If USE_MODULAR_WORKFLOW_CONFIGS is true: Use composed modular config
+ * - Otherwise: Use legacy hardcoded config
+ */
+function getDynamicChatSlides(): WorkflowSlide[] {
+  if (FEATURE_FLAGS.USE_MODULAR_WORKFLOW_CONFIGS) {
+    // Lazy load modular system to avoid import errors when flag is false
+    if (!modularSlides) {
+      try {
+        const { WorkflowBuilder } = require('@/workflows/composers/WorkflowBuilder');
+        const { renewalComposition } = require('@/workflows/templates/renewal');
+
+        const builder = new WorkflowBuilder();
+        modularSlides = builder.build(renewalComposition);
+
+        console.log('[Workflow] Using modular workflow configuration');
+      } catch (error) {
+        console.error('[Workflow] Error loading modular config, falling back to legacy:', error);
+        return legacyDynamicChatSlides;
+      }
+    }
+    return modularSlides;
+  }
+
+  console.log('[Workflow] Using legacy workflow configuration');
+  return legacyDynamicChatSlides;
+}
+
+// Legacy slide-based workflow configuration
+const legacyDynamicChatSlides: WorkflowSlide[] = [
   {
     id: 'initial-contact',
     slideNumber: 1,
@@ -643,6 +676,9 @@ P.S. I've also prepared some usage analytics that I think you'll find valuable f
     }
   }
 ];
+
+// Export slides using feature flag
+export const dynamicChatSlides: WorkflowSlide[] = getDynamicChatSlides();
 
 // Legacy configuration for backward compatibility
 export const dynamicChatAI: WorkflowConfig = {

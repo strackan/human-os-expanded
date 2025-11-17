@@ -1,25 +1,20 @@
 // src/app/api/contracts/route.ts - SECURED with multi-tenant isolation
 import { NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/lib/supabase-server'
+import { getAuthenticatedClient, getUserCompanyId } from '@/lib/supabase-server'
 
 export async function GET() {
   try {
-    // 1. Authenticate user
-    const supabase = createServiceRoleClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    // 1. Authenticate user and get client (with RLS bypass in demo mode)
+    const { user, supabase, error: authError } = await getAuthenticatedClient()
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // 2. Get user's company_id from profiles
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single()
+    const companyId = await getUserCompanyId(user.id, supabase)
 
-    if (!profile?.company_id) {
+    if (!companyId) {
       return NextResponse.json({ error: 'No company associated with user' }, { status: 403 })
     }
 
@@ -37,7 +32,7 @@ export async function GET() {
           company_id
         )
       `)
-      .eq('customers.company_id', profile.company_id)
+      .eq('customers.company_id', companyId)
       .order('end_date', { ascending: true })
 
     if (error) {

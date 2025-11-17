@@ -10,9 +10,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { DB_TABLES, DB_COLUMNS } from '@/lib/constants/database';
 import { WorkflowExecutionStatus } from '@/lib/constants/status-enums';
+import { FEATURE_FLAGS } from '@/lib/constants/feature-flags';
 import { SkipTrigger } from '@/types/skip-triggers';
 import { SkipTriggerEvaluator } from './SkipTriggerEvaluator';
+import { SkipTriggerEvaluatorV2 } from './triggers/SkipTriggerEvaluatorV2';
 import { WorkflowExecution } from './WorkflowExecutionService';
+
+// Select evaluator based on feature flag
+const Evaluator = FEATURE_FLAGS.USE_BASE_TRIGGER_EVALUATOR
+  ? SkipTriggerEvaluatorV2
+  : SkipTriggerEvaluator;
 
 // =====================================================
 // Types
@@ -215,8 +222,8 @@ export class WorkflowSkipService {
         return { reactivated: false };
       }
 
-      // Evaluate all triggers using SkipTriggerEvaluator
-      const evaluationResult = await SkipTriggerEvaluator.evaluateAllTriggers(
+      // Evaluate all triggers using selected Evaluator (based on feature flag)
+      const evaluationResult = await Evaluator.evaluateAllTriggers(
         workflow.id,
         triggers,
         this.supabase
@@ -224,7 +231,7 @@ export class WorkflowSkipService {
 
       // Log each trigger evaluation to workflow_skip_triggers table
       for (const { trigger, result } of evaluationResult.evaluationResults) {
-        await SkipTriggerEvaluator.logTriggerEvaluation(
+        await Evaluator.logTriggerEvaluation(
           workflow.id,
           trigger,
           result,
@@ -233,7 +240,7 @@ export class WorkflowSkipService {
       }
 
       // Update skip_last_evaluated_at
-      await SkipTriggerEvaluator.updateWorkflowWithEvaluationResults(
+      await Evaluator.updateWorkflowWithEvaluationResults(
         workflow.id,
         evaluationResult.shouldReactivate,
         evaluationResult.firedTrigger,

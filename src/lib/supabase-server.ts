@@ -137,10 +137,10 @@ export const validateSessionConsistency = async () => {
 export const checkAuthCookies = async () => {
   try {
     const cookieStore = await cookies()
-    const authCookies = cookieStore.getAll().filter(cookie => 
+    const authCookies = cookieStore.getAll().filter(cookie =>
       cookie.name.includes('auth') || cookie.name.includes('supabase')
     )
-    
+
     return {
       hasAuthCookies: authCookies.length > 0,
       cookieCount: authCookies.length,
@@ -154,5 +154,104 @@ export const checkAuthCookies = async () => {
       cookies: [],
       error
     }
+  }
+}
+
+/**
+ * Get authenticated Supabase client for API routes (TWO-CLIENT PATTERN)
+ *
+ * This is the DEFAULT way to handle authentication + RLS bypass in demo mode.
+ *
+ * Pattern from renubu.demo:
+ * - Always use server client for authentication (auth.getUser())
+ * - Use service role client for DB queries in demo mode (bypasses RLS)
+ * - This separates authentication from RLS bypass
+ *
+ * @returns Object with user and supabase client
+ *
+ * @example
+ * ```ts
+ * export async function GET() {
+ *   const { user, supabase, error } = await getAuthenticatedClient();
+ *   if (error || !user) {
+ *     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+ *   }
+ *
+ *   // Now use supabase for DB queries (bypasses RLS in demo mode)
+ *   const { data } = await supabase.from('customers').select('*');
+ *   return NextResponse.json(data);
+ * }
+ * ```
+ */
+export async function getAuthenticatedClient() {
+  try {
+    // Check if demo mode or auth bypass is enabled (following renubu.demo pattern)
+    const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+
+    // Always use server client for authentication
+    const authSupabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        user: null,
+        supabase: authSupabase,
+        error: authError || new Error('No user found')
+      };
+    }
+
+    // Use service role client for database queries in demo mode to bypass RLS
+    const supabase = (isDemoMode || authBypassEnabled)
+      ? createServiceRoleClient()
+      : authSupabase;
+
+    return {
+      user,
+      supabase,
+      error: null,
+      isDemoMode: isDemoMode || authBypassEnabled
+    };
+  } catch (error) {
+    console.error('Error in getAuthenticatedClient:', error);
+    return {
+      user: null,
+      supabase: await createServerSupabaseClient(),
+      error: error instanceof Error ? error : new Error('Unknown error')
+    };
+  }
+}
+
+/**
+ * Get user's company_id from profiles table
+ *
+ * Helper to get the company_id for multi-tenant filtering.
+ * Uses the supabase client from getAuthenticatedClient() which bypasses RLS in demo mode.
+ *
+ * @param userId - The user ID to look up
+ * @param supabase - The Supabase client to use (from getAuthenticatedClient)
+ * @returns The company_id or null
+ *
+ * @example
+ * ```ts
+ * const { user, supabase } = await getAuthenticatedClient();
+ * const companyId = await getUserCompanyId(user.id, supabase);
+ * if (!companyId) {
+ *   return NextResponse.json({ error: 'No company' }, { status: 403 });
+ * }
+ * ```
+ */
+export async function getUserCompanyId(userId: string, supabase: any): Promise<string | null> {
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_id')
+      .eq('id', userId)
+      .single();
+
+    return profile?.company_id || null;
+  } catch (error) {
+    console.error('Error getting user company_id:', error);
+    return null;
   }
 }
