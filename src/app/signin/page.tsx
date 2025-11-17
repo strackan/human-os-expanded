@@ -81,23 +81,37 @@ export default function SignInPage() {
 
   const signInWithEmail = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     try {
       const start = performance.now()
       console.log("🧐 [EMAIL LOGIN] Starting sign-in at", new Date().toISOString())
-  
+      console.log("🧐 [EMAIL LOGIN] Credentials:", { email, passwordLength: password.length })
+
       setIsLoading(true)
       setError(null)
-      
-      const { error } = await supabase.auth.signInWithPassword({
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       const mid = performance.now()
       console.log(`🧐 [EMAIL LOGIN] Supabase response in ${(mid - start).toFixed(2)} ms`)
+      console.log("🧐 [EMAIL LOGIN] Response data:", {
+        hasUser: !!data?.user,
+        hasSession: !!data?.session,
+        userEmail: data?.user?.email,
+        error: error?.message
+      })
 
-      if (error) throw error
+      if (error) {
+        console.error("🧐 [EMAIL LOGIN] Auth error details:", {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        })
+        throw error
+      }
   
       // 🚫 Commented out direct navigation — let RouteGuard handle it
       // router.push(next)
@@ -217,10 +231,10 @@ export default function SignInPage() {
 
   // ✅ UI restored
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8" data-testid="signin-page">
       <div className="w-full max-w-md space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900" data-testid="signin-heading">
             Sign in to Renubu
           </h2>
         </div>

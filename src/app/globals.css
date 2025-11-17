@@ -152,9 +152,12 @@ input[type="number"],
 input[type="search"],
 input[type="tel"],
 input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
 textarea,
 select {
-  color: rgb(17 24 39); /* gray-900 for input text in light mode */
+  color: rgb(17 24 39) !important; /* gray-900 for input text in light mode */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -165,14 +168,39 @@ select {
   input[type="search"],
   input[type="tel"],
   input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
   textarea,
   select {
-    color: rgb(243 244 246); /* gray-100 for input text in dark mode */
+    color: rgb(243 244 246) !important; /* gray-100 for input text in dark mode */
   }
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: rgb(156 163 175); /* gray-400 for placeholder */
+  color: rgb(107 114 128) !important; /* gray-500 for better placeholder visibility */
   opacity: 1;
+}
+
+/* Override any conflicting text color utilities */
+.text-gray-300,
+.text-gray-400 {
+  color: rgb(75 85 99) !important; /* gray-600 minimum for readability */
+}
+
+.text-gray-500 {
+  color: rgb(55 65 81) !important; /* gray-700 for better contrast */
+}
+
+/* Ensure labels and general text have good contrast */
+label {
+  color: rgb(55 65 81); /* gray-700 for labels */
+}
+
+/* Body text default */
+p,
+span,
+div {
+  color: inherit; /* Inherit from parent or use gray-900 if not set */
 }
