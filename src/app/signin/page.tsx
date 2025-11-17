@@ -85,7 +85,12 @@ export default function SignInPage() {
     try {
       const start = performance.now()
       console.log("🧐 [EMAIL LOGIN] Starting sign-in at", new Date().toISOString())
-      console.log("🧐 [EMAIL LOGIN] Credentials:", { email, passwordLength: password.length })
+      console.log("🧐 [EMAIL LOGIN] Credentials:", {
+        email,
+        passwordLength: password.length,
+        passwordPreview: password.substring(0, 5) + '...',
+        passwordChars: password.split('').map((c, i) => `[${i}]=${c.charCodeAt(0)}`).slice(0, 15)
+      })
 
       setIsLoading(true)
       setError(null)
@@ -303,11 +308,18 @@ export default function SignInPage() {
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="off"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  console.log('Password changed:', e.target.value.length, 'chars');
+                  setPassword(e.target.value);
+                }}
+                onPaste={(e) => {
+                  console.log('Password pasted:', e.clipboardData.getData('text').length, 'chars');
+                }}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2 border text-gray-900"
+                data-testid="password-input"
               />
             </div>
 
