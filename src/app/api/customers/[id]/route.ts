@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient, getUserCompanyId } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
@@ -9,26 +9,23 @@ export async function GET(
   try {
     const resolvedParams = await params;
 
-    // Get authenticated user and company_id
-    const supabase = createServiceRoleClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated user and supabase client (handles demo mode)
+    const { user, supabase, error: authError } = await getAuthenticatedClient();
 
     if (authError || !user) {
+      console.error('[Customer API] Auth error:', authError?.message);
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user's company_id from profiles
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('company_id')
-      .eq('id', user.id)
-      .single();
+    const companyId = await getUserCompanyId(user.id, supabase);
 
-    if (!profile?.company_id) {
+    if (!companyId) {
+      console.error('[Customer API] No company_id for user:', user.id);
       return NextResponse.json({ error: 'No company associated with user' }, { status: 403 });
     }
 
-    const customer = await CustomerService.getCustomerById(resolvedParams.id, profile.company_id, supabase);
+    const customer = await CustomerService.getCustomerById(resolvedParams.id, companyId, supabase);
 
     if (!customer) {
       return NextResponse.json(
