@@ -64,7 +64,9 @@
       "Bash(npx lint-staged)",
       "Bash(npm run lint)",
       "Bash(set NEXT_PUBLIC_SUPABASE_URL=https://amugmkrihnjsxlpwdzcy.supabase.co:*)",
-      "Bash(set:*)"
+      "Bash(set:*)",
+      "Bash(lib/assessment/types_temp.ts)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

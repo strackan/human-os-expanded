@@ -11,7 +11,8 @@ import {
   UserGroupIcon,
   DocumentTextIcon,
   PhoneIcon,
-  EnvelopeIcon
+  EnvelopeIcon,
+  PlayIcon
 } from '@heroicons/react/24/outline';
 import { CustomerService } from '../../../../lib/services/CustomerService';
 import { CustomerWithContact } from '../../../../types/customer';
@@ -22,6 +23,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
   const [customer, setCustomer] = useState<CustomerWithContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [launchingWorkflow, setLaunchingWorkflow] = useState(false);
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -152,6 +154,72 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
       setCustomer(updatedCustomer);
     } catch (error) {
       console.error('Error updating customer:', error);
+    }
+  };
+
+  const handleLaunchWorkflow = async () => {
+    if (!customer) return;
+
+    try {
+      setLaunchingWorkflow(true);
+
+      // Get current user from auth
+      const authResponse = await fetch('/api/auth/status');
+      const authData = await authResponse.json();
+
+      if (!authData.user) {
+        alert('Not authenticated');
+        return;
+      }
+
+      // Determine which workflow template to use based on days to renewal
+      const daysUntilRenewal = Math.ceil(
+        (new Date(customer.renewal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Use renewal_base template for all renewals
+      const templateName = 'renewal_base';
+
+      console.log('🚀 Launching workflow:', {
+        customerId: customer.id,
+        customerName: customer.name,
+        daysUntilRenewal,
+        templateName
+      });
+
+      // Call workflow compile API to create execution
+      const response = await fetch('/api/workflows/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateName,
+          customerId: customer.id,
+          userId: authData.user.id,
+          createExecution: true
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to launch workflow');
+      }
+
+      const result = await response.json();
+
+      console.log('✅ Workflow launched:', result);
+
+      // Navigate to the workflow execution
+      if (result.data.executionId) {
+        router.push(`/workflows?executionId=${result.data.executionId}`);
+      } else {
+        alert('Workflow launched successfully!');
+      }
+
+    } catch (error) {
+      console.error('Error launching workflow:', error);
+      alert(error instanceof Error ? error.message : 'Failed to launch workflow');
+    } finally {
+      setLaunchingWorkflow(false);
     }
   };
 
@@ -383,7 +451,15 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <button
+                  onClick={handleLaunchWorkflow}
+                  disabled={launchingWorkflow}
+                  className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <PlayIcon className="w-4 h-4 mr-2" />
+                  {launchingWorkflow ? 'Launching...' : 'Launch Renewal Workflow'}
+                </button>
+                <button className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                   <ChartBarIcon className="w-4 h-4 mr-2" />
                   View Analytics
                 </button>

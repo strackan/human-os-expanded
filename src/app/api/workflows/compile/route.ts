@@ -8,8 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 import { WorkflowCompilationService } from '@/lib/services/WorkflowCompilationService';
+import { getAuthenticatedClient } from '@/lib/supabase-server';
 
 /**
  * POST /api/workflows/compile
@@ -43,7 +43,16 @@ import { WorkflowCompilationService } from '@/lib/services/WorkflowCompilationSe
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // Get authenticated user and supabase client (handles demo mode)
+    const { user, supabase, error: authError } = await getAuthenticatedClient();
+
+    if (authError || !user) {
+      console.error('[Workflow Compile API] Auth error:', authError?.message);
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     // Parse request body
     const body = await request.json();
@@ -180,7 +189,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient();
+    // Get authenticated user and supabase client (handles demo mode)
+    const { user, supabase, error: authError } = await getAuthenticatedClient();
+
+    if (authError || !user) {
+      console.error('[Workflow Compile API] Auth error:', authError?.message);
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
 
     const category = searchParams.get('category');
