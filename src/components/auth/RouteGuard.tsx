@@ -29,17 +29,17 @@ export default function RouteGuard({ children }: RouteGuardProps) {
       demoReason: demoConfig.reason
     })
 
-    // If DEMO_MODE is enabled, skip all auth checks
-    if (demoConfig.enabled) {
-      console.log('🎮 DEMO MODE: Skipping auth check for:', pathname)
-      console.log('🎮 DEMO MODE:', demoConfig.reason)
+    // Fix: redirect signed-in users away from /signin (even in demo mode)
+    if (user && pathname === '/signin') {
+      console.log('🛡️ Signed in user on /signin, redirecting to /dashboard')
+      router.replace('/dashboard')
       return
     }
 
-    // Fix: redirect signed-in users away from /signin
-    if (user && pathname === '/signin') {
-      console.log('🛡️ Signed in user stuck on /signin, redirecting to /dashboard')
-      router.replace('/dashboard')
+    // If DEMO_MODE is enabled, skip other auth checks
+    if (demoConfig.enabled) {
+      console.log('🎮 DEMO MODE: Skipping remaining auth checks for:', pathname)
+      console.log('🎮 DEMO MODE:', demoConfig.reason)
       return
     }
 
