@@ -44,6 +44,25 @@ export const FEATURE_FLAGS = {
    */
   USE_MODULAR_WORKFLOW_CONFIGS:
     process.env.NEXT_PUBLIC_USE_MODULAR_WORKFLOW_CONFIGS === 'true',
+
+  /**
+   * Phase 4 (InHerSight 0.1.9): Use database-driven workflow template system
+   *
+   * When enabled: WorkflowCompilationService with template inheritance and modifications
+   * When disabled: Original hardcoded TypeScript workflow configs
+   *
+   * Benefit:
+   * - No more per-customer workflow files (eliminates bloat)
+   * - Runtime modification based on customer state (risk_score, company, etc.)
+   * - Templates and modifications managed via database (no code deploys)
+   * - Scalable across customers and workflows
+   *
+   * Risk: High (fundamental architecture change)
+   * Rollback: Toggle to false in .env.local
+   * Test Customer: Obsidian Black (renewal_base template + at-risk freebie mod)
+   */
+  USE_WORKFLOW_TEMPLATE_SYSTEM:
+    process.env.NEXT_PUBLIC_USE_WORKFLOW_TEMPLATE_SYSTEM === 'true',
 } as const;
 
 /**

@@ -809,6 +809,100 @@ export const PLANNING_CHECKLIST_TEMPLATES = {
 };
 
 /**
+ * Brand Exposure Report Artifact Template (InHerSight-specific)
+ *
+ * The brand-exposure-report type provides InHerSight-specific metrics:
+ * - Brand impressions and visibility metrics
+ * - Profile engagement (views, completion)
+ * - Job posting performance (matches, clicks, conversions)
+ * - Content metrics (articles, social, ratings)
+ * - Performance analysis and recommendations
+ */
+export interface BrandExposureReportConfig {
+  id: string;
+  title: string;
+  customerName: string;
+  reportingPeriod: string;
+  healthScore: number;
+  metrics: {
+    brandImpressions: number;
+    brandImpressionsTrend: string;
+    profileViews: number;
+    profileViewsTrend: string;
+    profileCompletionPct: number;
+    jobMatches: number;
+    applyClicks: number;
+    applyClicksTrend: string;
+    clickThroughRate: number;
+    articleInclusions: number;
+    socialMentions: number;
+    newRatings: number;
+    followerGrowth: number;
+  };
+  performanceAnalysis: string;
+  strengths: string[];
+  improvements: string[];
+  recommendations: string[];
+  visible?: boolean;
+}
+
+export const createBrandExposureReportArtifact = (config: BrandExposureReportConfig) => {
+  const content = `# ${config.customerName} - Brand Performance Report
+
+## Overview
+**Reporting Period**: ${config.reportingPeriod}
+**Platform Health Score**: ${config.healthScore}/100
+
+---
+
+## Key Metrics
+
+### Brand Visibility
+- **Brand Impressions**: ${config.metrics.brandImpressions.toLocaleString()} (${config.metrics.brandImpressionsTrend})
+- **Profile Views**: ${config.metrics.profileViews.toLocaleString()} (${config.metrics.profileViewsTrend})
+- **Profile Completion**: ${config.metrics.profileCompletionPct}%
+
+### Job Posting Performance
+- **Job Matches**: ${config.metrics.jobMatches.toLocaleString()}
+- **Apply Clicks**: ${config.metrics.applyClicks.toLocaleString()} (${config.metrics.applyClicksTrend})
+- **Click-Through Rate**: ${config.metrics.clickThroughRate}%
+
+### Content & Engagement
+- **Article Inclusions**: ${config.metrics.articleInclusions}
+- **Social Mentions**: ${config.metrics.socialMentions}
+- **New Ratings Received**: ${config.metrics.newRatings}
+- **Follower Growth**: ${config.metrics.followerGrowth > 0 ? '+' : ''}${config.metrics.followerGrowth}
+
+---
+
+## Performance Analysis
+
+${config.performanceAnalysis}
+
+### Strengths
+${config.strengths.map(s => `- ${s}`).join('\n')}
+
+### Areas for Improvement
+${config.improvements.map(i => `- ${i}`).join('\n')}
+
+---
+
+## Recommendations
+
+${config.recommendations.map(r => `- ${r}`).join('\n')}
+`;
+
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'document' as const,
+    visible: config.visible ?? false,
+    content: content,
+    editable: false
+  };
+};
+
+/**
  * Helper function to create multiple artifacts at once
  */
 export const createArtifactSection = (artifacts: Array<ReturnType<
@@ -822,7 +916,8 @@ export const createArtifactSection = (artifacts: Array<ReturnType<
   typeof createContactStrategyArtifact |
   typeof createPlanSummaryArtifact |
   typeof createQuoteArtifact |
-  typeof createDocumentArtifact
+  typeof createDocumentArtifact |
+  typeof createBrandExposureReportArtifact
 >>) => {
   return {
     sections: artifacts
