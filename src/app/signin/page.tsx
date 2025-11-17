@@ -40,7 +40,7 @@ export default function SignInPage() {
       
       // Only store non-null values
       const filteredParams = Object.fromEntries(
-        Object.entries(paramsToStore).filter(([_, value]) => value !== null)
+        Object.entries(paramsToStore).filter(([, value]) => value !== null)
       )
       
       if (Object.keys(filteredParams).length > 0) {
@@ -259,7 +259,7 @@ export default function SignInPage() {
               <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-gray-50 px-2 text-gray-500">Or continue with</span>
+              <span className="bg-gray-50 px-2 text-gray-700">Or continue with</span>
             </div>
           </div>
 

@@ -34,8 +34,8 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Checking authentication status...</p>
-          <p className="text-sm text-gray-500 mt-2">Loading: {loading ? 'true' : 'false'}</p>
+          <p className="text-gray-700">Checking authentication status...</p>
+          <p className="text-sm text-gray-600 mt-2">Loading: {loading ? 'true' : 'false'}</p>
         </div>
       </div>
     )
@@ -47,7 +47,7 @@ export default function LoginPage() {
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
           Welcome to Renubu
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-700 mb-8">
           Commercial Success Intelligence Platform
         </p>
         {user ? (
@@ -62,7 +62,7 @@ export default function LoginPage() {
           </div>
         ) : (
           <div>
-            <p className="text-gray-500 mb-4">Please sign in to continue</p>
+            <p className="text-gray-700 mb-4">Please sign in to continue</p>
             <AuthButton />
           </div>
         )}

@@ -1,64 +1,30 @@
-/**
- * Fix Infinite Recursion in Profiles RLS Policy
- */
-
-import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
-import { resolve } from 'path';
-import { readFileSync } from 'fs';
 
-// Load .env.local
-config({ path: resolve(__dirname, '../.env.local') });
-
-const STAGING_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+config({ path: '.env.local' });
 
 async function fixProfilesRLS() {
-  console.log('🔧 Fixing profiles RLS infinite recursion...');
+  console.log('🔧 Fixing profiles RLS policy via SQL...\n');
 
-  if (!STAGING_URL || !SERVICE_ROLE_KEY) {
-    console.error('❌ Missing SUPABASE_URL or SERVICE_ROLE_KEY environment variables');
-    process.exit(1);
-  }
+  // Execute SQL directly
+  const sql = `
+    -- Drop existing policy
+    DROP POLICY IF EXISTS "Authenticated users can access profiles" ON public.profiles;
 
-  const supabase = createClient(STAGING_URL, SERVICE_ROLE_KEY, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
+    -- Recreate with service role bypass to prevent recursion
+    CREATE POLICY "Authenticated users can access profiles" ON public.profiles
+        FOR ALL
+        USING (
+            -- Service role has full access (bypasses RLS)
+            auth.jwt()->>'role' = 'service_role'
+            OR
+            -- Authenticated users can access all profiles in demo mode
+            (auth.role() = 'authenticated')
+        );
+  `;
 
-  try {
-    // Read the SQL file
-    const sqlPath = resolve(__dirname, '../supabase/scripts/fix_profiles_rls_recursion.sql');
-    const sql = readFileSync(sqlPath, 'utf-8');
-
-    console.log('📝 Executing SQL...');
-    console.log(sql);
-
-    // Execute the SQL using rpc
-    const { data, error } = await supabase.rpc('exec_sql', { sql_string: sql });
-
-    if (error) {
-      console.error('❌ Error executing SQL:', error);
-
-      // Try direct query instead
-      console.log('⚠️ Trying direct query...');
-      const { error: execError } = await supabase.from('_sql').insert({ query: sql });
-
-      if (execError) {
-        console.error('❌ Direct query also failed:', execError);
-        process.exit(1);
-      }
-    }
-
-    console.log('✅ Profiles RLS recursion fix applied successfully!');
-    console.log('🎮 The customers endpoint should now work without delays');
-
-  } catch (error) {
-    console.error('❌ Unexpected error:', error);
-    process.exit(1);
-  }
+  console.log('Executing SQL...');
+  console.log(sql);
+  console.log('\n⚠️  Please run this SQL in Supabase SQL Editor manually.\n');
 }
 
 fixProfilesRLS();
