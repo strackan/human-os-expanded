@@ -61,21 +61,6 @@ function mapContactData(raw: any, customerId: string) {
 /**
  * Map InHerSight package data to contracts table
  */
-function mapContractData(raw: any, customerId: string) {
-  return {
-    customer_id: customerId,
-    contract_number: raw['Package Name'] || `IHS-${Date.now()}`,
-    start_date: raw['Term Start Date'] || raw['Start Date'],
-    end_date: raw['Term End Date'] || raw['End Date'],
-    contract_term_months: parseInt(raw['Term Months']) || 12,
-    arr: parseFloat(raw['Total Cost']) || 0,
-    status: raw['Status'] === 'active' ? 'active' : 'pending',
-    auto_renewal: raw['Auto Renewal'] === 'true' || raw['Renews'] === 'true',
-    product_mix: raw['Products'] ? JSON.parse(raw['Products']) : [],
-    payment_terms: raw['Billing Cycle'] || 'annual',
-    is_demo: true
-  };
-}
 
 /**
  * Map InHerSight metrics data to customer_engagement_metrics table
@@ -165,8 +150,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProcessRe
         // Determine data type and process accordingly
         if (rawData['Name'] || rawData['Company Name']) {
           // Company data
-          const customerData = mapCompanyData(rawData);
-          customerData.company_id = batch.company_id;
+          const customerData = {
+            ...mapCompanyData(rawData),
+            company_id: batch.company_id
+          };
 
           const { data: customer, error: customerError } = await supabase
             .from('customers')
@@ -212,8 +199,10 @@ export async function POST(request: NextRequest): Promise<NextResponse<ProcessRe
             throw new Error(`Customer not found: ${customerName}`);
           }
 
-          const metricsData = mapMetricsData(rawData, customer.id);
-          metricsData.company_id = batch.company_id;
+          const metricsData = {
+            ...mapMetricsData(rawData, customer.id),
+            company_id: batch.company_id
+          };
 
           await supabase
             .from('customer_engagement_metrics')

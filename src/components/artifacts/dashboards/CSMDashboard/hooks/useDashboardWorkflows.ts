@@ -161,7 +161,7 @@ export function useDashboardWorkflows({
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [showTaskModal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [showTaskModal]);  
 
   // Handlers
   const handleLaunchTaskMode = (taskId?: number) => {

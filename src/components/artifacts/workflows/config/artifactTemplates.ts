@@ -5,7 +5,6 @@
  * commonly used artifacts in workflows.
  */
 
-import { WorkflowConfig } from './WorkflowConfig';
 
 /**
  * Email Artifact Template

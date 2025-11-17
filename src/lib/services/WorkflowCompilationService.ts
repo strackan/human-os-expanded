@@ -398,7 +398,7 @@ export class WorkflowCompilationService {
     artifacts: ArtifactDefinition[]
   ): { steps: WorkflowStepDefinition[]; artifacts: ArtifactDefinition[] } {
     let newSteps = [...steps];
-    let newArtifacts = [...artifacts];
+    const newArtifacts = [...artifacts];
 
     switch (mod.modification_type) {
       case 'add_step':

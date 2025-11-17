@@ -32,7 +32,7 @@ async function setupInHerSightUser() {
     // ============================================================================
     console.log('📊 Step 1: Setting up InHerSight company...');
 
-    let { data: company, error: companyFetchError } = await supabase
+    const { data: companyData, error: companyFetchError } = await supabase
       .from('companies')
       .select('*')
       .eq('domain', 'inhersight.com')
@@ -42,6 +42,7 @@ async function setupInHerSightUser() {
       throw new Error(`Failed to fetch company: ${companyFetchError.message}`);
     }
 
+    let company = companyData;
     if (!company) {
       const { data: newCompany, error: companyCreateError } = await supabase
         .from('companies')

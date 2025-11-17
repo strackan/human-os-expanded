@@ -160,7 +160,7 @@ export class WorkflowLoaderService {
   private static async loadFromLegacy(
     options: WorkflowLoadOptions
   ): Promise<WorkflowLoadResult> {
-    const { workflowId, customerId, userId } = options;
+    const { workflowId, customerId } = options;
 
     // Get legacy config
     const config = getWorkflow(workflowId);

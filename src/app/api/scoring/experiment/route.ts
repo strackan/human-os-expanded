@@ -7,12 +7,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { inhersightScoringService, CustomerData } from '@/lib/services/InHerSightScoringService';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
     const { customerId, methods } = await request.json();
 
     if (!customerId) {
@@ -139,10 +139,10 @@ export async function POST(request: NextRequest) {
 
       // Contacts
       primary_contact_present: customer.contacts?.some((c: any) => c.is_primary) || false,
-      contact_changes_recent: this.hasRecentContactChanges(customer.contacts),
+      contact_changes_recent: hasRecentContactChanges(customer.contacts),
 
       // Interactions
-      last_interaction_days: lastInteractionDays,
+      last_interaction_days: lastInteractionDays ?? undefined,
       recent_sentiment: recentSentiment,
       support_tickets_open: openTickets || 0
     };
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate comparison metrics
-    const comparison = this.compareResults(results);
+    const comparison = compareResults(results);
 
     return NextResponse.json({
       success: true,
@@ -189,7 +189,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  private hasRecentContactChanges(contacts: any[]): boolean {
+}
+
+function hasRecentContactChanges(contacts: any[]): boolean {
     if (!contacts || contacts.length === 0) return true;
 
     const thirtyDaysAgo = new Date();
@@ -198,7 +200,7 @@ export async function POST(request: NextRequest) {
     return contacts.some(c => new Date(c.created_at) > thirtyDaysAgo);
   }
 
-  private compareResults(results: any) {
+function compareResults(results: any) {
     const methods = Object.keys(results);
     if (methods.length === 0) return {};
 
@@ -206,8 +208,8 @@ export async function POST(request: NextRequest) {
     const riskScores = methods.map(m => results[m].risk_score);
     const oppScores = methods.map(m => results[m].opportunity_score);
 
-    const riskStdDev = this.standardDeviation(riskScores);
-    const oppStdDev = this.standardDeviation(oppScores);
+    const riskStdDev = standardDeviation(riskScores);
+    const oppStdDev = standardDeviation(oppScores);
 
     return {
       agreement: {
@@ -241,10 +243,9 @@ export async function POST(request: NextRequest) {
     };
   }
 
-  private standardDeviation(values: number[]): number {
+function standardDeviation(values: number[]): number {
     const avg = values.reduce((a, b) => a + b, 0) / values.length;
     const squareDiffs = values.map(value => Math.pow(value - avg, 2));
     const avgSquareDiff = squareDiffs.reduce((a, b) => a + b, 0) / squareDiffs.length;
     return Math.sqrt(avgSquareDiff);
   }
-}

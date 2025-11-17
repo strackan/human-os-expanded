@@ -6,8 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
-import { headers } from 'next/headers';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 interface CSVRow {
   [key: string]: string;
@@ -88,8 +87,7 @@ function detectCSVType(headers: string[]): string {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ImportResult>> {
   try {
-    const headersList = await headers();
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
 
     // Get current user and company
     const { data: { user }, error: authError } = await supabase.auth.getUser();

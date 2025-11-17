@@ -26,8 +26,6 @@
 import { WorkflowConfig } from '../../config/WorkflowConfig';
 import {
   createEmailArtifact,
-  createContractArtifact,
-  createPlanningChecklistArtifact,
   createWorkflowSummaryArtifact,
   createDocumentArtifact,
   createBrandExposureReportArtifact

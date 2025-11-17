@@ -13,7 +13,6 @@
 
 import { WorkflowConfig } from '../../config/WorkflowConfig';
 import { renewalPlanningWorkflow } from './RenewalPlanning';
-import { isFeatureEnabled } from '@/lib/constants/feature-flags';
 
 // ============================================================================
 // LEGACY WORKFLOW REGISTRY (FROZEN - No new workflows)

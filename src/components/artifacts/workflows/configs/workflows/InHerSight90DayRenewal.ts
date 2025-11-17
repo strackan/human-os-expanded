@@ -27,12 +27,9 @@ import {
 } from '../../config/artifactTemplates';
 import {
   createSnoozeSkipBranches,
-  createEmailFlowBranch,
-  createEmailCompleteBranch,
   createNotReadyConcernBranches,
   createNextCustomerBranch,
   createExitTaskModeBranch,
-  createWorkflowSummaryBranch
 } from '../../config/branchTemplates';
 
 export const inhersight90DayRenewalWorkflow: WorkflowConfig = {
