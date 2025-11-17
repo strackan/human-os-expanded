@@ -147,6 +147,7 @@ body {
 /* Global input/textarea styles - fix light text issue */
 input[type="text"],
 input[type="email"],
+input[type="password"],
 input[type="number"],
 input[type="search"],
 input[type="tel"],
@@ -159,6 +160,7 @@ select {
 @media (prefers-color-scheme: dark) {
   input[type="text"],
   input[type="email"],
+  input[type="password"],
   input[type="number"],
   input[type="search"],
   input[type="tel"],
