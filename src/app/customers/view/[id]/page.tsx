@@ -17,28 +17,13 @@ import {
 import { CustomerService } from '../../../../lib/services/CustomerService';
 import { CustomerWithContact } from '../../../../types/customer';
 import EditableCell from '../../../../components/common/EditableCell';
-import TaskModeFullscreen from '@/components/workflows/TaskMode';
-import { registerWorkflowConfig } from '@/config/workflows/index';
-import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
-import { composeFromDatabase } from '@/lib/workflows/db-composer';
-import { createWorkflowExecution } from '@/lib/workflows/actions';
-import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function CustomerViewPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const { user } = useAuth();
   const [customer, setCustomer] = useState<CustomerWithContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [launchingWorkflow, setLaunchingWorkflow] = useState(false);
-  const [taskModeOpen, setTaskModeOpen] = useState(false);
-  const [activeWorkflow, setActiveWorkflow] = useState<{
-    workflowId: string;
-    title: string;
-    customerId: string;
-    customerName: string;
-  } | null>(null);
-  const [executionId, setExecutionId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -173,101 +158,69 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
   };
 
   const handleLaunchWorkflow = async () => {
-    if (!customer || !user?.id) {
-      alert('Please ensure you are logged in');
-      return;
-    }
+    if (!customer) return;
 
     try {
       setLaunchingWorkflow(true);
-      console.log('[Customer View] Launching workflow...', { customer: customer.name });
 
-      // Calculate days to renewal
-      const daysUntilRenewal = Math.ceil(
-        (new Date(customer.renewal_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-      );
+      // Get current user from auth
+      const authResponse = await fetch('/api/auth/status');
+      const authData = await authResponse.json();
 
-      // Use the same workflow system as dashboard
-      // For InHerSight, use generic renewal workflow (or specific workflow if exists)
-      const workflowId = 'obsidian-black-renewal'; // TODO: Use InHerSight-specific workflow if available
-
-      console.log('[Customer View] Loading workflow from database...', { workflowId });
-
-      // Compose workflow from database (same as dashboard)
-      const workflowConfig = await composeFromDatabase(
-        workflowId,
-        null, // company_id (null for stock workflows)
-        {
-          name: customer.name,
-          current_arr: customer.current_arr,
-          health_score: customer.health_score,
-          renewal_date: customer.renewal_date,
-          days_until_renewal: daysUntilRenewal,
-          contract_end_date: customer.renewal_date,
-          utilization: 87, // TODO: Get from customer metrics
-          monthsToRenewal: Math.ceil(daysUntilRenewal / 30),
-        }
-      );
-
-      if (!workflowConfig) {
-        throw new Error('Failed to load workflow configuration from database');
+      if (!authData.user) {
+        alert('Not authenticated');
+        return;
       }
 
-      console.log('[Customer View] Workflow loaded:', workflowConfig);
+      // Determine which workflow template to use based on days to renewal
+      const daysUntilRenewal = Math.ceil(
+        (new Date(customer.renewal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-      // Register config so TaskMode can find it
-      registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
-      console.log('[Customer View] Workflow config registered');
+      // Use renewal_base template for all renewals
+      const templateName = 'renewal_base';
 
-      // Create workflow execution record
-      const executionResult = await createWorkflowExecution({
-        workflowConfigId: workflowId,
-        workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
-        workflowType: 'renewal',
+      console.log('🚀 Launching workflow:', {
         customerId: customer.id,
-        userId: user.id,
-        assignedCsmId: user.id,
-        totalSteps: workflowConfig.slides?.length || 0,
+        customerName: customer.name,
+        daysUntilRenewal,
+        templateName
       });
 
-      if (executionResult.success && executionResult.executionId) {
-        console.log('[Customer View] Workflow execution created:', executionResult.executionId);
-
-        setExecutionId(executionResult.executionId);
-        setActiveWorkflow({
-          workflowId,
-          title: (workflowConfig as any).workflowName || 'Renewal Planning',
+      // Call workflow compile API to create execution
+      const response = await fetch('/api/workflows/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          templateName,
           customerId: customer.id,
-          customerName: customer.name
-        });
+          userId: authData.user.id,
+          createExecution: true
+        })
+      });
 
-        setTaskModeOpen(true);
-      } else {
-        throw new Error('Failed to create workflow execution');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to launch workflow');
       }
 
-    } catch (error: any) {
-      console.error('[Customer View] Error launching workflow:', error);
+      const result = await response.json();
 
-      let errorMessage = 'Error launching workflow. ';
-      if (error.message?.includes('WORKFLOW_NOT_FOUND')) {
-        errorMessage += 'The workflow definition was not found in the database. Please ensure workflow definitions are seeded.';
-      } else if (error.message?.includes('DB_FETCH_ERROR')) {
-        errorMessage += 'Unable to connect to the database. Please check your connection and try again.';
+      console.log('✅ Workflow launched:', result);
+
+      // Navigate to the workflow execution
+      if (result.data.executionId) {
+        router.push(`/workflows?executionId=${result.data.executionId}`);
       } else {
-        errorMessage += error.message || 'Please check the console for details.';
+        alert('Workflow launched successfully!');
       }
 
-      alert(errorMessage);
+    } catch (error) {
+      console.error('Error launching workflow:', error);
+      alert(error instanceof Error ? error.message : 'Failed to launch workflow');
     } finally {
       setLaunchingWorkflow(false);
     }
-  };
-
-  const handleCloseTaskMode = () => {
-    setTaskModeOpen(false);
-    setActiveWorkflow(null);
-    setExecutionId(null);
   };
 
   if (loading) {
@@ -544,18 +497,6 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
-
-      {/* TaskMode Modal */}
-      {taskModeOpen && activeWorkflow && (
-        <TaskModeFullscreen
-          workflowId={activeWorkflow.workflowId}
-          workflowTitle={activeWorkflow.title}
-          customerId={activeWorkflow.customerId}
-          customerName={activeWorkflow.customerName}
-          executionId={executionId || undefined}
-          onClose={handleCloseTaskMode}
-        />
-      )}
     </div>
   );
 }
