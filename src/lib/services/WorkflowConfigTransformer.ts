@@ -93,7 +93,7 @@ export class WorkflowConfigTransformer {
         chat: {
           initialMessage: {
             text: step.description || `Let's work on: ${step.step_name}`,
-            buttons: this.createStepButtons(step, index, steps.length),
+            buttons: this.createStepButtons(step),
             nextBranches: this.createNextBranches(step, index, steps.length)
           },
           branches: this.createBranches(step, index, steps.length),
@@ -190,7 +190,7 @@ export class WorkflowConfigTransformer {
    * Create buttons for a step
    * Priority: step.metadata.buttons > default buttons
    */
-  private static createStepButtons(step: WorkflowStepDefinition, _stepIndex: number, _totalSteps: number) {
+  private static createStepButtons(step: WorkflowStepDefinition) {
     // Check if step has custom buttons in metadata
     if (step.metadata?.buttons && Array.isArray(step.metadata.buttons)) {
       return step.metadata.buttons;
@@ -308,6 +308,8 @@ export class WorkflowConfigTransformer {
       'artifact.quote': 'QuoteArtifact',
       'artifact.pricing-analysis': 'PricingAnalysisArtifact',
       'artifact.summary': 'PlanSummaryArtifact',
+      'artifact.brand-exposure': 'BrandExposureArtifact',
+      'artifact.contract': 'ContractArtifact',
     };
     return mapping[componentId] || 'GenericArtifact';
   }
