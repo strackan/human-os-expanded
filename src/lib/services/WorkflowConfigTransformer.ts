@@ -107,15 +107,7 @@ export class WorkflowConfigTransformer {
 
         // Convert artifacts for this step
         artifacts: {
-          sections: stepArtifacts.map(art => ({
-            id: art.artifact_id,
-            title: art.artifact_name,
-            type: this.mapArtifactType(art.artifact_type),
-            visible: true,
-            editable: true,
-            content: art.template_content,
-            data: art.config,
-          })),
+          sections: stepArtifacts.map(art => this.transformArtifact(art)),
         },
 
         // Side panel configuration
@@ -179,6 +171,51 @@ export class WorkflowConfigTransformer {
     });
 
     return buttons;
+  }
+
+  /**
+   * Transform artifact from compilation to slide section format
+   * Uses component mapping if available (for rich artifacts like emails/quotes)
+   */
+  private static transformArtifact(artifact: any): any {
+    // Check if artifact has component mapping from compilation service
+    if (artifact._component) {
+      return {
+        id: artifact.artifact_id,
+        title: artifact.artifact_name,
+        type: 'custom',  // Use 'custom' type to route to component rendering
+        visible: true,
+        editable: !artifact._component.props.readOnly,
+        data: {
+          componentType: this.getComponentTypeName(artifact._component.componentId),
+          props: artifact._component.props
+        }
+      };
+    }
+
+    // Fallback to template-based rendering for documents, dashboards, etc.
+    return {
+      id: artifact.artifact_id,
+      title: artifact.artifact_name,
+      type: this.mapArtifactType(artifact.artifact_type),
+      visible: true,
+      editable: true,
+      content: artifact.template_content,
+      data: artifact.config,
+    };
+  }
+
+  /**
+   * Map componentId to componentType name for renderer routing
+   */
+  private static getComponentTypeName(componentId: string): string {
+    const mapping: Record<string, string> = {
+      'artifact.email': 'EmailArtifact',
+      'artifact.quote': 'QuoteArtifact',
+      'artifact.pricing-analysis': 'PricingAnalysisArtifact',
+      'artifact.summary': 'PlanSummaryArtifact',
+    };
+    return mapping[componentId] || 'GenericArtifact';
   }
 
   /**

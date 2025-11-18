@@ -205,7 +205,7 @@ export default function TaskModeModals(props: TaskModeModalsProps) {
           <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={onCloseRejectionHistoryModal}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />

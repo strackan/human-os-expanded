@@ -24,7 +24,6 @@ export default function ChatMessage({
   className = ''
 }: ChatMessageProps) {
   const isUser = role === 'user';
-  const isAssistant = role === 'assistant';
   const isSystem = role === 'system';
 
   // Format timestamp
@@ -35,7 +34,7 @@ export default function ChatMessage({
   if (isSystem) {
     return (
       <div className={`flex justify-center ${className}`}>
-        <div className="text-xs text-gray-400 px-3 py-1 bg-gray-50 rounded-full">
+        <div className="text-xs text-gray-600 px-3 py-1 bg-gray-50 rounded-full">
           {content}
         </div>
       </div>
@@ -74,7 +73,7 @@ export default function ChatMessage({
 
           {/* Timestamp */}
           {formattedTime && (
-            <span className={`text-xs text-gray-400 px-2 ${isUser ? 'text-right' : 'text-left'}`}>
+            <span className={`text-xs text-gray-600 px-2 ${isUser ? 'text-right' : 'text-left'}`}>
               {formattedTime}
             </span>
           )}

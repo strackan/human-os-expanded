@@ -47,7 +47,7 @@ export default function SuggestedResponses({
   if (loading) {
     return (
       <div className={`p-4 border-t border-gray-200 ${className}`}>
-        <div className="flex items-center gap-2 text-sm text-gray-400">
+        <div className="flex items-center gap-2 text-sm text-gray-600">
           <Sparkles className="w-4 h-4 animate-pulse" />
           <span>Loading suggestions...</span>
         </div>
@@ -63,7 +63,7 @@ export default function SuggestedResponses({
     <div className={`p-4 border-t border-gray-200 ${className}`}>
       <div className="flex items-center gap-2 mb-3">
         <Sparkles className="w-4 h-4 text-purple-500" />
-        <span className="text-xs font-medium text-gray-500">Suggested responses</span>
+        <span className="text-xs font-medium text-gray-700">Suggested responses</span>
       </div>
 
       <div className="flex flex-wrap gap-2">

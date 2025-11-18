@@ -59,7 +59,7 @@ export function useTaskModeStateV2({
 
   // Load workflow config and context data
   const workflowData = useWorkflowData({ workflowId, customerId });
-  const { config, slides } = workflowData;
+  const { slides } = workflowData;
   const currentSlide = slides?.[currentSlideIndex] ?? null;
 
   // Navigation helpers
@@ -224,7 +224,8 @@ export function useTaskModeStateV2({
 
   const handleButtonClick = useCallback((buttonValue: string) => {
     console.log('[useTaskModeStateV2] handleButtonClick called with value:', buttonValue);
-    if (buttonValue === 'start') {
+    if (buttonValue === 'start' || buttonValue === 'continue') {
+      console.log('[useTaskModeStateV2] Advancing to next slide');
       goToNextSlide();
     } else if (buttonValue === 'snooze') {
       console.log('[useTaskModeStateV2] Button value is "snooze" - calling handleSnooze');

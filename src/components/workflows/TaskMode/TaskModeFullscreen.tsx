@@ -29,7 +29,7 @@ import ArtifactRenderer from '@/components/workflows/renderers/ArtifactRenderer'
 import { CustomerMetrics } from '@/components/workflows/CustomerMetrics';
 import WorkflowSequencePanel from '@/components/workflows/WorkflowSequencePanel';
 import { getWorkflowSequence } from '@/config/workflowSequences';
-import { Mic, Paperclip, Shield } from 'lucide-react';
+import { Mic, Paperclip, Shield, X } from 'lucide-react';
 import { StepSnoozeModal, StepSkipModal, StepReviewModal } from '@/components/workflows/StepActionModals';
 import { WorkflowStepActionService } from '@/lib/workflows/actions/WorkflowStepActionService';
 import { EnhancedSnoozeModal } from '@/components/workflows/EnhancedSnoozeModal';
@@ -742,7 +742,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Task Snoozed</h3>
               <p className="text-gray-600 mb-4">Check back later.</p>
               {snoozeUntil && (
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-700">
                   Snoozed until {snoozeUntil.toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -764,7 +764,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               <p className="text-gray-600 mb-4">
                 This step is awaiting review from {stepReviewerName}.
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-700">
                 You cannot complete this step until it has been approved.
               </p>
             </div>
@@ -950,10 +950,10 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               {/* Chat Input */}
               <div className="border-t border-gray-200 p-4 bg-white">
                 <div className="flex gap-2 items-end max-w-4xl mx-auto">
-                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
                     <Mic className="w-5 h-5" />
                   </button>
-                  <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+                  <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
                     <Paperclip className="w-5 h-5" />
                   </button>
                   <input
@@ -1135,7 +1135,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               <div className="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4 relative max-h-[90vh] overflow-y-auto">
                 <button
                   onClick={() => setShowRejectionHistoryModal(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 transition-colors"
                   aria-label="Close"
                 >
                   <X className="w-5 h-5" />

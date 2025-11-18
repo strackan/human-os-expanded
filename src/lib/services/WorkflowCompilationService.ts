@@ -498,6 +498,69 @@ export class WorkflowCompilationService {
   }
 
   /**
+   * Map template artifact to component-based structure
+   * Transforms database artifacts into React component references (like obsidian_black)
+   */
+  private static mapArtifactToComponent(
+    artifact: ArtifactDefinition,
+    customer: any,
+    triggerContext: Record<string, any>
+  ): { componentId: string; props: any } | null {
+    const context = this.buildHydrationContext(customer, triggerContext);
+
+    switch (artifact.artifact_type) {
+      case 'email':
+      case 'email-draft': {
+        // Parse template content for subject/body
+        const content = artifact.template_content || '';
+        const lines = content.split('\n');
+        const subjectLine = lines.find(l => l.startsWith('Subject:'));
+        const subject = subjectLine ? subjectLine.replace('Subject:', '').trim() : '';
+        const bodyStartIndex = subjectLine ? lines.indexOf(subjectLine) + 1 : 0;
+        const body = lines.slice(bodyStartIndex).join('\n').trim();
+
+        return {
+          componentId: 'artifact.email',
+          props: {
+            to: this.hydrateString(artifact.config?.to || '', context),
+            cc: this.hydrateString(artifact.config?.cc || '', context),
+            subject: this.hydrateString(subject, context),
+            body: this.hydrateString(body, context),
+            attachments: artifact.config?.attachments || [],
+            customerId: customer.id,
+            enableAIGeneration: artifact.config?.enable_ai_generation !== false,
+            readOnly: artifact.config?.readOnly === true
+          }
+        };
+      }
+
+      case 'quote': {
+        return {
+          componentId: 'artifact.quote',
+          props: {
+            quoteNumber: this.hydrateString(artifact.config?.quoteNumber || `Q-${new Date().getFullYear()}-001`, context),
+            quoteDate: new Date().toLocaleDateString(),
+            customerName: customer.name,
+            customerContact: {
+              name: customer.contacts?.[0]?.name || customer.name,
+              title: customer.contacts?.[0]?.title || '',
+              email: customer.contacts?.[0]?.email || ''
+            },
+            lineItems: this.hydrateObject(artifact.config?.lineItems || [], context),
+            summary: this.hydrateObject(artifact.config?.summary || {}, context),
+            terms: artifact.config?.terms || [],
+            readOnly: artifact.config?.readOnly === true
+          }
+        };
+      }
+
+      default:
+        // Return null for artifacts that should use template rendering
+        return null;
+    }
+  }
+
+  /**
    * Hydrate artifact definitions with customer data
    */
   private static hydrateArtifacts(
@@ -507,14 +570,21 @@ export class WorkflowCompilationService {
   ): ArtifactDefinition[] {
     const context = this.buildHydrationContext(customer, triggerContext);
 
-    return artifacts.map(artifact => ({
-      ...artifact,
-      artifact_name: this.hydrateString(artifact.artifact_name, context),
-      template_content: artifact.template_content
-        ? this.hydrateString(artifact.template_content, context)
-        : undefined,
-      config: artifact.config ? this.hydrateObject(artifact.config, context) : undefined
-    }));
+    return artifacts.map(artifact => {
+      // Try to map to component first
+      const componentMapping = this.mapArtifactToComponent(artifact, customer, triggerContext);
+
+      return {
+        ...artifact,
+        artifact_name: this.hydrateString(artifact.artifact_name, context),
+        template_content: artifact.template_content
+          ? this.hydrateString(artifact.template_content, context)
+          : undefined,
+        config: artifact.config ? this.hydrateObject(artifact.config, context) : undefined,
+        // Add component mapping if available
+        ...(componentMapping ? { _component: componentMapping } : {})
+      };
+    });
   }
 
   /**
