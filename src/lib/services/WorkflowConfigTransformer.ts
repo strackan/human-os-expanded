@@ -93,21 +93,17 @@ export class WorkflowConfigTransformer {
         chat: {
           initialMessage: {
             text: step.description || `Let's work on: ${step.step_name}`,
-            buttons: this.createDefaultButtons(step),
+            buttons: this.createStepButtons(step, index, steps.length),
+            nextBranches: this.createNextBranches(step, index, steps.length)
           },
-          branches: {
-            start: {
-              response: `Great! Let's proceed with ${step.step_name.toLowerCase()}.`,
-              buttons: this.createDefaultButtons(step),
-            },
-          },
+          branches: this.createBranches(step, index, steps.length),
           userTriggers: {},
           defaultMessage: 'I understand. What would you like to do next?',
         },
 
         // Convert artifacts for this step
         artifacts: {
-          sections: stepArtifacts.map(art => this.transformArtifact(art)),
+          sections: stepArtifacts.map(art => this.transformArtifact(art, step)),
         },
 
         // Side panel configuration
@@ -146,29 +142,87 @@ export class WorkflowConfigTransformer {
   }
 
   /**
-   * Create default buttons for a step
+   * Create nextBranches mapping for a step's initial message
    */
-  private static createDefaultButtons(step: WorkflowStepDefinition) {
-    const buttons = [];
-
-    // Add task-related buttons
-    if (step.creates_tasks && step.creates_tasks.length > 0) {
-      buttons.push({
-        label: 'View Tasks',
-        value: 'view_tasks',
-        'label-background': 'bg-blue-600',
-        'label-text': 'text-white',
-      });
+  private static createNextBranches(step: WorkflowStepDefinition, stepIndex: number, totalSteps: number): Record<string, string> | undefined {
+    // For greeting/intro steps
+    if (step.step_type === 'intro' || step.step_id === 'greeting') {
+      return { 'start': 'proceed' };
     }
 
-    // Always add continue button
-    buttons.push({
-      label: 'Continue',
-      value: 'continue',
-      'label-background': 'bg-green-600',
-      'label-text': 'text-white',
-      completeStep: step.step_id,
-    });
+    // For summary/last step with complete button
+    if (step.step_type === 'summary' || stepIndex === totalSteps - 1) {
+      return { 'complete': 'complete', 'continue': 'proceed' };
+    }
+
+    // For other steps with continue button
+    return { 'continue': 'proceed' };
+  }
+
+  /**
+   * Create branches for a step
+   */
+  private static createBranches(step: WorkflowStepDefinition, stepIndex: number, totalSteps: number): Record<string, any> {
+    const branches: Record<string, any> = {};
+
+    // Check if this is the last step
+    const isLastStep = stepIndex === totalSteps - 1;
+
+    // Standard proceed branch
+    branches.proceed = {
+      response: `Great! Let's proceed with ${step.step_name.toLowerCase()}.`,
+      actions: isLastStep ? [] : ['nextSlide']
+    };
+
+    // For last step, add complete branch with closeWorkflow action
+    if (isLastStep || step.step_type === 'summary') {
+      branches.complete = {
+        response: 'Excellent work! Closing the workflow now.',
+        actions: ['closeWorkflow'],
+        delay: 1
+      };
+    }
+
+    return branches;
+  }
+
+  /**
+   * Create buttons for a step
+   * Priority: step.metadata.buttons > default buttons
+   */
+  private static createStepButtons(step: WorkflowStepDefinition, _stepIndex: number, _totalSteps: number) {
+    // Check if step has custom buttons in metadata
+    if (step.metadata?.buttons && Array.isArray(step.metadata.buttons)) {
+      return step.metadata.buttons;
+    }
+
+    // Default buttons for steps without custom buttons
+    const buttons = [];
+
+    // For greeting/intro steps, provide start + snooze buttons
+    if (step.step_type === 'intro' || step.step_id === 'greeting') {
+      buttons.push({
+        label: "Let's Begin!",
+        value: 'start',
+        'label-background': 'bg-blue-600',
+        'label-text': 'text-white'
+      });
+      buttons.push({
+        label: 'Review Later',
+        value: 'snooze',
+        'label-background': 'bg-gray-500',
+        'label-text': 'text-white'
+      });
+    } else {
+      // For other steps, just continue button
+      buttons.push({
+        label: 'Continue',
+        value: 'continue',
+        'label-background': 'bg-green-600',
+        'label-text': 'text-white',
+        completeStep: step.step_id,
+      });
+    }
 
     return buttons;
   }
@@ -177,7 +231,7 @@ export class WorkflowConfigTransformer {
    * Transform artifact from compilation to slide section format
    * Uses component mapping if available (for rich artifacts like emails/quotes)
    */
-  private static transformArtifact(artifact: any): any {
+  private static transformArtifact(artifact: any, step?: WorkflowStepDefinition): any {
     // Check if artifact has component mapping from compilation service
     if (artifact._component) {
       return {
@@ -189,6 +243,46 @@ export class WorkflowConfigTransformer {
         data: {
           componentType: this.getComponentTypeName(artifact._component.componentId),
           props: artifact._component.props
+        }
+      };
+    }
+
+    // Special handling for planning-checklist artifacts
+    if (artifact.artifact_type === 'planning-checklist' && step?.metadata?.checklist_items) {
+      return {
+        id: artifact.artifact_id,
+        title: artifact.artifact_name,
+        type: 'custom',
+        visible: true,
+        editable: false,
+        data: {
+          componentType: 'PlanningChecklistArtifact',
+          props: {
+            title: artifact.config?.title || "Here's what we'll accomplish together:",
+            items: step.metadata.checklist_items.map((label: string, index: number) => ({
+              id: `${index + 1}`,
+              label,
+              completed: false
+            })),
+            showActions: false
+          }
+        }
+      };
+    }
+
+    // Special handling for account-overview artifacts
+    if (artifact.artifact_type === 'account-overview') {
+      return {
+        id: artifact.artifact_id,
+        title: artifact.artifact_name,
+        type: 'custom',
+        visible: true,
+        editable: false,
+        data: {
+          componentType: 'AccountOverviewArtifact',
+          props: {
+            // Props will be populated at runtime with customer data
+          }
         }
       };
     }

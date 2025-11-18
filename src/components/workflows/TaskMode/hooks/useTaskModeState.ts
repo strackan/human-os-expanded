@@ -390,6 +390,10 @@ export function useTaskModeState({
           break;
 
         case 'closeWorkflow':
+          console.log('[useTaskModeState] closeWorkflow action triggered - calling onClose(true) for confetti');
+          onClose(true); // Pass true to trigger confetti on completion
+          break;
+
         case 'exitTaskMode':
           onClose();
           break;

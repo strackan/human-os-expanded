@@ -183,24 +183,33 @@ textarea::placeholder {
   opacity: 1;
 }
 
-/* Override any conflicting text color utilities */
-.text-gray-300,
-.text-gray-400 {
-  color: rgb(75 85 99) !important; /* gray-600 minimum for readability */
+/* Typography defaults for consistent readability */
+p {
+  color: rgb(55 65 81); /* gray-700 - standard body text */
 }
 
-.text-gray-500 {
-  color: rgb(55 65 81) !important; /* gray-700 for better contrast */
+h1, h2, h3, h4, h5, h6 {
+  color: rgb(17 24 39); /* gray-900 - headings should be darker */
+  font-weight: 600;
 }
 
-/* Ensure labels and general text have good contrast */
+/* Button text should inherit from button styling, not override */
+button {
+  font-weight: 500;
+}
+
+/* Table elements */
+th {
+  color: rgb(55 65 81); /* gray-700 */
+  font-weight: 600;
+}
+
+td {
+  color: rgb(75 85 99); /* gray-600 */
+}
+
+/* Labels */
 label {
-  color: rgb(55 65 81); /* gray-700 for labels */
-}
-
-/* Body text default */
-p,
-span,
-div {
-  color: inherit; /* Inherit from parent or use gray-900 if not set */
+  color: rgb(55 65 81); /* gray-700 */
+  font-weight: 500;
 }

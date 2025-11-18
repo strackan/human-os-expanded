@@ -508,6 +508,14 @@ export class WorkflowCompilationService {
   ): { componentId: string; props: any } | null {
     const context = this.buildHydrationContext(customer, triggerContext);
 
+    // If artifact has explicit component_id, use it with hydrated config as props
+    if ((artifact as any).component_id) {
+      return {
+        componentId: (artifact as any).component_id,
+        props: artifact.config ? this.hydrateObject(artifact.config, context) : {}
+      };
+    }
+
     switch (artifact.artifact_type) {
       case 'email':
       case 'email-draft': {

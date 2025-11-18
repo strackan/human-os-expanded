@@ -29,11 +29,11 @@ export async function GET() {
     if (error) {
       console.error('[Version API] Error fetching version:', error);
       // Fallback to hardcoded version if database query fails
-      return NextResponse.json({ version: '0.1.8', source: 'fallback' });
+      return NextResponse.json({ version: '0.1.6', source: 'fallback' });
     }
 
     if (!data) {
-      return NextResponse.json({ version: '0.1.8', source: 'fallback' });
+      return NextResponse.json({ version: '0.1.6', source: 'fallback' });
     }
 
     return NextResponse.json({
@@ -44,6 +44,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('[Version API] Unexpected error:', error);
-    return NextResponse.json({ version: '0.1.8', source: 'fallback' });
+    return NextResponse.json({ version: '0.1.6', source: 'fallback' });
   }
 }

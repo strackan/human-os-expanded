@@ -45,7 +45,7 @@ export async function GET(
     let stateData: { userId: string; integrationSlug: string };
     try {
       stateData = OAuthService.parseState(state);
-    } catch (_error) {
+    } catch {
       return NextResponse.json(
         { error: 'Invalid or expired state parameter' },
         { status: 400 }

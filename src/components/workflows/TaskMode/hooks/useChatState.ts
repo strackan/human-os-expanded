@@ -29,7 +29,6 @@ interface UseChatStateProps {
 export function useChatState({
   currentSlide,
   currentSlideIndex,
-  workflowState,
   setWorkflowState,
   goToNextSlide,
   goToPreviousSlide,
@@ -142,6 +141,10 @@ export function useChatState({
           break;
 
         case 'closeWorkflow':
+          console.log('[useChatState] closeWorkflow action triggered - calling onClose(true) for confetti');
+          onClose(true);
+          break;
+
         case 'exitTaskMode':
           onClose();
           break;
