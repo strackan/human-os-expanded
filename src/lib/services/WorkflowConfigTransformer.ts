@@ -234,6 +234,10 @@ export class WorkflowConfigTransformer {
       'checklist': 'planning-checklist',
       'document': 'document',
       'summary': 'workflow-summary',
+      // Additional template artifact types
+      'dashboard': 'html',  // Dashboards render as HTML/custom markup
+      'presentation': 'document',  // Presentations render as documents with slides
+      'table': 'html',  // Tables render as HTML
     };
 
     return typeMap[templateType.toLowerCase()] || 'custom';

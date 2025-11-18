@@ -112,17 +112,22 @@ async function testCompile() {
     if (slide.artifacts?.sections && slide.artifacts.sections.length > 0) {
       slide.artifacts.sections.forEach(section => {
         console.log(`         - ${section.title} (${section.type})`);
-        if (section.type === 'custom' && section.data?.componentType) {
-          console.log(`           componentType: ${section.data.componentType}`);
-          console.log(`           props keys: ${Object.keys(section.data.props || {}).join(', ')}`);
+        if (section.type === 'custom') {
+          if (section.data?.componentType) {
+            console.log(`           ✅ componentType: ${section.data.componentType}`);
+            console.log(`           props keys: ${Object.keys(section.data.props || {}).join(', ')}`);
 
-          // Show email details for EmailArtifact
-          if (section.data.componentType === 'EmailArtifact') {
-            const props = section.data.props;
-            console.log(`           📧 Email Details:`);
-            console.log(`              To: ${props.to}`);
-            console.log(`              Subject: ${props.subject}`);
-            console.log(`              Body (first 100 chars): ${props.body?.substring(0, 100)}...`);
+            // Show email details for EmailArtifact
+            if (section.data.componentType === 'EmailArtifact') {
+              const props = section.data.props;
+              console.log(`           📧 Email Details:`);
+              console.log(`              To: ${props.to}`);
+              console.log(`              Subject: ${props.subject}`);
+              console.log(`              Body (first 100 chars): ${props.body?.substring(0, 100)}...`);
+            }
+          } else {
+            console.log(`           ❌ NO componentType - will not render!`);
+            console.log(`           data keys: ${Object.keys(section.data || {}).join(', ')}`);
           }
         }
       });
