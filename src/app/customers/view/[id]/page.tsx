@@ -17,13 +17,26 @@ import {
 import { CustomerService } from '../../../../lib/services/CustomerService';
 import { CustomerWithContact } from '../../../../types/customer';
 import EditableCell from '../../../../components/common/EditableCell';
+import TaskModeFullscreen from '@/components/workflows/TaskMode';
+import { registerWorkflowConfig } from '@/config/workflows/index';
+import { WorkflowConfigTransformer } from '@/lib/services/WorkflowConfigTransformer';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function CustomerViewPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [customer, setCustomer] = useState<CustomerWithContact | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [launchingWorkflow, setLaunchingWorkflow] = useState(false);
+  const [taskModeOpen, setTaskModeOpen] = useState(false);
+  const [activeWorkflow, setActiveWorkflow] = useState<{
+    workflowId: string;
+    title: string;
+    customerId: string;
+    customerName: string;
+  } | null>(null);
+  const [executionId, setExecutionId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -158,69 +171,114 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
   };
 
   const handleLaunchWorkflow = async () => {
-    if (!customer) return;
+    if (!customer || !user?.id) {
+      alert('Please ensure you are logged in');
+      return;
+    }
 
     try {
       setLaunchingWorkflow(true);
-
-      // Get current user from auth
-      const authResponse = await fetch('/api/auth/status');
-      const authData = await authResponse.json();
-
-      if (!authData.user) {
-        alert('Not authenticated');
-        return;
-      }
-
-      // Determine which workflow template to use based on days to renewal
-      const daysUntilRenewal = Math.ceil(
-        (new Date(customer.renewal_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      // Use renewal_base template for all renewals
-      const templateName = 'renewal_base';
-
-      console.log('🚀 Launching workflow:', {
-        customerId: customer.id,
-        customerName: customer.name,
-        daysUntilRenewal,
-        templateName
+      console.log('[Customer View] Launching workflow using template system...', {
+        customer: customer.name
       });
 
-      // Call workflow compile API to create execution
+      // Calculate days to renewal for trigger context
+      const daysUntilRenewal = Math.ceil(
+        (new Date(customer.renewal_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      );
+
+      // Use workflow_templates system (NEW)
+      const templateName = 'renewal_base';
+
+      console.log('[Customer View] Compiling workflow template...', {
+        templateName,
+        daysUntilRenewal
+      });
+
+      // Call workflow compilation API
       const response = await fetch('/api/workflows/compile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           templateName,
           customerId: customer.id,
-          userId: authData.user.id,
-          createExecution: true
-        })
+          userId: user.id,
+          triggerContext: {
+            risk_score: customer.risk_score,
+            opportunity_score: customer.opportunity_score,
+            health_score: customer.health_score,
+            days_to_renewal: daysUntilRenewal,
+          },
+          createExecution: true,
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to launch workflow');
+        throw new Error(errorData.error || 'Failed to compile workflow');
       }
 
       const result = await response.json();
+      console.log('[Customer View] Workflow compiled:', result);
 
-      console.log('✅ Workflow launched:', result);
-
-      // Navigate to the workflow execution
-      if (result.data.executionId) {
-        router.push(`/workflows?executionId=${result.data.executionId}`);
-      } else {
-        alert('Workflow launched successfully!');
+      if (!result.success || !result.data.compiledWorkflow) {
+        throw new Error('Compilation succeeded but no workflow returned');
       }
 
-    } catch (error) {
-      console.error('Error launching workflow:', error);
-      alert(error instanceof Error ? error.message : 'Failed to launch workflow');
+      // Transform CompiledWorkflowConfig to WorkflowConfig format
+      const workflowConfig = WorkflowConfigTransformer.transformToWorkflowConfig(
+        result.data.compiledWorkflow,
+        customer.name
+      );
+
+      console.log('[Customer View] Workflow config transformed:', {
+        slides: workflowConfig.slides?.length,
+        templateId: result.data.metadata.templateId,
+        modifications: result.data.metadata.modificationsApplied,
+      });
+
+      // Generate unique workflow ID for this execution
+      const workflowId = `renewal-${customer.id}-${result.data.executionId}`;
+
+      // Register config so TaskMode can retrieve it
+      registerWorkflowConfig(workflowId, workflowConfig);
+      console.log('[Customer View] Workflow config registered:', workflowId);
+
+      // Set state to open TaskMode modal
+      setActiveWorkflow({
+        workflowId,
+        title: result.data.compiledWorkflow.template_name || 'Renewal Planning',
+        customerId: customer.id,
+        customerName: customer.name,
+      });
+
+      setExecutionId(result.data.executionId);
+      setTaskModeOpen(true);
+
+      console.log('[Customer View] Opening TaskMode modal');
+
+    } catch (error: any) {
+      console.error('[Customer View] Error launching workflow:', error);
+
+      let errorMessage = 'Error launching workflow. ';
+      if (error.message?.includes('Template not found')) {
+        errorMessage += 'The workflow template was not found. Please ensure templates are seeded (run: npx tsx scripts/seed-workflow-templates.ts).';
+      } else if (error.message?.includes('Customer not found')) {
+        errorMessage += 'Customer data could not be loaded.';
+      } else {
+        errorMessage += error.message || 'Please check the console for details.';
+      }
+
+      alert(errorMessage);
     } finally {
       setLaunchingWorkflow(false);
     }
+  };
+
+  const handleCloseTaskMode = () => {
+    setTaskModeOpen(false);
+    setActiveWorkflow(null);
+    setExecutionId(null);
   };
 
   if (loading) {
@@ -497,6 +555,18 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
           </div>
         </div>
       </div>
+
+      {/* TaskMode Modal */}
+      {taskModeOpen && activeWorkflow && (
+        <TaskModeFullscreen
+          workflowId={activeWorkflow.workflowId}
+          workflowTitle={activeWorkflow.title}
+          customerId={activeWorkflow.customerId}
+          customerName={activeWorkflow.customerName}
+          executionId={executionId || undefined}
+          onClose={handleCloseTaskMode}
+        />
+      )}
     </div>
   );
 }
