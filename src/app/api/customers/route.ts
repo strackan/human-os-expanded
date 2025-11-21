@@ -15,9 +15,12 @@ import { validateQueryParams, validateRequest, CustomerQuerySchema, CreateCustom
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🚀 === CUSTOMERS API ROUTE START ===');
+
     // Validate query parameters
     const validation = validateQueryParams(request, CustomerQuerySchema);
     if (!validation.success) {
+      console.log('❌ Validation failed:', validation.error);
       return NextResponse.json(
         { error: validation.error },
         { status: 400 }
@@ -48,11 +51,26 @@ export async function GET(request: NextRequest) {
     const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
 
+    console.log('🔧 Environment:', {
+      isDemoMode,
+      authBypassEnabled,
+      nodeEnv: process.env.NODE_ENV
+    });
+
     // Get authenticated user first (always use server client for auth)
+    console.log('🔐 Creating server Supabase client for auth...');
     const authSupabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await authSupabase.auth.getUser();
 
+    console.log('👤 Auth result:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message
+    });
+
     if (authError || !user) {
+      console.log('❌ Authentication failed');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -61,16 +79,37 @@ export async function GET(request: NextRequest) {
       ? createServiceRoleClient()
       : authSupabase;
 
+    console.log('🎮 Using client type:', isDemoMode || authBypassEnabled ? 'SERVICE_ROLE' : 'SERVER');
+
     // Get user's company_id from profiles (using service role in demo mode bypasses RLS)
-    const { data: profile } = await supabase
+    console.log('👤 Fetching profile for user:', user.id);
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('company_id')
+      .select('company_id, email, role')
       .eq('id', user.id)
       .single();
 
+    console.log('👤 Profile result:', {
+      hasProfile: !!profile,
+      profile: profile,
+      profileError: profileError?.message,
+      profileErrorDetails: profileError
+    });
+
     if (!profile?.company_id) {
-      return NextResponse.json({ error: 'No company associated with user' }, { status: 403 });
+      console.log('❌ No company_id found for user');
+      return NextResponse.json({
+        error: 'No company associated with user',
+        debug: {
+          userId: user.id,
+          email: user.email,
+          profile: profile,
+          profileError: profileError?.message
+        }
+      }, { status: 403 });
     }
+
+    console.log('✅ User has company_id:', profile.company_id);
 
     const sortOptions = { field: sort as any, direction: order };
 
