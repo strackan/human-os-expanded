@@ -4,8 +4,106 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.1.6 (In QA)
-**Next Release:** 0.2.0 - Production Launch (Target: January 1, 2026)
+**Current Version:** 0.1.7 (In Development)
+**Next Release:** 0.2.0 - Human OS Check-Ins (Target: Feb-Mar 2026)
+
+---
+
+## Release 0.1.7 - "MCP Foundation" (November 22, 2025)
+
+**Status:** In Development
+**Type:** Minor Release
+
+### New Features
+
+- **Model Context Protocol (MCP) Phase 1** - Extensible AI tool integration framework
+  - **Supabase MCP** - Direct AI queries to customer database with natural language → SQL translation
+  - **PostgreSQL MCP** - Advanced SQL analytics queries with read-only enforcement
+  - **Memory MCP** - Persistent conversation context across sessions with tag-based organization
+  - **Sequential Thinking MCP** - Step-by-step reasoning for complex renewal decisions
+  - 10 MCP tools registered and operational
+  - Feature-flagged architecture (disabled by default in production)
+
+- **Sequential Thinking for Complex Decisions** - Chain-of-thought reasoning
+  - Transparent step-by-step analysis for renewal strategies
+  - Confidence scoring for each reasoning step
+  - Use cases: pricing decisions, risk assessments, contract analysis, stakeholder mapping
+  - ThinkingProcess UI component with animated visualization
+
+### Enhancements
+
+- Webpack configuration for server-side-only PostgreSQL client bundling
+- Graceful MCP degradation in LLMService (zero impact when disabled)
+- MCP health monitoring with automatic checks every 60 seconds
+- Comprehensive logging and metrics tracking for MCP operations
+- Type-safe MCP tool definitions (MCPTool interface)
+
+### Technical Infrastructure
+
+- `src/lib/mcp/` - Complete MCP architecture
+  - MCPManager for centralized client coordination
+  - 4 MCP clients: Supabase, PostgreSQL, Memory, Sequential Thinking
+  - MCP registry with feature flags
+  - Type definitions in mcp.types.ts
+- `src/components/mcp/ThinkingProcess.tsx` - Sequential Thinking visualization
+- API endpoints: `/api/mcp/query`, `/api/mcp/health`, `/api/mcp/tools`
+- Integration tests and verification scripts
+
+### Database Changes
+
+- New table: `mcp_memory` (for Memory MCP storage)
+- No changes to existing workflow tables
+
+### Environment Variables
+
+```bash
+# Global MCP Settings
+MCP_ENABLED=true
+MCP_LOG_LEVEL=info
+
+# Phase 1 Servers
+MCP_ENABLE_SUPABASE=true
+MCP_ENABLE_POSTGRESQL=true
+MCP_ENABLE_MEMORY=true
+MCP_ENABLE_SEQUENTIAL_THINKING=true
+
+# PostgreSQL Connection
+MCP_POSTGRES_CONNECTION_STRING=postgresql://...
+
+# Memory Storage
+MCP_MEMORY_STORAGE_TYPE=database
+MCP_MEMORY_TABLE=mcp_memory
+MCP_MEMORY_TTL=86400
+```
+
+### Documentation
+
+- `docs/MCP_INTEGRATION_GUIDE.md` - Comprehensive MCP usage guide
+- `docs/CHAT_UX_IMPROVEMENTS.md` - Analysis of better-chatbot UX patterns
+- `docs/VOICE_INTEGRATION_ANALYSIS.md` - Web Speech API vs OpenAI Realtime comparison
+- `docs/MCP_MERGE_RISK_ANALYSIS.md` - Production merge safety analysis
+
+### Known Issues
+
+- PostgreSQL MCP disabled by default (bundling complexity)
+- MCP disabled in production until explicitly enabled via feature flag
+- Sequential Thinking can take 10-30 seconds for complex analysis
+
+### Performance
+
+- First token latency: <500ms with streaming (planned for 0.2.0)
+- MCP tool loading: ~50ms on first request
+- Zero performance impact when MCP disabled (production default)
+
+### Future Phases
+
+- **Phase 2:** Communication MCPs (Slack, Email, Calendar)
+- **Phase 3:** Integration MCPs (GitHub, Linear, Stripe, Twilio)
+- **Phase 4:** Document MCPs (Playwright, OCR)
+
+### Related Issues
+
+- GitHub Issue #7: Release 0.2.0 planning (Human OS Check-Ins + Chat UX)
 
 ---
 
