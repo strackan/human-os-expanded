@@ -3,10 +3,15 @@
  *
  * Handles LLM integration for workflow chat threads.
  * Supports streaming responses, tool calling, and context management.
+ * Integrates with MCP (Model Context Protocol) for enhanced AI capabilities.
  */
 
 import { ChatService, type ChatMessage } from './ChatService';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getMCPManager } from '@/lib/mcp/MCPManager';
+import { getMCPClientConfigs } from '@/lib/mcp/config/mcp-registry';
+import { isMCPEnabled } from '@/lib/mcp/config/mcp-registry';
+import type { MCPToolCall } from '@/lib/mcp/types/mcp.types';
 
 export interface LLMResponse {
   content: string;
@@ -33,9 +38,11 @@ export interface LLMChatParams {
  */
 export class LLMService {
   private chatService: ChatService;
+  private mcpEnabled: boolean;
 
   constructor(companyId?: string | null, supabase?: SupabaseClient) {
     this.chatService = new ChatService(companyId, supabase);
+    this.mcpEnabled = isMCPEnabled();
   }
 
   /**
@@ -45,7 +52,7 @@ export class LLMService {
     const { thread_id, user_message, stream = false, tools } = params;
 
     // 1. Record user message
-    const userMsg = await this.chatService.sendMessage({
+    await this.chatService.sendMessage({
       thread_id,
       content: user_message,
       role: 'user',
@@ -69,17 +76,27 @@ export class LLMService {
       })),
     ];
 
-    // 5. Call LLM (using OpenAI API format)
+    // 5. Get tool definitions (including MCP tools if enabled)
+    const toolDefinitions = await this.getAllToolDefinitions(
+      tools || context.tools_available || []
+    );
+
+    // 6. Call LLM (using OpenAI API format)
     const response = await this.callLLM({
       messages: llmMessages,
       model: context.model_used || 'gpt-4',
       temperature: context.temperature || 0.7,
       max_tokens: context.max_tokens || 2000,
-      tools: tools || (context.tools_available?.length ? this.getToolDefinitions(context.tools_available) : undefined),
+      tools: toolDefinitions,
       stream,
     });
 
-    // 6. Record assistant message
+    // 7. Execute MCP tool calls if any
+    if (response.tool_calls && this.mcpEnabled) {
+      response.tool_calls = await this.executeMCPTools(response.tool_calls);
+    }
+
+    // 8. Record assistant message
     const assistantMsg = await this.chatService.sendMessage({
       thread_id,
       content: response.content,
@@ -90,10 +107,10 @@ export class LLMService {
       },
     });
 
-    // 7. Update token usage
+    // 9. Update token usage
     await this.chatService.updateTokensUsed(thread_id, response.tokens_used);
 
-    // 8. Record tool calls if any
+    // 10. Record tool calls if any
     if (response.tool_calls) {
       for (const toolCall of response.tool_calls) {
         await this.chatService.recordToolCall(
@@ -146,12 +163,90 @@ export class LLMService {
   }
 
   /**
+   * Get all tool definitions (including MCP tools)
+   */
+  private async getAllToolDefinitions(toolNames: string[]): Promise<any[]> {
+    const tools: any[] = [];
+
+    // Get traditional tool definitions
+    tools.push(...this.getToolDefinitions(toolNames));
+
+    // Get MCP tool definitions if enabled
+    if (this.mcpEnabled) {
+      try {
+        const mcpManager = getMCPManager({
+          clients: getMCPClientConfigs(),
+        });
+
+        // Initialize if not already initialized
+        if (!mcpManager) {
+          console.warn('MCP Manager not initialized, skipping MCP tools');
+        } else {
+          const mcpTools = mcpManager.getToolDefinitions();
+          tools.push(...mcpTools);
+        }
+      } catch (error) {
+        console.error('Failed to get MCP tools:', error);
+      }
+    }
+
+    return tools;
+  }
+
+  /**
    * Get tool definitions for available tools
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private getToolDefinitions(toolNames: string[]): any[] {
     // TODO: Implement tool definitions registry
     // For now, return empty array
     return [];
+  }
+
+  /**
+   * Execute MCP tool calls
+   */
+  private async executeMCPTools(toolCalls: ToolCall[]): Promise<ToolCall[]> {
+    const executedCalls: ToolCall[] = [];
+
+    for (const toolCall of toolCalls) {
+      // Check if this is an MCP tool
+      if (toolCall.name.startsWith('mcp_')) {
+        try {
+          const mcpManager = getMCPManager();
+
+          const mcpToolCall: MCPToolCall = {
+            id: `call_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: 'function',
+            function: {
+              name: toolCall.name,
+              arguments: JSON.stringify(toolCall.input),
+            },
+          };
+
+          const result = await mcpManager.executeTool(mcpToolCall);
+          const parsedResult = JSON.parse(result.content);
+
+          executedCalls.push({
+            ...toolCall,
+            output: parsedResult.data,
+          });
+        } catch (error) {
+          console.error(`MCP tool execution failed for ${toolCall.name}:`, error);
+          executedCalls.push({
+            ...toolCall,
+            output: {
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+          });
+        }
+      } else {
+        // Non-MCP tool, keep as is
+        executedCalls.push(toolCall);
+      }
+    }
+
+    return executedCalls;
   }
 
   /**
