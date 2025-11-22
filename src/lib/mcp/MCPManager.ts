@@ -6,11 +6,10 @@
  */
 
 import { SupabaseMCPClient } from './clients/SupabaseMCPClient';
-// Temporarily disable PostgreSQL MCP to fix build issues (pg library bundling)
-// import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
-import type { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
+import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
 import { MemoryMCPClient } from './clients/MemoryMCPClient';
 import { SequentialThinkingMCPClient } from './clients/SequentialThinkingMCPClient';
+import { MCPServerStatus } from './types/mcp.types';
 import type {
   MCPServer,
   MCPQueryRequest,
@@ -18,10 +17,10 @@ import type {
   MCPManagerConfig,
   MCPClientConfig,
   MCPHealthCheck,
-  MCPServerStatus,
   MCPToolCall,
   MCPToolResult,
   MCPMetrics,
+  MCPTool,
 } from './types/mcp.types';
 
 /**
@@ -97,10 +96,7 @@ export class MCPManager {
         break;
 
       case 'postgresql':
-        // Temporarily disabled due to pg library bundling issues
-        // TODO: Fix by using dynamic imports or server-only wrapper
-        this.log('warn', 'PostgreSQL MCP client temporarily disabled');
-        // this.postgresqlClient = new PostgreSQLMCPClient();
+        this.postgresqlClient = new PostgreSQLMCPClient();
         break;
 
       case 'memory':
@@ -217,8 +213,8 @@ export class MCPManager {
   /**
    * Get all tool definitions for LLM
    */
-  getToolDefinitions() {
-    const tools: any[] = [];
+  getToolDefinitions(): MCPTool[] {
+    const tools: MCPTool[] = [];
 
     if (this.supabaseClient) {
       tools.push(...this.supabaseClient.getToolDefinitions());
@@ -393,7 +389,7 @@ export class MCPManager {
   /**
    * Logging utility
    */
-  private log(level: 'debug' | 'info' | 'warn' | 'error', message: string, ...args: any[]): void {
+  private log(level: 'debug' | 'info' | 'warn' | 'error', message: string, ...args: unknown[]): void {
     const levels = { debug: 0, info: 1, warn: 2, error: 3 };
     const configLevel = levels[this.config.logLevel || 'info'];
     const messageLevel = levels[level];
