@@ -6,7 +6,9 @@
  */
 
 import { SupabaseMCPClient } from './clients/SupabaseMCPClient';
-import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
+// Temporarily disable PostgreSQL MCP to fix build issues (pg library bundling)
+// import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
+import type { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
 import { MemoryMCPClient } from './clients/MemoryMCPClient';
 import { SequentialThinkingMCPClient } from './clients/SequentialThinkingMCPClient';
 import type {
@@ -95,7 +97,10 @@ export class MCPManager {
         break;
 
       case 'postgresql':
-        this.postgresqlClient = new PostgreSQLMCPClient();
+        // Temporarily disabled due to pg library bundling issues
+        // TODO: Fix by using dynamic imports or server-only wrapper
+        this.log('warn', 'PostgreSQL MCP client temporarily disabled');
+        // this.postgresqlClient = new PostgreSQLMCPClient();
         break;
 
       case 'memory':

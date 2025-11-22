@@ -75,7 +75,9 @@
       "Bash(then mkdir \"C:/Users/strac/dev/goodhang/goodhang-web/app/status\")",
       "Bash(fi)",
       "Bash(if [ ! -d \"C:/Users/strac/dev/goodhang/goodhang-web/app/status/not-approved\" ])",
-      "Bash(then mkdir \"C:/Users/strac/dev/goodhang/goodhang-web/app/status/not-approved\")"
+      "Bash(then mkdir \"C:/Users/strac/dev/goodhang/goodhang-web/app/status/not-approved\")",
+      "Bash(git push:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "ask": []
