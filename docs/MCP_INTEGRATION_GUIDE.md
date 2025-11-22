@@ -26,6 +26,13 @@ This guide covers the MCP (Model Context Protocol) integration in Renubu, which 
    - Context-aware memory retrieval
    - Automatic access tracking
 
+4. **Sequential Thinking MCP Client** ⭐ NEW
+   - Step-by-step reasoning for complex decisions
+   - Chain-of-thought prompting
+   - Transparent reasoning process
+   - Confidence scoring for each step
+   - Use for: renewal strategies, pricing decisions, risk assessments, contract analysis
+
 ## Setup
 
 ### 1. Environment Configuration
@@ -41,6 +48,7 @@ MCP_LOG_LEVEL=info
 MCP_ENABLE_SUPABASE=true
 MCP_ENABLE_POSTGRESQL=true
 MCP_ENABLE_MEMORY=true
+MCP_ENABLE_SEQUENTIAL_THINKING=true
 
 # PostgreSQL Connection
 MCP_POSTGRES_CONNECTION_STRING=postgresql://...
@@ -220,6 +228,47 @@ const memoryResult = await mcpManager.query({
 console.log('Previous discussions:', memoryResult.data);
 ```
 
+#### Sequential Thinking for Complex Decisions
+```typescript
+// Think through a renewal strategy
+const thinkingResult = await mcpManager.query({
+  server: 'sequential_thinking',
+  action: 'think',
+  parameters: {
+    problem: `Should we offer a discount to save the AcmeCorp renewal?
+    Context: $120k ARR, health score 42, renewal in 12 days, 2 competitor outreach attempts detected.`,
+    context: `Customer has been with us for 3 years. Current contract: $10k/month.
+    Usage has dropped 30% in Q4. CFO mentioned budget constraints in last call.`,
+    maxSteps: 8,
+    requireConclusion: true
+  }
+});
+
+if (thinkingResult.success) {
+  // Display thinking process to user
+  console.log('Reasoning steps:', thinkingResult.data.steps);
+  console.log('Conclusion:', thinkingResult.data.conclusion);
+  console.log('Confidence:', thinkingResult.data.confidenceScore);
+}
+
+// Example output:
+// Step 1: Analyze ARR impact
+//   - $120k represents 8% of quarterly target
+//   - Loss would significantly impact Q1 numbers
+//
+// Step 2: Assess competitor risk
+//   - 2 outreach attempts indicates active shopping
+//   - High likelihood of switching without intervention
+//
+// Step 3: Evaluate discount options
+//   - 10% discount = $12k/year cost
+//   - Retention value = $120k ARR preserved
+//   - ROI: 10x return on discount investment
+//
+// Conclusion: Recommend 10% discount + executive engagement
+// Confidence: 87%
+```
+
 ## LLM Integration
 
 The MCP tools are automatically available to the AI in workflow chats:
@@ -254,6 +303,40 @@ The MCP tools are automatically available to the AI in workflow chats:
 1. RiskyRenovations - Renewal: Jan 25, Health: 42
 2. AtRisk Corp - Renewal: Feb 3, Health: 55
 ..."
+
+### Example with Sequential Thinking
+
+**User:** "What's the best renewal strategy for RiskyRenovations?"
+
+**AI uses `mcp_sequential_thinking_think` tool:**
+```
+Step 1: Analyze current situation
+- Health score: 42 (critical risk)
+- ARR: $120k (significant revenue)
+- Renewal: 12 days away (urgent timeline)
+
+Step 2: Identify root causes
+- Usage down 30% in Q4
+- CFO mentioned budget constraints
+- 2 competitor outreach attempts
+
+Step 3: Evaluate options
+Option A: 10% discount ($12k cost, likely to secure renewal)
+Option B: No discount (risk losing $120k ARR)
+Option C: 15% discount + multi-year (higher cost, better LTV)
+
+Step 4: Calculate ROI
+- 10% discount ROI: 10x return
+- Retention probability: 85%
+- Expected value: $102k
+
+Conclusion: Offer 10% discount + exec engagement call
+Confidence: 87%
+```
+
+**AI displays reasoning** via `<ThinkingProcess>` component, then responds:
+
+"Based on step-by-step analysis, I recommend offering a 10% discount combined with an executive engagement call. This balances retention likelihood (85%) with cost efficiency (10x ROI). The discount addresses their budget concerns while exec engagement tackles the relationship aspect."
 
 ## Monitoring
 

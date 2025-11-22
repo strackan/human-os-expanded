@@ -8,6 +8,7 @@
 import { SupabaseMCPClient } from './clients/SupabaseMCPClient';
 import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
 import { MemoryMCPClient } from './clients/MemoryMCPClient';
+import { SequentialThinkingMCPClient } from './clients/SequentialThinkingMCPClient';
 import type {
   MCPServer,
   MCPQueryRequest,
@@ -28,6 +29,7 @@ export class MCPManager {
   private supabaseClient?: SupabaseMCPClient;
   private postgresqlClient?: PostgreSQLMCPClient;
   private memoryClient?: MemoryMCPClient;
+  private sequentialThinkingClient?: SequentialThinkingMCPClient;
 
   private config: MCPManagerConfig;
   private healthCheckInterval?: NodeJS.Timeout;
@@ -98,6 +100,10 @@ export class MCPManager {
 
       case 'memory':
         this.memoryClient = new MemoryMCPClient(true); // Enable persistence
+        break;
+
+      case 'sequential_thinking':
+        this.sequentialThinkingClient = new SequentialThinkingMCPClient();
         break;
 
       default:
@@ -218,6 +224,9 @@ export class MCPManager {
     if (this.memoryClient) {
       tools.push(...this.memoryClient.getToolDefinitions());
     }
+    if (this.sequentialThinkingClient) {
+      tools.push(...this.sequentialThinkingClient.getToolDefinitions());
+    }
 
     return tools;
   }
@@ -307,7 +316,7 @@ export class MCPManager {
    */
   private getClient(
     server: MCPServer
-  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | undefined {
+  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | undefined {
     switch (server) {
       case 'supabase':
         return this.supabaseClient;
@@ -315,6 +324,8 @@ export class MCPManager {
         return this.postgresqlClient;
       case 'memory':
         return this.memoryClient;
+      case 'sequential_thinking':
+        return this.sequentialThinkingClient;
       default:
         return undefined;
     }
@@ -324,10 +335,10 @@ export class MCPManager {
    * Get all active clients
    */
   private getActiveClients(): Array<
-    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient]
+    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient]
   > {
     const clients: Array<
-      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient]
+      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient]
     > = [];
 
     if (this.supabaseClient) {
@@ -338,6 +349,9 @@ export class MCPManager {
     }
     if (this.memoryClient) {
       clients.push(['memory' as MCPServer, this.memoryClient]);
+    }
+    if (this.sequentialThinkingClient) {
+      clients.push(['sequential_thinking' as MCPServer, this.sequentialThinkingClient]);
     }
 
     return clients;

@@ -12,6 +12,7 @@ export enum MCPServer {
   SUPABASE = 'supabase',
   POSTGRESQL = 'postgresql',
   MEMORY = 'memory',
+  SEQUENTIAL_THINKING = 'sequential_thinking',
   EMAIL = 'email',
   SLACK = 'slack',
   CALENDAR = 'calendar',
@@ -322,6 +323,50 @@ export namespace CalendarMCP {
       status: 'accepted' | 'declined' | 'tentative' | 'needsAction';
     }>;
     htmlLink: string;
+  }
+}
+
+/**
+ * Sequential Thinking MCP Types
+ */
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace SequentialThinkingMCP {
+  export interface ThinkParams {
+    problem: string;
+    context?: string;
+    maxSteps?: number;
+    requireConclusion?: boolean;
+  }
+
+  export interface ThoughtStep {
+    stepNumber: number;
+    title: string;
+    content: string;
+    confidence?: number; // 0-100
+    reasoning?: string;
+  }
+
+  export interface ThinkingResult {
+    steps: ThoughtStep[];
+    conclusion: string;
+    totalSteps: number;
+    confidenceScore: number;
+    metadata?: {
+      timeTaken: number;
+      complexity: 'simple' | 'moderate' | 'complex';
+      tokensUsed?: number;
+    };
+  }
+
+  export interface ReflectParams {
+    previousThoughts: ThoughtStep[];
+    question: string;
+  }
+
+  export interface ReviseParams {
+    originalConclusion: string;
+    feedback: string;
+    context?: string;
   }
 }
 

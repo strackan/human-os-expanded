@@ -32,6 +32,13 @@ export function getMCPClientConfigs(): MCPClientConfig[] {
       retryAttempts: 1,
       retryDelay: 500,
     },
+    {
+      server: 'sequential_thinking' as MCPServer,
+      enabled: process.env.MCP_ENABLE_SEQUENTIAL_THINKING === 'true',
+      timeout: 30000, // Longer timeout for thinking
+      retryAttempts: 1,
+      retryDelay: 1000,
+    },
   ];
 }
 
@@ -70,6 +77,7 @@ export const MCP_FEATURES = {
   supabase_mcp: process.env.MCP_ENABLE_SUPABASE === 'true',
   postgresql_mcp: process.env.MCP_ENABLE_POSTGRESQL === 'true',
   memory_mcp: process.env.MCP_ENABLE_MEMORY === 'true',
+  sequential_thinking_mcp: process.env.MCP_ENABLE_SEQUENTIAL_THINKING === 'true',
 
   // Phase 2: Communication (future)
   email_mcp: process.env.MCP_ENABLE_EMAIL === 'true',
