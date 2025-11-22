@@ -5,19 +5,11 @@
  * with brand exposure analysis and employer branding metrics
  */
 
-import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
-// Load environment variables
-config({ path: '.env.local' });
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.error('Missing required environment variables');
-  process.exit(1);
-}
+// Staging credentials
+const supabaseUrl = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtdWdta3JpaG5qc3hscHdkemN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTUwNjg5MiwiZXhwIjoyMDc3MDgyODkyfQ.gnUWQYmviaKUcm3haH672v-VK-G1p-Bqyq-EfBNXYfo';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 

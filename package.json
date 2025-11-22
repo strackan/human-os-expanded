@@ -54,6 +54,7 @@
     "reactflow": "^11.11.4",
     "recharts": "^2.15.4",
     "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.2.0",
     "zod": "^4.1.12"
   },
