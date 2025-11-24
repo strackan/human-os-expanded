@@ -780,24 +780,39 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
       return null;
     }
 
-    const section = state.currentSlide.artifacts.sections[0];
+    // Filter to only visible artifacts
+    const visibleSections = state.currentSlide.artifacts.sections.filter((section: any) => section.visible !== false);
 
+    if (visibleSections.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full p-8">
+          <p className="text-gray-500 text-sm">No artifacts to display</p>
+        </div>
+      );
+    }
+
+    // Render all visible artifacts
     return (
-      <ArtifactRenderer
-        slide={state.currentSlide}
-        section={section}
-        customerName={customerName}
-        workflowState={state.workflowState}
-        customer={state.customer}
-        expansionData={state.expansionData}
-        stakeholders={state.stakeholders || []}
-        sequenceInfo={sequenceInfo}
-        onNext={state.goToNextSlide}
-        onBack={state.goToPreviousSlide}
-        onClose={onClose}
-        onComplete={state.handleComplete}
-        onUpdateState={state.updateWorkflowState}
-      />
+      <div className="overflow-y-auto h-full p-6 space-y-6">
+        {visibleSections.map((section: any, index: number) => (
+          <ArtifactRenderer
+            key={section.id || `artifact-${index}`}
+            slide={state.currentSlide}
+            section={section}
+            customerName={customerName}
+            workflowState={state.workflowState}
+            customer={state.customer}
+            expansionData={state.expansionData}
+            stakeholders={state.stakeholders || []}
+            sequenceInfo={sequenceInfo}
+            onNext={state.goToNextSlide}
+            onBack={state.goToPreviousSlide}
+            onClose={onClose}
+            onComplete={state.handleComplete}
+            onUpdateState={state.updateWorkflowState}
+          />
+        ))}
+      </div>
     );
   };
 
