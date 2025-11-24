@@ -19,7 +19,9 @@ import { CustomerWithContact } from '../../../../types/customer';
 import EditableCell from '../../../../components/common/EditableCell';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import { registerWorkflowConfig } from '@/config/workflows/index';
-import { WorkflowConfigTransformer } from '@/lib/services/WorkflowConfigTransformer';
+import { composeFromDatabase } from '@/lib/workflows/db-composer';
+import { createWorkflowExecution } from '@/lib/workflows/actions';
+import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function CustomerViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -178,91 +180,104 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
 
     try {
       setLaunchingWorkflow(true);
-      console.log('[Customer View] Launching workflow using template system...', {
+      console.log('[Customer View] Launching workflow using modular slide library system...', {
         customer: customer.name
       });
+      console.time('[Customer View] Total workflow launch time');
 
-      // Calculate days to renewal for trigger context
+      // Calculate days to renewal
       const daysUntilRenewal = Math.ceil(
         (new Date(customer.renewal_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       );
 
-      // Use workflow_templates system (NEW)
-      const templateName = 'renewal_base';
-
-      console.log('[Customer View] Compiling workflow template...', {
-        templateName,
-        daysUntilRenewal
-      });
-
-      // Call workflow compilation API
-      const response = await fetch('/api/workflows/compile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          templateName,
-          customerId: customer.id,
-          userId: user.id,
-          triggerContext: {
-            risk_score: customer.risk_score,
-            opportunity_score: customer.opportunity_score,
-            health_score: customer.health_score,
-            days_to_renewal: daysUntilRenewal,
-          },
-          createExecution: true,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to compile workflow');
+      // Determine which workflow to launch based on customer context
+      // TODO: In the future, this should be determined by trigger evaluation
+      // For now, use a simple heuristic based on days to renewal
+      let workflowId: string;
+      if (daysUntilRenewal <= 90) {
+        workflowId = 'inhersight-90day-renewal';
+      } else if (daysUntilRenewal <= 120 && customer.health_score < 70) {
+        workflowId = 'inhersight-120day-atrisk';
+      } else {
+        workflowId = 'standard-renewal'; // Fallback to standard renewal
       }
 
-      const result = await response.json();
-      console.log('[Customer View] Workflow compiled:', result);
+      console.log('[Customer View] Selected workflow:', {
+        workflowId,
+        daysUntilRenewal,
+        healthScore: customer.health_score
+      });
 
-      if (!result.success || !result.data.compiledWorkflow) {
-        throw new Error('Compilation succeeded but no workflow returned');
-      }
-
-      // Transform CompiledWorkflowConfig to WorkflowConfig format
-      const workflowConfig = WorkflowConfigTransformer.transformToWorkflowConfig(
-        result.data.compiledWorkflow,
-        customer.name
+      // Load workflow config from database using Phase 3 modular system
+      const workflowConfig = await composeFromDatabase(
+        workflowId,
+        null, // company_id (null = stock workflow)
+        {
+          name: customer.name,
+          current_arr: customer.current_arr,
+          health_score: customer.health_score,
+          renewal_date: customer.renewal_date,
+          days_to_renewal: daysUntilRenewal,
+          risk_score: customer.risk_score,
+          opportunity_score: customer.opportunity_score,
+          // Add all customer fields for template hydration
+          ...customer,
+        }
       );
 
-      console.log('[Customer View] Workflow config transformed:', {
-        slides: workflowConfig.slides?.length,
-        templateId: result.data.metadata.templateId,
-        modifications: result.data.metadata.modificationsApplied,
+      if (!workflowConfig) {
+        console.error('[Customer View] Failed to load workflow config');
+        throw new Error(`Workflow template "${workflowId}" not found in database. Please ensure workflow definitions are seeded.`);
+      }
+
+      console.log('[Customer View] Workflow loaded from database:', {
+        workflowId,
+        workflowName: (workflowConfig as any).workflowName,
+        slides: workflowConfig.slides?.length
       });
 
-      // Generate unique workflow ID for this execution
-      const workflowId = `renewal-${customer.id}-${result.data.executionId}`;
+      // Register the config so TaskMode can find it
+      registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
+      console.log('[Customer View] Config registered in workflow registry');
 
-      // Register config so TaskMode can retrieve it
-      registerWorkflowConfig(workflowId, workflowConfig);
-      console.log('[Customer View] Workflow config registered:', workflowId);
+      // Create workflow execution record
+      const executionResult = await createWorkflowExecution({
+        workflowConfigId: workflowId,
+        workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
+        workflowType: (workflowConfig as any).workflowType || 'renewal',
+        customerId: customer.id,
+        userId: user.id,
+        assignedCsmId: user.id,
+        totalSteps: workflowConfig.slides?.length || 0,
+      });
+
+      if (executionResult.success && executionResult.executionId) {
+        console.log('[Customer View] Workflow execution created:', executionResult.executionId);
+        setExecutionId(executionResult.executionId);
+      }
 
       // Set state to open TaskMode modal
       setActiveWorkflow({
         workflowId,
-        title: result.data.compiledWorkflow.template_name || 'Renewal Planning',
+        title: (workflowConfig as any).workflowName || 'Renewal Planning',
         customerId: customer.id,
         customerName: customer.name,
       });
 
-      setExecutionId(result.data.executionId);
       setTaskModeOpen(true);
-
+      console.timeEnd('[Customer View] Total workflow launch time');
       console.log('[Customer View] Opening TaskMode modal');
 
     } catch (error: any) {
       console.error('[Customer View] Error launching workflow:', error);
+      console.timeEnd('[Customer View] Total workflow launch time');
 
       let errorMessage = 'Error launching workflow. ';
-      if (error.message?.includes('Template not found')) {
-        errorMessage += 'The workflow template was not found. Please ensure templates are seeded (run: npx tsx scripts/seed-workflow-templates.ts).';
+
+      if (error.message?.includes('WORKFLOW_NOT_FOUND') || error.message?.includes('not found in database')) {
+        errorMessage += 'The workflow was not found in the database. Please contact your administrator to set up workflow definitions (run: npx tsx scripts/seed-workflow-definitions.ts).';
+      } else if (error.message?.includes('DB_FETCH_ERROR')) {
+        errorMessage += 'Unable to connect to the database. Please check your connection and try again.';
       } else if (error.message?.includes('Customer not found')) {
         errorMessage += 'Customer data could not be loaded.';
       } else {

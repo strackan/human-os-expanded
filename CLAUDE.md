@@ -49,3 +49,10 @@ Skip these files during searches:
 - Multiple .env files exist for different environments - be careful when modifying
 - Use the env:staging and env:prod scripts to switch environments
 - Schema sync scripts are critical - don't modify without understanding
+
+## Workflow System Standard
+**CRITICAL**: All workflow creation and launching must use the Phase 3 Modular Slide Library System.
+- **Always use**: `composeFromDatabase()` from `@/lib/workflows/db-composer`
+- **Never use**: `/api/workflows/compile`, `WorkflowConfigTransformer`, or static WorkflowConfig files
+- **Reference**: See `docs/workflows/WORKFLOW_SYSTEM_STANDARD.md` for complete standard
+- **Example**: `src/app/dashboard/DashboardClient.tsx:62-147` (correct implementation)
