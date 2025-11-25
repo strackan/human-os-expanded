@@ -85,6 +85,9 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
     : config.artifacts;
   const currentSidePanelConfig = config.sidePanel;
 
+  // Check if current slide has visible artifacts (standard mode)
+  const hasVisibleArtifacts = currentArtifactsConfig?.sections?.some(s => s.visible) ?? false;
+
   const chatInterfaceRef = useRef<{
     showWorkingMessage: () => void;
     hideWorkingMessage: () => void;
@@ -228,7 +231,7 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
       }
     } else if ((action as any).type === 'nextStep') {
       console.log('TaskModeStandalone: Processing nextStep action');
-      const { stepId, stepTitle, artifactId, branchId, showMenu } = action.payload || {};
+      const { stepId, stepTitle, artifactId, branchId } = action.payload || {};
 
       if (stepId) {
         handleStepComplete(stepId);
@@ -432,8 +435,8 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
           id="task-mode-chat"
           className="flex flex-col h-full overflow-hidden"
           style={{
-            width: (isSplitMode || visibleArtifacts.size > 0) ? `${chatWidth}%` : '100%',
-            borderRight: (isSplitMode || visibleArtifacts.size > 0) ? '1px solid #e5e7eb' : 'none'
+            width: (isSplitMode || visibleArtifacts.size > 0 || hasVisibleArtifacts) ? `${chatWidth}%` : '100%',
+            borderRight: (isSplitMode || visibleArtifacts.size > 0 || hasVisibleArtifacts) ? '1px solid #e5e7eb' : 'none'
           }}
         >
           <ChatInterface
@@ -450,7 +453,7 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
         </div>
 
         {/* VERTICAL DIVIDER - Show when there are visible artifacts */}
-        {(isSplitMode || visibleArtifacts.size > 0) && (
+        {(isSplitMode || visibleArtifacts.size > 0 || hasVisibleArtifacts) && (
           <div
             id="divider-vertical"
             className="divider-vertical"
@@ -463,8 +466,8 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
           </div>
         )}
 
-        {/* ARTIFACTS CONTAINER - Show when there are visible artifacts */}
-        {(isSplitMode || visibleArtifacts.size > 0) && (
+        {/* ARTIFACTS CONTAINER - Show when current slide has visible artifacts */}
+        {(isSplitMode || visibleArtifacts.size > 0 || hasVisibleArtifacts) && (
           <div id="task-mode-artifacts" className="h-full overflow-hidden" style={{ width: `${100 - chatWidth}%` }}>
             <ArtifactsPanel
               config={currentArtifactsConfig}
