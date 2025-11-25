@@ -161,11 +161,23 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
   };
 
   const handleUpdateCustomer = async <K extends keyof CustomerWithContact>(field: K, value: CustomerWithContact[K]) => {
-    if (!customer) return;
+    if (!customer || !user) return;
 
     try {
+      // Get company_id from customer (it exists in DB but not in type)
+      const customerWithCompany = customer as CustomerWithContact & { company_id?: string };
+
+      if (!customerWithCompany.company_id) {
+        console.error('No company_id found on customer');
+        return;
+      }
+
       const updates = { [field]: value } as Partial<CustomerWithContact>;
-      const updatedCustomer = await CustomerService.updateCustomer(customer.id, updates);
+      const updatedCustomer = await CustomerService.updateCustomer(
+        customer.id,
+        customerWithCompany.company_id,
+        updates
+      );
       setCustomer(updatedCustomer);
     } catch (error) {
       console.error('Error updating customer:', error);
@@ -213,15 +225,10 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         workflowId,
         null, // company_id (null = stock workflow)
         {
-          name: customer.name,
-          current_arr: customer.current_arr,
-          health_score: customer.health_score,
-          renewal_date: customer.renewal_date,
-          days_to_renewal: daysUntilRenewal,
-          risk_score: customer.risk_score,
-          opportunity_score: customer.opportunity_score,
-          // Add all customer fields for template hydration
+          // Spread customer fields first, then override with computed values
           ...customer,
+          name: customer.name,
+          days_to_renewal: daysUntilRenewal,
         }
       );
 

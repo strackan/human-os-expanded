@@ -93,7 +93,21 @@ export default function CustomerList({
   // Handlers
   const handleUpdateCustomer = async (customerId: string, field: keyof Customer, value: string | number) => {
     try {
-      await CustomerService.updateCustomer(customerId, { [field]: value });
+      // Find the customer to get company_id
+      const customer = customers.find(c => c.id === customerId);
+      if (!customer) {
+        console.error('Customer not found');
+        return;
+      }
+
+      // Get company_id from customer (it exists in DB but not in type)
+      const customerWithCompany = customer as typeof customer & { company_id?: string };
+      if (!customerWithCompany.company_id) {
+        console.error('No company_id found on customer');
+        return;
+      }
+
+      await CustomerService.updateCustomer(customerId, customerWithCompany.company_id, { [field]: value });
       refetch();
     } catch (error) {
       console.error('Error updating customer:', error);

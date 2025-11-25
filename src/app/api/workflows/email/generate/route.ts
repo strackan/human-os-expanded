@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: 'No company associated with user',
           errorCode: 'NO_COMPANY',
-        } as GenerateEmailResponse,
+        },
         { status: 403 }
       );
     }

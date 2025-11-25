@@ -39,7 +39,7 @@ export class SupabaseMCPClient {
     const requestId = this.generateRequestId();
 
     try {
-      let query = this.client.from(params.table);
+      let query: any = this.client.from(params.table);
 
       // Select columns
       if (params.select) {

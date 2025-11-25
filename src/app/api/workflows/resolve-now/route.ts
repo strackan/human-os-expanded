@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     const reviewService = new WorkflowReviewService(supabase);
     await reviewService.approveReview(
       workflowId,
-      userId,
+      userId || 'system',
       comments
     );
 

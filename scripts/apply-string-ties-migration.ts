@@ -1,3 +1,4 @@
+// @ts-expect-error - pg types not available in this context
 import { Client } from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';

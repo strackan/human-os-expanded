@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 /**
  * Unit Tests for BaseTriggerEvaluator
  *

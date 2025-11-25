@@ -119,14 +119,16 @@ export class HybridWorkflowComposer {
       }
 
       // 5. Create hybrid config
-      const hybridConfig: WorkflowConfig = {
+      const hybridConfig = {
         ...legacyConfig,
         slides: hybridSlides,
-        _hybridInfo: {
-          legacySlides: legacyConfig.slides?.length || 0,
-          newSlides: useNewSlides.length,
-          hybridIndexes: useNewSlides
-        }
+      } as WorkflowConfig;
+
+      // Store hybrid metadata for debugging (not part of WorkflowConfig type)
+      (hybridConfig as any)._hybridInfo = {
+        legacySlides: legacyConfig.slides?.length || 0,
+        newSlides: useNewSlides.length,
+        hybridIndexes: useNewSlides
       };
 
       console.log('[HybridComposer] Hybrid workflow created:',

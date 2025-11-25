@@ -16,10 +16,10 @@ async function main() {
 
   console.log('=== INHERSIGHT 90-DAY RENEWAL ARTIFACTS ===\n');
 
-  const converted = [];
-  const unconverted = [];
+  const converted: string[] = [];
+  const unconverted: string[] = [];
 
-  template.base_artifacts.forEach((artifact: any) => {
+  template?.base_artifacts?.forEach((artifact: any) => {
     const hasComponent = !!artifact.component_id;
     const status = hasComponent ? '✅' : '⚠️ ';
 
@@ -41,7 +41,7 @@ async function main() {
 
   if (unconverted.length > 0) {
     console.log('Unconverted artifacts (using generic document rendering):');
-    unconverted.forEach(id => console.log(`  - ${id}`));
+    unconverted.forEach((id: string) => console.log(`  - ${id}`));
   }
 }
 

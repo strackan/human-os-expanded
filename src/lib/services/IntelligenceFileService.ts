@@ -68,18 +68,18 @@ export class IntelligenceFileService {
 
       // Personal Context
       life_context: {
-        location: profileData.location,
-        family: profileData.family,
-        hobbies: profileData.hobbies,
+        location: undefined,
+        family: undefined,
+        hobbies: undefined,
         last_updated: now,
       },
 
       // Motivations & Goals
       current_motivation: {
-        seeking: profileData.seeking || 'exploring opportunities',
-        ideal_role: profileData.ideal_role || 'Unknown',
-        deal_breakers: profileData.deal_breakers || [],
-        must_haves: profileData.must_haves || [],
+        seeking: 'exploring opportunities',
+        ideal_role: 'Unknown',
+        deal_breakers: [],
+        must_haves: [],
         updated: now,
       },
 
@@ -153,7 +153,7 @@ export class IntelligenceFileService {
     }
 
     // Update skills
-    if (updates.new_skills && updates.new_skills.length > 0) {
+    if (updates.new_skills && Array.isArray(updates.new_skills) && updates.new_skills.length > 0) {
       updates.new_skills.forEach((skill: string) => {
         if (!existingFile.technical_skills.includes(skill)) {
           existingFile.technical_skills.push(skill);
@@ -167,7 +167,7 @@ export class IntelligenceFileService {
     }
 
     // Update projects
-    if (updates.projects && updates.projects.length > 0) {
+    if (updates.projects && Array.isArray(updates.projects) && updates.projects.length > 0) {
       existingFile.projects.push(...updates.projects);
     }
 
@@ -203,7 +203,7 @@ export class IntelligenceFileService {
       session_id: session.id || `check-in-${existingFile.total_sessions}`,
       date: now,
       type: session.session_type || 'check_in',
-      key_updates: updates.key_insights || ['Check-in completed'],
+      key_updates: (Array.isArray(updates.key_insights) ? updates.key_insights : ['Check-in completed']) as string[],
       sentiment: session.sentiment || 'content',
     });
 
@@ -288,10 +288,10 @@ export class IntelligenceFileService {
     // This is a simplified extraction
     // In a real implementation, you'd use NLP or Claude API to extract structured data
 
-    const extracted: Record<string, string[]> = {
-      technical_skills: [],
-      domain_expertise: [],
-      career_trajectory: [],
+    const extracted: Record<string, any> = {
+      technical_skills: [] as string[],
+      domain_expertise: [] as string[],
+      career_trajectory: [] as any[],
     };
 
     // Extract from transcript content (basic keyword matching)
@@ -322,12 +322,12 @@ export class IntelligenceFileService {
     transcript: InterviewMessage[],
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _existingFile: IntelligenceFile
-  ): Record<string, unknown> {
+  ): Record<string, any> {
     // Simplified extraction - in production, use Claude API or NLP
-    const updates: Record<string, unknown> = {
-      new_skills: [],
-      projects: [],
-      key_insights: [],
+    const updates: Record<string, any> = {
+      new_skills: [] as string[],
+      projects: [] as any[],
+      key_insights: [] as string[],
     };
 
     const fullText = transcript.map((m) => m.content).join(' ');
@@ -337,7 +337,7 @@ export class IntelligenceFileService {
       updates.current_role = 'Updated Role'; // In production, extract actual role
     }
 
-    updates.key_insights.push('Check-in conversation completed');
+    (updates.key_insights as string[]).push('Check-in conversation completed');
 
     return updates;
   }

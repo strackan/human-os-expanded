@@ -70,7 +70,7 @@ function formatConditionSummary(condition: EventCondition): string {
   if (config.subject) parts.push(`subject: "${config.subject}"`);
   if (config.channelId) parts.push(`in ${config.channelId}`);
   if (config.metricName) parts.push(`${config.metricName} ${config.operator} ${config.threshold}`);
-  if (config.eventType) parts.push(config.eventType);
+  if (config.eventType) parts.push(String(config.eventType));
 
   if (parts.length === 0) {
     return source;

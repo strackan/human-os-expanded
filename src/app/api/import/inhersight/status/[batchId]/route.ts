@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase-server';
+import { createClient } from '@/lib/supabase/server';
 
 interface StatusResult {
   success: boolean;
@@ -19,7 +19,7 @@ export async function GET(
   { params }: { params: { batchId: string } }
 ): Promise<NextResponse<StatusResult>> {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { batchId } = params;
 
     // Get current user
@@ -65,7 +65,7 @@ export async function GET(
       skipped: 0
     };
 
-    stagingCounts?.forEach(row => {
+    stagingCounts?.forEach((row: { status: string }) => {
       const status = row.status as keyof typeof statusBreakdown;
       if (status in statusBreakdown) {
         statusBreakdown[status]++;

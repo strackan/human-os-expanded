@@ -13,7 +13,6 @@ export const pricingAnalysisSlideV2: SlideBuilderV2 = (context?: SlideContext): 
     title: 'Pricing Analysis',
     description: 'Analyze renewal pricing strategy',
     label: 'Pricing',
-    previousButton: 'Analyze Pricing Strategy',
     stepMapping: 'pricing-analysis',
     category: 'renewal',
     estimatedMinutes: 3,

@@ -141,8 +141,8 @@ export function useChatState({
           break;
 
         case 'closeWorkflow':
-          console.log('[useChatState] closeWorkflow action triggered - calling onClose(true) for confetti');
-          onClose(true);
+          console.log('[useChatState] closeWorkflow action triggered - calling onClose()');
+          onClose();
           break;
 
         case 'exitTaskMode':

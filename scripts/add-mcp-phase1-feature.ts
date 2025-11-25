@@ -4,6 +4,7 @@
  * Adds Release 0.1.7 "MCP Foundation" feature to features table
  */
 
+// @ts-expect-error - pg types not available in this context
 import { Pool } from 'pg';
 
 const STAGING_DATABASE_URL = process.env.STAGING_DATABASE_URL || '';
@@ -40,8 +41,8 @@ async function addMCPPhase1Feature() {
       `SELECT id, slug FROM feature_categories WHERE slug IN ('infrastructure', 'ai')`
     );
 
-    const infrastructureCategory = categoryResult.rows.find((c) => c.slug === 'infrastructure');
-    const aiCategory = categoryResult.rows.find((c) => c.slug === 'ai');
+    const infrastructureCategory = categoryResult.rows.find((c: any) => c.slug === 'infrastructure');
+    const aiCategory = categoryResult.rows.find((c: any) => c.slug === 'ai');
 
     if (!infrastructureCategory || !aiCategory) {
       throw new Error('Categories not found');

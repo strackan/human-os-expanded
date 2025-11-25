@@ -13,7 +13,7 @@
  * const slides = composeWorkflow(workflowComposition, SLIDE_LIBRARY);
  */
 
-import { SlideBuilder, UniversalSlideBuilder } from './baseSlide';
+import type { UniversalSlideBuilder } from './baseSlide';
 
 // Common slides (used across all workflow types)
 import { greetingSlide } from './common/greetingSlide';
@@ -29,10 +29,21 @@ import { updateCRMSlide } from './action/updateCRMSlide';
 // Risk-specific slides
 import { assessDepartureSlide } from './risk/assessDepartureSlide';
 import { identifyReplacementSlide } from './risk/identifyReplacementSlide';
+import { identifyConcernsSlide } from './risk/identifyConcernsSlide';
 
 // Renewal-specific slides
 import { reviewContractTermsSlide } from './renewal/reviewContractTermsSlide';
 import { pricingStrategySlide } from './renewal/pricingStrategySlide';
+import { identifyOpportunitiesSlide } from './renewal/identifyOpportunitiesSlide';
+import { meetingDebriefSlide } from './renewal/meetingDebriefSlide';
+import { createRecommendationSlide } from './renewal/createRecommendationSlide';
+import { negotiationGuideSlide } from './renewal/negotiationGuideSlide';
+
+// InHerSight-specific slides
+import { reviewBrandPerformanceSlide } from './inhersight/reviewBrandPerformanceSlide';
+import { prepareFreebieSlide } from './inhersight/prepareFreebieSlide';
+import { deliverFreebieSlide } from './inhersight/deliverFreebieSlide';
+import { measureFreebieImpactSlide } from './inhersight/measureFreebieImpactSlide';
 
 // V2 Slides (template-based)
 import { pricingAnalysisSlideV2 } from './renewal/pricingAnalysisSlideV2';
@@ -74,9 +85,7 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   // ========================================
   'assess-departure': assessDepartureSlide,
   'identify-replacement': identifyReplacementSlide,
-  // TODO: Add more risk slides:
-  // 'assess-churn-risk': assessChurnRiskSlide,
-  // 'create-mitigation-plan': createMitigationPlanSlide,
+  'identify-concerns': identifyConcernsSlide,
 
   // ========================================
   // RENEWAL-SPECIFIC SLIDES
@@ -84,8 +93,18 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'review-contract-terms': reviewContractTermsSlide,
   'pricing-strategy': pricingStrategySlide,
   'pricing-analysis': pricingStrategySlide, // Alias for pricing-strategy
-  // TODO: Add more renewal slides:
-  // 'renewal-timeline': renewalTimelineSlide,
+  'identify-opportunities': identifyOpportunitiesSlide,
+  'meeting-debrief': meetingDebriefSlide,
+  'create-recommendation': createRecommendationSlide,
+  'negotiation-guide': negotiationGuideSlide,
+
+  // ========================================
+  // INHERSIGHT-SPECIFIC SLIDES
+  // ========================================
+  'review-brand-performance': reviewBrandPerformanceSlide,
+  'prepare-freebie': prepareFreebieSlide,
+  'deliver-freebie': deliverFreebieSlide,
+  'measure-freebie-impact': measureFreebieImpactSlide,
 
   // ========================================
   // V2 SLIDES (Template-based - New Architecture)
@@ -129,7 +148,7 @@ export function getAllSlideIds(): string[] {
 /**
  * Get slides by category
  */
-export function getSlidesByCategory(category: string): Record<string, UniversalSlideBuilder> {
+export function getSlidesByCategory(_category: string): Record<string, UniversalSlideBuilder> {
   // This would filter based on slide.category
   // For now, returning all since we need to build out the slide metadata
   return SLIDE_LIBRARY;

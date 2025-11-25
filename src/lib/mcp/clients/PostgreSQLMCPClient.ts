@@ -5,6 +5,7 @@
  * Enables AI to execute complex SQL analytics queries.
  */
 
+// @ts-expect-error
 import { Pool, PoolClient, QueryResult } from 'pg';
 import type {
   MCPServer,
@@ -70,7 +71,7 @@ export class PostgreSQLMCPClient {
       const queryResult: PostgreSQLMCP.QueryResult = {
         rows: result.rows,
         rowCount: result.rowCount || 0,
-        fields: result.fields.map((field) => ({
+        fields: result.fields.map((field: any) => ({
           name: field.name,
           dataTypeID: field.dataTypeID,
         })),
@@ -132,7 +133,7 @@ export class PostgreSQLMCPClient {
         results.push({
           rows: result.rows,
           rowCount: result.rowCount || 0,
-          fields: result.fields.map((field) => ({
+          fields: result.fields.map((field: any) => ({
             name: field.name,
             dataTypeID: field.dataTypeID,
           })),

@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Customer, CustomerWithContact } from "../../types/customer";
-import { CustomerService } from "../../lib/services/CustomerService";
 
 interface CustomerModalProps {
   isOpen: boolean;
@@ -143,9 +142,35 @@ export default function CustomerModal({ isOpen, onClose, onSave, customer, mode 
       let savedCustomer: Customer;
 
       if (mode === 'edit' && customer) {
-        savedCustomer = await CustomerService.updateCustomer(customer.id, customerData);
+        // Use API route for updates
+        const response = await fetch(`/api/customers/${customer.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customerData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update customer');
+        }
+
+        const result = await response.json();
+        savedCustomer = result.customer;
       } else {
-        savedCustomer = await CustomerService.createCustomer(customerData);
+        // Use API route for creation
+        const response = await fetch('/api/customers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(customerData)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create customer');
+        }
+
+        const result = await response.json();
+        savedCustomer = result.customer;
       }
 
       onSave(savedCustomer);

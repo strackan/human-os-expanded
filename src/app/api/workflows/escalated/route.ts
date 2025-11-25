@@ -62,12 +62,16 @@ export async function GET(request: NextRequest) {
       : workflows.filter(w => w.review_status !== 'rejected');
 
     // Enhance response with rejection info summary
-    const workflowsWithRejectionInfo = filteredWorkflows.map(workflow => ({
-      ...workflow,
-      has_rejection_history: (workflow.review_rejection_history?.length || 0) > 0,
-      rejection_count: workflow.review_rejection_history?.length || 0,
-      current_iteration: workflow.review_iteration || 1
-    }));
+    const workflowsWithRejectionInfo = filteredWorkflows.map(workflow => {
+      const rejectionHistory = (workflow as any).review_rejection_history;
+      const reviewIteration = (workflow as any).review_iteration;
+      return {
+        ...workflow,
+        has_rejection_history: (rejectionHistory?.length || 0) > 0,
+        rejection_count: rejectionHistory?.length || 0,
+        current_iteration: reviewIteration || 1
+      };
+    });
 
     return NextResponse.json({
       workflows: workflowsWithRejectionInfo,

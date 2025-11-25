@@ -535,7 +535,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
       showToast({
         message: reviewBlockerMessage || 'Cannot complete: workflow is pending review',
         type: 'error',
-        icon: 'shield',
+        icon: 'alert',
         duration: 5000
       });
       return;
@@ -544,7 +544,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
       showToast({
         message: 'Cannot complete: workflow has been rejected. Please address feedback and re-submit.',
         type: 'error',
-        icon: 'x-circle',
+        icon: 'alert',
         duration: 5000
       });
       return;
@@ -797,7 +797,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
         {visibleSections.map((section: any, index: number) => (
           <ArtifactRenderer
             key={section.id || `artifact-${index}`}
-            slide={state.currentSlide}
+            slide={state.currentSlide!}
             section={section}
             customerName={customerName}
             workflowState={state.workflowState}
@@ -1115,7 +1115,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               workflowId={executionId}
               isOpen={state.isEscalateModalOpen}
               onClose={state.closeEscalateModal}
-              onReview={handleWorkflowReview}
+              onReview={(triggers, reviewerId, logic, reason) => handleWorkflowReview(reviewerId, triggers, logic, reason)}
             />
           )}
 

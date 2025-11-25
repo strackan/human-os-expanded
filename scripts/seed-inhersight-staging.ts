@@ -13,8 +13,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 async function main() {
   console.log('🚀 Seeding InHerSight workflows to staging...\n');
 
-  // Import seed data
-  const { inhersight90DayRenewalTemplate } = await import('./seed-inhersight-90day-template.js');
+  // Import seed data - using dynamic import of JS file
+  const seedModule = await import('./seed-inhersight-90day-template.js');
+  const inhersight90DayRenewalTemplate = (seedModule as any).default || (seedModule as any).inhersight90DayRenewalTemplate;
 
   console.log('1️⃣ Seeding 90-day renewal template...');
 

@@ -73,10 +73,10 @@ export default function ReturningPage() {
 
       // Candidate found! Redirect to session with their intelligence file
       if (data.candidate) {
-        const { id, sessionCount, relationshipStrength } = data.candidate;
+        const { id, checkInCount, relationshipStrength } = data.candidate;
 
         // Determine session type based on history
-        const sessionType = sessionCount && sessionCount > 0 ? 'check_in' : 'initial';
+        const sessionType = checkInCount && checkInCount > 0 ? 'check_in' : 'initial';
 
         // Store candidate context in sessionStorage for the interview
         sessionStorage.setItem('returning_candidate', JSON.stringify({
@@ -84,7 +84,7 @@ export default function ReturningPage() {
           email: data.candidate.email,
           firstName: data.candidate.firstName,
           lastName: data.candidate.lastName,
-          sessionCount,
+          sessionCount: checkInCount,
           relationshipStrength,
           isReturning: true,
         }));

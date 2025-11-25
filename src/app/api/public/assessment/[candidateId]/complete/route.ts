@@ -23,7 +23,7 @@ export async function POST(_request: NextRequest, { params }: { params: { candid
     }
 
     // Get candidate to verify ownership and get transcript
-    const candidate = await CandidateService.getCandidateById(supabase, candidateId);
+    const candidate = await CandidateService.getCandidateById(candidateId, supabase);
 
     if (!candidate) {
       return NextResponse.json({ error: 'Candidate not found' }, { status: 404 });

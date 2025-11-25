@@ -29,13 +29,15 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
 
     // Create candidate record (no user_id since we're not managing user accounts)
-    const candidate = await CandidateService.createCandidate(supabase, {
-      user_id: null, // No user account in Renubu
-      name,
-      email,
-      referral_source: source,
-      status: 'pending',
-    });
+    const candidate = await CandidateService.createCandidate(
+      {
+        name,
+        email,
+        referral_source: source,
+      },
+      'system', // Use 'system' as user_id for public assessments
+      supabase
+    );
 
     // Load assessment questions
     const assessmentConfig = loadAssessmentConfig();

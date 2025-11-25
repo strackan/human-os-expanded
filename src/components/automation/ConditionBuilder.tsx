@@ -223,7 +223,7 @@ const EventConfigForm: React.FC<EventConfigFormProps> = ({
     case 'slack_message':
       return <SlackMessageForm config={config as SlackMessageConfig} onChange={updateField} />;
     case 'usage_threshold':
-      return <UsageThresholdForm config={config as UsageThresholdConfig} onChange={updateField} />;
+      return <UsageThresholdForm config={config} onChange={updateField} />;
     case 'workflow_action_completed':
       return <WorkflowActionForm config={config as WorkflowActionCompletedConfig} onChange={updateField} />;
     case 'customer_login':
@@ -349,7 +349,7 @@ const SlackMessageForm: React.FC<{
 );
 
 const UsageThresholdForm: React.FC<{
-  config: UsageThresholdConfig;
+  config: Partial<UsageThresholdConfig> & Record<string, unknown>;
   onChange: (field: string, value: unknown) => void;
 }> = ({ config, onChange }) => (
   <div className="space-y-3">

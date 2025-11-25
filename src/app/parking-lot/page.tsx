@@ -19,7 +19,7 @@ import {
   useArchiveParkingLotItem,
   useDeleteParkingLotItem
 } from '@/lib/hooks/useParkingLot';
-import type { ParkingLotItem, CaptureMode, ParkingLotStatus } from '@/types/parking-lot';
+import type { ParkingLotItem, CaptureMode, ParkingLotStatus, ParkingLotCategory } from '@/types/parking-lot';
 
 interface FilterState {
   modes: CaptureMode[];
@@ -126,7 +126,7 @@ export default function ParkingLotPage() {
   };
 
   // Available categories for filter
-  const availableCategories = categoriesData?.categories.map(c => c.name) || [];
+  const availableCategories = categoriesData?.map((c: ParkingLotCategory) => c.name) || [];
 
   // Items
   const items = data?.items || [];

@@ -55,7 +55,7 @@ export class ParkingLotService {
             user_categories: request.user_categories || [],
             readiness_score: parsed.readinessScore
           } as ParkingLotItem,
-          context
+          context: context as any
         });
         expandedAnalysis = expansionResult.expansion;
         artifactData = expansionResult.artifact;

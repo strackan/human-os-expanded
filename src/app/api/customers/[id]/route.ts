@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CustomerService } from '@/lib/services/CustomerService';
-import { getAuthenticatedClient, getUserCompanyId } from '@/lib/supabase-server';
+import { getAuthenticatedClient, getUserCompanyId, createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,

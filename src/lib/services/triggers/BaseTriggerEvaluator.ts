@@ -373,7 +373,7 @@ export abstract class BaseTriggerEvaluator<T extends BaseTrigger> {
       const { data: profile, error: profileError } = await supabase
         .from(DB_TABLES.PROFILES)
         .select('last_sign_in_at')
-        .eq(DB_COLUMNS.ID, workflow.customer_id)
+        .eq(DB_COLUMNS.ID, (workflow as any).customer_id)
         .single();
 
       if (profileError || !profile) {
@@ -392,7 +392,7 @@ export abstract class BaseTriggerEvaluator<T extends BaseTrigger> {
       }
 
       const lastLoginDate = new Date(profile.last_sign_in_at);
-      const lastEvaluatedAt = (workflow as Record<string, unknown>)[lastEvaluatedField];
+      const lastEvaluatedAt = (workflow as unknown as Record<string, unknown>)[lastEvaluatedField];
       const lastEvaluatedDate = lastEvaluatedAt
         ? new Date(lastEvaluatedAt as string)
         : new Date(0); // If never evaluated, use epoch

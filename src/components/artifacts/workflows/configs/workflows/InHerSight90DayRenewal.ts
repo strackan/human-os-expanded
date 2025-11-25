@@ -50,62 +50,51 @@ export const inhersight90DayRenewalWorkflow: WorkflowConfig = {
         value: '{{customer.current_arr}}',
         trend: '{{customer.arr_trend}}',
         trendValue: '{{customer.arr_trend_value}}',
-        status: '{{customer.arr_status}}'
+        status: 'green'
+      },
+      licenseUnitPrice: {
+        label: 'License Unit Price',
+        value: '{{customer.license_unit_price}}'
       },
       renewalDate: {
         label: 'Renewal Date',
         value: '{{customer.renewal_date}}',
         sublabel: '{{customer.days_to_renewal}} days',
-        status: '{{customer.renewal_status}}'
-      },
-      healthScore: {
-        label: 'IHS Score',
-        value: '{{customer.health_score}}/100',
-        status: '{{customer.health_status}}',
-        sublabel: 'Platform health'
+        status: 'green'
       },
       primaryContact: {
         label: 'Primary Contact',
         value: '{{customer.primary_contact_name}}',
         role: '{{customer.primary_contact_title}}'
       },
-      brandImpressions: {
-        label: 'Brand Impressions',
-        value: '{{customer.brand_impressions}}',
-        trend: '{{customer.impressions_trend}}',
-        sublabel: 'Last 30 days',
-        status: '{{customer.impressions_status}}'
+      riskScore: {
+        label: 'Risk Score',
+        value: '{{customer.risk_score}}',
+        status: 'green'
       },
-      profileViews: {
-        label: 'Profile Views',
-        value: '{{customer.profile_views}}',
-        trend: '{{customer.views_trend}}',
-        sublabel: 'Last 30 days',
-        status: '{{customer.views_status}}'
+      growthScore: {
+        label: 'Growth Score',
+        value: '{{customer.growth_score}}',
+        status: 'green'
       },
-      applyClicks: {
-        label: 'Apply Clicks',
-        value: '{{customer.apply_clicks}}',
-        trend: '{{customer.clicks_trend}}',
-        sublabel: 'Conversion rate',
-        status: '{{customer.clicks_status}}'
+      yoyGrowth: {
+        label: 'YoY Growth',
+        value: '{{customer.yoy_growth}}'
       },
-      profileCompletion: {
-        label: 'Profile Complete',
-        value: '{{customer.profile_completion_pct}}%',
-        status: '{{customer.profile_status}}',
-        sublabel: 'Optimization score'
+      lastMonth: {
+        label: 'Last Month',
+        value: '{{customer.last_month}}'
       }
     }
   },
   analytics: {
-    engagementTrend: '{{chart.engagement.trend}}',
-    brandExposure: '{{chart.brandExposure.monthly}}',
+    usageTrend: '{{chart.usage.trend}}',
+    userLicenses: '{{chart.licenses.data}}',
     renewalInsights: {
       renewalStage: '{{renewal.current_stage}}',
-      confidence: '{{renewal.probability}}',
+      confidence: 0,
       recommendedAction: '{{renewal.recommended_action}}',
-      keyReasons: '{{renewal.key_factors}}'
+      keyReasons: []
     }
   },
   sidePanel: {
@@ -752,23 +741,23 @@ export const inhersight90DayRenewalWorkflow: WorkflowConfig = {
           title: 'Contract Review',
           contractId: '{{contract.contract_number}}',
           customerName: '{{customer.name}}',
-          contractValue: '{{contract.arr}}',
+          contractValue: 0,
           renewalDate: '{{contract.end_date}}',
-          signerBaseAmount: '{{contract.arr}}',
+          signerBaseAmount: 0,
           pricingCalculation: {
-            basePrice: '{{contract.base_price}}',
+            basePrice: 0,
             volumeDiscount: 0,
             additionalServices: 0,
-            totalPrice: '{{contract.arr}}'
+            totalPrice: 0
           },
           businessTerms: {
             unsigned: [],
-            nonStandardRenewal: '{{contract.renewal_terms}}',
-            nonStandardPricing: '{{contract.pricing_terms}}',
+            nonStandardRenewal: [],
+            nonStandardPricing: [],
             pricingCaps: [],
-            otherTerms: '{{contract.other_terms}}'
+            otherTerms: []
           },
-          riskLevel: '{{contract.risk_level}}',
+          riskLevel: 'low',
           lastUpdated: '{{contract.updated_at}}',
           visible: false
         })
@@ -778,9 +767,8 @@ export const inhersight90DayRenewalWorkflow: WorkflowConfig = {
         ...createPricingAnalysisArtifact({
           id: 'opportunity-analysis',
           title: 'Expansion Opportunity Analysis',
-          currentPrice: '{{customer.current_arr}}',
-          recommendedPrice: '{{customer.recommended_arr}}',
-          reasoning: '{{customer.expansion_reasoning}}',
+          currentPrice: 0,
+          currentARR: 0,
           visible: false
         })
       },
@@ -863,16 +851,15 @@ Best regards,
           customerName: '{{customer.name}}',
           currentStage: '{{renewal.current_stage}}',
           progressPercentage: 100,
-          completedActions: '{{workflow.completed_actions}}',
-          pendingActions: '{{workflow.pending_actions}}',
-          nextSteps: '{{workflow.next_steps}}',
+          completedActions: [],
+          pendingActions: [],
+          nextSteps: [],
           keyMetrics: {
             currentARR: '{{customer.current_arr}}',
             projectedARR: '{{customer.projected_arr}}',
-            healthScore: '{{customer.health_score}}/100',
             renewalDate: '{{customer.renewal_date}}'
           },
-          recommendations: '{{workflow.recommendations}}',
+          recommendations: [],
           visible: false
         })
       }

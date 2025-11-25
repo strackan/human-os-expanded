@@ -181,9 +181,6 @@ export class MCPManager {
         server,
         action,
         parameters: args,
-        metadata: {
-          requestId: toolCall.id,
-        },
       });
 
       // Return result
@@ -214,7 +211,7 @@ export class MCPManager {
    * Get all tool definitions for LLM
    */
   getToolDefinitions(): MCPTool[] {
-    const tools: MCPTool[] = [];
+    const tools: any[] = [];
 
     if (this.supabaseClient) {
       tools.push(...this.supabaseClient.getToolDefinitions());
@@ -229,7 +226,7 @@ export class MCPManager {
       tools.push(...this.sequentialThinkingClient.getToolDefinitions());
     }
 
-    return tools;
+    return tools as MCPTool[];
   }
 
   /**

@@ -57,11 +57,22 @@ export const inhersight120DayAtRiskWorkflow: WorkflowConfig = {
         trendValue: '{{customer.arr_trend_value}}',
         status: 'red'
       },
+      licenseUnitPrice: {
+        label: 'Last Contact',
+        value: '{{customer.last_contact_date}}',
+        sublabel: '{{customer.days_since_contact}} days ago',
+        status: 'red'
+      },
       renewalDate: {
         label: 'Renewal Date',
         value: '{{customer.renewal_date}}',
         sublabel: '{{customer.days_to_renewal}} days',
         status: 'orange'
+      },
+      primaryContact: {
+        label: 'Primary Contact',
+        value: '{{customer.primary_contact_name}}',
+        role: '{{customer.primary_contact_title}}'
       },
       riskScore: {
         label: 'Risk Score',
@@ -69,30 +80,19 @@ export const inhersight120DayAtRiskWorkflow: WorkflowConfig = {
         status: 'red',
         sublabel: 'HIGH RISK'
       },
-      healthScore: {
+      growthScore: {
         label: 'IHS Score',
         value: '{{customer.health_score}}/100',
         status: 'red',
         sublabel: 'Declining'
       },
-      primaryContact: {
-        label: 'Primary Contact',
-        value: '{{customer.primary_contact_name}}',
-        role: '{{customer.primary_contact_title}}'
-      },
-      lastContact: {
-        label: 'Last Contact',
-        value: '{{customer.last_contact_date}}',
-        sublabel: '{{customer.days_since_contact}} days ago',
-        status: 'red'
-      },
-      profileCompletion: {
+      yoyGrowth: {
         label: 'Profile Complete',
         value: '{{customer.profile_completion_pct}}%',
-        status: '{{customer.profile_status}}',
+        status: 'red',
         sublabel: 'Low engagement'
       },
-      keyIssue: {
+      lastMonth: {
         label: 'Key Issue',
         value: '{{customer.primary_concern}}',
         status: 'red',
@@ -416,7 +416,7 @@ export const inhersight120DayAtRiskWorkflow: WorkflowConfig = {
 
         'freebie-selected-article': {
           response: "**Freebie Selected**: Featured Article Placement\n\n**Value**: $1,500-2,000\n**Timeline**: 2-3 weeks\n**Expected Impact**: Brand impressions +50%, profile views +30%\n\nPerfect for addressing visibility concerns. Ready to schedule the initial meeting to present this?",
-          actions: ['updateArtifact'],
+          actions: ['showArtifact'],
           artifactId: 'freebie-options',
           buttons: [
             { label: 'Schedule initial meeting', value: 'initial-meeting' },
@@ -815,33 +815,54 @@ export const inhersight120DayAtRiskWorkflow: WorkflowConfig = {
       },
       // Performance Review
       {
-        ...createBrandExposureReportArtifact({
-          id: 'performance-review',
-          title: 'Performance Review - At-Risk Customer',
-          customerName: '{{customer.name}}',
-          reportingPeriod: 'Last 90 days',
-          healthScore: '{{customer.health_score}}',
-          metrics: {
-            brandImpressions: '{{customer.brand_impressions}}',
-            brandImpressionsTrend: '{{customer.impressions_trend}}',
-            profileViews: '{{customer.profile_views}}',
-            profileViewsTrend: '{{customer.views_trend}}',
-            profileCompletionPct: '{{customer.profile_completion_pct}}',
-            jobMatches: '{{customer.job_matches}}',
-            applyClicks: '{{customer.apply_clicks}}',
-            applyClicksTrend: '{{customer.clicks_trend}}',
-            clickThroughRate: '{{customer.click_through_rate}}',
-            articleInclusions: '{{customer.article_inclusions}}',
-            socialMentions: '{{customer.social_mentions}}',
-            newRatings: '{{customer.new_ratings}}',
-            followerGrowth: '{{customer.follower_growth}}'
-          },
-          performanceAnalysis: '{{customer.performance_analysis}}',
-          strengths: '{{customer.performance_strengths}}',
-          improvements: '{{customer.performance_improvements}}',
-          recommendations: '{{customer.performance_recommendations}}',
-          visible: false
-        })
+        id: 'performance-review',
+        title: 'Performance Review - At-Risk Customer',
+        type: 'document' as const,
+        visible: false,
+        editable: false,
+        content: `# {{customer.name}} - Brand Performance Report
+
+## Overview
+**Reporting Period**: Last 90 days
+**Platform Health Score**: {{customer.health_score}}/100
+
+---
+
+## Key Metrics
+
+### Brand Visibility
+- **Brand Impressions**: {{customer.brand_impressions}} ({{customer.impressions_trend}})
+- **Profile Views**: {{customer.profile_views}} ({{customer.views_trend}})
+- **Profile Completion**: {{customer.profile_completion_pct}}%
+
+### Job Posting Performance
+- **Job Matches**: {{customer.job_matches}}
+- **Apply Clicks**: {{customer.apply_clicks}} ({{customer.clicks_trend}})
+- **Click-Through Rate**: {{customer.click_through_rate}}%
+
+### Content & Engagement
+- **Article Inclusions**: {{customer.article_inclusions}}
+- **Social Mentions**: {{customer.social_mentions}}
+- **New Ratings Received**: {{customer.new_ratings}}
+- **Follower Growth**: {{customer.follower_growth}}
+
+---
+
+## Performance Analysis
+
+{{customer.performance_analysis}}
+
+### Strengths
+{{customer.performance_strengths}}
+
+### Areas for Improvement
+{{customer.performance_improvements}}
+
+---
+
+## Recommendations
+
+{{customer.performance_recommendations}}`
       },
       // Freebie Options
       {
@@ -947,16 +968,15 @@ export const inhersight120DayAtRiskWorkflow: WorkflowConfig = {
           customerName: '{{customer.name}}',
           currentStage: '{{renewal.outcome}}',
           progressPercentage: 100,
-          completedActions: '{{workflow.completed_actions}}',
-          pendingActions: '{{workflow.pending_actions}}',
-          nextSteps: '{{workflow.next_steps}}',
+          completedActions: [],
+          pendingActions: [],
+          nextSteps: [],
           keyMetrics: {
-            initialRisk: '{{customer.initial_risk_score}}/100',
-            finalRisk: '{{customer.final_risk_score}}/100',
-            freebieValue: '{{customer.freebie_value}}',
-            outcome: '{{customer.renewal_outcome}}'
+            riskScore: '{{customer.initial_risk_score}}/100 → {{customer.final_risk_score}}/100',
+            currentARR: '{{customer.freebie_value}}',
+            renewalDate: '{{customer.renewal_outcome}}'
           },
-          recommendations: '{{workflow.recommendations}}',
+          recommendations: [],
           visible: false
         })
       }

@@ -12,7 +12,6 @@ export const workflowSummarySlideV2: SlideBuilderV2 = (context?: SlideContext): 
     title: 'Summary',
     description: 'Plan summary and next steps',
     label: 'Summary',
-    previousButton: 'Finish Up',
     stepMapping: 'plan-summary',
     category: 'common',
     estimatedMinutes: 1,

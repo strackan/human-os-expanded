@@ -8,7 +8,7 @@ import { config } from 'dotenv';
 config({ path: '.env.local' });
 
 // Mock fetch for testing
-global.fetch = async (url: string, options?: any) => {
+(global as any).fetch = async (url: string, _options?: any): Promise<Response> => {
   console.log('[Mock Fetch] Called:', url);
 
   if (url === '/api/workflows/compile') {
@@ -59,13 +59,14 @@ async function test() {
 
   // Import after setting up mocks
   const { HybridWorkflowComposer } = await import('../src/lib/services/HybridWorkflowComposer');
-  const { composeFromDatabase } = await import('../src/lib/workflows/db-composer');
+  const _composeFromDatabase = await import('../src/lib/workflows/db-composer');
 
   // Test parameters
   const params = {
     workflowId: 'obsidian-black-renewal-v2',
     templateName: 'obsidian_black_renewal',
     customerId: '550e8400-e29b-41d4-a716-446655440001',
+    userId: '00000000-0000-0000-0000-000000000000',
     customerContext: {
       name: 'Obsidian Black',
       current_arr: 185000,

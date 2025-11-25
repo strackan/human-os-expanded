@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: { candida
     }
 
     // Get candidate
-    const candidate = await CandidateService.getCandidateById(supabase, candidateId);
+    const candidate = await CandidateService.getCandidateById(candidateId, supabase);
 
     if (!candidate) {
       return NextResponse.json({ error: 'Candidate not found' }, { status: 404 });

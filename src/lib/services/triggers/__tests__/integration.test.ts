@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 /**
  * Integration Tests - Old vs New Evaluators
  *

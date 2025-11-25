@@ -26,7 +26,7 @@ function getDynamicChatSlides(): WorkflowSlide[] {
         return legacyDynamicChatSlides;
       }
     }
-    return modularSlides;
+    return modularSlides || legacyDynamicChatSlides;
   }
 
   console.log('[Workflow] Using legacy workflow configuration');

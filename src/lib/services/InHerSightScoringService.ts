@@ -303,13 +303,14 @@ Respond in this exact JSON format:
 }`;
 
     try {
-      const claudeResponse = await this.anthropic.generateText(prompt, {
+      const claudeResponse = await AnthropicService.generateCompletion({
+        prompt,
         maxTokens: 500,
         temperature: 0.3
       });
 
       // Parse Claude's response
-      const jsonMatch = claudeResponse.match(/\{[\s\S]*\}/);
+      const jsonMatch = claudeResponse.content.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('Failed to parse Claude response');
       }

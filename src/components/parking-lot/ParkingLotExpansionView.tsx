@@ -41,7 +41,7 @@ export default function ParkingLotExpansionView({
   if (!isOpen || !item.expanded_analysis) return null;
 
   const expansion = item.expanded_analysis;
-  const hasArtifact = expansion.artifact && expansion.artifact.content;
+  const hasArtifact = item.artifact_data && item.artifact_data.content;
 
   const handleCopySection = async (section: string, content: string) => {
     try {
@@ -54,13 +54,13 @@ export default function ParkingLotExpansionView({
   };
 
   const handleDownloadArtifact = () => {
-    if (!expansion.artifact) return;
+    if (!item.artifact_data) return;
 
-    const blob = new Blob([expansion.artifact.content], { type: 'text/markdown' });
+    const blob = new Blob([item.artifact_data.content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${expansion.artifact.title || 'expansion'}.md`;
+    a.download = `${item.artifact_data.title || 'expansion'}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -195,15 +195,15 @@ export default function ParkingLotExpansionView({
             )}
 
             {/* Action Plan */}
-            {expansion.action_plan && expansion.action_plan.length > 0 && (
+            {expansion.actionPlan && expansion.actionPlan.length > 0 && (
               <section className="bg-blue-50 border border-blue-200 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                    Recommended Action Plan ({expansion.action_plan.length} steps)
+                    Recommended Action Plan ({expansion.actionPlan.length} steps)
                   </h3>
                   <button
-                    onClick={() => handleCopySection('action_plan', expansion.action_plan!.join('\n'))}
+                    onClick={() => handleCopySection('action_plan', expansion.actionPlan!.map(s => s.step).join('\n'))}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                     title="Copy to clipboard"
                   >
@@ -215,12 +215,12 @@ export default function ParkingLotExpansionView({
                   </button>
                 </div>
                 <ol className="space-y-2">
-                  {expansion.action_plan.map((step, idx) => (
+                  {expansion.actionPlan.map((actionStep, idx) => (
                     <li key={idx} className="flex items-start gap-3 text-gray-700">
                       <span className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full text-xs font-semibold flex items-center justify-center mt-0.5">
                         {idx + 1}
                       </span>
-                      <span className="flex-1 pt-0.5">{step}</span>
+                      <span className="flex-1 pt-0.5">{actionStep.step}</span>
                     </li>
                   ))}
                 </ol>
@@ -268,12 +268,12 @@ export default function ParkingLotExpansionView({
                   <div className="flex items-center gap-2">
                     <Share2 className="w-4 h-4 text-gray-600" />
                     <h3 className="text-base font-semibold text-gray-900">
-                      {expansion.artifact!.title || 'Shareable Document'}
+                      {item.artifact_data!.title || 'Shareable Document'}
                     </h3>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">
-                      {expansion.artifact!.format?.toUpperCase() || 'MARKDOWN'}
+                      {item.artifact_data!.format?.toUpperCase() || 'MARKDOWN'}
                     </span>
                     {showArtifact ? (
                       <ChevronUp className="w-4 h-4 text-gray-600" />
@@ -287,11 +287,11 @@ export default function ParkingLotExpansionView({
                   <div className="border-t border-gray-200">
                     <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-200">
                       <p className="text-sm text-gray-600">
-                        {expansion.artifact!.description || 'Ready to share with your team'}
+                        Ready to share with your team
                       </p>
                       <div className="flex gap-2">
                         <button
-                          onClick={() => handleCopySection('artifact', expansion.artifact!.content)}
+                          onClick={() => handleCopySection('artifact', item.artifact_data!.content)}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition-colors"
                         >
                           {copiedSection === 'artifact' ? (
@@ -317,7 +317,7 @@ export default function ParkingLotExpansionView({
                     </div>
                     <div className="px-5 py-4 max-h-96 overflow-y-auto">
                       <pre className="text-sm text-gray-700 whitespace-pre-wrap font-mono bg-white border border-gray-200 rounded p-4">
-                        {expansion.artifact!.content}
+                        {item.artifact_data!.content}
                       </pre>
                     </div>
                   </div>

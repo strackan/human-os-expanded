@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ParkingLotService } from '@/lib/services/ParkingLotService';
 import { createWorkflowExecution } from '@/lib/workflows/actions';
-import type { ConvertToWorkflowRequest } from '@/types/parking-lot';
+import type { ConvertToWorkflowRequest, UpdateParkingLotItemRequest } from '@/types/parking-lot';
 
 export async function POST(
   request: NextRequest,
@@ -78,14 +78,7 @@ export async function POST(
       workflowType: body.workflow_config_id, // Use config ID as type for now
       customerId: resolvedCustomerId,
       assignedCsmId: user.id,
-      totalSteps: 5, // Default, will be updated by workflow config
-      metadata: {
-        sourceType: 'parking_lot',
-        sourceId: params.id,
-        extractedEntities: item.extracted_entities,
-        expandedAnalysis: item.expanded_analysis,
-        ...body.pre_fill_data
-      }
+      totalSteps: 5 // Default, will be updated by workflow config
     });
 
     if (!workflowResult.success || !workflowResult.executionId) {
@@ -97,17 +90,8 @@ export async function POST(
 
     // Mark parking lot item as converted
     const updateResult = await ParkingLotService.update(user.id, params.id, {
-      status: 'converted',
-      converted_to: {
-        type: 'workflow',
-        id: workflowResult.executionId,
-        convertedAt: new Date().toISOString(),
-        metadata: {
-          workflow_config_id: body.workflow_config_id,
-          customer_id: resolvedCustomerId
-        }
-      } as any
-    });
+      status: 'converted'
+    } as UpdateParkingLotItemRequest);
 
     if (!updateResult.success) {
       console.error('[ConvertToWorkflow] Failed to update item:', updateResult.error);

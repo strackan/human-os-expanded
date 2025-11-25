@@ -43,7 +43,7 @@ export class EventDetectionService {
         return this.checkHealthScoreDrop(config);
 
       case 'usage_spike':
-        return this.checkUsageSpike(config);
+        return this.checkUsageSpike();
 
       default:
         console.warn(`[EventDetectionService] Unknown event type: ${config.event}`);

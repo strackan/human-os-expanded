@@ -32,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: { candida
     }
 
     // Get candidate and existing transcript
-    const candidate = await CandidateService.getCandidateById(supabase, candidateId);
+    const candidate = await CandidateService.getCandidateById(candidateId, supabase);
 
     if (!candidate) {
       return NextResponse.json({ error: 'Candidate not found' }, { status: 404 });

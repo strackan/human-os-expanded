@@ -12,7 +12,6 @@ export const prepareQuoteSlideV2: SlideBuilderV2 = (context?: SlideContext): Sli
     title: 'Renewal Quote',
     description: 'Generate renewal quote document',
     label: 'Quote',
-    previousButton: 'Draft The Quote',
     stepMapping: 'renewal-quote',
     category: 'renewal',
     estimatedMinutes: 2,

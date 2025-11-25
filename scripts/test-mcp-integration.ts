@@ -57,8 +57,8 @@ async function testMCPIntegration() {
     // Test Sequential Thinking
     console.log('5️⃣  Testing Sequential Thinking MCP...');
     const thinkingResult = await mcpManager.query({
-      server: 'sequential_thinking',
-      action: 'think',
+      server: 'sequential_thinking' as any,
+      action: 'think' as any,
       parameters: {
         problem: 'Quick test: Is 2+2=4?',
         maxSteps: 2,

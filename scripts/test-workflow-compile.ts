@@ -63,7 +63,7 @@ async function testCompile() {
     .select('*')
     .eq('customer_id', customer.id);
 
-  console.log(`   Company: ${fullCustomer?.company?.name || 'none'}`);
+  console.log(`   Company: ${(fullCustomer?.company as any)?.name || 'none'}`);
   console.log(`   Contacts: ${customerContacts?.length || 0}\n`);
 
   // Compile workflow
@@ -95,7 +95,7 @@ async function testCompile() {
   });
 
   console.log('\n🎨 Available artifacts:');
-  compiled.artifacts.forEach(art => {
+  compiled.artifacts.forEach((art: any) => {
     console.log(`   - ${art.artifact_id}: ${art.artifact_name} (${art.artifact_type})`);
   });
 
@@ -106,11 +106,11 @@ async function testCompile() {
   );
 
   console.log('\n📱 Transformed slides:');
-  workflowConfig.slides.forEach((slide, idx) => {
+  workflowConfig.slides?.forEach((slide: any, idx: number) => {
     console.log(`   ${idx + 1}. ${slide.title}`);
     console.log(`      artifact sections: ${slide.artifacts?.sections?.length || 0}`);
     if (slide.artifacts?.sections && slide.artifacts.sections.length > 0) {
-      slide.artifacts.sections.forEach(section => {
+      slide.artifacts.sections.forEach((section: any) => {
         console.log(`         - ${section.title} (${section.type})`);
         if (section.type === 'custom') {
           if (section.data?.componentType) {

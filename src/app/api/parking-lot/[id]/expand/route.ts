@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { ParkingLotService } from '@/lib/services/ParkingLotService';
 import { ParkingLotLLMService } from '@/lib/services/ParkingLotLLMService';
-import type { ExpandParkingLotItemRequest } from '@/types/parking-lot';
+import type { ExpandParkingLotItemRequest, UpdateParkingLotItemRequest } from '@/types/parking-lot';
 
 export async function POST(
   request: NextRequest,
@@ -41,16 +41,16 @@ export async function POST(
     // Expand with LLM
     const { expansion, artifact } = await ParkingLotLLMService.expandWithObjectives({
       idea: item,
-      context: body.context
+      context: body.context ? {
+        customerData: body.context.customer_data,
+        workflowData: body.context.workflow_data
+      } : undefined
     });
 
     // Update item with expansion
     const updateResult = await ParkingLotService.update(user.id, params.id, {
-      status: 'expanded',
-      expanded_analysis: expansion as any,
-      artifact_generated: true,
-      artifact_data: artifact as any
-    });
+      status: 'expanded'
+    } as UpdateParkingLotItemRequest);
 
     if (!updateResult.success) {
       return NextResponse.json(

@@ -12,7 +12,6 @@ export const draftEmailSlideV2: SlideBuilderV2 = (context?: SlideContext): Slide
     title: 'Email Draft',
     description: 'Draft renewal discussion email',
     label: 'Email',
-    previousButton: `Draft Email To ${context?.variables?.customer?.primaryContact?.firstName || 'Contact'}`,
     stepMapping: 'compose-email',
     category: 'action',
     estimatedMinutes: 2,
