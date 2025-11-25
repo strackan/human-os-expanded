@@ -59,32 +59,78 @@ export const identifyOpportunitiesSlide: UniversalSlideBuilder = (context): any 
       sections: [
         {
           id: 'opportunity-analysis',
-          type: 'custom',
+          type: 'document',
           title: 'Expansion Opportunity Analysis',
+          content: `# {{customer.name}} - Expansion Opportunity Analysis
+
+**Current ARR**: \${{customer.current_arr}}
+**Recommended ARR**: \${{customer.recommended_arr}}
+**Analysis Date**: {{current_date}}
+
+---
+
+## Current Performance
+
+### Usage Indicators
+| Metric | Value |
+|--------|-------|
+| Brand Impressions | {{customer.brand_impressions}} |
+| Profile Engagement | {{customer.profile_views}} |
+| Job Posting Activity | {{customer.apply_clicks}} |
+
+---
+
+## Expansion Opportunities
+
+### 1. Enhanced Visibility Package
+**Value Proposition**: Increase brand impressions with featured placement
+- Premium positioning in search results
+- Featured employer spotlight
+- Enhanced company profile badges
+
+### 2. Premium Job Credits
+**Value Proposition**: Support hiring growth with additional job postings
+- Bulk job posting credits
+- Priority job placement
+- Extended posting duration
+
+### 3. Content Partnership
+**Value Proposition**: Sponsored articles and social campaigns
+- Co-branded content pieces
+- Social media amplification
+- Thought leadership opportunities
+
+---
+
+## Recommended Approach
+
+Start with a mid-tier expansion focused on {{customer.expansion_focus}}, which aligns with their current engagement patterns and business goals.
+
+### Pricing Recommendation
+| Package | Current | Proposed | Increase |
+|---------|---------|----------|----------|
+| Base | \${{customer.current_arr}} | \${{customer.recommended_arr}} | {{customer.arr_increase_pct}}% |
+
+### Value Justification
+- ROI based on current engagement metrics
+- Competitive positioning in talent market
+- Employer brand growth trajectory
+
+---
+
+## Next Steps
+
+1. [ ] Review expansion options with customer
+2. [ ] Discuss budget and timing
+3. [ ] Prepare formal proposal if interest confirmed
+4. [ ] Schedule follow-up to finalize
+
+---
+
+*Analysis based on platform data through {{current_date}}*
+`,
+          editable: true,
           visible: true,
-          editable: false,
-          data: {
-            componentType: 'PricingAnalysisArtifact',
-            props: {
-              currentPrice: '{{customer.current_arr}}',
-              recommendedPrice: '{{customer.recommended_arr}}',
-              reasoning: context?.variables?.expansionReasoning ||
-                `Based on {{customer.name}}'s performance metrics:
-
-**Usage Indicators:**
-- Brand impressions: {{customer.brand_impressions}}
-- Profile engagement: {{customer.profile_views}}
-- Job posting activity: {{customer.apply_clicks}}
-
-**Expansion Opportunities:**
-1. **Enhanced Visibility Package** - Increase brand impressions with featured placement
-2. **Premium Job Credits** - Support hiring growth with additional job postings
-3. **Content Partnership** - Sponsored articles and social campaigns
-
-**Recommended Approach:**
-Start with a mid-tier expansion focused on {{customer.expansion_focus}}, which aligns with their current engagement patterns and business goals.`
-            }
-          }
         }
       ],
     },

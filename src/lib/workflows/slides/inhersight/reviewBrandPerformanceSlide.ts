@@ -49,37 +49,64 @@ export const reviewBrandPerformanceSlide: UniversalSlideBuilder = (context): any
       sections: [
         {
           id: 'brand-exposure-report',
-          type: 'custom',
+          type: 'document',
           title: 'Brand Performance Report',
-          visible: true,
+          content: `# {{customer.name}} - Brand Performance Report
+
+**Reporting Period**: ${context?.variables?.reportingPeriod || 'Last 90 Days'}
+**Health Score**: {{customer.health_score}}/100
+**Report Date**: {{current_date}}
+
+---
+
+## Brand Visibility Metrics
+
+### Impressions & Reach
+| Metric | Value | Trend |
+|--------|-------|-------|
+| Brand Impressions | {{customer.brand_impressions}} | {{customer.impressions_trend}} |
+| Profile Views | {{customer.profile_views}} | {{customer.views_trend}} |
+| Profile Completion | {{customer.profile_completion_pct}}% | - |
+
+### Engagement Metrics
+| Metric | Value | Trend |
+|--------|-------|-------|
+| Job Matches | {{customer.job_matches}} | - |
+| Apply Clicks | {{customer.apply_clicks}} | {{customer.clicks_trend}} |
+| Click-Through Rate | {{customer.click_through_rate}}% | - |
+
+### Content & Social
+| Metric | Value |
+|--------|-------|
+| Article Inclusions | {{customer.article_inclusions}} |
+| Social Mentions | {{customer.social_mentions}} |
+| New Ratings | {{customer.new_ratings}} |
+| Follower Growth | {{customer.follower_growth}} |
+
+---
+
+## Performance Analysis
+
+{{customer.performance_analysis}}
+
+### Strengths
+{{customer.performance_strengths}}
+
+### Areas for Improvement
+{{customer.performance_improvements}}
+
+---
+
+## Recommendations
+
+{{customer.performance_recommendations}}
+
+---
+
+*This report reflects InHerSight platform data. Contact your CSM for detailed analytics.*
+`,
           editable: false,
-          data: {
-            componentType: 'BrandExposureReportArtifact',
-            props: {
-              customerName: '{{customer.name}}',
-              reportingPeriod: context?.variables?.reportingPeriod || 'Last 90 days',
-              healthScore: '{{customer.health_score}}',
-              metrics: {
-                brandImpressions: '{{customer.brand_impressions}}',
-                brandImpressionsTrend: '{{customer.impressions_trend}}',
-                profileViews: '{{customer.profile_views}}',
-                profileViewsTrend: '{{customer.views_trend}}',
-                profileCompletionPct: '{{customer.profile_completion_pct}}',
-                jobMatches: '{{customer.job_matches}}',
-                applyClicks: '{{customer.apply_clicks}}',
-                applyClicksTrend: '{{customer.clicks_trend}}',
-                clickThroughRate: '{{customer.click_through_rate}}',
-                articleInclusions: '{{customer.article_inclusions}}',
-                socialMentions: '{{customer.social_mentions}}',
-                newRatings: '{{customer.new_ratings}}',
-                followerGrowth: '{{customer.follower_growth}}'
-              },
-              performanceAnalysis: '{{customer.performance_analysis}}',
-              strengths: '{{customer.performance_strengths}}',
-              improvements: '{{customer.performance_improvements}}',
-              recommendations: '{{customer.performance_recommendations}}'
-            }
-          }
+          visible: true,
         }
       ],
     },

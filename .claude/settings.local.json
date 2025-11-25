@@ -77,7 +77,9 @@
       "Bash(if [ ! -d \"C:/Users/strac/dev/goodhang/goodhang-web/app/status/not-approved\" ])",
       "Bash(then mkdir \"C:/Users/strac/dev/goodhang/goodhang-web/app/status/not-approved\")",
       "Bash(git push:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(source:*)",
+      "Bash(STAGING_SUPABASE_SERVICE_ROLE_KEY=\"$SUPABASE_SERVICE_ROLE_KEY\" npx tsx:*)"
     ],
     "deny": [],
     "ask": []
