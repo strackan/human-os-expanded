@@ -106,8 +106,72 @@ export const workflowSummarySlide: SlideBuilder = createSlideBuilder(
       description: 'Summary and next steps',
       label: 'Summary',
       stepMapping: 'workflow-summary',
-      chat: { initialMessage: undefined, branches: {} },
-      artifacts: { sections: [] },
+      chat: {
+        initialMessage: {
+          text: introMessage,
+          buttons: [
+            {
+              label: 'Complete Workflow',
+              value: 'complete',
+              'label-background': 'bg-green-600',
+              'label-text': 'text-white',
+            },
+          ],
+          nextBranches: {
+            'complete': 'complete-workflow',
+          },
+        },
+        branches: {
+          'complete-workflow': {
+            response: completionMessage,
+            actions: ['closeWorkflow'],
+          },
+        },
+      },
+      artifacts: {
+        sections: [
+          {
+            id: 'workflow-summary-doc',
+            type: 'document',
+            title: 'Workflow Summary',
+            visible: true,
+            content: `# {{customer.name}} - Workflow Summary
+
+**Workflow Type**: ${workflowType.charAt(0).toUpperCase() + workflowType.slice(1)}
+**Completed**: {{current_date}}
+
+---
+
+## What We Accomplished
+
+${actionCategories.map((cat, i) => `### ${i + 1}. ${cat}\n✓ Completed`).join('\n\n')}
+
+---
+
+## Next Steps
+
+${nextSteps.length > 0
+  ? nextSteps.map((step: any, i: number) => {
+      const s = typeof step === 'string' ? step : step.description;
+      return `${i + 1}. ${s}`;
+    }).join('\n')
+  : '- Monitor progress on action items\n- Stay in regular contact with {{customer.name}}\n- Update CRM with latest information'}
+
+---
+
+## Recommendations
+
+- **Monitor**: Track progress on action items and adjust as needed
+- **Follow Up**: Stay in regular contact with {{customer.name}} to ensure success
+- **Update CRM**: Keep customer records current with latest information
+
+---
+
+*${completionMessage}*
+`,
+          },
+        ],
+      },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping wrap up a customer success workflow.`,
