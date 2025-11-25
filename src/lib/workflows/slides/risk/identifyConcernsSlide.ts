@@ -58,6 +58,13 @@ export const identifyConcernsSlide: UniversalSlideBuilder = (context): any => ({
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'kpi': 'kpi',
+          'engagement': 'engagement',
+          'support': 'support',
+          'budget': 'budget',
+          'multiple': 'multiple',
+        },
       },
       branches: {
         kpi: {

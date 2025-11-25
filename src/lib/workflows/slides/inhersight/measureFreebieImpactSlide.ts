@@ -46,6 +46,11 @@ export const measureFreebieImpactSlide: UniversalSlideBuilder = (context): any =
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'strong': 'strong',
+          'mixed': 'mixed',
+          'weak': 'weak',
+        },
       },
       branches: {
         strong: {

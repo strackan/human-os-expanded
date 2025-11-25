@@ -46,6 +46,11 @@ export const meetingDebriefSlide: UniversalSlideBuilder = (context): any => ({
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'positive': 'positive',
+          'mixed': 'mixed',
+          'challenging': 'challenging',
+        },
       },
       branches: {
         positive: {

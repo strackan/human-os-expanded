@@ -40,6 +40,9 @@ export const reviewContractTermsSlide: UniversalSlideBuilder = (context): any =>
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'review': 'review',
+        },
       },
       branches: {
         review: {

@@ -34,6 +34,9 @@ export const deliverFreebieSlide: UniversalSlideBuilder = (context): any => ({
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'track': 'track',
+        },
       },
       branches: {
         track: {

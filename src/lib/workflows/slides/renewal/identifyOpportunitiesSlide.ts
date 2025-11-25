@@ -40,6 +40,10 @@ export const identifyOpportunitiesSlide: UniversalSlideBuilder = (context): any 
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'review': 'review',
+          'skip': 'skip',
+        },
       },
       branches: {
         review: {

@@ -58,6 +58,13 @@ export const prepareFreebieSlide: UniversalSlideBuilder = (context): any => ({
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'article': 'article',
+          'profile': 'profile',
+          'social': 'social',
+          'jobs': 'jobs',
+          'custom': 'custom',
+        },
       },
       branches: {
         article: {

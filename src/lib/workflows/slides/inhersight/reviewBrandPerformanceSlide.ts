@@ -34,9 +34,12 @@ export const reviewBrandPerformanceSlide: UniversalSlideBuilder = (context): any
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'review': 'review-metrics',
+        },
       },
       branches: {
-        review: {
+        'review-metrics': {
           response: 'Great! Take a look at the performance report. The data shows some interesting trends.',
           actions: ['nextSlide'],
         },

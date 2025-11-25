@@ -34,6 +34,9 @@ export const createRecommendationSlide: UniversalSlideBuilder = (context): any =
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'create': 'create',
+        },
       },
       branches: {
         create: {

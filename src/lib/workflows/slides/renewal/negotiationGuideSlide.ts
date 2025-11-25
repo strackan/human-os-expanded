@@ -40,6 +40,10 @@ export const negotiationGuideSlide: UniversalSlideBuilder = (context): any => ({
             'label-text': 'text-white',
           },
         ],
+        nextBranches: {
+          'review': 'review',
+          'start': 'start',
+        },
       },
       branches: {
         review: {
