@@ -88,6 +88,15 @@ const TaskModeStandalone: React.FC<TaskModeStandaloneProps> = ({
   // Check if current slide has visible artifacts (standard mode)
   const hasVisibleArtifacts = currentArtifactsConfig?.sections?.some(s => s.visible) ?? false;
 
+  // Debug logging
+  console.log('[TaskModeStandalone] Slide:', currentSlideIndex, {
+    isSlideBased,
+    currentConfigId: (currentConfig as any)?.id,
+    currentArtifactsConfig,
+    hasVisibleArtifacts,
+    sections: currentArtifactsConfig?.sections
+  });
+
   const chatInterfaceRef = useRef<{
     showWorkingMessage: () => void;
     hideWorkingMessage: () => void;

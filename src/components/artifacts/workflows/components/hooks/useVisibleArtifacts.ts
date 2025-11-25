@@ -21,10 +21,13 @@ interface UseVisibleArtifactsProps {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function useVisibleArtifacts({ config, visibleArtifacts }: UseVisibleArtifactsProps) {
   const visibleSections = useMemo(() => {
+    console.log('[useVisibleArtifacts] config.sections:', config.sections);
     // Standard mode: show all artifacts with visible: true
     // The visibleArtifacts Set is reserved for future dynamic mode
     // where LLM controls what artifacts appear based on conversation
-    return config.sections.filter(s => s.visible);
+    const filtered = config.sections.filter(s => s.visible);
+    console.log('[useVisibleArtifacts] filtered sections:', filtered);
+    return filtered;
   }, [config.sections]);
 
   return visibleSections;

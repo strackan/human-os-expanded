@@ -37,6 +37,15 @@ interface ArtifactRenderProps {
  * Renders a single artifact based on its type
  */
 export function renderArtifact({ section, onArtifactButtonClick, onChapterNavigation, setChecklistItems }: ArtifactRenderProps): React.ReactNode {
+  console.log('[ArtifactRenderer] Rendering section:', {
+    id: section.id,
+    type: section.type,
+    hasContent: !!section.content,
+    hasData: !!section.data,
+    visible: section.visible,
+    keys: Object.keys(section)
+  });
+
   switch (section.type) {
     case 'license-analysis':
       return <LicenseAnalysisRenderer key={section.id} content={section.content} />;
