@@ -15,8 +15,8 @@ interface UseVisibleArtifactsProps {
 export function useVisibleArtifacts({ config, visibleArtifacts }: UseVisibleArtifactsProps) {
   const visibleSections = useMemo(() => {
     return config.sections.filter(s => {
-      // If visibleArtifacts is provided (dynamic mode), use it to filter
-      if (visibleArtifacts !== undefined) {
+      // If visibleArtifacts is provided AND has items (dynamic mode), use it to filter
+      if (visibleArtifacts !== undefined && visibleArtifacts.size > 0) {
         return visibleArtifacts.has(s.id);
       }
       // Otherwise, use the default visibility from config

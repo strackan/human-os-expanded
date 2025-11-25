@@ -171,8 +171,45 @@ export const draftEmailSlide: SlideBuilder = createSlideBuilder(
       description: 'Compose and review email',
       label: 'Email',
       stepMapping: 'draft-email',
-      chat: { initialMessage: undefined, branches: {} },
-      artifacts: { sections: [] },
+      chat: {
+        initialMessage: {
+          text: introMessage,
+          buttons: [
+            {
+              label: 'Review Email',
+              value: 'review',
+              'label-background': 'bg-blue-600',
+              'label-text': 'text-white',
+            },
+          ],
+          nextBranches: {
+            'review': 'review-email',
+          },
+        },
+        branches: {
+          'review-email': {
+            response: 'Here\'s the draft email. Feel free to make any edits before sending.',
+            actions: ['nextSlide'],
+          },
+        },
+      },
+      artifacts: {
+        sections: [
+          {
+            id: 'email-draft',
+            type: 'email',
+            title: 'Email Draft',
+            visible: true,
+            editable: allowEditing,
+            content: {
+              to: '{{recipient.name}} <{{recipient.email}}>',
+              from: '{{csm.name}} <{{csm.email}}>',
+              subject: subjectTemplate,
+              body: bodyTemplate,
+            },
+          },
+        ],
+      },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping draft an email for a customer success workflow.`,
