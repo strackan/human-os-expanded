@@ -130,7 +130,45 @@ export default function CommunicationsArtifactRenderer({
   onUpdateState
 }: CommunicationsArtifactRendererProps) {
   const componentType = section.data?.componentType;
+  const sectionType = section.type;
   const props = section.data?.props || {};
+
+  // Handle both componentType and section.type for email artifacts
+  if (componentType === 'EmailArtifact' || sectionType === 'email' || sectionType === 'email-draft') {
+    // For section.type === 'email', content is in section.content
+    const emailContent = section.content || {};
+    const emailType = props.emailType || 'default';
+    // Note: slide, expansionData, onClose used in switch cases below but not in this early return
+    const generatedContent = generateEmailContent(
+      emailType,
+      customerName,
+      customer,
+      expansionData,
+      workflowState
+    );
+    // Ensure slide, onClose are referenced to avoid unused warnings (they're used in switch cases)
+    void slide; void onClose;
+
+    // Prefer section.content values if provided, fall back to generated/props
+    const recipients = emailContent.to
+      ? (typeof emailContent.to === 'string' ? [emailContent.to] : emailContent.to)
+      : (props.to || generatedContent.recipients);
+
+    return (
+      <EmailArtifact
+        to={recipients}
+        subject={emailContent.subject || props.subject || generatedContent.subject}
+        body={emailContent.body || props.body || generatedContent.body}
+        customerId={customer?.id}
+        enableAIGeneration={true}
+        onCompose={() => {
+          onUpdateState('emailSent', true);
+          onNext();
+        }}
+        onBack={onBack}
+      />
+    );
+  }
 
   switch (componentType) {
     case 'EmailArtifact':

@@ -20,6 +20,7 @@ import AssessmentArtifactRenderer from './AssessmentArtifactRenderer';
 import AccountArtifactRenderer from './AccountArtifactRenderer';
 import PlanningArtifactRenderer from './PlanningArtifactRenderer';
 import CommunicationsArtifactRenderer from './CommunicationsArtifactRenderer';
+import DocumentArtifact from '@/components/artifacts/DocumentArtifact';
 
 interface ArtifactRendererProps {
   slide: WorkflowSlide;
@@ -43,7 +44,7 @@ interface ArtifactRendererProps {
 /**
  * Determine which specialized renderer should handle this artifact
  */
-function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 'communications' | 'inline' {
+function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 'communications' | 'document' | 'inline' {
   const componentType = section.data?.componentType;
   const type = section.type;
 
@@ -72,12 +73,23 @@ function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 
     return 'planning';
   }
 
-  // Communications & People
+  // Communications & People (componentType OR section.type)
   if (componentType === 'EmailArtifact' ||
       componentType === 'StakeholderProfileArtifact' ||
       componentType === 'TalkingPointsArtifact' ||
-      componentType === 'QuoteArtifact') {
+      componentType === 'QuoteArtifact' ||
+      type === 'email' ||
+      type === 'email-draft' ||
+      type === 'quote') {
     return 'communications';
+  }
+
+  // Document artifacts (markdown, structured docs)
+  if (type === 'document' ||
+      type === 'html' ||
+      type === 'license-analysis' ||
+      type === 'workflow-summary') {
+    return 'document';
   }
 
   // Default to inline rendering
@@ -162,6 +174,21 @@ export default function ArtifactRenderer({
           onBack={onBack}
           onClose={onClose}
           onUpdateState={onUpdateState}
+        />
+      );
+
+    case 'document':
+      // Document artifacts - render markdown or structured content
+      // section.content can be a string (markdown) or object (structured fields)
+      return (
+        <DocumentArtifact
+          data={section.content || section.data}
+          title={section.title || 'Document'}
+          readOnly={section.editable === false || section.readOnly === true}
+          onFieldChange={(field, value) => {
+            console.log('[ArtifactRenderer] Document field changed:', field, value);
+            onUpdateState(`document.${field}`, value);
+          }}
         />
       );
 
