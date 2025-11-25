@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Edit2, Save, X, FileText } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface DocumentArtifactProps {
-  data?: Record<string, any>;
+  data?: Record<string, any> | string;
   readOnly?: boolean;
   title?: string;
   onFieldChange?: (field: string, value: any) => void;
@@ -197,7 +199,9 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
   onFieldChange,
   className = ''
 }) => {
-  const [documentData, setDocumentData] = useState(data);
+  // Check if data is markdown content (string)
+  const isMarkdown = typeof data === 'string';
+  const [documentData, setDocumentData] = useState(isMarkdown ? {} : data);
 
   const handleFieldSave = (field: string, value: any) => {
     const updatedData = { ...documentData, [field]: value };
@@ -272,7 +276,13 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
 
       {/* Content */}
       <div className="p-6">
-        {Object.keys(documentData).length === 0 ? (
+        {isMarkdown ? (
+          <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900 prose-table:text-sm">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {data as string}
+            </ReactMarkdown>
+          </div>
+        ) : Object.keys(documentData).length === 0 ? (
           <div className="text-center text-gray-500 py-8">
             <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p>No document data available</p>
@@ -284,8 +294,8 @@ const DocumentArtifact: React.FC<DocumentArtifactProps> = ({
         )}
       </div>
 
-      {/* Footer */}
-      {!readOnly && (
+      {/* Footer - only show for editable field-based documents */}
+      {!readOnly && !isMarkdown && (
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
           <p className="text-xs text-gray-500 flex items-center space-x-1">
             <Edit2 className="w-3 h-3" />
