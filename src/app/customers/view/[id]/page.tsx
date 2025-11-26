@@ -20,7 +20,8 @@ import EditableCell from '../../../../components/common/EditableCell';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import { registerWorkflowConfig } from '@/config/workflows/index';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
-import { composeWithINTEL } from '@/lib/workflows/intel-composer';
+// Note: INTEL enrichment happens via API routes, not client-side
+// The LLM greeting API fetches INTEL server-side
 import { createWorkflowExecution } from '@/lib/workflows/actions';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -244,12 +245,8 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         slides: dbConfig.slides?.length
       });
 
-      // Enrich with INTEL context (customer intelligence)
-      const workflowConfig = await composeWithINTEL(dbConfig, customer.name);
-      console.log('[Customer View] INTEL enrichment complete:', {
-        hasIntel: !!(workflowConfig as any).intel,
-        hasGreetingContext: !!(workflowConfig as any).greetingContext,
-      });
+      // Use the config directly - INTEL enrichment happens via LLM greeting API
+      const workflowConfig = dbConfig;
 
       // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
