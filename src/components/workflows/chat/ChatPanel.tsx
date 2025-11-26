@@ -21,6 +21,10 @@ interface ChatPanelProps {
   workflowId: string;
   stepId: string;
   systemPrompt?: string;
+  customerName?: string;
+  customerData?: Record<string, any>;
+  /** INTEL summary for customer context */
+  intelSummary?: string;
   className?: string;
 }
 
@@ -30,6 +34,9 @@ export default function ChatPanel({
   workflowId,
   stepId,
   systemPrompt,
+  customerName,
+  customerData,
+  intelSummary,
   className = ''
 }: ChatPanelProps) {
   const {
@@ -44,7 +51,10 @@ export default function ChatPanel({
     stepExecutionId,
     workflowId,
     stepId,
-    systemPrompt
+    systemPrompt,
+    customerName,
+    customerData,
+    intelSummary,
   });
 
   const [inputValue, setInputValue] = useState('');

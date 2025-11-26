@@ -14,6 +14,7 @@ import {
   getSlideSystemPrompt,
   buildConversationSummary,
   addConversationContext,
+  addINTELContext,
   type SummaryMessage,
 } from '@/lib/workflows/llm/systemPrompts';
 
@@ -27,6 +28,8 @@ interface UseChatServiceParams {
   customerData?: Record<string, any>;
   /** Previous conversation messages for context continuity */
   previousMessages?: SummaryMessage[];
+  /** INTEL summary for customer context (from INTELService.buildINTELSummary) */
+  intelSummary?: string;
 }
 
 interface UseChatServiceReturn {
@@ -78,6 +81,12 @@ export function useChatService(params: UseChatServiceParams): UseChatServiceRetu
               customerData: params.customerData,
             })
           || 'You are a helpful CSM assistant. Help the user with their workflow tasks.';
+
+        // Add INTEL context if available (customer intelligence)
+        if (params.intelSummary) {
+          systemPrompt = addINTELContext(systemPrompt, params.intelSummary);
+          console.log('[useChatService] Added INTEL context for customer:', params.customerName);
+        }
 
         // Add conversation context from previous slides if available
         if (params.previousMessages && params.previousMessages.length > 0) {

@@ -34,9 +34,16 @@ export const SLIDE_SYSTEM_PROMPTS: Record<string, string> = {
 
 For this workflow kickoff:
 - Greet the CSM warmly and briefly summarize the task ahead
-- Highlight 2-3 key metrics or concerns worth noting
+- Reference specific details from the INTEL context provided (e.g., health score, recent interactions, key concerns)
+- Highlight 2-3 key metrics or concerns worth noting based on actual data
 - Keep your greeting concise (2-3 sentences max)
-- End with an encouraging note to get started`,
+- Be opinionated - tell the CSM what matters most right now
+- End with an encouraging note to get started
+
+If customer INTEL is available, use it to personalize your greeting:
+- Reference the relationship strength and key contacts
+- Mention recent updates or upcoming events that are relevant
+- Frame the workflow in context of their strategic goals`,
 
   // Brand/Account Performance Review
   'review-brand-performance': `${BASE_CSM_PROMPT}
@@ -317,4 +324,36 @@ ${conversationSummary}
 ---
 
 Use the conversation summary above for context when responding to the user.`;
+}
+
+/**
+ * Add INTEL context to system prompt
+ *
+ * This enriches the system prompt with customer, contact, and user intelligence
+ * to enable more personalized, informed LLM responses.
+ */
+export function addINTELContext(
+  basePrompt: string,
+  intelSummary: string
+): string {
+  if (!intelSummary || intelSummary.trim() === '') {
+    return basePrompt;
+  }
+
+  return `${basePrompt}
+
+---
+# Customer Intelligence (INTEL)
+
+The following intelligence has been gathered about this customer. Use this context to personalize your responses, reference specific details, and provide informed recommendations:
+
+${intelSummary}
+
+---
+
+When responding, draw on this INTEL to:
+- Reference specific metrics, dates, and relationship details
+- Understand the customer's strategic goals and concerns
+- Acknowledge the relationship history and recent interactions
+- Tailor your tone and recommendations to the account's health status`;
 }

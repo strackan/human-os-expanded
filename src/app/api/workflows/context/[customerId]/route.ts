@@ -5,10 +5,12 @@
  * - Returns complete workflow context for template resolution
  * - Used by frontend to resolve notification templates ({{customer.name}}, etc.)
  * - Matches backend context structure from workflowExecutor.js
+ * - Includes INTEL context for LLM personalization
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { getINTELContext, buildINTELSummary, buildGreetingContext } from '@/lib/skills/INTELService';
 
 // =====================================================
 // Types
@@ -337,9 +339,34 @@ export async function GET(
       accountTeam: accountTeamData
     };
 
+    // =====================================================
+    // 7. Fetch INTEL Context (Customer Intelligence)
+    // =====================================================
+
+    let intel = null;
+    let intelSummary = '';
+    let greetingContext = null;
+
+    try {
+      // Get INTEL for this customer
+      const intelContext = await getINTELContext(customer.name, 'grace');
+
+      if (intelContext.customer || intelContext.contacts) {
+        intel = intelContext;
+        intelSummary = buildINTELSummary(intelContext);
+        greetingContext = buildGreetingContext(intelContext);
+      }
+    } catch (intelError) {
+      // INTEL is optional - log but don't fail
+      console.warn('Could not load INTEL context:', intelError);
+    }
+
     return NextResponse.json({
       success: true,
-      context
+      context,
+      intel,
+      intelSummary,
+      greetingContext,
     });
 
   } catch (error) {

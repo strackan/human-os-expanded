@@ -30,6 +30,13 @@ export {
   type ReportMetadata,
 } from './ReportArtifact';
 
+export {
+  AccountSummaryArtifact,
+  type AccountSummaryContact,
+  type AccountSummaryMetric,
+  type AccountSummaryArtifactProps,
+} from './AccountSummaryArtifact';
+
 // Renderer
 export { default as ArtifactRenderer } from './ArtifactRenderer';
 
