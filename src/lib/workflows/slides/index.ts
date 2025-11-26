@@ -51,6 +51,10 @@ import { prepareQuoteSlideV2 } from './renewal/prepareQuoteSlideV2';
 import { draftEmailSlideV2 } from './action/draftEmailSlideV2';
 import { workflowSummarySlideV2 } from './common/workflowSummarySlideV2';
 
+// Pricing Engine slides (use new composite components)
+import { pricingRecommendationSlide } from './renewal/pricingRecommendationSlide';
+import { healthDashboardSlide } from './renewal/healthDashboardSlide';
+
 /**
  * Slide Library - All available slides
  *
@@ -113,6 +117,12 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'prepare-quote-v2': prepareQuoteSlideV2,
   'draft-email-v2': draftEmailSlideV2,
   'workflow-summary-v2': workflowSummarySlideV2,
+
+  // ========================================
+  // PRICING ENGINE SLIDES (Composite Components)
+  // ========================================
+  'pricing-recommendation': pricingRecommendationSlide,
+  'health-dashboard': healthDashboardSlide,
 
   // ========================================
   // OPPORTUNITY-SPECIFIC SLIDES

@@ -13,6 +13,10 @@ import QuoteArtifact from '@/components/artifacts/QuoteArtifact';
 import EmailArtifact from '@/components/artifacts/EmailArtifact';
 import PlanSummaryArtifact from '@/components/artifacts/PlanSummaryArtifact';
 
+// Import composite components from library
+import { HealthDashboard } from '@/components/workflows/library/composite/HealthDashboard';
+import { PricingRecommendation } from '@/components/workflows/library/composite/PricingRecommendation';
+
 /**
  * All artifact components
  */
@@ -36,6 +40,16 @@ export const artifactComponents = {
     component: PlanSummaryArtifact,
     displayName: 'Workflow Summary',
     description: 'Summary of completed tasks and next steps',
+  },
+  'artifact.health-dashboard': {
+    component: HealthDashboard,
+    displayName: 'Health Dashboard',
+    description: 'Customer health overview with metrics and risk factors',
+  },
+  'artifact.pricing-recommendation': {
+    component: PricingRecommendation,
+    displayName: 'Pricing Recommendation',
+    description: 'AI-powered pricing recommendation with 3 scenarios',
   },
 };
 
