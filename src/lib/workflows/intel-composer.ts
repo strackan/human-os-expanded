@@ -95,16 +95,19 @@ function enrichGreetingSlide(
       return slide;
     }
 
+    // Build the enriched chat config if the slide has chat
+    const enrichedChat = slide.chat ? {
+      ...slide.chat,
+      initialMessage: slide.chat.initialMessage ? {
+        ...slide.chat.initialMessage,
+        text: greetingContext.greetingText,
+      } : slide.chat.initialMessage,
+    } : slide.chat;
+
     // Update chat message with INTEL-based greeting
     const enrichedSlide: WorkflowSlide = {
       ...slide,
-      chat: slide.chat ? {
-        ...slide.chat,
-        initialMessage: slide.chat.initialMessage ? {
-          ...slide.chat.initialMessage,
-          text: greetingContext.greetingText,
-        } : undefined,
-      } : undefined,
+      ...(enrichedChat ? { chat: enrichedChat } : {}),
       // Add account summary artifact
       artifacts: {
         ...slide.artifacts,

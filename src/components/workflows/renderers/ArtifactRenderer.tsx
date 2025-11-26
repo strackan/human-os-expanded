@@ -58,6 +58,7 @@ function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 
 
   // Account & Financial Documents
   if (componentType === 'AccountOverviewArtifact' ||
+      componentType === 'AccountSummaryArtifact' ||
       componentType === 'ExpansionOverviewArtifact' ||
       componentType === 'ExpansionProposalArtifact' ||
       componentType === 'StrategicAccountPlanArtifact' ||

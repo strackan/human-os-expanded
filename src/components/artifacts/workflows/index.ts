@@ -38,7 +38,7 @@ export {
 } from './AccountSummaryArtifact';
 
 // Renderer
-export { default as ArtifactRenderer } from './ArtifactRenderer';
+export { ArtifactRenderer, ArtifactList, type WorkflowArtifact } from './ArtifactRenderer';
 
 // Task mode variants
 export { default as TaskArtifactsDisplay } from './TaskArtifactsDisplay';

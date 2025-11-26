@@ -21,6 +21,7 @@ import ExpansionOverviewArtifact from '@/components/artifacts/ExpansionOverviewA
 import ExpansionProposalArtifact from '@/components/artifacts/ExpansionProposalArtifact';
 import StrategicAccountPlanArtifact from '@/components/artifacts/StrategicAccountPlanArtifact';
 import PricingAnalysisArtifact from '@/components/artifacts/PricingAnalysisArtifact';
+import { AccountSummaryArtifact } from '@/components/artifacts/workflows';
 
 interface AccountArtifactRendererProps {
   slide: WorkflowSlide;
@@ -231,6 +232,24 @@ export default function AccountArtifactRenderer({
               ]
             }
           }}
+        />
+      );
+
+    case 'AccountSummaryArtifact':
+      const summaryProps = section.data?.props || {};
+      return (
+        <AccountSummaryArtifact
+          customerName={summaryProps.customerName || customerName}
+          industry={summaryProps.industry}
+          tier={summaryProps.tier}
+          status={summaryProps.status}
+          metrics={summaryProps.metrics}
+          renewalDate={summaryProps.renewalDate}
+          daysToRenewal={summaryProps.daysToRenewal}
+          contacts={summaryProps.contacts}
+          priorities={summaryProps.priorities}
+          risks={summaryProps.risks}
+          opportunities={summaryProps.opportunities}
         />
       );
 
