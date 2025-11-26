@@ -31,6 +31,12 @@ export interface ChatMessage {
     'label-background'?: string;
     'label-text'?: string;
   }>;
+  /** The slide this message belongs to (for chat continuity) */
+  slideId?: string;
+  /** Whether this message is from a previous slide (for visual distinction) */
+  isHistorical?: boolean;
+  /** Separator message between slides */
+  isSlideSeparator?: boolean;
 }
 
 interface ChatRendererProps {
@@ -505,67 +511,89 @@ export default function ChatRenderer({
   };
 
   return (
-    <div className="flex items-start justify-center p-12 h-full">
+    <div className="flex items-start justify-center p-12 h-full overflow-y-auto">
       <div className="max-w-2xl w-full space-y-6">
-        {chatMessages.map((message, index) => (
-          <div key={message.id} className="space-y-3">
-            {/* Message Row with Avatar */}
-            <div
-              className={`flex ${
-                message.sender === 'user' ? 'justify-end' : 'justify-start'
-              } items-start gap-2`}
-            >
-              {/* AI Avatar */}
-              {message.sender === 'ai' && (
-                <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Bot className="w-5 h-5 text-white" />
-                </div>
-              )}
+        {chatMessages.map((message, index) => {
+          // Render slide separator
+          if (message.isSlideSeparator) {
+            return (
+              <div key={message.id} className="flex items-center gap-3 py-2">
+                <div className="flex-1 h-px bg-gray-300" />
+                <span className="text-xs text-gray-500 font-medium px-2">
+                  {message.text}
+                </span>
+                <div className="flex-1 h-px bg-gray-300" />
+              </div>
+            );
+          }
 
-              {/* Message Content Column (bubble, components, buttons all same width) */}
-              <div className="flex flex-col gap-3 max-w-lg w-full">
-                {/* Message Bubble */}
-                <div
-                  className={`rounded-2xl px-5 py-3 ${
-                    message.sender === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
-                  }`}
-                >
+          // Apply opacity for historical messages
+          const historicalClass = message.isHistorical ? 'opacity-60' : '';
+
+          return (
+            <div key={message.id} className={`space-y-3 ${historicalClass}`}>
+              {/* Message Row with Avatar */}
+              <div
+                className={`flex ${
+                  message.sender === 'user' ? 'justify-end' : 'justify-start'
+                } items-start gap-2`}
+              >
+                {/* AI Avatar */}
+                {message.sender === 'ai' && (
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    message.isHistorical ? 'bg-gray-400' : 'bg-gray-600'
+                  }`}>
+                    <Bot className="w-5 h-5 text-white" />
+                  </div>
+                )}
+
+                {/* Message Content Column (bubble, components, buttons all same width) */}
+                <div className="flex flex-col gap-3 max-w-lg w-full">
+                  {/* Message Bubble */}
                   <div
-                    className="text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: formatTextToHTML(message.text) }}
-                  />
+                    className={`rounded-2xl px-5 py-3 ${
+                      message.sender === 'user'
+                        ? message.isHistorical ? 'bg-blue-400 text-white' : 'bg-blue-600 text-white'
+                        : message.isHistorical ? 'bg-gray-50 text-gray-700' : 'bg-gray-100 text-gray-900'
+                    }`}
+                  >
+                    <div
+                      className="text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: formatTextToHTML(message.text) }}
+                    />
+                  </div>
+
+                  {/* Inline Component (only for AI messages, not historical) */}
+                  {message.sender === 'ai' && message.component && !message.isHistorical && (
+                    <div>{renderInlineComponent(message.component, message.id)}</div>
+                  )}
+
+                  {/* Buttons (only for AI messages, not historical) */}
+                  {message.sender === 'ai' && message.buttons && !message.isHistorical && (
+                    <div>{renderButtons(message.buttons)}</div>
+                  )}
+
+                  {/* Submitted Component Value Display */}
+                  {message.componentValue !== undefined && (
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span>Submitted: {JSON.stringify(message.componentValue)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Inline Component (only for AI messages) */}
-                {message.sender === 'ai' && message.component && (
-                  <div>{renderInlineComponent(message.component, message.id)}</div>
-                )}
-
-                {/* Buttons (only for AI messages) */}
-                {message.sender === 'ai' && message.buttons && (
-                  <div>{renderButtons(message.buttons)}</div>
-                )}
-
-                {/* Submitted Component Value Display */}
-                {message.componentValue !== undefined && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Check className="w-4 h-4 text-green-600" />
-                    <span>Submitted: {JSON.stringify(message.componentValue)}</span>
+                {/* User Avatar */}
+                {message.sender === 'user' && (
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    message.isHistorical ? 'bg-blue-400' : 'bg-blue-600'
+                  }`}>
+                    <User className="w-5 h-5 text-white" />
                   </div>
                 )}
               </div>
-
-              {/* User Avatar */}
-              {message.sender === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {/* Auto-scroll anchor */}
         <div ref={messagesEndRef} />

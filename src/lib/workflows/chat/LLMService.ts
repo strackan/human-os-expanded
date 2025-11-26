@@ -12,6 +12,9 @@ import { getMCPManager } from '@/lib/mcp/MCPManager';
 import { getMCPClientConfigs } from '@/lib/mcp/config/mcp-registry';
 import { isMCPEnabled } from '@/lib/mcp/config/mcp-registry';
 import type { MCPToolCall } from '@/lib/mcp/types/mcp.types';
+import { AnthropicService } from '@/lib/services/AnthropicService';
+import { CLAUDE_HAIKU_CURRENT, CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getSlideSystemPrompt } from '../llm/systemPrompts';
 
 export interface LLMResponse {
   content: string;
@@ -128,7 +131,7 @@ export class LLMService {
   }
 
   /**
-   * Call LLM API (placeholder - implement with actual LLM provider)
+   * Call LLM API using Anthropic's Claude
    */
   private async callLLM(params: {
     messages: any[];
@@ -138,28 +141,73 @@ export class LLMService {
     tools?: any[];
     stream?: boolean;
   }): Promise<LLMResponse> {
-    // TODO: Implement actual LLM API call (OpenAI, Anthropic, etc.)
-    // For now, return a mock response
+    try {
+      // Extract system prompt and conversation messages
+      const systemMessage = params.messages.find((m) => m.role === 'system');
+      const conversationMessages = params.messages
+        .filter((m) => m.role !== 'system')
+        .map((m) => ({
+          role: m.role as 'user' | 'assistant',
+          content: m.content,
+        }));
 
-    const userMessage = params.messages[params.messages.length - 1]?.content || '';
+      // Map model names to Claude models
+      // Default to Haiku for speed, use Sonnet for complex tasks
+      let claudeModel = CLAUDE_HAIKU_CURRENT;
+      if (params.model.includes('gpt-4') || params.model.includes('sonnet')) {
+        claudeModel = CLAUDE_SONNET_CURRENT;
+      }
 
-    // Mock response based on user input
-    let content = "I understand. How can I help you with this workflow step?";
+      // Convert tools to Anthropic format if provided
+      const anthropicTools = params.tools?.map((tool) => ({
+        name: tool.function?.name || tool.name,
+        description: tool.function?.description || tool.description,
+        input_schema: tool.function?.parameters || tool.input_schema || {
+          type: 'object' as const,
+          properties: {},
+        },
+      }));
 
-    // Simple pattern matching for demo purposes
-    if (userMessage.toLowerCase().includes('quote')) {
-      content = "I'll help you prepare a quote. Based on the account information, I recommend starting with the current pricing and considering any expansion opportunities.";
-    } else if (userMessage.toLowerCase().includes('email')) {
-      content = "I'll help you draft an email. What's the main purpose of this communication?";
-    } else if (userMessage.toLowerCase().includes('call')) {
-      content = "I'll help you schedule a call. What topics do you want to cover in the meeting?";
+      // Call Anthropic API
+      const response = await AnthropicService.generateConversation({
+        messages: conversationMessages,
+        systemPrompt: systemMessage?.content || 'You are a helpful AI assistant for customer success workflows.',
+        model: claudeModel,
+        temperature: params.temperature,
+        maxTokens: params.max_tokens,
+        tools: anthropicTools,
+      });
+
+      // Map tool uses to our format
+      const toolCalls: ToolCall[] | undefined = response.toolUses?.map((tu) => ({
+        name: tu.name,
+        input: tu.input,
+      }));
+
+      // Map stop reason
+      let finishReason: 'stop' | 'length' | 'tool_calls' | 'content_filter' = 'stop';
+      if (response.stopReason === 'tool_use') {
+        finishReason = 'tool_calls';
+      } else if (response.stopReason === 'max_tokens') {
+        finishReason = 'length';
+      }
+
+      return {
+        content: response.content,
+        tokens_used: response.tokensUsed.total,
+        tool_calls: toolCalls,
+        finish_reason: finishReason,
+      };
+    } catch (error) {
+      console.error('LLMService.callLLM error:', error);
+
+      // Fallback to a graceful error message
+      return {
+        content: "I apologize, but I'm having trouble processing your request right now. Please try again or continue with the workflow.",
+        tokens_used: 0,
+        finish_reason: 'stop',
+      };
     }
-
-    return {
-      content,
-      tokens_used: Math.floor(userMessage.length / 4) + Math.floor(content.length / 4), // Rough estimate
-      finish_reason: 'stop',
-    };
   }
 
   /**

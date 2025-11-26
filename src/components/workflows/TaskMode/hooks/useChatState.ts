@@ -40,6 +40,9 @@ export function useChatState({
   const [chatInputValue, setChatInputValue] = useState('');
   const chatInputRef = useRef<HTMLInputElement>(null);
 
+  // Track the last slide index to detect slide changes
+  const lastSlideIndexRef = useRef<number>(currentSlideIndex);
+
   // Branch navigation handler
   const handleBranchNavigation = useCallback((branchName: string, value?: any) => {
     const branch = currentSlide?.chat?.branches?.[branchName];
@@ -255,37 +258,77 @@ export function useChatState({
   }, [currentBranch, currentSlide, handleBranchNavigation, setWorkflowState]);
 
   // Initialize chat messages when slide changes
+  // Now preserves history from previous slides with visual distinction
   useEffect(() => {
     if (!currentSlide) return;
 
-    // Reset chat for new slide
-    setChatMessages([]);
+    const slideChanged = lastSlideIndexRef.current !== currentSlideIndex;
+    const isFirstSlide = currentSlideIndex === 0;
+
+    // Reset branch for new slide
     setCurrentBranch(null);
 
-    // Add initial message if present
-    if (currentSlide.chat?.initialMessage) {
-      const initialMessage: ChatMessage = {
-        id: `ai-initial-${currentSlideIndex}`,
-        text: currentSlide.chat.initialMessage.text,
-        sender: 'ai',
-        timestamp: new Date(),
-        component: currentSlide.chat.initialMessage.component,
-        buttons: currentSlide.chat.initialMessage.buttons
-      };
+    // Build new messages for this slide transition
+    setChatMessages(prevMessages => {
+      let newMessages: ChatMessage[] = [];
 
-      // Apply typing animation delay for first slide only
-      if (currentSlideIndex === 0) {
-        setTimeout(() => {
-          setChatMessages([initialMessage]);
-        }, 500);
-      } else {
-        setChatMessages([initialMessage]);
+      // If this is a slide change (not initial load), preserve history
+      if (slideChanged && prevMessages.length > 0 && !isFirstSlide) {
+        // Mark all existing messages as historical
+        const historicalMessages = prevMessages.map(msg => ({
+          ...msg,
+          isHistorical: true,
+          // Remove buttons from historical messages to prevent interaction
+          buttons: undefined,
+          // Remove components from historical messages
+          component: undefined,
+        }));
+
+        // Add a separator between slides
+        const separator: ChatMessage = {
+          id: `separator-${currentSlideIndex}`,
+          text: currentSlide.title || currentSlide.label || `Step ${currentSlideIndex + 1}`,
+          sender: 'ai',
+          timestamp: new Date(),
+          isSlideSeparator: true,
+          slideId: currentSlide.id,
+        };
+
+        newMessages = [...historicalMessages, separator];
       }
 
-      // Set initial branch if component present
-      if (currentSlide.chat.initialMessage.component) {
-        setCurrentBranch('initial');
+      // Add initial message for new slide
+      if (currentSlide.chat?.initialMessage) {
+        const initialMessage: ChatMessage = {
+          id: `ai-initial-${currentSlideIndex}`,
+          text: currentSlide.chat.initialMessage.text,
+          sender: 'ai',
+          timestamp: new Date(),
+          component: currentSlide.chat.initialMessage.component,
+          buttons: currentSlide.chat.initialMessage.buttons,
+          slideId: currentSlide.id,
+        };
+
+        // For first slide, show with delay
+        if (isFirstSlide && newMessages.length === 0) {
+          setTimeout(() => {
+            setChatMessages([initialMessage]);
+          }, 500);
+          return []; // Return empty for now, will be set by timeout
+        }
+
+        newMessages = [...newMessages, initialMessage];
       }
+
+      return newMessages;
+    });
+
+    // Update the last slide index tracker
+    lastSlideIndexRef.current = currentSlideIndex;
+
+    // Set initial branch if component present
+    if (currentSlide.chat?.initialMessage?.component) {
+      setCurrentBranch('initial');
     }
   }, [currentSlideIndex, currentSlide]);
 

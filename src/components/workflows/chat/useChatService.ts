@@ -10,6 +10,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ChatService, type ChatMessage } from '@/lib/workflows/chat/ChatService';
 import { LLMService } from '@/lib/workflows/chat/LLMService';
+import {
+  getSlideSystemPrompt,
+  buildConversationSummary,
+  addConversationContext,
+  type SummaryMessage,
+} from '@/lib/workflows/llm/systemPrompts';
 
 interface UseChatServiceParams {
   workflowExecutionId: string;
@@ -17,6 +23,10 @@ interface UseChatServiceParams {
   workflowId: string;
   stepId: string;
   systemPrompt?: string;
+  customerName?: string;
+  customerData?: Record<string, any>;
+  /** Previous conversation messages for context continuity */
+  previousMessages?: SummaryMessage[];
 }
 
 interface UseChatServiceReturn {
@@ -61,18 +71,35 @@ export function useChatService(params: UseChatServiceParams): UseChatServiceRetu
         thread = existingThreads[0];
         console.log('[useChatService] Using existing thread:', thread.id);
       } else {
+        // Build base system prompt: explicit > slide-specific > default
+        let systemPrompt = params.systemPrompt
+          || getSlideSystemPrompt(params.stepId, {
+              customerName: params.customerName,
+              customerData: params.customerData,
+            })
+          || 'You are a helpful CSM assistant. Help the user with their workflow tasks.';
+
+        // Add conversation context from previous slides if available
+        if (params.previousMessages && params.previousMessages.length > 0) {
+          const conversationSummary = buildConversationSummary(params.previousMessages);
+          systemPrompt = addConversationContext(systemPrompt, conversationSummary);
+          console.log('[useChatService] Added conversation context from', params.previousMessages.length, 'previous messages');
+        }
+
         // Create new thread
         thread = await chatService.createThread({
           workflow_execution_id: params.workflowExecutionId,
           step_execution_id: params.stepExecutionId,
           thread_type: 'llm',
-          system_prompt: params.systemPrompt || 'You are a helpful CSM assistant. Help the user with their workflow tasks.',
+          system_prompt: systemPrompt,
           context_data: {
             workflowId: params.workflowId,
-            stepId: params.stepId
+            stepId: params.stepId,
+            customerName: params.customerName,
+            hasPreviousContext: params.previousMessages && params.previousMessages.length > 0,
           }
         });
-        console.log('[useChatService] Created new thread:', thread.id);
+        console.log('[useChatService] Created new thread:', thread.id, 'for slide:', params.stepId);
       }
 
       setThreadId(thread.id);
