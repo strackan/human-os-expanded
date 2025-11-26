@@ -436,6 +436,11 @@ export function resolveSlideV2(
     branches: {},
   };
 
+  // Copy generateInitialMessage flag if present (enables LLM greeting generation)
+  if ('generateInitialMessage' in slideV2.chat) {
+    chat.generateInitialMessage = (slideV2.chat as any).generateInitialMessage;
+  }
+
   // Resolve initial message if present
   if (slideV2.chat.initialMessage) {
     const msg = slideV2.chat.initialMessage;

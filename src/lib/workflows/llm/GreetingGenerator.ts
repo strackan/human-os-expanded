@@ -83,18 +83,23 @@ The workflow purpose is: ${workflowPurpose}`;
 
     // Handle tool calls if any
     if (initialResponse.toolUses && initialResponse.toolUses.length > 0) {
+      // Build conversation history - start with original user message
       const toolResults: Array<{ role: 'user' | 'assistant'; content: string }> = [
         { role: 'user', content: `Generate a personalized greeting for the ${customerName} workflow. Start by getting their context.` },
-        { role: 'assistant', content: initialResponse.content || '' },
       ];
 
-      // Execute each tool call
+      // Only add assistant message if it has content
+      if (initialResponse.content && initialResponse.content.trim()) {
+        toolResults.push({ role: 'assistant', content: initialResponse.content });
+      }
+
+      // Execute each tool call and add results
       for (const toolUse of initialResponse.toolUses) {
         if (isINTELTool(toolUse.name)) {
           toolsUsed.push(toolUse.name);
           const toolResult = await executeINTELTool(toolUse.name, toolUse.input as Record<string, any>);
 
-          // Add tool result to conversation
+          // Add tool result as user message
           toolResults.push({
             role: 'user',
             content: `Tool result for ${toolUse.name}:\n\n${toolResult}`,
@@ -102,8 +107,8 @@ The workflow purpose is: ${workflowPurpose}`;
         }
       }
 
-      // Continue conversation with tool results
-      if (toolResults.length > 2) {
+      // Continue conversation with tool results (need at least the original + tool result)
+      if (toolResults.length >= 2) {
         const continuationResponse = await AnthropicService.generateConversation({
           messages: toolResults,
           systemPrompt,
