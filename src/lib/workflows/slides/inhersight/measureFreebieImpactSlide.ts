@@ -13,6 +13,7 @@ export const measureFreebieImpactSlide: UniversalSlideBuilder = (context): any =
   version: '2',
   name: 'Measure Freebie Impact',
   category: 'inhersight',
+  checklistTitle: 'Analyze freebie results and plan next steps',
 
   structure: {
     id: 'measure-freebie-impact',

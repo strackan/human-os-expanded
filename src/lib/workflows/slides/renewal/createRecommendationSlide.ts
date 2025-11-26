@@ -13,6 +13,7 @@ export const createRecommendationSlide: UniversalSlideBuilder = (context): any =
   version: '2',
   name: 'Create Renewal Recommendation',
   category: 'renewal',
+  checklistTitle: 'Draft renewal recommendation and pricing strategy',
 
   structure: {
     id: 'create-recommendation',

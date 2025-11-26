@@ -92,14 +92,23 @@ export function composeWorkflow(
     // Get context for this slide and merge with runtime context
     const slideContext = composition.slideContexts?.[slideId];
 
+    // For greeting slide, inject workflow info so it can build a checklist from actual steps
+    const workflowInfo = slideId === 'greeting' ? {
+      slideSequence: composition.slideSequence,
+      slideLibrary,
+      workflowName: composition.name,
+      workflowCategory: composition.category,
+    } : {};
+
     // Merge runtime context (customer, pricing) into slide context for V2 slides
     const mergedContext = slideContext ? {
       ...slideContext,
       variables: {
         ...slideContext.variables,
         ...context, // Merge customer, pricing from runtime context
+        ...workflowInfo, // Inject workflow info for greeting slide
       },
-    } : undefined;
+    } : (slideId === 'greeting' ? { variables: { ...workflowInfo } } : undefined);
 
     // Check if context provides a complete override structure (legacy)
     if (slideContext?.overrideStructure) {

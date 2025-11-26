@@ -16,6 +16,7 @@ export const pricingAnalysisSlideV2: SlideBuilderV2 = (context?: SlideContext): 
     stepMapping: 'pricing-analysis',
     category: 'renewal',
     estimatedMinutes: 3,
+    checklistTitle: 'Analyze current pricing vs. market benchmarks',
     requiredFields: [
       'customer.name',
       'pricing.currentARR',

@@ -15,6 +15,7 @@ export const prepareQuoteSlideV2: SlideBuilderV2 = (context?: SlideContext): Sli
     stepMapping: 'renewal-quote',
     category: 'renewal',
     estimatedMinutes: 2,
+    checklistTitle: 'Generate optimized renewal quote',
     requiredFields: [
       'customer.name',
       'customer.primaryContact.firstName',

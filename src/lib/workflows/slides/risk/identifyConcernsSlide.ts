@@ -13,6 +13,7 @@ export const identifyConcernsSlide: UniversalSlideBuilder = (context): any => ({
   version: '2',
   name: 'Identify Customer Concerns',
   category: 'risk',
+  checklistTitle: 'Analyze root causes and customer concerns',
 
   structure: {
     id: 'identify-concerns',

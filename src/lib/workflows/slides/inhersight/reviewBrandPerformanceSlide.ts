@@ -13,6 +13,7 @@ export const reviewBrandPerformanceSlide: UniversalSlideBuilder = (context): any
   version: '2',
   name: 'Review Brand Performance',
   category: 'inhersight',
+  checklistTitle: 'Review brand performance metrics and trends',
 
   structure: {
     id: 'review-brand-performance',

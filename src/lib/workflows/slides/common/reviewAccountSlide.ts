@@ -51,6 +51,7 @@ export const reviewAccountSlide: SlideBuilder = createSlideBuilder(
       'primary_contact.title',
     ],
     tags: ['account', 'health', 'metrics', 'review'],
+    checklistTitle: 'Review account health and contract details',
     version: '1.0.0',
   },
   (context?: SlideContext) => {

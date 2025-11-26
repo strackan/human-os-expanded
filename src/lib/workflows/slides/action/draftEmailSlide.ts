@@ -154,6 +154,7 @@ export const draftEmailSlide: SlideBuilder = createSlideBuilder(
       'csm.name',
       'csm.email',
     ],
+    checklistTitle: 'Draft personalized outreach email',
   },
   (context?: SlideContext) => {
     const purpose = (context?.purpose as string) || 'default';

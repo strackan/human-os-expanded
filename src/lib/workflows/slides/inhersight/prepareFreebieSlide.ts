@@ -13,6 +13,7 @@ export const prepareFreebieSlide: UniversalSlideBuilder = (context): any => ({
   version: '2',
   name: 'Prepare Freebie Strategy',
   category: 'inhersight',
+  checklistTitle: 'Select and plan value-add freebie offering',
 
   structure: {
     id: 'prepare-freebie',

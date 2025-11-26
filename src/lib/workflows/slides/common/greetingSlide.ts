@@ -57,6 +57,54 @@ const URGENCY_CONFIG = {
   },
 };
 
+/**
+ * Default checklist items by workflow purpose
+ */
+const DEFAULT_CHECKLIST_ITEMS: Record<string, string[]> = {
+  renewal_preparation: [
+    'Review account health and contract details',
+    'Analyze current pricing vs. market benchmarks',
+    'Identify expansion opportunities',
+    'Prepare renewal quote',
+    'Create action plan and next steps',
+  ],
+  executive_departure: [
+    'Assess impact of departure on relationship',
+    'Identify replacement contacts',
+    'Draft outreach communication',
+    'Update stakeholder map',
+    'Create follow-up plan',
+  ],
+  expansion_opportunity: [
+    'Review current usage and adoption',
+    'Identify expansion opportunities',
+    'Prepare business case',
+    'Draft expansion proposal',
+    'Plan stakeholder engagement',
+  ],
+  churn_risk: [
+    'Analyze risk indicators',
+    'Identify root causes',
+    'Plan recovery strategy',
+    'Prepare value demonstration',
+    'Create action plan',
+  ],
+  account_review: [
+    'Review account health metrics',
+    'Analyze usage patterns',
+    'Identify opportunities and risks',
+    'Update success plan',
+    'Define next steps',
+  ],
+  default: [
+    'Review current situation',
+    'Analyze key factors',
+    'Develop recommendations',
+    'Create action plan',
+    'Define next steps',
+  ],
+};
+
 export const greetingSlide: SlideBuilder = createSlideBuilder(
   {
     id: 'greeting',
@@ -132,7 +180,7 @@ export const greetingSlide: SlideBuilder = createSlideBuilder(
       },
 
       artifacts: {
-        sections: context?.variables?.showPlanningChecklist ? [
+        sections: context?.variables?.showPlanningChecklist === false ? [] : [
           {
             id: 'planning-checklist',
             title: context?.variables?.checklistTitle || 'Planning Checklist',
@@ -142,17 +190,82 @@ export const greetingSlide: SlideBuilder = createSlideBuilder(
               componentType: 'PlanningChecklistArtifact',
               props: {
                 title: context?.variables?.checklistTitle || "Here's what we'll accomplish together:",
-                items: (context?.variables?.checklistItems || []).map((label: string, index: number) => ({
-                  id: `${index + 1}`,
-                  label,
-                  completed: false
-                })),
+                items: buildChecklistItems(context),
                 showActions: false
               }
             }
           }
-        ] : []
+        ]
       }
     };
   }
 );
+
+/**
+ * Build checklist items from slide sequence or explicit checklistItems
+ *
+ * Priority:
+ * 1. Explicit checklistItems from context (for backward compatibility)
+ * 2. Auto-generated from slideSequence using each slide's checklistTitle
+ * 3. Fallback to default items based on purpose
+ */
+function buildChecklistItems(context?: SlideContext): Array<{ id: string; label: string; completed: boolean }> {
+  // Priority 1: Explicit checklistItems
+  const explicitItems = context?.variables?.checklistItems;
+  if (explicitItems && Array.isArray(explicitItems) && explicitItems.length > 0) {
+    return explicitItems.map((label: string, index: number) => ({
+      id: `${index + 1}`,
+      label,
+      completed: false
+    }));
+  }
+
+  // Priority 2: Build from slideSequence + slideLibrary
+  const slideSequence = context?.variables?.slideSequence;
+  const slideLibrary = context?.variables?.slideLibrary;
+
+  if (slideSequence && Array.isArray(slideSequence) && slideLibrary) {
+    const items: Array<{ id: string; label: string; completed: boolean }> = [];
+
+    for (let i = 0; i < slideSequence.length; i++) {
+      const slideId = slideSequence[i];
+
+      // Skip greeting and summary slides in the checklist
+      if (slideId === 'greeting' || slideId.includes('summary')) {
+        continue;
+      }
+
+      const slideBuilder = slideLibrary[slideId];
+      if (slideBuilder) {
+        // Call the slide builder to get its definition
+        const slideDef = slideBuilder();
+        // Get checklistTitle from the slide definition
+        const checklistTitle = slideDef.checklistTitle
+          || slideDef.name
+          || slideDef.structure?.title
+          || slideId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+
+        items.push({
+          id: `${items.length + 1}`,
+          label: checklistTitle,
+          completed: false
+        });
+      }
+    }
+
+    if (items.length > 0) {
+      return items;
+    }
+  }
+
+  // Priority 3: Fallback to default items based on purpose
+  const purpose = context?.purpose || 'default';
+  const defaultItems = DEFAULT_CHECKLIST_ITEMS[purpose as keyof typeof DEFAULT_CHECKLIST_ITEMS]
+    || DEFAULT_CHECKLIST_ITEMS.default;
+
+  return defaultItems.map((label: string, index: number) => ({
+    id: `${index + 1}`,
+    label,
+    completed: false
+  }));
+}

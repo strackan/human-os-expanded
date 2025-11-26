@@ -259,6 +259,13 @@ export interface SlideDefinition {
    * Version for slide evolution tracking
    */
   version?: string;
+
+  /**
+   * Title for planning checklist display
+   * Used by greeting slide to build workflow checklist from slide sequence
+   * Example: "Review account health and contract details"
+   */
+  checklistTitle?: string;
 }
 
 /**
@@ -344,6 +351,13 @@ export interface SlideDefinitionV2 {
    * Version for slide evolution tracking
    */
   version?: string;
+
+  /**
+   * Title for planning checklist display
+   * Used by greeting slide to build workflow checklist from slide sequence
+   * Example: "Review account health and contract details"
+   */
+  checklistTitle?: string;
 }
 
 /**

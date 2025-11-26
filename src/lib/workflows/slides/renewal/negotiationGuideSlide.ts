@@ -13,6 +13,7 @@ export const negotiationGuideSlide: UniversalSlideBuilder = (context): any => ({
   version: '2',
   name: 'Negotiation Guide',
   category: 'renewal',
+  checklistTitle: 'Review negotiation talking points and pricing flexibility',
 
   structure: {
     id: 'negotiation-guide',

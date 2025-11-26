@@ -88,6 +88,7 @@ export const workflowSummarySlide: SlideBuilder = createSlideBuilder(
     description: 'Summary and next steps',
     estimatedMinutes: 3,
     requiredFields: ['customer.name'],
+    checklistTitle: 'Create action plan and next steps',
   },
   (context?: SlideContext) => {
     const workflowType = (context?.purpose as string) || 'default';

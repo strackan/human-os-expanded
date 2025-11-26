@@ -15,6 +15,7 @@ export const draftEmailSlideV2: SlideBuilderV2 = (context?: SlideContext): Slide
     stepMapping: 'compose-email',
     category: 'action',
     estimatedMinutes: 2,
+    checklistTitle: 'Draft personalized outreach email',
     requiredFields: [
       'customer.name',
       'customer.primaryContact.firstName',

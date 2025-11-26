@@ -15,6 +15,7 @@ export const workflowSummarySlideV2: SlideBuilderV2 = (context?: SlideContext): 
     stepMapping: 'plan-summary',
     category: 'common',
     estimatedMinutes: 1,
+    checklistTitle: 'Create action plan and next steps',
     requiredFields: [
       'customer.name',
       'customer.primaryContact.firstName',

@@ -13,6 +13,7 @@ export const identifyOpportunitiesSlide: UniversalSlideBuilder = (context): any 
   version: '2',
   name: 'Identify Expansion Opportunities',
   category: 'renewal',
+  checklistTitle: 'Identify expansion and upsell opportunities',
 
   structure: {
     id: 'identify-opportunities',

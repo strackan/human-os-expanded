@@ -13,6 +13,7 @@ export const meetingDebriefSlide: UniversalSlideBuilder = (context): any => ({
   version: '2',
   name: 'Meeting Debrief',
   category: 'renewal',
+  checklistTitle: 'Capture meeting feedback and action items',
 
   structure: {
     id: 'meeting-debrief',
