@@ -5,5 +5,8 @@
  * cohesive, feature-rich UI blocks for workflows.
  */
 
-// Pricing components removed - they depend on untracked files
-// Will be re-added when pricing optimization work is completed
+export { HealthDashboard } from './HealthDashboard';
+export type { HealthDashboardProps } from './HealthDashboard';
+
+export { PricingRecommendation } from './PricingRecommendation';
+export type { PricingRecommendationProps } from './PricingRecommendation';

@@ -46,4 +46,5 @@ next-env.d.ts
 
 # archive (refactoring backups, orphaned files)
 /archive/
+public/archive/
 killertools/
