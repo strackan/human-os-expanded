@@ -7,8 +7,16 @@
  * Future: Convert to full MCP implementation with proper tools and file access.
  */
 
-import { promises as fs } from 'fs';
-import * as path from 'path';
+// Dynamic imports for Node.js modules - these are only available server-side
+let fs: typeof import('fs').promises | null = null;
+let path: typeof import('path') | null = null;
+
+// Initialize Node.js modules only on server
+if (typeof window === 'undefined') {
+  // Server-side: use dynamic require to avoid bundling issues
+  fs = require('fs').promises;
+  path = require('path');
+}
 
 /**
  * Simple YAML-like frontmatter parser
@@ -98,6 +106,9 @@ export interface INTELContext {
  * Get the skills directory path
  */
 function getSkillsDir(): string {
+  if (!path) {
+    throw new Error('INTELService: path module not available (running in browser?)');
+  }
   // In development, skills are in the project root
   // In production, they would be fetched from Supabase Storage
   return path.join(process.cwd(), 'skills');
@@ -119,6 +130,10 @@ function customerNameToFolderName(name: string): string {
  * Read and parse a markdown INTEL file
  */
 async function readINTELFile(filePath: string): Promise<{ frontmatter: Record<string, any>; content: string } | null> {
+  if (!fs) {
+    console.warn(`Could not read INTEL file: ${filePath} - fs module not available (running in browser?)`);
+    return null;
+  }
   try {
     const fileContent = await fs.readFile(filePath, 'utf-8');
     const { data: frontmatter, content } = parseFrontmatter(fileContent);
@@ -161,6 +176,11 @@ export async function getCustomerINTEL(customerName: string): Promise<CustomerIN
  * Read all contact INTEL files for a customer
  */
 export async function getContactsINTEL(customerName: string): Promise<ContactINTEL[]> {
+  if (!fs || !path) {
+    console.warn(`Could not read contacts for ${customerName} - fs/path modules not available (running in browser?)`);
+    return [];
+  }
+
   const folderName = customerNameToFolderName(customerName);
   const contactsDir = path.join(getSkillsDir(), 'customers', folderName, 'contacts');
 

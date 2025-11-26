@@ -45,6 +45,12 @@ export async function composeWithINTEL(
   customerName: string,
   userId: string = 'grace'
 ): Promise<INTELEnrichedConfig> {
+  // INTEL reading requires Node.js fs - skip in browser environment
+  if (typeof window !== 'undefined') {
+    console.log('[intel-composer] Running in browser - skipping INTEL enrichment (use API route instead)');
+    return config;
+  }
+
   try {
     // 1. Fetch INTEL context
     const intel = await getINTELContext(customerName, userId);
