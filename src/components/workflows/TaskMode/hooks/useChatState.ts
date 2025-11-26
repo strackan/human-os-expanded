@@ -1,7 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 import type { WorkflowSlide } from '@/components/artifacts/workflows/config/WorkflowConfig';
-import { generateGreetingCached } from '@/lib/workflows/llm/GreetingGenerator';
+
+/**
+ * Fetch LLM-generated greeting from server API
+ */
+async function fetchGreetingFromAPI(params: {
+  customerName: string;
+  workflowPurpose?: string;
+  slideId?: string;
+  fallbackGreeting?: string;
+}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number }> {
+  const response = await fetch('/api/workflows/greeting', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Greeting API failed: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 /**
  * useChatState - Manages chat messages, branches, and conversation flow
@@ -278,6 +299,17 @@ export function useChatState({
                                    currentSlide.id === 'greeting' &&
                                    isFirstSlide;
 
+    // DEBUG: Log slide config to see what we're getting
+    console.log('[useChatState] DEBUG - currentSlide:', {
+      id: currentSlide.id,
+      slideIndex: currentSlideIndex,
+      isFirstSlide,
+      hasChat: !!currentSlide.chat,
+      generateInitialMessage: currentSlide.chat?.generateInitialMessage,
+      shouldGenerateGreeting,
+      customerName,
+    });
+
     // Build new messages for this slide transition
     const buildMessages = async () => {
       let newMessages: ChatMessage[] = [];
@@ -311,12 +343,12 @@ export function useChatState({
       if (currentSlide.chat?.initialMessage) {
         let greetingText = currentSlide.chat.initialMessage.text;
 
-        // If LLM greeting is enabled, generate it
+        // If LLM greeting is enabled, generate it via server API
         if (shouldGenerateGreeting && customerName) {
           try {
-            console.log('[useChatState] Generating LLM greeting for:', customerName);
+            console.log('[useChatState] Fetching LLM greeting for:', customerName);
 
-            const generated = await generateGreetingCached({
+            const generated = await fetchGreetingFromAPI({
               customerName,
               workflowPurpose,
               slideId: currentSlide.id,
