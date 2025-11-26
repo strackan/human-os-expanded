@@ -20,6 +20,7 @@ import EditableCell from '../../../../components/common/EditableCell';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
 import { registerWorkflowConfig } from '@/config/workflows/index';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
+import { composeWithINTEL } from '@/lib/workflows/intel-composer';
 import { createWorkflowExecution } from '@/lib/workflows/actions';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -221,7 +222,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
       });
 
       // Load workflow config from database using Phase 3 modular system
-      const workflowConfig = await composeFromDatabase(
+      const dbConfig = await composeFromDatabase(
         workflowId,
         null, // company_id (null = stock workflow)
         {
@@ -232,15 +233,22 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         }
       );
 
-      if (!workflowConfig) {
+      if (!dbConfig) {
         console.error('[Customer View] Failed to load workflow config');
         throw new Error(`Workflow template "${workflowId}" not found in database. Please ensure workflow definitions are seeded.`);
       }
 
       console.log('[Customer View] Workflow loaded from database:', {
         workflowId,
-        workflowName: (workflowConfig as any).workflowName,
-        slides: workflowConfig.slides?.length
+        workflowName: (dbConfig as any).workflowName,
+        slides: dbConfig.slides?.length
+      });
+
+      // Enrich with INTEL context (customer intelligence)
+      const workflowConfig = await composeWithINTEL(dbConfig, customer.name);
+      console.log('[Customer View] INTEL enrichment complete:', {
+        hasIntel: !!(workflowConfig as any).intel,
+        hasGreetingContext: !!(workflowConfig as any).greetingContext,
       });
 
       // Register the config so TaskMode can find it
