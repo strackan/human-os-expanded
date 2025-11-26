@@ -13,6 +13,20 @@ renewal_date: 2025-02-24
 
 # TechCorp Solutions - Customer Intelligence
 
+## Key Context
+<!-- Persistent facts/concerns - remain until displaced by new information -->
+- AT RISK: Health score 45/100, high churn risk (75)
+- Primary contact: Jennifer Walsh (Chief People Officer) - new to role, relationship building
+- Motivation is reactive: signed after Glassdoor backlash, not strategic buy-in
+- Low engagement: profile completion at 45%, minimal active usage
+- Board pressure driving DEI initiatives but limited internal championship
+
+## Recent Events
+<!-- Time-based: last 60 days of activity -->
+- **Nov 12, 2024**: Missed scheduled check-in call (Jennifer rescheduled twice)
+- **Oct 28, 2024**: Sent engagement playbook - no response received
+- **Oct 15, 2024**: QBR declined - "too busy with reorg"
+
 ## Identity
 
 **Company:** TechCorp Solutions

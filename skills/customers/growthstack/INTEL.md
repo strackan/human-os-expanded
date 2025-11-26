@@ -13,6 +13,21 @@ renewal_date: 2025-02-24
 
 # GrowthStack - Customer Intelligence
 
+## Key Context
+<!-- Persistent facts/concerns - remain until displaced by new information -->
+- Primary champion: Sarah Johnson (VP of People) - strong internal advocate
+- Enterprise tier upgrade actively being evaluated
+- London office launching Q2 2025 - expansion opportunity
+- New VP of HR (2 months) - relationship still building
+- Interested in Greenhouse API integration
+
+## Recent Events
+<!-- Time-based: last 60 days of activity -->
+- **Nov 15, 2024**: Sarah initiated Enterprise tier upgrade conversation
+- **Nov 8, 2024**: Sarah asked about API access for Greenhouse integration
+- **Oct 22, 2024**: QBR completed - all success metrics exceeded
+- **Oct 10, 2024**: Introduced to new VP of HR (Jennifer Walsh)
+
 ## Identity
 
 **Company:** GrowthStack

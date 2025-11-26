@@ -13,6 +13,20 @@ renewal_date: 2025-03-26
 
 # DataDriven Inc - Customer Intelligence
 
+## Key Context
+<!-- Persistent facts/concerns - remain until displaced by new information -->
+- NEEDS ATTENTION: Health 55/100, elevated risk (65)
+- Primary contact: Michelle Rivera (Director of HR) - engaged but lacks executive sponsorship
+- Budget concerns: Evaluating ROI ahead of renewal
+- Low feature adoption - not using employer branding tools fully
+- Leadership team lacks diversity - limits internal championship
+
+## Recent Events
+<!-- Time-based: last 60 days of activity -->
+- **Nov 20, 2024**: Michelle raised renewal budget concerns - needs ROI justification
+- **Nov 3, 2024**: Sent competitive analysis vs Glassdoor/Comparably
+- **Oct 18, 2024**: Check-in call - discussed underutilized features
+
 ## Identity
 
 **Company:** DataDriven Inc

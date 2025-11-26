@@ -205,6 +205,8 @@ export function useTaskModeStateV2({
     goToPreviousSlide,
     onClose,
     handleComplete,
+    customerName,
+    workflowPurpose: currentSlide?.stepMapping || 'renewal_preparation',
   });
 
   // Artifact state management

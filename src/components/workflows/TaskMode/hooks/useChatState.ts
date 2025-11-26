@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 import type { WorkflowSlide } from '@/components/artifacts/workflows/config/WorkflowConfig';
+import { generateGreetingCached } from '@/lib/workflows/llm/GreetingGenerator';
 
 /**
  * useChatState - Manages chat messages, branches, and conversation flow
@@ -24,6 +25,8 @@ interface UseChatStateProps {
   goToPreviousSlide: () => void;
   onClose: () => void;
   handleComplete: () => void;
+  customerName: string;
+  workflowPurpose?: string;
 }
 
 export function useChatState({
@@ -34,6 +37,8 @@ export function useChatState({
   goToPreviousSlide,
   onClose,
   handleComplete,
+  customerName,
+  workflowPurpose = 'renewal_preparation',
 }: UseChatStateProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentBranch, setCurrentBranch] = useState<string | null>(null);
@@ -268,14 +273,19 @@ export function useChatState({
     // Reset branch for new slide
     setCurrentBranch(null);
 
+    // Check if we should generate greeting via LLM
+    const shouldGenerateGreeting = currentSlide.chat?.generateInitialMessage &&
+                                   currentSlide.id === 'greeting' &&
+                                   isFirstSlide;
+
     // Build new messages for this slide transition
-    setChatMessages(prevMessages => {
+    const buildMessages = async () => {
       let newMessages: ChatMessage[] = [];
 
       // If this is a slide change (not initial load), preserve history
-      if (slideChanged && prevMessages.length > 0 && !isFirstSlide) {
+      if (slideChanged && chatMessages.length > 0 && !isFirstSlide) {
         // Mark all existing messages as historical
-        const historicalMessages = prevMessages.map(msg => ({
+        const historicalMessages = chatMessages.map(msg => ({
           ...msg,
           isHistorical: true,
           // Remove buttons from historical messages to prevent interaction
@@ -299,9 +309,32 @@ export function useChatState({
 
       // Add initial message for new slide
       if (currentSlide.chat?.initialMessage) {
+        let greetingText = currentSlide.chat.initialMessage.text;
+
+        // If LLM greeting is enabled, generate it
+        if (shouldGenerateGreeting && customerName) {
+          try {
+            console.log('[useChatState] Generating LLM greeting for:', customerName);
+
+            const generated = await generateGreetingCached({
+              customerName,
+              workflowPurpose,
+              slideId: currentSlide.id,
+              fallbackGreeting: currentSlide.chat.initialMessage.text,
+            });
+
+            greetingText = generated.text;
+            console.log('[useChatState] Generated greeting:', greetingText);
+            console.log('[useChatState] Tools used:', generated.toolsUsed);
+          } catch (error) {
+            console.error('[useChatState] Failed to generate greeting:', error);
+            // Fall back to static text
+          }
+        }
+
         const initialMessage: ChatMessage = {
           id: `ai-initial-${currentSlideIndex}`,
-          text: currentSlide.chat.initialMessage.text,
+          text: greetingText,
           sender: 'ai',
           timestamp: new Date(),
           component: currentSlide.chat.initialMessage.component,
@@ -313,15 +346,18 @@ export function useChatState({
         if (isFirstSlide && newMessages.length === 0) {
           setTimeout(() => {
             setChatMessages([initialMessage]);
-          }, 500);
-          return []; // Return empty for now, will be set by timeout
+          }, shouldGenerateGreeting ? 100 : 500); // Shorter delay if we already waited for LLM
+          return; // Exit early, will be set by timeout
         }
 
         newMessages = [...newMessages, initialMessage];
       }
 
-      return newMessages;
-    });
+      setChatMessages(newMessages);
+    };
+
+    // Execute the async message builder
+    buildMessages();
 
     // Update the last slide index tracker
     lastSlideIndexRef.current = currentSlideIndex;

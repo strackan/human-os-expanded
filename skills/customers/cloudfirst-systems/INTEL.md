@@ -13,6 +13,22 @@ renewal_date: 2025-01-25
 
 # CloudFirst Systems - Customer Intelligence
 
+## Key Context
+<!-- Persistent facts/concerns - remain until displaced by new information -->
+- CRITICAL RISK: Health 40/100, churn risk 80 - renewal in 60 days
+- CEO resigned September - interim leadership, all vendor contracts under review
+- Champion departed: Previous sponsor (VP People) left with CEO
+- Original sign-up was reactive (harassment lawsuit settlement)
+- Culture transformation initiative stalled - recruiting paused
+- No clear executive sponsor currently
+
+## Recent Events
+<!-- Time-based: last 60 days of activity -->
+- **Nov 22, 2024**: Left voicemail for interim CFO re: renewal - no callback
+- **Nov 10, 2024**: Board meeting reviewing vendor contracts (per inside source)
+- **Oct 25, 2024**: Attempted outreach to new interim leadership - no response
+- **Sep 28, 2024**: CEO resignation announced; VP People also departed
+
 ## Identity
 
 **Company:** CloudFirst Systems

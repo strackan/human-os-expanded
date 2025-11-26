@@ -13,6 +13,20 @@ renewal_date: 2025-03-26
 
 # InnovateCo - Customer Intelligence
 
+## Key Context
+<!-- Persistent facts/concerns - remain until displaced by new information -->
+- Healthy account: 85/100 health, low risk (25), strong expansion potential (80)
+- Primary champion: Rachel Kim (Head of Talent) - true believer in DEI mission
+- Actively evaluating Enterprise tier for scale
+- London office expansion planned - multi-location opportunity
+- Series D / acquisition exploration may affect decision timelines
+
+## Recent Events
+<!-- Time-based: last 60 days of activity -->
+- **Nov 18, 2024**: Rachel requested ROI data for board presentation
+- **Nov 5, 2024**: Discussed Enterprise tier features for 2025 scaling
+- **Oct 20, 2024**: Successful QBR - highlighted 40% increase in diverse applicants
+
 ## Identity
 
 **Company:** InnovateCo

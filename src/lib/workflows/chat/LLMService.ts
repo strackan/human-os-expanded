@@ -15,6 +15,7 @@ import type { MCPToolCall } from '@/lib/mcp/types/mcp.types';
 import { AnthropicService } from '@/lib/services/AnthropicService';
 import { CLAUDE_HAIKU_CURRENT, CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
 import { getSlideSystemPrompt } from '../llm/systemPrompts';
+import { getINTELToolDefinitions, executeINTELTool, isINTELTool } from '../llm/tools';
 
 export interface LLMResponse {
   content: string;
@@ -211,10 +212,14 @@ export class LLMService {
   }
 
   /**
-   * Get all tool definitions (including MCP tools)
+   * Get all tool definitions (including INTEL and MCP tools)
    */
   private async getAllToolDefinitions(toolNames: string[]): Promise<any[]> {
     const tools: any[] = [];
+
+    // Add INTEL tools (always available for workflow chat)
+    const intelTools = getINTELToolDefinitions();
+    tools.push(...intelTools);
 
     // Get traditional tool definitions
     tools.push(...this.getToolDefinitions(toolNames));
@@ -246,20 +251,37 @@ export class LLMService {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private getToolDefinitions(toolNames: string[]): any[] {
-    // TODO: Implement tool definitions registry
-    // For now, return empty array
+    // Additional tool definitions can be added here
     return [];
   }
 
   /**
-   * Execute MCP tool calls
+   * Execute tool calls (MCP and INTEL tools)
    */
   private async executeMCPTools(toolCalls: ToolCall[]): Promise<ToolCall[]> {
     const executedCalls: ToolCall[] = [];
 
     for (const toolCall of toolCalls) {
+      // Check if this is an INTEL tool
+      if (isINTELTool(toolCall.name)) {
+        try {
+          const result = await executeINTELTool(toolCall.name, toolCall.input);
+          executedCalls.push({
+            ...toolCall,
+            output: result,
+          });
+        } catch (error) {
+          console.error(`INTEL tool execution failed for ${toolCall.name}:`, error);
+          executedCalls.push({
+            ...toolCall,
+            output: {
+              error: error instanceof Error ? error.message : 'Unknown error',
+            },
+          });
+        }
+      }
       // Check if this is an MCP tool
-      if (toolCall.name.startsWith('mcp_')) {
+      else if (toolCall.name.startsWith('mcp_')) {
         try {
           const mcpManager = getMCPManager();
 
@@ -289,7 +311,7 @@ export class LLMService {
           });
         }
       } else {
-        // Non-MCP tool, keep as is
+        // Unknown tool, keep as is
         executedCalls.push(toolCall);
       }
     }

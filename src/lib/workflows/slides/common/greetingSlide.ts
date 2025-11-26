@@ -162,8 +162,10 @@ export const greetingSlide: SlideBuilder = createSlideBuilder(
       stepMapping: 'greeting',
 
       chat: {
+        // Enable LLM-generated greeting when INTEL is available
+        generateInitialMessage: context?.variables?.enableLLMGreeting !== false,
         initialMessage: {
-          text: greetingText,
+          text: greetingText, // Fallback if LLM generation fails
           buttons,
           nextBranches: {
             'start': 'proceed',
