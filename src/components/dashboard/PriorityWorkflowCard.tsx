@@ -14,6 +14,7 @@ interface PriorityWorkflowCardProps {
   onLaunch: () => void;
   className?: string;
   completed?: boolean;
+  isLoading?: boolean; // NEW: External loading state (e.g., LLM prefetch)
 }
 
 export default function PriorityWorkflowCard({
@@ -24,7 +25,8 @@ export default function PriorityWorkflowCard({
   userId,
   onLaunch,
   className = '',
-  completed = false
+  completed = false,
+  isLoading = false
 }: PriorityWorkflowCardProps) {
   const [dbWorkflow, setDbWorkflow] = useState<any>(null);
   const [loadingDb, setLoadingDb] = useState(false);
@@ -120,7 +122,7 @@ export default function PriorityWorkflowCard({
     }
   };
 
-  // NEW: Show loading state with zen styling
+  // NEW: Show loading state with zen styling (for DB loading)
   if (loadingDb) {
     return (
       <div
@@ -133,6 +135,72 @@ export default function PriorityWorkflowCard({
           <div className="h-6 bg-gray-200 rounded w-1/3 priority-workflow-card__skeleton priority-workflow-card__skeleton--header"></div>
           <div className="h-8 bg-gray-200 rounded w-2/3 priority-workflow-card__skeleton priority-workflow-card__skeleton--title"></div>
           <div className="h-4 bg-gray-200 rounded w-1/4 priority-workflow-card__skeleton priority-workflow-card__skeleton--meta"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show gradient loading animation when LLM prefetch is in progress
+  if (isLoading) {
+    return (
+      <div
+        id="priority-workflow-card"
+        data-testid="priority-workflow-card"
+        data-loading="llm"
+        className={`relative overflow-hidden rounded-3xl p-10 border border-purple-300 shadow-lg priority-workflow-card priority-workflow-card--llm-loading ${className}`}
+      >
+        {/* Animated gradient background */}
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: 'linear-gradient(90deg, #a855f7, #6366f1, #8b5cf6, #a855f7)',
+            backgroundSize: '300% 100%',
+            animation: 'gradient-shift 2s ease infinite',
+          }}
+        />
+        <style jsx>{`
+          @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
+
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Header Row */}
+          <div className="flex items-center justify-between mb-6 priority-workflow-card__header">
+            <div className="flex items-center gap-3">
+              <Target className="w-6 h-6 text-purple-500 animate-pulse priority-workflow-card__icon" />
+              <span className="text-sm text-gray-500 tracking-wide priority-workflow-card__label">Today&apos;s One Thing</span>
+            </div>
+            <div className="flex items-center gap-2 text-purple-600">
+              <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span className="text-xs font-medium">Loading...</span>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <h2 className="text-2xl mb-4 text-gray-800 priority-workflow-card__title">
+            {workflowTitle}
+          </h2>
+
+          {/* Metadata Badges */}
+          <div className="flex items-center gap-4 text-sm text-gray-500 priority-workflow-card__meta">
+            <span className={`px-3 py-1 ${getPriorityColor()} rounded-full text-xs font-medium priority-workflow-card__priority-badge`}>
+              {priority}
+            </span>
+            <span className="priority-workflow-card__due-date">Due: {dueDate}</span>
+            {arr && (
+              <>
+                <span>•</span>
+                <span className="priority-workflow-card__arr">{arr} ARR</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     );

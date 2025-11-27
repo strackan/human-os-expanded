@@ -121,11 +121,13 @@ export async function composeFromDatabase(
   const workflowDef = await fetchWorkflowDefinition(workflowId, companyId, supabase);
 
   // 2. Convert database format to WorkflowComposition
-  // Auto-prepend splash slide unless explicitly disabled via settings.skipSplash
+  // NOTE: Splash slide is NO LONGER auto-prepended (deprecated)
+  // LLM prefetch now happens at the "Launch Workflow" button click
+  // Use settings.includeSplash = true if splash slide is explicitly needed
   let slideSequence = workflowDef.slide_sequence || [];
-  const skipSplash = workflowDef.settings?.skipSplash === true;
+  const includeSplash = workflowDef.settings?.includeSplash === true;
 
-  if (!skipSplash && slideSequence.length > 0 && slideSequence[0] !== 'splash') {
+  if (includeSplash && slideSequence.length > 0 && slideSequence[0] !== 'splash') {
     slideSequence = ['splash', ...slideSequence];
   }
 

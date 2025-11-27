@@ -48,6 +48,7 @@ interface UseTaskModeStateProps {
     onNextWorkflow: () => void;
     onJumpToWorkflow?: (index: number) => void;
   };
+  prefetchedGreeting?: string; // LLM greeting prefetched during launch
 }
 
 export function useTaskModeState({
@@ -55,7 +56,8 @@ export function useTaskModeState({
   customerId,
   customerName,
   onClose,
-  sequenceInfo
+  sequenceInfo,
+  prefetchedGreeting
 }: UseTaskModeStateProps) {
   const { showToast } = useToast();
 
@@ -634,17 +636,24 @@ export function useTaskModeState({
 
     // Add initial message if present
     if (currentSlide.chat?.initialMessage) {
-      // Check if this is the greeting slide and we have a prefetched LLM greeting
-      const isGreetingSlide = currentSlide.id === 'greeting';
-      const hasPrefetchedGreeting = prefetchedGreetingRef.current?.ready && prefetchedGreetingRef.current?.text;
+      // Check if this is the greeting slide (or first slide with LLM generation) and we have a prefetched greeting
+      const isGreetingSlide = currentSlide.id === 'greeting' || currentSlide.chat?.generateInitialMessage;
+
+      // Check for external prefetched greeting (from DashboardClient) OR internal prefetch ref
+      const hasExternalPrefetch = prefetchedGreeting && currentSlideIndex === 0;
+      const hasInternalPrefetch = prefetchedGreetingRef.current?.ready && prefetchedGreetingRef.current?.text;
+      const hasPrefetchedGreeting = hasExternalPrefetch || hasInternalPrefetch;
 
       // Use prefetched greeting if available for greeting slide, otherwise use config text
-      const messageText = (isGreetingSlide && hasPrefetchedGreeting)
-        ? prefetchedGreetingRef.current!.text
-        : currentSlide.chat.initialMessage.text;
-
+      let messageText = currentSlide.chat.initialMessage.text;
       if (isGreetingSlide && hasPrefetchedGreeting) {
-        console.log('[Chat Init] Using prefetched LLM greeting');
+        if (hasExternalPrefetch) {
+          messageText = prefetchedGreeting!;
+          console.log('[Chat Init] Using external prefetched LLM greeting');
+        } else if (hasInternalPrefetch) {
+          messageText = prefetchedGreetingRef.current!.text;
+          console.log('[Chat Init] Using internal prefetched LLM greeting');
+        }
       }
 
       const initialMessage: ChatMessage = {
@@ -656,8 +665,8 @@ export function useTaskModeState({
         buttons: currentSlide.chat.initialMessage.buttons
       };
 
-      // Apply typing animation delay for first slide only
-      if (currentSlideIndex === 0) {
+      // Apply typing animation delay for first slide only (but skip if we have prefetched greeting - already waited)
+      if (currentSlideIndex === 0 && !hasPrefetchedGreeting) {
         setTimeout(() => {
           setChatMessages([initialMessage]);
         }, 500);
@@ -670,12 +679,12 @@ export function useTaskModeState({
         setCurrentBranch('initial');
       }
 
-      // Clear prefetched greeting after use
-      if (isGreetingSlide && hasPrefetchedGreeting) {
+      // Clear internal prefetched greeting after use
+      if (isGreetingSlide && hasInternalPrefetch) {
         prefetchedGreetingRef.current = null;
       }
     }
-  }, [currentSlideIndex, currentSlide]);
+  }, [currentSlideIndex, currentSlide, prefetchedGreeting]);
 
   // Auto-focus input when new messages expect text response
   useEffect(() => {

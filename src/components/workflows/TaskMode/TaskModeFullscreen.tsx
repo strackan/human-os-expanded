@@ -61,6 +61,7 @@ interface TaskModeFullscreenProps {
     onNextWorkflow: () => void;
     onJumpToWorkflow?: (index: number) => void;
   };
+  prefetchedGreeting?: string; // LLM greeting prefetched during launch
 }
 
 export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
@@ -74,7 +75,8 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     workflowStatus,
     onClose,
     onWorkflowAction,
-    sequenceInfo
+    sequenceInfo,
+    prefetchedGreeting
   } = props;
 
   // Toast notifications
@@ -86,7 +88,8 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     customerId,
     customerName,
     onClose,
-    sequenceInfo
+    sequenceInfo,
+    prefetchedGreeting
   });
 
   // Step-level action modal state

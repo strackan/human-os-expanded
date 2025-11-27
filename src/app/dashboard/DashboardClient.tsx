@@ -21,6 +21,28 @@ import { registerWorkflowConfig } from '@/config/workflows/index';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 
+/**
+ * Fetch LLM-generated greeting from server API
+ */
+async function fetchGreetingFromAPI(params: {
+  customerName: string;
+  workflowPurpose?: string;
+  slideId?: string;
+  fallbackGreeting?: string;
+}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number }> {
+  const response = await fetch('/api/workflows/greeting', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Greeting API failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export default function DashboardClient() {
   const { user } = useAuth();
   const [taskModeOpen, setTaskModeOpen] = useState(false);
@@ -32,6 +54,8 @@ export default function DashboardClient() {
   } | null>(null);
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [workflowStatus, setWorkflowStatus] = useState<string>('in_progress');
+  const [isLaunchingWorkflow, setIsLaunchingWorkflow] = useState(false);
+  const [prefetchedGreeting, setPrefetchedGreeting] = useState<string | null>(null);
 
   const userId = user?.id;
 
@@ -65,36 +89,63 @@ export default function DashboardClient() {
       return;
     }
 
+    // Prevent double-clicks
+    if (isLaunchingWorkflow) {
+      console.log('[Dashboard] Already launching workflow, ignoring click');
+      return;
+    }
+
+    setIsLaunchingWorkflow(true);
+
     try {
-      console.log('[Dashboard] Launching database-driven workflow...');
+      console.log('[Dashboard] Launching database-driven workflow with LLM prefetch...');
       console.time('[Dashboard] Total workflow launch time');
 
       const workflowId = 'obsidian-black-renewal';
       const customerId = '550e8400-e29b-41d4-a716-446655440001';
+      const customerName = 'Obsidian Black';
 
-      // Load workflow config from database
-      const workflowConfig = await composeFromDatabase(
-        workflowId,
-        null, // company_id (null = stock workflow)
-        {
-          name: 'Obsidian Black',
-          current_arr: 185000,
-          health_score: 87,
-          contract_end_date: '2026-10-21',
-          days_until_renewal: 365,
-          utilization: 87,
-          monthsToRenewal: 12,
-          seatCount: 50,
-        }
-      );
+      // Run workflow config load AND LLM prefetch in parallel
+      const [workflowConfig, greetingResult] = await Promise.all([
+        // Load workflow config from database
+        composeFromDatabase(
+          workflowId,
+          null, // company_id (null = stock workflow)
+          {
+            name: customerName,
+            current_arr: 185000,
+            health_score: 87,
+            contract_end_date: '2026-10-21',
+            days_until_renewal: 365,
+            utilization: 87,
+            monthsToRenewal: 12,
+            seatCount: 50,
+          }
+        ),
+        // Prefetch LLM greeting
+        fetchGreetingFromAPI({
+          customerName: customerName,
+          workflowPurpose: 'renewal_preparation',
+          slideId: 'greeting',
+          fallbackGreeting: `Good afternoon! Let's prepare for ${customerName}'s renewal.`,
+        }).catch((error) => {
+          console.warn('[Dashboard] LLM prefetch failed, will use fallback:', error);
+          return { text: `Good afternoon! Let's prepare for ${customerName}'s renewal.`, toolsUsed: [], tokensUsed: 0 };
+        }),
+      ]);
 
       if (!workflowConfig) {
         console.error('[Dashboard] Failed to load workflow config');
+        setIsLaunchingWorkflow(false);
         alert('Workflow template not found. Please contact your administrator to set up the "obsidian-black-renewal" workflow definition in the database.');
         return;
       }
 
       console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
+      console.log('[Dashboard] LLM greeting prefetched:', greetingResult.text.substring(0, 50) + '...');
+
+      // Store the prefetched greeting
+      setPrefetchedGreeting(greetingResult.text);
 
       // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
@@ -122,7 +173,7 @@ export default function DashboardClient() {
         workflowId: workflowId,
         title: (workflowConfig as any).workflowName || 'Renewal Planning',
         customerId: customerId,
-        customerName: 'Obsidian Black'
+        customerName: customerName
       });
 
       setTaskModeOpen(true);
@@ -143,6 +194,8 @@ export default function DashboardClient() {
       }
 
       alert(errorMessage);
+    } finally {
+      setIsLaunchingWorkflow(false);
     }
   };
 
@@ -199,6 +252,7 @@ export default function DashboardClient() {
               <PriorityWorkflowCard
                 userId={userId}
                 onLaunch={handleLaunchWorkflow}
+                isLoading={isLaunchingWorkflow}
               />
             </section>
           )}
@@ -242,6 +296,7 @@ export default function DashboardClient() {
             workflowStatus={workflowStatus}
             onClose={handleWorkflowComplete}
             onWorkflowAction={handleWorkflowAction}
+            prefetchedGreeting={prefetchedGreeting || undefined}
           />
         </div>
       )}
