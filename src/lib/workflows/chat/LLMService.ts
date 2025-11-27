@@ -15,7 +15,8 @@ import type { MCPToolCall } from '@/lib/mcp/types/mcp.types';
 import { AnthropicService } from '@/lib/services/AnthropicService';
 import { CLAUDE_HAIKU_CURRENT, CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
 import { getSlideSystemPrompt } from '../llm/systemPrompts';
-import { getINTELToolDefinitions, executeINTELTool, isINTELTool } from '../llm/tools';
+// Note: INTEL tools removed from client-side LLMService - they require fs and can only run server-side
+// Use /api/workflows/greeting for LLM-generated greetings with INTEL context
 
 export interface LLMResponse {
   content: string;
@@ -212,14 +213,13 @@ export class LLMService {
   }
 
   /**
-   * Get all tool definitions (including INTEL and MCP tools)
+   * Get all tool definitions (MCP tools only - INTEL tools are server-side only)
    */
   private async getAllToolDefinitions(toolNames: string[]): Promise<any[]> {
     const tools: any[] = [];
 
-    // Add INTEL tools (always available for workflow chat)
-    const intelTools = getINTELToolDefinitions();
-    tools.push(...intelTools);
+    // Note: INTEL tools removed - they require fs and can only run server-side
+    // Use /api/workflows/greeting for LLM-generated greetings with INTEL context
 
     // Get traditional tool definitions
     tools.push(...this.getToolDefinitions(toolNames));
@@ -256,32 +256,15 @@ export class LLMService {
   }
 
   /**
-   * Execute tool calls (MCP and INTEL tools)
+   * Execute tool calls (MCP tools only - INTEL tools are server-side only)
    */
   private async executeMCPTools(toolCalls: ToolCall[]): Promise<ToolCall[]> {
     const executedCalls: ToolCall[] = [];
 
     for (const toolCall of toolCalls) {
-      // Check if this is an INTEL tool
-      if (isINTELTool(toolCall.name)) {
-        try {
-          const result = await executeINTELTool(toolCall.name, toolCall.input);
-          executedCalls.push({
-            ...toolCall,
-            output: result,
-          });
-        } catch (error) {
-          console.error(`INTEL tool execution failed for ${toolCall.name}:`, error);
-          executedCalls.push({
-            ...toolCall,
-            output: {
-              error: error instanceof Error ? error.message : 'Unknown error',
-            },
-          });
-        }
-      }
+      // Note: INTEL tools removed - they require fs and can only run server-side
       // Check if this is an MCP tool
-      else if (toolCall.name.startsWith('mcp_')) {
+      if (toolCall.name.startsWith('mcp_')) {
         try {
           const mcpManager = getMCPManager();
 
