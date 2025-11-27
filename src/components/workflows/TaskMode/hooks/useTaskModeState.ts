@@ -634,9 +634,22 @@ export function useTaskModeState({
 
     // Add initial message if present
     if (currentSlide.chat?.initialMessage) {
+      // Check if this is the greeting slide and we have a prefetched LLM greeting
+      const isGreetingSlide = currentSlide.id === 'greeting';
+      const hasPrefetchedGreeting = prefetchedGreetingRef.current?.ready && prefetchedGreetingRef.current?.text;
+
+      // Use prefetched greeting if available for greeting slide, otherwise use config text
+      const messageText = (isGreetingSlide && hasPrefetchedGreeting)
+        ? prefetchedGreetingRef.current!.text
+        : currentSlide.chat.initialMessage.text;
+
+      if (isGreetingSlide && hasPrefetchedGreeting) {
+        console.log('[Chat Init] Using prefetched LLM greeting');
+      }
+
       const initialMessage: ChatMessage = {
         id: `ai-initial-${currentSlideIndex}`,
-        text: currentSlide.chat.initialMessage.text,
+        text: messageText,
         sender: 'ai',
         timestamp: new Date(),
         component: currentSlide.chat.initialMessage.component,
@@ -655,6 +668,11 @@ export function useTaskModeState({
       // Set initial branch if component present
       if (currentSlide.chat.initialMessage.component) {
         setCurrentBranch('initial');
+      }
+
+      // Clear prefetched greeting after use
+      if (isGreetingSlide && hasPrefetchedGreeting) {
+        prefetchedGreetingRef.current = null;
       }
     }
   }, [currentSlideIndex, currentSlide]);
