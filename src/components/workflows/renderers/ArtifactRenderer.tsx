@@ -21,6 +21,7 @@ import AccountArtifactRenderer from './AccountArtifactRenderer';
 import PlanningArtifactRenderer from './PlanningArtifactRenderer';
 import CommunicationsArtifactRenderer from './CommunicationsArtifactRenderer';
 import DocumentArtifact from '@/components/artifacts/DocumentArtifact';
+import { componentMap } from '@/components/artifacts/componentImports';
 
 interface ArtifactRendererProps {
   slide: WorkflowSlide;
@@ -43,10 +44,25 @@ interface ArtifactRendererProps {
 
 /**
  * Determine which specialized renderer should handle this artifact
+ *
+ * Type taxonomy:
+ * - component:informative - Styled display components (metrics, summaries, cards)
+ * - component:interactive - Components with forms, buttons, actions
+ * - document - Text-focused content (markdown, whitepapers)
+ * - Specialized renderers for legacy types (assessment, account, planning, communications)
  */
-function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 'communications' | 'document' | 'inline' {
+function getRendererType(section: any): 'assessment' | 'account' | 'planning' | 'communications' | 'document' | 'component' | 'inline' {
   const componentType = section.data?.componentType;
   const type = section.type;
+
+  // Component types - registered React components
+  if (type === 'component:informative' || type === 'component:interactive') {
+    if (componentType && componentMap[componentType]) {
+      return 'component';
+    }
+    console.warn(`[ArtifactRenderer] Component type "${componentType}" not found in componentMap`);
+    return 'inline';
+  }
 
   // Assessment & Recommendations
   if (componentType === 'AssessmentArtifact' ||
@@ -192,6 +208,18 @@ export default function ArtifactRenderer({
           }}
         />
       );
+
+    case 'component': {
+      // Registered React components (informative or interactive)
+      const componentType = section.data?.componentType;
+      const Component = componentMap[componentType];
+      if (!Component) {
+        console.error(`[ArtifactRenderer] Component "${componentType}" not found`);
+        return null;
+      }
+      const props = section.data?.props || {};
+      return <Component {...props} />;
+    }
 
     case 'inline':
       // Inline artifacts are rendered directly in the main component

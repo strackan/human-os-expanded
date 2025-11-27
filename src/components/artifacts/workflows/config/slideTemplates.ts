@@ -59,7 +59,7 @@ export interface WorkflowSlideConfig extends BaseSlideConfig {
   artifacts: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'component:interactive' | 'component:informative';
     visible: boolean;
     editable?: boolean;
     content?: any;

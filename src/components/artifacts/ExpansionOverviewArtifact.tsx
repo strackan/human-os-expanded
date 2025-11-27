@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FileText, TrendingUp, DollarSign, ChevronRight, Calendar, Users, Activity, BarChart3, AlertTriangle } from 'lucide-react';
+import { FileText, TrendingUp, DollarSign, ChevronRight, Calendar, Users, Activity, BarChart3, AlertTriangle, Eye, MousePointer, Star } from 'lucide-react';
 
 interface ContractInfo {
   licenseCount: number;
@@ -32,24 +32,100 @@ interface MarketInfo {
   opportunityValue: string;
 }
 
+interface BrandMetric {
+  label: string;
+  value: string | number;
+  trend?: 'up' | 'down' | 'flat';
+  trendValue?: string;
+  sparkData?: number[];
+}
+
+interface BrandInfo {
+  healthScore: number;
+  reportingPeriod?: string;
+  impressions: BrandMetric;
+  profileViews: BrandMetric;
+  applyClicks: BrandMetric;
+  newRatings: BrandMetric;
+}
+
 interface ExpansionOverviewArtifactProps {
   customerName: string;
   contractInfo: ContractInfo;
   usageInfo: UsageInfo;
   marketInfo: MarketInfo;
+  brandInfo?: BrandInfo;
   onContinue?: () => void;
   onBack?: () => void;
 }
+
+// Mini sparkline chart component
+function MiniSparkline({ data, trend }: { data: number[]; trend?: 'up' | 'down' | 'flat' }) {
+  const max = Math.max(...data);
+  const normalized = data.map(d => (d / max) * 100);
+  const color = trend === 'up' ? '#22c55e' : trend === 'down' ? '#ef4444' : '#6b7280';
+
+  return (
+    <div className="flex items-end gap-0.5 h-8">
+      {normalized.map((height, i) => (
+        <div
+          key={i}
+          className="w-1.5 rounded-t transition-all"
+          style={{
+            height: `${Math.max(height, 10)}%`,
+            backgroundColor: color,
+            opacity: 0.3 + (i / normalized.length) * 0.7,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Health score circular display
+function HealthScoreCircle({ score }: { score: number }) {
+  const circumference = 2 * Math.PI * 40;
+  const offset = circumference - (score / 100) * circumference;
+  const color = score >= 70 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div className="relative w-24 h-24">
+      <svg className="w-24 h-24 transform -rotate-90">
+        <circle cx="48" cy="48" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+        <circle
+          cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="8"
+          strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
+          className="transition-all duration-500"
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-bold text-gray-900">{score}</span>
+        <span className="text-xs text-gray-500">Score</span>
+      </div>
+    </div>
+  );
+}
+
+// Default brand info for demo
+const DEFAULT_BRAND_INFO: BrandInfo = {
+  healthScore: 78,
+  reportingPeriod: 'Last 90 Days',
+  impressions: { label: 'Impressions', value: '24.5K', trend: 'up', trendValue: '+12%', sparkData: [30, 45, 35, 50, 42, 55, 60, 52, 65, 70, 68, 75] },
+  profileViews: { label: 'Profile Views', value: '3,842', trend: 'up', trendValue: '+8%', sparkData: [20, 25, 22, 30, 28, 35, 32, 40, 38, 45, 42, 48] },
+  applyClicks: { label: 'Apply Clicks', value: '847', trend: 'flat', trendValue: '+2%', sparkData: [15, 18, 16, 20, 19, 18, 22, 21, 20, 23, 22, 24] },
+  newRatings: { label: 'New Ratings', value: '156', trend: 'up', trendValue: '+23%', sparkData: [8, 12, 10, 15, 14, 18, 16, 22, 20, 25, 28, 32] },
+};
 
 export default function ExpansionOverviewArtifact({
   customerName,
   contractInfo,
   usageInfo,
   marketInfo,
+  brandInfo = DEFAULT_BRAND_INFO,
   onContinue,
   onBack
 }: ExpansionOverviewArtifactProps) {
-  const [activeTab, setActiveTab] = useState<'contract' | 'usage' | 'market'>('contract');
+  const [activeTab, setActiveTab] = useState<'brand' | 'contract' | 'usage' | 'market'>('brand');
 
   const getCapacityStatus = () => {
     const overCapacity = usageInfo.activeUsers > usageInfo.licenseCapacity;
@@ -75,21 +151,32 @@ export default function ExpansionOverviewArtifact({
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-100">
+      <div className="flex border-b border-gray-100 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('brand')}
+          className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${
+            activeTab === 'brand'
+              ? 'text-gray-900 border-b-2 border-blue-600'
+              : 'text-gray-500 hover:text-gray-900'
+          }`}
+        >
+          <Star className="w-4 h-4" />
+          Brand Performance
+        </button>
         <button
           onClick={() => setActiveTab('contract')}
-          className={`flex items-center gap-2 px-8 py-4 text-sm font-medium ${
+          className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${
             activeTab === 'contract'
               ? 'text-gray-900 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           <FileText className="w-4 h-4" />
-          Current Contract
+          Contract
         </button>
         <button
           onClick={() => setActiveTab('usage')}
-          className={`flex items-center gap-2 px-8 py-4 text-sm font-medium ${
+          className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${
             activeTab === 'usage'
               ? 'text-gray-900 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-900'
@@ -100,7 +187,7 @@ export default function ExpansionOverviewArtifact({
         </button>
         <button
           onClick={() => setActiveTab('market')}
-          className={`flex items-center gap-2 px-8 py-4 text-sm font-medium ${
+          className={`flex items-center gap-2 px-6 py-4 text-sm font-medium whitespace-nowrap ${
             activeTab === 'market'
               ? 'text-gray-900 border-b-2 border-blue-600'
               : 'text-gray-500 hover:text-gray-900'
@@ -113,6 +200,153 @@ export default function ExpansionOverviewArtifact({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-8 py-6">
+        {activeTab === 'brand' && (
+          <div className="max-w-3xl space-y-6">
+            {/* Health Score + Summary */}
+            <div className="flex items-center gap-6 pb-6 border-b border-gray-200">
+              <HealthScoreCircle score={brandInfo.healthScore} />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">Brand Health Score</h3>
+                <p className="text-sm text-gray-600">
+                  {brandInfo.healthScore >= 70
+                    ? 'Strong brand presence with healthy engagement metrics.'
+                    : brandInfo.healthScore >= 50
+                    ? 'Moderate brand health with room for improvement.'
+                    : 'Brand needs attention - engagement metrics are below target.'}
+                </p>
+                {brandInfo.reportingPeriod && (
+                  <p className="text-xs text-gray-400 mt-2">{brandInfo.reportingPeriod}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Impressions */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                      <Eye className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {brandInfo.impressions.label}
+                    </span>
+                  </div>
+                  {brandInfo.impressions.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{brandInfo.impressions.value}</div>
+                    {brandInfo.impressions.trendValue && (
+                      <div className="text-xs font-medium text-green-600 mt-0.5">{brandInfo.impressions.trendValue} vs last period</div>
+                    )}
+                  </div>
+                  {brandInfo.impressions.sparkData && (
+                    <MiniSparkline data={brandInfo.impressions.sparkData} trend={brandInfo.impressions.trend} />
+                  )}
+                </div>
+              </div>
+
+              {/* Profile Views */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                      <Users className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {brandInfo.profileViews.label}
+                    </span>
+                  </div>
+                  {brandInfo.profileViews.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{brandInfo.profileViews.value}</div>
+                    {brandInfo.profileViews.trendValue && (
+                      <div className="text-xs font-medium text-green-600 mt-0.5">{brandInfo.profileViews.trendValue} vs last period</div>
+                    )}
+                  </div>
+                  {brandInfo.profileViews.sparkData && (
+                    <MiniSparkline data={brandInfo.profileViews.sparkData} trend={brandInfo.profileViews.trend} />
+                  )}
+                </div>
+              </div>
+
+              {/* Apply Clicks */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                      <MousePointer className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {brandInfo.applyClicks.label}
+                    </span>
+                  </div>
+                  {brandInfo.applyClicks.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                  {brandInfo.applyClicks.trend === 'flat' && <Activity className="w-3.5 h-3.5 text-gray-400" />}
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{brandInfo.applyClicks.value}</div>
+                    {brandInfo.applyClicks.trendValue && (
+                      <div className={`text-xs font-medium mt-0.5 ${brandInfo.applyClicks.trend === 'up' ? 'text-green-600' : 'text-gray-500'}`}>
+                        {brandInfo.applyClicks.trendValue} vs last period
+                      </div>
+                    )}
+                  </div>
+                  {brandInfo.applyClicks.sparkData && (
+                    <MiniSparkline data={brandInfo.applyClicks.sparkData} trend={brandInfo.applyClicks.trend} />
+                  )}
+                </div>
+              </div>
+
+              {/* New Ratings */}
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-white rounded-lg shadow-sm">
+                      <Star className="w-4 h-4 text-gray-500" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      {brandInfo.newRatings.label}
+                    </span>
+                  </div>
+                  {brandInfo.newRatings.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-green-500" />}
+                </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">{brandInfo.newRatings.value}</div>
+                    {brandInfo.newRatings.trendValue && (
+                      <div className="text-xs font-medium text-green-600 mt-0.5">{brandInfo.newRatings.trendValue} vs last period</div>
+                    )}
+                  </div>
+                  {brandInfo.newRatings.sparkData && (
+                    <MiniSparkline data={brandInfo.newRatings.sparkData} trend={brandInfo.newRatings.trend} />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Brand Insight */}
+            <div className="pt-4 border-t border-gray-200">
+              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Star className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-900">Brand Growth Opportunity</p>
+                    <p className="text-xs text-gray-600 mt-1">
+                      Strong engagement trends indicate potential for premium positioning and expanded visibility packages.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {activeTab === 'contract' && (
           <div className="max-w-3xl space-y-6">
             {/* Current Contract Snapshot */}

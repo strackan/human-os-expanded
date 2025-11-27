@@ -58,84 +58,37 @@ export const reviewContractTermsSlide: UniversalSlideBuilder = (context): any =>
       sections: [
         {
           id: 'contract-review',
-          type: 'document',
+          type: 'component:interactive',
           title: 'Contract Review',
-          content: `# {{customer.name}} - Contract Review
-
-**Review Date**: {{current_date}}
-**Days Until Renewal**: {{customer.days_to_renewal}}
-
----
-
-## Current Contract Terms
-
-### Term & Dates
-| Field | Value |
-|-------|-------|
-| Contract Start | {{customer.contract_start_date}} |
-| Contract End | {{customer.contract_end_date}} |
-| Contract Term | ${context?.variables?.contractTerm || 12} months |
-| Auto-Renewal | {{customer.auto_renewal}} |
-
-### Financial Terms
-| Field | Value |
-|-------|-------|
-| Current ARR | \${{customer.current_arr}} |
-| Payment Terms | ${context?.variables?.paymentTerms || 'Annual'} |
-| License Unit Price | \${{customer.license_unit_price}} |
-
-### Product & Services
-| Field | Value |
-|-------|-------|
-| Products | {{customer.products}} |
-| License Count | {{customer.license_count}} |
-| Support Level | {{customer.support_level}} |
-
----
-
-## Usage & Performance
-
-| Metric | Value |
-|--------|-------|
-| Utilization | {{customer.utilization_percent}}% |
-| Active Users | {{customer.active_users}} of {{customer.license_count}} |
-| Health Score | {{customer.health_score}}/100 |
-
----
-
-## Proposed Changes for Renewal
-
-### Recommendations
-- **Contract Term**: ${context?.variables?.proposedTerm || 'No change recommended'}
-- **License Count**: ${context?.variables?.proposedLicenses || 'Review based on utilization'}
-- **Support Level**: ${context?.variables?.proposedSupport || 'Maintain current level'}
-- **Payment Terms**: ${context?.variables?.proposedPayment || 'No change'}
-
-### Additional Considerations
-
-**Expansion Opportunity**:
-${context?.variables?.expansionNotes || 'Review utilization trends to identify expansion potential'}
-
-**Discount Strategy**:
-${context?.variables?.discountNotes || 'Standard renewal pricing unless justified by multi-year commitment'}
-
----
-
-## Contract Review Checklist
-
-- [ ] Reviewed all current contract terms
-- [ ] Analyzed usage relative to contract
-- [ ] Identified changes needed for renewal
-- [ ] Understood customer's desired changes
-- [ ] Prepared renewal terms proposal
-
----
-
-*Prepared for renewal planning. Update this document as discussions progress.*
-`,
-          editable: true,
           visible: true,
-        }
+          data: {
+            componentType: 'ContractArtifact',
+            props: {
+              data: {
+                contractId: context?.variables?.contractId || 'CNT-2024-001',
+                customerName: '{{customer.name}}',
+                contractValue: context?.variables?.contractValue || 180000,
+                renewalDate: '{{customer.renewal_date}}',
+                signerBaseAmount: context?.variables?.signerBaseAmount || 150000,
+                pricingCalculation: {
+                  basePrice: context?.variables?.basePrice || 150000,
+                  volumeDiscount: context?.variables?.volumeDiscount || -15000,
+                  additionalServices: context?.variables?.additionalServices || 45000,
+                  totalPrice: context?.variables?.totalPrice || 180000,
+                },
+                businessTerms: {
+                  unsigned: context?.variables?.unsignedTerms || [],
+                  nonStandardRenewal: context?.variables?.nonStandardRenewal || ['90-day notice period (standard: 30 days)'],
+                  nonStandardPricing: context?.variables?.nonStandardPricing || [],
+                  pricingCaps: context?.variables?.pricingCaps || ['Maximum 10% annual increase'],
+                  otherTerms: context?.variables?.otherTerms || ['Priority support included'],
+                },
+                riskLevel: context?.variables?.riskLevel || 'low',
+                lastUpdated: context?.variables?.lastUpdated || 'November 2024',
+              },
+            },
+          },
+        },
       ],
     },
 

@@ -63,80 +63,75 @@ export const identifyOpportunitiesSlide: UniversalSlideBuilder = (context): any 
     artifacts: {
       sections: [
         {
-          id: 'opportunity-analysis',
-          type: 'document',
-          title: 'Expansion Opportunity Analysis',
-          content: `# {{customer.name}} - Expansion Opportunity Analysis
-
-**Current ARR**: \${{customer.current_arr}}
-**Recommended ARR**: \${{customer.recommended_arr}}
-**Analysis Date**: {{current_date}}
-
----
-
-## Current Performance
-
-### Usage Indicators
-| Metric | Value |
-|--------|-------|
-| Brand Impressions | {{customer.brand_impressions}} |
-| Profile Engagement | {{customer.profile_views}} |
-| Job Posting Activity | {{customer.apply_clicks}} |
-
----
-
-## Expansion Opportunities
-
-### 1. Enhanced Visibility Package
-**Value Proposition**: Increase brand impressions with featured placement
-- Premium positioning in search results
-- Featured employer spotlight
-- Enhanced company profile badges
-
-### 2. Premium Job Credits
-**Value Proposition**: Support hiring growth with additional job postings
-- Bulk job posting credits
-- Priority job placement
-- Extended posting duration
-
-### 3. Content Partnership
-**Value Proposition**: Sponsored articles and social campaigns
-- Co-branded content pieces
-- Social media amplification
-- Thought leadership opportunities
-
----
-
-## Recommended Approach
-
-Start with a mid-tier expansion focused on {{customer.expansion_focus}}, which aligns with their current engagement patterns and business goals.
-
-### Pricing Recommendation
-| Package | Current | Proposed | Increase |
-|---------|---------|----------|----------|
-| Base | \${{customer.current_arr}} | \${{customer.recommended_arr}} | {{customer.arr_increase_pct}}% |
-
-### Value Justification
-- ROI based on current engagement metrics
-- Competitive positioning in talent market
-- Employer brand growth trajectory
-
----
-
-## Next Steps
-
-1. [ ] Review expansion options with customer
-2. [ ] Discuss budget and timing
-3. [ ] Prepare formal proposal if interest confirmed
-4. [ ] Schedule follow-up to finalize
-
----
-
-*Analysis based on platform data through {{current_date}}*
-`,
-          editable: true,
+          id: 'expansion-overview',
+          type: 'component:interactive',
+          title: 'Expansion Overview',
           visible: true,
-        }
+          data: {
+            componentType: 'ExpansionOverviewArtifact',
+            props: {
+              customerName: '{{customer.name}}',
+              contractInfo: {
+                licenseCount: context?.variables?.licenseCount || 50,
+                pricePerSeat: context?.variables?.pricePerSeat || 150,
+                annualSpend: context?.variables?.annualSpend || 90000,
+                renewalDate: '{{customer.renewal_date}}',
+                renewalDays: context?.variables?.renewalDays || 90,
+                term: context?.variables?.term || '12 months',
+                autoRenew: context?.variables?.autoRenew ?? true,
+              },
+              usageInfo: {
+                activeUsers: context?.variables?.activeUsers || 55,
+                licenseCapacity: context?.variables?.licenseCapacity || 50,
+                utilizationPercent: context?.variables?.utilizationPercent || 110,
+                yoyGrowth: context?.variables?.yoyGrowth || 28,
+                lastMonthGrowth: context?.variables?.lastMonthGrowth || 8,
+                peakUsage: context?.variables?.peakUsage || 62,
+                adoptionRate: context?.variables?.adoptionRate || 87,
+              },
+              marketInfo: {
+                currentPrice: context?.variables?.currentPrice || 150,
+                marketAverage: context?.variables?.marketAverage || 210,
+                percentile: context?.variables?.percentile || 25,
+                priceGap: context?.variables?.priceGap || 29,
+                similarCustomerRange: context?.variables?.similarCustomerRange || '$180-$240',
+                opportunityValue: context?.variables?.opportunityValue || '+$45,000 ARR',
+              },
+              brandInfo: {
+                healthScore: context?.variables?.healthScore || 78,
+                reportingPeriod: context?.variables?.reportingPeriod || 'Last 90 Days',
+                impressions: {
+                  label: 'Impressions',
+                  value: context?.variables?.impressions || '24.5K',
+                  trend: 'up',
+                  trendValue: '+12%',
+                  sparkData: [30, 45, 35, 50, 42, 55, 60, 52, 65, 70, 68, 75],
+                },
+                profileViews: {
+                  label: 'Profile Views',
+                  value: context?.variables?.profileViews || '3,842',
+                  trend: 'up',
+                  trendValue: '+8%',
+                  sparkData: [20, 25, 22, 30, 28, 35, 32, 40, 38, 45, 42, 48],
+                },
+                applyClicks: {
+                  label: 'Apply Clicks',
+                  value: context?.variables?.applyClicks || '847',
+                  trend: 'flat',
+                  trendValue: '+2%',
+                  sparkData: [15, 18, 16, 20, 19, 18, 22, 21, 20, 23, 22, 24],
+                },
+                newRatings: {
+                  label: 'New Ratings',
+                  value: context?.variables?.newRatings || '156',
+                  trend: 'up',
+                  trendValue: '+23%',
+                  sparkData: [8, 12, 10, 15, 14, 18, 16, 22, 20, 25, 28, 32],
+                },
+              },
+            },
+          },
+        },
       ],
     },
 
