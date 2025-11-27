@@ -226,6 +226,8 @@ export interface WorkflowSlide {
       [pattern: string]: string;
     };
     defaultMessage?: string;
+    /** Enable LLM-generated greeting when user clicks "Let's Begin" */
+    generateInitialMessage?: boolean;
   };
   artifacts: {
     sections: Array<{

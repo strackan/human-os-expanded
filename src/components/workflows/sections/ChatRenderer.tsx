@@ -37,6 +37,8 @@ export interface ChatMessage {
   isHistorical?: boolean;
   /** Separator message between slides */
   isSlideSeparator?: boolean;
+  /** Loading indicator for LLM generation in progress */
+  isLoading?: boolean;
 }
 
 interface ChatRendererProps {

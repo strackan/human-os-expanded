@@ -65,12 +65,79 @@ export function useChatState({
   const [currentBranch, setCurrentBranch] = useState<string | null>(null);
   const [chatInputValue, setChatInputValue] = useState('');
   const chatInputRef = useRef<HTMLInputElement>(null);
+  const [isGeneratingLLM, setIsGeneratingLLM] = useState(false);
 
   // Track the last slide index to detect slide changes
   const lastSlideIndexRef = useRef<number>(currentSlideIndex);
 
-  // Branch navigation handler
-  const handleBranchNavigation = useCallback((branchName: string, value?: any) => {
+  // Execute branch actions - MUST be defined before handleBranchNavigation
+  const executeBranchActions = useCallback((
+    actions: string[],
+    artifactId?: string,
+    stepId?: string,
+    stepNumber?: number
+  ) => {
+    for (const action of actions) {
+      switch (action) {
+        case 'nextSlide':
+        case 'goToNextSlide':
+          goToNextSlide();
+          break;
+
+        case 'previousSlide':
+        case 'goToPreviousSlide':
+          goToPreviousSlide();
+          break;
+
+        case 'completeStep':
+          if (stepId) {
+            console.log('[useChatState] Complete step:', stepId);
+          }
+          break;
+
+        case 'enterStep':
+          if (stepNumber !== undefined) {
+            console.log('[useChatState] Enter step:', stepNumber);
+          }
+          break;
+
+        case 'launch-artifact':
+        case 'showArtifact':
+          if (artifactId) {
+            console.log('[useChatState] Show artifact:', artifactId);
+          }
+          break;
+
+        case 'removeArtifact':
+          console.log('[useChatState] Remove artifact');
+          break;
+
+        case 'closeWorkflow':
+          console.log('[useChatState] closeWorkflow action triggered - calling onClose()');
+          onClose();
+          break;
+
+        case 'exitTaskMode':
+          onClose();
+          break;
+
+        case 'nextCustomer':
+          handleComplete();
+          break;
+
+        case 'resetChat':
+          setChatMessages([]);
+          setCurrentBranch(null);
+          break;
+
+        default:
+          console.warn('[useChatState] Unknown action:', action);
+      }
+    }
+  }, [goToNextSlide, goToPreviousSlide, handleComplete, onClose]);
+
+  // Branch navigation handler - async to support LLM calls on button click
+  const handleBranchNavigation = useCallback(async (branchName: string, value?: any) => {
     const branch = currentSlide?.chat?.branches?.[branchName];
     if (!branch) {
       console.warn('[useChatState] Branch not found:', branchName);
@@ -86,7 +153,77 @@ export function useChatState({
       }));
     }
 
-    // Add AI response message
+    // Check if this is the "proceed" branch on greeting slide with LLM enabled
+    // This is the "Let's Begin" button - trigger LLM here instead of on page load
+    const isGreetingProceed = branchName === 'proceed' &&
+                              currentSlide?.id === 'greeting' &&
+                              currentSlide?.chat?.generateInitialMessage;
+
+    if (isGreetingProceed && customerName) {
+      console.log('[useChatState] "Let\'s Begin" clicked - triggering LLM greeting for:', customerName);
+      setIsGeneratingLLM(true);
+
+      // Show loading message immediately
+      const loadingMessage: ChatMessage = {
+        id: `ai-loading-${Date.now()}`,
+        text: `Let me review ${customerName}'s account...`,
+        sender: 'ai',
+        timestamp: new Date(),
+        isLoading: true,
+      };
+      setChatMessages(prev => [...prev, loadingMessage]);
+
+      try {
+        // Call LLM API with INTEL tools
+        const generated = await fetchGreetingFromAPI({
+          customerName,
+          workflowPurpose,
+          slideId: currentSlide.id,
+          fallbackGreeting: branch.response,
+        });
+
+        console.log('[useChatState] LLM generated:', generated.text);
+        console.log('[useChatState] Tools used:', generated.toolsUsed);
+
+        // Replace loading message with LLM response
+        setChatMessages(prev => {
+          const withoutLoading = prev.filter(m => !m.isLoading);
+          return [...withoutLoading, {
+            id: `ai-${Date.now()}-llm`,
+            text: generated.text,
+            sender: 'ai',
+            timestamp: new Date(),
+            buttons: branch.buttons,
+          }];
+        });
+      } catch (error) {
+        console.error('[useChatState] LLM greeting failed:', error);
+        // Fall back to static response
+        setChatMessages(prev => {
+          const withoutLoading = prev.filter(m => !m.isLoading);
+          return [...withoutLoading, {
+            id: `ai-${Date.now()}-fallback`,
+            text: branch.response,
+            sender: 'ai',
+            timestamp: new Date(),
+            buttons: branch.buttons,
+          }];
+        });
+      } finally {
+        setIsGeneratingLLM(false);
+      }
+
+      setCurrentBranch(branchName);
+
+      // Execute branch actions after LLM response
+      if (branch.actions) {
+        executeBranchActions(branch.actions, branch.artifactId, branch.stepId, branch.stepNumber);
+      }
+
+      return; // Don't continue with normal branch handling
+    }
+
+    // Normal branch handling (non-LLM)
     const aiMessage: ChatMessage = {
       id: `ai-${Date.now()}-${branchName}`,
       text: branch.response,
@@ -122,76 +259,7 @@ export function useChatState({
         }, delay * 1000);
       }
     }
-  }, [currentSlide, setWorkflowState]);
-
-  // Execute branch actions
-  const executeBranchActions = useCallback((
-    actions: string[],
-    artifactId?: string,
-    stepId?: string,
-    stepNumber?: number
-  ) => {
-    for (const action of actions) {
-      switch (action) {
-        case 'nextSlide':
-        case 'goToNextSlide':
-          goToNextSlide();
-          break;
-
-        case 'previousSlide':
-        case 'goToPreviousSlide':
-          goToPreviousSlide();
-          break;
-
-        case 'completeStep':
-          if (stepId) {
-            console.log('[useChatState] Complete step:', stepId);
-          }
-          break;
-
-        case 'enterStep':
-          if (stepNumber !== undefined) {
-            // Note: Would need setCurrentSlideIndex from parent
-            console.log('[useChatState] Enter step:', stepNumber);
-          }
-          break;
-
-        case 'launch-artifact':
-        case 'showArtifact':
-          if (artifactId) {
-            // Note: Would need setShowArtifacts from parent
-            console.log('[useChatState] Show artifact:', artifactId);
-          }
-          break;
-
-        case 'removeArtifact':
-          // Note: Would need setShowArtifacts from parent
-          console.log('[useChatState] Remove artifact');
-          break;
-
-        case 'closeWorkflow':
-          console.log('[useChatState] closeWorkflow action triggered - calling onClose()');
-          onClose();
-          break;
-
-        case 'exitTaskMode':
-          onClose();
-          break;
-
-        case 'nextCustomer':
-          handleComplete();
-          break;
-
-        case 'resetChat':
-          setChatMessages([]);
-          setCurrentBranch(null);
-          break;
-
-        default:
-          console.warn('[useChatState] Unknown action:', action);
-      }
-    }
-  }, [goToNextSlide, goToPreviousSlide, handleComplete, onClose]);
+  }, [currentSlide, setWorkflowState, customerName, workflowPurpose, executeBranchActions]);
 
   // Send message handler
   const handleSendMessage = useCallback((message: string) => {
@@ -284,7 +352,7 @@ export function useChatState({
   }, [currentBranch, currentSlide, handleBranchNavigation, setWorkflowState]);
 
   // Initialize chat messages when slide changes
-  // Now preserves history from previous slides with visual distinction
+  // Shows STATIC greeting on page load - LLM is triggered by "Let's Begin" button click (no hydration issues)
   useEffect(() => {
     if (!currentSlide) return;
 
@@ -294,11 +362,6 @@ export function useChatState({
     // Reset branch for new slide
     setCurrentBranch(null);
 
-    // Check if we should generate greeting via LLM
-    const shouldGenerateGreeting = currentSlide.chat?.generateInitialMessage &&
-                                   currentSlide.id === 'greeting' &&
-                                   isFirstSlide;
-
     // DEBUG: Log slide config to see what we're getting
     console.log('[useChatState] DEBUG - currentSlide:', {
       id: currentSlide.id,
@@ -306,12 +369,12 @@ export function useChatState({
       isFirstSlide,
       hasChat: !!currentSlide.chat,
       generateInitialMessage: currentSlide.chat?.generateInitialMessage,
-      shouldGenerateGreeting,
       customerName,
+      note: 'LLM greeting will be triggered on "Let\'s Begin" button click, not page load',
     });
 
-    // Build new messages for this slide transition
-    const buildMessages = async () => {
+    // Build new messages for this slide transition (synchronous - no LLM call on page load)
+    const buildMessages = () => {
       let newMessages: ChatMessage[] = [];
 
       // If this is a slide change (not initial load), preserve history
@@ -339,34 +402,12 @@ export function useChatState({
         newMessages = [...historicalMessages, separator];
       }
 
-      // Add initial message for new slide
+      // Add initial message for new slide - ALWAYS use static text (no LLM on page load)
+      // LLM greeting is triggered when user clicks "Let's Begin" button
       if (currentSlide.chat?.initialMessage) {
-        let greetingText = currentSlide.chat.initialMessage.text;
-
-        // If LLM greeting is enabled, generate it via server API
-        if (shouldGenerateGreeting && customerName) {
-          try {
-            console.log('[useChatState] Fetching LLM greeting for:', customerName);
-
-            const generated = await fetchGreetingFromAPI({
-              customerName,
-              workflowPurpose,
-              slideId: currentSlide.id,
-              fallbackGreeting: currentSlide.chat.initialMessage.text,
-            });
-
-            greetingText = generated.text;
-            console.log('[useChatState] Generated greeting:', greetingText);
-            console.log('[useChatState] Tools used:', generated.toolsUsed);
-          } catch (error) {
-            console.error('[useChatState] Failed to generate greeting:', error);
-            // Fall back to static text
-          }
-        }
-
         const initialMessage: ChatMessage = {
           id: `ai-initial-${currentSlideIndex}`,
-          text: greetingText,
+          text: currentSlide.chat.initialMessage.text, // Always static - LLM on button click
           sender: 'ai',
           timestamp: new Date(),
           component: currentSlide.chat.initialMessage.component,
@@ -378,7 +419,7 @@ export function useChatState({
         if (isFirstSlide && newMessages.length === 0) {
           setTimeout(() => {
             setChatMessages([initialMessage]);
-          }, shouldGenerateGreeting ? 100 : 500); // Shorter delay if we already waited for LLM
+          }, 500);
           return; // Exit early, will be set by timeout
         }
 
@@ -388,7 +429,7 @@ export function useChatState({
       setChatMessages(newMessages);
     };
 
-    // Execute the async message builder
+    // Execute the message builder (synchronous now - no async LLM call)
     buildMessages();
 
     // Update the last slide index tracker
@@ -423,6 +464,7 @@ export function useChatState({
     currentBranch,
     chatInputValue,
     chatInputRef,
+    isGeneratingLLM,
     setChatInputValue,
     handleBranchNavigation,
     handleSendMessage,
