@@ -16,6 +16,7 @@
 import type { UniversalSlideBuilder } from './baseSlide';
 
 // Common slides (used across all workflow types)
+import { splashSlide } from './common/splashSlide';
 import { greetingSlide } from './common/greetingSlide';
 import { reviewAccountSlide } from './common/reviewAccountSlide';
 import { workflowSummarySlide } from './common/workflowSummarySlide';
@@ -72,6 +73,7 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   // ========================================
   // COMMON SLIDES
   // ========================================
+  'splash': splashSlide,
   'greeting': greetingSlide,
   'review-account': reviewAccountSlide,
   'workflow-summary': workflowSummarySlide,

@@ -165,7 +165,7 @@ export interface DynamicChatBranch {
   defaultMessage?: string;
   delay?: number; // Delay in seconds before showing the response
   predelay?: number; // Delay in seconds before this branch can be triggered
-  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow' | 'navigateToBranch'>;
+  actions?: Array<'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'advanceWithoutComplete' | 'resetWorkflow' | 'completeStep' | 'enterStep' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow' | 'navigateToBranch' | 'triggerConfetti' | 'prefetchLLM' | 'nextSlideWhenReady'>;
   artifactId?: string;
   stepId?: string; // Step ID for completeStep action
   stepNumber?: number; // Step number for enterStep action

@@ -67,6 +67,10 @@ export function useChatState({
   const chatInputRef = useRef<HTMLInputElement>(null);
   const [isGeneratingLLM, setIsGeneratingLLM] = useState(false);
 
+  // Store prefetched LLM greeting (from splash slide)
+  const prefetchedGreetingRef = useRef<{ text: string; ready: boolean } | null>(null);
+  const prefetchPromiseRef = useRef<Promise<void> | null>(null);
+
   // Track the last slide index to detect slide changes
   const lastSlideIndexRef = useRef<number>(currentSlideIndex);
 
@@ -130,6 +134,48 @@ export function useChatState({
           setCurrentBranch(null);
           break;
 
+        case 'prefetchLLM':
+          // Start prefetching LLM greeting in background
+          console.log('[useChatState] Starting LLM prefetch for:', customerName);
+          if (customerName && !prefetchPromiseRef.current) {
+            prefetchedGreetingRef.current = { text: '', ready: false };
+            prefetchPromiseRef.current = fetchGreetingFromAPI({
+              customerName,
+              workflowPurpose,
+              slideId: 'greeting',
+              fallbackGreeting: 'Let me brief you on this account...',
+            }).then(result => {
+              console.log('[useChatState] LLM prefetch complete:', result.text.substring(0, 50) + '...');
+              prefetchedGreetingRef.current = { text: result.text, ready: true };
+            }).catch(err => {
+              console.error('[useChatState] LLM prefetch failed:', err);
+              prefetchedGreetingRef.current = { text: '', ready: true }; // Mark ready so we don't block
+            });
+          }
+          break;
+
+        case 'triggerConfetti':
+          // Dispatch confetti event for UI to handle
+          console.log('[useChatState] Triggering confetti!');
+          window.dispatchEvent(new CustomEvent('workflow-confetti'));
+          break;
+
+        case 'nextSlideWhenReady':
+          // Wait for prefetch to complete, then advance
+          console.log('[useChatState] Waiting for LLM prefetch before advancing...');
+          const checkAndAdvance = () => {
+            if (prefetchedGreetingRef.current?.ready) {
+              console.log('[useChatState] Prefetch ready, advancing to next slide');
+              goToNextSlide();
+            } else {
+              // Check again in 200ms
+              setTimeout(checkAndAdvance, 200);
+            }
+          };
+          // Give a minimum delay for the confetti moment (1.5s)
+          setTimeout(checkAndAdvance, 1500);
+          break;
+
         default:
           console.warn('[useChatState] Unknown action:', action);
       }
@@ -154,12 +200,32 @@ export function useChatState({
     }
 
     // Check if this is the "proceed" branch on greeting slide with LLM enabled
-    // This is the "Let's Begin" button - trigger LLM here instead of on page load
+    // This is the "Let's Begin" button - use prefetched response if available
     const isGreetingProceed = branchName === 'proceed' &&
                               currentSlide?.id === 'greeting' &&
                               currentSlide?.chat?.generateInitialMessage;
 
     if (isGreetingProceed && customerName) {
+      // Check if we have a prefetched greeting from splash slide
+      if (prefetchedGreetingRef.current?.ready && prefetchedGreetingRef.current.text) {
+        console.log('[useChatState] Using prefetched LLM greeting');
+        setChatMessages(prev => [...prev, {
+          id: `ai-${Date.now()}-prefetched`,
+          text: prefetchedGreetingRef.current!.text,
+          sender: 'ai',
+          timestamp: new Date(),
+          buttons: branch.buttons,
+        }]);
+        setCurrentBranch(branchName);
+        if (branch.actions) {
+          executeBranchActions(branch.actions, branch.artifactId, branch.stepId, branch.stepNumber);
+        }
+        // Clear the prefetch for next time
+        prefetchedGreetingRef.current = null;
+        prefetchPromiseRef.current = null;
+        return;
+      }
+      // Fall through to fetch if no prefetch available
       console.log('[useChatState] "Let\'s Begin" clicked - triggering LLM greeting for:', customerName);
       setIsGeneratingLLM(true);
 
