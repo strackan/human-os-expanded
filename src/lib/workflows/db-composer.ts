@@ -121,13 +121,21 @@ export async function composeFromDatabase(
   const workflowDef = await fetchWorkflowDefinition(workflowId, companyId, supabase);
 
   // 2. Convert database format to WorkflowComposition
+  // Auto-prepend splash slide unless explicitly disabled via settings.skipSplash
+  let slideSequence = workflowDef.slide_sequence || [];
+  const skipSplash = workflowDef.settings?.skipSplash === true;
+
+  if (!skipSplash && slideSequence.length > 0 && slideSequence[0] !== 'splash') {
+    slideSequence = ['splash', ...slideSequence];
+  }
+
   const composition: WorkflowComposition = {
     id: workflowDef.workflow_id,
     name: workflowDef.name,
     moduleId: (workflowDef as any).module_id || 'customer-success', // Default to CS module for legacy workflows
     category: workflowDef.workflow_type as any,
     description: workflowDef.description || '',
-    slideSequence: workflowDef.slide_sequence || [],
+    slideSequence,
     slideContexts: workflowDef.slide_contexts || {},
     settings: workflowDef.settings || undefined,
   };
