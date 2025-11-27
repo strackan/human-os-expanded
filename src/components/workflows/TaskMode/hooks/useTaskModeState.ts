@@ -470,7 +470,7 @@ export function useTaskModeState({
           // Wait for prefetch to complete (with timeout), then advance
           const waitForPrefetch = async () => {
             const startTime = Date.now();
-            const maxWait = 5000; // 5 second timeout
+            const maxWait = 10000; // 10 second timeout (LLM calls can take 5-8s)
             const minDelay = 1500; // Minimum 1.5s for nice UX
 
             // Wait for prefetch to complete or timeout
