@@ -22,11 +22,10 @@ dotenv.config({ path: '.env.local' });
 
 const INTEL_BUCKET = 'intel';
 
-// Use staging project (where the intel bucket was created)
-// Can be overridden with STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_ROLE_KEY env vars
-const STAGING_URL = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
-const supabaseUrl = process.env.STAGING_SUPABASE_URL || STAGING_URL;
-const serviceRoleKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+// Use INTEL-specific credentials
+// Set INTEL_SUPABASE_URL and INTEL_SUPABASE_SERVICE_ROLE_KEY for the target environment
+const supabaseUrl = process.env.INTEL_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.INTEL_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('❌ Missing environment variables:');

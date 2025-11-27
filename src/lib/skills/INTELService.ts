@@ -34,14 +34,17 @@ async function getFileSystemModules() {
 /**
  * Create Supabase client with service role for storage access
  *
- * Note: INTEL bucket is in the staging project (amugmkrihnjsxlpwdzcy)
- * Use STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_ROLE_KEY env vars
+ * Uses INTEL_SUPABASE_URL and INTEL_SUPABASE_SERVICE_ROLE_KEY env vars.
+ * Falls back to main Supabase credentials if INTEL-specific ones not set.
+ *
+ * Environment configuration:
+ * - Staging: Point to staging Supabase with sample INTEL data
+ * - Production: Point to production Supabase with real customer INTEL
  */
 function createStorageClient() {
-  // INTEL bucket is in staging project - use staging credentials if available
-  const STAGING_URL = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
-  const supabaseUrl = process.env.STAGING_SUPABASE_URL || STAGING_URL;
-  const serviceRoleKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Use INTEL-specific credentials if available, otherwise fall back to main Supabase
+  const supabaseUrl = process.env.INTEL_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.INTEL_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !serviceRoleKey) {
     console.warn('[INTELService] Missing Supabase credentials for storage access');
