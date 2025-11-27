@@ -272,6 +272,17 @@ export const componentRegistry: ComponentItem[] = [
     lastUpdated: '2025-10-20'
   },
 
+  // === BRAND PERFORMANCE ===
+  {
+    name: 'BrandPerformanceArtifact',
+    path: '@/components/artifacts/workflows/BrandPerformanceArtifact',
+    label: 'Brand Performance',
+    category: 'InHerSight',
+    version: '1.0.0',
+    status: 'active',
+    lastUpdated: '2025-11-27'
+  },
+
   // === STRATEGY ===
   {
     name: 'ContactStrategyArtifact',

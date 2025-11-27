@@ -3,7 +3,9 @@
  *
  * Purpose: Display InHerSight-specific brand metrics and performance analysis
  * Used in: InHerSight 90-day renewal, 120-day at-risk workflows
- * Artifact: BrandExposureReport (already exists!)
+ * Artifact: BrandPerformanceArtifact (simple, attractive design with mini charts)
+ *
+ * Chat: LLM-powered summary of growth/adoption performance
  */
 
 import type { UniversalSlideBuilder } from '../baseSlide';
@@ -24,25 +26,69 @@ export const reviewBrandPerformanceSlide: UniversalSlideBuilder = (context): any
     showSideMenu: true,
 
     chat: {
+      // Enable LLM generation for performance summary
+      generateInitialMessage: true,
+      llmPrompt: `You are a customer success manager reviewing brand performance metrics for {{customer.name}} on InHerSight.
+
+Based on the following metrics, provide a brief, friendly summary of their brand performance from a growth and adoption standpoint:
+
+- Health Score: {{customer.health_score}}/100
+- Brand Impressions: 24.5K (+12% vs last period)
+- Profile Views: 3,842 (+8% vs last period)
+- Apply Clicks: 847 (+2% vs last period)
+- New Ratings: 156 (+23% vs last period)
+
+Keep your response to 2-3 sentences. Focus on the positive trends and highlight any areas worth discussing. Be conversational and helpful, not formal.`,
       initialMessage: {
         text: context?.variables?.message ||
-          `I've pulled together {{customer.name}}'s brand performance data from InHerSight. Let's review the key metrics and see how things are trending.`,
+          `Looking at {{customer.name}}'s performance, I'm seeing some solid growth! Your brand impressions are up 12% and you've gained 23% more ratings compared to last period. The engagement looks healthy - let's review the details together.`,
         buttons: [
           {
-            label: 'Review Metrics',
-            value: 'review',
+            label: 'Looks good, continue',
+            value: 'continue',
             'label-background': 'bg-blue-600',
             'label-text': 'text-white',
           },
+          {
+            label: 'Tell me more',
+            value: 'more-details',
+            'label-background': 'bg-gray-100',
+            'label-text': 'text-gray-700',
+          },
         ],
         nextBranches: {
-          'review': 'review-metrics',
+          'continue': 'proceed',
+          'more-details': 'explain-metrics',
         },
       },
       branches: {
-        'review-metrics': {
-          response: 'Great! Take a look at the performance report. The data shows some interesting trends.',
+        'proceed': {
+          response: 'Great! Let\'s move on to the next step.',
           actions: ['nextSlide'],
+        },
+        'explain-metrics': {
+          response: `Here's a quick breakdown:
+
+**Impressions** (24.5K) - How often your brand appears in search results and recommendations. This is your visibility.
+
+**Profile Views** (3,842) - Users actively clicking through to learn more about you. Strong indicator of interest.
+
+**Apply Clicks** (847) - Direct job application interest from your profile. This is bottom-of-funnel engagement.
+
+**New Ratings** (156) - Fresh employee reviews coming in. More ratings = more credibility and better ranking.
+
+Overall, the trends are positive across all metrics. Ready to continue?`,
+          buttons: [
+            {
+              label: 'Got it, continue',
+              value: 'proceed-after-details',
+              'label-background': 'bg-blue-600',
+              'label-text': 'text-white',
+            },
+          ],
+          nextBranches: {
+            'proceed-after-details': 'proceed',
+          },
         },
       },
       defaultMessage: 'Would you like to review the performance data?',
@@ -52,66 +98,20 @@ export const reviewBrandPerformanceSlide: UniversalSlideBuilder = (context): any
     artifacts: {
       sections: [
         {
-          id: 'brand-exposure-report',
-          type: 'document',
-          title: 'Brand Performance Report',
-          content: `# {{customer.name}} - Brand Performance Report
-
-**Reporting Period**: ${context?.variables?.reportingPeriod || 'Last 90 Days'}
-**Health Score**: {{customer.health_score}}/100
-**Report Date**: {{current_date}}
-
----
-
-## Brand Visibility Metrics
-
-### Impressions & Reach
-| Metric | Value | Trend |
-|--------|-------|-------|
-| Brand Impressions | {{customer.brand_impressions}} | {{customer.impressions_trend}} |
-| Profile Views | {{customer.profile_views}} | {{customer.views_trend}} |
-| Profile Completion | {{customer.profile_completion_pct}}% | - |
-
-### Engagement Metrics
-| Metric | Value | Trend |
-|--------|-------|-------|
-| Job Matches | {{customer.job_matches}} | - |
-| Apply Clicks | {{customer.apply_clicks}} | {{customer.clicks_trend}} |
-| Click-Through Rate | {{customer.click_through_rate}}% | - |
-
-### Content & Social
-| Metric | Value |
-|--------|-------|
-| Article Inclusions | {{customer.article_inclusions}} |
-| Social Mentions | {{customer.social_mentions}} |
-| New Ratings | {{customer.new_ratings}} |
-| Follower Growth | {{customer.follower_growth}} |
-
----
-
-## Performance Analysis
-
-{{customer.performance_analysis}}
-
-### Strengths
-{{customer.performance_strengths}}
-
-### Areas for Improvement
-{{customer.performance_improvements}}
-
----
-
-## Recommendations
-
-{{customer.performance_recommendations}}
-
----
-
-*This report reflects InHerSight platform data. Contact your CSM for detailed analytics.*
-`,
-          editable: false,
+          id: 'brand-performance',
+          type: 'custom',
+          title: 'Brand Performance',
           visible: true,
-        }
+          data: {
+            componentType: 'BrandPerformanceArtifact',
+            props: {
+              customerName: '{{customer.name}}',
+              reportingPeriod: context?.variables?.reportingPeriod || 'Last 90 Days',
+              healthScore: context?.variables?.healthScore || 78,
+              // Using default mock metrics from the component
+            },
+          },
+        },
       ],
     },
 

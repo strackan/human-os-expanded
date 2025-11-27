@@ -13,6 +13,13 @@ export { default as PricingTableArtifact } from './PricingTableArtifact';
 export { default as RecommendationsArtifact } from './RecommendationsArtifact';
 export { default as StakeholderMapArtifact } from './StakeholderMapArtifact';
 
+// Brand performance artifact
+export {
+  BrandPerformanceArtifact,
+  type BrandMetric,
+  type BrandPerformanceArtifactProps,
+} from './BrandPerformanceArtifact';
+
 // New primitives-based artifacts
 export {
   ContactsOverviewArtifact,

@@ -9,6 +9,7 @@ import PricingAnalysisArtifact from './PricingAnalysisArtifact';
 import ContactStrategyArtifact from './ContactStrategyArtifact';
 import PlanSummaryArtifact from './PlanSummaryArtifact';
 import PlanningChecklistEnhancedArtifact from './PlanningChecklistEnhancedArtifact';
+import { BrandPerformanceArtifact } from './workflows/BrandPerformanceArtifact';
 
 // TODO: Add other imports as they are confirmed to exist
 // import PriceRecommendationFlat from './pricing/PriceRecommendationFlat';
@@ -25,6 +26,7 @@ export const componentMap: Record<string, React.ComponentType<any>> = {
   'ContactStrategyArtifact': ContactStrategyArtifact,
   'PlanSummaryArtifact': PlanSummaryArtifact,
   'PlanningChecklistEnhancedArtifact': PlanningChecklistEnhancedArtifact,
+  'BrandPerformanceArtifact': BrandPerformanceArtifact,
   // TODO: Add other mappings as components are confirmed to exist
 };
 
