@@ -2,19 +2,58 @@
  * INTEL Service
  *
  * Reads customer, contact, and user INTEL files to provide context for LLM interactions.
- * This is a simulated MCP implementation - reads files directly and injects into prompts.
  *
- * IMPORTANT: This service uses Node.js fs module and can ONLY run server-side.
+ * Storage Strategy:
+ * - Production/Staging: Fetches from Supabase Storage bucket 'intel'
+ * - Local Development: Falls back to filesystem (skills/ folder) if Supabase fails
+ *
+ * IMPORTANT: This service can ONLY run server-side.
  * It should only be imported by:
  * - API routes (src/app/api/*)
  * - Server Components without 'use client'
  * - Server Actions
- *
- * Future: Convert to full MCP implementation with proper tools and file access.
  */
 
-import { promises as fs } from 'fs';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+
+// Conditionally import fs for local fallback (only works server-side)
+let fs: typeof import('fs').promises | null = null;
+let path: typeof import('path') | null = null;
+
+// Dynamic import for server-side only
+async function getFileSystemModules() {
+  if (typeof window === 'undefined' && !fs) {
+    const fsModule = await import('fs');
+    const pathModule = await import('path');
+    fs = fsModule.promises;
+    path = pathModule.default;
+  }
+  return { fs, path };
+}
+
+/**
+ * Create Supabase client with service role for storage access
+ *
+ * Note: INTEL bucket is in the staging project (amugmkrihnjsxlpwdzcy)
+ * Use STAGING_SUPABASE_URL and STAGING_SUPABASE_SERVICE_ROLE_KEY env vars
+ */
+function createStorageClient() {
+  // INTEL bucket is in staging project - use staging credentials if available
+  const STAGING_URL = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
+  const supabaseUrl = process.env.STAGING_SUPABASE_URL || STAGING_URL;
+  const serviceRoleKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    console.warn('[INTELService] Missing Supabase credentials for storage access');
+    return null;
+  }
+
+  return createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false }
+  });
+}
+
+const INTEL_BUCKET = 'intel';
 
 /**
  * Simple YAML-like frontmatter parser
@@ -101,15 +140,6 @@ export interface INTELContext {
 }
 
 /**
- * Get the skills directory path
- */
-function getSkillsDir(): string {
-  // In development, skills are in the project root
-  // In production, they would be fetched from Supabase Storage
-  return path.join(process.cwd(), 'skills');
-}
-
-/**
  * Convert customer name to folder name
  * e.g., "GrowthStack" -> "growthstack"
  * e.g., "TechCorp Solutions" -> "techcorp-solutions"
@@ -122,16 +152,116 @@ function customerNameToFolderName(name: string): string {
 }
 
 /**
- * Read and parse a markdown INTEL file
+ * Read INTEL file from Supabase Storage
  */
-async function readINTELFile(filePath: string): Promise<{ frontmatter: Record<string, any>; content: string } | null> {
+async function readFromSupabase(storagePath: string): Promise<string | null> {
+  const supabase = createStorageClient();
+  if (!supabase) return null;
+
   try {
-    const fileContent = await fs.readFile(filePath, 'utf-8');
-    const { data: frontmatter, content } = parseFrontmatter(fileContent);
-    return { frontmatter, content };
+    const { data, error } = await supabase.storage
+      .from(INTEL_BUCKET)
+      .download(storagePath);
+
+    if (error) {
+      console.warn(`[INTELService] Supabase storage error for ${storagePath}:`, error.message);
+      return null;
+    }
+
+    if (!data) {
+      console.warn(`[INTELService] No data returned for ${storagePath}`);
+      return null;
+    }
+
+    const content = await data.text();
+    console.log(`[INTELService] Successfully read from Supabase: ${storagePath} (${content.length} chars)`);
+    return content;
   } catch (error) {
-    console.warn(`Could not read INTEL file: ${filePath}`, error);
+    console.warn(`[INTELService] Error reading from Supabase: ${storagePath}`, error);
     return null;
+  }
+}
+
+/**
+ * Read INTEL file from local filesystem (fallback for development)
+ */
+async function readFromFilesystem(relativePath: string): Promise<string | null> {
+  const { fs: fsModule, path: pathModule } = await getFileSystemModules();
+  if (!fsModule || !pathModule) return null;
+
+  try {
+    const skillsDir = pathModule.join(process.cwd(), 'skills');
+    const fullPath = pathModule.join(skillsDir, relativePath);
+    const content = await fsModule.readFile(fullPath, 'utf-8');
+    console.log(`[INTELService] Successfully read from filesystem: ${relativePath} (${content.length} chars)`);
+    return content;
+  } catch (error) {
+    // Don't warn for filesystem fallback failures - it's expected in production
+    return null;
+  }
+}
+
+/**
+ * Read INTEL file with Supabase-first, filesystem fallback strategy
+ */
+async function readINTELFile(relativePath: string): Promise<{ frontmatter: Record<string, any>; content: string } | null> {
+  // Try Supabase Storage first
+  let fileContent = await readFromSupabase(relativePath);
+
+  // Fall back to filesystem for local development
+  if (!fileContent) {
+    fileContent = await readFromFilesystem(relativePath);
+  }
+
+  if (!fileContent) {
+    console.warn(`[INTELService] Could not read INTEL file from any source: ${relativePath}`);
+    return null;
+  }
+
+  const { data: frontmatter, content } = parseFrontmatter(fileContent);
+  return { frontmatter, content };
+}
+
+/**
+ * List files in a Supabase Storage folder
+ */
+async function listSupabaseFolder(folderPath: string): Promise<string[]> {
+  const supabase = createStorageClient();
+  if (!supabase) return [];
+
+  try {
+    const { data, error } = await supabase.storage
+      .from(INTEL_BUCKET)
+      .list(folderPath);
+
+    if (error) {
+      console.warn(`[INTELService] Error listing folder ${folderPath}:`, error.message);
+      return [];
+    }
+
+    return (data || [])
+      .filter(item => item.name.endsWith('.md'))
+      .map(item => item.name);
+  } catch (error) {
+    console.warn(`[INTELService] Error listing folder ${folderPath}:`, error);
+    return [];
+  }
+}
+
+/**
+ * List files in a local filesystem folder
+ */
+async function listFilesystemFolder(relativePath: string): Promise<string[]> {
+  const { fs: fsModule, path: pathModule } = await getFileSystemModules();
+  if (!fsModule || !pathModule) return [];
+
+  try {
+    const skillsDir = pathModule.join(process.cwd(), 'skills');
+    const fullPath = pathModule.join(skillsDir, relativePath);
+    const files = await fsModule.readdir(fullPath);
+    return files.filter(f => f.endsWith('.md'));
+  } catch (error) {
+    return [];
   }
 }
 
@@ -140,9 +270,9 @@ async function readINTELFile(filePath: string): Promise<{ frontmatter: Record<st
  */
 export async function getCustomerINTEL(customerName: string): Promise<CustomerINTEL | null> {
   const folderName = customerNameToFolderName(customerName);
-  const filePath = path.join(getSkillsDir(), 'customers', folderName, 'INTEL.md');
+  const relativePath = `customers/${folderName}/INTEL.md`;
 
-  const result = await readINTELFile(filePath);
+  const result = await readINTELFile(relativePath);
   if (!result) return null;
 
   const { frontmatter, content } = result;
@@ -168,53 +298,51 @@ export async function getCustomerINTEL(customerName: string): Promise<CustomerIN
  */
 export async function getContactsINTEL(customerName: string): Promise<ContactINTEL[]> {
   const folderName = customerNameToFolderName(customerName);
-  const contactsDir = path.join(getSkillsDir(), 'customers', folderName, 'contacts');
+  const contactsFolderPath = `customers/${folderName}/contacts`;
 
-  try {
-    const files = await fs.readdir(contactsDir);
-    const contacts: ContactINTEL[] = [];
-
-    for (const file of files) {
-      if (!file.endsWith('.md')) continue;
-
-      const filePath = path.join(contactsDir, file);
-      const result = await readINTELFile(filePath);
-      if (!result) continue;
-
-      const { frontmatter, content } = result;
-
-      contacts.push({
-        contact_id: frontmatter.contact_id || '',
-        customer_id: frontmatter.customer_id || '',
-        name: frontmatter.name || '',
-        role: frontmatter.role || '',
-        email: frontmatter.email,
-        is_primary: frontmatter.is_primary || false,
-        relationship_strength: frontmatter.relationship_strength || 'moderate',
-        content,
-        frontmatter,
-      });
-    }
-
-    // Sort by primary first, then by name
-    return contacts.sort((a, b) => {
-      if (a.is_primary && !b.is_primary) return -1;
-      if (!a.is_primary && b.is_primary) return 1;
-      return a.name.localeCompare(b.name);
-    });
-  } catch (error) {
-    console.warn(`Could not read contacts for ${customerName}:`, error);
-    return [];
+  // Try Supabase first, then filesystem
+  let files = await listSupabaseFolder(contactsFolderPath);
+  if (files.length === 0) {
+    files = await listFilesystemFolder(contactsFolderPath);
   }
+
+  const contacts: ContactINTEL[] = [];
+
+  for (const file of files) {
+    const relativePath = `${contactsFolderPath}/${file}`;
+    const result = await readINTELFile(relativePath);
+    if (!result) continue;
+
+    const { frontmatter, content } = result;
+
+    contacts.push({
+      contact_id: frontmatter.contact_id || '',
+      customer_id: frontmatter.customer_id || '',
+      name: frontmatter.name || '',
+      role: frontmatter.role || '',
+      email: frontmatter.email,
+      is_primary: frontmatter.is_primary || false,
+      relationship_strength: frontmatter.relationship_strength || 'moderate',
+      content,
+      frontmatter,
+    });
+  }
+
+  // Sort by primary first, then by name
+  return contacts.sort((a, b) => {
+    if (a.is_primary && !b.is_primary) return -1;
+    if (!a.is_primary && b.is_primary) return 1;
+    return a.name.localeCompare(b.name);
+  });
 }
 
 /**
  * Read user INTEL file (CSM profile)
  */
 export async function getUserINTEL(userId: string): Promise<UserINTEL | null> {
-  const filePath = path.join(getSkillsDir(), 'users', `${userId}.md`);
+  const relativePath = `users/${userId}.md`;
 
-  const result = await readINTELFile(filePath);
+  const result = await readINTELFile(relativePath);
   if (!result) return null;
 
   const { frontmatter, content } = result;
@@ -241,17 +369,27 @@ export async function getINTELContext(
   customerName: string,
   userId: string = 'grace'
 ): Promise<INTELContext> {
+  console.log(`[INTELService] Getting INTEL context for customer: ${customerName}, user: ${userId}`);
+
   const [customer, contacts, user] = await Promise.all([
     getCustomerINTEL(customerName),
     getContactsINTEL(customerName),
     getUserINTEL(userId),
   ]);
 
-  return {
+  const result = {
     customer: customer || undefined,
     contacts: contacts.length > 0 ? contacts : undefined,
     user: user || undefined,
   };
+
+  console.log(`[INTELService] INTEL context result:`, {
+    hasCustomer: !!result.customer,
+    contactCount: result.contacts?.length || 0,
+    hasUser: !!result.user,
+  });
+
+  return result;
 }
 
 /**
