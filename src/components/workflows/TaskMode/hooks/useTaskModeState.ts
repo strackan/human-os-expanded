@@ -6,6 +6,28 @@ import { useWorkflowContext } from '@/lib/data-providers';
 import { useToast } from '@/components/ui/ToastProvider';
 
 /**
+ * Fetch LLM-generated greeting from server API
+ */
+async function fetchGreetingFromAPI(params: {
+  customerName: string;
+  workflowPurpose?: string;
+  slideId?: string;
+  fallbackGreeting?: string;
+}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number }> {
+  const response = await fetch('/api/workflows/greeting', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Greeting API failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
  * useTaskModeState - Centralized state management for TaskMode
  *
  * This hook manages ALL state and business logic for the TaskMode workflow.
@@ -99,6 +121,10 @@ export function useTaskModeState({
     stepIndex: number | null;
   }>({ type: null, stepIndex: null });
   const [isSnoozeModalOpen, setIsSnoozeModalOpen] = useState(false);
+
+  // LLM Prefetch state for splash slide
+  const prefetchedGreetingRef = useRef<{ text: string; ready: boolean } | null>(null);
+  const prefetchPromiseRef = useRef<Promise<void> | null>(null);
   const [isEscalateModalOpen, setIsEscalateModalOpen] = useState(false);
 
   // ============================================================
@@ -407,11 +433,68 @@ export function useTaskModeState({
           setCurrentBranch(null);
           break;
 
+        case 'triggerConfetti':
+          console.log('[Action] Triggering confetti');
+          // Confetti is triggered via the confetti library
+          if (typeof window !== 'undefined') {
+            import('canvas-confetti').then(confettiModule => {
+              const confetti = confettiModule.default || confettiModule;
+              confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+            });
+          }
+          break;
+
+        case 'prefetchLLM':
+          console.log('[Action] Starting LLM prefetch');
+          // Start the LLM fetch in the background
+          if (!prefetchPromiseRef.current) {
+            prefetchPromiseRef.current = fetchGreetingFromAPI({
+              customerName: customerName || config?.customerName || 'Customer',
+              workflowPurpose: config?.workflowType || 'renewal_preparation',
+            }).then(response => {
+              prefetchedGreetingRef.current = { text: response.text, ready: true };
+              console.log('[Action] LLM prefetch complete');
+            }).catch(error => {
+              console.error('[Action] LLM prefetch failed:', error);
+              prefetchedGreetingRef.current = { text: "Let's get started!", ready: true };
+            });
+          }
+          break;
+
+        case 'nextSlideWhenReady':
+          console.log('[Action] Waiting for LLM then advancing');
+          // Wait for prefetch to complete (with timeout), then advance
+          const waitForPrefetch = async () => {
+            const startTime = Date.now();
+            const maxWait = 5000; // 5 second timeout
+            const minDelay = 1500; // Minimum 1.5s for nice UX
+
+            // Wait for prefetch to complete or timeout
+            while (!prefetchedGreetingRef.current?.ready && Date.now() - startTime < maxWait) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Ensure minimum delay for good UX
+            const elapsed = Date.now() - startTime;
+            if (elapsed < minDelay) {
+              await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+            }
+
+            console.log('[Action] Advancing to next slide');
+            goToNextSlide();
+          };
+          waitForPrefetch();
+          break;
+
         default:
           console.warn('[Action] Unknown action:', action);
       }
     }
-  }, [goToNextSlide, goToPreviousSlide, handleComplete, onClose]);
+  }, [goToNextSlide, goToPreviousSlide, handleComplete, onClose, config, customerName]);
 
   const handleSendMessage = useCallback((message: string) => {
     // Add user message to history
