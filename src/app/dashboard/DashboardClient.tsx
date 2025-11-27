@@ -185,53 +185,65 @@ export default function DashboardClient() {
   };
 
   return (
-    <div className="w-full">
+    <div id="dashboard-root" data-testid="dashboard-root" className="w-full">
         {/* Zen Greeting */}
-        <ZenGreeting className="mb-12" />
+        <section id="dashboard-greeting" data-testid="dashboard-greeting" className="dashboard-section dashboard-section--greeting">
+          <ZenGreeting className="mb-12" />
+        </section>
 
         {/* Main Dashboard Content */}
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div id="dashboard-content" data-testid="dashboard-content" className="max-w-6xl mx-auto space-y-6 dashboard-content">
           {/* Priority Workflow Card - Database-Driven */}
           {userId && (
-            <PriorityWorkflowCard
-              userId={userId}
-              onLaunch={handleLaunchWorkflow}
-            />
+            <section id="dashboard-priority-workflow" data-testid="dashboard-priority-workflow" className="dashboard-section dashboard-section--priority">
+              <PriorityWorkflowCard
+                userId={userId}
+                onLaunch={handleLaunchWorkflow}
+              />
+            </section>
           )}
 
           {/* Two columns: Today's Workflows + Quick Actions */}
-          <div className="grid grid-cols-2 gap-6">
-            {userId ? (
-              <TodaysWorkflows
-                userId={userId}
-                onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
-              />
-            ) : (
-              <TodaysWorkflows
-                onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
-              />
-            )}
+          <section id="dashboard-main-grid" data-testid="dashboard-main-grid" className="grid grid-cols-2 gap-6 dashboard-section dashboard-section--main-grid">
+            <div id="dashboard-workflows-column" data-testid="dashboard-workflows-column" className="dashboard-column dashboard-column--workflows">
+              {userId ? (
+                <TodaysWorkflows
+                  userId={userId}
+                  onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
+                />
+              ) : (
+                <TodaysWorkflows
+                  onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
+                />
+              )}
+            </div>
 
-            <QuickActions expandByDefault={false} />
-          </div>
+            <div id="dashboard-actions-column" data-testid="dashboard-actions-column" className="dashboard-column dashboard-column--actions">
+              <QuickActions expandByDefault={false} />
+            </div>
+          </section>
 
           {/* When You're Ready Divider */}
-          <WhenYouReReady />
+          <section id="dashboard-secondary-nav" data-testid="dashboard-secondary-nav" className="dashboard-section dashboard-section--secondary-nav">
+            <WhenYouReReady />
+          </section>
         </div>
 
       {/* TaskMode Modal */}
       {taskModeOpen && activeWorkflow && (
-        <TaskModeFullscreen
-          workflowId={activeWorkflow.workflowId}
-          workflowTitle={activeWorkflow.title}
-          customerId={activeWorkflow.customerId}
-          customerName={activeWorkflow.customerName}
-          executionId={executionId || undefined}
-          userId={userId || undefined}
-          workflowStatus={workflowStatus}
-          onClose={handleWorkflowComplete}
-          onWorkflowAction={handleWorkflowAction}
-        />
+        <div id="dashboard-task-modal" data-testid="dashboard-task-modal" className="dashboard-modal dashboard-modal--task-mode">
+          <TaskModeFullscreen
+            workflowId={activeWorkflow.workflowId}
+            workflowTitle={activeWorkflow.title}
+            customerId={activeWorkflow.customerId}
+            customerName={activeWorkflow.customerName}
+            executionId={executionId || undefined}
+            userId={userId || undefined}
+            workflowStatus={workflowStatus}
+            onClose={handleWorkflowComplete}
+            onWorkflowAction={handleWorkflowAction}
+          />
+        </div>
       )}
     </div>
   );

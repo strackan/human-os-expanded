@@ -99,19 +99,37 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
 
   if (loading) {
     return (
-      <div className={`text-center space-y-2 ${className}`}>
-        <div className="h-8 bg-gray-200 rounded w-64 mx-auto animate-pulse"></div>
-        <div className="h-4 bg-gray-100 rounded w-48 mx-auto animate-pulse"></div>
+      <div
+        id="zen-greeting"
+        data-testid="zen-greeting"
+        data-loading="true"
+        className={`text-center space-y-2 zen-greeting zen-greeting--loading ${className}`}
+      >
+        <div className="h-8 bg-gray-200 rounded w-64 mx-auto animate-pulse zen-greeting__skeleton zen-greeting__skeleton--title"></div>
+        <div className="h-4 bg-gray-100 rounded w-48 mx-auto animate-pulse zen-greeting__skeleton zen-greeting__skeleton--date"></div>
       </div>
     );
   }
 
   return (
-    <div className={`text-center space-y-2 ${className}`}>
-      <h1 className="text-3xl font-light text-gray-700">
+    <div
+      id="zen-greeting"
+      data-testid="zen-greeting"
+      data-loading="false"
+      className={`text-center space-y-2 zen-greeting ${className}`}
+    >
+      <h1
+        id="zen-greeting-title"
+        data-testid="zen-greeting-title"
+        className="text-3xl font-light text-gray-700 zen-greeting__title"
+      >
         {getTimeBasedGreeting()}, {getFirstName()}
       </h1>
-      <p className="text-sm text-gray-400">
+      <p
+        id="zen-greeting-date"
+        data-testid="zen-greeting-date"
+        className="text-sm text-gray-400 zen-greeting__date"
+      >
         {getCurrentDayDate()}
       </p>
     </div>
