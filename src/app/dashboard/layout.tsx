@@ -35,10 +35,15 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <div
+        id="dashboard-layout"
+        data-testid="dashboard-layout"
+        data-loading="true"
+        className="flex min-h-screen items-center justify-center bg-gray-50 dashboard-layout dashboard-layout--loading"
+      >
+        <div className="text-center dashboard-layout__loading-container">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mb-4 dashboard-layout__spinner" data-testid="dashboard-loading-spinner"></div>
+          <p className="text-gray-600 dashboard-layout__loading-text" data-testid="dashboard-loading-text">Loading dashboard...</p>
         </div>
       </div>
     )

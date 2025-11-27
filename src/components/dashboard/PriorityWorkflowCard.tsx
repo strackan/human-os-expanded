@@ -123,11 +123,16 @@ export default function PriorityWorkflowCard({
   // NEW: Show loading state with zen styling
   if (loadingDb) {
     return (
-      <div className={`bg-white rounded-3xl p-10 border border-gray-200 shadow-lg ${className}`}>
+      <div
+        id="priority-workflow-card"
+        data-testid="priority-workflow-card"
+        data-loading="true"
+        className={`bg-white rounded-3xl p-10 border border-gray-200 shadow-lg priority-workflow-card priority-workflow-card--loading ${className}`}
+      >
         <div className="space-y-4 animate-pulse">
-          <div className="h-6 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-8 bg-gray-200 rounded w-2/3"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-6 bg-gray-200 rounded w-1/3 priority-workflow-card__skeleton priority-workflow-card__skeleton--header"></div>
+          <div className="h-8 bg-gray-200 rounded w-2/3 priority-workflow-card__skeleton priority-workflow-card__skeleton--title"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/4 priority-workflow-card__skeleton priority-workflow-card__skeleton--meta"></div>
         </div>
       </div>
     );
@@ -136,22 +141,27 @@ export default function PriorityWorkflowCard({
   // NEW: Show onboarding message when no workflows available
   if (hasNoWorkflows) {
     return (
-      <div className={`bg-white rounded-3xl p-10 border border-gray-200 shadow-lg relative ${className}`}>
+      <div
+        id="priority-workflow-card"
+        data-testid="priority-workflow-card"
+        data-state="empty"
+        className={`bg-white rounded-3xl p-10 border border-gray-200 shadow-lg relative priority-workflow-card priority-workflow-card--empty ${className}`}
+      >
         {/* Header Row */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 priority-workflow-card__header">
           <div className="flex items-center gap-3">
-            <Target className="w-6 h-6 text-gray-400" />
-            <span className="text-sm text-gray-500 tracking-wide">Today's One Thing</span>
+            <Target className="w-6 h-6 text-gray-400 priority-workflow-card__icon" />
+            <span className="text-sm text-gray-500 tracking-wide priority-workflow-card__label">Today's One Thing</span>
           </div>
         </div>
 
         {/* Main Content */}
-        <h2 className="text-2xl mb-4 text-gray-700">
+        <h2 className="text-2xl mb-4 text-gray-700 priority-workflow-card__title" data-testid="priority-workflow-title">
           No workflows yet
         </h2>
 
         {/* Message */}
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 priority-workflow-card__message" data-testid="priority-workflow-message">
           Workflows will appear here when they're assigned to you. Check with your administrator to set up workflow definitions, or explore Today's Plays below to see all available tasks.
         </p>
 
@@ -163,7 +173,8 @@ export default function PriorityWorkflowCard({
             const playsSection = document.querySelector('[data-section="todays-plays"]');
             playsSection?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          data-testid="priority-workflow-view-all-btn"
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium priority-workflow-card__action-btn"
         >
           View All Workflows
         </button>
@@ -173,28 +184,32 @@ export default function PriorityWorkflowCard({
 
   return (
     <div
+      id="priority-workflow-card"
+      data-testid="priority-workflow-card"
+      data-state={completed ? 'completed' : 'active'}
+      data-priority={priority?.toLowerCase()}
       onClick={handleCardClick}
       className={`bg-white rounded-3xl p-10 border ${
         completed ? 'border-green-300 bg-green-50/30' : 'border-gray-200'
-      } shadow-lg cursor-pointer hover:shadow-xl transition-all group relative ${className}`}
+      } shadow-lg cursor-pointer hover:shadow-xl transition-all group relative priority-workflow-card ${completed ? 'priority-workflow-card--completed' : 'priority-workflow-card--active'} ${className}`}
     >
       {/* Completion Badge */}
       {completed && (
-        <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+        <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium priority-workflow-card__badge priority-workflow-card__badge--completed" data-testid="priority-workflow-badge">
           <CheckCircle className="w-4 h-4" />
           <span>Completed</span>
         </div>
       )}
 
       {/* Header Row */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 priority-workflow-card__header">
         <div className="flex items-center gap-3">
-          <Target className={`w-6 h-6 ${completed ? 'text-green-500' : 'text-purple-500'}`} />
-          <span className="text-sm text-gray-500 tracking-wide">Today's One Thing</span>
+          <Target className={`w-6 h-6 ${completed ? 'text-green-500' : 'text-purple-500'} priority-workflow-card__icon`} />
+          <span className="text-sm text-gray-500 tracking-wide priority-workflow-card__label">Today's One Thing</span>
         </div>
         {/* Subtle Launch Icon - Passage/Door */}
         {!completed && (
-          <div className="flex items-center gap-2 text-gray-400 group-hover:text-purple-500 transition-colors">
+          <div className="flex items-center gap-2 text-gray-400 group-hover:text-purple-500 transition-colors priority-workflow-card__launch-hint" data-testid="priority-workflow-launch-hint">
             <img src="/passage_icon.png" alt="Launch" className="w-6 h-6 opacity-40 group-hover:opacity-70 transition-opacity" />
             <span className="text-xs font-medium">Launch {TERMINOLOGY.TASK_MODE}</span>
           </div>
@@ -202,24 +217,27 @@ export default function PriorityWorkflowCard({
       </div>
 
       {/* Main Content */}
-      <h2 className={`text-2xl mb-4 transition-colors ${
-        completed
-          ? 'text-green-800'
-          : 'text-gray-800 group-hover:text-purple-600'
-      }`}>
+      <h2
+        data-testid="priority-workflow-title"
+        className={`text-2xl mb-4 transition-colors priority-workflow-card__title ${
+          completed
+            ? 'text-green-800'
+            : 'text-gray-800 group-hover:text-purple-600'
+        }`}
+      >
         {workflowTitle}
       </h2>
 
       {/* Metadata Badges */}
-      <div className="flex items-center gap-4 text-sm text-gray-500">
-        <span className={`px-3 py-1 ${getPriorityColor()} rounded-full text-xs font-medium`}>
+      <div className="flex items-center gap-4 text-sm text-gray-500 priority-workflow-card__meta" data-testid="priority-workflow-meta">
+        <span className={`px-3 py-1 ${getPriorityColor()} rounded-full text-xs font-medium priority-workflow-card__priority-badge`} data-testid="priority-workflow-priority">
           {priority}
         </span>
-        <span>Due: {dueDate}</span>
+        <span className="priority-workflow-card__due-date" data-testid="priority-workflow-due">Due: {dueDate}</span>
         {arr && (
           <>
             <span>•</span>
-            <span>{arr} ARR</span>
+            <span className="priority-workflow-card__arr" data-testid="priority-workflow-arr">{arr} ARR</span>
           </>
         )}
       </div>

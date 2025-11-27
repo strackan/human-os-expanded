@@ -249,19 +249,24 @@ export default function TodaysWorkflows({
   // NEW: Show loading state with zen styling
   if (loadingDb) {
     return (
-      <div className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm ${className}`}>
-        <div className="flex items-center gap-3 mb-4">
+      <div
+        id="todays-workflows"
+        data-testid="todays-workflows"
+        data-loading="true"
+        className={`bg-white/80 backdrop-blur-sm rounded-3xl p-6 border border-gray-200 shadow-sm todays-workflows todays-workflows--loading ${className}`}
+      >
+        <div className="flex items-center gap-3 mb-4 todays-workflows__header">
           <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
             <Sparkles className="w-5 h-5 text-purple-500" />
           </div>
           <div>
-            <h3 className="text-lg text-gray-700">Today's {TERMINOLOGY.WORKFLOW_PLURAL}</h3>
-            <p className="text-sm text-gray-400">Loading...</p>
+            <h3 className="text-lg text-gray-700 todays-workflows__title">Today's {TERMINOLOGY.WORKFLOW_PLURAL}</h3>
+            <p className="text-sm text-gray-400 todays-workflows__subtitle">Loading...</p>
           </div>
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 todays-workflows__skeleton-list">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse"></div>
+            <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse todays-workflows__skeleton-item"></div>
           ))}
         </div>
       </div>
@@ -269,17 +274,26 @@ export default function TodaysWorkflows({
   }
 
   return (
-    <div data-section="todays-plays" className={`bg-white/60 backdrop-blur-sm rounded-3xl p-6 border border-purple-100 shadow-sm ${className}`}>
+    <div
+      id="todays-workflows"
+      data-testid="todays-workflows"
+      data-section="todays-plays"
+      data-loading="false"
+      data-expanded={isExpanded}
+      data-view-mode={viewMode}
+      className={`bg-white/60 backdrop-blur-sm rounded-3xl p-6 border border-purple-100 shadow-sm todays-workflows ${className}`}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 todays-workflows__header">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          <span className="text-sm text-purple-600 font-medium">Today's Plays</span>
+          <Sparkles className="w-5 h-5 text-purple-400 todays-workflows__icon" />
+          <span className="text-sm text-purple-600 font-medium todays-workflows__label">Today's Plays</span>
         </div>
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-gray-400 hover:text-gray-600 transition-colors todays-workflows__expand-btn"
           aria-label={isExpanded ? 'Collapse' : 'Expand'}
+          data-testid="todays-workflows-expand-btn"
         >
           {isExpanded ? (
             <ChevronDown className="w-5 h-5" />
@@ -290,12 +304,13 @@ export default function TodaysWorkflows({
       </div>
 
       {/* Tabs - Always visible */}
-      <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
+      <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl todays-workflows__tabs" data-testid="todays-workflows-tabs">
         <button
           onClick={() => setViewMode('all')}
-          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+          data-testid="todays-workflows-tab-all"
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all todays-workflows__tab ${
             viewMode === 'all'
-              ? 'bg-white text-purple-600 shadow-sm'
+              ? 'bg-white text-purple-600 shadow-sm todays-workflows__tab--active'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -303,9 +318,10 @@ export default function TodaysWorkflows({
         </button>
         <button
           onClick={() => setViewMode('new')}
-          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+          data-testid="todays-workflows-tab-new"
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all todays-workflows__tab ${
             viewMode === 'new'
-              ? 'bg-white text-purple-600 shadow-sm'
+              ? 'bg-white text-purple-600 shadow-sm todays-workflows__tab--active'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -313,9 +329,10 @@ export default function TodaysWorkflows({
         </button>
         <button
           onClick={() => setViewMode('due')}
-          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+          data-testid="todays-workflows-tab-due"
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all todays-workflows__tab ${
             viewMode === 'due'
-              ? 'bg-white text-purple-600 shadow-sm'
+              ? 'bg-white text-purple-600 shadow-sm todays-workflows__tab--active'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -323,9 +340,10 @@ export default function TodaysWorkflows({
         </button>
         <button
           onClick={() => setViewMode('category')}
-          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+          data-testid="todays-workflows-tab-category"
+          className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-all todays-workflows__tab ${
             viewMode === 'category'
-              ? 'bg-white text-purple-600 shadow-sm'
+              ? 'bg-white text-purple-600 shadow-sm todays-workflows__tab--active'
               : 'text-gray-600 hover:text-gray-800'
           }`}
         >
@@ -334,13 +352,13 @@ export default function TodaysWorkflows({
       </div>
 
       {/* Workflow List View */}
-      <div className="space-y-3">
+      <div className="space-y-3 todays-workflows__list" data-testid="todays-workflows-list">
         {/* Empty State */}
         {workflows.length === 0 && hasRealData && (
-          <div className="text-center py-12">
-            <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-700 mb-2">No workflows available</h3>
-            <p className="text-sm text-gray-500 max-w-sm mx-auto">
+          <div className="text-center py-12 todays-workflows__empty-state" data-testid="todays-workflows-empty">
+            <Target className="w-12 h-12 text-gray-300 mx-auto mb-4 todays-workflows__empty-icon" />
+            <h3 className="text-lg font-medium text-gray-700 mb-2 todays-workflows__empty-title">No workflows available</h3>
+            <p className="text-sm text-gray-500 max-w-sm mx-auto todays-workflows__empty-message">
               You don't have any active workflows assigned yet. Workflows will appear here when they're created and assigned to you.
             </p>
           </div>
@@ -351,12 +369,18 @@ export default function TodaysWorkflows({
           const item = workflows[0];
           const WorkflowIcon = getWorkflowIcon(item.workflow, (item as any).workflowData?.workflow_type);
           return (
-            <div className={`p-4 rounded-xl border transition-all hover:shadow-sm ${getCardStyles(item.priority, item.complete)}`}>
+            <div
+              data-testid="workflow-item-0"
+              data-workflow-id={(item as any).workflowData?.workflowId}
+              data-priority={item.priority?.toLowerCase()}
+              data-complete={item.complete}
+              className={`p-4 rounded-xl border transition-all hover:shadow-sm todays-workflows__item ${getCardStyles(item.priority, item.complete)}`}
+            >
               <div className="flex items-start gap-3">
-                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getIconColor(item.priority)}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">{item.customer}</p>
-                  <p className="text-xs text-gray-500">{item.workflow}</p>
+                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 todays-workflows__item-icon ${getIconColor(item.priority)}`} />
+                <div className="flex-1 min-w-0 todays-workflows__item-content">
+                  <p className="text-sm text-gray-700 mb-1 todays-workflows__item-customer">{item.customer}</p>
+                  <p className="text-xs text-gray-500 todays-workflows__item-workflow">{item.workflow}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -365,8 +389,9 @@ export default function TodaysWorkflows({
                     }
                   }}
                   disabled={item.complete}
-                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1 todays-workflows__item-launch-btn"
                   aria-label="Launch workflow"
+                  data-testid="workflow-launch-btn-0"
                 >
                   <Play className="w-4 h-4" />
                 </button>
@@ -379,12 +404,19 @@ export default function TodaysWorkflows({
         {isExpanded && workflows.slice(1).map((item, idx) => {
           const WorkflowIcon = getWorkflowIcon(item.workflow, (item as any).workflowData?.workflow_type);
           return (
-            <div key={idx + 1} className={`p-4 rounded-xl border transition-all hover:shadow-sm ${getCardStyles(item.priority, item.complete)}`}>
+            <div
+              key={idx + 1}
+              data-testid={`workflow-item-${idx + 1}`}
+              data-workflow-id={(item as any).workflowData?.workflowId}
+              data-priority={item.priority?.toLowerCase()}
+              data-complete={item.complete}
+              className={`p-4 rounded-xl border transition-all hover:shadow-sm todays-workflows__item ${getCardStyles(item.priority, item.complete)}`}
+            >
               <div className="flex items-start gap-3">
-                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 ${getIconColor(item.priority)}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700 mb-1">{item.customer}</p>
-                  <p className="text-xs text-gray-500">{item.workflow}</p>
+                <WorkflowIcon className={`w-4 h-4 mt-0.5 flex-shrink-0 todays-workflows__item-icon ${getIconColor(item.priority)}`} />
+                <div className="flex-1 min-w-0 todays-workflows__item-content">
+                  <p className="text-sm text-gray-700 mb-1 todays-workflows__item-customer">{item.customer}</p>
+                  <p className="text-xs text-gray-500 todays-workflows__item-workflow">{item.workflow}</p>
                 </div>
                 <button
                   onClick={() => {
@@ -393,8 +425,9 @@ export default function TodaysWorkflows({
                     }
                   }}
                   disabled={item.complete}
-                  className="text-gray-400 hover:text-purple-500 transition-colors p-1"
+                  className="text-gray-400 hover:text-purple-500 transition-colors p-1 todays-workflows__item-launch-btn"
                   aria-label="Launch workflow"
+                  data-testid={`workflow-launch-btn-${idx + 1}`}
                 >
                   <Play className="w-4 h-4" />
                 </button>
