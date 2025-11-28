@@ -4,6 +4,8 @@ import { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 import { getWorkflowConfig } from '@/config/workflows';
 import { useWorkflowContext } from '@/lib/data-providers';
 import { useToast } from '@/components/ui/ToastProvider';
+import { useWorkflowPersistence } from '@/hooks/useWorkflowPersistence';
+import { fromSerializableMessage } from '@/lib/persistence/types';
 
 /**
  * Fetch LLM-generated greeting from server API
@@ -40,6 +42,8 @@ interface UseTaskModeStateProps {
   workflowId: string;
   customerId: string;
   customerName: string;
+  executionId?: string; // For state persistence
+  userId?: string; // For state persistence
   onClose: (completed?: boolean) => void;
   sequenceInfo?: {
     sequenceId: string;
@@ -55,6 +59,8 @@ export function useTaskModeState({
   workflowId,
   customerId,
   customerName,
+  executionId,
+  userId,
   onClose,
   sequenceInfo,
   prefetchedGreeting
@@ -63,6 +69,7 @@ export function useTaskModeState({
   console.log('[useTaskModeState] Received props:', {
     workflowId,
     customerId,
+    executionId,
     prefetchedGreeting: prefetchedGreeting ? prefetchedGreeting.substring(0, 30) + '...' : null,
   });
 
@@ -144,6 +151,110 @@ export function useTaskModeState({
   const [currentBranch, setCurrentBranch] = useState<string | null>(null);
   const [chatInputValue, setChatInputValue] = useState('');
   const chatInputRef = useRef<HTMLInputElement>(null);
+
+  // ============================================================
+  // STATE PERSISTENCE
+  // ============================================================
+
+  // Track whether we're currently restoring state (to prevent auto-save during restore)
+  const [isRestoringState, setIsRestoringState] = useState(true);
+  const hasRestoredRef = useRef(false);
+
+  // Persistence hook
+  const {
+    loadState,
+    saveState,
+    saveStateImmediate,
+    isReady: isPersistenceReady,
+  } = useWorkflowPersistence({
+    executionId,
+    userId,
+    enabled: !!executionId && !!userId,
+  });
+
+  // Restore state on mount (when persistence is ready)
+  useEffect(() => {
+    if (!isPersistenceReady || hasRestoredRef.current) {
+      return;
+    }
+
+    const restoreState = async () => {
+      console.log('[useTaskModeState] Attempting to restore saved state...');
+      const savedState = await loadState();
+
+      if (savedState) {
+        console.log('[useTaskModeState] Restoring saved state:', {
+          slideIndex: savedState.currentSlideIndex,
+          completedCount: savedState.completedSlides.length,
+          messageCount: savedState.chatMessages.length,
+        });
+
+        // Restore navigation state
+        setCurrentSlideIndex(savedState.currentSlideIndex);
+        setCompletedSlides(new Set(savedState.completedSlides));
+        setSkippedSlides(new Set(savedState.skippedSlides));
+
+        // Restore workflow data
+        setWorkflowState(savedState.workflowData || {});
+
+        // Restore chat messages (convert from serializable format)
+        if (savedState.chatMessages && savedState.chatMessages.length > 0) {
+          const restoredMessages = savedState.chatMessages.map(fromSerializableMessage);
+          setChatMessages(restoredMessages);
+        }
+
+        // Restore branch state
+        setCurrentBranch(savedState.currentBranch);
+
+        showToast({
+          message: 'Workflow progress restored',
+          type: 'info',
+          icon: 'check',
+          duration: 2000,
+        });
+      } else {
+        console.log('[useTaskModeState] No saved state found, starting fresh');
+      }
+
+      hasRestoredRef.current = true;
+      setIsRestoringState(false);
+    };
+
+    restoreState();
+  }, [isPersistenceReady, loadState, showToast]);
+
+  // Auto-save when state changes (debounced via persistence service)
+  useEffect(() => {
+    // Don't save while restoring or if persistence isn't ready
+    if (isRestoringState || !isPersistenceReady) {
+      return;
+    }
+
+    // Don't save if we haven't actually loaded yet
+    if (!hasRestoredRef.current) {
+      return;
+    }
+
+    console.log('[useTaskModeState] Auto-saving state...');
+    saveState({
+      currentSlideIndex,
+      completedSlides,
+      skippedSlides,
+      workflowState,
+      chatMessages,
+      currentBranch,
+    });
+  }, [
+    currentSlideIndex,
+    completedSlides,
+    skippedSlides,
+    workflowState,
+    chatMessages,
+    currentBranch,
+    isRestoringState,
+    isPersistenceReady,
+    saveState,
+  ]);
 
   // ============================================================
   // NAVIGATION HANDLERS
@@ -282,9 +393,31 @@ export function useTaskModeState({
     }, 1500);
   }, [sequenceInfo, onClose, showToast]);
 
-  const handleClose = useCallback(() => {
+  const handleClose = useCallback(async () => {
+    // Force save state before closing
+    if (isPersistenceReady && hasRestoredRef.current) {
+      console.log('[useTaskModeState] Force saving before close...');
+      await saveStateImmediate({
+        currentSlideIndex,
+        completedSlides,
+        skippedSlides,
+        workflowState,
+        chatMessages,
+        currentBranch,
+      });
+    }
     onClose();
-  }, [onClose]);
+  }, [
+    onClose,
+    isPersistenceReady,
+    saveStateImmediate,
+    currentSlideIndex,
+    completedSlides,
+    skippedSlides,
+    workflowState,
+    chatMessages,
+    currentBranch,
+  ]);
 
   const skipStep = useCallback((stepIndex: number) => {
     console.log('[TaskMode] Skip step:', stepIndex);

@@ -72,7 +72,35 @@ export const alignStrategySlide: UniversalSlideBuilder = (context): any => ({
     },
 
     artifacts: {
-      sections: [],
+      sections: [
+        {
+          id: 'strategy-options',
+          type: 'document' as const,
+          title: 'Strategy Options',
+          visible: true,
+          content: `# Renewal Strategy Options
+
+## Standard Renewal
+Focus on maintaining the relationship and ensuring a smooth renewal process.
+- Highlight ongoing value delivery
+- Review contract terms
+- Confirm pricing
+
+## Expansion Play
+Position for account growth and additional value.
+- Present usage trends showing potential for growth
+- Propose additional seats or features
+- Demonstrate ROI of expanded investment
+
+## At-Risk Recovery
+Address concerns and reinforce value proposition.
+- Acknowledge any challenges
+- Present remediation plan
+- Offer concessions if needed
+`,
+          editable: false,
+        },
+      ],
     },
 
     sidePanel: {

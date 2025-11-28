@@ -71,10 +71,30 @@ export default function ChatRenderer({
   const [pendingComponentValue, setPendingComponentValue] = useState<any>(null);
   const [currentComponentId, setCurrentComponentId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastSeparatorRef = useRef<HTMLDivElement>(null);
+  const previousSlideIdRef = useRef<string | null>(null);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll behavior:
+  // - When a new slide starts (separator added), scroll to the separator (top of new section)
+  // - Otherwise, scroll to the bottom for new messages
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (chatMessages.length === 0) return;
+
+    // Find the most recent separator to detect slide changes
+    const lastSeparator = [...chatMessages].reverse().find(m => m.isSlideSeparator || m.isDivider);
+    const currentSlideId = lastSeparator?.slideId || chatMessages[chatMessages.length - 1]?.slideId;
+
+    // Check if we just entered a new slide
+    if (lastSeparator && currentSlideId !== previousSlideIdRef.current) {
+      // Scroll to the separator (top of new section)
+      setTimeout(() => {
+        lastSeparatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      previousSlideIdRef.current = currentSlideId || null;
+    } else {
+      // Normal case: scroll to bottom for new messages
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [chatMessages]);
 
   // Handle inline component value changes
@@ -518,10 +538,18 @@ export default function ChatRenderer({
     <div className="flex items-start justify-center p-12 h-full overflow-y-auto">
       <div className="max-w-2xl w-full space-y-6">
         {chatMessages.map((message, index) => {
+          // Check if this is the last separator in the list (for scroll ref)
+          const isLastSeparator = (message.isSlideSeparator || message.isDivider) &&
+            !chatMessages.slice(index + 1).some(m => m.isSlideSeparator || m.isDivider);
+
           // Render slide separator
           if (message.isSlideSeparator) {
             return (
-              <div key={message.id} className="flex items-center gap-3 py-2">
+              <div
+                key={message.id}
+                ref={isLastSeparator ? lastSeparatorRef : undefined}
+                className="flex items-center gap-3 py-2"
+              >
                 <div className="flex-1 h-px bg-gray-300" />
                 <span className="text-xs text-gray-500 font-medium px-2">
                   {message.text}
@@ -532,9 +560,13 @@ export default function ChatRenderer({
           }
 
           // Handle system/divider messages (slide transitions in continuous chat)
-          if (message.sender === 'system' || message.isDivider || message.isSlideSeparator) {
+          if (message.sender === 'system' || message.isDivider) {
             return (
-              <div key={message.id} className="flex items-center justify-center my-4">
+              <div
+                key={message.id}
+                ref={isLastSeparator ? lastSeparatorRef : undefined}
+                className="flex items-center justify-center my-4"
+              >
                 <div className="flex items-center gap-3 text-xs text-gray-400">
                   <div className="h-px w-12 bg-gray-200"></div>
                   <span className="font-medium uppercase tracking-wider">{message.text}</span>

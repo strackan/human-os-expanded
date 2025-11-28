@@ -183,12 +183,135 @@ export const scheduleCallSlide: SlideBuilder = createSlideBuilder(
 
     return {
       id: 'schedule-call',
-      title: 'Schedule Call',
+      title: 'Schedule Meeting',
       description: 'Schedule and prepare for customer calls',
-      label: 'Call',
+      label: 'Meeting',
       stepMapping: 'schedule-call',
-      chat: { initialMessage: undefined, branches: {} },
-      artifacts: { sections: [] },
+      showSideMenu: true,
+
+      chat: {
+        generateInitialMessage: true,
+        llmPrompt: `You are helping schedule a meeting with {{customer.name}}.
+
+Call type: ${purpose.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+Duration: ${duration} minutes
+Urgency: ${urgency}
+Suggested timing: ${schedulingSuggestion}
+
+Provide a brief message (2-3 sentences) explaining that you're ready to help schedule this meeting. Mention the suggested timeframe and ask if they're ready to draft the calendar invite.`,
+        initialMessage: {
+          text: context?.variables?.message ||
+            `Let's get this meeting on the books! Based on the renewal timeline, I recommend scheduling ${schedulingSuggestion}. I can help you draft the calendar invite and email to {{customer.primary_contact_name}}.`,
+          buttons: [
+            {
+              label: 'Draft calendar invite',
+              value: 'draft-invite',
+              'label-background': 'bg-blue-600',
+              'label-text': 'text-white',
+            },
+            {
+              label: 'I\'ll schedule it myself',
+              value: 'self-schedule',
+              'label-background': 'bg-gray-100',
+              'label-text': 'text-gray-700',
+            },
+          ],
+          nextBranches: {
+            'draft-invite': 'show-invite',
+            'self-schedule': 'confirm-self',
+          },
+        },
+        branches: {
+          'show-invite': {
+            response: `Here's a draft calendar invite for your ${duration}-minute meeting:\n\n**Subject:** {{customer.name}} - Renewal Discussion\n**Duration:** ${duration} minutes\n**Attendees:** {{customer.primary_contact_name}}, {{csm.name}}\n\n**Agenda:**\n${agendaItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}\n\nWould you like me to help you send this?`,
+            buttons: [
+              {
+                label: 'Looks good, continue',
+                value: 'continue',
+                'label-background': 'bg-green-600',
+                'label-text': 'text-white',
+              },
+              {
+                label: 'Edit the invite',
+                value: 'edit-invite',
+                'label-background': 'bg-gray-100',
+                'label-text': 'text-gray-700',
+              },
+            ],
+            nextBranches: {
+              'continue': 'proceed',
+              'edit-invite': 'editing',
+            },
+          },
+          'confirm-self': {
+            response: 'No problem! Make sure to schedule it ${schedulingSuggestion}. Ready to continue to the summary?',
+            buttons: [
+              {
+                label: 'Continue to summary',
+                value: 'continue',
+                'label-background': 'bg-blue-600',
+                'label-text': 'text-white',
+              },
+            ],
+            nextBranches: {
+              'continue': 'proceed',
+            },
+          },
+          'editing': {
+            response: 'What would you like to change about the invite? You can adjust the duration, agenda items, or attendees.',
+            buttons: [
+              {
+                label: 'Done editing',
+                value: 'done-editing',
+                'label-background': 'bg-blue-600',
+                'label-text': 'text-white',
+              },
+            ],
+            nextBranches: {
+              'done-editing': 'proceed',
+            },
+          },
+          'proceed': {
+            response: 'Great! The meeting is ready to be scheduled. Let\'s move on to wrap up this workflow.',
+            actions: ['nextSlide'],
+          },
+        },
+        defaultMessage: 'Let me know if you have any questions about scheduling this meeting.',
+        userTriggers: {},
+      },
+
+      artifacts: {
+        sections: [
+          {
+            id: 'meeting-details',
+            type: 'document' as const,
+            title: 'Meeting Details',
+            visible: true,
+            content: `# Meeting: {{customer.name}} Renewal Discussion
+
+## Overview
+- **Type:** ${purpose.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+- **Duration:** ${duration} minutes
+- **Urgency:** ${urgency.charAt(0).toUpperCase() + urgency.slice(1)}
+- **Schedule by:** ${schedulingSuggestion}
+
+## Attendees
+- {{customer.primary_contact_name}} (Customer)
+- {{csm.name}} (CSM)
+
+## Agenda
+${agendaItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}
+
+## Preparation
+- Review recent customer activity and usage metrics
+- Prepare relevant slides and documents
+- Review key messages and talking points
+`,
+            editable: true,
+          },
+        ],
+      },
+
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping schedule and prepare for a customer success call.`,

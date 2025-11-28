@@ -20,6 +20,7 @@ import { createWorkflowExecution } from '@/lib/workflows/actions';
 import { registerWorkflowConfig } from '@/config/workflows/index';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
+import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenceService';
 
 /**
  * Fetch LLM-generated greeting from server API
@@ -56,6 +57,16 @@ export default function DashboardClient() {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [workflowStatus, setWorkflowStatus] = useState<string>('in_progress');
   const [isLaunchingWorkflow, setIsLaunchingWorkflow] = useState(false);
+
+  // Resume dialog state
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
+  const [resumableExecution, setResumableExecution] = useState<{
+    executionId: string;
+    slideIndex: number;
+    savedAt: string;
+  } | null>(null);
+  const [pendingWorkflowConfig, setPendingWorkflowConfig] = useState<any>(null);
+  const [pendingGreeting, setPendingGreeting] = useState<string | null>(null);
 
   const userId = user?.id;
 
@@ -165,7 +176,30 @@ export default function DashboardClient() {
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
       console.log('[Dashboard] Config registered in workflow registry');
 
-      // Create workflow execution record
+      // Check for resumable execution before creating a new one
+      console.log('[Dashboard] Checking for resumable execution...');
+      const resumable = await WorkflowPersistenceService.checkForResumable(
+        workflowId,
+        customerId,
+        userId
+      );
+
+      if (resumable) {
+        console.log('[Dashboard] Found resumable execution:', resumable.executionId);
+        // Store config and greeting for later use
+        setPendingWorkflowConfig(workflowConfig);
+        setPendingGreeting(greetingResult.text);
+        setResumableExecution({
+          executionId: resumable.executionId,
+          slideIndex: resumable.snapshot.currentSlideIndex,
+          savedAt: resumable.snapshot.savedAt,
+        });
+        setShowResumeDialog(true);
+        setIsLaunchingWorkflow(false);
+        return;
+      }
+
+      // No resumable execution - create new one
       const executionResult = await createWorkflowExecution({
         workflowConfigId: workflowId,
         workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
@@ -252,6 +286,81 @@ export default function DashboardClient() {
     }
   };
 
+  // Resume dialog handlers
+  const handleResumeWorkflow = () => {
+    if (!resumableExecution || !pendingWorkflowConfig) return;
+
+    console.log('[Dashboard] Resuming workflow with execution:', resumableExecution.executionId);
+
+    setExecutionId(resumableExecution.executionId);
+    setWorkflowStatus('in_progress');
+    setActiveWorkflow({
+      workflowId: 'obsidian-black-renewal',
+      title: pendingWorkflowConfig.workflowName || 'Renewal Planning',
+      customerId: '550e8400-e29b-41d4-a716-446655440001',
+      customerName: 'Obsidian Black',
+      prefetchedGreeting: undefined, // Don't use greeting when resuming - let state restore handle it
+    });
+
+    // Clean up dialog state
+    setShowResumeDialog(false);
+    setResumableExecution(null);
+    setPendingWorkflowConfig(null);
+    setPendingGreeting(null);
+
+    setTaskModeOpen(true);
+  };
+
+  const handleStartFresh = async () => {
+    if (!pendingWorkflowConfig || !userId) return;
+
+    console.log('[Dashboard] Starting fresh - creating new execution');
+    setShowResumeDialog(false);
+
+    const workflowId = 'obsidian-black-renewal';
+    const customerId = '550e8400-e29b-41d4-a716-446655440001';
+    const customerName = 'Obsidian Black';
+
+    // Create new execution (the old one will remain but won't be resumed)
+    const executionResult = await createWorkflowExecution({
+      workflowConfigId: workflowId,
+      workflowName: pendingWorkflowConfig.workflowName || 'Renewal Planning',
+      workflowType: 'renewal',
+      customerId: customerId,
+      userId: userId,
+      assignedCsmId: userId,
+      totalSteps: pendingWorkflowConfig.slides?.length || 0,
+    });
+
+    if (executionResult.success && executionResult.executionId) {
+      console.log('[Dashboard] New execution created:', executionResult.executionId);
+      setExecutionId(executionResult.executionId);
+      setWorkflowStatus('in_progress');
+    }
+
+    setActiveWorkflow({
+      workflowId: workflowId,
+      title: pendingWorkflowConfig.workflowName || 'Renewal Planning',
+      customerId: customerId,
+      customerName: customerName,
+      prefetchedGreeting: pendingGreeting || undefined,
+    });
+
+    // Clean up dialog state
+    setResumableExecution(null);
+    setPendingWorkflowConfig(null);
+    setPendingGreeting(null);
+
+    setTaskModeOpen(true);
+  };
+
+  const handleCancelResume = () => {
+    setShowResumeDialog(false);
+    setResumableExecution(null);
+    setPendingWorkflowConfig(null);
+    setPendingGreeting(null);
+  };
+
   return (
     <div id="dashboard-root" data-testid="dashboard-root" className="w-full">
         {/* Zen Greeting */}
@@ -313,6 +422,56 @@ export default function DashboardClient() {
             onWorkflowAction={handleWorkflowAction}
             prefetchedGreeting={activeWorkflow.prefetchedGreeting}
           />
+        </div>
+      )}
+
+      {/* Resume Workflow Dialog */}
+      {showResumeDialog && resumableExecution && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Resume Previous Session?</h2>
+              <p className="text-gray-600">
+                You have an in-progress workflow from{' '}
+                {new Date(resumableExecution.savedAt).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Progress: Step {resumableExecution.slideIndex + 1}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleResumeWorkflow}
+                className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              >
+                Resume Where I Left Off
+              </button>
+              <button
+                onClick={handleStartFresh}
+                className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+              >
+                Start Fresh
+              </button>
+              <button
+                onClick={handleCancelResume}
+                className="w-full px-4 py-2 text-gray-500 hover:text-gray-700 text-sm transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

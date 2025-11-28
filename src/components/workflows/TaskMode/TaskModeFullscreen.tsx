@@ -90,6 +90,8 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     workflowId,
     customerId,
     customerName,
+    executionId,
+    userId,
     onClose,
     sequenceInfo,
     prefetchedGreeting
