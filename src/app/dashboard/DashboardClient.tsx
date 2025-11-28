@@ -51,11 +51,11 @@ export default function DashboardClient() {
     title: string;
     customerId: string;
     customerName: string;
+    prefetchedGreeting?: string; // Include greeting here for atomic state update
   } | null>(null);
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [workflowStatus, setWorkflowStatus] = useState<string>('in_progress');
   const [isLaunchingWorkflow, setIsLaunchingWorkflow] = useState(false);
-  const [prefetchedGreeting, setPrefetchedGreeting] = useState<string | null>(null);
 
   const userId = user?.id;
 
@@ -144,9 +144,6 @@ export default function DashboardClient() {
       console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
       console.log('[Dashboard] LLM greeting prefetched:', greetingResult.text.substring(0, 50) + '...');
 
-      // Store the prefetched greeting
-      setPrefetchedGreeting(greetingResult.text);
-
       // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
       console.log('[Dashboard] Config registered in workflow registry');
@@ -168,12 +165,13 @@ export default function DashboardClient() {
         setWorkflowStatus('in_progress');
       }
 
-      // Set active workflow
+      // Set active workflow (include prefetchedGreeting for atomic state update)
       setActiveWorkflow({
         workflowId: workflowId,
         title: (workflowConfig as any).workflowName || 'Renewal Planning',
         customerId: customerId,
-        customerName: customerName
+        customerName: customerName,
+        prefetchedGreeting: greetingResult.text
       });
 
       setTaskModeOpen(true);
@@ -296,7 +294,7 @@ export default function DashboardClient() {
             workflowStatus={workflowStatus}
             onClose={handleWorkflowComplete}
             onWorkflowAction={handleWorkflowAction}
-            prefetchedGreeting={prefetchedGreeting || undefined}
+            prefetchedGreeting={activeWorkflow.prefetchedGreeting}
           />
         </div>
       )}
