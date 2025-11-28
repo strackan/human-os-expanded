@@ -21,7 +21,7 @@ import { WorkflowSlide, InlineComponent, DynamicChatBranch } from '@/components/
 export interface ChatMessage {
   id: string;
   text: string;
-  sender: 'user' | 'ai';
+  sender: 'user' | 'ai' | 'system';
   timestamp: Date;
   component?: InlineComponent;
   componentValue?: any;
@@ -35,8 +35,10 @@ export interface ChatMessage {
   slideId?: string;
   /** Whether this message is from a previous slide (for visual distinction) */
   isHistorical?: boolean;
-  /** Separator message between slides */
+  /** Separator/divider message between slides (for continuous chat) */
   isSlideSeparator?: boolean;
+  /** Alias for isSlideSeparator */
+  isDivider?: boolean;
   /** Loading indicator for LLM generation in progress */
   isLoading?: boolean;
 }
@@ -525,6 +527,19 @@ export default function ChatRenderer({
                   {message.text}
                 </span>
                 <div className="flex-1 h-px bg-gray-300" />
+              </div>
+            );
+          }
+
+          // Handle system/divider messages (slide transitions in continuous chat)
+          if (message.sender === 'system' || message.isDivider || message.isSlideSeparator) {
+            return (
+              <div key={message.id} className="flex items-center justify-center my-4">
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  <div className="h-px w-12 bg-gray-200"></div>
+                  <span className="font-medium uppercase tracking-wider">{message.text}</span>
+                  <div className="h-px w-12 bg-gray-200"></div>
+                </div>
               </div>
             );
           }

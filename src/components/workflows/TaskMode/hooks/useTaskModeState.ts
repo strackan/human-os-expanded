@@ -633,12 +633,25 @@ export function useTaskModeState({
   // EFFECTS
   // ============================================================
 
-  // Initialize chat messages when slide changes
+  // Track previous slide index to detect slide changes
+  const prevSlideIndexRef = useRef<number>(-1);
+
+  // Initialize/update chat messages when slide changes (CONTINUOUS CHAT)
   useEffect(() => {
     if (!currentSlide) return;
 
-    // Reset chat for new slide
-    setChatMessages([]);
+    // Check if this is actually a new slide (not just a re-render)
+    const isNewSlide = prevSlideIndexRef.current !== currentSlideIndex;
+    const isFirstSlide = currentSlideIndex === 0 && prevSlideIndexRef.current === -1;
+
+    if (!isNewSlide && !isFirstSlide) {
+      return; // No slide change, don't modify chat
+    }
+
+    // Update the ref for next comparison
+    prevSlideIndexRef.current = currentSlideIndex;
+
+    // Reset branch state for new slide
     setCurrentBranch(null);
 
     // Add initial message if present
@@ -652,7 +665,7 @@ export function useTaskModeState({
       const hasPrefetchedGreeting = hasExternalPrefetch || hasInternalPrefetch;
 
       // Debug logging for prefetch
-      console.log('[Chat Init] Slide:', currentSlide.id, 'Index:', currentSlideIndex);
+      console.log('[Chat Init] Slide:', currentSlide.id, 'Index:', currentSlideIndex, 'isNewSlide:', isNewSlide);
       console.log('[Chat Init] isGreetingSlide:', isGreetingSlide, 'hasExternalPrefetch:', hasExternalPrefetch);
       console.log('[Chat Init] prefetchedGreeting prop:', prefetchedGreeting ? prefetchedGreeting.substring(0, 50) + '...' : 'null');
 
@@ -669,7 +682,7 @@ export function useTaskModeState({
       }
 
       const initialMessage: ChatMessage = {
-        id: `ai-initial-${currentSlideIndex}`,
+        id: `ai-initial-${currentSlideIndex}-${Date.now()}`,
         text: messageText,
         sender: 'ai',
         timestamp: new Date(),
@@ -677,13 +690,28 @@ export function useTaskModeState({
         buttons: currentSlide.chat.initialMessage.buttons
       };
 
-      // Apply typing animation delay for first slide only (but skip if we have prefetched greeting - already waited)
-      if (currentSlideIndex === 0 && !hasPrefetchedGreeting) {
-        setTimeout(() => {
+      // For the first slide, start fresh. For subsequent slides, append to existing chat.
+      if (isFirstSlide) {
+        // First slide - start with empty chat, then add message
+        if (!hasPrefetchedGreeting) {
+          // Apply typing animation delay if no prefetch
+          setTimeout(() => {
+            setChatMessages([initialMessage]);
+          }, 500);
+        } else {
           setChatMessages([initialMessage]);
-        }, 500);
+        }
       } else {
-        setChatMessages([initialMessage]);
+        // Subsequent slides - add a divider and the new slide's message (CONTINUOUS CHAT)
+        const dividerMessage: ChatMessage = {
+          id: `divider-${currentSlideIndex}-${Date.now()}`,
+          text: `───── ${currentSlide.title || currentSlide.label || 'Next Step'} ─────`,
+          sender: 'system',
+          timestamp: new Date(),
+          isDivider: true,
+        };
+
+        setChatMessages(prev => [...prev, dividerMessage, initialMessage]);
       }
 
       // Set initial branch if component present
