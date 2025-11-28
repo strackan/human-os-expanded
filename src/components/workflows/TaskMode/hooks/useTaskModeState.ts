@@ -644,6 +644,11 @@ export function useTaskModeState({
       const hasInternalPrefetch = prefetchedGreetingRef.current?.ready && prefetchedGreetingRef.current?.text;
       const hasPrefetchedGreeting = hasExternalPrefetch || hasInternalPrefetch;
 
+      // Debug logging for prefetch
+      console.log('[Chat Init] Slide:', currentSlide.id, 'Index:', currentSlideIndex);
+      console.log('[Chat Init] isGreetingSlide:', isGreetingSlide, 'hasExternalPrefetch:', hasExternalPrefetch);
+      console.log('[Chat Init] prefetchedGreeting prop:', prefetchedGreeting ? prefetchedGreeting.substring(0, 50) + '...' : 'null');
+
       // Use prefetched greeting if available for greeting slide, otherwise use config text
       let messageText = currentSlide.chat.initialMessage.text;
       if (isGreetingSlide && hasPrefetchedGreeting) {

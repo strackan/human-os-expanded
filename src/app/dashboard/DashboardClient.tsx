@@ -142,7 +142,8 @@ export default function DashboardClient() {
       }
 
       console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
-      console.log('[Dashboard] LLM greeting prefetched:', greetingResult.text.substring(0, 50) + '...');
+      console.log('[Dashboard] LLM greeting prefetched:', greetingResult.text);
+      console.log('[Dashboard] Full greeting text length:', greetingResult.text.length);
 
       // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
