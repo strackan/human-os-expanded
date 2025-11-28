@@ -84,6 +84,8 @@ export default function DashboardClient() {
   };
 
   const handleLaunchWorkflow = async () => {
+    console.log('[Dashboard] handleLaunchWorkflow called');
+
     if (!userId) {
       console.error('[Dashboard] No user ID available');
       return;
@@ -95,17 +97,22 @@ export default function DashboardClient() {
       return;
     }
 
+    console.log('[Dashboard] Setting isLaunchingWorkflow = true');
     setIsLaunchingWorkflow(true);
 
     try {
       console.log('[Dashboard] Launching database-driven workflow with LLM prefetch...');
       console.time('[Dashboard] Total workflow launch time');
+      console.log('[Dashboard] Starting LLM prefetch API call...');
 
       const workflowId = 'obsidian-black-renewal';
       const customerId = '550e8400-e29b-41d4-a716-446655440001';
       const customerName = 'Obsidian Black';
 
       // Run workflow config load AND LLM prefetch in parallel
+      console.log('[Dashboard] Starting Promise.all for workflow config + LLM prefetch');
+      const startTime = Date.now();
+
       const [workflowConfig, greetingResult] = await Promise.all([
         // Load workflow config from database
         composeFromDatabase(
@@ -121,18 +128,27 @@ export default function DashboardClient() {
             monthsToRenewal: 12,
             seatCount: 50,
           }
-        ),
+        ).then(result => {
+          console.log('[Dashboard] Workflow config loaded in', Date.now() - startTime, 'ms');
+          return result;
+        }),
         // Prefetch LLM greeting
         fetchGreetingFromAPI({
           customerName: customerName,
           workflowPurpose: 'renewal_preparation',
           slideId: 'greeting',
           fallbackGreeting: `Good afternoon! Let's prepare for ${customerName}'s renewal.`,
+        }).then(result => {
+          console.log('[Dashboard] LLM API returned in', Date.now() - startTime, 'ms');
+          console.log('[Dashboard] LLM greeting text:', result.text);
+          return result;
         }).catch((error) => {
-          console.warn('[Dashboard] LLM prefetch failed, will use fallback:', error);
+          console.warn('[Dashboard] LLM prefetch failed after', Date.now() - startTime, 'ms:', error);
           return { text: `Good afternoon! Let's prepare for ${customerName}'s renewal.`, toolsUsed: [], tokensUsed: 0 };
         }),
       ]);
+
+      console.log('[Dashboard] Promise.all completed in', Date.now() - startTime, 'ms');
 
       if (!workflowConfig) {
         console.error('[Dashboard] Failed to load workflow config');

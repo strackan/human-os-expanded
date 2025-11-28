@@ -22,39 +22,43 @@ INSERT INTO public.workflow_definitions (
   'renewal',
   'Renewal workflow using V2 template-based architecture',
   -- slide_sequence: array of slide IDs
+  -- Phase 1: 90-day renewal preparation workflow
   ARRAY[
-    'greeting',
-    'review-account',
-    'pricing-analysis-v2',
-    'prepare-quote-v2',
-    'draft-email-v2',
-    'workflow-summary-v2'
+    'greeting',                    -- 1. Confirm Plan - Planning Checklist
+    'review-brand-performance',    -- 2. Performance Review - Usage Metrics
+    'review-contract-terms',       -- 3. Contract + Contact Review
+    'identify-opportunities',      -- 4. Expansion Analysis
+    'align-strategy',              -- 5. Align on Strategy (interactive)
+    'prepare-meeting-deck',        -- 6. Prepare Meeting Deck (autonomous)
+    'schedule-call',               -- 7. Schedule Meeting
+    'workflow-summary-v2'          -- 8. Summary
   ],
   -- slide_contexts: JSONB with per-slide configuration
   '{
     "greeting": {
       "purpose": "renewal_preparation",
-      "urgency": "critical",
+      "urgency": "medium",
       "variables": {
         "showPlanningChecklist": true,
         "checklistItems": [
-          "Review account health and contract details",
-          "Analyze current pricing vs. market benchmarks",
-          "Generate optimized renewal quote",
-          "Draft personalized outreach email",
-          "Create action plan and next steps"
+          "Review brand performance metrics and trends",
+          "Review contract terms and key contacts",
+          "Identify expansion and upsell opportunities",
+          "Align on 90-day engagement strategy",
+          "Prepare meeting deck for customer",
+          "Schedule renewal kick-off meeting"
         ],
         "checklistTitle": "Here''s what we''ll accomplish together:",
-        "greetingText": "Good afternoon, Justin. You''ve got one critical task for today:\n\n**Renewal Planning for {{customer.name}}.**\n\nWe need to review contract terms, make sure we''ve got the right contacts, and put our initial forecast in.\n\nThe full plan is on the right. Ready to get started?",
+        "enableLLMGreeting": true,
         "buttons": [
           {
-            "label": "Review Later",
+            "label": "Snooze",
             "value": "snooze",
             "label-background": "bg-gray-500 hover:bg-gray-600",
             "label-text": "text-white"
           },
           {
-            "label": "Let''s Begin!",
+            "label": "Let''s Begin",
             "value": "start",
             "label-background": "bg-blue-600 hover:bg-blue-700",
             "label-text": "text-white"
@@ -62,13 +66,37 @@ INSERT INTO public.workflow_definitions (
         ]
       }
     },
-    "review-account": {
+    "review-brand-performance": {
       "purpose": "renewal",
       "variables": {
-        "ask_for_assessment": false,
-        "focus_metrics": ["arr", "price_per_seat", "renewal_date", "health_score", "utilization", "yoy_growth"],
-        "insightText": "Please review {{customer.name}}''s current status to the right:\n\n**Key Insights:**\n• 20% usage increase over prior month\n• 4 months to renewal - time to engage\n• Paying less per unit than 65% of customers - Room for expansion\n• Recent negative comments in support - May need to investigate\n• Key contract items - 5% limit on price increases. Consider amendment.\n\nMake sure you''ve reviewed the contract and stakeholder. When you''re ready, click to move onto pricing.",
-        "buttonLabel": "Analyze Pricing Strategy"
+        "enableLLMGreeting": true
+      }
+    },
+    "review-contract-terms": {
+      "purpose": "renewal",
+      "variables": {}
+    },
+    "identify-opportunities": {
+      "purpose": "renewal",
+      "variables": {}
+    },
+    "align-strategy": {
+      "purpose": "renewal",
+      "variables": {
+        "strategyOptions": ["Standard Renewal", "Expansion Play", "At-Risk Recovery", "Multi-Year Deal"]
+      }
+    },
+    "prepare-meeting-deck": {
+      "purpose": "renewal",
+      "variables": {
+        "autonomous": true
+      }
+    },
+    "schedule-call": {
+      "purpose": "renewal",
+      "variables": {
+        "meetingType": "renewal_kickoff",
+        "suggestedDuration": 30
       }
     }
   }'::jsonb,

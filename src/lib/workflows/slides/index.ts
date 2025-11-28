@@ -39,6 +39,8 @@ import { identifyOpportunitiesSlide } from './renewal/identifyOpportunitiesSlide
 import { meetingDebriefSlide } from './renewal/meetingDebriefSlide';
 import { createRecommendationSlide } from './renewal/createRecommendationSlide';
 import { negotiationGuideSlide } from './renewal/negotiationGuideSlide';
+import { alignStrategySlide } from './renewal/alignStrategySlide';
+import { prepareMeetingDeckSlide } from './renewal/prepareMeetingDeckSlide';
 
 // InHerSight-specific slides
 import { reviewBrandPerformanceSlide } from './inhersight/reviewBrandPerformanceSlide';
@@ -103,6 +105,8 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'meeting-debrief': meetingDebriefSlide,
   'create-recommendation': createRecommendationSlide,
   'negotiation-guide': negotiationGuideSlide,
+  'align-strategy': alignStrategySlide,
+  'prepare-meeting-deck': prepareMeetingDeckSlide,
 
   // ========================================
   // INHERSIGHT-SPECIFIC SLIDES
