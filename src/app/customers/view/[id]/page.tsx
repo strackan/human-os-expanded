@@ -22,7 +22,8 @@ import { registerWorkflowConfig } from '@/config/workflows/index';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 // Note: INTEL enrichment happens via API routes, not client-side
 // The LLM greeting API fetches INTEL server-side
-import { createWorkflowExecution } from '@/lib/workflows/actions';
+// NOTE: createWorkflowExecution is now handled internally by TaskModeFullscreen
+// This allows it to check for resumable executions first
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { useAuth } from '@/components/auth/AuthProvider';
 
@@ -253,21 +254,12 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
       console.log('[Customer View] Config registered in workflow registry');
 
-      // Create workflow execution record
-      const executionResult = await createWorkflowExecution({
-        workflowConfigId: workflowId,
-        workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
-        workflowType: (workflowConfig as any).workflowType || 'renewal',
-        customerId: customer.id,
-        userId: user.id,
-        assignedCsmId: user.id,
-        totalSteps: workflowConfig.slides?.length || 0,
-      });
-
-      if (executionResult.success && executionResult.executionId) {
-        console.log('[Customer View] Workflow execution created:', executionResult.executionId);
-        setExecutionId(executionResult.executionId);
-      }
+      // NOTE: We no longer create executionId here.
+      // TaskModeFullscreen now handles resume detection internally and will:
+      // 1. Check for existing in-progress execution
+      // 2. Show resume dialog if found
+      // 3. Create new execution if needed
+      console.log('[Customer View] Deferring execution creation to TaskModeFullscreen for resume detection');
 
       // Prefetch LLM greeting while user waits (shows as "Launching..." on button)
       console.log('[Customer View] Prefetching LLM greeting...');

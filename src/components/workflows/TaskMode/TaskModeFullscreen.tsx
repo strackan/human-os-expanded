@@ -7,6 +7,7 @@
  * 1. Uses useTaskModeState hook for all state management
  * 2. Provides TaskModeContext to child components
  * 3. Composes child components (Header, Chat, Artifacts, Modals)
+ * 4. Handles resume detection for in-progress workflows
  *
  * This is the new modular architecture replacing the monolithic TaskModeFullscreen-v3.
  */
@@ -14,6 +15,8 @@
 import React, { useEffect, useState } from 'react';
 import TaskModeContext, { TaskModeContextValue } from './TaskModeContext';
 import { useTaskModeState } from './hooks/useTaskModeState';
+import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenceService';
+import { createWorkflowExecution } from '@/lib/workflows/actions';
 
 // TODO: Import child components when extracted
 // import TaskModeHeader from './components/TaskModeHeader';
@@ -70,7 +73,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     workflowTitle,
     customerId,
     customerName,
-    executionId,
+    executionId: propExecutionId, // Renamed to indicate it's from props
     userId,
     workflowStatus,
     onClose,
@@ -84,6 +87,152 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
 
   // Toast notifications
   const { showToast } = useToast();
+
+  // ============================================================
+  // RESUME DETECTION STATE
+  // ============================================================
+
+  // The actual executionId we'll use (may come from props or from resume detection)
+  const [effectiveExecutionId, setEffectiveExecutionId] = useState<string | undefined>(propExecutionId);
+
+  // Resume dialog state
+  const [resumeCheckState, setResumeCheckState] = useState<{
+    checking: boolean;
+    showDialog: boolean;
+    resumableExecution: { executionId: string; slideIndex: number; savedAt: string } | null;
+  }>({
+    checking: !propExecutionId, // Only check if no executionId was passed
+    showDialog: false,
+    resumableExecution: null,
+  });
+
+  // Check for resumable execution on mount
+  useEffect(() => {
+    // Skip if we already have an executionId from props
+    if (propExecutionId) {
+      console.log('[TaskModeFullscreen] Using provided executionId:', propExecutionId);
+      setEffectiveExecutionId(propExecutionId);
+      setResumeCheckState(prev => ({ ...prev, checking: false }));
+      return;
+    }
+
+    // Skip if we don't have required data
+    if (!workflowId || !customerId || !userId) {
+      console.log('[TaskModeFullscreen] Missing required data for resume check');
+      setResumeCheckState(prev => ({ ...prev, checking: false }));
+      return;
+    }
+
+    const checkForResume = async () => {
+      console.log('[TaskModeFullscreen] Checking for resumable execution...', {
+        workflowId,
+        customerId,
+        userId,
+      });
+
+      try {
+        const resumable = await WorkflowPersistenceService.checkForResumable(
+          workflowId,
+          customerId,
+          userId
+        );
+
+        if (resumable) {
+          console.log('[TaskModeFullscreen] Found resumable execution:', {
+            executionId: resumable.executionId,
+            slideIndex: resumable.snapshot.currentSlideIndex,
+            savedAt: resumable.snapshot.savedAt,
+          });
+
+          setResumeCheckState({
+            checking: false,
+            showDialog: true,
+            resumableExecution: {
+              executionId: resumable.executionId,
+              slideIndex: resumable.snapshot.currentSlideIndex,
+              savedAt: resumable.snapshot.savedAt || new Date().toISOString(),
+            },
+          });
+        } else {
+          console.log('[TaskModeFullscreen] No resumable execution found, will create new');
+          // No resumable - create new execution
+          await createNewExecution();
+        }
+      } catch (error) {
+        console.error('[TaskModeFullscreen] Error checking for resumable:', error);
+        // On error, create new execution
+        await createNewExecution();
+      }
+    };
+
+    checkForResume();
+  }, [propExecutionId, workflowId, customerId, userId]);
+
+  // Create a new workflow execution
+  const createNewExecution = async () => {
+    if (!userId) {
+      console.error('[TaskModeFullscreen] Cannot create execution - missing userId');
+      setResumeCheckState(prev => ({ ...prev, checking: false }));
+      return;
+    }
+
+    try {
+      console.log('[TaskModeFullscreen] Creating new workflow execution...');
+      const result = await createWorkflowExecution({
+        workflowConfigId: workflowId,
+        workflowName: workflowTitle || 'Workflow',
+        workflowType: 'renewal', // Default type
+        customerId,
+        userId,
+        assignedCsmId: userId,
+        totalSteps: 0, // Will be updated once config loads
+      });
+
+      if (result.success && result.executionId) {
+        console.log('[TaskModeFullscreen] New execution created:', result.executionId);
+        setEffectiveExecutionId(result.executionId);
+      } else {
+        console.error('[TaskModeFullscreen] Failed to create execution:', result.error);
+      }
+    } catch (error) {
+      console.error('[TaskModeFullscreen] Error creating execution:', error);
+    }
+
+    setResumeCheckState(prev => ({ ...prev, checking: false }));
+  };
+
+  // Handle resume dialog choices
+  const handleResume = () => {
+    if (resumeCheckState.resumableExecution) {
+      console.log('[TaskModeFullscreen] User chose to resume execution:', resumeCheckState.resumableExecution.executionId);
+      setEffectiveExecutionId(resumeCheckState.resumableExecution.executionId);
+      setResumeCheckState({
+        checking: false,
+        showDialog: false,
+        resumableExecution: null,
+      });
+
+      showToast({
+        message: 'Resuming your progress...',
+        type: 'info',
+        icon: 'check',
+        duration: 2000,
+      });
+    }
+  };
+
+  const handleStartFresh = async () => {
+    console.log('[TaskModeFullscreen] User chose to start fresh');
+    setResumeCheckState(prev => ({
+      ...prev,
+      showDialog: false,
+      checking: true,
+    }));
+    await createNewExecution();
+  };
+
+  // Use effectiveExecutionId for persistence
+  const executionId = effectiveExecutionId;
 
   // Get all state and handlers from the hook
   const state = useTaskModeState({
@@ -614,6 +763,75 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     skipStep: state.skipStep,
     snoozeStep: state.snoozeStep
   };
+
+  // Resume check loading state
+  if (resumeCheckState.checking) {
+    return (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center">
+        <div className="text-center text-gray-700">
+          <div className="inline-block w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p>Checking for saved progress...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Resume dialog
+  if (resumeCheckState.showDialog && resumeCheckState.resumableExecution) {
+    const savedDate = new Date(resumeCheckState.resumableExecution.savedAt);
+    const formattedDate = savedDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    return (
+      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center p-8">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Resume Previous Session?</h2>
+            <p className="text-gray-600">
+              You have an in-progress workflow for <strong>{customerName}</strong> saved from {formattedDate}.
+            </p>
+            <p className="text-sm text-gray-500 mt-2">
+              Step {resumeCheckState.resumableExecution.slideIndex + 1} of your workflow
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              onClick={handleResume}
+              className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Resume Where I Left Off
+            </button>
+            <button
+              onClick={handleStartFresh}
+              className="w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+            >
+              Start Fresh
+            </button>
+            <button
+              onClick={() => onClose()}
+              className="w-full px-6 py-3 text-gray-500 hover:text-gray-700 font-medium transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (!state.config && !state.configError) {
