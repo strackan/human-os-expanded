@@ -4,14 +4,134 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.1.7 (In Development)
+**Current Version:** 0.1.10 (Workflow Persistence)
 **Next Release:** 0.2.0 - Human OS Check-Ins (Target: Feb-Mar 2026)
+
+---
+
+## Release 0.1.10 - "Workflow Persistence" (November 28, 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### New Features
+
+- **Workflow State Persistence** - Never lose progress on in-flight workflows
+  - Auto-save on every state change (debounced 500ms)
+  - Automatic resume detection when reopening workflows
+  - Cross-device/browser state sync via Supabase
+  - localStorage cache for fast local reads
+
+- **LLM Response Caching** - Faster workflow launches
+  - Database-backed greeting cache (24hr TTL)
+  - Cache key: `customerId + workflowType`
+  - Zero LLM calls when reopening workflows for same customer
+  - Console logging shows cache hits/misses
+
+- **Auto-Resume UX** - Seamless workflow continuation
+  - No confirmation dialog - workflows resume automatically
+  - Toast notification "Resuming your progress..."
+  - Centralized resume detection in TaskModeFullscreen
+  - Works from any entry point (Dashboard, Customer View)
+
+### Technical Infrastructure
+
+- `src/lib/persistence/WorkflowPersistenceService.ts` - Core persistence logic
+- `src/lib/persistence/LLMCacheService.ts` - LLM response caching
+- `src/lib/persistence/types.ts` - Persistence type definitions
+- `src/hooks/useWorkflowPersistence.ts` - React hook for components
+- `supabase/migrations/20251129000000_workflow_state_persistence.sql`
+
+### Database Changes
+
+- New table: `workflow_state_snapshots` - Stores complete workflow state
+- New table: `workflow_state_audit` - Tracks state changes (future use)
+- New table: `llm_response_cache` - Caches LLM responses
+- RLS policies for user data isolation
+
+### Performance
+
+- State save: <100ms (debounced)
+- State restore: <200ms
+- Greeting cache hit: <50ms (vs 2-5s for LLM generation)
+
+---
+
+## Release 0.1.9 - "InHerSight Integration" (January 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### New Features
+
+- **InHerSight Customer Success Platform** - Complete CS tooling for employer branding
+  - Database schema extensions for InHerSight-specific metrics
+  - CSV import system for bulk data ingestion
+  - 5 demo customers with realistic renewal scenarios
+  - Brand Exposure Report artifact
+
+- **Scoring Engine** - Data-driven risk/opportunity assessment
+  - Rule-based scoring (free, <10ms, 75-80% accuracy)
+  - Claude hybrid scoring (for high-value accounts)
+  - ML-based POC (future training data collection)
+  - Configurable scoring strategy by customer segment
+
+- **90-Day Renewal Workflow** - Guided renewal planning
+  - 9-step workflow matching Grace's actual process
+  - Performance data review, contract analysis
+  - Meeting prep, deck generation, email drafts
+  - Time savings: 3-4 hours → <1 hour per renewal
+
+- **Workflow Template System** - Database-driven workflows
+  - `workflow_templates` table with base journey definitions
+  - `workflow_modifications` for scope-based inheritance
+  - Priority system: global (100), company (200), customer (300)
+  - Dual-mode deployment with feature flag
+
+### Database Changes
+
+- New tables: `workflow_templates`, `workflow_modifications`
+- InHerSight-specific: engagement metrics, contract details, contact enhancements
+- CSV import staging tables
+
+### Documentation
+
+- `docs/release-0.1.9-inhersight-summary.md` - Complete release guide
+- `docs/release-0.1.9-workflow-template-system-COMPLETE.md` - Template system docs
+
+---
+
+## Release 0.1.8 - "Code Optimizations" (November 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### Enhancements
+
+- **Trigger Evaluator Consolidation** - 59% code reduction
+  - `BaseTriggerEvaluator` abstract class
+  - `SkipTriggerEvaluatorV2`, `ReviewTriggerEvaluatorV2`, `EscalateTriggerEvaluatorV2`
+  - Unified trigger evaluation pattern
+
+- **TaskMode Modularization** - 1,151 lines → 6 focused components
+  - Separated concerns: state, chat, navigation, artifacts
+  - Improved maintainability and testability
+
+- **INTEL Storage Migration** - Supabase Storage for customer intelligence
+  - Moved from filesystem to cloud storage
+  - Cross-environment data consistency
+
+### Technical Infrastructure
+
+- `src/lib/services/triggers/BaseTriggerEvaluator.ts`
+- Integration tests for trigger evaluators
+- Comprehensive test suite
 
 ---
 
 ## Release 0.1.7 - "MCP Foundation" (November 22, 2025)
 
-**Status:** In Development
+**Status:** Released
 **Type:** Minor Release
 
 ### New Features
@@ -651,11 +771,15 @@ Details to be announced.
 
 | Version | Release Date | Status | Type | Key Feature |
 |---------|-------------|--------|------|-------------|
-| 0.1.6 | Nov 17, 2025 | Testing | Minor | Workflow Templates |
+| **0.1.10** | **Nov 28, 2025** | **Released** | **Minor** | **Workflow Persistence** |
+| 0.1.9 | Jan 2025 | Released | Minor | InHerSight Integration |
+| 0.1.8 | Nov 2025 | Released | Minor | Code Optimizations |
+| 0.1.7 | Nov 22, 2025 | Released | Minor | MCP Foundation |
+| 0.1.6 | Nov 17, 2025 | Released | Minor | Workflow Templates |
 | 0.1.5 | Nov 15-16, 2025 | Released | Minor | String-Tie + Optimization |
 | 0.1.4 | Nov 15, 2025 | Released | Minor | Skip & Review Systems |
 | 0.1.3 | Nov 15, 2025 | Released | Minor | Parking Lot System |
-| 0.1.2 | Nov 7-12, 2025 | Released | Minor | MCP Foundation |
+| 0.1.2 | Nov 7-12, 2025 | Released | Minor | MCP Registry |
 | 0.1.1 | Nov 2-8, 2025 | Released | Minor | Multi-Tenancy |
 | 0.1.0 | Oct 21 - Nov 6, 2025 | Released | Minor | Zen Dashboard |
 | 0.0.9 | Nov 1-6, 2025 | Released | Patch | Pre-Production Polish |
@@ -678,5 +802,5 @@ For bug reports, feature requests, or questions:
 
 ---
 
-**Last Updated:** November 18, 2025
-**Document Version:** 1.0
+**Last Updated:** November 28, 2025
+**Document Version:** 1.1
