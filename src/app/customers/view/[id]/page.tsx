@@ -635,6 +635,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
           customerId={activeWorkflow.customerId}
           customerName={activeWorkflow.customerName}
           executionId={executionId || undefined}
+          userId={user?.id}
           prefetchedGreeting={activeWorkflow.prefetchedGreeting}
           onClose={handleCloseTaskMode}
         />

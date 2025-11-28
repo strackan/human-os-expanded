@@ -121,7 +121,10 @@ export function useWorkflowPersistence({
 
   // Initialize service when executionId and userId are available
   useEffect(() => {
+    console.log('[useWorkflowPersistence] Init check - enabled:', enabled, 'executionId:', executionId, 'userId:', userId);
+
     if (!enabled || !executionId || !userId) {
+      console.log('[useWorkflowPersistence] Not ready - missing required values');
       setIsReady(false);
       return;
     }
@@ -129,6 +132,7 @@ export function useWorkflowPersistence({
     console.log('[useWorkflowPersistence] Initializing with execution:', executionId);
     serviceRef.current.initialize(executionId, userId);
     setIsReady(true);
+    console.log('[useWorkflowPersistence] Service ready');
 
     // Cleanup on unmount
     return () => {
