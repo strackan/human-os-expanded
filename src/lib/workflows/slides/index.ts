@@ -47,6 +47,7 @@ import { reviewBrandPerformanceSlide } from './inhersight/reviewBrandPerformance
 import { prepareFreebieSlide } from './inhersight/prepareFreebieSlide';
 import { deliverFreebieSlide } from './inhersight/deliverFreebieSlide';
 import { measureFreebieImpactSlide } from './inhersight/measureFreebieImpactSlide';
+import { accountReviewTabbedSlide } from './inhersight/accountReviewTabbedSlide';
 
 // V2 Slides (template-based)
 import { pricingAnalysisSlideV2 } from './renewal/pricingAnalysisSlideV2';
@@ -115,6 +116,7 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'prepare-freebie': prepareFreebieSlide,
   'deliver-freebie': deliverFreebieSlide,
   'measure-freebie-impact': measureFreebieImpactSlide,
+  'account-review-tabbed': accountReviewTabbedSlide,
 
   // ========================================
   // V2 SLIDES (Template-based - New Architecture)

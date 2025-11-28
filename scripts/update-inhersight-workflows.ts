@@ -34,13 +34,11 @@ async function updateWorkflows() {
       version: 1,
       slide_sequence: [
         'greeting',                  // 1. Confirm Plan - Planning Checklist
-        'review-brand-performance',  // 2. Performance Review - Usage Metrics
-        'review-contract-terms',     // 3. Contract + Contact Review
-        'identify-opportunities',    // 4. Expansion Analysis
-        'align-strategy',            // 5. Align on Strategy (interactive)
-        'prepare-meeting-deck',      // 6. Prepare Meeting Deck (autonomous)
-        'schedule-call',             // 7. Schedule Meeting
-        'workflow-summary'           // 8. Summary
+        'account-review-tabbed',     // 2. Performance Review - Tabbed: Usage | Contract | Contacts | Expansion | Risk
+        'align-strategy',            // 3. Align on Strategy (interactive)
+        'prepare-meeting-deck',      // 4. Prepare Meeting Deck (autonomous)
+        'schedule-call',             // 5. Schedule Meeting
+        'workflow-summary'           // 6. Summary
       ],
       slide_contexts: {
         greeting: {
@@ -49,9 +47,9 @@ async function updateWorkflows() {
           variables: {
             showPlanningChecklist: true,
             checklistItems: [
-              "Review account health and brand performance metrics",
-              "Check contract terms and key contacts",
-              "Identify expansion opportunities",
+              "Review account performance and usage metrics",
+              "Check contract terms and stakeholder contacts",
+              "Identify expansion opportunities and risks",
               "Align on renewal strategy",
               "Prepare meeting deck for customer call",
               "Schedule renewal conversation"
@@ -59,21 +57,20 @@ async function updateWorkflows() {
             checklistTitle: "Here's what we'll accomplish together:",
           }
         },
-        'review-brand-performance': {
+        'account-review-tabbed': {
           variables: {
+            tabs: [
+              { id: 'usage', label: 'Usage', icon: 'chart-bar' },
+              { id: 'contract', label: 'Contract', icon: 'document-text' },
+              { id: 'contacts', label: 'Contacts', icon: 'users' },
+              { id: 'expansion', label: 'Expansion', icon: 'trending-up' },
+              { id: 'risk', label: 'Risk', icon: 'exclamation-triangle' }
+            ],
+            defaultTab: 'usage',
             metricsToShow: ['brand_impressions', 'profile_views', 'apply_clicks', 'yoy_growth'],
-            reportType: 'brand-exposure',
-          }
-        },
-        'review-contract-terms': {
-          variables: {
             showContacts: true,
             showContractDetails: true,
-          }
-        },
-        'identify-opportunities': {
-          variables: {
-            focus: ['expansion', 'upsell', 'feature_adoption'],
+            expansionFocus: ['expansion', 'upsell', 'feature_adoption'],
           }
         },
         'align-strategy': {
