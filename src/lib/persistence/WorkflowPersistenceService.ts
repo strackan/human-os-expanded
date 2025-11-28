@@ -57,6 +57,8 @@ export class WorkflowPersistenceService {
       return;
     }
 
+    console.log('[Persistence] Queueing save - slide:', state.currentSlideIndex, 'messages:', state.chatMessages?.length || 0);
+
     // Store latest state for debounced save
     this.pendingSave = {
       ...state,

@@ -166,9 +166,11 @@ export function useWorkflowPersistence({
   const saveState = useCallback(
     (state: PersistableState) => {
       if (!isReady) {
+        console.log('[useWorkflowPersistence] saveState called but not ready');
         return;
       }
 
+      console.log('[useWorkflowPersistence] saveState called - slide:', state.currentSlideIndex, 'messages:', state.chatMessages.length);
       const snapshot = toPersistableSnapshot(state);
       serviceRef.current.save(snapshot as WorkflowStateSnapshot);
     },
