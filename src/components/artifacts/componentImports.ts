@@ -11,6 +11,7 @@ import PlanSummaryArtifact from './PlanSummaryArtifact';
 import PlanningChecklistEnhancedArtifact from './PlanningChecklistEnhancedArtifact';
 import { BrandPerformanceArtifact } from './workflows/BrandPerformanceArtifact';
 import ExpansionOverviewArtifact from './ExpansionOverviewArtifact';
+import PresentationTemplateStatusArtifact from './PresentationTemplateStatusArtifact';
 
 // TODO: Add other imports as they are confirmed to exist
 // import PriceRecommendationFlat from './pricing/PriceRecommendationFlat';
@@ -29,6 +30,7 @@ export const componentMap: Record<string, React.ComponentType<any>> = {
   'PlanningChecklistEnhancedArtifact': PlanningChecklistEnhancedArtifact,
   'BrandPerformanceArtifact': BrandPerformanceArtifact,
   'ExpansionOverviewArtifact': ExpansionOverviewArtifact,
+  'PresentationTemplateStatusArtifact': PresentationTemplateStatusArtifact,
   // TODO: Add other mappings as components are confirmed to exist
 };
 

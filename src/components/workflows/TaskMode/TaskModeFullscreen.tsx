@@ -79,6 +79,9 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     prefetchedGreeting
   } = props;
 
+  // Debug: Log props
+  console.log('[TaskModeFullscreen] Received prefetchedGreeting:', prefetchedGreeting ? prefetchedGreeting.substring(0, 30) + '...' : null);
+
   // Toast notifications
   const { showToast } = useToast();
 

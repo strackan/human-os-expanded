@@ -59,6 +59,13 @@ export function useTaskModeState({
   sequenceInfo,
   prefetchedGreeting
 }: UseTaskModeStateProps) {
+  // Debug: Log props on every render
+  console.log('[useTaskModeState] Received props:', {
+    workflowId,
+    customerId,
+    prefetchedGreeting: prefetchedGreeting ? prefetchedGreeting.substring(0, 30) + '...' : null,
+  });
+
   const { showToast } = useToast();
 
   // ============================================================
