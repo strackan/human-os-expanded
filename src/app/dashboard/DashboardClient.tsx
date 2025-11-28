@@ -24,13 +24,16 @@ import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenc
 
 /**
  * Fetch LLM-generated greeting from server API
+ * Includes customerId for cache support
  */
 async function fetchGreetingFromAPI(params: {
   customerName: string;
+  customerId?: string;
   workflowPurpose?: string;
+  workflowType?: string;
   slideId?: string;
   fallbackGreeting?: string;
-}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number }> {
+}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number; cached?: boolean }> {
   const response = await fetch('/api/workflows/greeting', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -143,14 +146,15 @@ export default function DashboardClient() {
           console.log('[Dashboard] Workflow config loaded in', Date.now() - startTime, 'ms');
           return result;
         }),
-        // Prefetch LLM greeting
+        // Prefetch LLM greeting (cached by customerId)
         fetchGreetingFromAPI({
           customerName: customerName,
-          workflowPurpose: 'renewal_preparation',
+          customerId: customerId,
+          workflowType: 'renewal',
           slideId: 'greeting',
           fallbackGreeting: `Good afternoon! Let's prepare for ${customerName}'s renewal.`,
         }).then(result => {
-          console.log('[Dashboard] LLM API returned in', Date.now() - startTime, 'ms');
+          console.log('[Dashboard] LLM API returned in', Date.now() - startTime, 'ms', result.cached ? '(CACHED)' : '(fresh)');
           console.log('[Dashboard] LLM greeting text:', result.text);
           return result;
         }).catch((error) => {
