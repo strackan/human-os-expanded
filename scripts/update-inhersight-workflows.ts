@@ -1,50 +1,204 @@
 import { createClient } from '@supabase/supabase-js';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
-const supabaseUrl = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
-const supabaseKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY || '';
+// Load environment variables from .env.local
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
+
+// Use environment variables for flexibility between environments
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://amugmkrihnjsxlpwdzcy.supabase.co';
+const supabaseKey = process.env.STAGING_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+console.log('Connecting to:', supabaseUrl);
 
 async function updateWorkflows() {
   const supabase = createClient(supabaseUrl, supabaseKey);
-  
-  // Update 90-Day Renewal Workflow
+
+  // Upsert 90-Day Renewal Workflow
+  // Phase 1: 90-day renewal preparation workflow
+  // Slides: greeting, review-brand-performance, review-contract-terms, identify-opportunities,
+  //         align-strategy, prepare-meeting-deck, schedule-call, workflow-summary
   const { data: data90, error: error90 } = await supabase
     .from('workflow_definitions')
-    .update({
+    .upsert({
+      workflow_id: 'inhersight-90day-renewal',
+      name: 'InHerSight 90-Day Renewal',
+      workflow_type: 'renewal',
+      description: "Grace's 90-day renewal workflow with performance review and strategy alignment",
+      company_id: null, // Stock workflow
+      module_id: 'customer-success',
+      is_active: true,
+      is_demo: false,
+      is_stock_workflow: true,
+      priority_weight: 800,
+      version: 1,
       slide_sequence: [
-        'greeting', 'review-brand-performance', 'review-contract-terms', 'identify-opportunities',
-        'draft-email', 'meeting-debrief', 'create-recommendation', 'draft-email',
-        'negotiation-guide', 'workflow-summary'
-      ]
+        'greeting',                  // 1. Confirm Plan - Planning Checklist
+        'review-brand-performance',  // 2. Performance Review - Usage Metrics
+        'review-contract-terms',     // 3. Contract + Contact Review
+        'identify-opportunities',    // 4. Expansion Analysis
+        'align-strategy',            // 5. Align on Strategy (interactive)
+        'prepare-meeting-deck',      // 6. Prepare Meeting Deck (autonomous)
+        'schedule-call',             // 7. Schedule Meeting
+        'workflow-summary'           // 8. Summary
+      ],
+      slide_contexts: {
+        greeting: {
+          purpose: 'renewal_preparation',
+          urgency: 'high',
+          variables: {
+            showPlanningChecklist: true,
+            checklistItems: [
+              "Review account health and brand performance metrics",
+              "Check contract terms and key contacts",
+              "Identify expansion opportunities",
+              "Align on renewal strategy",
+              "Prepare meeting deck for customer call",
+              "Schedule renewal conversation"
+            ],
+            checklistTitle: "Here's what we'll accomplish together:",
+          }
+        },
+        'review-brand-performance': {
+          variables: {
+            metricsToShow: ['brand_impressions', 'profile_views', 'apply_clicks', 'yoy_growth'],
+            reportType: 'brand-exposure',
+          }
+        },
+        'review-contract-terms': {
+          variables: {
+            showContacts: true,
+            showContractDetails: true,
+          }
+        },
+        'identify-opportunities': {
+          variables: {
+            focus: ['expansion', 'upsell', 'feature_adoption'],
+          }
+        },
+        'align-strategy': {
+          variables: {
+            strategyOptions: ['standard_renewal', 'upsell', 'retention_focus', 'expansion'],
+          }
+        },
+        'prepare-meeting-deck': {
+          variables: {
+            templateType: 'renewal-presentation',
+            includeSections: ['performance', 'recommendations', 'next_steps'],
+          }
+        }
+      },
+      settings: {
+        layout: {
+          modalDimensions: { width: 90, height: 90, top: 5, left: 5 },
+          dividerPosition: 50,
+          chatWidth: 50,
+          splitModeDefault: true
+        },
+        chat: {
+          placeholder: 'Ask me anything about this renewal...',
+        }
+      },
+      trigger_conditions: {
+        days_to_renewal: { operator: '<=', value: 90 },
+        workflow_type: 'renewal',
+      },
+    }, {
+      onConflict: 'workflow_id,company_id'
     })
-    .eq('workflow_id', 'inhersight-90day-renewal')
     .select();
-    
+
   if (error90) {
-    console.error('Error updating 90-day:', error90);
+    console.error('Error upserting 90-day:', error90);
   } else {
-    console.log('Updated 90-day renewal:', data90);
+    console.log('Upserted 90-day renewal:', data90);
   }
 
-  // Update 120-Day At-Risk Workflow
+  // Upsert 120-Day At-Risk Workflow
   const { data: data120, error: error120 } = await supabase
     .from('workflow_definitions')
-    .update({
+    .upsert({
+      workflow_id: 'inhersight-120day-atrisk',
+      name: 'InHerSight 120-Day At-Risk Recovery',
+      workflow_type: 'risk',
+      description: "Grace's at-risk customer recovery workflow with freebie strategy",
+      company_id: null, // Stock workflow
+      module_id: 'customer-success',
+      is_active: true,
+      is_demo: false,
+      is_stock_workflow: true,
+      priority_weight: 900, // Higher priority for at-risk
+      version: 1,
       slide_sequence: [
-        'greeting', 'identify-concerns', 'review-brand-performance', 'prepare-freebie',
-        'draft-email', 'deliver-freebie', 'measure-freebie-impact', 'draft-email',
-        'create-recommendation', 'draft-email', 'negotiation-guide', 'workflow-summary'
-      ]
+        'greeting',
+        'identify-concerns',
+        'review-brand-performance',
+        'prepare-freebie',
+        'draft-email',
+        'deliver-freebie',
+        'measure-freebie-impact',
+        'draft-email',
+        'create-recommendation',
+        'draft-email',
+        'negotiation-guide',
+        'workflow-summary'
+      ],
+      slide_contexts: {
+        greeting: {
+          purpose: 'at_risk_recovery',
+          urgency: 'critical',
+          variables: {
+            showPlanningChecklist: true,
+            checklistItems: [
+              "Identify customer concerns and risk factors",
+              "Review brand performance metrics",
+              "Prepare value-add offer (freebie)",
+              "Deliver freebie and measure impact",
+              "Create renewal recommendation",
+              "Guide negotiation strategy"
+            ],
+            checklistTitle: "Recovery plan for at-risk customer:",
+          }
+        },
+        'identify-concerns': {
+          variables: {
+            riskFactors: ['usage_decline', 'support_issues', 'competitive_threat', 'budget_constraints'],
+          }
+        },
+        'prepare-freebie': {
+          variables: {
+            freebieOptions: ['featured-article', 'profile-optimization', 'social-campaign', 'job-credits'],
+          }
+        }
+      },
+      settings: {
+        layout: {
+          modalDimensions: { width: 90, height: 90, top: 5, left: 5 },
+          dividerPosition: 50,
+          chatWidth: 50,
+          splitModeDefault: true
+        },
+        chat: {
+          placeholder: 'Ask me anything about this at-risk recovery...',
+        }
+      },
+      trigger_conditions: {
+        days_to_renewal: { operator: '<=', value: 120 },
+        health_score: { operator: '<', value: 70 },
+        workflow_type: 'risk',
+      },
+    }, {
+      onConflict: 'workflow_id,company_id'
     })
-    .eq('workflow_id', 'inhersight-120day-atrisk')
     .select();
-    
+
   if (error120) {
-    console.error('Error updating 120-day:', error120);
+    console.error('Error upserting 120-day:', error120);
   } else {
-    console.log('Updated 120-day at-risk:', data120);
+    console.log('Upserted 120-day at-risk:', data120);
   }
-  
-  console.log('\nWorkflow sequences updated successfully!');
+
+  console.log('\nWorkflow definitions seeded/updated successfully!');
 }
 
 updateWorkflows();

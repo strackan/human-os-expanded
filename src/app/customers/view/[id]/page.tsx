@@ -39,6 +39,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
     title: string;
     customerId: string;
     customerName: string;
+    prefetchedGreeting?: string;
   } | null>(null);
   const [executionId, setExecutionId] = useState<string | null>(null);
 
@@ -268,12 +269,42 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         setExecutionId(executionResult.executionId);
       }
 
-      // Set state to open TaskMode modal
+      // Prefetch LLM greeting while user waits (shows as "Launching..." on button)
+      console.log('[Customer View] Prefetching LLM greeting...');
+      console.time('[Customer View] LLM prefetch time');
+      let prefetchedGreeting: string | undefined;
+      try {
+        const greetingResponse = await fetch('/api/workflows/greeting', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: customer.id,
+            workflowType: (workflowConfig as any).workflowType || 'renewal',
+            daysToRenewal: daysUntilRenewal,
+            customerName: customer.name,
+          }),
+        });
+
+        if (greetingResponse.ok) {
+          const greetingData = await greetingResponse.json();
+          prefetchedGreeting = greetingData.text;
+          console.log('[Customer View] LLM greeting prefetched successfully:', prefetchedGreeting?.substring(0, 50) + '...');
+        } else {
+          console.warn('[Customer View] Failed to prefetch greeting, will use fallback');
+        }
+      } catch (prefetchError) {
+        console.warn('[Customer View] Error prefetching greeting:', prefetchError);
+        // Continue without prefetched greeting - TaskMode will generate one
+      }
+      console.timeEnd('[Customer View] LLM prefetch time');
+
+      // Set state to open TaskMode modal (atomic update includes prefetchedGreeting)
       setActiveWorkflow({
         workflowId,
         title: (workflowConfig as any).workflowName || 'Renewal Planning',
         customerId: customer.id,
         customerName: customer.name,
+        prefetchedGreeting,
       });
 
       setTaskModeOpen(true);
@@ -591,6 +622,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
           customerId={activeWorkflow.customerId}
           customerName={activeWorkflow.customerName}
           executionId={executionId || undefined}
+          prefetchedGreeting={activeWorkflow.prefetchedGreeting}
           onClose={handleCloseTaskMode}
         />
       )}
