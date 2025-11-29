@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 
 export async function POST(
   request: NextRequest,
@@ -18,8 +18,12 @@ export async function POST(
     const resolvedParams = await params;
     const executionId = resolvedParams.id;
 
+    // Use service role client if DEMO_MODE or auth bypass is enabled
+    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
+    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
+
     // Authenticate user
-    const supabase = createServiceRoleClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
