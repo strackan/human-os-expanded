@@ -902,6 +902,66 @@ ${config.recommendations.map(r => `- ${r}`).join('\n')}
 };
 
 /**
+ * Presentation Artifact Template
+ *
+ * The presentation type provides a slide deck with navigation:
+ * - Title slide with company branding
+ * - Metrics slides with KPIs and trends
+ * - Highlights/wins slides
+ * - Recommendations slides
+ * - Next steps with action items
+ *
+ * Features:
+ * - Carousel navigation (arrows + dots)
+ * - Edit mode for inline content editing
+ * - Export to PDF
+ *
+ * @example
+ * ```typescript
+ * const presentationArtifact = createPresentationArtifact({
+ *   id: 'qbr-deck',
+ *   title: '90-Day Performance Review',
+ *   customerName: 'GrowthStack',
+ *   slides: [
+ *     { id: 'title', type: 'title', title: 'GrowthStack', content: { subtitle: 'QBR' } },
+ *     { id: 'metrics', type: 'metrics', title: 'Performance', content: { ... } }
+ *   ],
+ *   editable: true,
+ *   visible: false
+ * });
+ * ```
+ */
+export interface PresentationSlideConfig {
+  id: string;
+  type: 'title' | 'metrics' | 'highlights' | 'recommendations' | 'next-steps';
+  title: string;
+  content: Record<string, any>;
+}
+
+export interface PresentationArtifactConfig {
+  id: string;
+  title: string;
+  subtitle?: string;
+  customerName?: string;
+  slides: PresentationSlideConfig[];
+  editable?: boolean;
+  visible?: boolean;
+}
+
+export const createPresentationArtifact = (config: PresentationArtifactConfig) => {
+  return {
+    id: config.id,
+    title: config.title,
+    type: 'presentation' as const,
+    visible: config.visible ?? false,
+    editable: config.editable ?? true,
+    subtitle: config.subtitle,
+    customerName: config.customerName,
+    slides: config.slides
+  };
+};
+
+/**
  * Helper function to create multiple artifacts at once
  */
 export const createArtifactSection = (artifacts: Array<ReturnType<
@@ -916,7 +976,8 @@ export const createArtifactSection = (artifacts: Array<ReturnType<
   typeof createPlanSummaryArtifact |
   typeof createQuoteArtifact |
   typeof createDocumentArtifact |
-  typeof createBrandExposureReportArtifact
+  typeof createBrandExposureReportArtifact |
+  typeof createPresentationArtifact
 >>) => {
   return {
     sections: artifacts

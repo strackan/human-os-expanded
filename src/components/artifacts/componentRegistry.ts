@@ -283,6 +283,17 @@ export const componentRegistry: ComponentItem[] = [
     lastUpdated: '2025-11-27'
   },
 
+  // === PRESENTATIONS ===
+  {
+    name: 'PresentationArtifact',
+    path: '@/components/artifacts/PresentationArtifact',
+    label: 'Presentation Deck',
+    category: 'Presentations',
+    version: '1.0.0',
+    status: 'active',
+    lastUpdated: '2025-11-28'
+  },
+
   // === STRATEGY ===
   {
     name: 'ContactStrategyArtifact',

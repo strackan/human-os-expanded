@@ -233,7 +233,7 @@ export interface WorkflowSlide {
     sections: Array<{
       id: string;
       title: string;
-      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'component:interactive' | 'component:informative';
+      type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'presentation' | 'component:interactive' | 'component:informative';
       visible: boolean;
       editable?: boolean;
       content?: any;
@@ -301,7 +301,7 @@ export interface ArtifactsConfig {
   sections: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'presentation';
     visible: boolean;
     editable?: boolean;
     content?: any;

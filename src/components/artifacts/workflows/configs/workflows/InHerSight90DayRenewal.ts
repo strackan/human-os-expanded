@@ -23,7 +23,8 @@ import {
   createPlanningChecklistArtifact,
   createWorkflowSummaryArtifact,
   createPricingAnalysisArtifact,
-  createDocumentArtifact
+  createDocumentArtifact,
+  createPresentationArtifact
 } from '../../config/artifactTemplates';
 import {
   createSnoozeSkipBranches,
@@ -772,14 +773,118 @@ export const inhersight90DayRenewalWorkflow: WorkflowConfig = {
           visible: false
         })
       },
-      // Meeting Deck
+      // Meeting Deck - Presentation Artifact for QBR
       {
-        ...createDocumentArtifact({
+        ...createPresentationArtifact({
           id: 'meeting-deck',
-          title: 'Performance Review Deck',
-          content: '{{customer.meeting_deck_content}}',
+          title: '90-Day Performance Review',
+          customerName: '{{customer.name}}',
           editable: true,
-          visible: false
+          visible: false,
+          slides: [
+            {
+              id: 'title',
+              type: 'title',
+              title: '{{customer.name}}',
+              content: {
+                subtitle: '90-Day Performance Review',
+                date: '{{current_date}}',
+                preparedBy: '{{user.first}} {{user.last}}'
+              }
+            },
+            {
+              id: 'metrics',
+              type: 'metrics',
+              title: 'Brand Performance',
+              content: {
+                impressions: {
+                  value: '{{customer.brand_impressions}}',
+                  trend: '{{customer.impressions_trend}}',
+                  trendValue: '{{customer.impressions_trend_value}}'
+                },
+                profileViews: {
+                  value: '{{customer.profile_views}}',
+                  trend: '{{customer.profile_views_trend}}',
+                  trendValue: '{{customer.profile_views_trend_value}}'
+                },
+                applyClicks: {
+                  value: '{{customer.apply_clicks}}',
+                  trend: '{{customer.apply_clicks_trend}}',
+                  trendValue: '{{customer.apply_clicks_trend_value}}'
+                },
+                newRatings: {
+                  value: '{{customer.new_ratings}}',
+                  trend: '{{customer.ratings_trend}}',
+                  trendValue: '{{customer.ratings_trend_value}}'
+                },
+                reportingPeriod: 'Last 90 Days'
+              }
+            },
+            {
+              id: 'highlights',
+              type: 'highlights',
+              title: 'Key Wins',
+              content: {
+                items: [
+                  '{{customer.highlight_1}}',
+                  '{{customer.highlight_2}}',
+                  '{{customer.highlight_3}}',
+                  '{{customer.highlight_4}}'
+                ]
+              }
+            },
+            {
+              id: 'recommendations',
+              type: 'recommendations',
+              title: 'Strategic Recommendations',
+              content: {
+                items: [
+                  {
+                    title: '{{customer.recommendation_1_title}}',
+                    description: '{{customer.recommendation_1_description}}',
+                    priority: 'high'
+                  },
+                  {
+                    title: '{{customer.recommendation_2_title}}',
+                    description: '{{customer.recommendation_2_description}}',
+                    priority: 'high'
+                  },
+                  {
+                    title: '{{customer.recommendation_3_title}}',
+                    description: '{{customer.recommendation_3_description}}',
+                    priority: 'medium'
+                  }
+                ]
+              }
+            },
+            {
+              id: 'next-steps',
+              type: 'next-steps',
+              title: 'Next Steps',
+              content: {
+                items: [
+                  {
+                    title: 'Schedule renewal discussion with {{customer.primary_contact_name}}',
+                    owner: '{{user.first}}',
+                    dueDate: '{{customer.next_step_1_date}}',
+                    completed: false
+                  },
+                  {
+                    title: '{{customer.next_step_2_title}}',
+                    owner: '{{user.first}}',
+                    dueDate: '{{customer.next_step_2_date}}',
+                    completed: false
+                  },
+                  {
+                    title: '{{customer.next_step_3_title}}',
+                    owner: '{{customer.next_step_3_owner}}',
+                    dueDate: '{{customer.next_step_3_date}}',
+                    completed: false
+                  }
+                ]
+              }
+            }
+          ]
         })
       },
       // Meeting Request Email

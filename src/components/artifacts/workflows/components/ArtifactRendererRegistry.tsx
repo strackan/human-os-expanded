@@ -13,6 +13,7 @@ import ContactStrategyArtifact from '../../ContactStrategyArtifact';
 import PlanSummaryArtifact from '../../PlanSummaryArtifact';
 import DocumentArtifact from '../../DocumentArtifact';
 import QuoteArtifact from '../../QuoteArtifact';
+import PresentationArtifact from '../../PresentationArtifact';
 
 /**
  * Artifact Renderer Registry
@@ -201,6 +202,24 @@ export function renderArtifact({ section, onArtifactButtonClick, onChapterNaviga
 
     case 'custom':
       return <CustomRenderer key={section.id} section={section} />;
+
+    case 'presentation':
+      return (
+        <PresentationArtifact
+          key={section.id}
+          artifactId={section.id}
+          title={section.title || '90-Day Performance Review'}
+          subtitle={section.subtitle}
+          customerName={section.customerName}
+          slides={section.slides || section.content?.slides}
+          editable={section.editable !== false}
+          isLoading={section.isLoading}
+          error={section.error}
+          onSlideChange={(slideIndex, content) => {
+            console.log('Slide changed:', slideIndex, content);
+          }}
+        />
+      );
 
     default:
       return null;

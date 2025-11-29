@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 // Current version - update this with each release
-const CURRENT_VERSION = '0.1.10';
-const CURRENT_VERSION_NAME = 'Workflow Persistence';
+const CURRENT_VERSION = '0.1.11';
+const CURRENT_VERSION_NAME = 'QBR Presentations';
 
 /**
  * GET /api/version

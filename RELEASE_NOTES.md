@@ -4,8 +4,47 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.1.10 (Workflow Persistence)
+**Current Version:** 0.1.11 (QBR Presentations)
 **Next Release:** 0.2.0 - Human OS Check-Ins (Target: Feb-Mar 2026)
+
+---
+
+## Release 0.1.11 - "QBR Presentations" (November 28, 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### New Features
+
+- **Presentation Artifact Type** - Editable slide decks within workflows
+  - New `presentation` artifact type for QBR meeting decks
+  - 5 slide types: Title, Metrics, Highlights, Recommendations, Next Steps
+  - Carousel navigation with keyboard support
+  - Edit mode for inline content modifications
+  - Export to PDF via browser print
+
+- **InHerSight 90-Day Presentation** - GrowthStack QBR deck
+  - Replaced document artifact with full presentation
+  - Brand performance metrics with trends
+  - Key wins and performance highlights
+  - Strategic recommendations with priorities
+  - Action items with owners and due dates
+
+### New Components
+
+- `src/components/artifacts/PresentationArtifact.tsx` - Main presentation component
+- `src/components/artifacts/presentation/slides/TitleSlide.tsx` - Title slide
+- `src/components/artifacts/presentation/slides/MetricsSlide.tsx` - KPI metrics
+- `src/components/artifacts/presentation/slides/HighlightsSlide.tsx` - Key wins
+- `src/components/artifacts/presentation/slides/RecommendationsSlide.tsx` - Strategy
+- `src/components/artifacts/presentation/slides/NextStepsSlide.tsx` - Action items
+
+### Updated Files
+
+- `src/components/artifacts/workflows/config/artifactTemplates.ts` - Added `createPresentationArtifact`
+- `src/components/artifacts/workflows/components/ArtifactRendererRegistry.tsx` - Added presentation case
+- `src/components/artifacts/componentRegistry.ts` - Registered PresentationArtifact
+- `src/components/artifacts/workflows/configs/workflows/InHerSight90DayRenewal.ts` - Updated meeting-deck artifact
 
 ---
 
