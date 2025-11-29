@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { X } from 'lucide-react';
+import { X, OctagonX } from 'lucide-react';
 import WorkflowActionButtons from '@/components/workflows/WorkflowActionButtons';
 
 interface WorkflowHeaderProps {
@@ -34,6 +34,7 @@ interface WorkflowHeaderProps {
   onToggleMetrics: () => void;
   onToggleArtifacts: () => void;
   onClose: () => void;
+  onRestart?: () => void;
   onWorkflowAction?: (actionType: string) => void;
 }
 
@@ -51,6 +52,7 @@ export default function WorkflowHeader({
   onToggleMetrics,
   onToggleArtifacts,
   onClose,
+  onRestart,
   onWorkflowAction
 }: WorkflowHeaderProps) {
   return (
@@ -105,6 +107,17 @@ export default function WorkflowHeader({
           >
             <i className="fa-light fa-chart-simple text-xl"></i>
           </button>
+
+          {/* Restart Button */}
+          {onRestart && (
+            <button
+              onClick={onRestart}
+              className="text-gray-400 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+              title="Restart workflow from beginning"
+            >
+              <OctagonX className="w-5 h-5" />
+            </button>
+          )}
 
           {/* Close Button */}
           <button

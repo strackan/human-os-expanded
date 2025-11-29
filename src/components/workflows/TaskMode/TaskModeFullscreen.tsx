@@ -32,7 +32,7 @@ import ArtifactRenderer from '@/components/workflows/renderers/ArtifactRenderer'
 import { CustomerMetrics } from '@/components/workflows/CustomerMetrics';
 import WorkflowSequencePanel from '@/components/workflows/WorkflowSequencePanel';
 import { getWorkflowSequence } from '@/config/workflowSequences';
-import { Mic, Paperclip, Shield, X } from 'lucide-react';
+import { Mic, Paperclip, Shield, X, OctagonX } from 'lucide-react';
 import { StepSnoozeModal, StepSkipModal, StepReviewModal } from '@/components/workflows/StepActionModals';
 import { WorkflowStepActionService } from '@/lib/workflows/actions/WorkflowStepActionService';
 import { EnhancedSnoozeModal } from '@/components/workflows/EnhancedSnoozeModal';
@@ -223,6 +223,10 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   const [showRejectionHistoryModal, setShowRejectionHistoryModal] = useState(false);
   const [workflowRejectionData, setWorkflowRejectionData] = useState<any>(null);
   const [rejectionHistory, setRejectionHistory] = useState<ReviewRejectionHistory>([]);
+
+  // Restart confirmation modal state
+  const [showRestartModal, setShowRestartModal] = useState(false);
+  const [isRestarting, setIsRestarting] = useState(false);
 
   // Debug: Log step snooze modal state changes
   useEffect(() => {
@@ -619,6 +623,52 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
     }
   };
 
+  // Handle workflow restart - resets all progress back to the beginning
+  const handleRestartWorkflow = async () => {
+    if (!executionId) {
+      console.error('[TaskModeFullscreen] Cannot restart: missing executionId');
+      return;
+    }
+
+    setIsRestarting(true);
+    try {
+      console.log('[TaskModeFullscreen] Restarting workflow execution:', executionId);
+
+      // Reset the workflow execution in the database
+      const response = await fetch(`/api/workflows/executions/${executionId}/restart`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to restart workflow');
+      }
+
+      showToast({
+        message: 'Workflow restarted successfully',
+        type: 'success',
+        icon: 'check',
+        duration: 3000
+      });
+
+      // Close the modal and reload the page to get fresh state
+      setShowRestartModal(false);
+
+      // Force a page reload to reset all state
+      window.location.reload();
+    } catch (error: any) {
+      console.error('[TaskModeFullscreen] Error restarting workflow:', error);
+      showToast({
+        message: `Failed to restart workflow: ${error.message}`,
+        type: 'error',
+        duration: 5000
+      });
+    } finally {
+      setIsRestarting(false);
+    }
+  };
+
   // Resize handling effect (must be before early returns)
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -988,6 +1038,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
             onToggleMetrics={() => state.toggleMetricsSlideup(true)}
             onToggleArtifacts={() => state.toggleArtifacts(!state.showArtifacts)}
             onClose={state.handleClose}
+            onRestart={() => setShowRestartModal(true)}
             onWorkflowAction={onWorkflowAction}
           />
 
@@ -1288,6 +1339,47 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
                   <X className="w-5 h-5" />
                 </button>
                 <RejectionHistoryTimeline history={rejectionHistory} />
+              </div>
+            </div>
+          )}
+
+          {/* Restart Confirmation Modal */}
+          {showRestartModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-red-100 rounded-full">
+                    <OctagonX className="w-6 h-6 text-red-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900">Restart Workflow?</h3>
+                </div>
+                <p className="text-gray-600 mb-6">
+                  This will reset all progress and start the workflow from the beginning.
+                  Any data entered in this session will be lost.
+                </p>
+                <div className="flex justify-end gap-3">
+                  <button
+                    onClick={() => setShowRestartModal(false)}
+                    className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                    disabled={isRestarting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRestartWorkflow}
+                    className="px-4 py-2 text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2"
+                    disabled={isRestarting}
+                  >
+                    {isRestarting ? (
+                      <>
+                        <span className="animate-spin">⟳</span>
+                        Restarting...
+                      </>
+                    ) : (
+                      'Restart Workflow'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
