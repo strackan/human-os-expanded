@@ -173,3 +173,83 @@ export function fromSerializableMessage(msg: SerializableChatMessage): ChatMessa
     // Note: buttons and component will be re-derived from slide config
   };
 }
+
+// ============================================
+// v0.1.12: Account Review Phase Approval Types
+// ============================================
+
+/**
+ * Tab/Phase status for approval workflow
+ */
+export type PhaseStatus = 'pending' | 'current' | 'approved';
+
+/**
+ * Individual phase approval data
+ */
+export interface PhaseApproval {
+  phaseId: string;
+  status: PhaseStatus;
+  llmAnalysis?: string;
+  userComments?: string;
+  approvedAt?: string;
+}
+
+/**
+ * Account review phase identifiers
+ */
+export const ACCOUNT_REVIEW_PHASE_IDS = [
+  'usage',
+  'contract',
+  'contacts',
+  'expansion',
+  'risk',
+] as const;
+
+export type AccountReviewPhaseId = (typeof ACCOUNT_REVIEW_PHASE_IDS)[number];
+
+/**
+ * Complete account review state for persistence
+ */
+export interface AccountReviewStateSnapshot {
+  /** Customer ID for the review */
+  customerId: string;
+  /** Customer name for display */
+  customerName: string;
+  /** Phase approvals with LLM analysis and user comments */
+  phaseApprovals: PhaseApproval[];
+  /** Current active phase */
+  currentPhase: AccountReviewPhaseId;
+  /** Whether all phases are approved */
+  allPhasesApproved: boolean;
+  /** Synthesis result (populated after all phases approved) */
+  synthesisResult?: AccountReviewSynthesisResult;
+  /** Timestamp when review was started */
+  startedAt: string;
+  /** Timestamp when review was completed */
+  completedAt?: string;
+}
+
+/**
+ * Result of strategy synthesis after all phases approved
+ */
+export interface AccountReviewSynthesisResult {
+  /** Engagement strategy summary */
+  strategySummary: string;
+  /** Meeting deck slides in PresentationArtifact format */
+  deckSlides: any[];
+  /** Renewal email draft */
+  emailDraft: string;
+  /** Meeting agenda */
+  meetingAgenda: string;
+  /** Raw LLM response */
+  rawResponse: string;
+  /** Generation timestamp */
+  generatedAt: string;
+}
+
+/**
+ * Extended workflow state snapshot with account review state
+ */
+export interface WorkflowStateSnapshotWithAccountReview extends WorkflowStateSnapshot {
+  accountReviewState?: AccountReviewStateSnapshot;
+}

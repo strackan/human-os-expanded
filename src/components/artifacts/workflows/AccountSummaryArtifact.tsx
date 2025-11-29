@@ -141,14 +141,13 @@ export function AccountSummaryArtifact({
     { label: 'ARR', value: '--', prefix: '$' },
   ];
 
-  return (
+  const containerContent = (
     <ArtifactContainer
       artifactId={artifactId}
       variant="summary"
       isLoading={isLoading}
       error={error}
       className={onClick ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}
-      onClick={onClick}
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-100">
@@ -304,6 +303,13 @@ export function AccountSummaryArtifact({
       </div>
     </ArtifactContainer>
   );
+
+  // Wrap with onClick handler if provided
+  if (onClick) {
+    return <div onClick={onClick}>{containerContent}</div>;
+  }
+
+  return containerContent;
 }
 
 AccountSummaryArtifact.displayName = 'AccountSummaryArtifact';

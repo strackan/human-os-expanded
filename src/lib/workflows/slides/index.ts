@@ -48,6 +48,8 @@ import { prepareFreebieSlide } from './inhersight/prepareFreebieSlide';
 import { deliverFreebieSlide } from './inhersight/deliverFreebieSlide';
 import { measureFreebieImpactSlide } from './inhersight/measureFreebieImpactSlide';
 import { accountReviewTabbedSlide } from './inhersight/accountReviewTabbedSlide';
+import { accountReviewLLMSlide } from './inhersight/accountReviewLLMSlide';
+import { strategySynthesisSlide } from './inhersight/strategySynthesisSlide';
 
 // V2 Slides (template-based)
 import { pricingAnalysisSlideV2 } from './renewal/pricingAnalysisSlideV2';
@@ -117,6 +119,10 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'deliver-freebie': deliverFreebieSlide,
   'measure-freebie-impact': measureFreebieImpactSlide,
   'account-review-tabbed': accountReviewTabbedSlide,
+  // v0.1.12: LLM-driven account review with phase approval
+  'account-review-llm': accountReviewLLMSlide,
+  // v0.1.12: Strategy synthesis after all phases approved
+  'strategy-synthesis': strategySynthesisSlide,
 
   // ========================================
   // V2 SLIDES (Template-based - New Architecture)

@@ -13,9 +13,11 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: Promise<{ workflowId: string }> }
 ) {
   try {
+    const { workflowId } = await params;
+
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
@@ -52,11 +54,11 @@ export async function GET(
 
     // Get rejection history
     const reviewService = new WorkflowReviewService(supabase);
-    const history = await reviewService.getRejectionHistory(params.workflowId, userId);
+    const history = await reviewService.getRejectionHistory(workflowId, userId);
 
     return NextResponse.json({
       success: true,
-      workflowId: params.workflowId,
+      workflowId,
       rejectionHistory: history,
       count: history.length
     });

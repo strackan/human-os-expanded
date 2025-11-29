@@ -595,8 +595,8 @@ export function useTaskModeState({
           // Start the LLM fetch in the background
           if (!prefetchPromiseRef.current) {
             prefetchPromiseRef.current = fetchGreetingFromAPI({
-              customerName: customerName || config?.customerName || 'Customer',
-              workflowPurpose: config?.workflowType || 'renewal_preparation',
+              customerName: customerName || (config as any)?.customer || 'Customer',
+              workflowPurpose: (config as any)?.type || 'renewal_preparation',
             }).then(response => {
               prefetchedGreetingRef.current = { text: response.text, ready: true };
               console.log('[Action] LLM prefetch complete');

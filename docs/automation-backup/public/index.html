@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer List - Webhook Automation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-left: auto;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stats span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #f8f9fa;
+        }
+
+        th {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .customer-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .domain {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .arr {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .renewal-date {
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .urgency-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .urgency-critical {
+            background-color: #fee;
+            color: #c53030;
+        }
+
+        .urgency-monitor {
+            background-color: #fffaf0;
+            color: #dd6b20;
+        }
+
+        .urgency-normal {
+            background-color: #f0f9ff;
+            color: #2563eb;
+        }
+
+        .urgency-snooze {
+            background-color: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .webhook-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .webhook-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .webhook-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .webhook-btn.loading {
+            background: #9f7aea;
+        }
+
+        .webhook-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .loading svg {
+            animation: spin 1s linear infinite;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .no-data svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 400px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-success {
+            background-color: #d1fae5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-size: 13px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+
+        .error-message {
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 20px;
+            margin: 20px 30px;
+            border-radius: 6px;
+            border-left: 4px solid #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Customer Webhook Dashboard</h1>
+            <p>Manage customer renewal webhooks and push data to Active Pieces</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search customers by name or domain...">
+            </div>
+            <div class="stats">
+                <div>Total: <span id="totalCount">0</span></div>
+                <div>Critical: <span id="criticalCount">0</span></div>
+            </div>
+        </div>
+
+        <div class="table-container" id="tableContainer">
+            <div style="text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <p style="color: #666; margin-top: 15px;">Loading customers...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allCustomers = [];
+
+        // Calculate days until renewal
+        function calculateDaysUntilRenewal(renewalDate) {
+            const renewal = new Date(renewalDate + 'T00:00:00.000Z');
+            const today = new Date();
+            const todayUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+            const timeDifference = renewal.getTime() - todayUTC.getTime();
+            return Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+        }
+
+        // Get urgency level
+        function getUrgencyLevel(daysUntilRenewal) {
+            if (daysUntilRenewal < 90) return { level: 'critical', label: 'CRITICAL' };
+            if (daysUntilRenewal <= 105) return { level: 'monitor', label: 'MONITOR' };
+            if (daysUntilRenewal <= 120) return { level: 'normal', label: 'NORMAL' };
+            return { level: 'snooze', label: 'SNOOZE' };
+        }
+
+        // Show alert
+        function showAlert(title, message, type = 'success') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <div class="alert-title">${title}</div>
+                <div class="alert-message">${message}</div>
+            `;
+            document.body.appendChild(alert);
+
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // Trigger webhook for a customer
+        async function triggerWebhook(customerId, customerName, button) {
+            const originalContent = button.innerHTML;
+            button.classList.add('loading');
+            button.disabled = true;
+            button.innerHTML = `
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Sending...
+            `;
+
+            try {
+                const response = await fetch(`/api/trigger-webhook/${customerId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(
+                        '✅ Webhook Triggered Successfully',
+                        `Data sent for ${customerName}<br>Urgency: ${result.payload.urgency_label} | Days: ${result.payload.days_until_renewal}`,
+                        'success'
+                    );
+                } else {
+                    showAlert(
+                        '❌ Webhook Failed',
+                        `Failed to trigger webhook for ${customerName}: ${result.error || 'Unknown error'}`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showAlert(
+                    '❌ Network Error',
+                    `Failed to trigger webhook for ${customerName}: ${error.message}`,
+                    'error'
+                );
+            } finally {
+                button.classList.remove('loading');
+                button.disabled = false;
+                button.innerHTML = originalContent;
+            }
+        }
+
+        // Render customers table
+        function renderCustomers(customers) {
+            const container = document.getElementById('tableContainer');
+
+            if (customers.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                        <h3>No customers found</h3>
+                        <p>Try adjusting your search or add some customers to the database.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Plan Type</th>
+                            <th>ARR</th>
+                            <th>Renewal Date</th>
+                            <th>Days Until</th>
+                            <th>Urgency</th>
+                            <th>Owner</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${customers.map(customer => {
+                            const daysUntil = customer.renewal_date ? calculateDaysUntilRenewal(customer.renewal_date) : null;
+                            const urgency = daysUntil !== null ? getUrgencyLevel(daysUntil) : null;
+                            const planTypes = customer.account_plans && customer.account_plans.length > 0
+                                ? customer.account_plans.map(p => p.plan_type.toUpperCase()).join(', ')
+                                : 'None';
+
+                            return `
+                                <tr>
+                                    <td>
+                                        <div class="customer-name">${customer.company_name || 'N/A'}</div>
+                                        <div class="domain">${customer.domain || 'No domain'}</div>
+                                    </td>
+                                    <td style="font-size: 12px; font-weight: 600; color: #5a67d8;">${planTypes}</td>
+                                    <td class="arr">$${customer.arr ? customer.arr.toLocaleString() : '0'}</td>
+                                    <td class="renewal-date">${customer.renewal_date || 'Not set'}</td>
+                                    <td>${daysUntil !== null ? `${daysUntil} days` : 'N/A'}</td>
+                                    <td>
+                                        ${urgency ? `<span class="urgency-badge urgency-${urgency.level}">${urgency.label}</span>` : 'N/A'}
+                                    </td>
+                                    <td>${customer.owner_name || 'Unassigned'}</td>
+                                    <td>
+                                        <button
+                                            class="webhook-btn"
+                                            onclick="triggerWebhook('${customer.id}', '${customer.company_name}', this)"
+                                            ${!customer.renewal_date ? 'disabled title="Requires renewal date"' : ''}
+                                        >
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                            </svg>
+                                            Send
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // Update stats
+        function updateStats(customers) {
+            document.getElementById('totalCount').textContent = customers.length;
+
+            const criticalCount = customers.filter(c => {
+                if (!c.renewal_date) return false;
+                const days = calculateDaysUntilRenewal(c.renewal_date);
+                return days < 90;
+            }).length;
+
+            document.getElementById('criticalCount').textContent = criticalCount;
+        }
+
+        // Search customers
+        function searchCustomers(query) {
+            const filtered = allCustomers.filter(customer => {
+                const searchStr = query.toLowerCase();
+                return (
+                    (customer.company_name && customer.company_name.toLowerCase().includes(searchStr)) ||
+                    (customer.domain && customer.domain.toLowerCase().includes(searchStr))
+                );
+            });
+            renderCustomers(filtered);
+            updateStats(filtered);
+        }
+
+        // Load customers
+        async function loadCustomers() {
+            try {
+                const response = await fetch('/api/customers');
+                const data = await response.json();
+
+                if (data.success) {
+                    allCustomers = data.customers;
+                    renderCustomers(allCustomers);
+                    updateStats(allCustomers);
+                } else {
+                    throw new Error(data.error || 'Failed to load customers');
+                }
+            } catch (error) {
+                document.getElementById('tableContainer').innerHTML = `
+                    <div class="error-message">
+                        <strong>Error loading customers:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Setup search
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchCustomers(e.target.value);
+        });
+
+        // Initialize
+        loadCustomers();
+    </script>
+</body>
+</html>

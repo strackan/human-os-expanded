@@ -7,10 +7,10 @@ import { CandidateService } from '@/lib/services/CandidateService';
 import { ScoringService } from '@/lib/services/ScoringService';
 import { InterviewMessage } from '@/types/talent';
 
-export async function POST(_request: NextRequest, { params }: { params: { candidateId: string } }) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ candidateId: string }> }) {
   try {
     const supabase = await createClient();
-    const candidateId = params.candidateId;
+    const { candidateId } = await params;
 
     // Verify authentication
     const {

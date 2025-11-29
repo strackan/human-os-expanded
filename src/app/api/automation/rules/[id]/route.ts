@@ -24,7 +24,7 @@ import {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -39,7 +39,7 @@ export async function GET(
       );
     }
 
-    const ruleId = params.id;
+    const { id: ruleId } = await params;
 
     // Get rule
     const service = new AutomationRuleService(supabase);
@@ -82,7 +82,7 @@ export async function GET(
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -97,7 +97,7 @@ export async function PATCH(
       );
     }
 
-    const ruleId = params.id;
+    const { id: ruleId } = await params;
 
     // Parse request body
     const body: UpdateAutomationRuleRequest = await request.json();
@@ -152,7 +152,7 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -167,7 +167,7 @@ export async function DELETE(
       );
     }
 
-    const ruleId = params.id;
+    const { id: ruleId } = await params;
 
     // Delete rule
     const service = new AutomationRuleService(supabase);

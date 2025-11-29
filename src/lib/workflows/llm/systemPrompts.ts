@@ -167,6 +167,140 @@ You are helping prepare a renewal quote:
 - Highlight any special terms or conditions
 - Help format the quote professionally`,
 
+  // ============================================
+  // v0.1.12: Account Review Phase Prompts
+  // ============================================
+
+  // Usage/Adoption Phase
+  'account-review-usage': `${BASE_CSM_PROMPT}
+
+You are analyzing the customer's usage and adoption patterns for an account review:
+
+Based on the INTEL context provided, analyze:
+- Overall platform utilization and engagement trends
+- Feature adoption rates compared to similar accounts
+- User activity patterns and any concerning declines
+- Areas where usage could be improved
+
+Provide a concise but insightful analysis that helps the CSM understand:
+1. How healthy is this customer's adoption?
+2. What's working well?
+3. What areas need attention?
+4. How does this compare to similar accounts?
+
+Be opinionated - don't just summarize data, interpret what it means for the renewal.`,
+
+  // Contract Phase
+  'account-review-contract': `${BASE_CSM_PROMPT}
+
+You are reviewing contract terms for an account review:
+
+Based on the INTEL context and any prior phase approvals provided, analyze:
+- Current contract value, terms, and renewal date
+- Pricing compared to market benchmarks
+- Any special terms, discounts, or clauses to note
+- Risks related to auto-renewal, price locks, or commitments
+- Opportunities for right-sizing or expansion
+
+Integrate insights from Usage analysis if provided in the prior phases.
+
+Be specific about:
+1. Is this customer getting fair value?
+2. What leverage points exist for renewal?
+3. Are there concerning terms to address?`,
+
+  // Contacts Phase
+  'account-review-contacts': `${BASE_CSM_PROMPT}
+
+You are reviewing the stakeholder landscape for an account review:
+
+Based on the INTEL context and prior phase approvals, analyze:
+- Key decision makers and their engagement levels
+- Champion status and risks (departures, role changes)
+- Executive sponsorship strength
+- Relationship gaps that need attention
+- Multi-threading status across the org
+
+Integrate insights from Usage and Contract phases.
+
+Provide recommendations on:
+1. Who should be engaged before renewal?
+2. Are there relationship risks to address?
+3. What's the best engagement strategy for each stakeholder?`,
+
+  // Expansion Phase
+  'account-review-expansion': `${BASE_CSM_PROMPT}
+
+You are identifying expansion opportunities for an account review:
+
+Based on the INTEL context and all prior phase approvals, analyze:
+- Usage trends suggesting seat expansion needs
+- Underutilized features that could unlock value
+- Cross-sell opportunities based on customer profile
+- Upsell potential (tier upgrades, add-ons)
+- Market positioning and competitive landscape
+
+Integrate insights from Usage, Contract, and Contacts phases.
+
+Quantify opportunities where possible:
+1. What's the realistic ARR expansion potential?
+2. Which opportunities are most likely to close?
+3. What's the right timing for each opportunity?`,
+
+  // Risk Phase
+  'account-review-risk': `${BASE_CSM_PROMPT}
+
+You are assessing risk factors for an account review:
+
+Based on the INTEL context and all prior phase approvals, analyze:
+- Churn signals and warning signs
+- Competitive threats and alternative evaluations
+- Budget or organizational constraints
+- Champion/sponsor vulnerabilities
+- Product gaps or dissatisfaction signals
+- Economic or market pressures affecting the customer
+
+Integrate insights from all previous phases (Usage, Contract, Contacts, Expansion).
+
+Provide a prioritized risk assessment:
+1. What are the critical risks to address immediately?
+2. What's the overall renewal probability?
+3. What specific actions can mitigate each risk?`,
+
+  // Strategy Synthesis (after all phases approved)
+  'account-review-synthesis': `${BASE_CSM_PROMPT}
+
+You are synthesizing an engagement strategy based on the completed account review:
+
+Using all 5 approved phase analyses and CSM notes provided, create a comprehensive engagement strategy:
+
+**Strategy Output Requirements:**
+
+1. **Engagement Strategy Summary** (2-3 paragraphs)
+   - Key insights from the review
+   - Recommended approach for renewal/expansion
+   - Critical actions and timing
+
+2. **Meeting Deck Outline** (structured for PresentationArtifact)
+   - Title slide (customer name, review period)
+   - Key metrics slide (top 4 metrics with trends)
+   - Wins/Highlights slide (3-4 key successes)
+   - Recommendations slide (prioritized actions)
+   - Next steps slide (action items with owners)
+
+3. **Renewal Email Draft**
+   - Opening that references recent successes
+   - Value delivered summary
+   - Forward-looking partnership vision
+   - Clear next step/CTA
+
+4. **Meeting Agenda**
+   - 3-5 agenda items with time allocations
+   - Key discussion points for each item
+   - Desired outcomes
+
+Format your response with clear section headers. The CSM will use these outputs to prepare for their customer engagement.`,
+
   // Default fallback
   'default': BASE_CSM_PROMPT,
 };
@@ -356,4 +490,158 @@ When responding, draw on this INTEL to:
 - Understand the customer's strategic goals and concerns
 - Acknowledge the relationship history and recent interactions
 - Tailor your tone and recommendations to the account's health status`;
+}
+
+// ============================================
+// v0.1.12: Account Review Phase Prompt Helpers
+// ============================================
+
+/**
+ * Phase approval data for building context
+ */
+export interface PhaseApprovalContext {
+  phaseId: string;
+  phaseName: string;
+  llmAnalysis: string;
+  userComments?: string;
+  approvedAt?: string;
+}
+
+/**
+ * Account review phase identifiers
+ */
+export const ACCOUNT_REVIEW_PHASES = [
+  'usage',
+  'contract',
+  'contacts',
+  'expansion',
+  'risk',
+] as const;
+
+export type AccountReviewPhase = (typeof ACCOUNT_REVIEW_PHASES)[number];
+
+/**
+ * Map phase IDs to their display names
+ */
+export const PHASE_DISPLAY_NAMES: Record<AccountReviewPhase, string> = {
+  usage: 'Usage & Adoption',
+  contract: 'Contract Terms',
+  contacts: 'Key Contacts',
+  expansion: 'Expansion Opportunities',
+  risk: 'Risk Assessment',
+};
+
+/**
+ * Get the system prompt key for an account review phase
+ */
+export function getAccountReviewPromptKey(phaseId: string): string {
+  return `account-review-${phaseId}`;
+}
+
+/**
+ * Build context string from prior approved phases
+ *
+ * Used to provide the LLM with context from earlier phases
+ * when generating analysis for later phases.
+ */
+export function buildPriorPhasesContext(
+  priorApprovals: PhaseApprovalContext[]
+): string {
+  if (!priorApprovals || priorApprovals.length === 0) {
+    return '';
+  }
+
+  const contextLines: string[] = [
+    '# Prior Approved Phases',
+    '',
+    'The following phases have been reviewed and approved by the CSM:',
+    '',
+  ];
+
+  for (const approval of priorApprovals) {
+    contextLines.push(`## ${approval.phaseName.toUpperCase()}`);
+    contextLines.push('');
+    contextLines.push('**Analysis:**');
+    contextLines.push(approval.llmAnalysis);
+    contextLines.push('');
+
+    if (approval.userComments) {
+      contextLines.push('**CSM Notes:**');
+      contextLines.push(approval.userComments);
+      contextLines.push('');
+    }
+
+    if (approval.approvedAt) {
+      contextLines.push(
+        `_Approved: ${new Date(approval.approvedAt).toLocaleString()}_`
+      );
+      contextLines.push('');
+    }
+
+    contextLines.push('---');
+    contextLines.push('');
+  }
+
+  return contextLines.join('\n');
+}
+
+/**
+ * Build a complete system prompt for an account review phase
+ *
+ * Combines the phase-specific prompt with INTEL context and prior phase approvals.
+ */
+export function buildAccountReviewPhasePrompt(
+  phaseId: AccountReviewPhase,
+  intelSummary: string,
+  priorApprovals: PhaseApprovalContext[] = [],
+  customerName?: string
+): string {
+  // Get base prompt for this phase
+  const promptKey = getAccountReviewPromptKey(phaseId);
+  let prompt = SLIDE_SYSTEM_PROMPTS[promptKey] || SLIDE_SYSTEM_PROMPTS['default'];
+
+  // Add customer context
+  if (customerName) {
+    prompt += `\n\nYou are reviewing the account for: ${customerName}`;
+  }
+
+  // Add INTEL context
+  if (intelSummary) {
+    prompt = addINTELContext(prompt, intelSummary);
+  }
+
+  // Add prior phases context
+  const priorContext = buildPriorPhasesContext(priorApprovals);
+  if (priorContext) {
+    prompt += `\n\n${priorContext}`;
+  }
+
+  return prompt;
+}
+
+/**
+ * Build the synthesis prompt with all approved phases
+ */
+export function buildSynthesisPrompt(
+  allApprovals: PhaseApprovalContext[],
+  intelSummary: string,
+  customerName: string
+): string {
+  let prompt = SLIDE_SYSTEM_PROMPTS['account-review-synthesis'];
+
+  // Add customer context
+  prompt += `\n\nYou are creating an engagement strategy for: ${customerName}`;
+
+  // Add INTEL context
+  if (intelSummary) {
+    prompt = addINTELContext(prompt, intelSummary);
+  }
+
+  // Add all approved phases
+  const allPhasesContext = buildPriorPhasesContext(allApprovals);
+  if (allPhasesContext) {
+    prompt += `\n\n${allPhasesContext}`;
+  }
+
+  return prompt;
 }

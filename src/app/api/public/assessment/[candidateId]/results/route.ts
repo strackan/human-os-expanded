@@ -5,10 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { CandidateService } from '@/lib/services/CandidateService';
 
-export async function GET(_request: NextRequest, { params }: { params: { candidateId: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ candidateId: string }> }) {
   try {
     const supabase = await createClient();
-    const candidateId = params.candidateId;
+    const { candidateId } = await params;
 
     // Verify authentication
     const {

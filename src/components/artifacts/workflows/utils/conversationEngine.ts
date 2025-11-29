@@ -13,7 +13,7 @@ export interface ConversationState {
 }
 
 export interface ConversationAction {
-  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'enterStep' | 'advanceWithoutComplete' | 'resetWorkflow' | 'navigateToBranch' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow';
+  type: 'launch-artifact' | 'showArtifact' | 'removeArtifact' | 'nextChat' | 'exitTaskMode' | 'nextCustomer' | 'resetChat' | 'resetToInitialState' | 'showFinalSlide' | 'showMenu' | 'nextSlide' | 'completeStep' | 'enterStep' | 'advanceWithoutComplete' | 'resetWorkflow' | 'navigateToBranch' | 'goToNextSlide' | 'goToPreviousSlide' | 'closeWorkflow' | 'triggerConfetti' | 'prefetchLLM' | 'nextSlideWhenReady';
   payload?: any;
 }
 

@@ -17,7 +17,7 @@ import { TestAutomationRuleResponse } from '@/types/automation-rules';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -32,7 +32,7 @@ export async function POST(
       );
     }
 
-    const ruleId = params.id;
+    const { id: ruleId } = await params;
 
     // Get the rule first to verify ownership
     const service = new AutomationRuleService(supabase);

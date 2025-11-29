@@ -16,11 +16,11 @@ interface StatusResult {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { batchId: string } }
+  { params }: { params: Promise<{ batchId: string }> }
 ): Promise<NextResponse<StatusResult>> {
   try {
     const supabase = await createClient();
-    const { batchId } = params;
+    const { batchId } = await params;
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();

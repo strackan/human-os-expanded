@@ -5,13 +5,13 @@
  */
 
 // Core artifacts
-export { default as ActionPlanArtifact } from './ActionPlanArtifact';
-export { default as ContractAnalysisArtifact } from './ContractAnalysisArtifact';
-export { default as ContractReviewArtifact } from './ContractReviewArtifact';
-export { default as MeetingNotesArtifact } from './MeetingNotesArtifact';
-export { default as PricingTableArtifact } from './PricingTableArtifact';
-export { default as RecommendationsArtifact } from './RecommendationsArtifact';
-export { default as StakeholderMapArtifact } from './StakeholderMapArtifact';
+export { ActionPlanArtifact } from './ActionPlanArtifact';
+export { ContractAnalysisArtifact } from './ContractAnalysisArtifact';
+export { ContractReviewArtifact } from './ContractReviewArtifact';
+export { MeetingNotesArtifact } from './MeetingNotesArtifact';
+export { PricingTableArtifact } from './PricingTableArtifact';
+export { RecommendationsArtifact } from './RecommendationsArtifact';
+export { StakeholderMapArtifact } from './StakeholderMapArtifact';
 
 // Brand performance artifact
 export {
@@ -48,7 +48,7 @@ export {
 export { ArtifactRenderer, ArtifactList, type WorkflowArtifact } from './ArtifactRenderer';
 
 // Task mode variants
-export { default as TaskArtifactsDisplay } from './TaskArtifactsDisplay';
+export { TaskArtifactsDisplay } from './TaskArtifactsDisplay';
 export { default as TaskModeAdvanced } from './TaskModeAdvanced';
 export { default as TaskModeCustom } from './TaskModeCustom';
 export { default as TaskModeGallery } from './TaskModeGallery';

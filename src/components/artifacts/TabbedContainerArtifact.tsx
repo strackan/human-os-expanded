@@ -19,7 +19,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   BarChart3,
   FileText,
@@ -27,6 +27,7 @@ import {
   TrendingUp,
   AlertTriangle,
   ChevronRight,
+  Check,
   LucideIcon,
 } from 'lucide-react';
 import componentMap from './componentImports';
@@ -40,6 +41,9 @@ const iconMap: Record<string, LucideIcon> = {
   'exclamation-triangle': AlertTriangle,
 };
 
+// Tab status for approval workflow
+export type TabStatus = 'pending' | 'current' | 'approved';
+
 export interface TabDefinition {
   id: string;
   label: string;
@@ -47,6 +51,19 @@ export interface TabDefinition {
   artifact: string; // Component name from componentMap
   props?: Record<string, any>;
   show?: boolean; // Optional conditional rendering
+  // v0.1.12: Approval workflow status
+  status?: TabStatus;
+  approvedAt?: string;
+  hasComments?: boolean;
+}
+
+// Phase approval data for context accumulation
+export interface PhaseApproval {
+  phaseId: string;
+  status: TabStatus;
+  llmAnalysis?: string;
+  userComments?: string;
+  approvedAt?: string;
 }
 
 export interface TabbedContainerArtifactProps {
@@ -61,6 +78,11 @@ export interface TabbedContainerArtifactProps {
   showNavigation?: boolean;
   // Pass-through props that will be merged with each tab's props
   sharedProps?: Record<string, any>;
+  // v0.1.12: Approval workflow callbacks and state
+  showApprovalWorkflow?: boolean;
+  phaseApprovals?: PhaseApproval[];
+  onTabApprove?: (tabId: string, comments?: string) => void;
+  onTabStatusChange?: (tabId: string, status: TabStatus) => void;
 }
 
 export function TabbedContainerArtifact({
@@ -74,6 +96,10 @@ export function TabbedContainerArtifact({
   onBack,
   showNavigation = true,
   sharedProps = {},
+  showApprovalWorkflow = false,
+  phaseApprovals = [],
+  onTabApprove,
+  onTabStatusChange,
 }: TabbedContainerArtifactProps) {
   // Filter tabs based on 'show' property (default to true if not specified)
   const visibleTabs = tabs.filter(tab => tab.show !== false);
@@ -83,6 +109,24 @@ export function TabbedContainerArtifact({
   );
 
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
+
+  // Get tab status from phaseApprovals or tab definition
+  const getTabStatus = useCallback((tabId: string): TabStatus => {
+    // Check phaseApprovals first (dynamic state)
+    const approval = phaseApprovals.find(p => p.phaseId === tabId);
+    if (approval) return approval.status;
+    // Fall back to tab definition status
+    const tab = tabs.find(t => t.id === tabId);
+    if (tab?.status) return tab.status;
+    // Default: current tab is 'current', others are 'pending'
+    return tabId === activeTabId ? 'current' : 'pending';
+  }, [phaseApprovals, tabs, activeTabId]);
+
+  // Check if tab has comments
+  const tabHasComments = useCallback((tabId: string): boolean => {
+    const approval = phaseApprovals.find(p => p.phaseId === tabId);
+    return !!(approval?.userComments);
+  }, [phaseApprovals]);
 
   // Resolve icon from string or use directly if it's a component
   const resolveIcon = (icon?: string | LucideIcon): LucideIcon | null => {
@@ -123,6 +167,8 @@ export function TabbedContainerArtifact({
         {visibleTabs.map((tab) => {
           const Icon = resolveIcon(tab.icon);
           const isActive = tab.id === activeTabId;
+          const status = showApprovalWorkflow ? getTabStatus(tab.id) : undefined;
+          const hasComments = showApprovalWorkflow ? tabHasComments(tab.id) : false;
 
           return (
             <button
@@ -131,13 +177,33 @@ export function TabbedContainerArtifact({
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
                 isActive
                   ? 'text-blue-600'
+                  : status === 'approved'
+                  ? 'text-green-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {Icon && <Icon className="w-4 h-4" />}
+              {/* Status indicator (when approval workflow enabled) */}
+              {showApprovalWorkflow && status === 'approved' && (
+                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-green-100">
+                  <Check className="w-3 h-3 text-green-600" />
+                </span>
+              )}
+              {showApprovalWorkflow && status === 'current' && isActive && (
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              )}
+              {/* Tab icon (only show if no status indicator or pending) */}
+              {(!showApprovalWorkflow || status === 'pending') && Icon && (
+                <Icon className="w-4 h-4" />
+              )}
               {tab.label}
+              {/* Comments indicator */}
+              {hasComments && (
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" title="Has notes" />
+              )}
               {isActive && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+                <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
+                  status === 'approved' ? 'bg-green-600' : 'bg-blue-600'
+                }`} />
               )}
             </button>
           );

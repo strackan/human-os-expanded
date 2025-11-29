@@ -11,7 +11,7 @@ import type { ConvertToWorkflowRequest, UpdateParkingLotItemRequest } from '@/ty
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -24,8 +24,10 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
+
     // Get the item
-    const itemResult = await ParkingLotService.getById(user.id, params.id);
+    const itemResult = await ParkingLotService.getById(user.id, id);
     if (!itemResult.success || !itemResult.item) {
       return NextResponse.json(
         { success: false, error: 'Item not found' },
@@ -89,7 +91,7 @@ export async function POST(
     }
 
     // Mark parking lot item as converted
-    const updateResult = await ParkingLotService.update(user.id, params.id, {
+    const updateResult = await ParkingLotService.update(user.id, id, {
       status: 'converted'
     } as UpdateParkingLotItemRequest);
 

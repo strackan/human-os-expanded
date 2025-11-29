@@ -15,7 +15,8 @@ export type ArtifactVariant =
   | 'risk'
   | 'email'
   | 'report'
-  | 'contacts';
+  | 'contacts'
+  | 'summary';
 
 export interface ArtifactVariantStyles {
   header: string;
@@ -97,6 +98,13 @@ export const ARTIFACT_VARIANTS: Record<ArtifactVariant, ArtifactVariantStyles> =
     headerText: 'text-cyan-900',
     border: 'border-cyan-200',
     accent: 'bg-cyan-600',
+    icon: 'text-white',
+  },
+  summary: {
+    header: 'bg-gradient-to-r from-slate-50 to-gray-50',
+    headerText: 'text-slate-900',
+    border: 'border-slate-200',
+    accent: 'bg-slate-600',
     icon: 'text-white',
   },
 };

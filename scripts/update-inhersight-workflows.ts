@@ -14,13 +14,33 @@ console.log('Connecting to:', supabaseUrl);
 async function updateWorkflows() {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Upsert 90-Day Renewal Workflow
+  // ============================================================================
+  // IMPORTANT: PostgreSQL UNIQUE constraints don't work properly with NULL values
+  // NULL != NULL in SQL, so upsert creates new rows instead of updating
+  // We must DELETE then INSERT for stock workflows (company_id = NULL)
+  // ============================================================================
+
+  // First, delete existing InHerSight workflows (stock workflows only)
+  console.log('Deleting existing InHerSight stock workflows...');
+  const { error: deleteError } = await supabase
+    .from('workflow_definitions')
+    .delete()
+    .is('company_id', null)
+    .in('workflow_id', ['inhersight-90day-renewal', 'inhersight-120day-atrisk']);
+
+  if (deleteError) {
+    console.error('Error deleting existing workflows:', deleteError);
+    // Continue anyway - maybe they don't exist yet
+  } else {
+    console.log('Deleted existing InHerSight stock workflows');
+  }
+
+  // Insert 90-Day Renewal Workflow
   // Phase 1: 90-day renewal preparation workflow
-  // Slides: greeting, review-brand-performance, review-contract-terms, identify-opportunities,
-  //         align-strategy, prepare-meeting-deck, schedule-call, workflow-summary
+  // Slides: greeting, account-review-tabbed (5 tabs), align-strategy, prepare-meeting-deck, schedule-call, workflow-summary
   const { data: data90, error: error90 } = await supabase
     .from('workflow_definitions')
-    .upsert({
+    .insert({
       workflow_id: 'inhersight-90day-renewal',
       name: 'InHerSight 90-Day Renewal',
       workflow_type: 'renewal',
@@ -100,21 +120,19 @@ async function updateWorkflows() {
         days_to_renewal: { operator: '<=', value: 90 },
         workflow_type: 'renewal',
       },
-    }, {
-      onConflict: 'workflow_id,company_id'
     })
     .select();
 
   if (error90) {
-    console.error('Error upserting 90-day:', error90);
+    console.error('Error inserting 90-day:', error90);
   } else {
-    console.log('Upserted 90-day renewal:', data90);
+    console.log('Inserted 90-day renewal:', data90);
   }
 
-  // Upsert 120-Day At-Risk Workflow
+  // Insert 120-Day At-Risk Workflow
   const { data: data120, error: error120 } = await supabase
     .from('workflow_definitions')
-    .upsert({
+    .insert({
       workflow_id: 'inhersight-120day-atrisk',
       name: 'InHerSight 120-Day At-Risk Recovery',
       workflow_type: 'risk',
@@ -184,15 +202,13 @@ async function updateWorkflows() {
         health_score: { operator: '<', value: 70 },
         workflow_type: 'risk',
       },
-    }, {
-      onConflict: 'workflow_id,company_id'
     })
     .select();
 
   if (error120) {
-    console.error('Error upserting 120-day:', error120);
+    console.error('Error inserting 120-day:', error120);
   } else {
-    console.log('Upserted 120-day at-risk:', data120);
+    console.log('Inserted 120-day at-risk:', data120);
   }
 
   console.log('\nWorkflow definitions seeded/updated successfully!');

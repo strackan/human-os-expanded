@@ -13,9 +13,11 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; stepId: string } }
+  { params }: { params: Promise<{ id: string; stepId: string }> }
 ) {
   try {
+    const { id, stepId } = await params;
+
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
@@ -52,13 +54,13 @@ export async function POST(
 
     // Re-submit the step
     const reviewService = new WorkflowReviewService(supabase);
-    await reviewService.resubmitStep(params.id, params.stepId, userId);
+    await reviewService.resubmitStep(id, stepId, userId);
 
     return NextResponse.json({
       success: true,
       message: 'Step re-submitted successfully',
-      executionId: params.id,
-      stepId: params.stepId
+      executionId: id,
+      stepId
     });
 
   } catch (error) {

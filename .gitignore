@@ -48,3 +48,4 @@ next-env.d.ts
 /archive/
 public/archive/
 killertools/
+.env*.local

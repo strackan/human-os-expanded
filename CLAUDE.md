@@ -109,9 +109,68 @@ Skip during searches:
 - Use project npm scripts for builds
 
 ## Testing
-- Framework: Jest
-- Key test file: `tests/e2e/pricing-optimization-complete.test.tsx`
-- Multi-layer validation pattern
+
+### Jest Test Framework
+```bash
+npm test              # Run all tests
+npm run test:watch    # Watch mode (re-run on changes)
+npm run test:coverage # Generate coverage report
+```
+
+### Test File Locations
+- Unit tests: `src/**/__tests__/*.test.ts`
+- Component tests: `src/**/__tests__/*.test.tsx`
+- Test pattern: `*.test.ts` or `*.test.tsx`
+
+### Testing Requirements for Releases
+
+**Before any release, agents MUST:**
+1. Run `npm test` and ensure all tests pass
+2. Run `npm run type-check` with 0 errors (excluding `supabase/functions/`)
+3. Run `npm run build` successfully
+
+**When making code changes, agents SHOULD:**
+1. Write unit tests for new service functions/utilities
+2. Update existing tests if changing function signatures
+3. Add regression tests for bug fixes
+
+### Writing Tests
+
+**Unit tests for services** (preferred - no Next.js context needed):
+```typescript
+// src/lib/services/__tests__/MyService.test.ts
+import { describe, it, expect, jest } from '@jest/globals';
+import { MyService } from '../MyService';
+
+describe('MyService', () => {
+  it('should do something', () => {
+    const result = MyService.calculate(10);
+    expect(result).toBe(20);
+  });
+});
+```
+
+**Mocking Supabase** (for database operations):
+```typescript
+const mockSupabase = {
+  from: jest.fn().mockReturnValue({
+    select: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue({ data: mockData, error: null })
+  })
+} as unknown as SupabaseClient;
+```
+
+**What to test:**
+- Pure functions and utilities (easiest)
+- Service methods with mocked dependencies
+- Data transformations and business logic
+- Edge cases and error handling
+
+**What NOT to test (requires complex mocking):**
+- React components with Next.js context (cookies, headers)
+- Full workflow execution (use manual QA)
+- API routes (test via integration or E2E)
 
 ## Documentation
 Extensive docs in `/docs`:

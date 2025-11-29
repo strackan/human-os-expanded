@@ -301,7 +301,7 @@ export interface ArtifactsConfig {
   sections: Array<{
     id: string;
     title: string;
-    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'presentation';
+    type: 'license-analysis' | 'email-draft' | 'email' | 'html' | 'custom' | 'workflow-summary' | 'planning-checklist' | 'planning-checklist-enhanced' | 'contract' | 'pricing-analysis' | 'document' | 'contact-strategy' | 'plan-summary' | 'quote' | 'presentation' | 'component:informative' | 'component:interactive' | 'action-plan' | 'brand-performance' | 'contacts-overview' | 'report' | 'account-summary';
     visible: boolean;
     editable?: boolean;
     content?: any;

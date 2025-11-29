@@ -13,9 +13,11 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: Promise<{ workflowId: string }> }
 ) {
   try {
+    const { workflowId } = await params;
+
     // Use service role client if DEMO_MODE or auth bypass is enabled
     const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
@@ -72,7 +74,7 @@ export async function POST(
     // Reject the workflow
     const reviewService = new WorkflowReviewService(supabase);
     await reviewService.rejectWorkflow(
-      params.workflowId,
+      workflowId,
       userId,
       comments,
       reason
@@ -81,7 +83,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: 'Workflow rejected successfully',
-      workflowId: params.workflowId
+      workflowId
     });
 
   } catch (error) {

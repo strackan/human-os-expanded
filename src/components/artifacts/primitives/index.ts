@@ -81,3 +81,9 @@ export {
   type MetricSize,
   type TrendDirection,
 } from './ArtifactMetric';
+
+// Approval Footer (v0.1.12)
+export {
+  ApprovalFooter,
+  type ApprovalFooterProps,
+} from './ApprovalFooter';

@@ -165,7 +165,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   const createNewExecution = async () => {
     if (!userId) {
       console.error('[TaskModeFullscreen] Cannot create execution - missing userId');
-      setResumeCheckState(prev => ({ ...prev, checking: false }));
+      setIsCheckingResume(false);
       return;
     }
 

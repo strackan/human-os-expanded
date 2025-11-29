@@ -12,7 +12,7 @@ import type { UpdateParkingLotItemRequest } from '@/types/parking-lot';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -25,7 +25,8 @@ export async function GET(
       );
     }
 
-    const result = await ParkingLotService.getById(user.id, params.id);
+    const { id } = await params;
+    const result = await ParkingLotService.getById(user.id, id);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 404 });
@@ -43,7 +44,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -56,9 +57,10 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
     const body = await request.json() as UpdateParkingLotItemRequest;
 
-    const result = await ParkingLotService.update(user.id, params.id, body);
+    const result = await ParkingLotService.update(user.id, id, body);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 500 });
@@ -76,7 +78,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -89,7 +91,8 @@ export async function DELETE(
       );
     }
 
-    const result = await ParkingLotService.delete(user.id, params.id);
+    const { id } = await params;
+    const result = await ParkingLotService.delete(user.id, id);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 500 }

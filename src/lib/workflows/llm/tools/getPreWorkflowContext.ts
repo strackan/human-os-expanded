@@ -72,7 +72,7 @@ export const getPreWorkflowContextTool: INTELTool = {
     },
   },
 
-  execute: async (input: { customer_name: string }): Promise<string> => {
+  execute: async (input: Record<string, any>): Promise<string> => {
     try {
       const intel = await getINTELContext(input.customer_name);
 

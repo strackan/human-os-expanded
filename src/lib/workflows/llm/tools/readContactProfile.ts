@@ -29,7 +29,7 @@ export const readContactProfileTool: INTELTool = {
     },
   },
 
-  execute: async (input: { customer_name: string; contact_name: string }): Promise<string> => {
+  execute: async (input: Record<string, any>): Promise<string> => {
     try {
       const intel = await getINTELContext(input.customer_name);
 

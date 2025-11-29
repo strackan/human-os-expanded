@@ -11,7 +11,7 @@ import type { BrainstormSessionRequest } from '@/types/parking-lot';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
@@ -24,8 +24,10 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
+
     // Get the item
-    const itemResult = await ParkingLotService.getById(user.id, params.id);
+    const itemResult = await ParkingLotService.getById(user.id, id);
     if (!itemResult.success || !itemResult.item) {
       return NextResponse.json(
         { success: false, error: 'Item not found' },
@@ -61,7 +63,7 @@ export async function POST(
         brainstorm_completed_at: new Date().toISOString(),
         status: 'brainstorming'
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id);
 
     if (updateError) {
@@ -72,7 +74,7 @@ export async function POST(
     }
 
     // Fetch updated item
-    const updatedItemResult = await ParkingLotService.getById(user.id, params.id);
+    const updatedItemResult = await ParkingLotService.getById(user.id, id);
     if (!updatedItemResult.success || !updatedItemResult.item) {
       return NextResponse.json(
         { success: false, error: 'Failed to fetch updated item' },
@@ -94,7 +96,7 @@ export async function POST(
         status: 'expanded',
         readiness_score: 80 // Brainstormed ideas are typically more fleshed out
       })
-      .eq('id', params.id);
+      .eq('id', id);
 
     if (expansionError) {
       return NextResponse.json(

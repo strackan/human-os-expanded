@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { CandidateService } from '@/lib/services/CandidateService';
 import { InterviewMessage } from '@/types/talent';
 
-export async function POST(request: NextRequest, { params }: { params: { candidateId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ candidateId: string }> }) {
   try {
     // Verify API key from GoodHang
     const apiKey = request.headers.get('x-api-key');
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest, { params }: { params: { candida
     }
 
     const supabase = await createClient();
-    const candidateId = params.candidateId;
+    const { candidateId } = await params;
 
     // Parse request body
     const body = await request.json();

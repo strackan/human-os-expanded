@@ -9,6 +9,7 @@
  * Release 0.1.8.1 - Phase 1: Trigger Evaluator Consolidation
  */
 
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { SkipTriggerEvaluator } from '../../SkipTriggerEvaluator';
 import { SkipTriggerEvaluatorV2 } from '../SkipTriggerEvaluatorV2';
@@ -16,7 +17,7 @@ import { ReviewTriggerEvaluator } from '../../ReviewTriggerEvaluator';
 import { ReviewTriggerEvaluatorV2 } from '../ReviewTriggerEvaluatorV2';
 import { EscalateTriggerEvaluator } from '../../EscalateTriggerEvaluator';
 import { EscalateTriggerEvaluatorV2 } from '../EscalateTriggerEvaluatorV2';
-import { SkipTrigger } from '@/types/skip-triggers';
+import { SkipTrigger, DateTriggerConfig, EventTriggerConfig } from '@/types/skip-triggers';
 import { ReviewTrigger } from '@/types/review-triggers';
 import { EscalateTrigger } from '@/types/escalate-triggers';
 
@@ -295,14 +296,7 @@ describe('Integration Tests - Comprehensive Comparison', () => {
 interface TestCase {
   id: number;
   type: 'date' | 'event';
-  config: {
-    date?: string;
-    timezone?: string;
-    eventType?: string;
-    eventConfig?: {
-      workflowExecutionId?: string;
-    };
-  };
+  config: DateTriggerConfig | EventTriggerConfig;
 }
 
 function generateTestCases(count: number): TestCase[] {

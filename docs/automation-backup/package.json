@@ -1,0 +1,25 @@
+{
+  "name": "automation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "check-db.js",
+  "scripts": {
+    "start": "node server.js",
+    "db:seed": "node seed.js",
+    "db:reset": "node reset-db.js",
+    "db:query": "node query-db.js",
+    "db:analyze": "node analyze-renewals.js",
+    "test": "node test-renewal-stages.js",
+    "test:workflows": "node test-renewal-workflow-mapper.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
+    "better-sqlite3": "^12.4.1",
+    "express": "^4.21.1",
+    "node-fetch": "^2.7.0"
+  }
+}
