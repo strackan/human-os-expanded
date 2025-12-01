@@ -137,12 +137,12 @@ const EditableCell: React.FC<EditableCellProps> = ({
   }
 
   return (
-    <div 
+    <div
       className={`cursor-pointer hover:bg-gray-50 rounded px-2 py-1 transition-colors ${cellClassName}`}
       onDoubleClick={handleDoubleClick}
       title="Double-click to edit"
     >
-      <span className={`text-sm ${className}`}>
+      <span className={`text-sm font-semibold text-gray-800 ${className}`}>
         {formatDisplayValue(value)}
       </span>
     </div>

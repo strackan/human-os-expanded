@@ -122,12 +122,17 @@ export function useTaskModeState({
   // UI STATE
   // ============================================================
 
-  const [greetingText, setGreetingText] = useState('');
-  const [showButtons, setShowButtons] = useState(false);
-  const [metricsExpanded, setMetricsExpanded] = useState(false);
+  const [_greetingText, _setGreetingText] = useState('');
+  const [_showButtons, _setShowButtons] = useState(false);
+  const [_metricsExpanded, setMetricsExpanded] = useState(false);
   const [showArtifacts, setShowArtifacts] = useState(true);
   const [artifactsPanelWidth, setArtifactsPanelWidth] = useState(50);
-  const [isResizing, setIsResizing] = useState(false);
+  const [_isResizing, _setIsResizing] = useState(false);
+  // Reserved for future use
+  void _greetingText; void _setGreetingText;
+  void _showButtons; void _setShowButtons;
+  void _metricsExpanded;
+  void _isResizing; void _setIsResizing;
   const [isArtifactResizing, setIsArtifactResizing] = useState(false);
   const [showPlaysDropdown, setShowPlaysDropdown] = useState(false);
   const [showMetricsSlideup, setShowMetricsSlideup] = useState(false);
@@ -206,12 +211,8 @@ export function useTaskModeState({
         // Restore branch state
         setCurrentBranch(savedState.currentBranch);
 
-        showToast({
-          message: 'Workflow progress restored',
-          type: 'info',
-          icon: 'check',
-          duration: 2000,
-        });
+        // Note: "Resuming your progress..." toast is shown in TaskModeFullscreen
+        // when detecting resumable execution, so we don't show a duplicate here
       } else {
         console.log('[useTaskModeState] No saved state found, starting fresh');
       }

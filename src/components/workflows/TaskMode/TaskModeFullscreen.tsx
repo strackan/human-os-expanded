@@ -41,6 +41,7 @@ import { ReviewApprovalModal } from '@/components/workflows/ReviewApprovalModal'
 import { RejectionAlertBanner } from '@/components/workflows/RejectionAlertBanner';
 import { ResubmitConfirmationModal } from '@/components/workflows/ResubmitConfirmationModal';
 import { RejectionHistoryTimeline } from '@/components/workflows/RejectionHistoryTimeline';
+import Customer360SidePanel from '@/components/workflows/Customer360SidePanel';
 import { snoozeWithTriggers, requestReviewWithTriggers } from '@/lib/api/workflow-triggers';
 import { approveWorkflowReview, requestWorkflowChanges, rejectWorkflowReview, resubmitWorkflowForReview } from '@/lib/api/workflow-triggers';
 import type { WakeTrigger, TriggerLogic } from '@/types/wake-triggers';
@@ -227,6 +228,13 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
   // Restart confirmation modal state
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [isRestarting, setIsRestarting] = useState(false);
+
+  // Customer 360 side panel state
+  const [showCustomer360, setShowCustomer360] = useState(false);
+
+  // Workflow-level snooze/skip modal state (for header buttons)
+  const [showWorkflowSnoozeModal, setShowWorkflowSnoozeModal] = useState(false);
+  const [showWorkflowSkipModal, setShowWorkflowSkipModal] = useState(false);
 
   // Debug: Log step snooze modal state changes
   useEffect(() => {
@@ -1037,9 +1045,12 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
             onTogglePlays={() => state.togglePlaysDropdown(!state.showPlaysDropdown)}
             onToggleMetrics={() => state.toggleMetricsSlideup(true)}
             onToggleArtifacts={() => state.toggleArtifacts(!state.showArtifacts)}
+            onToggleCustomer360={() => setShowCustomer360(!showCustomer360)}
             onClose={state.handleClose}
             onRestart={() => setShowRestartModal(true)}
             onWorkflowAction={onWorkflowAction}
+            onSnooze={() => setShowWorkflowSnoozeModal(true)}
+            onSkip={() => setShowWorkflowSkipModal(true)}
           />
 
           {/* Progress Bar */}
@@ -1383,6 +1394,147 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               </div>
             </div>
           )}
+
+          {/* Workflow-level Snooze Modal (from header) */}
+          {showWorkflowSnoozeModal && executionId && userId && (
+            <EnhancedSnoozeModal
+              workflowId={executionId}
+              isOpen={showWorkflowSnoozeModal}
+              onClose={() => setShowWorkflowSnoozeModal(false)}
+              onSnooze={async (triggers: WakeTrigger[]) => {
+                try {
+                  await snoozeWithTriggers(executionId, userId, triggers);
+                  setShowWorkflowSnoozeModal(false);
+                  onWorkflowAction?.('snooze');
+                  showToast({
+                    message: 'Workflow snoozed',
+                    type: 'success',
+                    icon: 'check',
+                    duration: 2000,
+                  });
+                } catch (error) {
+                  console.error('Failed to snooze workflow:', error);
+                  showToast({
+                    message: 'Failed to snooze workflow',
+                    type: 'error',
+                    icon: 'alert',
+                    duration: 3000,
+                  });
+                }
+              }}
+            />
+          )}
+
+          {/* Workflow-level Skip Modal (from header) */}
+          {showWorkflowSkipModal && executionId && userId && (
+            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4 relative">
+                <button
+                  onClick={() => setShowWorkflowSkipModal(false)}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+
+                <h3 className="text-lg font-semibold mb-4 text-gray-900">Skip Workflow</h3>
+
+                <p className="text-sm text-gray-600 mb-4">
+                  Skipping this workflow will permanently remove it from your active list. This action cannot be undone.
+                </p>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const reason = (form.elements.namedItem('reason') as HTMLTextAreaElement).value;
+                    if (!reason.trim()) {
+                      showToast({
+                        message: 'Please provide a reason for skipping',
+                        type: 'error',
+                        icon: 'alert',
+                        duration: 3000,
+                      });
+                      return;
+                    }
+                    try {
+                      const { WorkflowActionService } = await import('@/lib/workflows/actions');
+                      const service = new WorkflowActionService();
+                      await service.skipWorkflow(executionId, userId, { reason });
+                      setShowWorkflowSkipModal(false);
+                      onWorkflowAction?.('skip');
+                      showToast({
+                        message: 'Workflow skipped',
+                        type: 'success',
+                        icon: 'check',
+                        duration: 2000,
+                      });
+                    } catch (error) {
+                      console.error('Failed to skip workflow:', error);
+                      showToast({
+                        message: 'Failed to skip workflow',
+                        type: 'error',
+                        icon: 'alert',
+                        duration: 3000,
+                      });
+                    }
+                  }}
+                >
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 mb-1">
+                        Reason for skipping: <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="reason"
+                        placeholder="e.g., Customer not interested, duplicate workflow, etc."
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setShowWorkflowSkipModal(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Skip Workflow
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Customer 360 Side Panel */}
+          <Customer360SidePanel
+            isOpen={showCustomer360}
+            onToggle={() => setShowCustomer360(!showCustomer360)}
+            workflowType={workflowId.includes('renewal') || workflowId.includes('day') ? 'date' : 'event'}
+            customerId={customerId}
+            customerName={customerName}
+            currentWorkflowId={workflowId}
+            metrics={state.customer ? {
+              healthScore: state.customer.healthScore || 75,
+              arr: state.customer.arr || 100000,
+              nps: 45,
+              usagePercent: 85,
+              daysToRenewal: state.customer.renewalDate
+                ? Math.ceil((new Date(state.customer.renewalDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                : undefined,
+              riskLevel: (state.customer.healthScore || 75) < 50 ? 'high' : (state.customer.healthScore || 75) < 70 ? 'medium' : 'low',
+              expansionPotential: 25000,
+            } : undefined}
+          />
         </div>
       </div>
     </TaskModeContext.Provider>
