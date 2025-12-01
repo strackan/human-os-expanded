@@ -59,6 +59,8 @@ export async function POST(
     console.log(`[API] Restarting workflow execution: ${executionId}`);
 
     // Define update payload for debugging
+    // NOTE: review_iteration and review_rejection_history are from migration 20260202
+    // which may not be deployed yet - only include columns that exist in production
     const updatePayload = {
       status: 'in_progress',
       current_step_index: 0,
@@ -70,8 +72,6 @@ export async function POST(
       review_reason: null,
       reviewed_at: null,
       reviewer_comments: null,
-      review_iteration: 0,
-      review_rejection_history: null,
       // Clear review trigger fields (these were escalate_trigger_* before rename)
       review_trigger_fired_at: null,
       review_fired_trigger_type: null,
