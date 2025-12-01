@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { getAuthenticatedClient } from '@/lib/supabase-server';
 
 export async function POST(
   request: NextRequest,
@@ -18,13 +18,8 @@ export async function POST(
     const resolvedParams = await params;
     const executionId = resolvedParams.id;
 
-    // Use service role client if DEMO_MODE or auth bypass is enabled
-    const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
-    const authBypassEnabled = process.env.NEXT_PUBLIC_AUTH_BYPASS_ENABLED === 'true';
-    const supabase = (demoMode || authBypassEnabled) ? createServiceRoleClient() : await createServerSupabaseClient();
-
-    // Authenticate user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get authenticated user and supabase client (handles demo mode with two-client pattern)
+    const { user, supabase, error: authError } = await getAuthenticatedClient();
 
     if (authError || !user) {
       return NextResponse.json(
@@ -68,26 +63,25 @@ export async function POST(
       .from('workflow_executions')
       .update({
         status: 'in_progress',
-        current_step: 0,
+        current_step_index: 0,
         completed_at: null,
-        // Clear all review-related fields
+        // Clear all review-related fields (escalate_* was renamed to review_* in migration)
         review_status: null,
         reviewer_id: null,
         review_requested_at: null,
         review_reason: null,
-        review_completed_at: null,
+        reviewed_at: null,
+        reviewer_comments: null,
         review_iteration: 0,
         review_rejection_history: null,
-        // Clear skip/wake trigger fields
+        // Clear review trigger fields (these were escalate_trigger_* before rename)
+        review_trigger_fired_at: null,
+        review_fired_trigger_type: null,
+        review_last_evaluated_at: null,
+        // Clear skip trigger fields
         skip_trigger_fired_at: null,
         skip_fired_trigger_type: null,
-        skip_fired_trigger_reason: null,
         skip_last_evaluated_at: null,
-        // Clear escalate trigger fields
-        escalate_trigger_fired_at: null,
-        escalate_fired_trigger_type: null,
-        escalate_fired_trigger_reason: null,
-        escalate_last_evaluated_at: null,
         // Update timestamp
         updated_at: new Date().toISOString(),
       })
