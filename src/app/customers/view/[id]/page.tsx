@@ -562,9 +562,9 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                 <button
                   onClick={handleLaunchWorkflow}
                   disabled={launchingWorkflow}
-                  className={`w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:cursor-not-allowed relative overflow-hidden transition-all ${
+                  className={`w-full flex items-center justify-center px-4 py-3 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:cursor-not-allowed relative overflow-hidden transition-all ${
                     launchingWorkflow
-                      ? 'bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]'
+                      ? 'bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite]'
                       : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
@@ -577,7 +577,7 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
                     ) : (
                       <PlayIcon className="w-4 h-4 mr-2" />
                     )}
-                    {launchingWorkflow ? 'Launching...' : 'Launch Renewal Workflow'}
+                    {launchingWorkflow ? 'Preparing...' : 'Launch Renewal Workflow'}
                   </span>
                 </button>
                 <button
@@ -628,29 +628,6 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Gradient Loading Screen */}
-      {launchingWorkflow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Animated gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 bg-200% animate-gradient-shift" />
-
-          {/* Content */}
-          <div className="relative z-10 text-center">
-            {/* Spinning loader */}
-            <div className="mb-6">
-              <div className="w-16 h-16 mx-auto border-4 border-white/30 border-t-white rounded-full animate-spin" />
-            </div>
-
-            {/* Text */}
-            <h2 className="text-2xl font-bold text-white mb-2">
-              Preparing Your Workflow
-            </h2>
-            <p className="text-white/80 text-lg">
-              Loading {customer?.name} renewal data...
-            </p>
-          </div>
-        </div>
-      )}
 
       {/* TaskMode Modal */}
       {taskModeOpen && activeWorkflow && (
