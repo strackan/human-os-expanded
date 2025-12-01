@@ -58,39 +58,57 @@ export async function POST(
 
     console.log(`[API] Restarting workflow execution: ${executionId}`);
 
+    // Define update payload for debugging
+    const updatePayload = {
+      status: 'in_progress',
+      current_step_index: 0,
+      completed_at: null,
+      // Clear all review-related fields (escalate_* was renamed to review_* in migration)
+      review_status: null,
+      reviewer_id: null,
+      review_requested_at: null,
+      review_reason: null,
+      reviewed_at: null,
+      reviewer_comments: null,
+      review_iteration: 0,
+      review_rejection_history: null,
+      // Clear review trigger fields (these were escalate_trigger_* before rename)
+      review_trigger_fired_at: null,
+      review_fired_trigger_type: null,
+      review_last_evaluated_at: null,
+      // Clear skip trigger fields
+      skip_trigger_fired_at: null,
+      skip_fired_trigger_type: null,
+      skip_last_evaluated_at: null,
+      // Update timestamp
+      updated_at: new Date().toISOString(),
+    };
+
+    console.log('[API] Update payload:', JSON.stringify(updatePayload, null, 2));
+
     // Reset the workflow execution to initial state
     const { error: updateError } = await supabase
       .from('workflow_executions')
-      .update({
-        status: 'in_progress',
-        current_step_index: 0,
-        completed_at: null,
-        // Clear all review-related fields (escalate_* was renamed to review_* in migration)
-        review_status: null,
-        reviewer_id: null,
-        review_requested_at: null,
-        review_reason: null,
-        reviewed_at: null,
-        reviewer_comments: null,
-        review_iteration: 0,
-        review_rejection_history: null,
-        // Clear review trigger fields (these were escalate_trigger_* before rename)
-        review_trigger_fired_at: null,
-        review_fired_trigger_type: null,
-        review_last_evaluated_at: null,
-        // Clear skip trigger fields
-        skip_trigger_fired_at: null,
-        skip_fired_trigger_type: null,
-        skip_last_evaluated_at: null,
-        // Update timestamp
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', executionId);
 
     if (updateError) {
-      console.error('[API] Error resetting workflow execution:', updateError);
+      console.error('[API] Error resetting workflow execution:', JSON.stringify(updateError, null, 2));
+      console.error('[API] Error details:', {
+        code: updateError.code,
+        message: updateError.message,
+        details: updateError.details,
+        hint: updateError.hint,
+      });
       return NextResponse.json(
-        { error: 'Failed to reset workflow execution' },
+        {
+          error: 'Failed to reset workflow execution',
+          details: {
+            code: updateError.code,
+            message: updateError.message,
+            hint: updateError.hint,
+          }
+        },
         { status: 500 }
       );
     }
