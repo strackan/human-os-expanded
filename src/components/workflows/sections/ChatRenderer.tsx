@@ -535,8 +535,8 @@ export default function ChatRenderer({
   };
 
   return (
-    <div className="flex items-start justify-center p-12 h-full overflow-y-auto">
-      <div className="max-w-2xl w-full space-y-6">
+    <div className="flex flex-col justify-end p-12 pb-8 h-full overflow-y-auto">
+      <div className="max-w-2xl w-full space-y-6 mx-auto mt-auto">
         {chatMessages.map((message, index) => {
           // Check if this is the last separator in the list (for scroll ref)
           const isLastSeparator = (message.isSlideSeparator || message.isDivider) &&

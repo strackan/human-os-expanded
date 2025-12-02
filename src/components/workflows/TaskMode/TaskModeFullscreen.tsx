@@ -1157,7 +1157,7 @@ export default function TaskModeFullscreen(props: TaskModeFullscreenProps) {
               </div>
 
               {/* Chat Input */}
-              <div className="border-t border-gray-200 p-4 bg-white">
+              <div className="border-t border-gray-200 p-4 pb-8 bg-white">
                 <div className="flex gap-2 items-end max-w-4xl mx-auto">
                   <button className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg">
                     <Mic className="w-5 h-5" />

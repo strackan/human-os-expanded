@@ -108,11 +108,38 @@ export function TabbedContainerArtifact({
     defaultTab || visibleTabs[0]?.id || ''
   );
 
+  // Track which tabs have been reviewed (internal state)
+  const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
+
+  // Mark a tab as reviewed
+  const markTabReviewed = useCallback((tabId: string, reviewed: boolean) => {
+    setReviewedTabs(prev => {
+      const next = new Set(prev);
+      if (reviewed) {
+        next.add(tabId);
+      } else {
+        next.delete(tabId);
+      }
+      return next;
+    });
+    // Also call external callback if provided
+    if (onTabStatusChange) {
+      onTabStatusChange(tabId, reviewed ? 'approved' : 'pending');
+    }
+  }, [onTabStatusChange]);
+
+  // Check if a tab has been reviewed
+  const isTabReviewed = useCallback((tabId: string): boolean => {
+    return reviewedTabs.has(tabId);
+  }, [reviewedTabs]);
+
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
 
-  // Get tab status from phaseApprovals or tab definition
+  // Get tab status from reviewed state, phaseApprovals, or tab definition
   const getTabStatus = useCallback((tabId: string): TabStatus => {
-    // Check phaseApprovals first (dynamic state)
+    // Check internal reviewed state first
+    if (reviewedTabs.has(tabId)) return 'approved';
+    // Check phaseApprovals (dynamic state)
     const approval = phaseApprovals.find(p => p.phaseId === tabId);
     if (approval) return approval.status;
     // Fall back to tab definition status
@@ -120,7 +147,7 @@ export function TabbedContainerArtifact({
     if (tab?.status) return tab.status;
     // Default: current tab is 'current', others are 'pending'
     return tabId === activeTabId ? 'current' : 'pending';
-  }, [phaseApprovals, tabs, activeTabId]);
+  }, [reviewedTabs, phaseApprovals, tabs, activeTabId]);
 
   // Check if tab has comments
   const tabHasComments = useCallback((tabId: string): boolean => {
@@ -167,32 +194,30 @@ export function TabbedContainerArtifact({
         {visibleTabs.map((tab) => {
           const Icon = resolveIcon(tab.icon);
           const isActive = tab.id === activeTabId;
-          const status = showApprovalWorkflow ? getTabStatus(tab.id) : undefined;
+          const status = getTabStatus(tab.id);
           const hasComments = showApprovalWorkflow ? tabHasComments(tab.id) : false;
+          const isReviewed = status === 'approved';
 
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTabId(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
-                isActive
-                  ? 'text-blue-600'
-                  : status === 'approved'
+                isReviewed
                   ? 'text-green-600'
+                  : isActive
+                  ? 'text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {/* Status indicator (when approval workflow enabled) */}
-              {showApprovalWorkflow && status === 'approved' && (
+              {/* Reviewed indicator */}
+              {isReviewed && (
                 <span className="flex items-center justify-center w-4 h-4 rounded-full bg-green-100">
                   <Check className="w-3 h-3 text-green-600" />
                 </span>
               )}
-              {showApprovalWorkflow && status === 'current' && isActive && (
-                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-              )}
-              {/* Tab icon (only show if no status indicator or pending) */}
-              {(!showApprovalWorkflow || status === 'pending') && Icon && (
+              {/* Tab icon (only show if not reviewed) */}
+              {!isReviewed && Icon && (
                 <Icon className="w-4 h-4" />
               )}
               {tab.label}
@@ -202,7 +227,7 @@ export function TabbedContainerArtifact({
               )}
               {isActive && (
                 <div className={`absolute bottom-0 left-0 right-0 h-0.5 ${
-                  status === 'approved' ? 'bg-green-600' : 'bg-blue-600'
+                  isReviewed ? 'bg-green-600' : 'bg-blue-600'
                 }`} />
               )}
             </button>
@@ -211,28 +236,56 @@ export function TabbedContainerArtifact({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {activeTab && (() => {
-          const ArtifactComponent = getArtifactComponent(activeTab.artifact);
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          {activeTab && (() => {
+            const ArtifactComponent = getArtifactComponent(activeTab.artifact);
 
-          if (!ArtifactComponent) {
-            return (
-              <div className="p-6 text-center text-gray-500">
-                <p>Component "{activeTab.artifact}" not found in registry</p>
-                <p className="text-xs mt-1">Check componentImports.ts</p>
-              </div>
-            );
-          }
+            if (!ArtifactComponent) {
+              return (
+                <div className="p-6 text-center text-gray-500">
+                  <p>Component "{activeTab.artifact}" not found in registry</p>
+                  <p className="text-xs mt-1">Check componentImports.ts</p>
+                </div>
+              );
+            }
 
-          // Merge shared props with tab-specific props
-          const mergedProps = {
-            ...sharedProps,
-            ...activeTab.props,
-            customerName: activeTab.props?.customerName || customerName,
-          };
+            // Merge shared props with tab-specific props
+            const mergedProps = {
+              ...sharedProps,
+              ...activeTab.props,
+              customerName: activeTab.props?.customerName || customerName,
+            };
 
-          return <ArtifactComponent {...mergedProps} />;
-        })()}
+            return <ArtifactComponent {...mergedProps} />;
+          })()}
+        </div>
+
+        {/* Review Checkbox */}
+        {activeTab && (
+          <div className={`px-6 py-3 border-t flex items-center gap-3 transition-colors ${
+            isTabReviewed(activeTabId)
+              ? 'bg-green-50 border-green-200'
+              : 'bg-gray-50 border-gray-200'
+          }`}>
+            <label className="flex items-center gap-3 cursor-pointer select-none flex-1">
+              <input
+                type="checkbox"
+                checked={isTabReviewed(activeTabId)}
+                onChange={(e) => markTabReviewed(activeTabId, e.target.checked)}
+                className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 cursor-pointer"
+              />
+              <span className={`text-sm font-medium ${
+                isTabReviewed(activeTabId) ? 'text-green-700' : 'text-gray-700'
+              }`}>
+                {isTabReviewed(activeTabId)
+                  ? `✓ ${activeTab.label} reviewed`
+                  : `I've reviewed ${activeTab.label.toLowerCase()}`
+                }
+              </span>
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Footer Navigation */}
