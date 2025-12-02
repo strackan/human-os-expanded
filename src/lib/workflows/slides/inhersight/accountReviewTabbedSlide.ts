@@ -384,21 +384,11 @@ Take your time exploring each tab. Ready to continue when you are!`,
                   id: 'risk',
                   label: 'Risk',
                   icon: 'exclamation-triangle',
-                  artifact: 'PlanSummaryArtifact', // Placeholder - shows summary of risk factors
+                  artifact: 'RiskAssessmentArtifact',
                   props: {
-                    title: 'Risk Assessment',
                     customerName: '{{customer.name}}',
-                    sections: [
-                      {
-                        title: 'Risk Factors',
-                        items: context?.variables?.riskFactors || [
-                          { label: 'Budget Constraints', status: 'low', note: 'No known budget issues' },
-                          { label: 'Competitive Threat', status: 'medium', note: 'Evaluating alternatives' },
-                          { label: 'Champion Risk', status: 'low', note: 'Main contact stable' },
-                          { label: 'Usage Decline', status: 'low', note: 'Usage is growing' },
-                        ],
-                      },
-                    ],
+                    overallRiskScore: context?.variables?.overallRiskScore || 25,
+                    // Risk factors will use defaults from artifact if not provided
                   },
                 },
               ],

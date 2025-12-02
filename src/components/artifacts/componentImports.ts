@@ -14,6 +14,7 @@ import ExpansionOverviewArtifact from './ExpansionOverviewArtifact';
 import PresentationTemplateStatusArtifact from './PresentationTemplateStatusArtifact';
 import TabbedContainerArtifact from './TabbedContainerArtifact';
 import PresentationArtifact from './PresentationArtifact';
+import RiskAssessmentArtifact from './RiskAssessmentArtifact';
 
 // TODO: Add other imports as they are confirmed to exist
 // import PriceRecommendationFlat from './pricing/PriceRecommendationFlat';
@@ -35,6 +36,7 @@ export const componentMap: Record<string, React.ComponentType<any>> = {
   'PresentationTemplateStatusArtifact': PresentationTemplateStatusArtifact,
   'TabbedContainerArtifact': TabbedContainerArtifact,
   'PresentationArtifact': PresentationArtifact,
+  'RiskAssessmentArtifact': RiskAssessmentArtifact,
   // TODO: Add other mappings as components are confirmed to exist
 };
 
