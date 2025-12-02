@@ -41,6 +41,7 @@ import { createRecommendationSlide } from './renewal/createRecommendationSlide';
 import { negotiationGuideSlide } from './renewal/negotiationGuideSlide';
 import { alignStrategySlide } from './renewal/alignStrategySlide';
 import { prepareMeetingDeckSlide } from './renewal/prepareMeetingDeckSlide';
+import { renewalPresentationSlide } from './renewal/renewalPresentationSlide';
 
 // InHerSight-specific slides
 import { reviewBrandPerformanceSlide } from './inhersight/reviewBrandPerformanceSlide';
@@ -110,6 +111,7 @@ export const SLIDE_LIBRARY: Record<string, UniversalSlideBuilder> = {
   'negotiation-guide': negotiationGuideSlide,
   'align-strategy': alignStrategySlide,
   'prepare-meeting-deck': prepareMeetingDeckSlide,
+  'renewal-presentation': renewalPresentationSlide,
 
   // ========================================
   // INHERSIGHT-SPECIFIC SLIDES
@@ -172,6 +174,7 @@ export function getAllSlideIds(): string[] {
 /**
  * Get slides by category
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function getSlidesByCategory(_category: string): Record<string, UniversalSlideBuilder> {
   // This would filter based on slide.category
   // For now, returning all since we need to build out the slide metadata

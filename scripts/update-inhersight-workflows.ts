@@ -56,7 +56,7 @@ async function updateWorkflows() {
         'greeting',                  // 1. Confirm Plan - Planning Checklist
         'account-review-tabbed',     // 2. Performance Review - Tabbed: Usage | Contract | Contacts | Expansion | Risk
         'align-strategy',            // 3. Align on Strategy (interactive)
-        'prepare-meeting-deck',      // 4. Prepare Meeting Deck (autonomous)
+        'renewal-presentation',      // 4. Renewal Presentation (interactive deck with export)
         'schedule-call',             // 5. Schedule Meeting
         'workflow-summary'           // 6. Summary
       ],
@@ -98,10 +98,11 @@ async function updateWorkflows() {
             strategyOptions: ['standard_renewal', 'upsell', 'retention_focus', 'expansion'],
           }
         },
-        'prepare-meeting-deck': {
+        'renewal-presentation': {
           variables: {
-            templateType: 'renewal-presentation',
-            includeSections: ['performance', 'recommendations', 'next_steps'],
+            templateType: 'annual-review',
+            includeSections: ['title', 'metrics', 'highlights', 'recommendations', 'next-steps'],
+            editable: true,
           }
         }
       },

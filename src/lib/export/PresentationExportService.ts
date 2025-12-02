@@ -14,10 +14,11 @@
 import pptxgen from 'pptxgenjs';
 import type { PresentationSlide } from '@/components/artifacts/PresentationArtifact';
 
-// Brand colors
+// InHerSight Brand Colors
 const COLORS = {
-  primary: '2563EB',      // Blue-600
-  secondary: '7C3AED',    // Purple-600
+  primary: '7C3AED',      // InHerSight Purple (primary brand color)
+  secondary: '14B8A6',    // InHerSight Teal (accent color)
+  accent: 'EC4899',       // Pink accent for highlights
   success: '22C55E',      // Green-500
   warning: 'F59E0B',      // Amber-500
   danger: 'EF4444',       // Red-500
@@ -25,11 +26,13 @@ const COLORS = {
   light: 'F3F4F6',        // Gray-100
   white: 'FFFFFF',
   muted: '6B7280',        // Gray-500
+  purpleLight: 'EDE9FE',  // Light purple for backgrounds
+  tealLight: 'CCFBF1',    // Light teal for backgrounds
 };
 
-// Slide dimensions (16:9 widescreen)
-const SLIDE_WIDTH = 10;
-const SLIDE_HEIGHT = 5.625;
+// Slide dimensions (16:9 widescreen) - for reference
+// const SLIDE_WIDTH = 10;
+// const SLIDE_HEIGHT = 5.625;
 
 export interface ExportOptions {
   fileName?: string;
@@ -59,7 +62,8 @@ export class PresentationExportService {
   /**
    * Generate PowerPoint from presentation slides
    */
-  async generatePptx(slides: PresentationSlide[], options: ExportOptions = {}): Promise<Blob> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async generatePptx(slides: PresentationSlide[], _options: ExportOptions = {}): Promise<Blob> {
     // Process each slide
     for (const slide of slides) {
       switch (slide.type) {
@@ -127,16 +131,16 @@ export class PresentationExportService {
     const slide = this.pres.addSlide();
     const content = slideData.content as any;
 
-    // Blue gradient background
+    // InHerSight purple gradient background
     slide.background = { color: COLORS.primary };
 
-    // Logo placeholder
-    slide.addText('IHS', {
-      x: 4.25,
-      y: 0.8,
-      w: 1.5,
-      h: 0.8,
-      fontSize: 28,
+    // InHerSight logo text
+    slide.addText('InHerSight', {
+      x: 3.5,
+      y: 0.6,
+      w: 3,
+      h: 0.6,
+      fontSize: 20,
       bold: true,
       color: COLORS.white,
       align: 'center',
@@ -335,13 +339,13 @@ export class PresentationExportService {
     const slide = this.pres.addSlide();
     const content = slideData.content as any;
 
-    // Purple gradient header
+    // InHerSight purple header band
     slide.addShape('rect', {
       x: 0,
       y: 0,
       w: 10,
       h: 1,
-      fill: { color: 'F3E8FF' },
+      fill: { color: COLORS.purpleLight },
     });
 
     // Header
@@ -352,7 +356,7 @@ export class PresentationExportService {
       h: 0.5,
       fontSize: 24,
       bold: true,
-      color: COLORS.secondary,
+      color: COLORS.primary,
     });
 
     // Recommendations list
@@ -412,12 +416,12 @@ export class PresentationExportService {
         });
       }
 
-      // Priority badge
+      // Priority badge with InHerSight colors
       if (rec.priority) {
         const badgeColors: Record<string, string> = {
-          high: COLORS.danger,
-          medium: COLORS.warning,
-          low: COLORS.primary,
+          high: COLORS.accent,      // Pink for high priority
+          medium: COLORS.primary,   // Purple for medium
+          low: COLORS.secondary,    // Teal for low
         };
         slide.addText(rec.priority.toUpperCase(), {
           x: 8.5,
@@ -454,8 +458,8 @@ export class PresentationExportService {
       const yPos = 1.1 + (idx * 0.95);
       const step = typeof item === 'string' ? { title: item } : item;
 
-      // Card background
-      const bgColor = step.completed ? COLORS.light : 'EFF6FF';
+      // Card background with InHerSight teal accent
+      const bgColor = step.completed ? COLORS.light : COLORS.tealLight;
       slide.addShape('rect', {
         x: 0.5,
         y: yPos,
@@ -473,7 +477,7 @@ export class PresentationExportService {
         w: 0.4,
         h: 0.4,
         fontSize: 16,
-        color: step.completed ? COLORS.success : COLORS.primary,
+        color: step.completed ? COLORS.success : COLORS.secondary,
       });
 
       // Title
