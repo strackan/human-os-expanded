@@ -306,7 +306,7 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
 
         {/* Contact Cards */}
         {!isLoading && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          <div className="flex flex-wrap gap-4 mb-6">
           {contacts.map((contact) => {
             const typeConfig = getContactTypeConfig(contact.type);
             const meetingConfig = getMeetingStatusConfig(contact.meetingStatus);
@@ -319,7 +319,7 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
             return (
               <div
                 key={contact.id}
-                className={`min-w-[280px] border-2 ${typeConfig.borderColor} bg-white rounded-lg transition-all duration-200 hover:shadow-md flex flex-col`}
+                className={`w-[300px] flex-shrink-0 border-2 ${typeConfig.borderColor} bg-white rounded-lg transition-all duration-200 hover:shadow-md flex flex-col`}
               >
                 {/* Contact Header */}
                 <div className={`${typeConfig.bgColor} px-4 py-3 rounded-t-md`}>
@@ -404,92 +404,60 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
                         </div>
                       </div>
 
-                      {/* INTEL Section - Personality & Communication */}
-                      {intel?.personality && (
-                        <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <Sparkles size={12} className="text-purple-600" />
-                            <span className="text-xs font-semibold text-purple-800">Communication Style</span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            {intel.personality.discStyle && (
-                              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${getDISCStyle(intel.personality.discStyle).bg} ${getDISCStyle(intel.personality.discStyle).text}`}>
-                                {intel.personality.discStyle}
-                              </span>
-                            )}
-                            <span className="text-xs text-gray-700">{intel.personality.communicationStyle}</span>
-                          </div>
-                          {intel.personality.motivators && (
-                            <div className="flex flex-wrap gap-1 mt-1.5">
-                              {intel.personality.motivators.slice(0, 3).map((m, i) => (
-                                <span key={i} className="px-1.5 py-0.5 bg-white/70 rounded text-xs text-purple-700">{m}</span>
+                      {/* Strategy summary - always visible */}
+                      <p className="text-xs text-gray-600 mb-3 line-clamp-2">{contact.strategy}</p>
+
+                      {/* Expandable INTEL section */}
+                      {intel && (
+                        <button
+                          onClick={() => toggleExpanded(contact.id)}
+                          className="w-full text-xs text-indigo-600 hover:text-indigo-800 flex items-center justify-center gap-1 py-2 bg-indigo-50 rounded-lg mb-3"
+                        >
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {isExpanded ? 'Hide insights' : 'View insights'}
+                        </button>
+                      )}
+
+                      {isExpanded && intel && (
+                        <div className="space-y-3 mb-3">
+                          {/* Communication Style */}
+                          {intel.personality && (
+                            <div className="p-2 bg-purple-50 rounded border border-purple-100">
+                              <div className="flex items-center gap-2 mb-1">
+                                {intel.personality.discStyle && (
+                                  <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${getDISCStyle(intel.personality.discStyle).bg} ${getDISCStyle(intel.personality.discStyle).text}`}>
+                                    {intel.personality.discStyle}
+                                  </span>
+                                )}
+                                <span className="text-xs text-gray-700">{intel.personality.communicationStyle}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recent Activity */}
+                          {intel.recentActivity && intel.recentActivity.length > 0 && (
+                            <div className="space-y-1">
+                              {intel.recentActivity.slice(0, 2).map((activity, i) => (
+                                <div key={i} className={`p-2 rounded border-l-2 ${getActivityStyle(activity.type).border} ${getActivityStyle(activity.type).bg}`}>
+                                  <p className="text-xs font-medium text-gray-800">{activity.title}</p>
+                                  <p className="text-xs text-gray-500">{activity.date}</p>
+                                </div>
                               ))}
+                            </div>
+                          )}
+
+                          {/* Talking Points */}
+                          {intel.talkingPoints && intel.talkingPoints.length > 0 && (
+                            <div className="p-2 bg-green-50 rounded border border-green-100">
+                              <ul className="space-y-1">
+                                {intel.talkingPoints.slice(0, 2).map((point, i) => (
+                                  <li key={i} className="text-xs text-green-700">• {point}</li>
+                                ))}
+                              </ul>
                             </div>
                           )}
                         </div>
                       )}
-
-                      {/* Recent Activity Feed */}
-                      {intel?.recentActivity && intel.recentActivity.length > 0 && (
-                        <div className="mb-3">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Bell size={12} className="text-blue-600" />
-                            <span className="text-xs font-semibold text-gray-700">Recent Activity</span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {intel.recentActivity.slice(0, isExpanded ? 5 : 2).map((activity, i) => (
-                              <div key={i} className={`p-2 rounded border-l-2 ${getActivityStyle(activity.type).border} ${getActivityStyle(activity.type).bg}`}>
-                                <div className="flex items-start gap-2">
-                                  {getActivityStyle(activity.type).icon}
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-medium text-gray-800 truncate">{activity.title}</p>
-                                    <p className="text-xs text-gray-600 line-clamp-2">{activity.summary}</p>
-                                    <p className="text-xs text-gray-400 mt-0.5">{activity.date}</p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Talking Points */}
-                      {intel?.talkingPoints && intel.talkingPoints.length > 0 && (
-                        <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-100">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <MessageCircle size={12} className="text-green-600" />
-                            <span className="text-xs font-semibold text-green-800">Suggested Talking Points</span>
-                          </div>
-                          <ul className="space-y-1">
-                            {intel.talkingPoints.slice(0, isExpanded ? 4 : 2).map((point, i) => (
-                              <li key={i} className="text-xs text-green-700 flex items-start gap-1.5">
-                                <span className="text-green-500 mt-0.5">•</span>
-                                <span>{point}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Strategy (original) */}
-                      <div className="border-t border-gray-200 pt-2 mb-3">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Target size={12} className="text-indigo-600" />
-                          <span className="text-xs font-semibold text-gray-700">Engagement Strategy</span>
-                        </div>
-                        <p className="text-xs text-gray-600">{contact.strategy}</p>
-                      </div>
-
-                      {/* Expand/Collapse for more details */}
-                      {(intel?.recentActivity?.length || 0) > 2 || (intel?.talkingPoints?.length || 0) > 2 ? (
-                        <button
-                          onClick={() => toggleExpanded(contact.id)}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mb-3"
-                        >
-                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                          {isExpanded ? 'Show less' : 'Show more insights'}
-                        </button>
-                      ) : null}
 
                       {/* Spacer to push buttons to bottom */}
                       <div className="flex-1" />
