@@ -815,13 +815,33 @@ export function useTaskModeState({
         }
       }
 
+      // Default buttons for greeting slide if none provided
+      const defaultGreetingButtons = [
+        {
+          label: "Let's Begin",
+          value: 'start',
+          'label-background': 'bg-blue-600',
+          'label-text': 'text-white'
+        },
+        {
+          label: 'Snooze',
+          value: 'snooze',
+          'label-background': 'bg-gray-500',
+          'label-text': 'text-white'
+        },
+      ];
+
+      // Use slide buttons, or default buttons for first slide (greeting)
+      const messageButtons = currentSlide.chat.initialMessage.buttons
+        || (isFirstSlide ? defaultGreetingButtons : undefined);
+
       const initialMessage: ChatMessage = {
         id: `ai-initial-${currentSlideIndex}-${Date.now()}`,
         text: messageText,
         sender: 'ai',
         timestamp: new Date(),
         component: currentSlide.chat.initialMessage.component,
-        buttons: currentSlide.chat.initialMessage.buttons
+        buttons: messageButtons
       };
 
       // For the first slide, start fresh. For subsequent slides, append to existing chat.
