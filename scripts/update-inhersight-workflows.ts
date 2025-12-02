@@ -55,7 +55,7 @@ async function updateWorkflows() {
       slide_sequence: [
         'greeting',                  // 1. Confirm Plan - Planning Checklist
         'account-review-tabbed',     // 2. Performance Review - Tabbed: Usage | Contract | Contacts | Expansion | Risk
-        'align-strategy',            // 3. Align on Strategy (interactive)
+        'pricing-strategy',          // 3. Pricing Strategy - Develop renewal pricing approach
         'renewal-presentation',      // 4. Renewal Presentation (interactive deck with export)
         'schedule-call',             // 5. Schedule Meeting
         'workflow-summary'           // 6. Summary
@@ -93,9 +93,11 @@ async function updateWorkflows() {
             expansionFocus: ['expansion', 'upsell', 'feature_adoption'],
           }
         },
-        'align-strategy': {
+        'pricing-strategy': {
           variables: {
-            strategyOptions: ['standard_renewal', 'upsell', 'retention_focus', 'expansion'],
+            priceChangeStrategy: 'flat', // Default to flat renewal
+            includeExpansion: false,
+            multiYearOption: false,
           }
         },
         'renewal-presentation': {

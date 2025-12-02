@@ -25,6 +25,7 @@ import {
   createHydrationContext,
   type HydrationContext,
 } from './hydration/TemplateHydrator';
+import { getPricingSlideContext } from './utils/strategyRecommender';
 
 // IMPORTANT: Import registration modules to auto-register templates and components
 // This ensures V2 slides work correctly when loaded from database
@@ -131,6 +132,34 @@ export async function composeFromDatabase(
     slideSequence = ['splash', ...slideSequence];
   }
 
+  // Compute slide contexts - merge static contexts with computed recommendations
+  // TEMPORARY: This ensures slides "sing from the same hymnal" until we have live data
+  let slideContexts = workflowDef.slide_contexts || {};
+
+  // If pricing-strategy slide exists in sequence, compute recommended strategy from customer data
+  if (slideSequence.includes('pricing-strategy') && customerContext) {
+    const pricingContext = getPricingSlideContext({
+      utilizationPercent: customerContext.utilizationPercent ?? customerContext.utilization_percent,
+      healthScore: customerContext.healthScore ?? customerContext.health_score,
+      riskScore: customerContext.riskScore ?? customerContext.risk_score,
+      currentPrice: customerContext.currentPrice ?? customerContext.price_per_seat,
+      marketAverage: customerContext.marketAverage ?? customerContext.market_average,
+      yoyGrowth: customerContext.yoyGrowth ?? customerContext.yoy_growth,
+      currentARR: customerContext.currentARR ?? customerContext.current_arr,
+    });
+
+    slideContexts = {
+      ...slideContexts,
+      'pricing-strategy': {
+        ...slideContexts['pricing-strategy'],
+        variables: {
+          ...slideContexts['pricing-strategy']?.variables,
+          ...pricingContext,
+        },
+      },
+    };
+  }
+
   const composition: WorkflowComposition = {
     id: workflowDef.workflow_id,
     name: workflowDef.name,
@@ -138,7 +167,7 @@ export async function composeFromDatabase(
     category: workflowDef.workflow_type as any,
     description: workflowDef.description || '',
     slideSequence,
-    slideContexts: workflowDef.slide_contexts || {},
+    slideContexts,
     settings: workflowDef.settings || undefined,
   };
 
