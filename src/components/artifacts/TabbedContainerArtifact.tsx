@@ -279,7 +279,7 @@ export function TabbedContainerArtifact({
                 isTabReviewed(activeTabId) ? 'text-green-700' : 'text-gray-700'
               }`}>
                 {isTabReviewed(activeTabId)
-                  ? `✓ ${activeTab.label} reviewed`
+                  ? `${activeTab.label} reviewed`
                   : `I've reviewed ${activeTab.label.toLowerCase()}`
                 }
               </span>
