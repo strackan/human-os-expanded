@@ -206,6 +206,7 @@ export function useTaskModeStateV2({
     onClose,
     handleComplete,
     customerName,
+    customerId,  // Enables server-side LLM caching (24h TTL)
     workflowPurpose: currentSlide?.stepMapping || 'renewal_preparation',
   });
 

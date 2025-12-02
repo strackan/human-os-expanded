@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedClient } from '@/lib/supabase-server';
+import { LLMCacheService } from '@/lib/persistence/LLMCacheService';
 
 export async function POST(
   request: NextRequest,
@@ -57,6 +58,15 @@ export async function POST(
     }
 
     console.log(`[API] Restarting workflow execution: ${executionId}`);
+
+    // Invalidate LLM greeting cache for this customer (so greeting is fresh on restart)
+    if (execution.customer?.id) {
+      console.log(`[API] Invalidating LLM cache for customer: ${execution.customer.id}`);
+      await LLMCacheService.invalidateForCustomer(execution.customer.id).catch(err => {
+        console.error('[API] Failed to invalidate LLM cache:', err);
+        // Don't fail the restart if cache invalidation fails
+      });
+    }
 
     // Define update payload for debugging
     // NOTE: review_iteration and review_rejection_history are from migration 20260202

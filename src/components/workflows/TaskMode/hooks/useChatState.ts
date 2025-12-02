@@ -4,13 +4,17 @@ import type { WorkflowSlide } from '@/components/artifacts/workflows/config/Work
 
 /**
  * Fetch LLM-generated greeting from server API
+ *
+ * Note: Including `customerId` enables server-side caching (24h TTL).
+ * Without customerId, each call generates a fresh LLM response.
  */
 async function fetchGreetingFromAPI(params: {
   customerName: string;
+  customerId?: string;  // Required for caching
   workflowPurpose?: string;
   slideId?: string;
   fallbackGreeting?: string;
-}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number }> {
+}): Promise<{ text: string; toolsUsed: string[]; tokensUsed: number; cached?: boolean }> {
   const response = await fetch('/api/workflows/greeting', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -47,6 +51,7 @@ interface UseChatStateProps {
   onClose: () => void;
   handleComplete: () => void;
   customerName: string;
+  customerId?: string;  // Required for LLM greeting caching
   workflowPurpose?: string;
 }
 
@@ -59,6 +64,7 @@ export function useChatState({
   onClose,
   handleComplete,
   customerName,
+  customerId,
   workflowPurpose = 'renewal_preparation',
 }: UseChatStateProps) {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -136,16 +142,17 @@ export function useChatState({
 
         case 'prefetchLLM':
           // Start prefetching LLM greeting in background
-          console.log('[useChatState] Starting LLM prefetch for:', customerName);
+          console.log('[useChatState] Starting LLM prefetch for:', customerName, 'customerId:', customerId);
           if (customerName && !prefetchPromiseRef.current) {
             prefetchedGreetingRef.current = { text: '', ready: false };
             prefetchPromiseRef.current = fetchGreetingFromAPI({
               customerName,
+              customerId,  // Enable server-side caching
               workflowPurpose,
               slideId: 'greeting',
               fallbackGreeting: 'Let me brief you on this account...',
             }).then(result => {
-              console.log('[useChatState] LLM prefetch complete:', result.text.substring(0, 50) + '...');
+              console.log('[useChatState] LLM prefetch complete:', result.text.substring(0, 50) + '...', 'cached:', result.cached);
               prefetchedGreetingRef.current = { text: result.text, ready: true };
             }).catch(err => {
               console.error('[useChatState] LLM prefetch failed:', err);
@@ -240,15 +247,16 @@ export function useChatState({
       setChatMessages(prev => [...prev, loadingMessage]);
 
       try {
-        // Call LLM API with INTEL tools
+        // Call LLM API with INTEL tools (customerId enables server-side caching)
         const generated = await fetchGreetingFromAPI({
           customerName,
+          customerId,  // Enable server-side caching
           workflowPurpose,
           slideId: currentSlide.id,
           fallbackGreeting: branch.response,
         });
 
-        console.log('[useChatState] LLM generated:', generated.text);
+        console.log('[useChatState] LLM generated:', generated.text, 'cached:', generated.cached);
         console.log('[useChatState] Tools used:', generated.toolsUsed);
 
         // Replace loading message with LLM response

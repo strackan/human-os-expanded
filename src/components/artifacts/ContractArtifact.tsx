@@ -167,21 +167,14 @@ const ContractArtifact: React.FC<ContractArtifactProps> = ({ data = {}, isLoadin
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-50 to-blue-50 px-4 md:px-6 py-4 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">{customerName} Contract</h3>
-              <p className="text-sm text-gray-500">{contractId} • Last updated: {lastUpdated}</p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <FileText className="w-5 h-5 text-white" />
           </div>
-          <button className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors self-start sm:self-auto">
-            <Eye className="w-4 h-4" />
-            <span className="hidden sm:inline">View PDF</span>
-            <span className="sm:hidden">PDF</span>
-          </button>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{customerName} Contract</h3>
+            <p className="text-sm text-gray-500">{contractId} • Last updated: {lastUpdated}</p>
+          </div>
         </div>
       </div>
 

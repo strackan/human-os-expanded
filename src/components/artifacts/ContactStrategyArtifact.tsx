@@ -106,7 +106,7 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
   };
 
   // Helper: Sentiment styling
-  const getSentimentConfig = (sentiment: ContactINTEL['relationship']['sentiment']) => {
+  const getSentimentConfig = (sentiment: 'champion' | 'supporter' | 'neutral' | 'skeptic' | 'blocker') => {
     const configs = {
       champion: { bg: 'bg-green-100', text: 'text-green-700', label: 'Champion', icon: <Heart size={12} className="text-green-600" /> },
       supporter: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Supporter', icon: <ThumbsUp size={12} className="text-blue-600" /> },
@@ -129,7 +129,7 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
   };
 
   // Helper: Activity type styling
-  const getActivityStyle = (type: ContactINTEL['recentActivity'][0]['type']) => {
+  const getActivityStyle = (type: 'linkedin' | 'news' | 'role_change' | 'company_event' | 'engagement') => {
     const styles = {
       linkedin: { border: 'border-blue-400', bg: 'bg-blue-50', icon: <Linkedin size={12} className="text-blue-600 flex-shrink-0" /> },
       news: { border: 'border-purple-400', bg: 'bg-purple-50', icon: <Bell size={12} className="text-purple-600 flex-shrink-0" /> },
