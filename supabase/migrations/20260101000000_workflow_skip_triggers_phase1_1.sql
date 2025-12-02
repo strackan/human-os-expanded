@@ -111,8 +111,13 @@ CREATE INDEX IF NOT EXISTS idx_workflow_skip_triggers_fired
 ALTER TABLE public.workflow_skip_triggers ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
--- SECTION 5: CREATE RLS POLICIES
+-- SECTION 5: CREATE RLS POLICIES (idempotent with DROP IF EXISTS)
 -- ============================================================================
+
+-- Drop existing policies first for idempotency
+DROP POLICY IF EXISTS "Users can view their workflow skip triggers" ON public.workflow_skip_triggers;
+DROP POLICY IF EXISTS "Users can create workflow skip triggers" ON public.workflow_skip_triggers;
+DROP POLICY IF EXISTS "Users can update workflow skip triggers" ON public.workflow_skip_triggers;
 
 -- Users can view skip trigger history for their own workflow executions
 CREATE POLICY "Users can view their workflow skip triggers"
@@ -163,7 +168,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for automatic timestamp updates
+-- Trigger for automatic timestamp updates (idempotent)
+DROP TRIGGER IF EXISTS workflow_skip_triggers_updated_at ON public.workflow_skip_triggers;
 CREATE TRIGGER workflow_skip_triggers_updated_at
     BEFORE UPDATE ON public.workflow_skip_triggers
     FOR EACH ROW
@@ -217,25 +223,33 @@ COMMENT ON FUNCTION public.get_skipped_workflows_for_evaluation IS
 
 -- Convert existing basic skips (with skip_until) to trigger format
 -- This ensures backward compatibility with workflows skipped before Phase 1.1
+-- Only runs if skip_until column exists
 DO $$
 BEGIN
-  UPDATE public.workflow_executions
-  SET skip_triggers = jsonb_build_array(
-    jsonb_build_object(
-      'id', 'trigger-date-' || extract(epoch from COALESCE(skipped_at, NOW()))::text,
-      'type', 'date',
-      'config', jsonb_build_object('date', skip_until),
-      'createdAt', COALESCE(skipped_at, NOW())
-    )
-  ),
-  skip_trigger_logic = 'OR'
-  WHERE status = 'skipped'
-    AND skip_until IS NOT NULL
-    AND (skip_triggers IS NULL OR skip_triggers = '[]'::jsonb);
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+    AND table_name = 'workflow_executions'
+    AND column_name = 'skip_until'
+  ) THEN
+    UPDATE public.workflow_executions
+    SET skip_triggers = jsonb_build_array(
+      jsonb_build_object(
+        'id', 'trigger-date-' || extract(epoch from COALESCE(skipped_at, NOW()))::text,
+        'type', 'date',
+        'config', jsonb_build_object('date', skip_until),
+        'createdAt', COALESCE(skipped_at, NOW())
+      )
+    ),
+    skip_trigger_logic = 'OR'
+    WHERE status = 'skipped'
+      AND skip_until IS NOT NULL
+      AND (skip_triggers IS NULL OR skip_triggers = '[]'::jsonb);
 
-  RAISE NOTICE 'Backfilled % existing skipped workflows with date triggers',
-    (SELECT COUNT(*) FROM public.workflow_executions
-     WHERE status = 'skipped' AND skip_triggers IS NOT NULL AND skip_triggers != '[]'::jsonb);
+    RAISE NOTICE 'Backfilled existing skipped workflows with date triggers';
+  ELSE
+    RAISE NOTICE 'skip_until column does not exist, skipping backfill';
+  END IF;
 END $$;
 
 -- ============================================================================

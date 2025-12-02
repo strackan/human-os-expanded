@@ -2,7 +2,7 @@
 -- Stores business/legal terms that remain constant during contract lifecycle
 -- Examples: auto-renewal periods, liability caps, SLA levels, pricing models
 
-CREATE TABLE public.contract_terms (
+CREATE TABLE IF NOT EXISTS public.contract_terms (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   contract_id UUID NOT NULL REFERENCES public.contracts(id) ON DELETE CASCADE,
 
@@ -50,28 +50,28 @@ CREATE TABLE public.contract_terms (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Indexes
-CREATE UNIQUE INDEX idx_contract_terms_contract
+-- Indexes (use IF NOT EXISTS for idempotency)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_contract_terms_contract
 ON public.contract_terms(contract_id);
 
-CREATE INDEX idx_contract_terms_auto_renewal
+CREATE INDEX IF NOT EXISTS idx_contract_terms_auto_renewal
 ON public.contract_terms(auto_renewal, auto_renewal_notice_days)
 WHERE auto_renewal = true;
 
-CREATE INDEX idx_contract_terms_pricing_model
+CREATE INDEX IF NOT EXISTS idx_contract_terms_pricing_model
 ON public.contract_terms(pricing_model);
 
-CREATE INDEX idx_contract_terms_support_tier
+CREATE INDEX IF NOT EXISTS idx_contract_terms_support_tier
 ON public.contract_terms(support_tier);
 
-CREATE INDEX idx_contract_terms_liability
+CREATE INDEX IF NOT EXISTS idx_contract_terms_liability
 ON public.contract_terms(liability_cap);
 
 -- GIN index for JSONB queries
-CREATE INDEX idx_contract_terms_custom_terms
+CREATE INDEX IF NOT EXISTS idx_contract_terms_custom_terms
 ON public.contract_terms USING gin(custom_terms);
 
-CREATE INDEX idx_contract_terms_usage_limits
+CREATE INDEX IF NOT EXISTS idx_contract_terms_usage_limits
 ON public.contract_terms USING gin(usage_limits);
 
 -- Comments
@@ -102,6 +102,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_contract_terms_updated_at ON public.contract_terms;
 CREATE TRIGGER trigger_update_contract_terms_updated_at
 BEFORE UPDATE ON public.contract_terms
 FOR EACH ROW
@@ -109,6 +110,7 @@ EXECUTE FUNCTION public.update_contract_terms_updated_at();
 
 -- Contract Matrix View
 -- Provides a comprehensive view of contracts with their terms
+DROP VIEW IF EXISTS public.contract_matrix;
 CREATE OR REPLACE VIEW public.contract_matrix AS
 SELECT
   c.id as contract_id,
