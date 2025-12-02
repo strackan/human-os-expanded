@@ -1,8 +1,50 @@
 "use client";
 
 import React, { useState } from 'react';
-import { User, Mail, Edit2, UserX, RefreshCw, Check, Building, Briefcase, Code, Clock, TrendingUp, AlertCircle } from 'lucide-react';
+import {
+  User, Mail, Edit2, UserX, RefreshCw, Check, Building, Briefcase, Code, Clock,
+  TrendingUp, AlertCircle, Linkedin, Calendar, Sparkles, Target, MessageCircle,
+  Zap, Award, Bell, ChevronDown, ChevronUp, ExternalLink, Heart, ThumbsUp
+} from 'lucide-react';
 import LoadingSpinner from '../ui/LoadingSpinner';
+
+// INTEL-enriched contact data
+export interface ContactINTEL {
+  // Personality & Communication
+  personality?: {
+    discStyle?: 'D' | 'I' | 'S' | 'C'; // Dominance, Influence, Steadiness, Conscientiousness
+    communicationStyle?: string;
+    decisionMaking?: string;
+    motivators?: string[];
+  };
+  // Recent Activity & Events
+  recentActivity?: {
+    type: 'linkedin' | 'news' | 'role_change' | 'company_event' | 'engagement';
+    title: string;
+    date: string;
+    summary: string;
+    sentiment?: 'positive' | 'neutral' | 'negative';
+    source?: string;
+  }[];
+  // Buyer Persona
+  buyerPersona?: {
+    archetype: string;
+    priorities: string[];
+    painPoints: string[];
+    influenceLevel: 'decision_maker' | 'influencer' | 'evaluator' | 'end_user';
+  };
+  // Relationship Intelligence
+  relationship?: {
+    strength: number; // 0-100
+    sentiment: 'champion' | 'supporter' | 'neutral' | 'skeptic' | 'blocker';
+    lastPositiveInteraction?: string;
+    riskFactors?: string[];
+  };
+  // Recommended Talking Points
+  talkingPoints?: string[];
+  // Key Topics of Interest
+  topicsOfInterest?: string[];
+}
 
 export interface Contact {
   id: string;
@@ -14,6 +56,10 @@ export interface Contact {
   meetingStatus: 'recent' | 'overdue' | 'none';
   strategy: string;
   updates?: string;
+  // INTEL enrichment
+  intel?: ContactINTEL;
+  linkedinUrl?: string;
+  photoUrl?: string;
 }
 
 export interface ContactStrategyProps {
@@ -45,6 +91,54 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Contact | null>(null);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+
+  const toggleExpanded = (contactId: string) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev);
+      if (next.has(contactId)) {
+        next.delete(contactId);
+      } else {
+        next.add(contactId);
+      }
+      return next;
+    });
+  };
+
+  // Helper: Sentiment styling
+  const getSentimentConfig = (sentiment: ContactINTEL['relationship']['sentiment']) => {
+    const configs = {
+      champion: { bg: 'bg-green-100', text: 'text-green-700', label: 'Champion', icon: <Heart size={12} className="text-green-600" /> },
+      supporter: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Supporter', icon: <ThumbsUp size={12} className="text-blue-600" /> },
+      neutral: { bg: 'bg-gray-100', text: 'text-gray-700', label: 'Neutral', icon: <User size={12} className="text-gray-500" /> },
+      skeptic: { bg: 'bg-amber-100', text: 'text-amber-700', label: 'Skeptic', icon: <AlertCircle size={12} className="text-amber-600" /> },
+      blocker: { bg: 'bg-red-100', text: 'text-red-700', label: 'Blocker', icon: <AlertCircle size={12} className="text-red-600" /> },
+    };
+    return configs[sentiment] || configs.neutral;
+  };
+
+  // Helper: DISC personality style
+  const getDISCStyle = (disc: 'D' | 'I' | 'S' | 'C') => {
+    const styles = {
+      D: { bg: 'bg-red-100', text: 'text-red-700' },      // Dominance - Red
+      I: { bg: 'bg-yellow-100', text: 'text-yellow-700' }, // Influence - Yellow
+      S: { bg: 'bg-green-100', text: 'text-green-700' },   // Steadiness - Green
+      C: { bg: 'bg-blue-100', text: 'text-blue-700' },     // Conscientiousness - Blue
+    };
+    return styles[disc];
+  };
+
+  // Helper: Activity type styling
+  const getActivityStyle = (type: ContactINTEL['recentActivity'][0]['type']) => {
+    const styles = {
+      linkedin: { border: 'border-blue-400', bg: 'bg-blue-50', icon: <Linkedin size={12} className="text-blue-600 flex-shrink-0" /> },
+      news: { border: 'border-purple-400', bg: 'bg-purple-50', icon: <Bell size={12} className="text-purple-600 flex-shrink-0" /> },
+      role_change: { border: 'border-amber-400', bg: 'bg-amber-50', icon: <Award size={12} className="text-amber-600 flex-shrink-0" /> },
+      company_event: { border: 'border-green-400', bg: 'bg-green-50', icon: <Calendar size={12} className="text-green-600 flex-shrink-0" /> },
+      engagement: { border: 'border-indigo-400', bg: 'bg-indigo-50', icon: <Zap size={12} className="text-indigo-600 flex-shrink-0" /> },
+    };
+    return styles[type] || styles.engagement;
+  };
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -217,144 +311,207 @@ const ContactStrategyArtifact: React.FC<ContactStrategyProps> = React.memo(({
             const typeConfig = getContactTypeConfig(contact.type);
             const meetingConfig = getMeetingStatusConfig(contact.meetingStatus);
             const isEditing = editingId === contact.id;
+            const isExpanded = expandedCards.has(contact.id);
             const TypeIcon = typeConfig.icon;
             const MeetingIcon = meetingConfig.icon;
+            const intel = contact.intel;
 
             return (
               <div
                 key={contact.id}
-                className={`border-2 ${typeConfig.borderColor} ${typeConfig.bgColor} rounded-lg p-4 transition-all duration-200 hover:shadow-md`}
+                className={`min-w-[280px] border-2 ${typeConfig.borderColor} bg-white rounded-lg transition-all duration-200 hover:shadow-md flex flex-col`}
               >
-                {/* Contact Type Badge */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`flex items-center gap-2 px-2 py-1 rounded-full ${typeConfig.bgColor} ${typeConfig.textColor}`}>
-                    <TypeIcon size={14} className={typeConfig.iconColor} />
-                    <span className="text-xs font-medium">{typeConfig.label}</span>
+                {/* Contact Header */}
+                <div className={`${typeConfig.bgColor} px-4 py-3 rounded-t-md`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/60 ${typeConfig.textColor}`}>
+                      <TypeIcon size={12} className={typeConfig.iconColor} />
+                      <span className="text-xs font-medium">{typeConfig.label}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {contact.linkedinUrl && (
+                        <a href={contact.linkedinUrl} target="_blank" rel="noopener noreferrer"
+                           className="p-1 hover:bg-white/50 rounded transition-colors">
+                          <Linkedin size={14} className="text-blue-600" />
+                        </a>
+                      )}
+                      {!isEditing && (
+                        <button onClick={() => handleEditClick(contact)}
+                          className="p-1 hover:bg-white/50 rounded transition-colors" title="Edit contact">
+                          <Edit2 size={14} className="text-gray-600" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {!isEditing && (
-                    <button
-                      onClick={() => handleEditClick(contact)}
-                      className="p-1 hover:bg-white/50 rounded transition-colors"
-                      title="Edit contact"
-                    >
-                      <Edit2 size={14} className="text-gray-600" />
-                    </button>
-                  )}
+
+                  {/* Contact Name & Role */}
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-white/80 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      {contact.photoUrl ? (
+                        <img src={contact.photoUrl} alt={contact.name} className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <User size={24} className={typeConfig.iconColor} />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 truncate">{contact.name}</h4>
+                      <p className="text-sm text-gray-700">{contact.role}</p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Mail size={11} className="text-gray-500 flex-shrink-0" />
+                        <p className="text-xs text-gray-600 truncate">{contact.email}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Contact Details */}
-                {isEditing && editForm ? (
-                  <div className="space-y-2">
-                    <div>
-                      <input
-                        type="text"
-                        value={editForm.name}
+                {/* Contact Body - Flex grow to push buttons to bottom */}
+                <div className="flex-1 p-4 flex flex-col">
+                  {isEditing && editForm ? (
+                    <div className="space-y-2">
+                      <input type="text" value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className={`w-full px-2 py-1 text-sm border rounded ${
-                          validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                        }`}
-                        placeholder="Name"
-                      />
-                      {validationErrors.name && (
-                        <p className="text-xs text-red-600 mt-1">{validationErrors.name}</p>
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        type="text"
-                        value={editForm.role}
+                        className={`w-full px-2 py-1 text-sm border rounded ${validationErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                        placeholder="Name" />
+                      {validationErrors.name && <p className="text-xs text-red-600">{validationErrors.name}</p>}
+                      <input type="text" value={editForm.role}
                         onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                        className={`w-full px-2 py-1 text-sm border rounded ${
-                          validationErrors.role ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                        }`}
-                        placeholder="Role"
-                      />
-                      {validationErrors.role && (
-                        <p className="text-xs text-red-600 mt-1">{validationErrors.role}</p>
-                      )}
-                    </div>
-                    <div>
-                      <input
-                        type="email"
-                        value={editForm.email}
+                        className={`w-full px-2 py-1 text-sm border rounded ${validationErrors.role ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                        placeholder="Role" />
+                      {validationErrors.role && <p className="text-xs text-red-600">{validationErrors.role}</p>}
+                      <input type="email" value={editForm.email}
                         onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className={`w-full px-2 py-1 text-sm border rounded ${
-                          validationErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                        }`}
-                        placeholder="Email"
-                      />
-                      {validationErrors.email && (
-                        <p className="text-xs text-red-600 mt-1">{validationErrors.email}</p>
+                        className={`w-full px-2 py-1 text-sm border rounded ${validationErrors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
+                        placeholder="Email" />
+                      {validationErrors.email && <p className="text-xs text-red-600">{validationErrors.email}</p>}
+                      <div className="flex gap-2 pt-2">
+                        <button onClick={handleEditSave} className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700">Save</button>
+                        <button onClick={handleEditCancel} className="flex-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700">Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Relationship & Meeting Status Row */}
+                      <div className="flex items-center gap-2 mb-3">
+                        {intel?.relationship && (
+                          <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getSentimentConfig(intel.relationship.sentiment).bg} ${getSentimentConfig(intel.relationship.sentiment).text}`}>
+                            {getSentimentConfig(intel.relationship.sentiment).icon}
+                            <span>{getSentimentConfig(intel.relationship.sentiment).label}</span>
+                          </div>
+                        )}
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded ${meetingConfig.bgColor}`}>
+                          <MeetingIcon size={12} className={meetingConfig.color} />
+                          <span className="text-xs">{contact.lastMeeting}</span>
+                        </div>
+                      </div>
+
+                      {/* INTEL Section - Personality & Communication */}
+                      {intel?.personality && (
+                        <div className="mb-3 p-2 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-100">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Sparkles size={12} className="text-purple-600" />
+                            <span className="text-xs font-semibold text-purple-800">Communication Style</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            {intel.personality.discStyle && (
+                              <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${getDISCStyle(intel.personality.discStyle).bg} ${getDISCStyle(intel.personality.discStyle).text}`}>
+                                {intel.personality.discStyle}
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-700">{intel.personality.communicationStyle}</span>
+                          </div>
+                          {intel.personality.motivators && (
+                            <div className="flex flex-wrap gap-1 mt-1.5">
+                              {intel.personality.motivators.slice(0, 3).map((m, i) => (
+                                <span key={i} className="px-1.5 py-0.5 bg-white/70 rounded text-xs text-purple-700">{m}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <button
-                        onClick={handleEditSave}
-                        className="flex-1 px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700"
-                      >
-                        Save
-                      </button>
-                      <button
-                        onClick={handleEditCancel}
-                        className="flex-1 px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-700"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="mb-3">
-                      <h4 className="font-semibold text-gray-900">{contact.name}</h4>
-                      <p className="text-sm text-gray-600">{contact.role}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Mail size={12} className="text-gray-500" />
-                        <p className="text-xs text-gray-500">{contact.email}</p>
-                      </div>
-                    </div>
 
-                    {/* Meeting Status */}
-                    <div className={`flex items-center gap-2 px-2 py-1 rounded ${meetingConfig.bgColor} mb-3`}>
-                      <MeetingIcon size={14} className={meetingConfig.color} />
-                      <div className="text-xs">
-                        <span className="font-medium">Last meeting:</span>
-                        <span className="ml-1">{contact.lastMeeting}</span>
-                      </div>
-                    </div>
-
-                    {/* Strategy Section */}
-                    <div className="border-t border-gray-300 pt-3 mb-3">
-                      <div className="flex items-center gap-1 mb-1">
-                        <TrendingUp size={14} className="text-indigo-600" />
-                        <span className="text-xs font-semibold text-gray-700">Recommended Strategy</span>
-                      </div>
-                      <p className="text-xs text-gray-600">{contact.strategy}</p>
-                      {contact.updates && (
-                        <p className="text-xs text-indigo-600 mt-1 font-medium">{contact.updates}</p>
+                      {/* Recent Activity Feed */}
+                      {intel?.recentActivity && intel.recentActivity.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Bell size={12} className="text-blue-600" />
+                            <span className="text-xs font-semibold text-gray-700">Recent Activity</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {intel.recentActivity.slice(0, isExpanded ? 5 : 2).map((activity, i) => (
+                              <div key={i} className={`p-2 rounded border-l-2 ${getActivityStyle(activity.type).border} ${getActivityStyle(activity.type).bg}`}>
+                                <div className="flex items-start gap-2">
+                                  {getActivityStyle(activity.type).icon}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-800 truncate">{activity.title}</p>
+                                    <p className="text-xs text-gray-600 line-clamp-2">{activity.summary}</p>
+                                    <p className="text-xs text-gray-400 mt-0.5">{activity.date}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
                       )}
-                    </div>
 
-                    {/* Contact Actions */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleReplaceContact(contact.id)}
-                        className="flex-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50 flex items-center justify-center gap-1"
-                        title="Switch contact"
-                      >
-                        <RefreshCw size={12} />
-                        Switch
-                      </button>
-                      <button
-                        onClick={() => handleRemoveContact(contact.id)}
-                        className="flex-1 px-2 py-1 bg-white border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50 flex items-center justify-center gap-1"
-                        title="Remove contact"
-                      >
-                        <UserX size={12} />
-                        Remove
-                      </button>
-                    </div>
-                  </>
-                )}
+                      {/* Talking Points */}
+                      {intel?.talkingPoints && intel.talkingPoints.length > 0 && (
+                        <div className="mb-3 p-2 bg-green-50 rounded-lg border border-green-100">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <MessageCircle size={12} className="text-green-600" />
+                            <span className="text-xs font-semibold text-green-800">Suggested Talking Points</span>
+                          </div>
+                          <ul className="space-y-1">
+                            {intel.talkingPoints.slice(0, isExpanded ? 4 : 2).map((point, i) => (
+                              <li key={i} className="text-xs text-green-700 flex items-start gap-1.5">
+                                <span className="text-green-500 mt-0.5">•</span>
+                                <span>{point}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Strategy (original) */}
+                      <div className="border-t border-gray-200 pt-2 mb-3">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Target size={12} className="text-indigo-600" />
+                          <span className="text-xs font-semibold text-gray-700">Engagement Strategy</span>
+                        </div>
+                        <p className="text-xs text-gray-600">{contact.strategy}</p>
+                      </div>
+
+                      {/* Expand/Collapse for more details */}
+                      {(intel?.recentActivity?.length || 0) > 2 || (intel?.talkingPoints?.length || 0) > 2 ? (
+                        <button
+                          onClick={() => toggleExpanded(contact.id)}
+                          className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 mb-3"
+                        >
+                          {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                          {isExpanded ? 'Show less' : 'Show more insights'}
+                        </button>
+                      ) : null}
+
+                      {/* Spacer to push buttons to bottom */}
+                      <div className="flex-1" />
+
+                      {/* Contact Actions - Fixed at bottom */}
+                      <div className="flex gap-2 pt-2 border-t border-gray-100">
+                        <button onClick={() => handleReplaceContact(contact.id)}
+                          className="flex-1 px-2 py-1.5 bg-white border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50 flex items-center justify-center gap-1 whitespace-nowrap"
+                          title="Switch contact">
+                          <RefreshCw size={12} />
+                          Switch
+                        </button>
+                        <button onClick={() => handleRemoveContact(contact.id)}
+                          className="flex-1 px-2 py-1.5 bg-white border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50 flex items-center justify-center gap-1 whitespace-nowrap"
+                          title="Remove contact">
+                          <UserX size={12} />
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             );
           })}
