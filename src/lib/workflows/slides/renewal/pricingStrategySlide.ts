@@ -57,75 +57,7 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
       label: 'Pricing',
       stepMapping: 'pricing-strategy',
       chat: { initialMessage: undefined, branches: {} },
-      artifacts: {
-        sections: [
-          {
-            id: 'pricing-strategy-artifact',
-            type: 'component:interactive' as const,
-            title: 'Pricing Strategy',
-            visible: true,
-            data: {
-              componentType: 'PricingRecommendation',
-              props: {
-                recommendation: context?.variables?.recommendedStrategy || {
-                  targetPrice: 0,
-                  increasePercent: 0,
-                  increaseAmount: 0,
-                  confidence: context?.variables?.confidence || 70,
-                  scenarios: [
-                    {
-                      scenario: 'Conservative',
-                      targetPrice: 0,
-                      increasePercent: 0,
-                      increaseAmount: 0,
-                      probability: 95,
-                      pros: ['Minimal churn risk', 'Maintains relationship'],
-                      cons: ['Leaves revenue on table'],
-                    },
-                    {
-                      scenario: 'Recommended',
-                      targetPrice: 0,
-                      increasePercent: context?.variables?.suggestedChangePercent || 5,
-                      increaseAmount: 0,
-                      probability: 85,
-                      pros: ['Balanced approach', 'Market-aligned pricing'],
-                      cons: ['Some negotiation expected'],
-                    },
-                    {
-                      scenario: 'Aggressive',
-                      targetPrice: 0,
-                      increasePercent: context?.variables?.suggestedChangePercent ? context.variables.suggestedChangePercent * 1.5 : 8,
-                      increaseAmount: 0,
-                      probability: 65,
-                      pros: ['Maximum value capture', 'Sets new baseline'],
-                      cons: ['Higher churn risk', 'May require concessions'],
-                    },
-                  ],
-                  factors: {
-                    stickinessScore: context?.variables?.utilizationPercent || 100,
-                    valueIndex: 1,
-                    marketAdjustment: context?.variables?.marketAverage && context?.variables?.currentPrice
-                      ? Math.round((context.variables.marketAverage - context.variables.currentPrice) / context.variables.currentPrice * 100)
-                      : 0,
-                    riskMultiplier: 1,
-                    trendAdjustment: 0,
-                  },
-                  dataQuality: {
-                    usage: 'partial',
-                    financial: 'partial',
-                    risk: 'partial',
-                    competitive: 'placeholder',
-                  },
-                },
-                currentARR: context?.variables?.currentARR || 0,
-                customerName: '{{customer.name}}',
-                showFactors: true,
-                showDataQuality: true,
-              },
-            },
-          },
-        ],
-      },
+      artifacts: { sections: [] },
       layout: 'side-by-side',
       chatInstructions: [
         `You are helping develop a pricing strategy for a customer renewal.`,
