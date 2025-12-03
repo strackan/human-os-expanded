@@ -35,8 +35,12 @@ export interface TaskModeHeaderProps {
   onTogglePlays: () => void;
   onToggleMetrics: () => void;
   onToggleArtifacts: () => void;
+  onToggleCustomer360?: () => void;
   onClose: () => void;
+  onRestart?: () => void;
   onWorkflowAction?: (actionType: string) => void;
+  onSnooze?: () => void;
+  onSkip?: () => void;
 }
 
 export default function TaskModeHeader(props: TaskModeHeaderProps) {
@@ -53,8 +57,12 @@ export default function TaskModeHeader(props: TaskModeHeaderProps) {
     onTogglePlays,
     onToggleMetrics,
     onToggleArtifacts,
+    onToggleCustomer360,
     onClose,
+    onRestart,
     onWorkflowAction,
+    onSnooze,
+    onSkip,
   } = props;
 
   return (
@@ -71,8 +79,12 @@ export default function TaskModeHeader(props: TaskModeHeaderProps) {
       onTogglePlays={onTogglePlays}
       onToggleMetrics={onToggleMetrics}
       onToggleArtifacts={onToggleArtifacts}
+      onToggleCustomer360={onToggleCustomer360}
       onClose={onClose}
+      onRestart={onRestart}
       onWorkflowAction={onWorkflowAction}
+      onSnooze={onSnooze}
+      onSkip={onSkip}
     />
   );
 }

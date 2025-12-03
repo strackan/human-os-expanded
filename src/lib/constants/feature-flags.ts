@@ -63,6 +63,24 @@ export const FEATURE_FLAGS = {
    */
   USE_WORKFLOW_TEMPLATE_SYSTEM:
     process.env.NEXT_PUBLIC_USE_WORKFLOW_TEMPLATE_SYSTEM === 'true',
+
+  /**
+   * Phase 5: Use encapsulated TaskMode layout (side-by-side chat + artifact)
+   *
+   * When enabled: TaskModeEncapsulated with 50/50 chat/artifact split
+   * When disabled: Original layout with toggleable artifact panel
+   *
+   * Benefit:
+   * - Each slide shows its own chat and artifact side-by-side
+   * - Cleaner per-slide experience (no continuous chat scroll)
+   * - Artifacts always visible (no toggle needed)
+   * - Better alignment with Obsidian Black demo UX
+   *
+   * Risk: Medium (layout change, same underlying logic)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_ENCAPSULATED_TASK_MODE:
+    process.env.NEXT_PUBLIC_USE_ENCAPSULATED_TASK_MODE === 'true',
 } as const;
 
 /**
