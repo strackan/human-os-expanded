@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, AlertTriangle, DollarSign, BarChart3, Users, Activity, CheckCircle, XCircle } from 'lucide-react';
+import React from 'react';
+import { TrendingUp, AlertTriangle, DollarSign, BarChart3, Users, Activity, CheckCircle } from 'lucide-react';
 
 interface PricingAnalysisProps {
   data?: {
@@ -40,7 +40,6 @@ interface PricingAnalysisProps {
 }
 
 const PricingAnalysisArtifact = React.memo(function PricingAnalysisArtifact({ data = {}, isLoading = false }: PricingAnalysisProps) {
-  const [selectedAction, setSelectedAction] = useState<string | null>(null);
 
   // Validate numerical inputs to prevent display errors
   const validateNumber = (value: number | undefined, fallback: number): number => {
@@ -317,49 +316,6 @@ const PricingAnalysisArtifact = React.memo(function PricingAnalysisArtifact({ da
               </ul>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-center gap-3">
-              <button
-                onClick={() => setSelectedAction('accept')}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                  selectedAction === 'accept'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-green-100 text-green-700 hover:bg-green-200'
-                }`}
-              >
-                Accept Recommendation
-              </button>
-              <button
-                onClick={() => setSelectedAction('adjust')}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                  selectedAction === 'adjust'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                }`}
-              >
-                Adjust Strategy
-              </button>
-              <button
-                onClick={() => setSelectedAction('review')}
-                className={`px-6 py-3 rounded-lg font-medium transition-all ${
-                  selectedAction === 'review'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                }`}
-              >
-                Request Review
-              </button>
-            </div>
-
-            {selectedAction && (
-              <div className="mt-4 p-3 bg-white rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-600 text-center">
-                  {selectedAction === 'accept' && "✓ Recommendation accepted. Proceeding with 8% price increase."}
-                  {selectedAction === 'adjust' && "Opening strategy adjustment panel..."}
-                  {selectedAction === 'review' && "Scheduling review with pricing committee..."}
-                </p>
-              </div>
-            )}
           </div>
         </div>
       </div>
