@@ -63,14 +63,14 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
             {
               label: 'Approve & Review Deck',
               value: 'continue',
-              'label-background': '#10b981',
-              'label-text': '#ffffff',
+              'label-background': 'bg-green-600 hover:bg-green-700',
+              'label-text': 'text-white',
             },
             {
               label: 'Adjust Strategy',
               value: 'adjust',
-              'label-background': '#f3f4f6',
-              'label-text': '#374151',
+              'label-background': 'bg-gray-100 hover:bg-gray-200',
+              'label-text': 'text-gray-700',
             },
           ],
           nextBranches: {
@@ -89,20 +89,20 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
               {
                 label: 'Lower the increase',
                 value: 'lower-increase',
-                'label-background': '#f3f4f6',
-                'label-text': '#374151',
+                'label-background': 'bg-gray-100 hover:bg-gray-200',
+                'label-text': 'text-gray-700',
               },
               {
                 label: 'Add multi-year option',
                 value: 'multi-year',
-                'label-background': '#f3f4f6',
-                'label-text': '#374151',
+                'label-background': 'bg-gray-100 hover:bg-gray-200',
+                'label-text': 'text-gray-700',
               },
               {
                 label: 'Keep current strategy',
                 value: 'continue',
-                'label-background': '#10b981',
-                'label-text': '#ffffff',
+                'label-background': 'bg-green-600 hover:bg-green-700',
+                'label-text': 'text-white',
               },
             ],
             nextBranches: {
@@ -117,8 +117,8 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
               {
                 label: 'Review Deck',
                 value: 'continue',
-                'label-background': '#10b981',
-                'label-text': '#ffffff',
+                'label-background': 'bg-green-600 hover:bg-green-700',
+                'label-text': 'text-white',
               },
             ],
             nextBranches: {
@@ -131,8 +131,8 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
               {
                 label: 'Review Deck',
                 value: 'continue',
-                'label-background': '#10b981',
-                'label-text': '#ffffff',
+                'label-background': 'bg-green-600 hover:bg-green-700',
+                'label-text': 'text-white',
               },
             ],
             nextBranches: {
