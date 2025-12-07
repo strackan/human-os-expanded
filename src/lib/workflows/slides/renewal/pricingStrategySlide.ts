@@ -56,7 +56,91 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
       description: 'Develop renewal pricing strategy',
       label: 'Pricing',
       stepMapping: 'pricing-strategy',
-      chat: { initialMessage: undefined, branches: {} },
+      chat: {
+        initialMessage: {
+          text: `Here's your pricing strategy analysis for **{{customer.name}}**. I've analyzed their usage, market positioning, and value delivered to recommend an approach.\n\nReview the pricing recommendation on the right and let me know when you're ready to proceed.`,
+          buttons: [
+            {
+              label: 'Approve & Review Deck',
+              value: 'continue',
+              'label-background': '#10b981',
+              'label-text': '#ffffff',
+            },
+            {
+              label: 'Adjust Strategy',
+              value: 'adjust',
+              'label-background': '#f3f4f6',
+              'label-text': '#374151',
+            },
+          ],
+          nextBranches: {
+            continue: 'approved',
+            adjust: 'adjust-strategy',
+          },
+        },
+        branches: {
+          approved: {
+            response: 'Great! The pricing strategy is locked in. Let\'s review the meeting deck.',
+            actions: ['nextSlide'],
+          },
+          'adjust-strategy': {
+            response: 'No problem. What would you like to adjust about the pricing strategy? I can help you:\n\n• Change the price increase percentage\n• Consider a multi-year discount\n• Add expansion products\n• Discuss retention pricing\n\nJust let me know what you\'re thinking.',
+            buttons: [
+              {
+                label: 'Lower the increase',
+                value: 'lower-increase',
+                'label-background': '#f3f4f6',
+                'label-text': '#374151',
+              },
+              {
+                label: 'Add multi-year option',
+                value: 'multi-year',
+                'label-background': '#f3f4f6',
+                'label-text': '#374151',
+              },
+              {
+                label: 'Keep current strategy',
+                value: 'continue',
+                'label-background': '#10b981',
+                'label-text': '#ffffff',
+              },
+            ],
+            nextBranches: {
+              'lower-increase': 'lower-increase-response',
+              'multi-year': 'multi-year-response',
+              continue: 'approved',
+            },
+          },
+          'lower-increase-response': {
+            response: 'I\'ve noted your preference for a lower increase. You can discuss a 3-5% increase as a starting point - this keeps us competitive while still capturing value. Ready to proceed?',
+            buttons: [
+              {
+                label: 'Review Deck',
+                value: 'continue',
+                'label-background': '#10b981',
+                'label-text': '#ffffff',
+              },
+            ],
+            nextBranches: {
+              continue: 'approved',
+            },
+          },
+          'multi-year-response': {
+            response: 'Multi-year discounts are a great retention tool! Consider offering 5-10% off for a 2-year commitment, or 10-15% for 3 years. This locks in the customer and provides revenue predictability.',
+            buttons: [
+              {
+                label: 'Review Deck',
+                value: 'continue',
+                'label-background': '#10b981',
+                'label-text': '#ffffff',
+              },
+            ],
+            nextBranches: {
+              continue: 'approved',
+            },
+          },
+        },
+      },
       artifacts: {
         sections: [
           {
@@ -353,7 +437,7 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
       },
 
       flowControl: {
-        nextSlideLabel: 'Continue to Quote',
+        nextSlideLabel: 'Review Deck',
         canSkip: false,
       },
     };
