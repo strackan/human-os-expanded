@@ -12,7 +12,6 @@ import { generatePptxBlob } from '@/lib/export/PresentationExportService';
 import type { PresentationSlide } from '@/components/artifacts/PresentationArtifact';
 
 const GOOGLE_DRIVE_API = 'https://www.googleapis.com/upload/drive/v3/files';
-const GOOGLE_DRIVE_METADATA_API = 'https://www.googleapis.com/drive/v3/files';
 
 interface DriveExportRequest {
   slides: PresentationSlide[];

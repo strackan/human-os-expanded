@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, User, Check } from 'lucide-react';
-import { WorkflowSlide, InlineComponent, DynamicChatBranch } from '@/components/artifacts/workflows/config/WorkflowConfig';
+import { WorkflowSlide, InlineComponent } from '@/components/artifacts/workflows/config/WorkflowConfig';
 
 export interface ChatMessage {
   id: string;
@@ -56,20 +56,16 @@ interface ChatRendererProps {
   getPreviousButtonLabel?: (originalLabel: string, buttonValue: string) => string;
 }
 
-export default function ChatRenderer({
-  currentSlide,
-  chatMessages,
-  workflowState,
-  customerName,
-  onSendMessage,
-  onBranchNavigation,
-  onComponentValueChange,
-  onButtonClick,
-  getNextButtonLabel,
-  getPreviousButtonLabel
-}: ChatRendererProps) {
+export default function ChatRenderer(props: ChatRendererProps) {
+  const {
+    chatMessages,
+    customerName,
+    onComponentValueChange,
+    onButtonClick,
+    getNextButtonLabel,
+    getPreviousButtonLabel
+  } = props;
   const [pendingComponentValue, setPendingComponentValue] = useState<any>(null);
-  const [currentComponentId, setCurrentComponentId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSeparatorRef = useRef<HTMLDivElement>(null);
   const previousSlideIdRef = useRef<string | null>(null);
@@ -98,20 +94,18 @@ export default function ChatRenderer({
   }, [chatMessages]);
 
   // Handle inline component value changes
-  const handleComponentChange = (componentId: string, value: any) => {
+  const handleComponentChange = (_: string, value: any) => {
     setPendingComponentValue(value);
-    setCurrentComponentId(componentId);
   };
 
   // Submit component value (triggers branch navigation)
   const handleComponentSubmit = (componentId: string, value: any) => {
     onComponentValueChange(componentId, value);
     setPendingComponentValue(null);
-    setCurrentComponentId(null);
   };
 
   // Render inline slider component
-  const renderSlider = (component: InlineComponent & { type: 'slider' }, messageId: string) => {
+  const renderSlider = (component: InlineComponent & { type: 'slider' }) => {
     if (component.type !== 'slider') return null;
 
     const value = pendingComponentValue ?? component.defaultValue ?? component.min;
@@ -157,7 +151,7 @@ export default function ChatRenderer({
   };
 
   // Render inline textarea component
-  const RenderTextarea = ({ component, messageId }: { component: InlineComponent & { type: 'textarea' }, messageId: string }) => {
+  const RenderTextarea = ({ component }: { component: InlineComponent & { type: 'textarea' } }) => {
     const [value, setValue] = useState('');
 
     return (
@@ -190,7 +184,7 @@ export default function ChatRenderer({
   };
 
   // Render inline input component
-  const RenderInput = ({ component, messageId }: { component: InlineComponent & { type: 'input' }, messageId: string }) => {
+  const RenderInput = ({ component }: { component: InlineComponent & { type: 'input' } }) => {
     const [value, setValue] = useState('');
 
     return (
@@ -218,7 +212,7 @@ export default function ChatRenderer({
   };
 
   // Render inline radio component
-  const RenderRadio = ({ component, messageId }: { component: InlineComponent & { type: 'radio' }, messageId: string }) => {
+  const RenderRadio = ({ component }: { component: InlineComponent & { type: 'radio' } }) => {
     const [selectedValue, setSelectedValue] = useState<string | null>(null);
 
     return (
@@ -263,7 +257,7 @@ export default function ChatRenderer({
   };
 
   // Render inline dropdown component
-  const RenderDropdown = ({ component, messageId }: { component: InlineComponent & { type: 'dropdown' }, messageId: string }) => {
+  const RenderDropdown = ({ component }: { component: InlineComponent & { type: 'dropdown' } }) => {
     const [selectedValue, setSelectedValue] = useState<string>('');
 
     return (
@@ -297,7 +291,7 @@ export default function ChatRenderer({
   };
 
   // Render inline checkbox component
-  const RenderCheckbox = ({ component, messageId }: { component: InlineComponent & { type: 'checkbox' }, messageId: string }) => {
+  const RenderCheckbox = ({ component }: { component: InlineComponent & { type: 'checkbox' } }) => {
     const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
     const handleCheckboxChange = (value: string, checked: boolean) => {
@@ -379,7 +373,7 @@ export default function ChatRenderer({
   };
 
   // Render inline star rating component
-  const RenderStarRating = ({ component, messageId }: { component: InlineComponent & { type: 'star-rating' }, messageId: string }) => {
+  const RenderStarRating = ({ component }: { component: InlineComponent & { type: 'star-rating' } }) => {
     const [selectedRating, setSelectedRating] = useState<number | null>(null);
     const [hoveredRating, setHoveredRating] = useState<number | null>(null);
 
@@ -434,22 +428,22 @@ export default function ChatRenderer({
   };
 
   // Render inline component based on type
-  const renderInlineComponent = (component: InlineComponent, messageId: string) => {
+  const renderInlineComponent = (component: InlineComponent) => {
     switch (component.type) {
       case 'slider':
-        return renderSlider(component, messageId);
+        return renderSlider(component);
       case 'textarea':
-        return <RenderTextarea component={component} messageId={messageId} />;
+        return <RenderTextarea component={component} />;
       case 'input':
-        return <RenderInput component={component} messageId={messageId} />;
+        return <RenderInput component={component} />;
       case 'radio':
-        return <RenderRadio component={component} messageId={messageId} />;
+        return <RenderRadio component={component} />;
       case 'dropdown':
-        return <RenderDropdown component={component} messageId={messageId} />;
+        return <RenderDropdown component={component} />;
       case 'checkbox':
-        return <RenderCheckbox component={component} messageId={messageId} />;
+        return <RenderCheckbox component={component} />;
       case 'star-rating':
-        return <RenderStarRating component={component} messageId={messageId} />;
+        return <RenderStarRating component={component} />;
       default:
         return null;
     }
@@ -500,6 +494,8 @@ export default function ChatRenderer({
           return (
             <button
               key={index}
+              data-button-value={button.value}
+              data-button-index={index}
               onClick={() => onButtonClick?.(button.value)}
               className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md ${
                 button['label-background'] || 'bg-purple-600 hover:bg-purple-700'
@@ -535,7 +531,7 @@ export default function ChatRenderer({
   };
 
   return (
-    <div className="flex flex-col justify-end p-8 pb-4 h-full overflow-y-auto">
+    <div id="chat-messages" className="flex flex-col justify-end p-8 pb-4 h-full overflow-y-auto">
       <div className="max-w-2xl w-full space-y-6 mx-auto mt-auto pb-4">
         {chatMessages.map((message, index) => {
           // Check if this is the last separator in the list (for scroll ref)
@@ -548,13 +544,15 @@ export default function ChatRenderer({
               <div
                 key={message.id}
                 ref={isLastSeparator ? lastSeparatorRef : undefined}
+                data-message-id={message.id}
+                data-message-type="separator"
                 className="flex items-center gap-3 py-2"
               >
-                <div className="flex-1 h-px bg-gray-300" />
-                <span className="text-xs text-gray-500 font-medium px-2">
+                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium px-2">
                   {message.text}
                 </span>
-                <div className="flex-1 h-px bg-gray-300" />
+                <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
               </div>
             );
           }
@@ -565,12 +563,14 @@ export default function ChatRenderer({
               <div
                 key={message.id}
                 ref={isLastSeparator ? lastSeparatorRef : undefined}
+                data-message-id={message.id}
+                data-message-type="divider"
                 className="flex items-center justify-center my-4"
               >
-                <div className="flex items-center gap-3 text-xs text-gray-400">
-                  <div className="h-px w-12 bg-gray-200"></div>
+                <div className="flex items-center gap-3 text-xs text-gray-400 dark:text-gray-500">
+                  <div className="h-px w-12 bg-gray-200 dark:bg-gray-700"></div>
                   <span className="font-medium uppercase tracking-wider">{message.text}</span>
-                  <div className="h-px w-12 bg-gray-200"></div>
+                  <div className="h-px w-12 bg-gray-200 dark:bg-gray-700"></div>
                 </div>
               </div>
             );
@@ -580,7 +580,13 @@ export default function ChatRenderer({
           const historicalClass = message.isHistorical ? 'opacity-60' : '';
 
           return (
-            <div key={message.id} className={`space-y-3 ${historicalClass}`}>
+            <div
+              key={message.id}
+              data-message-id={message.id}
+              data-message-sender={message.sender}
+              data-message-type="message"
+              className={`space-y-3 ${historicalClass}`}
+            >
               {/* Message Row with Avatar */}
               <div
                 className={`flex ${
@@ -603,7 +609,7 @@ export default function ChatRenderer({
                     className={`rounded-2xl px-5 py-3 ${
                       message.sender === 'user'
                         ? message.isHistorical ? 'bg-blue-400 text-white' : 'bg-blue-600 text-white'
-                        : message.isHistorical ? 'bg-gray-50 text-gray-700' : 'bg-gray-100 text-gray-900'
+                        : message.isHistorical ? 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                     }`}
                   >
                     <div
@@ -614,7 +620,7 @@ export default function ChatRenderer({
 
                   {/* Inline Component (only for AI messages, not historical) */}
                   {message.sender === 'ai' && message.component && !message.isHistorical && (
-                    <div>{renderInlineComponent(message.component, message.id)}</div>
+                    <div>{renderInlineComponent(message.component)}</div>
                   )}
 
                   {/* Buttons (only for AI messages, not historical) */}

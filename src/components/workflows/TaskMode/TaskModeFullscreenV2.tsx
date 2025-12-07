@@ -571,8 +571,17 @@ export default function TaskModeFullscreenV2(props: TaskModeFullscreenV2Props) {
 
   return (
     <TaskModeContext.Provider value={contextValue}>
-      <div className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 backdrop-blur-sm flex items-center justify-center p-8">
-        <div className="relative w-full max-w-7xl h-full bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div
+        id="task-mode-overlay"
+        data-workflow-id={workflowId}
+        data-customer-id={customerId}
+        className="fixed inset-0 z-50 bg-gradient-to-br from-gray-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 backdrop-blur-sm flex items-center justify-center p-8"
+      >
+        <div
+          id="task-mode-container"
+          data-mode="fullscreen"
+          className="relative w-full max-w-7xl h-full bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        >
 
           {/* Overlays (metrics, plays) */}
           <TaskModeOverlays
@@ -626,10 +635,11 @@ export default function TaskModeFullscreenV2(props: TaskModeFullscreenV2Props) {
           />
 
           {/* Main Content Area */}
-          <div className="flex-1 flex overflow-hidden">
+          <div id="task-mode-body" className="flex-1 flex overflow-hidden">
             {/* Left Panel - Chat */}
             <div
-              className="flex flex-col bg-white"
+              id="task-mode-chat"
+              className="flex flex-col bg-white dark:bg-gray-900"
               style={{ width: state.showArtifacts ? `${100 - state.artifactsPanelWidth}%` : '100%' }}
             >
               <TaskModeChatPanel
@@ -680,10 +690,11 @@ export default function TaskModeFullscreenV2(props: TaskModeFullscreenV2Props) {
             {/* Resizable Divider */}
             {state.showArtifacts && (
               <div
+                id="task-mode-divider"
                 onMouseDown={handleResizeStart}
-                className={`w-3 bg-gray-200 hover:bg-blue-400 cursor-col-resize relative group flex-shrink-0 ${state.isArtifactResizing ? 'bg-blue-500' : ''}`}
+                className={`w-3 bg-gray-200 dark:bg-gray-700 hover:bg-blue-400 cursor-col-resize relative group flex-shrink-0 ${state.isArtifactResizing ? 'bg-blue-500' : ''}`}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-16 bg-gray-300 group-hover:bg-blue-500 rounded-full flex items-center justify-center">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-16 bg-gray-300 dark:bg-gray-600 group-hover:bg-blue-500 rounded-full flex items-center justify-center">
                   <div className="w-0.5 h-12 bg-white/50 rounded-full"></div>
                 </div>
               </div>
@@ -692,7 +703,8 @@ export default function TaskModeFullscreenV2(props: TaskModeFullscreenV2Props) {
             {/* Right Panel - Artifacts */}
             {state.showArtifacts && (
               <div
-                className="bg-gray-50 border-l border-gray-200 flex flex-col overflow-hidden"
+                id="task-mode-artifacts"
+                className="bg-gray-50 dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden"
                 style={{ width: `${state.artifactsPanelWidth}%` }}
               >
                 <TaskModeArtifactPanel
