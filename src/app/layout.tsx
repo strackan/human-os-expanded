@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { ChatProvider } from "@/context/ChatContext";
 import { DateProvider } from "@/context/DateContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 import GlobalChat from "@/components/GlobalChat";
 import AppLayout from "@/components/layout/AppLayout";
 import { PageTransitionProvider } from "../components/layout/PageTransitionContext";
@@ -47,23 +48,25 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <QueryProvider>
-          <ToastProvider>
-            <AuthProvider>
-              <RouteGuard>
-                <ChatProvider>
-                  <DateProvider>
-                    <PageTransitionProvider>
-                      <AppLayout>
-                        {children}
-                        <GlobalChat />
-                        <VersionIndicator />
-                      </AppLayout>
-                    </PageTransitionProvider>
-                  </DateProvider>
-                </ChatProvider>
-              </RouteGuard>
-            </AuthProvider>
-          </ToastProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <RouteGuard>
+                  <ChatProvider>
+                    <DateProvider>
+                      <PageTransitionProvider>
+                        <AppLayout>
+                          {children}
+                          <GlobalChat />
+                          <VersionIndicator />
+                        </AppLayout>
+                      </PageTransitionProvider>
+                    </DateProvider>
+                  </ChatProvider>
+                </RouteGuard>
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
         </QueryProvider>
       </body>
     </html>

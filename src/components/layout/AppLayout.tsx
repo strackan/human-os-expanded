@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Cog6ToothIcon, MagnifyingGlassIcon, SunIcon, XMarkIcon, BookmarkIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
 import Sidebar from './Sidebar';
 import { useAuth } from '@/components/auth/AuthProvider';
 import UserAvatarDropdown from './UserAvatarDropdown';
@@ -15,6 +15,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import QuickCapturePopover from '@/components/string-ties/QuickCapturePopover';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -27,41 +28,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
 
-  // ADD THIS: Get user data from auth context
-  const { user, loading } = useAuth();
-
-  // Extract first name from user data
-  const getFirstName = () => {
-    if (loading) return 'User'
-
-    // Try to get name from user metadata
-    if (user?.user_metadata?.full_name) {
-      const name = user.user_metadata.full_name.split(' ')[0]
-      return name
-    }
-    
-    // Then try user metadata from Google OAuth
-    if (user?.user_metadata) {
-      const metadata = user.user_metadata
-      // Try different possible name fields from Google OAuth
-      const name = metadata.given_name || 
-                  metadata.name?.split(' ')[0] || 
-                  metadata.full_name?.split(' ')[0]
-      
-      if (name) {
-        return name
-      }
-    }
-    
-    // Fallback to email username if no name found
-    if (user?.email) {
-      const emailPrefix = user.email.split('@')[0]
-      const name = emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1)
-      return name
-    }
-    
-    return 'User'
-  }
+  // Get user data from auth context
+  const { user } = useAuth();
 
   // Fetch workflow notifications (snoozed due + escalations)
   const fetchNotifications = async () => {
@@ -258,6 +226,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </PopoverContent>
               </Popover>
 
+              <ThemeToggle />
               {user ? <UserAvatarDropdown /> : <AuthButton />}
             </div>
           </div>
