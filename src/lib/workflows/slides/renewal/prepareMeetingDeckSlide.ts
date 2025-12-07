@@ -15,10 +15,6 @@
 import type { UniversalSlideBuilder } from '../baseSlide';
 
 export const prepareMeetingDeckSlide: UniversalSlideBuilder = (context): any => {
-  // Check if we should show template setup mode (no templates available)
-  // This will be determined by the artifact component at runtime
-  const requiresTemplateSetup = context?.variables?.requiresTemplateSetup ?? true; // Default to true until templates exist
-
   return {
     id: 'prepare-meeting-deck',
     version: '2',
@@ -37,76 +33,48 @@ export const prepareMeetingDeckSlide: UniversalSlideBuilder = (context): any => 
 
       chat: {
         generateInitialMessage: false,
-        initialMessage: requiresTemplateSetup
-          ? {
-              // No template available - prompt to create one
-              text: `Before we can generate a meeting deck for {{customer.name}}, you'll need to set up a presentation template.\n\nTemplates are created from your company's existing PowerPoint decks, ensuring your presentations match your brand guidelines.\n\nWould you like to set up a template now?`,
-              buttons: [
-                {
-                  label: 'Set Up Template',
-                  value: 'setup-template',
-                  'label-background': 'bg-purple-600',
-                  'label-text': 'text-white',
-                },
-                {
-                  label: 'Skip for Now',
-                  value: 'skip',
-                  'label-background': 'bg-gray-500',
-                  'label-text': 'text-white',
-                },
-              ],
-              nextBranches: {
-                'setup-template': 'template-coming-soon',
-                'skip': 'skip-deck',
-              },
-            }
-          : {
-              // Template exists - can generate deck
-              text: `I'm ready to prepare a meeting deck for {{customer.name}} based on our analysis.\n\nThis will include:\n• Account overview and health metrics\n• Performance highlights\n• Renewal proposal\n• Discussion points\n\nWould you like me to generate the deck now?`,
-              buttons: [
-                {
-                  label: 'Generate Deck',
-                  value: 'generate',
-                  'label-background': 'bg-blue-600',
-                  'label-text': 'text-white',
-                },
-                {
-                  label: 'Skip for Now',
-                  value: 'skip',
-                  'label-background': 'bg-gray-500',
-                  'label-text': 'text-white',
-                },
-              ],
-              nextBranches: {
-                'generate': 'generating',
-                'skip': 'skip-deck',
-              },
+        initialMessage: {
+          text: `Here's your meeting deck for **{{customer.name}}**. I've compiled the key insights from our analysis into a presentation you can use for the renewal conversation.\n\nReview the deck on the right and let me know when you're ready to schedule the meeting.`,
+          buttons: [
+            {
+              label: 'Schedule Meeting',
+              value: 'continue',
+              'label-background': 'bg-green-600 hover:bg-green-700',
+              'label-text': 'text-white',
             },
+            {
+              label: 'Edit Deck',
+              value: 'edit',
+              'label-background': 'bg-gray-100 hover:bg-gray-200',
+              'label-text': 'text-gray-700',
+            },
+          ],
+          nextBranches: {
+            continue: 'proceed',
+            edit: 'edit-deck',
+          },
+        },
         branches: {
-          'template-coming-soon': {
-            response: '**Coming Soon!**\n\nPresentation template creation is currently in development. Soon you\'ll be able to upload your company\'s PowerPoint decks and we\'ll automatically extract the styling, layouts, and branding to use for generating future presentations.\n\nFor now, let\'s continue with the workflow.',
+          proceed: {
+            response: 'Great! Let\'s schedule the renewal meeting.',
+            actions: ['nextSlide'],
+          },
+          'edit-deck': {
+            response: 'You can customize the deck using the editor on the right. When you\'re done, click Schedule Meeting to continue.',
             buttons: [
               {
-                label: 'Continue',
-                value: 'continue-after-template',
-                'label-background': 'bg-blue-600',
+                label: 'Schedule Meeting',
+                value: 'continue',
+                'label-background': 'bg-green-600 hover:bg-green-700',
                 'label-text': 'text-white',
               },
             ],
             nextBranches: {
-              'continue-after-template': 'skip-deck',
+              continue: 'proceed',
             },
           },
-          'generating': {
-            response: 'Generating your meeting deck... This feature is coming soon! For now, let\'s move on to scheduling the meeting.',
-            actions: ['nextSlide'],
-          },
-          'skip-deck': {
-            response: 'No problem! You can always create the deck later. Let\'s schedule the meeting.',
-            actions: ['nextSlide'],
-          },
         },
-        defaultMessage: 'Would you like to generate a meeting deck?',
+        defaultMessage: 'Review the meeting deck and schedule when ready.',
         userTriggers: {},
       },
 
