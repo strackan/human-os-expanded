@@ -13,12 +13,13 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
+/* Dark mode disabled - app is light-mode only */
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 html {
   scrollbar-width: thin;
@@ -160,6 +161,7 @@ select {
   color: rgb(17 24 39) !important; /* gray-900 for input text in light mode */
 }
 
+/* Dark mode disabled - app is light-mode only
 @media (prefers-color-scheme: dark) {
   input[type="text"],
   input[type="email"],
@@ -173,9 +175,9 @@ select {
   input[type="time"],
   textarea,
   select {
-    color: rgb(243 244 246) !important; /* gray-100 for input text in dark mode */
+    color: rgb(243 244 246) !important;
   }
-}
+} */
 
 input::placeholder,
 textarea::placeholder {
