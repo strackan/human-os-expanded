@@ -15,11 +15,13 @@ const config = {
     'bg-gray-500',
     'bg-green-600',
     'bg-purple-600',
+    'bg-purple-700',
     'hover:bg-blue-700',
     'hover:bg-gray-200',
     'hover:bg-gray-600',
     'hover:bg-green-700',
     'hover:bg-purple-700',
+    'hover:bg-purple-800',
     // Button text colors
     'text-white',
     'text-gray-700',

@@ -112,20 +112,31 @@ export const workflowSummarySlide: SlideBuilder = createSlideBuilder(
           text: introMessage,
           buttons: [
             {
-              label: 'Complete Workflow',
+              label: 'Complete',
               value: 'complete',
-              'label-background': 'bg-green-600',
+              'label-background': 'bg-green-600 hover:bg-green-700',
+              'label-text': 'text-white',
+            },
+            {
+              label: 'Next Task →',
+              value: 'next-task',
+              'label-background': 'bg-purple-700 hover:bg-purple-800',
               'label-text': 'text-white',
             },
           ],
           nextBranches: {
             'complete': 'complete-workflow',
+            'next-task': 'go-to-next-task',
           },
         },
         branches: {
           'complete-workflow': {
-            response: completionMessage,
-            actions: ['closeWorkflow'],
+            response: 'Workflow complete! Great job.',
+            actions: ['triggerConfetti', 'closeWorkflow'],
+          },
+          'go-to-next-task': {
+            response: 'Loading next task...',
+            actions: ['nextCustomer'],
           },
         },
       },
