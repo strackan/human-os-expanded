@@ -5,15 +5,25 @@ const config = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/lib/workflows/**/*.{js,ts}',
+    './src/config/workflows/**/*.{js,ts}',
   ],
   safelist: [
     // Button background colors used in workflow slides
     'bg-blue-600',
+    'bg-gray-100',
     'bg-gray-500',
     'bg-green-600',
+    'bg-purple-600',
     'hover:bg-blue-700',
+    'hover:bg-gray-200',
     'hover:bg-gray-600',
     'hover:bg-green-700',
+    'hover:bg-purple-700',
+    // Button text colors
+    'text-white',
+    'text-gray-700',
+    'text-gray-900',
   ],
   theme: {
     extend: {
