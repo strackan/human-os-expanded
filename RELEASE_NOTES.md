@@ -4,8 +4,76 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.1.11 (QBR Presentations)
+**Current Version:** 0.1.13 (Dark Mode Infrastructure)
 **Next Release:** 0.2.0 - Human OS Check-Ins (Target: Feb-Mar 2026)
+
+---
+
+## Release 0.1.13 - "Dark Mode Infrastructure" (December 7, 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### New Features
+
+- **Dark Mode Infrastructure** - Class-based dark mode with toggle
+  - ThemeProvider context with localStorage persistence
+  - ThemeToggle component in header (sun/moon icons)
+  - Tailwind configured for `darkMode: 'class'`
+  - Dark mode styles for AppLayout, ChatRenderer, TaskMode
+  - Defaults to light mode until dark theme is fully tested
+
+- **Semantic DOM Structure** - Better element identification for testing/exploration
+  - Added IDs: `task-mode-overlay`, `task-mode-container`, `task-mode-body`
+  - Added IDs: `task-mode-chat`, `task-mode-divider`, `task-mode-artifacts`
+  - Added `id="chat-messages"` container
+  - Data attributes: `data-message-id`, `data-message-sender`, `data-message-type`
+  - Data attributes: `data-button-value`, `data-button-index`
+
+### Enhancements
+
+- **Simplified Workflow Slides** - Reduced back-and-forth in deck/schedule flows
+  - Meeting deck slide: single two-button choice (Looks Good / Edit Deck)
+  - Schedule call slide: streamlined to immediate progression
+  - Both slides now advance immediately on button click
+
+- **Workflow Completion Buttons** - Added dual-action completion
+  - "Complete" (green) - triggers confetti and closes workflow
+  - "Next Task →" (purple) - advances to next customer workflow
+
+### Bug Fixes
+
+- Fixed `${schedulingSuggestion}` template variable not interpolating (single quotes → backticks)
+- Fixed pricing slide button colors (hex → Tailwind classes)
+- Fixed navigation buttons missing on pricing-strategy slide
+- Fixed dark mode CSS causing light text on light background
+- Security: Updated Next.js 15.5.2 → 15.5.7 (CVE-2025-55182)
+
+### Files Changed
+
+- `src/context/ThemeContext.tsx` - NEW: Theme provider
+- `src/components/ui/ThemeToggle.tsx` - NEW: Toggle component
+- `src/app/globals.css` - Dark mode CSS variables
+- `tailwind.config.ts` - Dark mode configuration
+- `src/components/layout/AppLayout.tsx` - Dark mode styles
+- `src/components/workflows/sections/ChatRenderer.tsx` - Semantic IDs + dark mode
+- `src/components/workflows/TaskMode/TaskModeFullscreenV2.tsx` - Semantic IDs
+- `src/lib/workflows/slides/action/scheduleCallSlide.ts` - Simplified flow
+- `src/lib/workflows/slides/renewal/prepareMeetingDeckSlide.ts` - Simplified flow
+- `src/lib/workflows/slides/common/workflowSummarySlide.ts` - Dual completion buttons
+
+---
+
+## Release 0.1.12 - "TaskMode Encapsulation" (December 2025)
+
+**Status:** Released
+**Type:** Minor Release
+
+### New Features
+
+- **TaskModeEncapsulated** - Reusable workflow launcher with resume dialog
+- **PricingAnalysisArtifact** - Pricing strategy visualization
+- **Runtime Feature Flags** - Dynamic TaskMode routing
 
 ---
 
@@ -810,7 +878,10 @@ Details to be announced.
 
 | Version | Release Date | Status | Type | Key Feature |
 |---------|-------------|--------|------|-------------|
-| **0.1.10** | **Nov 28, 2025** | **Released** | **Minor** | **Workflow Persistence** |
+| **0.1.13** | **Dec 7, 2025** | **Released** | **Minor** | **Dark Mode Infrastructure** |
+| 0.1.12 | Dec 2025 | Released | Minor | TaskMode Encapsulation |
+| 0.1.11 | Nov 28, 2025 | Released | Minor | QBR Presentations |
+| 0.1.10 | Nov 28, 2025 | Released | Minor | Workflow Persistence |
 | 0.1.9 | Jan 2025 | Released | Minor | InHerSight Integration |
 | 0.1.8 | Nov 2025 | Released | Minor | Code Optimizations |
 | 0.1.7 | Nov 22, 2025 | Released | Minor | MCP Foundation |
@@ -841,5 +912,5 @@ For bug reports, feature requests, or questions:
 
 ---
 
-**Last Updated:** November 28, 2025
+**Last Updated:** December 7, 2025
 **Document Version:** 1.1
