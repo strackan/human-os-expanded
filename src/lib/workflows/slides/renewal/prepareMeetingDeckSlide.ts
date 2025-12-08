@@ -34,10 +34,10 @@ export const prepareMeetingDeckSlide: UniversalSlideBuilder = (context): any => 
       chat: {
         generateInitialMessage: false,
         initialMessage: {
-          text: `Here's your meeting deck for **{{customer.name}}**. I've compiled the key insights from our analysis into a presentation you can use for the renewal conversation.\n\nReview the deck on the right and let me know when you're ready to schedule the meeting.`,
+          text: `Here's your meeting deck for **{{customer.name}}**. I've compiled the key insights from our analysis into a presentation you can use for the renewal conversation.\n\nReview the deck on the right and let me know when you're ready to continue.`,
           buttons: [
             {
-              label: 'Schedule Meeting',
+              label: 'Looks Good →',
               value: 'continue',
               'label-background': 'bg-green-600 hover:bg-green-700',
               'label-text': 'text-white',
@@ -56,25 +56,15 @@ export const prepareMeetingDeckSlide: UniversalSlideBuilder = (context): any => 
         },
         branches: {
           proceed: {
-            response: 'Great! Let\'s schedule the renewal meeting.',
+            response: 'Great! Moving on to schedule the meeting.',
             actions: ['nextSlide'],
           },
           'edit-deck': {
-            response: 'You can customize the deck using the editor on the right. When you\'re done, click Schedule Meeting to continue.',
-            buttons: [
-              {
-                label: 'Schedule Meeting',
-                value: 'continue',
-                'label-background': 'bg-green-600 hover:bg-green-700',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              continue: 'proceed',
-            },
+            response: 'You can customize the deck using the editor on the right. Click Looks Good when ready.',
+            actions: ['nextSlide'],
           },
         },
-        defaultMessage: 'Review the meeting deck and schedule when ready.',
+        defaultMessage: 'Review the meeting deck and continue when ready.',
         userTriggers: {},
       },
 

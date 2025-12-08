@@ -201,78 +201,33 @@ Suggested timing: ${schedulingSuggestion}
 Provide a brief message (2-3 sentences) explaining that you're ready to help schedule this meeting. Mention the suggested timeframe and ask if they're ready to draft the calendar invite.`,
         initialMessage: {
           text: context?.variables?.message ||
-            `Let's get this meeting on the books! Based on the renewal timeline, I recommend scheduling ${schedulingSuggestion}. I can help you draft the calendar invite and email to {{customer.primary_contact_name}}.`,
+            `Let's get this meeting on the books! Based on the renewal timeline, I recommend scheduling ${schedulingSuggestion}.\n\n**Draft invite details:**\n- **Subject:** {{customer.name}} - Renewal Discussion\n- **Duration:** ${duration} minutes\n- **Attendees:** {{customer.primary_contact_name}}, {{csm.name}}`,
           buttons: [
             {
-              label: 'Draft calendar invite',
-              value: 'draft-invite',
-              'label-background': 'bg-blue-600',
+              label: 'Looks Good →',
+              value: 'continue',
+              'label-background': 'bg-green-600 hover:bg-green-700',
               'label-text': 'text-white',
             },
             {
-              label: 'I\'ll schedule it myself',
+              label: 'I\'ll Schedule Myself',
               value: 'self-schedule',
-              'label-background': 'bg-gray-100',
+              'label-background': 'bg-gray-100 hover:bg-gray-200',
               'label-text': 'text-gray-700',
             },
           ],
           nextBranches: {
-            'draft-invite': 'show-invite',
+            'continue': 'proceed',
             'self-schedule': 'confirm-self',
           },
         },
         branches: {
-          'show-invite': {
-            response: `Here's a draft calendar invite for your ${duration}-minute meeting:\n\n**Subject:** {{customer.name}} - Renewal Discussion\n**Duration:** ${duration} minutes\n**Attendees:** {{customer.primary_contact_name}}, {{csm.name}}\n\n**Agenda:**\n${agendaItems.map((item, i) => `${i + 1}. ${item}`).join('\n')}\n\nWould you like me to help you send this?`,
-            buttons: [
-              {
-                label: 'Looks good, continue',
-                value: 'continue',
-                'label-background': 'bg-green-600',
-                'label-text': 'text-white',
-              },
-              {
-                label: 'Edit the invite',
-                value: 'edit-invite',
-                'label-background': 'bg-gray-100',
-                'label-text': 'text-gray-700',
-              },
-            ],
-            nextBranches: {
-              'continue': 'proceed',
-              'edit-invite': 'editing',
-            },
-          },
           'confirm-self': {
-            response: 'No problem! Make sure to schedule it ${schedulingSuggestion}. Ready to continue to the summary?',
-            buttons: [
-              {
-                label: 'Continue to summary',
-                value: 'continue',
-                'label-background': 'bg-blue-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'continue': 'proceed',
-            },
-          },
-          'editing': {
-            response: 'What would you like to change about the invite? You can adjust the duration, agenda items, or attendees.',
-            buttons: [
-              {
-                label: 'Done editing',
-                value: 'done-editing',
-                'label-background': 'bg-blue-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'done-editing': 'proceed',
-            },
+            response: `No problem! Make sure to schedule it ${schedulingSuggestion}.`,
+            actions: ['nextSlide'],
           },
           'proceed': {
-            response: 'Great! The meeting is ready to be scheduled. Let\'s move on to wrap up this workflow.',
+            response: 'Great! Moving on to the summary.',
             actions: ['nextSlide'],
           },
         },
