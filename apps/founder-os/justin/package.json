@@ -1,0 +1,24 @@
+{
+  "name": "@human-os/founder-os-justin",
+  "version": "0.1.0",
+  "description": "Justin's Founder OS MCP Server",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "founder-os-justin": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@human-os/founder-os-base": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.2"
+  }
+}

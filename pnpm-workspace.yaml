@@ -1,0 +1,6 @@
+packages:
+  - "packages/*"
+  - "apps/*"
+  - "apps/founder-os/*"
+  - "apps/founder-os/mcp"
+  - "apps/voice-packs/*"
