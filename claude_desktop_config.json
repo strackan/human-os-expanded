@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "founder-os": {
+      "command": "node",
+      "args": ["C:\\Users\\strac\\dev\\human-os\\apps\\founder-os\\mcp\\dist\\index.js"],
+      "env": {
+        "SUPABASE_URL": "https://zulowgscotdrqlccomht.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bG93Z3Njb3RkcnFsY2NvbWh0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTUwNjg2OSwiZXhwIjoyMDgxMDgyODY5fQ.1TaHY99JRt7ABGRZMMg5n_F7qwQc5H1UHkcOuUfdt8o",
+        "HUMAN_OS_USER_ID": "justin",
+        "HUMAN_OS_LAYER": "founder:justin"
+      }
+    },
+    "prefect": {
+      "command": "uvx",
+      "args": ["--from", "prefect-mcp", "prefect-mcp-server"]
+    },
+    "human-os-workflows": {
+      "command": "python",
+      "args": ["-m", "fastmcp", "run", "C:\\Users\\strac\\dev\\human-os\\apps\\workflows\\server.py"],
+      "env": {
+        "SUPABASE_URL": "https://zulowgscotdrqlccomht.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1bG93Z3Njb3RkcnFsY2NvbWh0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NTUwNjg2OSwiZXhwIjoyMDgxMDgyODY5fQ.1TaHY99JRt7ABGRZMMg5n_F7qwQc5H1UHkcOuUfdt8o",
+        "PREFECT_API_URL": "https://api.prefect.cloud/api/accounts/{account_id}/workspaces/{workspace_id}"
+      }
+    }
+  }
+}

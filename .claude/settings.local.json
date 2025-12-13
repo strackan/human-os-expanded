@@ -7,7 +7,14 @@
       "Bash(pnpm build:*)",
       "Bash(pnpm install:*)",
       "Bash(dir /b \"C:\\Users\\TriCityPC\\dev\\renubu\")",
-      "Bash(git rm --cached \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os02_TEMPLATE_COMPONENTS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os05_CONVERSATION_PROTOCOLS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os08_CURRENT_STATE.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\")"
+      "Bash(git rm --cached \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os02_TEMPLATE_COMPONENTS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os05_CONVERSATION_PROTOCOLS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os08_CURRENT_STATE.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\")",
+      "Bash(cat:*)",
+      "Bash(pnpm add:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx supabase:*)",
+      "Bash(npx tsx:*)",
+      "WebSearch",
+      "Bash(find:*)"
     ]
   }
 }
