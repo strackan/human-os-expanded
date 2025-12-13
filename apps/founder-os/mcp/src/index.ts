@@ -13,8 +13,15 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
   type Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import { readFile } from 'fs/promises';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { z } from 'zod';
 import {
   ContextEngine,
@@ -400,14 +407,183 @@ async function main() {
     supabaseKey: SUPABASE_SERVICE_KEY,
   });
 
+  // Get the directory of this file for loading INSTRUCTIONS.md
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const instructionsPath = join(__dirname, '..', 'INSTRUCTIONS.md');
+
   const server = new Server(
     { name: 'founder-os-gft', version: '0.1.0' },
-    { capabilities: { tools: {} } }
+    {
+      capabilities: {
+        tools: {},
+        prompts: {},
+        resources: {},
+      },
+    }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: [...sessionTools, ...gftTools, ...glossaryTools, ...searchTools] };
   });
+
+  // ==========================================================================
+  // MCP PROMPTS - Discoverable as slash commands (e.g., /founder-os__session_context)
+  // ==========================================================================
+
+  server.setRequestHandler(ListPromptsRequestSchema, async () => {
+    return {
+      prompts: [
+        {
+          name: 'session_context',
+          description: 'Initialize session with identity, current state, and instructions for working with Justin. Call this at the start of every conversation.',
+        },
+        {
+          name: 'crisis_mode',
+          description: 'Load crisis support protocols for when Justin is overwhelmed, stuck, or drowning.',
+        },
+        {
+          name: 'voice_mode',
+          description: 'Load writing engine and templates for drafting posts, content, and communications.',
+        },
+      ],
+    };
+  });
+
+  server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    const { name } = request.params;
+
+    if (name === 'session_context') {
+      // Load INSTRUCTIONS.md and also call get_session_context for dynamic state
+      const instructions = await readFile(instructionsPath, 'utf-8');
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+
+      return {
+        description: 'Session initialization with instructions and current context',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `${instructions}\n\n---\n\n## Current Session Context\n\n\`\`\`json\n${JSON.stringify(sessionContext, null, 2)}\n\`\`\``,
+            },
+          },
+        ],
+      };
+    }
+
+    if (name === 'crisis_mode') {
+      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, 'crisis');
+      return {
+        description: 'Crisis support protocols loaded',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `## Crisis Mode Activated\n\n${JSON.stringify(modeContent, null, 2)}`,
+            },
+          },
+        ],
+      };
+    }
+
+    if (name === 'voice_mode') {
+      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, 'voice');
+      return {
+        description: 'Writing engine and templates loaded',
+        messages: [
+          {
+            role: 'user',
+            content: {
+              type: 'text',
+              text: `## Voice Mode Activated\n\n${JSON.stringify(modeContent, null, 2)}`,
+            },
+          },
+        ],
+      };
+    }
+
+    throw new Error(`Unknown prompt: ${name}`);
+  });
+
+  // ==========================================================================
+  // MCP RESOURCES - Referenceable with @ notation (e.g., @founder-os://instructions)
+  // ==========================================================================
+
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    return {
+      resources: [
+        {
+          uri: 'founder-os://instructions',
+          name: 'Session Instructions',
+          description: 'Instructions for how Claude should interact with Justin',
+          mimeType: 'text/markdown',
+        },
+        {
+          uri: 'founder-os://identity',
+          name: 'Justin\'s Identity',
+          description: 'Core identity information, cognitive profile, and preferences',
+          mimeType: 'text/markdown',
+        },
+        {
+          uri: 'founder-os://state',
+          name: 'Current State',
+          description: 'Justin\'s current energy level, priorities, and what to avoid',
+          mimeType: 'application/json',
+        },
+      ],
+    };
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    const { uri } = request.params;
+
+    if (uri === 'founder-os://instructions') {
+      const content = await readFile(instructionsPath, 'utf-8');
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'text/markdown',
+            text: content,
+          },
+        ],
+      };
+    }
+
+    if (uri === 'founder-os://identity') {
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'text/markdown',
+            text: sessionContext.identity || 'Identity not loaded',
+          },
+        ],
+      };
+    }
+
+    if (uri === 'founder-os://state') {
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: 'application/json',
+            text: JSON.stringify(sessionContext.currentState, null, 2),
+          },
+        ],
+      };
+    }
+
+    throw new Error(`Unknown resource: ${uri}`);
+  });
+
+  // ==========================================================================
+  // TOOL HANDLERS
+  // ==========================================================================
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
