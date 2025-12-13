@@ -29,6 +29,48 @@ import {
   updateLinkedInProfile,
   type LinkedInProfileData,
 } from './tools/gft-ingestion.js';
+import {
+  getSessionContext,
+  loadMode,
+} from './tools/session.js';
+import {
+  defineTerm,
+  lookupTerm,
+  listGlossary,
+  getFrequentTerms,
+  searchGlossary,
+  deleteTerm,
+} from './tools/glossary.js';
+
+/**
+ * Session management tool definitions
+ */
+const sessionTools: Tool[] = [
+  {
+    name: 'get_session_context',
+    description: 'Load identity, current state, and available modes at session start. Call this at the beginning of every conversation.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'load_mode',
+    description: 'Load protocol files for a specific mode (crisis, voice, decision, conversation, identity)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        mode: {
+          type: 'string',
+          description: 'Mode to load: crisis, voice, decision, conversation, identity',
+          enum: ['crisis', 'voice', 'decision', 'conversation', 'identity'],
+        },
+      },
+      required: ['mode'],
+    },
+  },
+];
 
 /**
  * GFT-specific tool definitions
@@ -103,6 +145,89 @@ const gftTools: Tool[] = [
         scrapedAt: { type: 'string', description: 'Timestamp when scraped (ISO)' },
       },
       required: ['slug', 'linkedinUrl', 'name', 'scrapedAt'],
+    },
+  },
+];
+
+/**
+ * Glossary tool definitions
+ */
+const glossaryTools: Tool[] = [
+  {
+    name: 'define_term',
+    description: 'Define or update a term in the glossary. Use for shorthand, nicknames, slang, acronyms. Example: "Ruth = Justin\'s wife, Clinical Psychologist"',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'The term to define (case-insensitive matching)' },
+        definition: { type: 'string', description: 'Full definition/explanation of the term' },
+        term_type: {
+          type: 'string',
+          description: 'Classification of the term',
+          enum: ['person', 'group', 'acronym', 'slang', 'project', 'shorthand'],
+          default: 'shorthand',
+        },
+        short_definition: { type: 'string', description: 'One-liner for inline expansion (auto-generated if not provided)' },
+        entity_id: { type: 'string', description: 'UUID of linked entity (if this term refers to an entity)' },
+        context_tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Context tags like "personal", "work", "social"',
+        },
+        always_expand: { type: 'boolean', description: 'Always show definition when term is used', default: false },
+      },
+      required: ['term', 'definition'],
+    },
+  },
+  {
+    name: 'lookup_term',
+    description: 'Look up a term in the glossary. Returns definition and increments usage count. Use when user uses unfamiliar shorthand.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'The term to look up' },
+      },
+      required: ['term'],
+    },
+  },
+  {
+    name: 'list_glossary',
+    description: 'List all terms in the glossary, optionally filtered by type or tag',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term_type: {
+          type: 'string',
+          description: 'Filter by term type',
+          enum: ['person', 'group', 'acronym', 'slang', 'project', 'shorthand'],
+        },
+        context_tag: { type: 'string', description: 'Filter by context tag (e.g., "personal", "work")' },
+        search: { type: 'string', description: 'Search in term and definition' },
+        limit: { type: 'number', description: 'Max results to return', default: 50 },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'search_glossary',
+    description: 'Full-text search across glossary terms and definitions',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'delete_term',
+    description: 'Remove a term from the glossary',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        term: { type: 'string', description: 'The term to delete' },
+      },
+      required: ['term'],
     },
   },
 ];
@@ -200,20 +325,62 @@ async function main() {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools: gftTools };
+    return { tools: [...sessionTools, ...gftTools, ...glossaryTools] };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     try {
-      const result = await handleGFTTool(
-        name,
-        args || {},
-        contextEngine,
-        knowledgeGraph,
-        USER_ID
-      );
+      let result: unknown;
+
+      // Handle session tools
+      if (name === 'get_session_context') {
+        result = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      } else if (name === 'load_mode') {
+        const mode = (args as { mode: string })?.mode;
+        if (!mode) throw new Error('mode parameter is required');
+        result = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, mode);
+      }
+      // Handle glossary tools
+      else if (name === 'define_term') {
+        const params = args as {
+          term: string;
+          definition: string;
+          term_type?: string;
+          short_definition?: string;
+          entity_id?: string;
+          context_tags?: string[];
+          always_expand?: boolean;
+        };
+        result = await defineTerm(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, params);
+      } else if (name === 'lookup_term') {
+        const { term } = args as { term: string };
+        result = await lookupTerm(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, term);
+      } else if (name === 'list_glossary') {
+        const params = args as {
+          term_type?: string;
+          context_tag?: string;
+          search?: string;
+          limit?: number;
+        };
+        result = await listGlossary(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, params);
+      } else if (name === 'search_glossary') {
+        const { query } = args as { query: string };
+        result = await searchGlossary(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, query);
+      } else if (name === 'delete_term') {
+        const { term } = args as { term: string };
+        result = await deleteTerm(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, term);
+      } else {
+        // Handle GFT tools
+        result = await handleGFTTool(
+          name,
+          args || {},
+          contextEngine,
+          knowledgeGraph,
+          USER_ID
+        );
+      }
 
       return {
         content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
