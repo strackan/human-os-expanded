@@ -1,0 +1,455 @@
+// Human OS - Prisma Schema
+// Generated manually from SQL migrations
+// Supports multi-schema: public + human_os
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["public", "human_os"]
+}
+
+// =============================================================================
+// PUBLIC SCHEMA - Core Infrastructure
+// =============================================================================
+
+/// Universal entity table for people, companies, projects, goals, tasks
+model Entity {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug          String?   @unique
+  entity_type   String
+  name          String
+  email         String?
+  metadata      Json      @default("{}")
+  owner_id      String?   @db.Uuid
+  tenant_id     String?   @db.Uuid
+  privacy_scope String    @default("private")
+  source_system String?
+  source_id     String?
+  source        String?   @default("manual")
+  claimed_by_user_id String? @db.Uuid
+  created_at    DateTime  @default(now()) @db.Timestamptz
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  // Relations
+  context_files  ContextFile[]
+  interactions   Interaction[]
+  identity_packs IdentityPack[]
+  tasks          Task[]
+  glossary       Glossary[]
+
+  @@unique([source_system, source_id], name: "entity_unique_source")
+  @@index([slug], name: "idx_entities_slug")
+  @@index([entity_type], name: "idx_entities_type")
+  @@index([owner_id], name: "idx_entities_owner")
+  @@index([tenant_id], name: "idx_entities_tenant")
+  @@index([privacy_scope], name: "idx_entities_privacy")
+  @@index([source_system, source_id], name: "idx_entities_source")
+  @@index([claimed_by_user_id], name: "idx_entities_claimed_by")
+  @@index([source], name: "idx_entities_source_type")
+  @@map("entities")
+  @@schema("public")
+}
+
+/// Registry of markdown context files in Supabase Storage
+model ContextFile {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entity_id      String?   @db.Uuid
+  layer          String
+  file_path      String
+  storage_bucket String    @default("contexts")
+  content_hash   String?
+  last_synced_at DateTime? @db.Timestamptz
+  created_at     DateTime  @default(now()) @db.Timestamptz
+  content_tsv    Unsupported("tsvector")?
+
+  // Relations
+  entity Entity? @relation(fields: [entity_id], references: [id], onDelete: SetNull)
+
+  @@unique([layer, file_path])
+  @@index([layer], name: "idx_context_files_layer")
+  @@index([entity_id], name: "idx_context_files_entity")
+  @@index([file_path], name: "idx_context_files_path")
+  @@map("context_files")
+  @@schema("public")
+}
+
+/// Knowledge graph edges between entities
+model EntityLink {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  layer           String
+  source_slug     String
+  target_slug     String
+  link_type       String
+  link_text       String?
+  context_snippet String?
+  strength        Float    @default(1.0)
+  created_at      DateTime @default(now()) @db.Timestamptz
+
+  @@unique([layer, source_slug, target_slug, link_type])
+  @@index([layer], name: "idx_entity_links_layer")
+  @@index([source_slug], name: "idx_entity_links_source")
+  @@index([target_slug], name: "idx_entity_links_target")
+  @@index([link_type], name: "idx_entity_links_type")
+  @@index([layer, source_slug], name: "idx_entity_links_layer_source")
+  @@index([layer, target_slug], name: "idx_entity_links_layer_target")
+  @@map("entity_links")
+  @@schema("public")
+}
+
+/// Temporal event log for check-ins, meetings, notes, engagements
+model Interaction {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entity_id        String?   @db.Uuid
+  layer            String
+  interaction_type String
+  title            String?
+  content          String?
+  sentiment        String?
+  metadata         Json      @default("{}")
+  occurred_at      DateTime  @default(now()) @db.Timestamptz
+  duration_minutes Int?
+  owner_id         String?   @db.Uuid
+  source_system    String?
+  source_id        String?
+  created_at       DateTime  @default(now()) @db.Timestamptz
+
+  // Relations
+  entity Entity? @relation(fields: [entity_id], references: [id], onDelete: SetNull)
+
+  @@index([entity_id], name: "idx_interactions_entity")
+  @@index([layer], name: "idx_interactions_layer")
+  @@index([interaction_type], name: "idx_interactions_type")
+  @@index([owner_id], name: "idx_interactions_owner")
+  @@index([occurred_at(sort: Desc)], name: "idx_interactions_occurred")
+  @@index([source_system, source_id], name: "idx_interactions_source")
+  @@map("interactions")
+  @@schema("public")
+}
+
+/// API keys with scoped permissions for external access (public schema)
+model ApiKey {
+  id                    String    @id
+  owner_id              String?   @db.Uuid
+  name                  String
+  scopes                String[]  @default([])
+  rate_limit_per_minute Int       @default(100)
+  is_active             Boolean   @default(true)
+  expires_at            DateTime? @db.Timestamptz
+  created_at            DateTime  @default(now()) @db.Timestamptz
+  last_used_at          DateTime? @db.Timestamptz
+
+  // Relations
+  usage ApiKeyUsage[]
+
+  @@index([owner_id], name: "idx_api_keys_owner")
+  @@index([is_active], name: "idx_api_keys_active")
+  @@map("api_keys")
+  @@schema("public")
+}
+
+/// Usage log for API key rate limiting and analytics
+model ApiKeyUsage {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  api_key_id       String
+  endpoint         String
+  method           String
+  status_code      Int?
+  response_time_ms Int?
+  created_at       DateTime @default(now()) @db.Timestamptz
+
+  // Relations
+  api_key ApiKey @relation(fields: [api_key_id], references: [id], onDelete: Cascade)
+
+  @@index([api_key_id, created_at(sort: Desc)], name: "idx_api_key_usage_recent")
+  @@map("api_key_usage")
+  @@schema("public")
+}
+
+/// Junction table linking users to tenants for RLS
+model UserTenant {
+  user_id    String   @db.Uuid
+  tenant_id  String   @db.Uuid
+  role       String   @default("member")
+  created_at DateTime @default(now()) @db.Timestamptz
+
+  @@id([user_id, tenant_id])
+  @@index([user_id], name: "idx_user_tenants_user")
+  @@index([tenant_id], name: "idx_user_tenants_tenant")
+  @@map("user_tenants")
+  @@schema("public")
+}
+
+/// Multi-dimensional identity facets for PowerPak discovery
+model IdentityPack {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  entity_id  String?  @db.Uuid
+  pack_type  String
+  visibility String   @default("private")
+  headline   String?
+  summary    String?
+  tags       String[] @default([])
+  metadata   Json     @default("{}")
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  // Relations
+  entity Entity? @relation(fields: [entity_id], references: [id], onDelete: Cascade)
+
+  @@unique([entity_id, pack_type])
+  @@index([entity_id], name: "idx_identity_packs_entity")
+  @@index([pack_type], name: "idx_identity_packs_type")
+  @@index([visibility], name: "idx_identity_packs_visibility")
+  @@map("identity_packs")
+  @@schema("public")
+}
+
+/// Dynamic key-value storage for user settings
+model UserPreference {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  key        String
+  value      Json
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  @@unique([user_id, key])
+  @@index([user_id], name: "idx_user_preferences_user")
+  @@index([key], name: "idx_user_preferences_key")
+  @@map("user_preferences")
+  @@schema("public")
+}
+
+/// Glossary - Quick term definitions for shorthand, aliases, slang
+model Glossary {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  term             String
+  term_normalized  String
+  definition       String
+  short_definition String?
+  entity_id        String?   @db.Uuid
+  term_type        String    @default("shorthand")
+  usage_count      Int       @default(0)
+  last_used_at     DateTime? @db.Timestamptz
+  context_tags     String[]  @default([])
+  always_expand    Boolean   @default(false)
+  owner_id         String?   @db.Uuid
+  layer            String    @default("founder:justin")
+  created_at       DateTime  @default(now()) @db.Timestamptz
+  updated_at       DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  // Relations
+  entity Entity? @relation(fields: [entity_id], references: [id], onDelete: SetNull)
+
+  @@unique([layer, term_normalized])
+  @@index([term_normalized], name: "idx_glossary_term")
+  @@index([layer], name: "idx_glossary_layer")
+  @@index([term_type], name: "idx_glossary_type")
+  @@index([entity_id], name: "idx_glossary_entity")
+  @@index([usage_count(sort: Desc)], name: "idx_glossary_usage")
+  @@map("glossary")
+  @@schema("public")
+}
+
+/// Tasks with due dates and urgency escalation
+model Task {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title                 String
+  description           String?
+  owner_id              String?   @db.Uuid
+  assignee_id           String?   @db.Uuid
+  assignee_name         String?
+  entity_id             String?   @db.Uuid
+  due_date              DateTime? @db.Date
+  due_time              DateTime? @db.Time
+  reminder_days         Int[]     @default([7, 3, 1, 0])
+  urgency               String    @default("normal")
+  status                String    @default("pending")
+  last_escalation_at    DateTime? @db.Timestamptz
+  escalation_count      Int       @default(0)
+  escalation_notes      String[]  @default([])
+  notify_on_escalation  Boolean   @default(true)
+  notify_support_person Boolean   @default(false)
+  metadata              Json      @default("{}")
+  source_system         String?
+  source_id             String?
+  layer                 String    @default("founder:justin")
+  created_at            DateTime  @default(now()) @db.Timestamptz
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz
+  completed_at          DateTime? @db.Timestamptz
+
+  // Relations
+  entity Entity? @relation(fields: [entity_id], references: [id], onDelete: SetNull)
+
+  @@index([owner_id], name: "idx_tasks_owner")
+  @@index([assignee_id], name: "idx_tasks_assignee")
+  @@index([due_date], name: "idx_tasks_due_date")
+  @@index([urgency], name: "idx_tasks_urgency")
+  @@index([status], name: "idx_tasks_status")
+  @@index([layer], name: "idx_tasks_layer")
+  @@map("tasks")
+  @@schema("public")
+}
+
+// =============================================================================
+// HUMAN_OS SCHEMA - Identity and Billing
+// =============================================================================
+
+/// Core user/identity table
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String    @unique
+  display_name String
+  email        String?   @unique
+  created_at   DateTime? @default(now()) @db.Timestamptz
+
+  // Relations
+  verifications      UserVerification[]
+  usage_events       UsageEvent[]
+  onboarding         OnboardingProgress?
+  subscription       Subscription?
+  api_keys           HumanOsApiKey[]
+  api_usage          HumanOsApiUsage[]
+
+  @@index([slug], name: "idx_users_slug")
+  @@index([email], name: "idx_users_email")
+  @@map("users")
+  @@schema("human_os")
+}
+
+/// Verification providers (Google, LinkedIn = verification, not identity)
+model UserVerification {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String?   @db.Uuid
+  provider         String
+  provider_user_id String
+  verified_at      DateTime? @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_user_id])
+  @@index([user_id], name: "idx_verifications_user")
+  @@index([provider, provider_user_id], name: "idx_verifications_provider")
+  @@map("user_verifications")
+  @@schema("human_os")
+}
+
+/// Usage events for retention metric discovery
+model UsageEvent {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id     String?  @db.Uuid
+  event_type  String
+  entity_slug String?
+  layer       String?
+  metadata    Json     @default("{}")
+  created_at  DateTime? @default(now()) @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at(sort: Desc)], name: "idx_usage_user_time")
+  @@index([event_type, created_at(sort: Desc)], name: "idx_usage_type")
+  @@index([entity_slug], name: "idx_usage_entity")
+  @@map("usage_events")
+  @@schema("human_os")
+}
+
+/// Onboarding progress for high-touch follow-up
+model OnboardingProgress {
+  user_id                    String    @id @db.Uuid
+  steps_completed            String[]  @default([])
+  current_step               String?
+  percent_complete           Int       @default(0)
+  first_entity_created_at    DateTime? @db.Timestamptz
+  first_context_saved_at     DateTime? @db.Timestamptz
+  first_link_created_at      DateTime? @db.Timestamptz
+  onboarding_call_scheduled  Boolean   @default(false)
+  onboarding_call_completed  Boolean   @default(false)
+  scheduled_call             DateTime? @db.Timestamptz
+  created_at                 DateTime  @default(now()) @db.Timestamptz
+  updated_at                 DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_progress")
+  @@schema("human_os")
+}
+
+/// API usage tracking for rate limiting and billing
+model HumanOsApiUsage {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String?  @db.Uuid
+  endpoint   String
+  method     String
+  created_at DateTime? @default(now()) @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, created_at(sort: Desc)], name: "idx_api_usage_user")
+  @@map("api_usage")
+  @@schema("human_os")
+}
+
+/// Subscription/billing
+model Subscription {
+  id                     String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                String?   @unique @db.Uuid
+  plan                   String    @default("free")
+  status                 String?   @default("active")
+  stripe_customer_id     String?
+  stripe_subscription_id String?
+  price_id               String?
+  current_period_start   DateTime? @db.Timestamptz
+  current_period_end     DateTime? @db.Timestamptz
+  cancel_at_period_end   Boolean   @default(false)
+  created_at             DateTime  @default(now()) @db.Timestamptz
+  updated_at             DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], name: "idx_subscriptions_user")
+  @@index([stripe_customer_id], name: "idx_subscriptions_stripe")
+  @@map("subscriptions")
+  @@schema("human_os")
+}
+
+/// API key management for third-party apps (human_os schema)
+model HumanOsApiKey {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id      String?   @db.Uuid
+  key_hash     String
+  name         String?
+  scopes       String[]  @default([])
+  last_used_at DateTime? @db.Timestamptz
+  created_at   DateTime  @default(now()) @db.Timestamptz
+
+  // Relations
+  user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], name: "idx_api_keys_user")
+  @@index([key_hash], name: "idx_api_keys_hash")
+  @@map("api_keys")
+  @@schema("human_os")
+}
+
+/// Payment history
+model PaymentHistory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id String
+  invoice_id  String?
+  amount      Int?
+  status      String?
+  paid_at     DateTime? @db.Timestamptz
+  created_at  DateTime  @default(now()) @db.Timestamptz
+
+  @@index([customer_id], name: "idx_payment_history_customer")
+  @@map("payment_history")
+  @@schema("human_os")
+}
