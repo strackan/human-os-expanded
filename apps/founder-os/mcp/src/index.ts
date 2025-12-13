@@ -41,6 +41,12 @@ import {
   searchGlossary,
   deleteTerm,
 } from './tools/glossary.js';
+import {
+  packSearch,
+  findConnectionPoints,
+  quickSearch,
+  findSimilarPeople,
+} from './tools/search.js';
 
 /**
  * Session management tool definitions
@@ -233,6 +239,81 @@ const glossaryTools: Tool[] = [
 ];
 
 /**
+ * Search tool definitions
+ */
+const searchTools: Tool[] = [
+  {
+    name: 'pack_search',
+    description: 'Multi-dimensional identity discovery. Search across entities, identity packs, and context files. Use for finding people by skills, interests, location, or keywords.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        keyword: { type: 'string', description: 'Search keyword (matches name, headline, tags, content)' },
+        entity_type: {
+          type: 'string',
+          description: 'Filter by entity type',
+          enum: ['person', 'company', 'project'],
+        },
+        pack_type: {
+          type: 'string',
+          description: 'Filter by identity pack type',
+          enum: ['professional', 'interests', 'social', 'dating', 'expertise', 'founder'],
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Filter by tags (any match)',
+        },
+        location: { type: 'string', description: 'Filter by location (fuzzy match)' },
+        limit: { type: 'number', description: 'Max results to return', default: 20 },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'find_connection_points',
+    description: 'Serendipity engine: Discover shared interests, mutual connections, and conversation openers between two people. Use before meeting someone or preparing for outreach.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        viewer_slug: { type: 'string', description: 'Slug of the person looking (usually the user)' },
+        target_slug: { type: 'string', description: 'Slug of the person they want to connect with' },
+      },
+      required: ['viewer_slug', 'target_slug'],
+    },
+  },
+  {
+    name: 'quick_search',
+    description: 'Simple entity lookup by name or keyword. Faster than pack_search for basic queries.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query (name or keyword)' },
+        type: {
+          type: 'string',
+          description: 'Entity type filter',
+          enum: ['person', 'company', 'project'],
+        },
+        limit: { type: 'number', description: 'Max results', default: 10 },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'find_similar_people',
+    description: 'Find people with similar interests and background to a given person. Useful for networking recommendations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        person_slug: { type: 'string', description: 'Slug of the person to find similar people to' },
+        limit: { type: 'number', description: 'Max results', default: 10 },
+      },
+      required: ['person_slug'],
+    },
+  },
+];
+
+/**
  * Validation schemas
  */
 const LinkedInProfileSchema = z.object({
@@ -325,7 +406,7 @@ async function main() {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools: [...sessionTools, ...gftTools, ...glossaryTools] };
+    return { tools: [...sessionTools, ...gftTools, ...glossaryTools, ...searchTools] };
   });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -371,6 +452,30 @@ async function main() {
       } else if (name === 'delete_term') {
         const { term } = args as { term: string };
         result = await deleteTerm(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, term);
+      }
+      // Handle search tools
+      else if (name === 'pack_search') {
+        const params = args as {
+          keyword?: string;
+          entity_type?: string;
+          pack_type?: string;
+          tags?: string[];
+          location?: string;
+          limit?: number;
+        };
+        result = await packSearch(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+          ...params,
+          layer: LAYER,
+        });
+      } else if (name === 'find_connection_points') {
+        const { viewer_slug, target_slug } = args as { viewer_slug: string; target_slug: string };
+        result = await findConnectionPoints(SUPABASE_URL, SUPABASE_SERVICE_KEY, viewer_slug, target_slug);
+      } else if (name === 'quick_search') {
+        const { query, type, limit } = args as { query: string; type?: 'person' | 'company' | 'project'; limit?: number };
+        result = await quickSearch(SUPABASE_URL, SUPABASE_SERVICE_KEY, query, { type, limit });
+      } else if (name === 'find_similar_people') {
+        const { person_slug, limit } = args as { person_slug: string; limit?: number };
+        result = await findSimilarPeople(SUPABASE_URL, SUPABASE_SERVICE_KEY, person_slug, limit);
       } else {
         // Handle GFT tools
         result = await handleGFTTool(
