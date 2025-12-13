@@ -40,7 +40,7 @@ CREATE INDEX idx_api_keys_scopes ON api_keys USING GIN (scopes);
 -- Track API key usage for rate limiting and analytics
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS api_key_usage (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   api_key_id TEXT NOT NULL REFERENCES api_keys(id) ON DELETE CASCADE,
   endpoint TEXT NOT NULL,
   method TEXT NOT NULL,

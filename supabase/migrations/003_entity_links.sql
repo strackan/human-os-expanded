@@ -6,7 +6,7 @@
 -- Knowledge graph edges - links are also scoped by layer
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS entity_links (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Layer scoping (links inherit privacy from their layer)
   layer TEXT NOT NULL,                 -- Same layer concept as context_files

@@ -6,7 +6,7 @@
 -- Registry of markdown context files with layer-based privacy
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS context_files (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Entity linkage
   entity_id UUID REFERENCES entities(id) ON DELETE SET NULL,

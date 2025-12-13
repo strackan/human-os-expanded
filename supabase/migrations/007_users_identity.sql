@@ -32,4 +32,4 @@ CREATE INDEX idx_users_email ON human_os.users(email);
 CREATE INDEX idx_verifications_user ON human_os.user_verifications(user_id);
 CREATE INDEX idx_verifications_provider ON human_os.user_verifications(provider, provider_user_id);
 CREATE INDEX idx_entities_claimed_by ON public.entities(claimed_by_user_id);
-CREATE INDEX idx_entities_source ON public.entities(source);
+CREATE INDEX idx_entities_source_type ON public.entities(source);

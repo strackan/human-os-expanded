@@ -6,7 +6,7 @@
 -- Records of interactions with entities over time
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS interactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Entity being interacted with (optional - some interactions are self-reflections)
   entity_id UUID REFERENCES entities(id) ON DELETE SET NULL,

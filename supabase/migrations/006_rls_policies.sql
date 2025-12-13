@@ -2,6 +2,22 @@
 -- Enforces privacy model at the database layer
 
 -- =============================================================================
+-- USER TENANTS TABLE (Required for tenant policies)
+-- Junction table linking users to their tenants
+-- Must be created BEFORE policies that reference it
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS user_tenants (
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL,
+  role TEXT DEFAULT 'member',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, tenant_id)
+);
+
+CREATE INDEX idx_user_tenants_user ON user_tenants(user_id);
+CREATE INDEX idx_user_tenants_tenant ON user_tenants(tenant_id);
+
+-- =============================================================================
 -- ENABLE RLS ON ALL TABLES
 -- =============================================================================
 ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
@@ -173,21 +189,6 @@ CREATE POLICY "api_key_usage_owner_read" ON api_key_usage
 
 -- Note: Supabase service role automatically bypasses RLS
 -- These policies are for the anon/authenticated roles
-
--- =============================================================================
--- USER TENANTS TABLE (Required for tenant policies)
--- Junction table linking users to their tenants
--- =============================================================================
-CREATE TABLE IF NOT EXISTS user_tenants (
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  tenant_id UUID NOT NULL,
-  role TEXT DEFAULT 'member',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (user_id, tenant_id)
-);
-
-CREATE INDEX idx_user_tenants_user ON user_tenants(user_id);
-CREATE INDEX idx_user_tenants_tenant ON user_tenants(tenant_id);
 
 -- RLS for user_tenants
 ALTER TABLE user_tenants ENABLE ROW LEVEL SECURITY;
