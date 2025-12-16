@@ -121,13 +121,13 @@ When you detect these patterns, call the appropriate tool:
 | `gft_batch_ingest` | Batch import multiple profiles |
 | `gft_update_profile` | Update existing profile |
 
-### Tasks (human-os-workflows server)
+### Tasks
 | Tool | Purpose |
 |------|---------|
-| `get_urgent_tasks` | Get tasks by urgency level |
+| `get_urgent_tasks` | Get tasks by urgency (call at session start!) |
 | `add_task` | Create new task with deadline |
 | `complete_task` | Mark task complete |
-| `list_all_tasks` | List all tasks |
+| `list_all_tasks` | List all tasks by status |
 
 ---
 

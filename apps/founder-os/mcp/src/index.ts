@@ -22,6 +22,22 @@ import {
 import { readFile } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+
+// Declare global for embedded instructions (set by bundle script for standalone exe)
+declare global {
+  var __EMBEDDED_INSTRUCTIONS__: string | undefined;
+}
+
+/**
+ * Get INSTRUCTIONS.md content - uses embedded version for standalone exe,
+ * falls back to file read for development
+ */
+async function getInstructions(instructionsPath: string): Promise<string> {
+  if (globalThis.__EMBEDDED_INSTRUCTIONS__) {
+    return globalThis.__EMBEDDED_INSTRUCTIONS__;
+  }
+  return readFile(instructionsPath, 'utf-8');
+}
 import { z } from 'zod';
 import {
   ContextEngine,
@@ -54,6 +70,20 @@ import {
   quickSearch,
   findSimilarPeople,
 } from './tools/search.js';
+import {
+  queueItem,
+  updateQueueItem,
+  processQueueItems,
+  processQueueItem,
+  type QueueItemInput,
+  type QueueItemUpdate,
+} from './tools/queue.js';
+import {
+  getUrgentTasks,
+  addTask,
+  completeTask,
+  listAllTasks,
+} from './tools/tasks.js';
 
 /**
  * Session management tool definitions
@@ -81,6 +111,87 @@ const sessionTools: Tool[] = [
         },
       },
       required: ['mode'],
+    },
+  },
+  {
+    name: 'add_queue_item',
+    description: 'Add an item to the processing queue for later handling. Use when on mobile or unable to complete immediately.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        intent_type: {
+          type: 'string',
+          enum: ['task', 'event', 'decision', 'note', 'memory_edit'],
+          description: 'Type of item being queued',
+        },
+        payload: {
+          type: 'object',
+          description: 'Item data - structure depends on intent_type. task: {title, context_tags?, priority?, due_date?, notes?}. note/event: {content, interaction_type?, occurred_at?}. decision: {decision, context?, outcome?}',
+        },
+        target_table: {
+          type: 'string',
+          description: 'Optional hint for where this should land when processed',
+        },
+        notes: {
+          type: 'string',
+          description: 'Context or instructions for processing',
+        },
+        session_id: {
+          type: 'string',
+          description: 'Group related items (auto-generated if not provided)',
+        },
+      },
+      required: ['intent_type', 'payload'],
+    },
+  },
+  {
+    name: 'update_queue_item',
+    description: 'Update a pending queue item (change payload, status, or notes)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: {
+          type: 'string',
+          description: 'UUID of the queue item to update',
+        },
+        payload: {
+          type: 'object',
+          description: 'Updated payload data (replaces existing)',
+        },
+        status: {
+          type: 'string',
+          enum: ['pending', 'skipped'],
+          description: 'Change status (can skip items to ignore them)',
+        },
+        notes: {
+          type: 'string',
+          description: 'Update notes/context',
+        },
+      },
+      required: ['item_id'],
+    },
+  },
+  {
+    name: 'process_queue',
+    description: 'Process all pending queue items. Routes each item to appropriate table based on intent_type.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'process_queue_item',
+    description: 'Process a single queue item by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: {
+          type: 'string',
+          description: 'UUID of the queue item to process',
+        },
+      },
+      required: ['item_id'],
     },
   },
 ];
@@ -321,6 +432,68 @@ const searchTools: Tool[] = [
 ];
 
 /**
+ * Task management tool definitions
+ */
+const taskTools: Tool[] = [
+  {
+    name: 'get_urgent_tasks',
+    description: 'Get tasks that need attention, ordered by urgency. Returns overdue, critical (due today), urgent (due in 1-2 days), and upcoming tasks. Call this at session start to check for tasks needing immediate attention.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        include_upcoming: {
+          type: 'boolean',
+          description: 'Include tasks due in 3-7 days',
+          default: true,
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'add_task',
+    description: 'Add a new task with a due date. The task will automatically escalate as the due date approaches.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'What needs to be done' },
+        due_date: { type: 'string', description: 'When it\'s due (YYYY-MM-DD format)' },
+        assignee_name: { type: 'string', description: 'Who should do it (e.g., "Lisa", or omit for Justin)' },
+        description: { type: 'string', description: 'Optional details' },
+      },
+      required: ['title', 'due_date'],
+    },
+  },
+  {
+    name: 'complete_task',
+    description: 'Mark a task as completed.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task_id: { type: 'string', description: 'The UUID of the task to complete' },
+      },
+      required: ['task_id'],
+    },
+  },
+  {
+    name: 'list_all_tasks',
+    description: 'List all tasks with a given status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          description: 'Filter by status',
+          enum: ['pending', 'in_progress', 'blocked', 'completed', 'cancelled'],
+          default: 'pending',
+        },
+      },
+      required: [],
+    },
+  },
+];
+
+/**
  * Validation schemas
  */
 const LinkedInProfileSchema = z.object({
@@ -408,9 +581,17 @@ async function main() {
   });
 
   // Get the directory of this file for loading INSTRUCTIONS.md
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  const instructionsPath = join(__dirname, '..', 'INSTRUCTIONS.md');
+  // In standalone exe, import.meta.url is undefined but INSTRUCTIONS.md is embedded
+  let instructionsPath = '';
+  try {
+    if (typeof import.meta?.url === 'string') {
+      const __filename = fileURLToPath(import.meta.url);
+      const __dirname = dirname(__filename);
+      instructionsPath = join(__dirname, '..', 'INSTRUCTIONS.md');
+    }
+  } catch {
+    // Standalone exe - instructions are embedded, path not needed
+  }
 
   const server = new Server(
     { name: 'founder-os-gft', version: '0.1.0' },
@@ -424,7 +605,7 @@ async function main() {
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return { tools: [...sessionTools, ...gftTools, ...glossaryTools, ...searchTools] };
+    return { tools: [...sessionTools, ...gftTools, ...glossaryTools, ...searchTools, ...taskTools] };
   });
 
   // ==========================================================================
@@ -455,7 +636,7 @@ async function main() {
 
     if (name === 'session_context') {
       // Load INSTRUCTIONS.md and also call get_session_context for dynamic state
-      const instructions = await readFile(instructionsPath, 'utf-8');
+      const instructions = await getInstructions(instructionsPath);
       const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
 
       return {
@@ -540,7 +721,7 @@ async function main() {
     const { uri } = request.params;
 
     if (uri === 'founder-os://instructions') {
-      const content = await readFile(instructionsPath, 'utf-8');
+      const content = await getInstructions(instructionsPath);
       return {
         contents: [
           {
@@ -599,6 +780,33 @@ async function main() {
         if (!mode) throw new Error('mode parameter is required');
         result = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, mode);
       }
+      // Handle queue tools
+      else if (name === 'add_queue_item') {
+        const { intent_type, payload, target_table, notes, session_id } = args as Record<string, unknown>;
+        if (!intent_type || !payload) throw new Error('intent_type and payload are required');
+        const input: QueueItemInput = {
+          intent_type: intent_type as QueueItemInput['intent_type'],
+          payload: payload as Record<string, unknown>,
+          target_table: target_table as string | undefined,
+          notes: notes as string | undefined,
+          session_id: session_id as string | undefined,
+        };
+        result = await queueItem(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, input);
+      } else if (name === 'update_queue_item') {
+        const { item_id, payload, status, notes } = args as Record<string, unknown>;
+        if (!item_id) throw new Error('item_id is required');
+        const updates: QueueItemUpdate = {};
+        if (payload !== undefined) updates.payload = payload as Record<string, unknown>;
+        if (status !== undefined) updates.status = status as QueueItemUpdate['status'];
+        if (notes !== undefined) updates.notes = notes as string;
+        result = await updateQueueItem(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, item_id as string, updates);
+      } else if (name === 'process_queue') {
+        result = await processQueueItems(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      } else if (name === 'process_queue_item') {
+        const { item_id } = args as Record<string, unknown>;
+        if (!item_id) throw new Error('item_id is required');
+        result = await processQueueItem(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, item_id as string);
+      }
       // Handle glossary tools
       else if (name === 'define_term') {
         const params = args as {
@@ -652,6 +860,25 @@ async function main() {
       } else if (name === 'find_similar_people') {
         const { person_slug, limit } = args as { person_slug: string; limit?: number };
         result = await findSimilarPeople(SUPABASE_URL, SUPABASE_SERVICE_KEY, person_slug, limit);
+      }
+      // Handle task tools
+      else if (name === 'get_urgent_tasks') {
+        const { include_upcoming } = args as { include_upcoming?: boolean };
+        result = await getUrgentTasks(SUPABASE_URL, SUPABASE_SERVICE_KEY, include_upcoming ?? true);
+      } else if (name === 'add_task') {
+        const params = args as {
+          title: string;
+          due_date: string;
+          assignee_name?: string;
+          description?: string;
+        };
+        result = await addTask(SUPABASE_URL, SUPABASE_SERVICE_KEY, LAYER, params);
+      } else if (name === 'complete_task') {
+        const { task_id } = args as { task_id: string };
+        result = await completeTask(SUPABASE_URL, SUPABASE_SERVICE_KEY, task_id);
+      } else if (name === 'list_all_tasks') {
+        const { status } = args as { status?: string };
+        result = await listAllTasks(SUPABASE_URL, SUPABASE_SERVICE_KEY, status ?? 'pending');
       } else {
         // Handle GFT tools
         result = await handleGFTTool(

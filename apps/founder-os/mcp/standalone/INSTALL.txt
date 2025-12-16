@@ -1,0 +1,68 @@
+Founder OS MCP Server - Standalone Installation
+===============================================
+
+This folder contains everything needed to run the Human OS MCP server
+on a new machine WITHOUT installing Node.js or cloning the repository.
+
+FILES
+-----
+- founder-os-mcp.exe  : Standalone executable (includes Node.js runtime)
+- setup.ps1           : PowerShell setup script for Windows
+- INSTALL.txt         : This file
+
+QUICK SETUP (Windows)
+---------------------
+1. Copy this entire folder to the new machine
+2. Open PowerShell as Administrator
+3. Navigate to this folder
+4. Run: .\setup.ps1
+5. Follow the prompts (you'll need the Supabase Service Role Key)
+6. Restart Claude Desktop
+
+MANUAL SETUP
+------------
+If you prefer manual setup:
+
+1. Copy founder-os-mcp.exe to a permanent location (e.g., C:\Tools\founder-os\)
+
+2. Create/edit Claude Desktop config at:
+   %APPDATA%\Claude\claude_desktop_config.json
+
+3. Add this configuration (adjust paths and values):
+
+   {
+     "mcpServers": {
+       "founder-os": {
+         "command": "C:\\Tools\\founder-os\\founder-os-mcp.exe",
+         "args": [],
+         "env": {
+           "SUPABASE_URL": "https://zulowgscotdrqlccomht.supabase.co",
+           "SUPABASE_SERVICE_ROLE_KEY": "<your-service-role-key>",
+           "HUMAN_OS_USER_ID": "justin",
+           "HUMAN_OS_LAYER": "founder:justin"
+         }
+       }
+     }
+   }
+
+4. Restart Claude Desktop
+
+TROUBLESHOOTING
+---------------
+- If Claude Desktop doesn't see the MCP server, check the logs at:
+  %APPDATA%\Claude\logs\
+
+- Make sure the path to founder-os-mcp.exe uses double backslashes (\\)
+  in the JSON config
+
+- The Supabase Service Role Key can be found in your Supabase dashboard
+  under Settings > API > Service Role Key
+
+REBUILDING
+----------
+To rebuild the standalone executable from source:
+
+  cd apps/founder-os/mcp
+  pnpm build:exe
+
+This requires Node.js and pnpm installed.

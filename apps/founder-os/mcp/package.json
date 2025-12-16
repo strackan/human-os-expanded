@@ -22,7 +22,16 @@
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "clean": "rimraf dist",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "bundle": "node scripts/bundle.mjs",
+    "build:exe": "pnpm bundle && pnpm pkg:win",
+    "pkg:win": "pkg standalone/index.cjs --target node20-win-x64 --output standalone/founder-os-mcp.exe --config pkg.json"
+  },
+  "pkg": {
+    "assets": [
+      "INSTRUCTIONS.md"
+    ],
+    "outputPath": "standalone"
   },
   "dependencies": {
     "@human-os/core": "workspace:*",
@@ -32,6 +41,8 @@
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "@yao-pkg/pkg": "^5.12.0",
+    "esbuild": "^0.21.0",
     "typescript": "^5.7.2"
   }
 }

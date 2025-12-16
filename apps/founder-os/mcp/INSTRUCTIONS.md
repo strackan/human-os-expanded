@@ -112,10 +112,28 @@ Load protocol files for a specific mode:
 - `conversation` - Conversation protocols
 - `identity` - Core identity files
 
-### GFT Tools
+### Glossary Tools
+Justin uses shorthand and slang. When you encounter unfamiliar terms:
+- `lookup_term(term)` - Look up what "Ruth", "GFT", "PDA" etc. mean
+- `define_term(term, definition)` - Add new shorthand to glossary
+- `list_glossary()` - See all defined terms
+- `search_glossary(query)` - Search terms and definitions
+
+### Search & Discovery
+- `pack_search` - Find people by skills, interests, location, tags
+- `find_connection_points(viewer, target)` - Discover shared interests between two people
+- `quick_search(name)` - Fast entity lookup by name
+
+### GFT Tools (LinkedIn Intelligence)
 - `gft_ingest_linkedin` - Ingest LinkedIn profile
 - `gft_batch_ingest` - Batch ingest profiles
 - `gft_update_profile` - Update existing profile
+
+### Task Tools
+- `get_urgent_tasks` - Get tasks by urgency level (call at session start!)
+- `add_task` - Create new task with deadline
+- `complete_task` - Mark task complete
+- `list_all_tasks` - List all tasks by status
 
 ## The North Star
 
