@@ -5,7 +5,7 @@
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
 **Current Version:** 0.1.13 (Dark Mode Infrastructure)
-**Next Release:** 0.2.0 - Human OS Check-Ins (Target: Feb-Mar 2026)
+**Next Release:** 0.2.0 - Human OS Integration (Target: Feb-Mar 2026)
 
 ---
 
@@ -836,32 +836,128 @@ MCP_MEMORY_TTL=86400
 
 ## Upcoming Releases
 
-### Release 0.2.0 - "Production Launch" (Target: January 1, 2026)
+### Release 0.2.0 - "Human OS Integration" (Target: Feb-Mar 2026)
 
 **Status:** Planning
 **Type:** Major Release
 
 #### Planned Features
 
-- **Human OS Check-In System** - Daily/weekly user check-ins
-  - Pattern recognition across user behavior
-  - Personalized workflow suggestions
-  - Adaptive reminder timing
-  - Success metric tracking
-  - Relationship strength tracking
-  - Longitudinal intelligence files
-- **Production Deployment** - Full production environment
-- **Performance Optimization** - Scale testing and optimization
-- **Security Hardening** - Production security audit
-- **Documentation Complete** - User guides and API documentation
+- **Human-OS External Enrichment** - Triangulated intelligence via MCP
+  - Contact enrichment (LinkedIn profiles, headlines, recent posts)
+  - Company enrichment (funding rounds, news, growth signals)
+  - Relationship context (layer-scoped opinions)
+  - Skills files integration
+  - `HumanOSClient` MCP client implementation
 
-#### Foundation Already Built
+- **FastMCP 2.0 Features** - Enhanced workflow handling
+  - Mid-workflow LLM sampling (`ctx.sample()`)
+  - Progress reporting for long operations (`ctx.report_progress()`)
+  - External wake triggers (funding events, job changes, activity spikes)
 
+- **String-Tie Enrichment** - Reminders enriched with contact context
+  - Auto-detect contact mentions in reminder text
+  - LinkedIn data surfaced when reminder fires
+  - Triangulated insights ("Sarah just posted about expansion plans")
+
+- **Parking Lot Enhancement** - Expansion with Human-OS data
+  - Entity enrichment during idea capture
+  - Progress UI during long LLM operations
+  - External context in expansion analysis
+
+- **External Wake Triggers** - 5 new trigger types from Human-OS
+  - `company_funding_event` - Company raises funding
+  - `contact_job_change` - Contact changes roles
+  - `linkedin_activity_spike` - Contact becomes active
+  - `company_news_event` - Company in the news
+  - `relationship_opinion_added` - New opinion about contact
+
+#### Foundation Already Built (0.1.x)
+
+- MCP infrastructure (MCPManager, 4 servers: Supabase, PostgreSQL, Memory, Sequential Thinking)
+- String-tie voice-first reminders with LLM parsing
+- Parking lot idea capture with wake triggers
+- Workflow snooze with date + event triggers
 - IntelligenceFileService (synthesis and context)
-- InterviewSessionService (session tracking)
-- SessionTimeline component
 - Check-in conversation components
-- Email-based lookup system
+
+#### Implementation Phases
+
+1. **Phase 1: Foundation** - HumanOSClient, MCPManager registration, env config
+2. **Phase 2: Workflow Integration** - Context enrichment, triangulation logic
+3. **Phase 3: Feature Enhancement** - String-tie + parking lot enrichment
+4. **Phase 4: External Triggers** - Wake trigger types, webhook handler
+
+#### Feature Flags
+
+All 0.2.0 features are behind feature flags for safe rollback:
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `MCP_ENABLE_HUMAN_OS` | `false` | Master toggle for Human-OS integration |
+| `FEATURE_STRING_TIE_ENRICHMENT` | `false` | Contact enrichment on string-tie reminders |
+| `FEATURE_PARKING_LOT_HUMAN_OS` | `false` | Human-OS expansion for parking lot |
+| `FEATURE_EXTERNAL_WAKE_TRIGGERS` | `false` | External event triggers from Human-OS |
+
+#### Reference Documentation
+
+- `docs/HUMAN_OS_INTEGRATION_GUIDE.md` - Complete implementation guide
+
+#### Development
+
+- **Branch:** `feature/human-os-integration`
+- **Strategy:** Feature flags enable incremental rollout and instant rollback
+
+---
+
+### Release 0.2.1 - "Workflow Refresh" (Target: Q2 2026)
+
+**Status:** Planning
+**Type:** Minor Release
+
+#### Overview
+
+Leverage the Human-OS integration infrastructure from 0.2.0 to refresh existing workflows with triangulated intelligence.
+
+#### Planned Features
+
+- **Workflow Greeting Refresh** - Incorporate triangulated insights in opening slides
+  - External context (funding, news, LinkedIn activity)
+  - Suggested talking points from recent contact activity
+  - Risk/opportunity signals from combined data sources
+
+- **External Trigger Integration** - Add Human-OS triggers to existing workflows
+  - 90-Day Renewal: Wake on champion job change
+  - QBR Prep: Wake on company news/funding
+  - Risk Mitigation: Wake on health score + external signals
+  - Expansion: Wake on funding events
+
+- **Smart Snooze Options** - Event-based snooze suggestions
+  - "Snooze until contact posts"
+  - "Snooze until funding announced"
+  - "Snooze until champion responds"
+
+- **Automated Context Steps** - Replace manual research with enrichment
+  - Auto-populate company background from GFT
+  - Auto-fetch recent LinkedIn activity
+  - Auto-summarize relationship opinions
+
+- **Enriched Artifact Generation** - External data in generated content
+  - Meeting decks reference recent company news
+  - Emails mention relevant LinkedIn posts
+  - Proposals incorporate funding context
+
+#### Workflows to Refresh
+
+1. **90-Day Renewal Workflow** - Full refresh with triangulation
+2. **QBR Preparation Workflow** - External context integration
+3. **Risk Mitigation Workflow** - External signal triggers
+4. **Expansion Opportunity Workflow** - Funding-triggered activation
+
+#### Dependencies
+
+- Requires 0.2.0 Human-OS integration complete
+- `MCP_ENABLE_HUMAN_OS=true` in production
 
 ---
 
