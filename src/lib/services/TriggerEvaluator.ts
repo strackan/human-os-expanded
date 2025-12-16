@@ -19,7 +19,13 @@ import {
   EventType,
   WorkflowActionCompletedConfig,
   UsageThresholdConfig,
-  ManualEventConfig
+  ManualEventConfig,
+  // Human-OS External Event Types (0.2.0)
+  CompanyFundingEventConfig,
+  ContactJobChangeConfig,
+  LinkedInActivitySpikeConfig,
+  CompanyNewsEventConfig,
+  RelationshipOpinionAddedConfig,
 } from '@/types/wake-triggers';
 
 // =====================================================
@@ -43,7 +49,7 @@ export class TriggerEvaluator {
       let reason: string | undefined;
 
       if (isDateTrigger(trigger)) {
-        triggered = await this.evaluateDateTrigger(trigger.config, supabase);
+        triggered = await this.evaluateDateTrigger(trigger.config);
         reason = triggered
           ? `Date trigger fired: ${trigger.config.date}`
           : `Date not yet reached: ${trigger.config.date}`;
@@ -86,8 +92,7 @@ export class TriggerEvaluator {
    * Returns true if the current time has passed the trigger date
    */
   static async evaluateDateTrigger(
-    config: DateTriggerConfig,
-    supabase: SupabaseClient
+    config: DateTriggerConfig
   ): Promise<boolean> {
     try {
       const now = new Date();
@@ -157,6 +162,48 @@ export class TriggerEvaluator {
         case 'manual_event':
           return await this.evaluateManualEvent(
             config.eventConfig as unknown as ManualEventConfig,
+            workflowExecutionId,
+            supabase
+          );
+
+        // Human-OS External Event Types (0.2.0)
+        // These are evaluated by checking if a matching external event exists
+        case 'company_funding_event':
+          return await this.evaluateExternalEvent(
+            'company_funding_event',
+            config.eventConfig as unknown as CompanyFundingEventConfig,
+            workflowExecutionId,
+            supabase
+          );
+
+        case 'contact_job_change':
+          return await this.evaluateExternalEvent(
+            'contact_job_change',
+            config.eventConfig as unknown as ContactJobChangeConfig,
+            workflowExecutionId,
+            supabase
+          );
+
+        case 'linkedin_activity_spike':
+          return await this.evaluateExternalEvent(
+            'linkedin_activity_spike',
+            config.eventConfig as unknown as LinkedInActivitySpikeConfig,
+            workflowExecutionId,
+            supabase
+          );
+
+        case 'company_news_event':
+          return await this.evaluateExternalEvent(
+            'company_news_event',
+            config.eventConfig as unknown as CompanyNewsEventConfig,
+            workflowExecutionId,
+            supabase
+          );
+
+        case 'relationship_opinion_added':
+          return await this.evaluateExternalEvent(
+            'relationship_opinion_added',
+            config.eventConfig as unknown as RelationshipOpinionAddedConfig,
             workflowExecutionId,
             supabase
           );
@@ -443,6 +490,248 @@ export class TriggerEvaluator {
         triggered: false,
         reason: error instanceof Error ? error.message : 'Unknown error'
       };
+    }
+  }
+
+  // =====================================================
+  // Human-OS External Event Evaluation (0.2.0)
+  // =====================================================
+
+  /**
+   * Evaluate external event triggers from Human-OS
+   * Checks if a matching external event has been received via webhook
+   *
+   * Note: External events are primarily pushed via webhook and wake workflows directly.
+   * This evaluation method is for polling/catching up on missed events.
+   */
+  private static async evaluateExternalEvent(
+    eventType: EventType,
+    config: CompanyFundingEventConfig | ContactJobChangeConfig | LinkedInActivitySpikeConfig | CompanyNewsEventConfig | RelationshipOpinionAddedConfig,
+    workflowExecutionId: string,
+    supabase: SupabaseClient
+  ): Promise<{ triggered: boolean; reason?: string }> {
+    try {
+      // Get the workflow execution to check customer context
+      const { data: workflow, error: workflowError } = await supabase
+        .from(DB_TABLES.WORKFLOW_EXECUTIONS)
+        .select(`
+          customer_id,
+          last_evaluated_at,
+          customers (
+            id,
+            name,
+            domain
+          )
+        `)
+        .eq(DB_COLUMNS.ID, workflowExecutionId)
+        .single();
+
+      if (workflowError || !workflow) {
+        return {
+          triggered: false,
+          reason: 'Workflow execution not found'
+        };
+      }
+
+      // Check for matching external events since last evaluation
+      const lastEvaluated = workflow.last_evaluated_at
+        ? new Date(workflow.last_evaluated_at)
+        : new Date(0);
+
+      // Query external_wake_events table for matching events
+      const { data: events, error: eventsError } = await supabase
+        .from('external_wake_events')
+        .select('*')
+        .eq('event_type', eventType)
+        .eq('processed', true)
+        .gt('received_at', lastEvaluated.toISOString())
+        .order('received_at', { ascending: false })
+        .limit(10);
+
+      if (eventsError) {
+        // Table may not exist - external events are optional
+        return {
+          triggered: false,
+          reason: 'External events not available (table may not exist)'
+        };
+      }
+
+      if (!events || events.length === 0) {
+        return {
+          triggered: false,
+          reason: `No ${eventType} events since last evaluation`
+        };
+      }
+
+      // Get customer info for matching
+      const customer = Array.isArray(workflow.customers)
+        ? workflow.customers[0]
+        : workflow.customers;
+      const customerName = (customer as { name?: string } | null)?.name;
+      const customerDomain = (customer as { domain?: string } | null)?.domain;
+
+      // Check if any event matches our criteria
+      for (const event of events) {
+        const payload = event.event_payload as {
+          companyName?: string;
+          companyDomain?: string;
+          contactName?: string;
+          details?: Record<string, unknown>;
+        };
+
+        const matches = this.matchExternalEvent(
+          eventType,
+          config,
+          payload,
+          customerName,
+          customerDomain
+        );
+
+        if (matches.triggered) {
+          // Check if this workflow was already matched by the webhook
+          const matchedWorkflowIds = event.matched_workflow_ids as string[];
+          if (matchedWorkflowIds?.includes(workflowExecutionId)) {
+            return {
+              triggered: true,
+              reason: `${eventType}: Already matched via webhook`
+            };
+          }
+
+          return {
+            triggered: true,
+            reason: `${eventType}: ${matches.reason}`
+          };
+        }
+      }
+
+      return {
+        triggered: false,
+        reason: `No matching ${eventType} events found`
+      };
+    } catch (error) {
+      console.error(`[TriggerEvaluator] Error evaluating ${eventType}:`, error);
+      return {
+        triggered: false,
+        reason: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Match external event payload against trigger config
+   */
+  private static matchExternalEvent(
+    eventType: EventType,
+    config: CompanyFundingEventConfig | ContactJobChangeConfig | LinkedInActivitySpikeConfig | CompanyNewsEventConfig | RelationshipOpinionAddedConfig,
+    payload: {
+      companyName?: string;
+      companyDomain?: string;
+      contactName?: string;
+      details?: Record<string, unknown>;
+    },
+    customerName?: string,
+    customerDomain?: string
+  ): { triggered: boolean; reason: string } {
+    switch (eventType) {
+      case 'company_funding_event': {
+        const fundingConfig = config as CompanyFundingEventConfig;
+        const targetCompany = fundingConfig.companyName || customerName;
+
+        // Match company
+        if (targetCompany && payload.companyName) {
+          if (!payload.companyName.toLowerCase().includes(targetCompany.toLowerCase())) {
+            return { triggered: false, reason: 'Company mismatch' };
+          }
+        } else if (customerDomain && payload.companyDomain) {
+          if (payload.companyDomain !== customerDomain) {
+            return { triggered: false, reason: 'Domain mismatch' };
+          }
+        }
+
+        // Check amount threshold
+        if (fundingConfig.minAmount && payload.details?.amount) {
+          const amount = payload.details.amount as number;
+          if (amount < fundingConfig.minAmount) {
+            return { triggered: false, reason: 'Below minimum amount' };
+          }
+        }
+
+        return {
+          triggered: true,
+          reason: `${payload.companyName} raised funding`
+        };
+      }
+
+      case 'contact_job_change': {
+        const jobConfig = config as ContactJobChangeConfig;
+
+        if (jobConfig.contactName && payload.contactName) {
+          if (!payload.contactName.toLowerCase().includes(jobConfig.contactName.toLowerCase())) {
+            return { triggered: false, reason: 'Contact mismatch' };
+          }
+        }
+
+        return {
+          triggered: true,
+          reason: `${payload.contactName} changed jobs`
+        };
+      }
+
+      case 'linkedin_activity_spike': {
+        const activityConfig = config as LinkedInActivitySpikeConfig;
+
+        if (activityConfig.contactName && payload.contactName) {
+          if (!payload.contactName.toLowerCase().includes(activityConfig.contactName.toLowerCase())) {
+            return { triggered: false, reason: 'Contact mismatch' };
+          }
+        }
+
+        const minPosts = activityConfig.minPostsPerWeek || 3;
+        const posts = (payload.details?.postsThisWeek as number) || 0;
+        if (posts < minPosts) {
+          return { triggered: false, reason: 'Below activity threshold' };
+        }
+
+        return {
+          triggered: true,
+          reason: `${payload.contactName} activity spike (${posts} posts)`
+        };
+      }
+
+      case 'company_news_event': {
+        const newsConfig = config as CompanyNewsEventConfig;
+        const targetCompany = newsConfig.companyName || customerName;
+
+        if (targetCompany && payload.companyName) {
+          if (!payload.companyName.toLowerCase().includes(targetCompany.toLowerCase())) {
+            return { triggered: false, reason: 'Company mismatch' };
+          }
+        }
+
+        return {
+          triggered: true,
+          reason: `${payload.companyName} in news`
+        };
+      }
+
+      case 'relationship_opinion_added': {
+        const opinionConfig = config as RelationshipOpinionAddedConfig;
+        const entityName = payload.contactName || payload.companyName;
+
+        if (opinionConfig.entityName && entityName) {
+          if (!entityName.toLowerCase().includes(opinionConfig.entityName.toLowerCase())) {
+            return { triggered: false, reason: 'Entity mismatch' };
+          }
+        }
+
+        return {
+          triggered: true,
+          reason: `New opinion for ${entityName}`
+        };
+      }
+
+      default:
+        return { triggered: false, reason: 'Unknown event type' };
     }
   }
 
