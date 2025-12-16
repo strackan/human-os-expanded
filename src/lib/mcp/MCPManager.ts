@@ -140,7 +140,7 @@ export class MCPManager {
 
       this.log('debug', `Executing query on ${request.server}:`, request);
 
-      const response = await client.execute(request.action, request.parameters);
+      const response = await client.execute(request.action, request.parameters || {});
 
       // Update metrics
       this.updateMetrics(request.server, true, Date.now() - startTime);

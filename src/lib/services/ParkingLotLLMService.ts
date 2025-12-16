@@ -12,8 +12,12 @@ import type {
   ExpandedAnalysis,
   Artifact,
   LLMExpansionRequest,
-  ParkingLotItem
+  ParkingLotItem,
+  HumanOSExpansionRequest,
+  HumanOSExpansionResult,
+  HumanOSEnrichment,
 } from '@/types/parking-lot';
+import { HumanOSClient } from '@/lib/mcp/clients/HumanOSClient';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -435,6 +439,389 @@ ${expansion.actionPlan.map((step, i) =>
         effortEstimate: 50
       },
       potentialWorkflows: []
+    };
+  }
+
+  // ============================================================================
+  // HUMAN-OS ENHANCED EXPANSION (0.2.0)
+  // ============================================================================
+
+  /**
+   * Expand idea with Human-OS enrichment and progress reporting
+   * Combines internal context with external intelligence for richer analysis
+   */
+  static async expandWithHumanOS(
+    request: HumanOSExpansionRequest
+  ): Promise<HumanOSExpansionResult> {
+    const { idea, context, onProgress } = request;
+
+    // Report initial progress
+    onProgress?.('enriching', 0, 'Starting Human-OS enrichment...');
+
+    let humanOSEnrichment: HumanOSEnrichment | undefined;
+
+    try {
+      const humanOS = new HumanOSClient();
+
+      // Step 1: Enrich with Human-OS if available (0-30%)
+      if (humanOS.isEnabled()) {
+        onProgress?.('enriching', 10, 'Fetching external intelligence...');
+
+        humanOSEnrichment = await this.fetchHumanOSEnrichment(
+          humanOS,
+          idea,
+          (progress) => onProgress?.('enriching', 10 + progress * 0.2, 'Enriching...')
+        );
+
+        onProgress?.('enriching', 30, 'Enrichment complete');
+      } else {
+        onProgress?.('enriching', 30, 'Human-OS not available, using internal context only');
+      }
+
+      // Step 2: Analyze with LLM (30-70%)
+      onProgress?.('analyzing', 30, 'Analyzing idea with AI...');
+
+      const enrichedPrompt = this.buildEnrichedPrompt(idea, context, humanOSEnrichment);
+
+      onProgress?.('analyzing', 50, 'Generating expansion...');
+
+      const expansion = await this.callLLMForExpansion(idea, enrichedPrompt);
+
+      onProgress?.('analyzing', 70, 'Analysis complete');
+
+      // Step 3: Generate artifact (70-100%)
+      onProgress?.('generating', 70, 'Generating shareable document...');
+
+      const artifact = this.generateEnrichedArtifact(idea, expansion, humanOSEnrichment);
+
+      onProgress?.('generating', 90, 'Finalizing...');
+      onProgress?.('complete', 100, 'Expansion complete');
+
+      return {
+        expansion,
+        artifact,
+        humanOSEnrichment,
+        enrichedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('[ParkingLotLLMService] expandWithHumanOS error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch enrichment data from Human-OS
+   */
+  private static async fetchHumanOSEnrichment(
+    humanOS: HumanOSClient,
+    idea: ParkingLotItem,
+    onProgress?: (progress: number) => void
+  ): Promise<HumanOSEnrichment> {
+    const enrichment: HumanOSEnrichment = {};
+
+    try {
+      // Enrich company if mentioned
+      const customers = idea.extracted_entities.customers || [];
+      if (customers.length > 0) {
+        onProgress?.(0.3);
+        const companyResult = await humanOS.enrichCompany({
+          company_name: customers[0],
+        });
+
+        if (companyResult.found && companyResult.company) {
+          enrichment.company = {
+            name: companyResult.company.name,
+            industry: companyResult.company.industry,
+            recentFunding: companyResult.company.recent_funding,
+          };
+        }
+      }
+
+      // Enrich contacts if mentioned
+      const contacts = idea.extracted_entities.contacts || [];
+      if (contacts.length > 0) {
+        onProgress?.(0.6);
+        const contactEnrichments = await Promise.all(
+          contacts.slice(0, 3).map(async (contactName) => {
+            const result = await humanOS.enrichContact({
+              contact_name: contactName,
+              company_name: customers[0],
+            });
+
+            if (result.found && result.contact) {
+              return {
+                name: contactName,
+                headline: result.contact.headline,
+                recentPosts: result.contact.recent_posts?.slice(0, 2).map((post) => ({
+                  content: post.content,
+                  date: post.posted_at,
+                })),
+              };
+            }
+            return null;
+          })
+        );
+
+        enrichment.contacts = contactEnrichments.filter((c): c is NonNullable<typeof c> => c !== null);
+      }
+
+      onProgress?.(1.0);
+
+      // Generate triangulation summary
+      enrichment.triangulation = this.generateTriangulation(enrichment);
+
+      return enrichment;
+    } catch (error) {
+      console.warn('[ParkingLotLLMService] Human-OS enrichment failed:', error);
+      return enrichment;
+    }
+  }
+
+  /**
+   * Generate triangulation insights from enrichment data
+   */
+  private static generateTriangulation(
+    enrichment: HumanOSEnrichment
+  ): { insights: string[]; summary: string } {
+    const insights: string[] = [];
+
+    // Check for funding signals
+    if (enrichment.company?.recentFunding) {
+      const { amount, round, date } = enrichment.company.recentFunding;
+      const formattedAmount = amount >= 1_000_000
+        ? `$${(amount / 1_000_000).toFixed(1)}M`
+        : `$${amount.toLocaleString()}`;
+      insights.push(`${enrichment.company.name} raised ${formattedAmount} (${round}) on ${date}`);
+    }
+
+    // Check for contact activity
+    for (const contact of enrichment.contacts || []) {
+      if (contact.recentPosts && contact.recentPosts.length > 0) {
+        insights.push(`${contact.name} is recently active on LinkedIn - good time for outreach`);
+      }
+    }
+
+    // Generate summary
+    let summary = '';
+    if (insights.length > 0) {
+      summary = `External intelligence: ${insights.length} signal${insights.length > 1 ? 's' : ''} detected. `;
+      if (enrichment.company?.industry) {
+        summary += `${enrichment.company.name} operates in ${enrichment.company.industry}. `;
+      }
+    }
+
+    return { insights, summary };
+  }
+
+  /**
+   * Build enriched prompt with Human-OS context
+   */
+  private static buildEnrichedPrompt(
+    idea: ParkingLotItem,
+    context?: HumanOSExpansionRequest['context'],
+    enrichment?: HumanOSEnrichment
+  ): string {
+    let prompt = `Expand this idea with deep analysis:
+
+**Idea:** ${idea.cleaned_text}
+
+**Extracted Context:**
+- Customers: ${idea.extracted_entities.customers?.join(', ') || 'none'}
+- Contacts: ${idea.extracted_entities.contacts?.join(', ') || 'none'}
+- Topics: ${idea.extracted_entities.topics?.join(', ') || 'none'}
+`;
+
+    // Add internal context
+    if (context?.customerData) {
+      prompt += `\n**Customer Data:** ${JSON.stringify(context.customerData)}`;
+    }
+    if (context?.workflowData) {
+      prompt += `\n**Related Workflows:** ${JSON.stringify(context.workflowData)}`;
+    }
+
+    // Add Human-OS enrichment
+    if (enrichment) {
+      prompt += '\n\n**External Intelligence (Human-OS):**';
+
+      if (enrichment.company) {
+        prompt += `\n- Company: ${enrichment.company.name}`;
+        if (enrichment.company.industry) {
+          prompt += ` (${enrichment.company.industry})`;
+        }
+        if (enrichment.company.recentFunding) {
+          const { amount, round, date } = enrichment.company.recentFunding;
+          prompt += `\n- Recent Funding: ${round} - $${(amount / 1_000_000).toFixed(1)}M on ${date}`;
+        }
+      }
+
+      if (enrichment.contacts && enrichment.contacts.length > 0) {
+        prompt += '\n- Key Contacts:';
+        for (const contact of enrichment.contacts) {
+          prompt += `\n  - ${contact.name}`;
+          if (contact.headline) {
+            prompt += ` (${contact.headline})`;
+          }
+        }
+      }
+
+      if (enrichment.triangulation?.insights.length) {
+        prompt += '\n- Signals: ' + enrichment.triangulation.insights.join('; ');
+      }
+    }
+
+    prompt += '\n\nReturn JSON only.';
+
+    return prompt;
+  }
+
+  /**
+   * Call LLM for expansion with enriched prompt
+   */
+  private static async callLLMForExpansion(
+    idea: ParkingLotItem,
+    userPrompt: string
+  ): Promise<ExpandedAnalysis> {
+    const systemPrompt = `You are helping users flesh out business ideas with deep analysis.
+
+Generate a comprehensive expansion that includes:
+1. Background: Current state and context (incorporate any external intelligence)
+2. Opportunities: Potential upsides and benefits
+3. Risks: Potential downsides and challenges
+4. Action Plan: Concrete, sequenced steps
+5. Objectives: Clear, measurable goals
+
+When external intelligence is provided (funding, contact info, etc.), incorporate it into your analysis.
+
+Return JSON with this structure:
+{
+  "background": "Context and current state...",
+  "opportunities": ["Opportunity 1", "Opportunity 2"],
+  "risks": ["Risk 1", "Risk 2"],
+  "actionPlan": [
+    {
+      "step": "Step description",
+      "estimatedTime": "30 min",
+      "priority": "high",
+      "order": 1
+    }
+  ],
+  "objectives": ["Objective 1", "Objective 2"],
+  "generatedAt": "${new Date().toISOString()}"
+}`;
+
+    const response = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 3072,
+      temperature: 0.5,
+      system: systemPrompt,
+      messages: [
+        { role: 'user', content: userPrompt }
+      ]
+    });
+
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('Expected text response');
+    }
+
+    return JSON.parse(content.text) as ExpandedAnalysis;
+  }
+
+  /**
+   * Generate artifact with Human-OS enrichment data
+   */
+  private static generateEnrichedArtifact(
+    idea: ParkingLotItem,
+    expansion: ExpandedAnalysis,
+    enrichment?: HumanOSEnrichment
+  ): Artifact {
+    let markdown = `# ${idea.cleaned_text}
+
+**Generated:** ${new Date().toLocaleDateString()}
+**Category:** ${idea.user_categories.join(', ') || 'Uncategorized'}
+**Readiness Score:** ${idea.readiness_score}/100
+`;
+
+    // Add Human-OS enrichment section if available
+    if (enrichment && (enrichment.company || enrichment.contacts?.length)) {
+      markdown += `\n---\n\n## External Intelligence\n\n`;
+
+      if (enrichment.company) {
+        markdown += `**Company:** ${enrichment.company.name}`;
+        if (enrichment.company.industry) {
+          markdown += ` (${enrichment.company.industry})`;
+        }
+        markdown += '\n';
+
+        if (enrichment.company.recentFunding) {
+          const { amount, round, date } = enrichment.company.recentFunding;
+          markdown += `**Recent Funding:** ${round} - $${(amount / 1_000_000).toFixed(1)}M on ${date}\n`;
+        }
+      }
+
+      if (enrichment.contacts && enrichment.contacts.length > 0) {
+        markdown += '\n**Key Contacts:**\n';
+        for (const contact of enrichment.contacts) {
+          markdown += `- ${contact.name}`;
+          if (contact.headline) {
+            markdown += ` - ${contact.headline}`;
+          }
+          markdown += '\n';
+        }
+      }
+
+      if (enrichment.triangulation?.insights.length) {
+        markdown += '\n**Signals:**\n';
+        for (const insight of enrichment.triangulation.insights) {
+          markdown += `- ${insight}\n`;
+        }
+      }
+    }
+
+    markdown += `
+---
+
+## Background
+
+${expansion.background}
+
+---
+
+## Opportunities
+
+${expansion.opportunities.map(o => `- ${o}`).join('\n')}
+
+---
+
+## Risks
+
+${expansion.risks.map(r => `- ${r}`).join('\n')}
+
+---
+
+## Objectives
+
+${expansion.objectives.map(obj => `- ${obj}`).join('\n')}
+
+---
+
+## Action Plan
+
+${expansion.actionPlan.map((step, i) =>
+  `${i + 1}. **${step.step}** (${step.estimatedTime}) - Priority: ${step.priority}`
+).join('\n')}
+
+---
+
+*Generated by Renubu Parking Lot${enrichment ? ' with Human-OS enrichment' : ''}*
+`;
+
+    return {
+      type: 'plan',
+      format: 'markdown',
+      content: markdown,
+      title: idea.cleaned_text,
+      generatedAt: new Date().toISOString()
     };
   }
 }

@@ -244,3 +244,45 @@ export function shouldSurfaceStringTie(stringTie: StringTie): boolean {
     isStringTieDue(stringTie)
   );
 }
+
+// =====================================================
+// Human-OS Enrichment Types (0.2.0)
+// =====================================================
+
+/**
+ * Contact enrichment data from Human-OS
+ */
+export interface ContactEnrichment {
+  name: string;
+  headline?: string;
+  linkedinUrl?: string;
+  recentPosts?: Array<{
+    content: string;
+    date: string;
+  }>;
+  lastEnrichedAt: string;
+}
+
+/**
+ * String-tie with Human-OS enrichment data
+ * Used when surfacing reminders to provide context
+ */
+export interface EnrichedStringTie extends StringTie {
+  enrichment?: {
+    contacts: ContactEnrichment[];
+    customerInsights?: string[];
+    suggestedApproach?: string;
+    enrichedAt: string;
+    humanOSAvailable: boolean;
+  };
+}
+
+/**
+ * Result from enriching a reminder
+ */
+export interface EnrichReminderResult {
+  stringTie: StringTie;
+  enrichment: EnrichedStringTie['enrichment'];
+  success: boolean;
+  error?: string;
+}
