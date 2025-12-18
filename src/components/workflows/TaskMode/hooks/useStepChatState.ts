@@ -124,7 +124,7 @@ export function useStepChatState({
   // Use expansion state hook
   const expansionState = useStepExpansionState({
     totalSteps: slides.length,
-    currentStepIndex,
+    currentStepIndex: currentSlideIndex,
     autoCollapseDelay,
   });
 
