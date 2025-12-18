@@ -463,6 +463,7 @@ export function useTaskModeState({
   // ============================================================
 
   const handleBranchNavigation = useCallback((branchName: string, value?: any) => {
+    // Get branch from current slide
     const branch = currentSlide?.chat?.branches?.[branchName];
     if (!branch) {
       console.warn('[ChatRenderer] Branch not found:', branchName);
@@ -514,7 +515,7 @@ export function useTaskModeState({
         }, delay * 1000);
       }
     }
-  }, [currentSlide]);
+  }, [currentSlide, config]);
 
   const executeBranchActions = useCallback((
     actions: string[],
@@ -729,15 +730,43 @@ export function useTaskModeState({
 
   const handleButtonClick = useCallback((buttonValue: string) => {
     console.log('[useTaskModeState] handleButtonClick called with value:', buttonValue);
-    if (buttonValue === 'start') {
-      goToNextSlide();
-    } else if (buttonValue === 'snooze') {
+
+    // Handle common actions first
+    if (buttonValue === 'snooze') {
       console.log('[useTaskModeState] Button value is "snooze" - calling handleSnooze');
       handleSnooze();
+      return;
     } else if (buttonValue === 'skip') {
       handleSkip();
+      return;
     }
-  }, [goToNextSlide, handleSnooze, handleSkip]);
+
+    // Check current branch's nextBranches first (for buttons within branch flows)
+    if (currentBranch && currentSlide?.chat?.branches?.[currentBranch]?.nextBranches) {
+      const branchNextBranches = currentSlide.chat.branches[currentBranch].nextBranches;
+      const nextBranch = branchNextBranches?.[buttonValue];
+      if (nextBranch) {
+        console.log('[useTaskModeState] Branch nextBranches - navigating to:', nextBranch);
+        handleBranchNavigation(nextBranch);
+        return;
+      }
+    }
+
+    // Check currentSlide initialMessage.nextBranches for branch navigation
+    if (currentSlide?.chat?.initialMessage?.nextBranches) {
+      const nextBranch = currentSlide.chat.initialMessage.nextBranches[buttonValue];
+      if (nextBranch) {
+        console.log('[useTaskModeState] Slide initialMessage - navigating to branch:', nextBranch);
+        handleBranchNavigation(nextBranch);
+        return;
+      }
+    }
+
+    // Legacy: 'start' navigates to next slide
+    if (buttonValue === 'start') {
+      goToNextSlide();
+    }
+  }, [goToNextSlide, handleSnooze, handleSkip, currentSlide, currentBranch, handleBranchNavigation]);
 
   // ============================================================
   // ARTIFACT HANDLERS
@@ -878,7 +907,7 @@ export function useTaskModeState({
         prefetchedGreetingRef.current = null;
       }
     }
-  }, [currentSlideIndex, currentSlide, prefetchedGreeting]);
+  }, [currentSlideIndex, currentSlide, prefetchedGreeting, customer, customerName, chatMessages.length]);
 
   // Auto-focus input when new messages expect text response
   useEffect(() => {

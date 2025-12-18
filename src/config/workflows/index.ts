@@ -5,6 +5,13 @@
  *
  * Central registry for all workflow configurations.
  * Maps workflow IDs to their declarative config files.
+ *
+ * ARCHITECTURE NOTE (2025-12-18):
+ * - Obsidian Black workflows use static configs (slides-based architecture)
+ * - InHerSight/GrowthStack workflows use composeFromDatabase() + SLIDE_LIBRARY
+ * - Dynamic configs are registered at runtime via registerWorkflowConfig()
+ *
+ * See: docs/workflows/WORKFLOW_SYSTEM_STANDARD.md
  */
 
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
@@ -24,9 +31,12 @@ import { obsidianBlackCallDebriefConfig } from './obsidianBlackCallDebrief.confi
  * These IDs should match:
  * - workflow_definitions.trigger_conditions.workflow_id in the database
  * - workflowId prop passed to TaskModeFullscreen
+ *
+ * NOTE: InHerSight/GrowthStack workflows are NOT in this static registry.
+ * They use composeFromDatabase() and registerWorkflowConfig() at runtime.
  */
 const WORKFLOW_REGISTRY: Record<string, WorkflowConfig> = {
-  // Demo workflows (from database seeding)
+  // Demo workflows (from database seeding) - Obsidian Black customer
   'obsblk-strategic-planning': strategicPlanningWorkflowConfig,
   'obsblk-expansion': expansionWorkflowConfig,
   'obsblk-expansion-opportunity': expansionWorkflowConfig,

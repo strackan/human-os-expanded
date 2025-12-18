@@ -29,6 +29,9 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
     version: '2',
     name: 'Renewal Presentation',
     category: 'renewal',
+    description: 'Generate and customize a comprehensive renewal presentation deck for customer meetings',
+    estimatedMinutes: 10,
+    requiredFields: ['customer.name'],
     checklistTitle: 'Generate renewal presentation deck',
 
     structure: {
@@ -89,33 +92,42 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
             buttons: [
               {
                 label: 'Continue',
-                value: 'walkthrough-highlights',
+                value: 'continue-highlights',
                 'label-background': 'bg-purple-600',
                 'label-text': 'text-white',
               },
             ],
+            nextBranches: {
+              'continue-highlights': 'walkthrough-highlights',
+            },
           },
           'walkthrough-highlights': {
             response: `Now the **Key Wins** slide - this is where we celebrate successes!\n\nI've included:\n- Recognition and awards received\n- Hiring impact metrics\n- How leadership has used InHerSight data\n- Policy improvements influenced by insights\n\nThese talking points help reinforce the partnership value.`,
             buttons: [
               {
                 label: 'Continue',
-                value: 'walkthrough-recommendations',
+                value: 'continue-recommendations',
                 'label-background': 'bg-purple-600',
                 'label-text': 'text-white',
               },
             ],
+            nextBranches: {
+              'continue-recommendations': 'walkthrough-recommendations',
+            },
           },
           'walkthrough-recommendations': {
             response: `The **Strategic Recommendations** slide presents growth opportunities:\n\n1. **Tier Upgrade** - Unlock additional features\n2. **Multi-year Commitment** - Lock in pricing\n3. **Expansion Options** - New markets or products\n\nEach recommendation includes a priority level and business justification.`,
             buttons: [
               {
                 label: 'Continue',
-                value: 'walkthrough-nextsteps',
+                value: 'continue-nextsteps',
                 'label-background': 'bg-purple-600',
                 'label-text': 'text-white',
               },
             ],
+            nextBranches: {
+              'continue-nextsteps': 'walkthrough-nextsteps',
+            },
           },
           'walkthrough-nextsteps': {
             response: `Finally, the **Next Steps** slide outlines the action plan:\n\n- Schedule renewal discussion\n- Review pricing proposal\n- Finalize contract terms\n- Set up success planning for next year\n\nEach item has an owner and timeline. Ready to finalize the deck?`,

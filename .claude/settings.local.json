@@ -79,7 +79,8 @@
       "Bash(git push:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(source:*)",
-      "Bash(STAGING_SUPABASE_SERVICE_ROLE_KEY=\"$SUPABASE_SERVICE_ROLE_KEY\" npx tsx:*)"
+      "Bash(STAGING_SUPABASE_SERVICE_ROLE_KEY=\"$SUPABASE_SERVICE_ROLE_KEY\" npx tsx:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

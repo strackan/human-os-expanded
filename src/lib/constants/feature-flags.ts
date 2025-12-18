@@ -81,6 +81,24 @@ export const FEATURE_FLAGS = {
    */
   USE_ENCAPSULATED_TASK_MODE:
     process.env.NEXT_PUBLIC_USE_ENCAPSULATED_TASK_MODE === 'true',
+
+  /**
+   * Phase 6: Use LLM-driven workflow orchestration (V2 workflows)
+   *
+   * When enabled: InHerSight90DayRenewalV2 with LLM step orchestration
+   * When disabled: Original static workflow config
+   *
+   * Benefit:
+   * - LLM decides next steps based on context (hybrid control)
+   * - Dynamic artifact generation (presentations, emails)
+   * - Human-OS enrichment integration
+   * - Key decisions require user confirmation
+   *
+   * Risk: Medium (LLM latency, cost, requires API key)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_LLM_WORKFLOW_V2:
+    process.env.NEXT_PUBLIC_USE_LLM_WORKFLOW_V2 === 'true',
 } as const;
 
 /**
