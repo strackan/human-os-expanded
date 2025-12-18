@@ -99,6 +99,25 @@ export const FEATURE_FLAGS = {
    */
   USE_LLM_WORKFLOW_V2:
     process.env.NEXT_PUBLIC_USE_LLM_WORKFLOW_V2 === 'true',
+
+  /**
+   * Phase 7: Use v0-style collapsible step chat layout
+   *
+   * When enabled: TaskModeStepChat with collapsible step containers
+   * When disabled: TaskModeEncapsulated (current 50/50 layout)
+   *
+   * Benefit:
+   * - Artifact becomes focal point (larger area)
+   * - Steps are collapsible accordions (cleaner progress)
+   * - Auto-collapse on completion creates momentum
+   * - Resizable step panel (280-450px)
+   * - "Quiet Mind" zen aesthetic
+   *
+   * Risk: Medium (layout + state structure change)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_STEP_CHAT_LAYOUT:
+    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT === 'true',
 } as const;
 
 /**

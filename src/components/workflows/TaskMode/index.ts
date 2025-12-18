@@ -42,6 +42,7 @@ interface TaskModeProps {
 const TaskModeFullscreenV1 = lazy(() => import('./TaskModeFullscreen'));
 const TaskModeFullscreenV2 = lazy(() => import('./TaskModeFullscreenV2'));
 const TaskModeEncapsulated = lazy(() => import('./TaskModeEncapsulated'));
+const TaskModeStepChat = lazy(() => import('./TaskModeStepChat'));
 
 // Loading component for Suspense fallback (using createElement for .ts file)
 function TaskModeLoading() {
@@ -66,13 +67,16 @@ function TaskModeLoading() {
 /**
  * Runtime router component - evaluates feature flags at render time
  *
- * Priority: Encapsulated > V2 > V1
+ * Priority: StepChat > Encapsulated > V2 > V1
  */
 function TaskModeRouter(props: TaskModeProps) {
   // Select component based on feature flags (evaluated at RUNTIME)
   let Component: ComponentType<TaskModeProps>;
 
-  if (FEATURE_FLAGS.USE_ENCAPSULATED_TASK_MODE) {
+  if (FEATURE_FLAGS.USE_STEP_CHAT_LAYOUT) {
+    // Phase 7: v0-style collapsible step chat layout
+    Component = TaskModeStepChat;
+  } else if (FEATURE_FLAGS.USE_ENCAPSULATED_TASK_MODE) {
     Component = TaskModeEncapsulated;
   } else if (FEATURE_FLAGS.USE_MODULAR_TASK_MODE) {
     Component = TaskModeFullscreenV2;
@@ -90,7 +94,7 @@ function TaskModeRouter(props: TaskModeProps) {
 export default TaskModeRouter;
 
 // Named exports for direct access (if needed for testing or specific use cases)
-export { TaskModeFullscreenV1, TaskModeFullscreenV2, TaskModeEncapsulated };
+export { TaskModeFullscreenV1, TaskModeFullscreenV2, TaskModeEncapsulated, TaskModeStepChat };
 
 // Always export context and hooks
 export { default as TaskModeContext, useTaskModeContext } from './TaskModeContext';
