@@ -123,9 +123,16 @@ export default function DemoWorkflowsPage() {
         return;
       }
 
+      // Force V1 (standard) mode for comparison demo
+      // In production, this would be controlled by use_llm_mode column in database
+      const v1Config = {
+        ...workflowConfig,
+        _llmMode: false, // Force standard slide progression
+      } as WorkflowConfig;
+
       // Register config so TaskMode can retrieve it
       const registryId = 'demo-v1-growthstack';
-      registerWorkflowConfig(registryId, workflowConfig as WorkflowConfig);
+      registerWorkflowConfig(registryId, v1Config);
 
       setActiveWorkflow({
         workflowId: registryId,
@@ -157,10 +164,12 @@ export default function DemoWorkflowsPage() {
         return;
       }
 
-      // Mark this config as LLM-enabled (for future LLM orchestration)
+      // V2 uses LLM mode - this comes from database (use_llm_mode column)
+      // For demo, we ensure it's true to demonstrate LLM orchestration
+      // In production, this is controlled per-workflow via the database
       const llmConfig = {
         ...workflowConfig,
-        _llmMode: true, // Flag for LLM orchestration
+        _llmMode: true, // LLM orchestration enabled
       } as WorkflowConfig;
 
       // Register config so TaskMode can retrieve it

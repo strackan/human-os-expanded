@@ -16,14 +16,13 @@
 import { createClient as createBrowserClient } from '@/lib/supabase/client';
 import { createSchemaAwareClient } from '@/lib/supabase/schema';
 import { SLIDE_LIBRARY } from './slides';
-import { composeWorkflow, buildWorkflowConfig, CompositionError } from './composer';
+import { buildWorkflowConfig, CompositionError } from './composer';
 import type { WorkflowComposition } from './slides/baseSlide';
 import type { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   hydrateWorkflowConfig,
   createHydrationContext,
-  type HydrationContext,
 } from './hydration/TemplateHydrator';
 import { getPricingSlideContext } from './utils/strategyRecommender';
 
@@ -178,12 +177,17 @@ export async function composeFromDatabase(
   const hydrationContext = createHydrationContext(customerContext);
   const hydratedConfig = hydrateWorkflowConfig(config, hydrationContext);
 
-  // 5. Add workflow metadata
+  // 5. Add workflow metadata and LLM mode flag
+  // use_llm_mode column controls V1 (standard) vs V2 (LLM orchestration)
+  // Default to true (LLM mode) if column doesn't exist yet
+  const useLLMMode = workflowDef.use_llm_mode ?? true;
+
   return {
     ...hydratedConfig,
     workflowId: workflowDef.workflow_id,
     workflowName: workflowDef.name,
     workflowType: workflowDef.workflow_type,
+    _llmMode: useLLMMode,
   };
 }
 
