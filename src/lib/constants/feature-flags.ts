@@ -114,10 +114,14 @@ export const FEATURE_FLAGS = {
    * - "Quiet Mind" zen aesthetic
    *
    * Risk: Medium (layout + state structure change)
-   * Rollback: Toggle to false in .env.local
+   * Rollback: Set NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT=false in .env.local
+   *
+   * Default: Enabled in development only
    */
   USE_STEP_CHAT_LAYOUT:
-    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT === 'true',
+    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT === 'true' ||
+    (process.env.NODE_ENV === 'development' &&
+      process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT !== 'false'),
 } as const;
 
 /**
