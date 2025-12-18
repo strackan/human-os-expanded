@@ -13,6 +13,7 @@ export enum MCPServer {
   POSTGRESQL = 'postgresql',
   MEMORY = 'memory',
   SEQUENTIAL_THINKING = 'sequential_thinking',
+  HUMAN_OS = 'human_os',
   EMAIL = 'email',
   SLACK = 'slack',
   CALENDAR = 'calendar',

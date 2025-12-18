@@ -9,8 +9,9 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { StringTieParser } from './StringTieParser';
-import { StringTie, StringTieFilters } from '@/types/string-ties';
+import { StringTie, StringTieFilters, EnrichedStringTie, EnrichReminderResult, ContactEnrichment } from '@/types/string-ties';
 import { DB_TABLES } from '@/lib/constants/database';
+import { HumanOSClient } from '@/lib/mcp/clients/HumanOSClient';
 
 // =====================================================
 // Types
@@ -561,6 +562,168 @@ export class StringTieService {
       return data as StringTie;
     } catch (error) {
       console.error('[StringTieService] Error creating string tie from parsed:', error);
+      throw error;
+    }
+  }
+
+  // =====================================================
+  // Human-OS Enrichment (0.2.0)
+  // =====================================================
+
+  /**
+   * Enrich a reminder with Human-OS contact data
+   * Called when surfacing a reminder to provide additional context
+   *
+   * @param stringTie - String tie to enrich
+   * @param contactNames - Names of contacts mentioned in the reminder
+   * @param companyName - Optional company name for context
+   * @returns Enriched string tie with contact data
+   */
+  async enrichReminder(
+    stringTie: StringTie,
+    contactNames: string[],
+    companyName?: string
+  ): Promise<EnrichReminderResult> {
+    const startTime = Date.now();
+
+    try {
+      console.log(`[StringTieService] Enriching reminder ${stringTie.id} with ${contactNames.length} contacts`);
+
+      const humanOS = new HumanOSClient();
+
+      // Check if Human-OS is available
+      if (!humanOS.isEnabled()) {
+        console.log('[StringTieService] Human-OS not available, returning unenriched');
+        return {
+          stringTie,
+          enrichment: {
+            contacts: [],
+            enrichedAt: new Date().toISOString(),
+            humanOSAvailable: false,
+          },
+          success: true,
+        };
+      }
+
+      // Enrich each contact
+      const contactEnrichments: ContactEnrichment[] = [];
+
+      for (const contactName of contactNames.slice(0, 3)) { // Limit to 3 contacts for performance
+        try {
+          const enrichment = await humanOS.enrichContact({
+            contact_name: contactName,
+            company_name: companyName,
+          });
+
+          if (enrichment.found && enrichment.contact) {
+            contactEnrichments.push({
+              name: contactName,
+              headline: enrichment.contact.headline,
+              linkedinUrl: enrichment.contact.linkedin_url,
+              recentPosts: enrichment.contact.recent_posts?.slice(0, 2).map((post) => ({
+                content: post.content.slice(0, 200),
+                date: post.posted_at,
+              })),
+              lastEnrichedAt: new Date().toISOString(),
+            });
+          }
+        } catch (contactError) {
+          console.warn(`[StringTieService] Failed to enrich contact ${contactName}:`, contactError);
+          // Continue with other contacts
+        }
+      }
+
+      // Generate suggested approach based on enrichment
+      const suggestedApproach = this.generateSuggestedApproach(contactEnrichments);
+
+      const enrichment: EnrichedStringTie['enrichment'] = {
+        contacts: contactEnrichments,
+        suggestedApproach,
+        enrichedAt: new Date().toISOString(),
+        humanOSAvailable: true,
+      };
+
+      const duration = Date.now() - startTime;
+      console.log(`[StringTieService] Enriched reminder in ${duration}ms with ${contactEnrichments.length} contacts`);
+
+      return {
+        stringTie,
+        enrichment,
+        success: true,
+      };
+    } catch (error) {
+      console.error('[StringTieService] Error enriching reminder:', error);
+      return {
+        stringTie,
+        enrichment: {
+          contacts: [],
+          enrichedAt: new Date().toISOString(),
+          humanOSAvailable: false,
+        },
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Generate a suggested approach based on contact enrichment
+   */
+  private generateSuggestedApproach(
+    contacts: ContactEnrichment[]
+  ): string | undefined {
+    if (contacts.length === 0) {
+      return undefined;
+    }
+
+    const suggestions: string[] = [];
+
+    for (const contact of contacts) {
+      // Check for recent LinkedIn activity
+      if (contact.recentPosts && contact.recentPosts.length > 0) {
+        suggestions.push(`${contact.name} recently posted on LinkedIn - good time for outreach`);
+      }
+
+      // Check for job title/headline
+      if (contact.headline) {
+        const lowerHeadline = contact.headline.toLowerCase();
+        if (lowerHeadline.includes('vp') || lowerHeadline.includes('director') || lowerHeadline.includes('head of')) {
+          suggestions.push(`${contact.name} is a senior stakeholder (${contact.headline})`);
+        }
+      }
+    }
+
+    if (suggestions.length === 0) {
+      return undefined;
+    }
+
+    return suggestions.join('. ') + '.';
+  }
+
+  /**
+   * Get enriched string ties for a user
+   * Combines string ties with Human-OS enrichment
+   *
+   * @param userId - User ID
+   * @param filters - Optional filters
+   * @returns Array of enriched string ties
+   */
+  async listEnriched(
+    userId: string,
+    filters?: StringTieFilters
+  ): Promise<EnrichedStringTie[]> {
+    try {
+      // Get base string ties
+      const stringTies = await this.list(userId, filters);
+
+      // For now, return without enrichment (enrichment is done on-demand when surfacing)
+      // Full enrichment would be too expensive for list operations
+      return stringTies.map((st) => ({
+        ...st,
+        enrichment: undefined,
+      }));
+    } catch (error) {
+      console.error('[StringTieService] Error listing enriched string ties:', error);
       throw error;
     }
   }

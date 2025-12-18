@@ -9,6 +9,7 @@ import { SupabaseMCPClient } from './clients/SupabaseMCPClient';
 import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
 import { MemoryMCPClient } from './clients/MemoryMCPClient';
 import { SequentialThinkingMCPClient } from './clients/SequentialThinkingMCPClient';
+import { HumanOSClient } from './clients/HumanOSClient';
 import { MCPServerStatus } from './types/mcp.types';
 import type {
   MCPServer,
@@ -31,6 +32,7 @@ export class MCPManager {
   private postgresqlClient?: PostgreSQLMCPClient;
   private memoryClient?: MemoryMCPClient;
   private sequentialThinkingClient?: SequentialThinkingMCPClient;
+  private humanOSClient?: HumanOSClient;
 
   private config: MCPManagerConfig;
   private healthCheckInterval?: NodeJS.Timeout;
@@ -107,6 +109,10 @@ export class MCPManager {
         this.sequentialThinkingClient = new SequentialThinkingMCPClient();
         break;
 
+      case 'human_os':
+        this.humanOSClient = new HumanOSClient();
+        break;
+
       default:
         throw new Error(`Unknown MCP server: ${config.server}`);
     }
@@ -134,7 +140,7 @@ export class MCPManager {
 
       this.log('debug', `Executing query on ${request.server}:`, request);
 
-      const response = await client.execute(request.action, request.parameters);
+      const response = await client.execute(request.action, request.parameters || {});
 
       // Update metrics
       this.updateMetrics(request.server, true, Date.now() - startTime);
@@ -225,6 +231,9 @@ export class MCPManager {
     if (this.sequentialThinkingClient) {
       tools.push(...this.sequentialThinkingClient.getToolDefinitions());
     }
+    if (this.humanOSClient) {
+      tools.push(...this.humanOSClient.getToolDefinitions());
+    }
 
     return tools as MCPTool[];
   }
@@ -314,7 +323,7 @@ export class MCPManager {
    */
   private getClient(
     server: MCPServer
-  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | undefined {
+  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient | undefined {
     switch (server) {
       case 'supabase':
         return this.supabaseClient;
@@ -324,19 +333,28 @@ export class MCPManager {
         return this.memoryClient;
       case 'sequential_thinking':
         return this.sequentialThinkingClient;
+      case 'human_os':
+        return this.humanOSClient;
       default:
         return undefined;
     }
   }
 
   /**
+   * Get Human-OS client directly (typed accessor)
+   */
+  getHumanOSClient(): HumanOSClient | undefined {
+    return this.humanOSClient;
+  }
+
+  /**
    * Get all active clients
    */
   private getActiveClients(): Array<
-    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient]
+    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient]
   > {
     const clients: Array<
-      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient]
+      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient]
     > = [];
 
     if (this.supabaseClient) {
@@ -350,6 +368,9 @@ export class MCPManager {
     }
     if (this.sequentialThinkingClient) {
       clients.push(['sequential_thinking' as MCPServer, this.sequentialThinkingClient]);
+    }
+    if (this.humanOSClient) {
+      clients.push(['human_os' as MCPServer, this.humanOSClient]);
     }
 
     return clients;

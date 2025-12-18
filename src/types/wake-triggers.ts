@@ -54,7 +54,13 @@ export type EventType =
   | 'workflow_action_completed'   // When a specific workflow action is completed
   | 'customer_login'              // When customer logs into the platform
   | 'usage_threshold_crossed'     // When usage metrics cross a threshold
-  | 'manual_event';               // Manual trigger by user/system
+  | 'manual_event'                // Manual trigger by user/system
+  // Human-OS External Wake Triggers (0.2.0)
+  | 'company_funding_event'       // When company raises funding (from Human-OS)
+  | 'contact_job_change'          // When contact changes jobs (from Human-OS)
+  | 'linkedin_activity_spike'     // When contact has unusual LinkedIn activity (from Human-OS)
+  | 'company_news_event'          // When company appears in news (from Human-OS)
+  | 'relationship_opinion_added'; // When new opinion/insight is added (from Human-OS)
 
 // =====================================================
 // Trigger Evaluation Types
@@ -138,6 +144,89 @@ export interface UsageThresholdConfig {
 export interface ManualEventConfig {
   eventKey: string;           // Unique key to identify this manual trigger
   description?: string;       // Human-readable description
+}
+
+// =====================================================
+// Human-OS External Event Configuration Types (0.2.0)
+// =====================================================
+
+/**
+ * Configuration for company_funding_event trigger
+ * Fires when a company raises funding
+ */
+export interface CompanyFundingEventConfig {
+  companyName?: string;       // Company to watch (optional, uses workflow customer if not set)
+  minAmount?: number;         // Minimum funding amount to trigger (in USD)
+  fundingRounds?: string[];   // Specific rounds to watch (e.g., ['Series A', 'Series B'])
+}
+
+/**
+ * Configuration for contact_job_change trigger
+ * Fires when a contact changes jobs
+ */
+export interface ContactJobChangeConfig {
+  contactName?: string;       // Contact to watch (optional)
+  contactEmail?: string;      // Contact email to match
+  watchedTitles?: string[];   // Specific titles to watch for (e.g., ['VP', 'Director'])
+}
+
+/**
+ * Configuration for linkedin_activity_spike trigger
+ * Fires when contact has unusual LinkedIn activity
+ */
+export interface LinkedInActivitySpikeConfig {
+  contactName?: string;       // Contact to watch
+  minPostsPerWeek?: number;   // Threshold for "spike" (default: 3)
+}
+
+/**
+ * Configuration for company_news_event trigger
+ * Fires when company appears in news
+ */
+export interface CompanyNewsEventConfig {
+  companyName?: string;       // Company to watch
+  keywords?: string[];        // Keywords to filter news (e.g., ['acquisition', 'layoff'])
+  sentiment?: 'positive' | 'negative' | 'any';  // News sentiment filter
+}
+
+/**
+ * Configuration for relationship_opinion_added trigger
+ * Fires when new opinion/insight is added in Human-OS
+ */
+export interface RelationshipOpinionAddedConfig {
+  entityType?: 'contact' | 'company' | 'any';  // What entity type to watch
+  entityName?: string;        // Specific entity to watch
+  opinionTypes?: string[];    // Types of opinions to watch (e.g., ['relationship_strength', 'risk'])
+}
+
+/**
+ * External wake trigger event payload from Human-OS webhook
+ */
+export interface ExternalWakeEvent {
+  eventId: string;            // Unique event ID from Human-OS
+  eventType: EventType;       // Type of external event
+  timestamp: string;          // When event occurred (ISO 8601)
+  source: 'human_os';         // Source system
+  payload: {
+    companyName?: string;
+    companyDomain?: string;
+    contactName?: string;
+    contactEmail?: string;
+    details: Record<string, unknown>;
+  };
+}
+
+/**
+ * Stored external event for trigger matching
+ */
+export interface ExternalEventRecord {
+  id: string;
+  event_type: EventType;
+  event_payload: ExternalWakeEvent['payload'];
+  received_at: string;
+  processed: boolean;
+  matched_workflow_ids: string[];
+  created_at: string;
 }
 
 // =====================================================

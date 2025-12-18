@@ -421,3 +421,70 @@ export const STATUS_LABELS: Record<ParkingLotStatus, string> = {
   converted: 'Converted',
   archived: 'Archived'
 };
+
+// ============================================================================
+// HUMAN-OS ENRICHMENT TYPES (0.2.0)
+// ============================================================================
+
+/**
+ * External enrichment data from Human-OS
+ */
+export interface HumanOSEnrichment {
+  company?: {
+    name: string;
+    industry?: string;
+    recentFunding?: {
+      amount: number;
+      round: string;
+      date: string;
+    };
+    news?: Array<{
+      headline: string;
+      date: string;
+    }>;
+  };
+  contacts?: Array<{
+    name: string;
+    headline?: string;
+    recentPosts?: Array<{
+      content: string;
+      date: string;
+    }>;
+  }>;
+  triangulation?: {
+    insights: string[];
+    summary: string;
+  };
+}
+
+/**
+ * Progress callback for long-running operations
+ */
+export type ExpansionProgressCallback = (
+  stage: 'enriching' | 'analyzing' | 'generating' | 'complete',
+  progress: number, // 0-100
+  message?: string
+) => void;
+
+/**
+ * Request for Human-OS enhanced expansion
+ */
+export interface HumanOSExpansionRequest {
+  idea: ParkingLotItem;
+  context?: {
+    customerData?: Record<string, unknown>;
+    workflowData?: Record<string, unknown>;
+    recentInteractions?: Record<string, unknown>;
+  };
+  onProgress?: ExpansionProgressCallback;
+}
+
+/**
+ * Result from Human-OS enhanced expansion
+ */
+export interface HumanOSExpansionResult {
+  expansion: ExpandedAnalysis;
+  artifact: Artifact;
+  humanOSEnrichment?: HumanOSEnrichment;
+  enrichedAt?: string;
+}

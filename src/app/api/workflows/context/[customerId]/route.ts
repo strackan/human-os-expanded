@@ -11,6 +11,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase-server';
 import { getINTELContext, buildINTELSummary, buildGreetingContext } from '@/lib/skills/INTELService';
+import { getWorkflowEnrichmentService } from '@/lib/services/WorkflowEnrichmentService';
+import type { WorkflowEnrichment } from '@/lib/services/WorkflowEnrichmentService';
 
 // =====================================================
 // Types
@@ -361,12 +363,75 @@ export async function GET(
       console.warn('Could not load INTEL context:', intelError);
     }
 
+    // =====================================================
+    // 8. Fetch Human-OS Enrichment (External Intelligence)
+    // =====================================================
+
+    let humanOSEnrichment: WorkflowEnrichment | null = null;
+
+    try {
+      const enrichmentService = getWorkflowEnrichmentService();
+
+      if (enrichmentService.isAvailable()) {
+        // Build contact list from various sources
+        const contactsForEnrichment = [];
+
+        // Add primary contact from INTEL if available
+        if (intel?.contacts?.length) {
+          for (const intelContact of intel.contacts.slice(0, 3)) {
+            contactsForEnrichment.push({
+              name: intelContact.name,
+              company_name: customer.name,
+            });
+          }
+        }
+
+        // Add CSM's primary contact if known
+        // (This would come from stakeholders in a full implementation)
+
+        // Get enrichment
+        // Build internal context from INTEL (adapted to WorkflowEnrichmentService types)
+        const internalContext = intel ? {
+          intel: {
+            customer: intel.customer ? {
+              summary: intel.customer.content, // INTEL stores full content
+              key_points: intel.customer.frontmatter?.key_points || [],
+            } : undefined,
+            contacts: intel.contacts?.map((c: { name: string; content?: string }) => ({
+              name: c.name,
+              summary: c.content,
+            })),
+          },
+        } : undefined;
+
+        humanOSEnrichment = await enrichmentService.enrichWorkflowContext(
+          {
+            name: customer.name,
+            domain: customer.domain || undefined,
+          },
+          contactsForEnrichment,
+          internalContext
+        );
+
+        if (humanOSEnrichment.triangulation.insights.length > 0) {
+          console.log(
+            `[WorkflowContext] Human-OS enrichment complete: ${humanOSEnrichment.triangulation.insights.length} insights`
+          );
+        }
+      }
+    } catch (humanOSError) {
+      // Human-OS is optional - log but don't fail
+      console.warn('Could not load Human-OS enrichment:', humanOSError);
+    }
+
     return NextResponse.json({
       success: true,
       context,
       intel,
       intelSummary,
       greetingContext,
+      // Human-OS enrichment (0.2.0)
+      humanOS: humanOSEnrichment,
     });
 
   } catch (error) {
