@@ -39,9 +39,31 @@ import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 
 import { createToolContext, type ToolHandler } from './lib/context.js';
 
-// Declare global for embedded instructions (set by bundle script for standalone exe)
+// Declare globals for embedded data (set by bundle script for standalone exe)
 declare global {
   var __EMBEDDED_INSTRUCTIONS__: string | undefined;
+  var __BUILD_INFO__: {
+    version: string;
+    gitHash: string;
+    gitBranch: string;
+    buildTime: string;
+  } | undefined;
+}
+
+// Handle --version flag
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  const info = globalThis.__BUILD_INFO__;
+  if (info) {
+    console.log(`founder-os-mcp v${info.version} (${info.gitHash})`);
+    console.log(`Branch: ${info.gitBranch}`);
+    console.log(`Built: ${info.buildTime}`);
+  } else {
+    // Development mode - read from package.json
+    import('./package.json', { assert: { type: 'json' } })
+      .then((pkg) => console.log(`founder-os-mcp v${pkg.default.version} (development)`))
+      .catch(() => console.log('founder-os-mcp (development)'));
+  }
+  process.exit(0);
 }
 
 // =============================================================================
@@ -136,9 +158,13 @@ async function main() {
     // Standalone exe - instructions are embedded
   }
 
+  // Get version info
+  const buildInfo = globalThis.__BUILD_INFO__;
+  const version = buildInfo?.version || '0.2.0';
+
   // Create server
   const server = new Server(
-    { name: 'founder-os-gft', version: '0.1.0' },
+    { name: 'founder-os-mcp', version },
     {
       capabilities: {
         tools: {},
@@ -335,7 +361,8 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error('Founder OS MCP Server running on stdio');
+  const versionStr = buildInfo ? `v${buildInfo.version} (${buildInfo.gitHash})` : `v${version}`;
+  console.error(`Founder OS MCP Server ${versionStr} running on stdio`);
 }
 
 main().catch((error) => {

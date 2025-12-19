@@ -1,6 +1,6 @@
 {
   "name": "@human-os/founder-os-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Founder OS MCP Server - GFT integration and enhanced tools",
   "type": "module",
   "main": "./dist/index.js",
@@ -25,7 +25,7 @@
     "typecheck": "tsc --noEmit",
     "bundle": "node scripts/bundle.mjs",
     "build:exe": "pnpm bundle && pnpm pkg:win",
-    "pkg:win": "pkg standalone/index.cjs --target node20-win-x64 --output standalone/founder-os-mcp.exe --config pkg.json"
+    "pkg:win": "node scripts/pkg.mjs"
   },
   "pkg": {
     "assets": [
