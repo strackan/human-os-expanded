@@ -12,6 +12,15 @@
  */
 
 import type { Layer, PrivacyScope, Viewer, ParsedContextFile } from './types.js';
+import {
+  PATH_PREFIXES,
+  PATH_PATTERNS,
+  LAYER_PREFIXES,
+  buildFounderLayer,
+  buildRenubuTenantLayer,
+  extractUserIdFromLayer,
+  extractTenantIdFromLayer,
+} from './config.js';
 
 export class PrivacyModel {
   private userId?: string;
@@ -28,11 +37,11 @@ export class PrivacyModel {
    * Extract privacy scope from file path
    */
   getScopeFromPath(filePath: string): PrivacyScope {
-    if (filePath.startsWith('public/')) return 'public';
-    if (filePath.startsWith('powerpak-published/')) return 'powerpak_published';
-    if (filePath.match(/^renubu\/tenant-[^/]+\//)) return 'tenant';
-    if (filePath.startsWith('founder-os/')) return 'user';
-    if (filePath.startsWith('voice-os/')) return 'user';
+    if (filePath.startsWith(PATH_PREFIXES.PUBLIC)) return 'public';
+    if (filePath.startsWith(PATH_PREFIXES.POWERPAK_PUBLISHED)) return 'powerpak_published';
+    if (PATH_PATTERNS.RENUBU_TENANT.test(filePath)) return 'tenant';
+    if (filePath.startsWith(PATH_PREFIXES.FOUNDER_OS)) return 'user';
+    if (filePath.startsWith(PATH_PREFIXES.VOICE_OS)) return 'user';
     return 'private';
   }
 
@@ -40,38 +49,38 @@ export class PrivacyModel {
    * Convert file path to Layer type
    */
   getLayerFromPath(filePath: string): Layer {
-    if (filePath.startsWith('public/')) return 'public';
-    if (filePath.startsWith('powerpak-published/')) return 'powerpak-published';
+    if (filePath.startsWith(PATH_PREFIXES.PUBLIC)) return LAYER_PREFIXES.PUBLIC as Layer;
+    if (filePath.startsWith(PATH_PREFIXES.POWERPAK_PUBLISHED)) return LAYER_PREFIXES.POWERPAK_PUBLISHED as Layer;
 
-    const tenantMatch = filePath.match(/^renubu\/tenant-([^/]+)\//);
-    if (tenantMatch) {
-      return `renubu:tenant-${tenantMatch[1]}`;
+    const tenantMatch = filePath.match(PATH_PATTERNS.RENUBU_TENANT);
+    if (tenantMatch?.[1]) {
+      return buildRenubuTenantLayer(tenantMatch[1]);
     }
 
-    const founderMatch = filePath.match(/^founder-os\/([^/]+)\//);
-    if (founderMatch) {
-      return `founder:${founderMatch[1]}`;
+    const founderMatch = filePath.match(PATH_PATTERNS.FOUNDER_OS);
+    if (founderMatch?.[1]) {
+      return buildFounderLayer(founderMatch[1]);
     }
 
     // Default to private user layer
-    return this.userId ? `founder:${this.userId}` : 'public';
+    return this.userId ? buildFounderLayer(this.userId) : (LAYER_PREFIXES.PUBLIC as Layer);
   }
 
   /**
    * Convert Layer to storage bucket path
    */
   getBucketPath(layer: Layer): string {
-    if (layer === 'public') return 'public';
-    if (layer === 'powerpak-published') return 'powerpak-published';
+    if (layer === LAYER_PREFIXES.PUBLIC) return PATH_PREFIXES.PUBLIC.slice(0, -1); // Remove trailing slash
+    if (layer === LAYER_PREFIXES.POWERPAK_PUBLISHED) return PATH_PREFIXES.POWERPAK_PUBLISHED.slice(0, -1);
 
-    if (layer.startsWith('renubu:tenant-')) {
-      const tenantId = layer.replace('renubu:tenant-', '');
-      return `renubu/tenant-${tenantId}`;
+    const tenantId = extractTenantIdFromLayer(layer);
+    if (tenantId) {
+      return `${PATH_PREFIXES.RENUBU}tenant-${tenantId}`;
     }
 
-    if (layer.startsWith('founder:')) {
-      const userId = layer.replace('founder:', '');
-      return `founder-os/${userId}`;
+    const userId = extractUserIdFromLayer(layer);
+    if (userId) {
+      return `${PATH_PREFIXES.FOUNDER_OS.slice(0, -1)}/${userId}`;
     }
 
     throw new Error(`Unknown layer: ${layer}`);
@@ -82,20 +91,20 @@ export class PrivacyModel {
    */
   getOwnerFromPath(filePath: string): { userId?: string; tenantId?: string } {
     // founder-os/{user_id}/...
-    const founderMatch = filePath.match(/^founder-os\/([^/]+)\//);
-    if (founderMatch) {
+    const founderMatch = filePath.match(PATH_PATTERNS.FOUNDER_OS);
+    if (founderMatch?.[1]) {
       return { userId: founderMatch[1] };
     }
 
     // voice-os/{user_id}/...
-    const voiceMatch = filePath.match(/^voice-os\/([^/]+)\//);
-    if (voiceMatch) {
+    const voiceMatch = filePath.match(PATH_PATTERNS.VOICE_OS);
+    if (voiceMatch?.[1]) {
       return { userId: voiceMatch[1] };
     }
 
     // renubu/tenant-{tenant_id}/...
-    const tenantMatch = filePath.match(/^renubu\/tenant-([^/]+)\//);
-    if (tenantMatch) {
+    const tenantMatch = filePath.match(PATH_PATTERNS.RENUBU_TENANT);
+    if (tenantMatch?.[1]) {
       return { tenantId: tenantMatch[1] };
     }
 
@@ -171,21 +180,21 @@ export class PrivacyModel {
    * Get all layers the current viewer can access
    */
   getAccessibleLayers(): Layer[] {
-    const layers: Layer[] = ['public']; // Everyone gets public
+    const layers: Layer[] = [LAYER_PREFIXES.PUBLIC as Layer]; // Everyone gets public
 
     // PowerPak subscriptions
     if (this.subscriptions.length > 0) {
-      layers.push('powerpak-published');
+      layers.push(LAYER_PREFIXES.POWERPAK_PUBLISHED as Layer);
     }
 
     // Tenant layer
     if (this.tenantId) {
-      layers.push(`renubu:tenant-${this.tenantId}`);
+      layers.push(buildRenubuTenantLayer(this.tenantId));
     }
 
     // Personal layer
     if (this.userId) {
-      layers.push(`founder:${this.userId}`);
+      layers.push(buildFounderLayer(this.userId));
     }
 
     return layers;

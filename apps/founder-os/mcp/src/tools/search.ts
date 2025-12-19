@@ -5,6 +5,141 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { ToolContext } from '../lib/context.js';
+
+// =============================================================================
+// TOOL DEFINITIONS
+// =============================================================================
+
+export const searchTools: Tool[] = [
+  {
+    name: 'pack_search',
+    description: 'Multi-dimensional identity discovery. Search across entities, identity packs, and context files. Use for finding people by skills, interests, location, or keywords.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        keyword: { type: 'string', description: 'Search keyword (matches name, headline, tags, content)' },
+        entity_type: {
+          type: 'string',
+          description: 'Filter by entity type',
+          enum: ['person', 'company', 'project'],
+        },
+        pack_type: {
+          type: 'string',
+          description: 'Filter by identity pack type',
+          enum: ['professional', 'interests', 'social', 'dating', 'expertise', 'founder'],
+        },
+        tags: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Filter by tags (any match)',
+        },
+        location: { type: 'string', description: 'Filter by location (fuzzy match)' },
+        limit: { type: 'number', description: 'Max results to return', default: 20 },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'find_connection_points',
+    description: 'Serendipity engine: Discover shared interests, mutual connections, and conversation openers between two people. Use before meeting someone or preparing for outreach.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        viewer_slug: { type: 'string', description: 'Slug of the person looking (usually the user)' },
+        target_slug: { type: 'string', description: 'Slug of the person they want to connect with' },
+      },
+      required: ['viewer_slug', 'target_slug'],
+    },
+  },
+  {
+    name: 'quick_search',
+    description: 'Simple entity lookup by name or keyword. Faster than pack_search for basic queries.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Search query (name or keyword)' },
+        type: {
+          type: 'string',
+          description: 'Entity type filter',
+          enum: ['person', 'company', 'project'],
+        },
+        limit: { type: 'number', description: 'Max results', default: 10 },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'find_similar_people',
+    description: 'Find people with similar interests and background to a given person. Useful for networking recommendations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        person_slug: { type: 'string', description: 'Slug of the person to find similar people to' },
+        limit: { type: 'number', description: 'Max results', default: 10 },
+      },
+      required: ['person_slug'],
+    },
+  },
+];
+
+// =============================================================================
+// TOOL HANDLER
+// =============================================================================
+
+/**
+ * Handle search tool calls
+ * Returns result if handled, null if not a search tool
+ */
+export async function handleSearchTools(
+  name: string,
+  args: Record<string, unknown>,
+  ctx: ToolContext
+): Promise<unknown | null> {
+  switch (name) {
+    case 'pack_search': {
+      const params = args as {
+        keyword?: string;
+        entity_type?: string;
+        pack_type?: string;
+        tags?: string[];
+        location?: string;
+        limit?: number;
+      };
+      return packSearch(ctx.supabaseUrl, ctx.supabaseKey, {
+        ...params,
+        layer: ctx.layer,
+      });
+    }
+
+    case 'find_connection_points': {
+      const { viewer_slug, target_slug } = args as { viewer_slug: string; target_slug: string };
+      return findConnectionPoints(ctx.supabaseUrl, ctx.supabaseKey, viewer_slug, target_slug);
+    }
+
+    case 'quick_search': {
+      const { query, type, limit } = args as {
+        query: string;
+        type?: 'person' | 'company' | 'project';
+        limit?: number;
+      };
+      return quickSearch(ctx.supabaseUrl, ctx.supabaseKey, query, { type, limit });
+    }
+
+    case 'find_similar_people': {
+      const { person_slug, limit } = args as { person_slug: string; limit?: number };
+      return findSimilarPeople(ctx.supabaseUrl, ctx.supabaseKey, person_slug, limit);
+    }
+
+    default:
+      return null;
+  }
+}
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 export interface PackSearchParams {
   keyword?: string;
@@ -51,12 +186,14 @@ export interface FindConnectionPointsResult {
   suggested_openers: Opener[];
 }
 
+// =============================================================================
+// TOOL IMPLEMENTATIONS
+// =============================================================================
+
 /**
  * Pack Search - Multi-dimensional identity discovery
- *
- * Search across entities, identity_packs, and context_files
  */
-export async function packSearch(
+async function packSearch(
   supabaseUrl: string,
   supabaseKey: string,
   params: PackSearchParams
@@ -85,11 +222,8 @@ export async function packSearch(
 
 /**
  * Find Connection Points - Serendipity Engine
- *
- * Discover shared interests, mutual connections, and similar facets
- * between two people.
  */
-export async function findConnectionPoints(
+async function findConnectionPoints(
   supabaseUrl: string,
   supabaseKey: string,
   viewerSlug: string,
@@ -97,28 +231,20 @@ export async function findConnectionPoints(
 ): Promise<FindConnectionPointsResult> {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Get connection points
-  const { data: connectionPoints, error: cpError } = await supabase.rpc(
-    'find_connection_points',
-    {
-      p_viewer_slug: viewerSlug,
-      p_target_slug: targetSlug,
-    }
-  );
+  const { data: connectionPoints, error: cpError } = await supabase.rpc('find_connection_points', {
+    p_viewer_slug: viewerSlug,
+    p_target_slug: targetSlug,
+  });
 
   if (cpError) {
     throw new Error(`Find connection points failed: ${cpError.message}`);
   }
 
-  // Get suggested openers
-  const { data: openers, error: opError } = await supabase.rpc(
-    'generate_openers',
-    {
-      p_viewer_slug: viewerSlug,
-      p_target_slug: targetSlug,
-      p_limit: 3,
-    }
-  );
+  const { data: openers, error: opError } = await supabase.rpc('generate_openers', {
+    p_viewer_slug: viewerSlug,
+    p_target_slug: targetSlug,
+    p_limit: 3,
+  });
 
   if (opError) {
     throw new Error(`Generate openers failed: ${opError.message}`);
@@ -133,37 +259,9 @@ export async function findConnectionPoints(
 }
 
 /**
- * Update Context File TSVector - Index content for full-text search
- *
- * Call this after uploading/updating a context file to enable
- * full-text search on its content.
- */
-export async function updateContextFileTsv(
-  supabaseUrl: string,
-  supabaseKey: string,
-  fileId: string,
-  content: string
-): Promise<{ success: boolean }> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { error } = await supabase.rpc('update_context_file_tsv', {
-    p_file_id: fileId,
-    p_content: content,
-  });
-
-  if (error) {
-    throw new Error(`Update TSV failed: ${error.message}`);
-  }
-
-  return { success: true };
-}
-
-/**
  * Quick Search - Simplified search for common use cases
- *
- * A wrapper that provides sensible defaults for quick entity lookups.
  */
-export async function quickSearch(
+async function quickSearch(
   supabaseUrl: string,
   supabaseKey: string,
   query: string,
@@ -183,10 +281,8 @@ export async function quickSearch(
 
 /**
  * Find Similar People - Find people with similar interests/background
- *
- * Given a person's slug, find others with overlapping tags or pack types.
  */
-export async function findSimilarPeople(
+async function findSimilarPeople(
   supabaseUrl: string,
   supabaseKey: string,
   personSlug: string,
@@ -194,13 +290,14 @@ export async function findSimilarPeople(
 ): Promise<PackSearchResult[]> {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // First, get the person's tags
   const { data: personData, error: personError } = await supabase
     .from('entities')
-    .select(`
+    .select(
+      `
       id,
       identity_packs (tags, pack_type)
-    `)
+    `
+    )
     .eq('slug', personSlug)
     .single();
 
@@ -208,7 +305,6 @@ export async function findSimilarPeople(
     throw new Error(`Person not found: ${personSlug}`);
   }
 
-  // Collect all tags from their identity packs
   const allTags: string[] = [];
   const packs = personData.identity_packs as { tags: string[]; pack_type: string }[];
 
@@ -224,13 +320,11 @@ export async function findSimilarPeople(
     return [];
   }
 
-  // Search for people with similar tags
   const result = await packSearch(supabaseUrl, supabaseKey, {
     entity_type: 'person',
-    tags: allTags.slice(0, 5), // Use top 5 tags
+    tags: allTags.slice(0, 5),
     limit,
   });
 
-  // Filter out the original person
   return result.results.filter(r => r.entity_slug !== personSlug);
 }

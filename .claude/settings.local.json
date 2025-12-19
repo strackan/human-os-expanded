@@ -1,20 +1,22 @@
-{
+{{
   "permissions": {
     "allow": [
       "Bash(dir:*)",
-      "Bash(ls -la \"C:\\Users\\TriCityPC\\dev\\renubu\\guyforthat\\.claude\"\" 2>/dev/null || echo \"Not found \")",
-      "Bash(copy \"C:\\Users\\TriCityPC\\dev\\powerpak\\justin_os\\00_JUSTIN_OS_V2_START_HERE.md\" \"C:\\Users\\TriCityPC\\dev\\human-os\\contexts\\justin\\voice\"\")",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(cp:*)",
+      "Bash(copy:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(git log:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm install:*)",
-      "Bash(dir /b \"C:\\Users\\TriCityPC\\dev\\renubu\")",
-      "Bash(git rm --cached \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os02_TEMPLATE_COMPONENTS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os05_CONVERSATION_PROTOCOLS.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\" \"contexts/justin/voice• && cp C：UsersTriCityPCdevpowerpakjustin_os08_CURRENT_STATE.md C：UsersTriCityPCdevhuman-oscontextsjustinvoice•\")",
-      "Bash(cat:*)",
       "Bash(pnpm add:*)",
       "Bash(npx prisma:*)",
       "Bash(npx supabase:*)",
       "Bash(npx tsx:*)",
       "WebSearch",
-      "Bash(find:*)"
+      "WebFetch(domain:docs.claude.com)"
     ]
   }
 }

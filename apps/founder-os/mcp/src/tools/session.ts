@@ -6,7 +6,73 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { getFrequentTerms } from './glossary.js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { ToolContext } from '../lib/context.js';
+import { STORAGE_BUCKETS, buildFounderLayer } from '@human-os/core';
+
+// =============================================================================
+// TOOL DEFINITIONS
+// =============================================================================
+
+export const sessionTools: Tool[] = [
+  {
+    name: 'get_session_context',
+    description: 'Load identity, current state, and available modes at session start. Call this at the beginning of every conversation.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'load_mode',
+    description: 'Load protocol files for a specific mode (crisis, voice, decision, conversation, identity)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        mode: {
+          type: 'string',
+          description: 'Mode to load: crisis, voice, decision, conversation, identity',
+          enum: ['crisis', 'voice', 'decision', 'conversation', 'identity'],
+        },
+      },
+      required: ['mode'],
+    },
+  },
+];
+
+// =============================================================================
+// TOOL HANDLER
+// =============================================================================
+
+/**
+ * Handle session tool calls
+ * Returns result if handled, null if not a session tool
+ */
+export async function handleSessionTools(
+  name: string,
+  args: Record<string, unknown>,
+  ctx: ToolContext
+): Promise<unknown | null> {
+  switch (name) {
+    case 'get_session_context': {
+      return getSessionContext(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId);
+    }
+
+    case 'load_mode': {
+      const mode = (args as { mode: string })?.mode;
+      if (!mode) throw new Error('mode parameter is required');
+      return loadMode(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, mode);
+    }
+
+    default:
+      return null;
+  }
+}
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 export interface SessionContext {
   identity: {
@@ -53,12 +119,14 @@ export interface LoadedFile {
   content: string;
 }
 
-const BUCKET_NAME = 'contexts';
+// =============================================================================
+// TOOL IMPLEMENTATIONS
+// =============================================================================
+
+const BUCKET_NAME = STORAGE_BUCKETS.CONTEXTS;
 
 /**
  * Get session context - called at the start of every session
- *
- * Returns identity, current state, and available modes
  */
 export async function getSessionContext(
   supabaseUrl: string,
@@ -69,8 +137,7 @@ export async function getSessionContext(
 
   // Load START_HERE.md
   const startHerePath = `justin/START_HERE.md`;
-  const { data: startHereData, error: startHereError } = await supabase
-    .storage
+  const { data: startHereData, error: startHereError } = await supabase.storage
     .from(BUCKET_NAME)
     .download(startHerePath);
 
@@ -82,8 +149,7 @@ export async function getSessionContext(
 
   // Load current state
   const statePath = `justin/state/current.md`;
-  const { data: stateData, error: stateError } = await supabase
-    .storage
+  const { data: stateData, error: stateError } = await supabase.storage
     .from(BUCKET_NAME)
     .download(statePath);
 
@@ -120,15 +186,15 @@ export async function getSessionContext(
     },
     {
       mode: 'conversation',
-      triggers: ['*'],  // Always available as default
+      triggers: ['*'], // Always available as default
       description: 'Conversation protocols',
       files: ['protocols/conversation.md'],
     },
   ];
 
   // Load frequently used glossary terms
-  const layer = `founder:${userId}`;
-  let glossaryResult;
+  const layer = buildFounderLayer(userId);
+  let glossaryResult: { terms: SessionContext['glossary']['terms'] } = { terms: [] };
   try {
     glossaryResult = await getFrequentTerms(supabaseUrl, supabaseKey, layer, 10);
   } catch {
@@ -137,9 +203,10 @@ export async function getSessionContext(
 
   const glossary = {
     terms: glossaryResult.terms,
-    hint: glossaryResult.terms.length > 0
-      ? `User has ${glossaryResult.terms.length} defined terms. Use lookup_term if you encounter unfamiliar shorthand.`
-      : 'No glossary terms defined yet. Use define_term to capture shorthand meanings.',
+    hint:
+      glossaryResult.terms.length > 0
+        ? `User has ${glossaryResult.terms.length} defined terms. Use lookup_term if you encounter unfamiliar shorthand.`
+        : 'No glossary terms defined yet. Use define_term to capture shorthand meanings.',
   };
 
   return {
@@ -162,7 +229,6 @@ export async function loadMode(
 ): Promise<ModeContent> {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Map mode to file paths
   const modeFilePaths: Record<string, string[]> = {
     crisis: ['justin/protocols/crisis.md'],
     voice: [
@@ -188,10 +254,7 @@ export async function loadMode(
   const contentParts: string[] = [];
 
   for (const filePath of filePaths) {
-    const { data, error } = await supabase
-      .storage
-      .from(BUCKET_NAME)
-      .download(filePath);
+    const { data, error } = await supabase.storage.from(BUCKET_NAME).download(filePath);
 
     if (error) {
       console.error(`Failed to load ${filePath}: ${error.message}`);
@@ -210,11 +273,14 @@ export async function loadMode(
   };
 }
 
+// =============================================================================
+// INTERNAL HELPERS
+// =============================================================================
+
 /**
  * Parse identity from START_HERE content
  */
 function parseIdentityFromStartHere(content: string): SessionContext['identity'] {
-  // Default values
   const identity = {
     name: 'Justin Strackany',
     northStar: 'Make Work Joyful',
@@ -223,7 +289,6 @@ function parseIdentityFromStartHere(content: string): SessionContext['identity']
     responseStyle: 'Direct, no fluff, authentic',
   };
 
-  // Try to extract values from content
   const northStarMatch = content.match(/North Star:\*?\*?\s*["']?([^"\n]+)["']?/i);
   if (northStarMatch?.[1]) {
     identity.northStar = northStarMatch[1].trim().replace(/["'*]/g, '');
@@ -246,7 +311,6 @@ function parseIdentityFromStartHere(content: string): SessionContext['identity']
  * Parse current state from state file
  */
 function parseCurrentState(content: string): SessionContext['currentState'] {
-  // Default values
   const state = {
     energy: 'Unknown',
     mode: 'Unknown',
@@ -256,7 +320,6 @@ function parseCurrentState(content: string): SessionContext['currentState'] {
 
   if (!content) return state;
 
-  // Try to extract values from content
   const energyMatch = content.match(/\*\*Energy:\*\*\s*([^\n]+)/i);
   if (energyMatch?.[1]) {
     state.energy = energyMatch[1].trim();
@@ -272,14 +335,42 @@ function parseCurrentState(content: string): SessionContext['currentState'] {
     state.topPriority = priorityMatch[1].trim();
   }
 
-  // Extract avoid items
   const avoidSection = content.match(/## WHAT'S DRAINING RIGHT NOW[\s\S]*?(?=##|$)/i);
   if (avoidSection) {
-    const avoidMatches = avoidSection[0].match(/⚠️\s*([^\n(]+)/g);
+    const avoidMatches = avoidSection[0].match(/[^\n(]+/g);
     if (avoidMatches) {
-      state.avoid = avoidMatches.map(m => m.replace(/⚠️\s*/, '').trim());
+      state.avoid = avoidMatches.map(m => m.replace(/\s*/, '').trim());
     }
   }
 
   return state;
+}
+
+/**
+ * Get frequent terms (internal helper for session context)
+ */
+async function getFrequentTerms(
+  supabaseUrl: string,
+  supabaseKey: string,
+  layer: string,
+  limit: number = 10
+): Promise<{ terms: SessionContext['glossary']['terms'] }> {
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  const { data, error } = await supabase
+    .from('glossary')
+    .select('term, short_definition, term_type, usage_count')
+    .eq('layer', layer)
+    .gt('usage_count', 0)
+    .order('usage_count', { ascending: false })
+    .order('last_used_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(`Failed to get frequent terms: ${error.message}`);
+  }
+
+  return {
+    terms: data || [],
+  };
 }

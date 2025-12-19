@@ -5,7 +5,154 @@
  * Items logged on mobile are processed when starting a desktop session.
  */
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type { ToolContext } from '../lib/context.js';
+import { DB_SCHEMAS, TASK_STATUS, DEFAULTS } from '@human-os/core';
+
+// =============================================================================
+// TOOL DEFINITIONS
+// =============================================================================
+
+export const queueTools: Tool[] = [
+  {
+    name: 'add_queue_item',
+    description: 'Add an item to the processing queue for later handling. Use when on mobile or unable to complete immediately.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        intent_type: {
+          type: 'string',
+          enum: ['task', 'event', 'decision', 'note', 'memory_edit'],
+          description: 'Type of item being queued',
+        },
+        payload: {
+          type: 'object',
+          description: 'Item data - structure depends on intent_type. task: {title, context_tags?, priority?, due_date?, notes?}. note/event: {content, interaction_type?, occurred_at?}. decision: {decision, context?, outcome?}',
+        },
+        target_table: {
+          type: 'string',
+          description: 'Optional hint for where this should land when processed',
+        },
+        notes: {
+          type: 'string',
+          description: 'Context or instructions for processing',
+        },
+        session_id: {
+          type: 'string',
+          description: 'Group related items (auto-generated if not provided)',
+        },
+      },
+      required: ['intent_type', 'payload'],
+    },
+  },
+  {
+    name: 'update_queue_item',
+    description: 'Update a pending queue item (change payload, status, or notes)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: {
+          type: 'string',
+          description: 'UUID of the queue item to update',
+        },
+        payload: {
+          type: 'object',
+          description: 'Updated payload data (replaces existing)',
+        },
+        status: {
+          type: 'string',
+          enum: ['pending', 'skipped'],
+          description: 'Change status (can skip items to ignore them)',
+        },
+        notes: {
+          type: 'string',
+          description: 'Update notes/context',
+        },
+      },
+      required: ['item_id'],
+    },
+  },
+  {
+    name: 'process_queue',
+    description: 'Process all pending queue items. Routes each item to appropriate table based on intent_type.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'process_queue_item',
+    description: 'Process a single queue item by ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        item_id: {
+          type: 'string',
+          description: 'UUID of the queue item to process',
+        },
+      },
+      required: ['item_id'],
+    },
+  },
+];
+
+// =============================================================================
+// TOOL HANDLER
+// =============================================================================
+
+/**
+ * Handle queue tool calls
+ * Returns result if handled, null if not a queue tool
+ */
+export async function handleQueueTools(
+  name: string,
+  args: Record<string, unknown>,
+  ctx: ToolContext
+): Promise<unknown | null> {
+  switch (name) {
+    case 'add_queue_item': {
+      const { intent_type, payload, target_table, notes, session_id } = args;
+      if (!intent_type || !payload) throw new Error('intent_type and payload are required');
+      const input: QueueItemInput = {
+        intent_type: intent_type as IntentType,
+        payload: payload as Record<string, unknown>,
+        target_table: target_table as string | undefined,
+        notes: notes as string | undefined,
+        session_id: session_id as string | undefined,
+      };
+      return queueItem(ctx, input);
+    }
+
+    case 'update_queue_item': {
+      const { item_id, payload, status, notes } = args;
+      if (!item_id) throw new Error('item_id is required');
+      const updates: QueueItemUpdate = {};
+      if (payload !== undefined) updates.payload = payload as Record<string, unknown>;
+      if (status !== undefined) updates.status = status as QueueItemUpdate['status'];
+      if (notes !== undefined) updates.notes = notes as string;
+      return updateQueueItem(ctx, item_id as string, updates);
+    }
+
+    case 'process_queue': {
+      return processQueueItems(ctx);
+    }
+
+    case 'process_queue_item': {
+      const { item_id } = args as { item_id: string };
+      if (!item_id) throw new Error('item_id is required');
+      return processQueueItem(ctx, item_id);
+    }
+
+    default:
+      return null;
+  }
+}
+
+// =============================================================================
+// TYPES
+// =============================================================================
 
 export type IntentType = 'task' | 'event' | 'decision' | 'note' | 'memory_edit';
 export type QueueStatus = 'pending' | 'processed' | 'skipped' | 'failed';
@@ -66,22 +213,20 @@ export interface SingleProcessResult {
   error?: string;
 }
 
+// =============================================================================
+// TOOL IMPLEMENTATIONS
+// =============================================================================
+
 /**
  * Add an item to the queue for later processing
  */
-export async function queueItem(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string,
-  input: QueueItemInput
-): Promise<QueueResult> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { data, error } = await supabase
-    .schema('founder')
+async function queueItem(ctx: ToolContext, input: QueueItemInput): Promise<QueueResult> {
+  const { data, error } = await ctx
+    .getClient()
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .insert({
-      user_id: userId,
+      user_id: ctx.userId,
       intent_type: input.intent_type,
       payload: input.payload,
       target_table: input.target_table || null,
@@ -109,22 +254,20 @@ export async function queueItem(
 /**
  * Update a pending queue item
  */
-export async function updateQueueItem(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string,
+async function updateQueueItem(
+  ctx: ToolContext,
   itemId: string,
   updates: QueueItemUpdate
 ): Promise<QueueResult> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const supabase = ctx.getClient();
 
   // First verify the item exists and belongs to user
   const { data: existing, error: fetchError } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .select('*')
     .eq('id', itemId)
-    .eq('user_id', userId)
+    .eq('user_id', ctx.userId)
     .single();
 
   if (fetchError || !existing) {
@@ -148,7 +291,7 @@ export async function updateQueueItem(
   if (updates.notes !== undefined) updateData.notes = updates.notes;
 
   const { error } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .update(updateData)
     .eq('id', itemId);
@@ -170,21 +313,16 @@ export async function updateQueueItem(
 /**
  * Process a single queue item by ID
  */
-export async function processQueueItem(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string,
-  itemId: string
-): Promise<SingleProcessResult> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
+async function processQueueItem(ctx: ToolContext, itemId: string): Promise<SingleProcessResult> {
+  const supabase = ctx.getClient();
 
   // Fetch the item
   const { data: item, error: fetchError } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .select('*')
     .eq('id', itemId)
-    .eq('user_id', userId)
+    .eq('user_id', ctx.userId)
     .single();
 
   if (fetchError || !item) {
@@ -196,25 +334,25 @@ export async function processQueueItem(
     };
   }
 
-  const queueItem = item as QueueItem;
+  const queueItemData = item as QueueItem;
 
-  if (queueItem.status !== 'pending') {
+  if (queueItemData.status !== 'pending') {
     return {
       success: false,
       item_id: itemId,
-      intent_type: queueItem.intent_type,
-      message: `Item has status '${queueItem.status}', cannot process`,
+      intent_type: queueItemData.intent_type,
+      message: `Item has status '${queueItemData.status}', cannot process`,
     };
   }
 
   try {
-    await routeAndInsert(supabase, queueItem);
+    await routeAndInsert(supabase, queueItemData);
     await markProcessed(supabase, itemId);
     return {
       success: true,
       item_id: itemId,
-      intent_type: queueItem.intent_type,
-      message: `Successfully processed ${queueItem.intent_type}`,
+      intent_type: queueItemData.intent_type,
+      message: `Successfully processed ${queueItemData.intent_type}`,
     };
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
@@ -222,7 +360,7 @@ export async function processQueueItem(
     return {
       success: false,
       item_id: itemId,
-      intent_type: queueItem.intent_type,
+      intent_type: queueItemData.intent_type,
       message: `Failed to process item`,
       error: errorMessage,
     };
@@ -232,19 +370,15 @@ export async function processQueueItem(
 /**
  * Process all pending queue items for a user
  */
-export async function processQueueItems(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string
-): Promise<ProcessResult> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
+async function processQueueItems(ctx: ToolContext): Promise<ProcessResult> {
+  const supabase = ctx.getClient();
 
   // Fetch all pending items
   const { data: pending, error: fetchError } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .select('*')
-    .eq('user_id', userId)
+    .eq('user_id', ctx.userId)
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
 
@@ -303,6 +437,10 @@ export async function processQueueItems(
   return results;
 }
 
+// =============================================================================
+// INTERNAL HELPERS
+// =============================================================================
+
 /**
  * Route item to appropriate table based on intent_type
  */
@@ -311,19 +449,18 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
 
   switch (item.intent_type) {
     case 'task': {
-      // Validate required fields
       if (!payload.title || typeof payload.title !== 'string') {
         throw new Error('Task requires a title');
       }
 
-      const { error } = await supabase.schema('founder').from('tasks').insert({
+      const { error } = await supabase.schema(DB_SCHEMAS.FOUNDER_OS).from('tasks').insert({
         user_id: item.user_id,
         title: payload.title,
         context_tags: Array.isArray(payload.context_tags) ? payload.context_tags : [],
-        priority: payload.priority || 'medium',
+        priority: payload.priority || DEFAULTS.TASK_PRIORITY,
         due_date: payload.due_date || null,
         notes: payload.notes || null,
-        status: 'todo',
+        status: TASK_STATUS.TODO,
       });
 
       if (error) throw new Error(`Failed to create task: ${error.message}`);
@@ -332,7 +469,6 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
 
     case 'note':
     case 'event': {
-      // Validate required fields
       if (!payload.content || typeof payload.content !== 'string') {
         throw new Error('Note/event requires content');
       }
@@ -350,12 +486,10 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
     }
 
     case 'decision': {
-      // Decisions can go to daily_plans as a note, or we skip for manual handling
       if (!payload.decision || typeof payload.decision !== 'string') {
         throw new Error('Decision requires a decision field');
       }
 
-      // For now, log as an interaction of type 'decision'
       const { error } = await supabase.from('interactions').insert({
         owner_id: item.user_id,
         interaction_type: 'note',
@@ -368,8 +502,6 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
     }
 
     case 'memory_edit': {
-      // Memory edits are complex - for now, skip for manual handling
-      // Future: could update glossary or context_files
       throw new Error('memory_edit requires manual handling - please process manually');
     }
 
@@ -383,7 +515,7 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
  */
 async function markProcessed(supabase: SupabaseClient, itemId: string): Promise<void> {
   const { error } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .update({
       status: 'processed',
@@ -401,7 +533,7 @@ async function markProcessed(supabase: SupabaseClient, itemId: string): Promise<
  */
 async function markFailed(supabase: SupabaseClient, itemId: string, errorMessage: string): Promise<void> {
   const { error } = await supabase
-    .schema('founder')
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .update({
       status: 'failed',
@@ -413,34 +545,4 @@ async function markFailed(supabase: SupabaseClient, itemId: string, errorMessage
   if (error) {
     console.error(`Failed to mark item ${itemId} as failed:`, error);
   }
-}
-
-/**
- * Get pending queue count (for display without processing)
- */
-export async function getQueueCount(
-  supabaseUrl: string,
-  supabaseKey: string,
-  userId: string
-): Promise<{ pending: number; failed: number }> {
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  const { count: pending } = await supabase
-    .schema('founder')
-    .from('claude_queue')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('status', 'pending');
-
-  const { count: failed } = await supabase
-    .schema('founder')
-    .from('claude_queue')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('status', 'failed');
-
-  return {
-    pending: pending || 0,
-    failed: failed || 0,
-  };
 }

@@ -133,6 +133,9 @@ importers:
 
   apps/renubu-mcp:
     dependencies:
+      '@human-os/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.24.3(zod@3.25.76)

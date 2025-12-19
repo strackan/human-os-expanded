@@ -8,6 +8,9 @@
 // Types
 export * from './types.js';
 
+// Configuration constants
+export * from './config.js';
+
 // Core classes
 export { ContextEngine } from './context-engine.js';
 export { KnowledgeGraph } from './knowledge-graph.js';
