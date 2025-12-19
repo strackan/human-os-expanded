@@ -52,11 +52,11 @@ create index transcripts_entity_ids_idx on founder_os.transcripts using gin(enti
 create index transcripts_content_fts_idx on founder_os.transcripts
   using gin(to_tsvector('english', coalesce(raw_content, '') || ' ' || coalesce(summary, '')));
 
--- Updated_at trigger (reuse existing function from founder_os schema)
+-- Updated_at trigger (reuse existing function from public schema)
 create trigger transcripts_updated_at
   before update on founder_os.transcripts
   for each row
-  execute function founder_os.update_updated_at_column();
+  execute function update_updated_at_column();
 
 -- RLS policies
 alter table founder_os.transcripts enable row level security;
