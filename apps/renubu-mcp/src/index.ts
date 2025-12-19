@@ -13,6 +13,7 @@
  *    - relationship_context (layer-scoped opinions)
  *    - context_files (skills files in permitted layers)
  *    - skills_tools / skills_programs (tool/program definitions)
+ *    - renubu.transcripts (tenant-scoped call transcripts)
  *
  * ❌ CANNOT access:
  *    - founder_os.* (personal tasks, goals, check-ins)
@@ -50,6 +51,7 @@ import {
   getEntitySkills,
   listAvailableTools,
 } from './tools/skills.js';
+import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -235,7 +237,7 @@ const skillsTools: Tool[] = [
   },
 ];
 
-const allTools: Tool[] = [...enrichmentTools, ...relationshipTools, ...skillsTools];
+const allTools: Tool[] = [...enrichmentTools, ...relationshipTools, ...skillsTools, ...transcriptTools];
 
 // =============================================================================
 // TOOL HANDLERS
@@ -410,6 +412,7 @@ const toolHandlers: ToolHandler[] = [
   handleEnrichmentTools,
   handleRelationshipTools,
   handleSkillsTools,
+  handleTranscriptTools,
 ];
 
 // =============================================================================
