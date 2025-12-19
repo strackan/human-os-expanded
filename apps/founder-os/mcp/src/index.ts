@@ -35,6 +35,7 @@ import { searchTools, handleSearchTools } from './tools/search.js';
 import { sessionTools, handleSessionTools, getSessionContext, loadMode } from './tools/session.js';
 import { gftTools, handleGFTTools } from './tools/gft-ingestion.js';
 import { demoTools, handleDemoTools } from './tools/demo.js';
+import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 
 import { createToolContext, type ToolHandler } from './lib/context.js';
 
@@ -59,6 +60,7 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: searchTools, handler: handleSearchTools },
   { tools: gftTools, handler: handleGFTTools },
   { tools: demoTools, handler: handleDemoTools },
+  { tools: transcriptTools, handler: handleTranscriptTools },
 ];
 
 /** Flat list of all tools for MCP registration */
