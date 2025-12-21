@@ -36,6 +36,8 @@ import { sessionTools, handleSessionTools, getSessionContext, loadMode } from '.
 import { gftTools, handleGFTTools } from './tools/gft-ingestion.js';
 import { demoTools, handleDemoTools } from './tools/demo.js';
 import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
+import { communityIntelTools, handleCommunityIntelTools } from './tools/community-intel.js';
+import { projectTools, handleProjectTools } from './tools/projects.js';
 
 import { createToolContext, type ToolHandler } from './lib/context.js';
 
@@ -58,10 +60,8 @@ if (process.argv.includes('--version') || process.argv.includes('-v')) {
     console.log(`Branch: ${info.gitBranch}`);
     console.log(`Built: ${info.buildTime}`);
   } else {
-    // Development mode - read from package.json
-    import('./package.json', { assert: { type: 'json' } })
-      .then((pkg) => console.log(`founder-os-mcp v${pkg.default.version} (development)`))
-      .catch(() => console.log('founder-os-mcp (development)'));
+    // Development mode - version from package.json at runtime
+    console.log('founder-os-mcp v0.2.0 (development)');
   }
   process.exit(0);
 }
@@ -78,11 +78,13 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: sessionTools, handler: handleSessionTools },
   { tools: queueTools, handler: handleQueueTools },
   { tools: taskTools, handler: handleTaskTools },
+  { tools: projectTools, handler: handleProjectTools },
   { tools: glossaryTools, handler: handleGlossaryTools },
   { tools: searchTools, handler: handleSearchTools },
   { tools: gftTools, handler: handleGFTTools },
   { tools: demoTools, handler: handleDemoTools },
   { tools: transcriptTools, handler: handleTranscriptTools },
+  { tools: communityIntelTools, handler: handleCommunityIntelTools },
 ];
 
 /** Flat list of all tools for MCP registration */

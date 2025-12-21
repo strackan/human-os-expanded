@@ -23,6 +23,7 @@ export type OpinionType =
 
 export type Sentiment = 'positive' | 'neutral' | 'negative' | 'mixed';
 export type Confidence = 'low' | 'medium' | 'high';
+export type Visibility = 'private' | 'community' | 'public';
 
 export interface Opinion {
   id: string;
@@ -52,11 +53,16 @@ export interface UpsertOpinionInput {
   confidence?: Confidence;
   evidence?: string[];
   source_context?: string;
+  // Community sharing fields
+  visibility?: Visibility;
+  community_content?: string;
+  publish_anonymously?: boolean;
 }
 
 export interface UpsertOpinionResult {
   success: boolean;
   id?: string;
+  visibility?: Visibility;
   error?: string;
 }
 
@@ -134,6 +140,11 @@ export async function upsertOpinion(
 ): Promise<UpsertOpinionResult> {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
+  // Renubu defaults to community visibility (team-shared)
+  const visibility = input.visibility || 'community';
+  const isPublishing = visibility !== 'private';
+  const now = new Date().toISOString();
+
   const { data, error } = await supabase
     .from('relationship_context')
     .upsert({
@@ -148,6 +159,12 @@ export async function upsertOpinion(
       source_context: input.source_context,
       layer,
       source_system: 'renubu',
+      // Community sharing fields
+      visibility,
+      community_content: isPublishing ? (input.community_content || input.content) : null,
+      published_at: isPublishing ? now : null,
+      published_anonymously: input.publish_anonymously || false,
+      sanitized_by: input.community_content ? 'manual' : null,
     }, {
       onConflict: 'owner_id,contact_entity_id,opinion_type',
     })
@@ -158,7 +175,7 @@ export async function upsertOpinion(
     return { success: false, error: error.message };
   }
 
-  return { success: true, id: data.id };
+  return { success: true, id: data.id, visibility };
 }
 
 /**

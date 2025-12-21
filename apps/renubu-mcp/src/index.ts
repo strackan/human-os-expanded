@@ -52,6 +52,7 @@ import {
   listAvailableTools,
 } from './tools/skills.js';
 import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
+import { teamIntelTools, handleTeamIntelTools } from './tools/team-intel.js';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -117,19 +118,22 @@ const relationshipTools: Tool[] = [
   },
   {
     name: 'upsert_opinion',
-    description: 'Create or update an opinion about a contact.',
+    description: 'Create or update an opinion about a contact. Defaults to community visibility (team-shared).',
     inputSchema: {
       type: 'object',
       properties: {
         contact_entity_id: { type: 'string' },
         gft_contact_id: { type: 'string' },
         opinion_type: { type: 'string', enum: [...OPINION_TYPES] },
-        content: { type: 'string' },
+        content: { type: 'string', description: 'The raw opinion content (private)' },
         sentiment: { type: 'string', enum: [...OPINION_SENTIMENTS] },
         confidence: { type: 'string', enum: [...CONFIDENCE_LEVELS] },
         evidence: { type: 'array', items: { type: 'string' } },
         source_context: { type: 'string' },
         layer: { type: 'string' },
+        visibility: { type: 'string', enum: ['private', 'community', 'public'], description: 'Who can see this. Default: community' },
+        community_content: { type: 'string', description: 'Sanitized version for team sharing. If not provided, uses content.' },
+        publish_anonymously: { type: 'boolean', description: 'Hide author identity in team queries' },
       },
       required: ['contact_entity_id', 'opinion_type', 'content', 'layer'],
     },
@@ -237,7 +241,7 @@ const skillsTools: Tool[] = [
   },
 ];
 
-const allTools: Tool[] = [...enrichmentTools, ...relationshipTools, ...skillsTools, ...transcriptTools];
+const allTools: Tool[] = [...enrichmentTools, ...relationshipTools, ...skillsTools, ...transcriptTools, ...teamIntelTools];
 
 // =============================================================================
 // TOOL HANDLERS
@@ -320,6 +324,9 @@ async function handleRelationshipTools(
         evidence?: string[];
         source_context?: string;
         layer: string;
+        visibility?: string;
+        community_content?: string;
+        publish_anonymously?: boolean;
       };
       return upsertOpinion(supabaseUrl, supabaseKey, ownerId, params.layer, {
         contact_entity_id: params.contact_entity_id,
@@ -330,6 +337,9 @@ async function handleRelationshipTools(
         confidence: params.confidence as any,
         evidence: params.evidence,
         source_context: params.source_context,
+        visibility: params.visibility as any,
+        community_content: params.community_content,
+        publish_anonymously: params.publish_anonymously,
       });
     }
 
@@ -413,6 +423,7 @@ const toolHandlers: ToolHandler[] = [
   handleRelationshipTools,
   handleSkillsTools,
   handleTranscriptTools,
+  handleTeamIntelTools,
 ];
 
 // =============================================================================

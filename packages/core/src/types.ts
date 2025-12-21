@@ -17,7 +17,8 @@ export type Layer =
   | 'public'                      // Anyone can read
   | 'powerpak-published'          // Subscribers can read
   | `renubu:tenant-${string}`     // Specific tenant can read/write
-  | `founder:${string}`;          // Specific user can read/write
+  | `founder:${string}`           // Specific user can read/write
+  | `prompts:${string}`;          // System prompts layer (e.g., prompts:system, prompts:userId)
 
 /**
  * Privacy scope for entities and files
