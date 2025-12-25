@@ -141,7 +141,9 @@ What was that like for you? I mean obviously it was terrible, but looking back, 
 
 **The First Sale**
 
-"Okay, the Hawaii Friday night story -- any details before the phone call or after your wife says 'if you don't do this, what are you going to do?' That's all the details I have, but anything else you want to throw in there?"
+"Okay, the Hawaii Friday night story -- any details before the phone call or after your wife says 'if you don't do this, what are you going to do?' That's all I have right now. Anything else you want to throw in there? It's feeling a little...sparse, if you know what I mean."
+
+*He scratches his neck absentmindedly, as a black shape slips through the water before disappearing under the boat.*
 
 ---
 
