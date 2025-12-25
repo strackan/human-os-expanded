@@ -263,7 +263,7 @@ export default function SculptorChat({
                 className={cn(
                   'max-w-[80%] rounded-2xl px-4 py-3',
                   message.role === 'user'
-                    ? 'bg-purple-600'
+                    ? 'bg-purple-600 text-white'
                     : 'bg-slate-100',
                   // Highlight the active question
                   isLatestAssistant && 'ring-2 ring-red-200 shadow-lg shadow-red-100/50'
@@ -289,8 +289,8 @@ export default function SculptorChat({
                         );
                       },
                       em: ({ children }) => (
-                        message.role === 'user' 
-                          ? <em className="text-purple-200">{children}</em>
+                        message.role === 'user'
+                          ? <em className="text-white/80">{children}</em>
                           : <span className="block text-xs text-slate-400 italic leading-relaxed">{children}</span>
                       ),
                     }}
@@ -307,7 +307,7 @@ export default function SculptorChat({
                   <p
                     className={cn(
                       'text-xs',
-                      message.role === 'user' ? '!text-purple-200' : 'text-slate-400'
+                      message.role === 'user' ? 'text-white/70' : 'text-slate-400'
                     )}
                   >
                     {message.timestamp.toLocaleTimeString([], {
