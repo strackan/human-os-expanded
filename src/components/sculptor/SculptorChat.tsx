@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, User, Bot, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
 import VoiceInputToggle from './VoiceInputToggle';
 
 interface Message {
@@ -268,14 +269,35 @@ export default function SculptorChat({
                   isLatestAssistant && 'ring-2 ring-red-200 shadow-lg shadow-red-100/50'
                 )}
               >
-                <p
-                  className={cn(
-                    'whitespace-pre-wrap text-sm leading-relaxed',
-                    message.role === 'user' ? '!text-white' : 'text-slate-900'
-                  )}
-                >
-                  {message.content}
-                </p>
+                <div className="space-y-3">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => {
+                        const text = String(children);
+                        const isDialogue = text.startsWith('"') || text.startsWith('"');
+                        
+                        if (message.role === 'user') {
+                          return <p className="text-white text-sm">{children}</p>;
+                        }
+                        
+                        return isDialogue ? (
+                          <p className="text-slate-900 text-base font-medium leading-relaxed pl-3 border-l-2 border-red-400 bg-red-50/50 py-2 pr-3 rounded-r">
+                            {children}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-slate-600">{children}</p>
+                        );
+                      },
+                      em: ({ children }) => (
+                        message.role === 'user' 
+                          ? <em className="text-purple-200">{children}</em>
+                          : <span className="block text-xs text-slate-400 italic leading-relaxed">{children}</span>
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
                 <div
                   className={cn(
                     'flex items-center gap-2 mt-2',
