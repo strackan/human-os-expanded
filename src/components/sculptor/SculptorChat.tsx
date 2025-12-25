@@ -275,9 +275,9 @@ export default function SculptorChat({
                       p: ({ children }) => {
                         const text = String(children);
                         const isDialogue = text.startsWith('"') || text.startsWith('"');
-                        
+
                         if (message.role === 'user') {
-                          return <p className="text-white text-sm">{children}</p>;
+                          return <p style={{ color: 'white' }} className="text-sm">{children}</p>;
                         }
                         
                         return isDialogue ? (
@@ -290,7 +290,7 @@ export default function SculptorChat({
                       },
                       em: ({ children }) => (
                         message.role === 'user'
-                          ? <em className="text-white/80">{children}</em>
+                          ? <em style={{ color: 'rgba(255,255,255,0.8)' }}>{children}</em>
                           : <span className="block text-xs text-slate-400 italic leading-relaxed">{children}</span>
                       ),
                     }}
@@ -305,10 +305,8 @@ export default function SculptorChat({
                   )}
                 >
                   <p
-                    className={cn(
-                      'text-xs',
-                      message.role === 'user' ? 'text-white/70' : 'text-slate-400'
-                    )}
+                    className="text-xs"
+                    style={{ color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : undefined }}
                   >
                     {message.timestamp.toLocaleTimeString([], {
                       hour: '2-digit',
