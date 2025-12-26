@@ -39,6 +39,7 @@ import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 import { communityIntelTools, handleCommunityIntelTools } from './tools/community-intel.js';
 import { projectTools, handleProjectTools } from './tools/projects.js';
 import { journalTools, handleJournalTools } from './tools/journal.js';
+import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 
 import { createToolContext, type ToolHandler } from './lib/context.js';
 
@@ -87,6 +88,7 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: transcriptTools, handler: handleTranscriptTools },
   { tools: communityIntelTools, handler: handleCommunityIntelTools },
   { tools: journalTools, handler: handleJournalTools },
+  { tools: emotionTools, handler: handleEmotionTools },
 ];
 
 /** Flat list of all tools for MCP registration */

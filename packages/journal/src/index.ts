@@ -17,6 +17,16 @@ export type {
   EmotionAnalysis,
   EmotionCategory,
 
+  // Text emotion analysis types (NEW)
+  PlutchikVector,
+  DetectedKeyword,
+  TextEmotionAnalysis,
+  EmotionComparison,
+  EmotionTrendDataPoint,
+  EmotionTrendAnalysis,
+  EmotionAnalysisFilter,
+  StoredEmotionAnalysis,
+
   // Journal entry types
   JournalEntry,
   JournalEntryType,
@@ -64,6 +74,24 @@ export type {
 export { JournalService, createJournalService } from './journal-service.js';
 export { EntityLinker, createEntityLinker } from './entity-linker.js';
 export { ModeLoader, createModeLoader } from './mode-loader.js';
+
+// =============================================================================
+// EMOTION ANALYZER EXPORTS (Text → Plutchik Vector)
+// =============================================================================
+
+export {
+  EmotionAnalyzer,
+  emotionAnalyzer,
+  analyzeTextEmotion,
+  compareTextEmotions,
+} from './emotion-analyzer.js';
+
+export {
+  EMOTION_LEXICON,
+  getKeywordsForEmotion,
+  getLexiconStats,
+  type LexiconEntry,
+} from './data/emotion-lexicon.js';
 
 // =============================================================================
 // UTILITY EXPORTS
