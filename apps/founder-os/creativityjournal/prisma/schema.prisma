@@ -1,0 +1,441 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String  @map("userId")
+  type              String
+  provider          String
+  providerAccountId String  @map("providerAccountId")
+  refresh_token     String? @map("refresh_token")
+  access_token      String? @map("access_token")
+  expires_at        Int?
+  token_type        String? @map("token_type")
+  scope             String?
+  id_token          String? @map("id_token")
+  session_state     String? @map("session_state")
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("account")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("sessionToken")
+  userId       String   @map("userId")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verificationToken")
+}
+
+model User {
+  id                              String                @id @map("id")
+  name                            String?               @map("name")
+  email                           String?               @unique @map("email")
+  emailVerified                   DateTime?             @map("emailVerified")
+  image                           String?               @map("image")
+  password                        Bytes?                @map("password")
+  first_name                      String?
+  last_name                       String?
+  createdDate                     DateTime              @default(now()) @map("created_date")
+  lastLoginDate                   DateTime              @default(now()) @map("last_login_date")
+  userToken                       String?               @map("user_token")
+  wordTarget                      Int?                  @default(500) @map("word_target")
+  role                            String                @default("author") @map("role")
+
+  accounts                        Account[]
+  entries                         Entry[]
+  moodPromotions                  MoodPromotion[]
+  sessions                        Session[]
+  userMoodPreferences             UserMoodPreferences[]
+  userMoods                       UserMood[]
+  userProps                       UserProps[]
+  userPermissions                 UserPermission[]      @relation("UserPermissions")
+  grantedPermissions              UserPermission[]      @relation("GrantedPermissions")
+
+  @@index([role], map: "idx_user_role")
+  @@index([role, createdDate], map: "idx_user_role_created")
+  @@map("user")
+}
+
+model UserProps {
+  id     Int    @id @default(autoincrement())
+  userId String @map("user_id")
+  key    String
+  value  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_props")
+}
+
+model UserPermission {
+  id         Int       @id @default(autoincrement())
+  userId     String    @map("user_id")
+  permission String
+  grantedAt  DateTime  @default(now()) @map("granted_at")
+  grantedBy  String?   @map("granted_by")
+  expiresAt  DateTime? @map("expires_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at")
+  
+  user        User  @relation("UserPermissions", fields: [userId], references: [id], onDelete: Cascade)
+  grantedByUser User? @relation("GrantedPermissions", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([userId, permission])
+  @@index([userId], map: "idx_user_permissions_user_id")
+  @@index([permission], map: "idx_user_permissions_permission")
+  @@index([expiresAt], map: "idx_user_permissions_expires")
+  @@map("user_permissions")
+}
+
+model Entry {
+  id             Int              @id @default(autoincrement())
+  createdDate    DateTime         @default(now()) @map("created_date")
+  ownerId        String           @map("owner_id")
+  updatedDate    DateTime         @default(now()) @map("updated_date")
+  statusId       Int              @default(1) @map("status_id")
+  projectId      Int?             @map("project_id")
+  publishedDate  DateTime?        @map("published_date")
+  project        Project?         @relation(fields: [projectId], references: [id])
+  status         EntryStatus      @relation(fields: [statusId], references: [id])
+  owner          User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  entryLabels    EntryLabels[]
+  entryMoods     EntryMoods[]
+  entryProps     EntryProps?
+  entrySecurity  EntrySecurity?
+  entrySnippets  EntrySnippets[]
+  entryUserMoods EntryUserMoods[]
+  tasks          Task[]
+
+  @@map("entry")
+}
+
+model EntryLabels {
+  id          Int      @id @default(autoincrement())
+  createdDate DateTime @default(now()) @map("created_date")
+  entryId     Int      @map("entry_id")
+  deleted     Boolean  @default(false)
+  label       String?
+  entry       Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("entry_labels")
+}
+
+model EntryMoods {
+  id      Int   @id @default(autoincrement())
+  moodId  Int   @map("mood_id")
+  entryId Int   @map("entry_id")
+  entry   Entry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  mood    Mood  @relation(fields: [moodId], references: [id])
+
+  @@map("entry_moods")
+}
+
+model EntryUserMoods {
+  id         Int      @id @default(autoincrement())
+  userMoodId Int      @map("user_mood_id")
+  entryId    Int      @map("entry_id")
+  entry      Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  userMood   UserMood @relation(fields: [userMoodId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userMoodId, entryId], map: "idx_entry_user_moods_unique")
+  @@index([entryId], map: "idx_entry_user_moods_entry_id")
+  @@index([userMoodId], map: "idx_entry_user_moods_user_mood_id")
+  @@map("entry_user_moods")
+}
+
+model EntryProps {
+  id          Int    @id @default(autoincrement())
+  entryId     Int    @unique @map("entry_id")
+  content     String @default("")
+  title       String @default("")
+  sat         Int    @default(5)
+  wordcount   Int    @default(0)
+  charcount   Int    @default(0)
+  moodContext String @default("") @map("mood_context")
+  entry       Entry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("entry_props")
+}
+
+model EntrySecurity {
+  id                Int       @id @default(autoincrement())
+  entryId           Int       @unique(map: "sqlite_autoindex_entry_security_1") @map("entry_id")
+  isPrivate         Boolean?  @default(false) @map("is_private")
+  passwordHash      String?   @map("password_hash")
+  breakGlassCode    String?   @map("break_glass_code")
+  breakGlassExpires DateTime? @map("break_glass_expires")
+  createdDate       DateTime? @default(now()) @map("created_date")
+  updatedDate       DateTime? @default(now()) @map("updated_date")
+  entry             Entry     @relation(fields: [entryId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([breakGlassExpires], map: "idx_entry_security_break_glass_expires")
+  @@index([isPrivate], map: "idx_entry_security_is_private")
+  @@map("entry_security")
+}
+
+model Mood {
+  id              Int                   @id @default(autoincrement())
+  name            String                @unique
+  entryMoods      EntryMoods[]
+  moodCategories  MoodCategory[]
+  promotions      MoodPromotion[]
+  moodProps       MoodProps[]
+  userPreferences UserMoodPreferences[]
+  user_moods      UserMood[]
+
+  @@map("mood")
+}
+
+model MoodProps {
+  id                 Int       @id @default(autoincrement())
+  moodId             Int?      @map("mood_id")
+  userMoodId         Int?      @map("user_mood_id")
+  joyRating          Int?      @map("joy_rating")
+  trustRating        Int?      @map("trust_rating")
+  fearRating         Int?      @map("fear_rating")
+  surpriseRating     Int?      @map("surprise_rating")
+  sadnessRating      Int?      @map("sadness_rating")
+  anticipationRating Int?      @map("anticipation_rating")
+  angerRating        Int?      @map("anger_rating")
+  disgustRating      Int?      @map("disgust_rating")
+  core               Boolean   @default(false)
+  arousalLevel       Int       @default(5) @map("arousal_level")
+  valence            Int       @default(5)
+  dominance          Int       @default(5)
+  intensity          Int       @default(5)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at")
+  userMood           UserMood? @relation(fields: [userMoodId], references: [id], onDelete: Cascade)
+  mood               Mood?     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+
+  @@index([userMoodId], map: "idx_mood_props_user_mood_id")
+  @@map("mood_props")
+}
+
+model EntryStatus {
+  id      Int     @id @default(autoincrement())
+  status  String
+  entries Entry[]
+
+  @@map("entry_status")
+}
+
+model EntrySnippets {
+  id             Int      @id @default(autoincrement())
+  entryId        Int      @map("entry_id")
+  snippet        String   @default("")
+  description    String   @default("")
+  createdDate    DateTime @default(now()) @map("created_date")
+  labelId        Int?     @map("label_id")
+  startIndex     Int      @map("start_index")
+  endIndex       Int      @map("end_index")
+  highlightColor String   @default("#FFEB3B") @map("highlight_color")
+  label          Label?   @relation(fields: [labelId], references: [id])
+  entry          Entry    @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@map("entry_snippets")
+}
+
+model Label {
+  id            Int             @id @default(autoincrement())
+  name          String
+  color         String          @unique @default("B5EBF5")
+  entrySnippets EntrySnippets[]
+
+  @@map("label")
+}
+
+model Task {
+  id               Int           @id @default(autoincrement())
+  task             String
+  description      String?
+  createdDate      DateTime      @default(now()) @map("created_date")
+  duedate          DateTime?
+  taskStatusId     Int           @default(1) @map("task_status_id")
+  taskPriorityId   Int?          @map("task_priority_id")
+  projectId        Int?          @map("project_id")
+  entryId          Int?          @map("entry_id")
+  googleTaskId     String?       @map("google_task_id")
+  googleTaskListId String?       @map("google_task_list_id")
+  entry            Entry?        @relation(fields: [entryId], references: [id])
+  project          Project?      @relation(fields: [projectId], references: [id])
+  taskPriority     TaskPriority? @relation(fields: [taskPriorityId], references: [id])
+  taskStatus       TaskStatus    @relation(fields: [taskStatusId], references: [id])
+
+  @@map("task")
+}
+
+model TaskStatus {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  tasks       Task[]
+
+  @@map("task_status")
+}
+
+model TaskPriority {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String?
+  tasks       Task[]
+
+  @@map("task_priority")
+}
+
+model Project {
+  id              Int           @id @default(autoincrement())
+  description     String?
+  name            String
+  createdDate     DateTime      @default(now()) @map("created_date")
+  projectStatusId Int           @default(1) @map("project_status_id")
+  entries         Entry[]
+  projectStatus   ProjectStatus @relation(fields: [projectStatusId], references: [id])
+  tasks           Task[]
+
+  @@map("project")
+}
+
+model ProjectStatus {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  projects    Project[]
+
+  @@map("project_status")
+}
+
+model Category {
+  id               Int            @id @default(autoincrement())
+  name             String         @unique
+  slug             String         @unique
+  description      String?
+  colorHex         String         @default("#6B7280") @map("color_hex")
+  iconName         String?        @map("icon_name")
+  categoryType     String         @map("category_type")
+  parentCategoryId Int?           @map("parent_category_id")
+  displayOrder     Int            @default(0) @map("display_order")
+  isActive         Boolean        @default(true) @map("is_active")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at")
+  parentCategory   Category?      @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id])
+  childCategories  Category[]     @relation("CategoryHierarchy")
+  moodCategories   MoodCategory[]
+
+  @@map("categories")
+}
+
+model MoodCategory {
+  id             Int      @id @default(autoincrement())
+  moodId         Int      @map("mood_id")
+  categoryId     Int      @map("category_id")
+  relevanceScore Float    @default(1.00) @map("relevance_score")
+  isPrimary      Boolean  @default(false) @map("is_primary")
+  createdAt      DateTime @default(now()) @map("created_at")
+  category       Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  mood           Mood     @relation(fields: [moodId], references: [id], onDelete: Cascade)
+
+  @@unique([moodId, categoryId])
+  @@map("mood_categories")
+}
+
+model UserMoodPreferences {
+  id          Int       @id @default(autoincrement())
+  userId      String    @map("user_id")
+  moodId      Int       @map("mood_id")
+  isPinned    Boolean   @default(false) @map("is_pinned")
+  isHidden    Boolean   @default(false) @map("is_hidden")
+  pinOrder    Int?      @map("pin_order")
+  usageCount  Int       @default(0) @map("usage_count")
+  lastUsedAt  DateTime? @map("last_used_at")
+  firstUsedAt DateTime? @map("first_used_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at")
+  mood        Mood      @relation(fields: [moodId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moodId])
+  @@index([moodId], map: "idx_user_mood_preferences_mood_id")
+  @@map("user_mood_preferences")
+}
+
+model UserMood {
+  id                    Int              @id @default(autoincrement())
+  userId                String           @map("user_id")
+  moodName              String           @map("mood_name")
+  status                String           @default("private")
+  description           String?
+  createdAt             DateTime         @default(now()) @map("created_at")
+  promotedAt            DateTime?        @map("promoted_at")
+  approvalVotes         Int              @default(0) @map("approval_votes")
+  similarWord           String?          @map("similar_word")
+  relatedMoodId         Int?             @map("related_mood_id")
+  questionnaireComplete Boolean          @default(false) @map("questionnaire_complete")
+  
+  // New fields for v1.6.1 - Pinning and Hiding Functionality
+  isPinned              Boolean          @default(false) @map("is_pinned")
+  isHidden              Boolean          @default(false) @map("is_hidden")
+  pinOrder              Int?             @map("pin_order")
+  usageCount            Int              @default(0) @map("usage_count")
+  lastUsedAt            DateTime?        @map("last_used_at")
+  firstUsedAt           DateTime?        @map("first_used_at")
+  
+  entryUserMoods        EntryUserMoods[]
+  promotions            MoodPromotion[]
+  moodProps             MoodProps[]
+  mood                  Mood?            @relation(fields: [relatedMoodId], references: [id])
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moodName])
+  @@index([userId, status], map: "idx_user_moods_user_id_status")
+  @@index([questionnaireComplete], map: "idx_user_moods_questionnaire_complete")
+  @@index([userId, isPinned], map: "idx_user_moods_pinned")
+  @@index([userId, isHidden], map: "idx_user_moods_hidden")
+  @@index([userId, pinOrder], map: "idx_user_moods_pin_order")
+  @@index([userId, usageCount], map: "idx_user_moods_usage_count")
+  @@index([userId, lastUsedAt], map: "idx_user_moods_last_used")
+  @@map("user_moods")
+}
+
+model MoodPromotion {
+  id               Int       @id @default(autoincrement())
+  userMoodId       Int       @map("user_mood_id")
+  promotedByUserId String    @map("promoted_by_user_id")
+  globalMoodId     Int?      @map("global_mood_id")
+  status           String    @default("pending")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  approvedAt       DateTime? @map("approved_at")
+  globalMood       Mood?     @relation(fields: [globalMoodId], references: [id])
+  promotedBy       User      @relation(fields: [promotedByUserId], references: [id], onDelete: Cascade)
+  userMood         UserMood  @relation(fields: [userMoodId], references: [id], onDelete: Cascade)
+
+  @@map("mood_promotions")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model DatabaseVersion {
+  version     String?   @id
+  appliedAt   DateTime? @default(now()) @map("applied_at")
+  description String?
+
+  @@map("database_versions")
+  @@ignore
+}

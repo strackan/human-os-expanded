@@ -16,7 +16,8 @@
       "Bash(npx supabase:*)",
       "Bash(npx tsx:*)",
       "WebSearch",
-      "WebFetch(domain:docs.claude.com)"
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(git add:*)"
     ]
   }
 }

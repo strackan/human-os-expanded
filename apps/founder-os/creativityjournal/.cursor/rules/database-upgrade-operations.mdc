@@ -1,0 +1,123 @@
+---
+alwaysApply: false
+---
+# 🚨 CRITICAL DATABASE SAFETY NOTE 🚨
+
+**⚠️ READ THIS BEFORE MAKING ANY DATABASE CHANGES ⚠️**
+
+This project contains **CRITICAL USER DATA** that must be preserved:
+- **457 emotions** (comprehensive mood system)
+- **649 mood categories** (category mappings)
+- **User journal entries** (personal content)
+- **Published entries** (user's published work)
+- **User accounts and preferences**
+
+## 🛡️ MANDATORY SAFETY PROCEDURES
+
+### 1. ALWAYS Check Current State First
+```bash
+npm run db:health          # Verify current data integrity
+npm run db:safety-check     # Check what data exists
+```
+
+### 2. ALWAYS Create Backups Before Changes
+```bash
+npm run db:protection-snapshot    # Create safety backup
+npm run db:backup                # Alternative backup method
+```
+
+### 3. ALWAYS Use Safe Operations
+```bash
+# ✅ SAFE COMMANDS:
+npm run db:safe-execute [file.sql]     # Execute SQL with protection
+npm run db:upgrade-to-v1.4.1          # Safe version upgrades
+npm run db:safe-restore               # Restore moods without data loss
+npm run db:ensure-emotions            # Restore emotions safely
+
+# ❌ NEVER USE THESE DANGEROUS COMMANDS:
+npx prisma migrate reset              # ❌ DELETES ALL DATA
+npx prisma migrate dev --reset        # ❌ DELETES ALL DATA  
+npx prisma db push --reset            # ❌ DELETES ALL DATA
+npm run db:restore:v1                 # ❌ DEPRECATED - DELETES DATA
+```
+
+### 4. ALWAYS Verify After Changes
+```bash
+npm run db:health                     # Confirm data preserved
+npm run db:audit                      # Review recent changes
+```
+
+## 🔧 SAFE MODIFICATION PATTERNS
+
+### Adding New Database Fields
+1. **Create versioned SQL file**: `database-versions/v1.X.X.sql`
+2. **Use safe ALTER TABLE**: Column additions with `DEFAULT NULL`
+3. **Add to version manager**: Update `scripts/db-version-manager.js`
+4. **Update schema.prisma**: Add field with optional/nullable type
+5. **Run with protection**: Use `npm run db:safe-execute`
+
+### Example Safe Field Addition:
+```sql
+-- Safe to run multiple times (fails silently if exists)
+ALTER TABLE entry ADD COLUMN new_field DATETIME DEFAULT NULL;
+CREATE INDEX IF NOT EXISTS idx_entry_new_field ON entry(new_field);
+```
+
+### Schema Changes
+1. **Update schema.prisma first**
+2. **Create manual SQL file** (don't rely on Prisma migrations)
+3. **Test on database copy**
+4. **Use protection system**
+5. **Verify all data preserved**
+
+## 🚨 WARNING SIGNS - STOP IMMEDIATELY
+
+If you see any of these, **STOP** and reassess:
+- Commands mentioning "reset" or "clean"
+- Any operation that would "delete all entries"
+- Migration commands with `--reset` flag
+- Direct database file replacement
+- Any operation without backup creation
+
+## 📊 EXPECTED DATA MINIMUMS
+
+After any operation, verify these minimums:
+- **Moods**: 450+ (should be 457)
+- **Mood Categories**: 600+ (should be 649)
+- **Entries**: Preserve all existing user entries
+- **Users**: Preserve all user accounts
+
+## 🆘 EMERGENCY RECOVERY
+
+If data is lost:
+1. **STOP all operations immediately**
+2. **Check backups**: `ls -la backups/`
+3. **Restore latest**: `cp backups/[latest]/dev.db prisma/dev.db`
+4. **Verify recovery**: `npm run db:health`
+
+## 📋 CURRENT SYSTEM STATUS
+
+- **Database Version**: v1.4.1
+- **Protection System**: ACTIVE
+- **Backup System**: AUTOMATED
+- **Version Manager**: AVAILABLE
+- **Safe Operations**: DOCUMENTED
+
+## 🎯 KEY PRINCIPLES
+
+1. **Additive Only**: Never delete existing data
+2. **Protection First**: Always backup before changes
+3. **Verify Everything**: Check data integrity after operations
+4. **Version Control**: Use numbered versions for all changes
+5. **Documentation**: Document all modifications
+
+## 📚 REFERENCE DOCS
+
+- `DATABASE_PROTECTION.md` - Complete protection system guide
+- `DATABASE_SAFE_OPERATIONS.md` - Safe vs dangerous operations
+- `DANGEROUS_OPERATIONS.md` - What never to run
+- `DATABASE_VERSION_MANAGEMENT.md` - Version upgrade procedures
+
+---
+
+**🔒 REMEMBER: This database contains personal journal entries and months of emotion system development. Treat it with the respect and care it deserves.**

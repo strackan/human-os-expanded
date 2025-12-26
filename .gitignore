@@ -45,3 +45,4 @@ supabase/.temp/
 # Standalone executables (build locally, don't commit)
 **/standalone/*.exe
 **/standalone/*.cjs
+.vercel

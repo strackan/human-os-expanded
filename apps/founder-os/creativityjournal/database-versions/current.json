@@ -1,0 +1,19 @@
+{
+  "version": "v1.6.1",
+  "description": "Add Pinning and Hiding Functionality to UserMood Model",
+  "features": [
+    "Added isPinned field to user_moods table for pinning favorite moods",
+    "Added isHidden field to user_moods table for hiding unwanted moods",
+    "Added pinOrder field for custom ordering of pinned moods",
+    "Added usageCount field for tracking mood usage frequency",
+    "Added lastUsedAt field for tracking recent mood usage",
+    "Added firstUsedAt field for tracking when mood was first used",
+    "Created performance indexes for efficient mood filtering and sorting",
+    "Enhanced user mood management with pinning and hiding capabilities",
+    "Added dedicated API endpoints for user mood preferences",
+    "Updated tabbed interface to support user mood pinning and hiding"
+  ],
+  "updatedAt": "2025-07-12T15:10:36.316Z",
+  "emotionCount": 459,
+  "improvements": 10
+}
