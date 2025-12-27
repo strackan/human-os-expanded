@@ -37,7 +37,7 @@ create index if not exists mood_categories_type_idx on founder_os.mood_categorie
 
 create table if not exists founder_os.mood_category_mappings (
   id uuid primary key default gen_random_uuid(),
-  mood_id uuid not null references founder_os.mood_definitions(id) on delete cascade,
+  mood_id uuid not null references public.mood_definitions(id) on delete cascade,
   category_id uuid not null references founder_os.mood_categories(id) on delete cascade,
   relevance_score numeric(3,2) default 1.00,
   is_primary boolean default false,
@@ -161,7 +161,7 @@ on conflict (slug) do nothing;
 -- =============================================================================
 
 -- Extended emotional states
-insert into founder_os.mood_definitions (name, joy_rating, trust_rating, fear_rating, surprise_rating, sadness_rating, anticipation_rating, anger_rating, disgust_rating, intensity, arousal_level, valence, dominance, is_core, category, color_hex) values
+insert into public.mood_definitions (name, joy_rating, trust_rating, fear_rating, surprise_rating, sadness_rating, anticipation_rating, anger_rating, disgust_rating, intensity, arousal_level, valence, dominance, is_core, category, color_hex) values
 -- Additional joy variants
 ('Blissful', 9, 3, 0, 0, 0, 0, 0, 0, 8, 6, 9, 6, false, 'joy-emotions', '#FCD34D'),
 ('Cheerful', 7, 2, 0, 0, 0, 0, 0, 0, 5, 6, 8, 5, false, 'joy-emotions', '#FBBF24'),
@@ -276,7 +276,7 @@ on conflict (name) do nothing;
 -- Joy-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'joy-emotions'
   and m.joy_rating >= 5
@@ -288,7 +288,7 @@ where c.slug = 'joy-emotions'
 -- Trust-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'trust-emotions'
   and m.trust_rating >= 5
@@ -300,7 +300,7 @@ where c.slug = 'trust-emotions'
 -- Fear-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'fear-emotions'
   and m.fear_rating >= 5
@@ -312,7 +312,7 @@ where c.slug = 'fear-emotions'
 -- Sadness-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'sadness-emotions'
   and m.sadness_rating >= 5
@@ -324,7 +324,7 @@ where c.slug = 'sadness-emotions'
 -- Anticipation-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'anticipation-emotions'
   and m.anticipation_rating >= 5
@@ -336,7 +336,7 @@ where c.slug = 'anticipation-emotions'
 -- Anger-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'anger-emotions'
   and m.anger_rating >= 5
@@ -348,7 +348,7 @@ where c.slug = 'anger-emotions'
 -- Disgust-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'disgust-emotions'
   and m.disgust_rating >= 5
@@ -360,7 +360,7 @@ where c.slug = 'disgust-emotions'
 -- Surprise-based emotions
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'surprise-emotions'
   and m.surprise_rating >= 5
@@ -376,7 +376,7 @@ where c.slug = 'surprise-emotions'
 -- Mild emotions (intensity 1-4)
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'mild'
   and m.intensity between 1 and 4
@@ -388,7 +388,7 @@ where c.slug = 'mild'
 -- Moderate emotions (intensity 5-7)
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'moderate'
   and m.intensity between 5 and 7
@@ -400,7 +400,7 @@ where c.slug = 'moderate'
 -- Intense emotions (intensity 8-10)
 insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from founder_os.mood_definitions m
+from public.mood_definitions m
 cross join founder_os.mood_categories c
 where c.slug = 'intense'
   and m.intensity between 8 and 10
@@ -450,7 +450,7 @@ as $$
     m.valence,
     m.color_hex,
     mcm.relevance_score
-  from founder_os.mood_definitions m
+  from public.mood_definitions m
   join founder_os.mood_category_mappings mcm on m.id = mcm.mood_id
   join founder_os.mood_categories c on mcm.category_id = c.id
   where c.slug = p_category_slug
@@ -507,7 +507,7 @@ as $$
     m.intensity,
     m.valence,
     m.color_hex
-  from founder_os.mood_definitions m
+  from public.mood_definitions m
   left join founder_os.mood_category_mappings mcm on m.id = mcm.mood_id
   left join founder_os.mood_categories c on mcm.category_id = c.id
   where

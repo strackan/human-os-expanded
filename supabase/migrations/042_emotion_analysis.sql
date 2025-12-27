@@ -236,8 +236,21 @@ returns table (
 language sql
 stable
 as $$
+  with expanded as (
+    select
+      p.participant,
+      ea.joy, ea.trust, ea.fear, ea.surprise,
+      ea.sadness, ea.anticipation, ea.anger, ea.disgust,
+      ea.valence, ea.arousal
+    from founder_os.emotion_analyses ea,
+         lateral unnest(ea.participant_names) as p(participant)
+    where
+      (p_participant1 = any(ea.participant_names) or p_participant2 = any(ea.participant_names))
+      and (p_date_from is null or ea.analyzed_date >= p_date_from)
+      and (p_date_to is null or ea.analyzed_date <= p_date_to)
+  )
   select
-    unnest(participant_names) as participant,
+    participant,
     round(avg(joy), 3),
     round(avg(trust), 3),
     round(avg(fear), 3),
@@ -249,13 +262,9 @@ as $$
     round(avg(valence), 3),
     round(avg(arousal), 3),
     count(*)
-  from founder_os.emotion_analyses
-  where
-    (p_participant1 = any(participant_names) or p_participant2 = any(participant_names))
-    and (p_date_from is null or analyzed_date >= p_date_from)
-    and (p_date_to is null or analyzed_date <= p_date_to)
-  group by unnest(participant_names)
-  having unnest(participant_names) in (p_participant1, p_participant2);
+  from expanded
+  where participant in (p_participant1, p_participant2)
+  group by participant;
 $$;
 
 comment on function founder_os.compare_participant_emotions is
