@@ -41,6 +41,11 @@ import { projectTools, handleProjectTools } from './tools/projects.js';
 import { journalTools, handleJournalTools } from './tools/journal.js';
 import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 
+// Alias system tools (natural language routing)
+import { doTools, handleDoTools } from './tools/do.js';
+import { recallTools, handleRecallTools } from './tools/recall.js';
+import { learnAliasTools, handleLearnAliasTools } from './tools/learn-alias.js';
+
 import { createToolContext, withModeProperties, type ToolHandler } from './lib/context.js';
 
 // Declare globals for embedded data (set by bundle script for standalone exe)
@@ -75,8 +80,18 @@ if (process.argv.includes('--version') || process.argv.includes('-v')) {
 /**
  * All tool modules with their handlers
  * Order matters - first matching handler wins
+ *
+ * NOTE: Alias tools (do, recall, learn_alias) are placed FIRST
+ * so the natural language router is tried before direct tools.
+ * This enables the "user vocabulary as API" pattern.
  */
 const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
+  // Alias system - natural language routing (try first)
+  { tools: doTools, handler: handleDoTools },
+  { tools: recallTools, handler: handleRecallTools },
+  { tools: learnAliasTools, handler: handleLearnAliasTools },
+
+  // Direct tools (fallback when aliases don't match)
   { tools: sessionTools, handler: handleSessionTools },
   { tools: queueTools, handler: handleQueueTools },
   { tools: taskTools, handler: handleTaskTools },

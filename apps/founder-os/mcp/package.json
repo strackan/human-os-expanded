@@ -34,6 +34,7 @@
     "outputPath": "standalone"
   },
   "dependencies": {
+    "@human-os/aliases": "workspace:*",
     "@human-os/core": "workspace:*",
     "@human-os/journal": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",

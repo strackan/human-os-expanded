@@ -214,6 +214,9 @@ importers:
 
   apps/founder-os/mcp:
     dependencies:
+      '@human-os/aliases':
+        specifier: workspace:*
+        version: link:../../../packages/aliases
       '@human-os/core':
         specifier: workspace:*
         version: link:../../../packages/core
@@ -296,6 +299,25 @@ importers:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3
+
+  packages/aliases:
+    dependencies:
+      '@human-os/core':
+        specifier: workspace:*
+        version: link:../core
+      '@supabase/supabase-js':
+        specifier: ^2.47.0
+        version: 2.87.1
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@24.10.2)(lightningcss@1.30.2)
 
   packages/commercial:
     dependencies:
