@@ -26,6 +26,7 @@ import { createGraphRoutes } from './routes/v1/graph.js';
 import { createEntitiesRoutes } from './routes/v1/entities.js';
 import { createVoiceRoutes } from './routes/v1/voice.js';
 import { createExpertsRoutes } from './routes/v1/experts.js';
+import { createAnalyzeRoutes } from './routes/v1/analyze.js';
 
 /**
  * Environment configuration
@@ -84,6 +85,7 @@ async function main() {
   app.use('/v1/entities', createEntitiesRoutes(supabase));
   app.use('/v1/voice', createVoiceRoutes(contextEngine));
   app.use('/v1/experts', createExpertsRoutes(supabase, contextEngine));
+  app.use('/v1/analyze', createAnalyzeRoutes());
 
   // 404 handler
   app.use((req, res) => {
