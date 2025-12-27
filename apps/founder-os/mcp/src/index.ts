@@ -41,7 +41,7 @@ import { projectTools, handleProjectTools } from './tools/projects.js';
 import { journalTools, handleJournalTools } from './tools/journal.js';
 import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 
-import { createToolContext, type ToolHandler } from './lib/context.js';
+import { createToolContext, withModeProperties, type ToolHandler } from './lib/context.js';
 
 // Declare globals for embedded data (set by bundle script for standalone exe)
 declare global {
@@ -91,8 +91,8 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: emotionTools, handler: handleEmotionTools },
 ];
 
-/** Flat list of all tools for MCP registration */
-const allTools = toolModules.flatMap(m => m.tools);
+/** Flat list of all tools for MCP registration, with mode property added */
+const allTools = withModeProperties(toolModules.flatMap(m => m.tools));
 
 // =============================================================================
 // HELPERS
