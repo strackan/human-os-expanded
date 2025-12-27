@@ -88,6 +88,148 @@ export interface EmotionCategory {
 }
 
 // =============================================================================
+// TEXT EMOTION ANALYSIS (Text → Plutchik Vector)
+// =============================================================================
+
+/**
+ * Plutchik 8-dimension vector with normalized scores (0-1)
+ * Used for text emotion analysis and comparison
+ */
+export interface PlutchikVector {
+  joy: number;        // 0-1 normalized
+  trust: number;      // 0-1 normalized
+  fear: number;       // 0-1 normalized
+  surprise: number;   // 0-1 normalized
+  sadness: number;    // 0-1 normalized
+  anticipation: number; // 0-1 normalized
+  anger: number;      // 0-1 normalized
+  disgust: number;    // 0-1 normalized
+}
+
+/**
+ * A detected emotional keyword in text
+ */
+export interface DetectedKeyword {
+  word: string;
+  emotion: PlutchikEmotion;
+  confidence: number;       // 0-1, how strongly this word indicates the emotion
+  intensity?: 'mild' | 'moderate' | 'intense';
+}
+
+/**
+ * Result of text emotion analysis
+ * Combines VAD (Valence-Arousal-Dominance) model with Plutchik categorical emotions
+ */
+export interface TextEmotionAnalysis {
+  // VAD Dimensions (continuous, for intensity/polarity)
+  valence: number;           // -1 (negative) to +1 (positive) - emotional polarity
+  arousal: number;           // 0 (calm) to 1 (intense) - emotional intensity
+  dominance: number;         // 0 (submissive) to 1 (dominant) - sense of control
+
+  // Plutchik Vector (categorical, for specific emotion identification)
+  plutchikVector: PlutchikVector;  // 8 dimensions, 0-1 each
+  dominantEmotion: PlutchikEmotion;
+  emotionConfidence: number;       // 0-1, confidence in dominant emotion
+
+  // Detection details
+  detectedKeywords: DetectedKeyword[];
+  wordCount: number;
+  emotionDensity: number;    // detectedKeywords.length / wordCount
+
+  // Analysis metadata
+  method: 'keyword' | 'transformer';  // Which analysis method was used
+}
+
+/**
+ * Result of comparing two texts emotionally
+ */
+export interface EmotionComparison {
+  distance: number;          // Euclidean distance between vectors (0 = identical)
+  similarity: number;        // 0-1, cosine similarity
+  shift: PlutchikVector;     // Change from text1 to text2 (positive = increase)
+  valenceChange: number;     // Change in valence (-2 to +2)
+  arousalChange: number;     // Change in arousal (-1 to +1)
+  dominantShift: {
+    from: PlutchikEmotion;
+    to: PlutchikEmotion;
+  };
+}
+
+/**
+ * Emotion trend data point for time-series analysis
+ */
+export interface EmotionTrendDataPoint {
+  period: string;            // ISO date or period label (e.g., "2024-01")
+  averageVector: PlutchikVector;
+  averageValence: number;
+  averageArousal: number;
+  dominantEmotion: PlutchikEmotion;
+  entryCount: number;
+}
+
+/**
+ * Emotion trend analysis result
+ */
+export interface EmotionTrendAnalysis {
+  dataPoints: EmotionTrendDataPoint[];
+  overallTrend: {
+    valenceDirection: 'improving' | 'declining' | 'stable';
+    arousalDirection: 'increasing' | 'decreasing' | 'stable';
+    dominantEmotions: PlutchikEmotion[];  // Most common across period
+  };
+  insights: string[];        // AI-generated observations
+}
+
+/**
+ * Filter options for batch emotion analysis
+ */
+export interface EmotionAnalysisFilter {
+  sourceType?: 'transcript' | 'journal' | 'text' | 'social';
+  participantName?: string;
+  contextTags?: string[];
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+/**
+ * Stored emotion analysis result (from database)
+ */
+export interface StoredEmotionAnalysis {
+  id: string;
+  sourceType: 'transcript' | 'journal' | 'text' | 'social';
+  sourceId?: string;
+  sourceTextHash?: string;
+
+  // Plutchik scores
+  joy: number;
+  trust: number;
+  fear: number;
+  surprise: number;
+  sadness: number;
+  anticipation: number;
+  anger: number;
+  disgust: number;
+
+  // VAD
+  valence: number;
+  arousal: number;
+  dominantEmotion: PlutchikEmotion;
+  emotionDensity: number;
+
+  // Context
+  analyzedDate: Date;
+  participantNames?: string[];
+  contextTags?: string[];
+
+  // Details
+  wordCount: number;
+  keywordCount: number;
+  detectedKeywords: DetectedKeyword[];
+
+  createdAt: Date;
+}
+
+// =============================================================================
 // JOURNAL ENTRIES
 // =============================================================================
 

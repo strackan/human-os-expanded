@@ -36,6 +36,9 @@ importers:
       '@human-os/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@human-os/journal':
+        specifier: workspace:*
+        version: link:../../packages/journal
       '@supabase/supabase-js':
         specifier: ^2.39.0
         version: 2.87.1
@@ -68,7 +71,29 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/creativityjournal:
+  apps/founder-os/_base:
+    dependencies:
+      '@human-os/core':
+        specifier: workspace:*
+        version: link:../../../packages/core
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.0.4
+        version: 1.24.3(zod@3.25.76)
+      '@supabase/supabase-js':
+        specifier: ^2.39.0
+        version: 2.87.1
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.26
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  apps/founder-os/creativityjournal:
     dependencies:
       '@next-auth/prisma-adapter':
         specifier: ^1.0.7
@@ -172,28 +197,6 @@ importers:
         version: 4.21.0
       typescript:
         specifier: ^5
-        version: 5.9.3
-
-  apps/founder-os/_base:
-    dependencies:
-      '@human-os/core':
-        specifier: workspace:*
-        version: link:../../../packages/core
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.0.4
-        version: 1.24.3(zod@3.25.76)
-      '@supabase/supabase-js':
-        specifier: ^2.39.0
-        version: 2.87.1
-      zod:
-        specifier: ^3.23.0
-        version: 3.25.76
-    devDependencies:
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.26
-      typescript:
-        specifier: ^5.7.2
         version: 5.9.3
 
   apps/founder-os/justin:
