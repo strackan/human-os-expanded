@@ -217,7 +217,7 @@ async function invokeToolInternal(
   const { handleSearchTools } = await import('./search.js');
   const { handleTranscriptTools } = await import('./transcripts.js');
   const { handleCommunityIntelTools } = await import('./community-intel.js');
-  const { handleProjectTools } = await import('./projects.js');
+  const { handleProjectTools } = await import('./projects/index.js');
   const { handleJournalTools } = await import('./journal.js');
   const { handleEmotionTools } = await import('./emotions.js');
 

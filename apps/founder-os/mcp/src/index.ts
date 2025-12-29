@@ -37,7 +37,7 @@ import { gftTools, handleGFTTools } from './tools/gft-ingestion.js';
 import { demoTools, handleDemoTools } from './tools/demo.js';
 import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 import { communityIntelTools, handleCommunityIntelTools } from './tools/community-intel.js';
-import { projectTools, handleProjectTools } from './tools/projects.js';
+import { projectTools, handleProjectTools } from './tools/projects/index.js';
 import { journalTools, handleJournalTools } from './tools/journal.js';
 import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 import { voiceTools, handleVoiceTools } from './tools/voice.js';

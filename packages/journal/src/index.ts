@@ -76,6 +76,12 @@ export { EntityLinker, createEntityLinker } from './entity-linker.js';
 export { ModeLoader, createModeLoader } from './mode-loader.js';
 
 // =============================================================================
+// MAPPER EXPORTS
+// =============================================================================
+
+export { mapEntryRow, mapMoodRow, mapEntryMoodRow } from './mappers.js';
+
+// =============================================================================
 // EMOTION ANALYZER EXPORTS (Text → Plutchik Vector)
 // =============================================================================
 

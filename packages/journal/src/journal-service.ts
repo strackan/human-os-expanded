@@ -24,6 +24,7 @@ import type {
 } from './types.js';
 import { EntityLinker, createEntityLinker } from './entity-linker.js';
 import { getEmotionRecommendations, generateEmotionInsights, analyzeEmotion } from './utils/emotion-utils.js';
+import { mapEntryRow, mapMoodRow, mapEntryMoodRow } from './mappers.js';
 
 // =============================================================================
 // JOURNAL SERVICE CLASS
@@ -115,7 +116,7 @@ export class JournalService {
       await this.linkEntitiesToEntry(entry.id, input.content, mentions);
     }
 
-    return this.mapEntryRow(entry);
+    return mapEntryRow(entry);
   }
 
   /**
@@ -192,7 +193,7 @@ export class JournalService {
       throw new Error(`Failed to update journal entry: ${error.message}`);
     }
 
-    return this.mapEntryRow(entry);
+    return mapEntryRow(entry);
   }
 
   /**
@@ -266,9 +267,9 @@ export class JournalService {
       }
     }
 
-    const result = this.mapEntryRow(entry);
-    result.primaryMood = entry.primary_mood ? this.mapMoodRow(entry.primary_mood) : undefined;
-    result.moods = moods?.map((m) => this.mapEntryMoodRow(m)) || [];
+    const result = mapEntryRow(entry);
+    result.primaryMood = entry.primary_mood ? mapMoodRow(entry.primary_mood) : undefined;
+    result.moods = moods?.map((m) => mapEntryMoodRow(m)) || [];
     result.entityMentions = entityMentions;
 
     return result;
@@ -320,8 +321,8 @@ export class JournalService {
 
     return {
       entries: (data || []).map((row) => {
-        const entry = this.mapEntryRow(row);
-        entry.primaryMood = row.primary_mood ? this.mapMoodRow(row.primary_mood) : undefined;
+        const entry = mapEntryRow(row);
+        entry.primaryMood = row.primary_mood ? mapMoodRow(row.primary_mood) : undefined;
         return entry;
       }),
       totalCount: count || 0,
@@ -547,7 +548,7 @@ export class JournalService {
       .select('*')
       .limit(50);
 
-    const analyses = (recentMoods || []).map((m) => analyzeEmotion(this.mapMoodRow(m)));
+    const analyses = (recentMoods || []).map((m) => analyzeEmotion(mapMoodRow(m)));
     return getEmotionRecommendations(content, analyses);
   }
 
@@ -742,76 +743,6 @@ export class JournalService {
     }
   }
 
-  /**
-   * Map database row to JournalEntry
-   */
-  private mapEntryRow(row: Record<string, unknown>): JournalEntry {
-    return {
-      id: row.id as string,
-      ownerId: row.owner_id as string,
-      tenantId: row.tenant_id as string | undefined,
-      layer: row.layer as JournalEntry['layer'],
-      title: row.title as string | undefined,
-      content: row.content as string,
-      contentHtml: row.content_html as string | undefined,
-      entryType: row.entry_type as JournalEntry['entryType'],
-      mode: row.mode as string | undefined,
-      primaryMoodId: row.primary_mood_id as string | undefined,
-      moodIntensity: row.mood_intensity as number | undefined,
-      valence: row.valence as number | undefined,
-      aiSummary: row.ai_summary as string | undefined,
-      aiInsights: row.ai_insights as string[] | undefined,
-      extractedThemes: row.extracted_themes as string[] | undefined,
-      status: row.status as JournalEntry['status'],
-      isPrivate: row.is_private as boolean,
-      entryDate: new Date(row.entry_date as string),
-      createdAt: new Date(row.created_at as string),
-      updatedAt: new Date(row.updated_at as string),
-    };
-  }
-
-  /**
-   * Map database row to MoodDefinition
-   */
-  private mapMoodRow(row: Record<string, unknown>): MoodDefinition {
-    return {
-      id: row.id as string,
-      name: row.name as string,
-      joyRating: row.joy_rating as number,
-      trustRating: row.trust_rating as number,
-      fearRating: row.fear_rating as number,
-      surpriseRating: row.surprise_rating as number,
-      sadnessRating: row.sadness_rating as number,
-      anticipationRating: row.anticipation_rating as number,
-      angerRating: row.anger_rating as number,
-      disgustRating: row.disgust_rating as number,
-      intensity: row.intensity as number,
-      arousalLevel: row.arousal_level as number,
-      valence: row.valence as number,
-      dominance: row.dominance as number,
-      category: row.category as string | undefined,
-      colorHex: row.color_hex as string,
-      isCore: row.is_core as boolean,
-      createdAt: new Date(row.created_at as string),
-      updatedAt: new Date(row.updated_at as string),
-    };
-  }
-
-  /**
-   * Map database row to JournalEntryMood
-   */
-  private mapEntryMoodRow(row: Record<string, unknown>): JournalEntryMood {
-    return {
-      id: row.id as string,
-      entryId: row.entry_id as string,
-      moodId: row.mood_id as string,
-      mood: row.mood ? this.mapMoodRow(row.mood as Record<string, unknown>) : undefined,
-      intensity: row.intensity as number,
-      isPrimary: row.is_primary as boolean,
-      contextSnippet: row.context_snippet as string | undefined,
-      createdAt: new Date(row.created_at as string),
-    };
-  }
 }
 
 /**
