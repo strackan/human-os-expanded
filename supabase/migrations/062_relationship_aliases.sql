@@ -130,7 +130,7 @@ VALUES
     '[{"tool": "get_relationship", "params": {"name": "{name}"}}]'::jsonb,
     150
   )
-ON CONFLICT (pattern) DO UPDATE SET
+ON CONFLICT (pattern, layer) DO UPDATE SET
   description = EXCLUDED.description,
   tools_required = EXCLUDED.tools_required,
   actions = EXCLUDED.actions,
