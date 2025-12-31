@@ -26,6 +26,9 @@ import { EntityLinker, createEntityLinker } from './entity-linker.js';
 import { getEmotionRecommendations, generateEmotionInsights, analyzeEmotion } from './utils/emotion-utils.js';
 import { mapEntryRow, mapMoodRow, mapEntryMoodRow } from './mappers.js';
 
+/** Schema where journal tables live */
+const JOURNAL_SCHEMA = 'human_os';
+
 // =============================================================================
 // JOURNAL SERVICE CLASS
 // =============================================================================
@@ -72,7 +75,7 @@ export class JournalService {
 
         // Get valence from mood definition
         const { data: moodDef } = await supabase
-          .from('mood_definitions')
+          .schema(JOURNAL_SCHEMA).from('mood_definitions')
           .select('valence')
           .eq('id', primaryMoodId)
           .single();
@@ -82,7 +85,7 @@ export class JournalService {
 
     // Insert entry
     const { data: entry, error } = await supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .insert({
         owner_id: this.ctx.userId,
         tenant_id: this.ctx.tenantId || null,
@@ -94,6 +97,8 @@ export class JournalService {
         primary_mood_id: primaryMoodId || null,
         mood_intensity: moodIntensity || null,
         valence: valence || null,
+        energy_level: input.energyLevel || null,
+        stress_level: input.stressLevel || null,
         status: 'draft',
         is_private: input.isPrivate ?? true,
         entry_date: input.entryDate ? input.entryDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -137,11 +142,17 @@ export class JournalService {
     if (input.status !== undefined) {
       updates.status = input.status;
     }
+    if (input.energyLevel !== undefined) {
+      updates.energy_level = input.energyLevel;
+    }
+    if (input.stressLevel !== undefined) {
+      updates.stress_level = input.stressLevel;
+    }
 
     // Update moods if provided
     if (input.moods !== undefined) {
       // Clear existing moods
-      await supabase.from('journal_entry_moods').delete().eq('entry_id', id);
+      await supabase.schema(JOURNAL_SCHEMA).from('journal_entry_moods').delete().eq('entry_id', id);
 
       // Link new moods
       if (input.moods.length > 0) {
@@ -155,7 +166,7 @@ export class JournalService {
           updates.mood_intensity = firstMood.intensity;
 
           const { data: moodDef } = await supabase
-            .from('mood_definitions')
+            .schema(JOURNAL_SCHEMA).from('mood_definitions')
             .select('valence')
             .eq('id', firstMood.moodId)
             .single();
@@ -171,7 +182,7 @@ export class JournalService {
     // Re-analyze entities if content changed
     if (input.content !== undefined && input.reanalyze) {
       // Clear existing mentions
-      await supabase.from('journal_entity_mentions').delete().eq('entry_id', id);
+      await supabase.schema(JOURNAL_SCHEMA).from('journal_entity_mentions').delete().eq('entry_id', id);
 
       // Extract and link new entities
       const mentions = this.entityLinker.extractMentions(input.content);
@@ -182,7 +193,7 @@ export class JournalService {
 
     // Update entry
     const { data: entry, error } = await supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .update(updates)
       .eq('id', id)
       .eq('owner_id', this.ctx.userId)
@@ -203,7 +214,7 @@ export class JournalService {
     const supabase = this.getClient();
 
     const { data: entry, error } = await supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .select(
         `
         *,
@@ -221,7 +232,7 @@ export class JournalService {
 
     // Get moods
     const { data: moods } = await supabase
-      .from('journal_entry_moods')
+      .schema(JOURNAL_SCHEMA).from('journal_entry_moods')
       .select(
         `
         *,
@@ -232,7 +243,7 @@ export class JournalService {
 
     // Get entity mentions
     const { data: mentions } = await supabase
-      .from('journal_entity_mentions')
+      .schema(JOURNAL_SCHEMA).from('journal_entity_mentions')
       .select('*')
       .eq('entry_id', id);
 
@@ -284,7 +295,7 @@ export class JournalService {
     const offset = filters.offset || 0;
 
     let query = supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .select(
         `
         *,
@@ -337,7 +348,7 @@ export class JournalService {
     const supabase = this.getClient();
 
     const { data, error, count } = await supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .select(
         `
         id, title, entry_date, entry_type,
@@ -403,7 +414,7 @@ export class JournalService {
     startDate.setDate(startDate.getDate() - days);
 
     const { data: entries, error } = await supabase
-      .from('journal_entries')
+      .schema(JOURNAL_SCHEMA).from('journal_entries')
       .select(
         `
         entry_date, mood_intensity, valence,
@@ -544,7 +555,7 @@ export class JournalService {
     // Get historical moods for context
     const supabase = this.getClient();
     const { data: recentMoods } = await supabase
-      .from('mood_definitions')
+      .schema(JOURNAL_SCHEMA).from('mood_definitions')
       .select('*')
       .limit(50);
 
@@ -564,7 +575,7 @@ export class JournalService {
 
     if (resolution.ignore) {
       await supabase
-        .from('journal_leads')
+        .schema(JOURNAL_SCHEMA).from('journal_leads')
         .update({ status: 'ignored', resolved_at: new Date().toISOString() })
         .eq('id', leadId)
         .eq('owner_id', this.ctx.userId);
@@ -597,7 +608,7 @@ export class JournalService {
 
     // Update lead
     await supabase
-      .from('journal_leads')
+      .schema(JOURNAL_SCHEMA).from('journal_leads')
       .update({
         status: 'resolved',
         resolved_entity_id: entityId,
@@ -608,14 +619,14 @@ export class JournalService {
 
     // Update any journal entries that referenced this lead
     const { data: lead } = await supabase
-      .from('journal_leads')
+      .schema(JOURNAL_SCHEMA).from('journal_leads')
       .select('name, entry_id')
       .eq('id', leadId)
       .single();
 
     if (lead?.entry_id && entityId) {
       // Add entity mention to the entry
-      await supabase.from('journal_entity_mentions').upsert({
+      await supabase.schema(JOURNAL_SCHEMA).from('journal_entity_mentions').upsert({
         entry_id: lead.entry_id,
         entity_id: entityId,
         mention_text: lead.name,
@@ -631,7 +642,7 @@ export class JournalService {
     const supabase = this.getClient();
 
     const { data, error } = await supabase
-      .from('journal_leads')
+      .schema(JOURNAL_SCHEMA).from('journal_leads')
       .select('*')
       .eq('owner_id', this.ctx.userId)
       .eq('status', 'pending')
@@ -672,7 +683,7 @@ export class JournalService {
 
     for (const mood of moods) {
       const { data } = await supabase
-        .from('mood_definitions')
+        .schema(JOURNAL_SCHEMA).from('mood_definitions')
         .select('id')
         .ilike('name', mood.name)
         .limit(1)
@@ -708,7 +719,7 @@ export class JournalService {
       is_primary: index === 0,
     }));
 
-    await supabase.from('journal_entry_moods').insert(moodLinks);
+    await supabase.schema(JOURNAL_SCHEMA).from('journal_entry_moods').insert(moodLinks);
   }
 
   /**
@@ -730,7 +741,7 @@ export class JournalService {
         const contextEnd = Math.min(content.length, index + mentionText.length + 50);
         const contextSnippet = content.substring(contextStart, contextEnd);
 
-        await supabase.from('journal_entity_mentions').upsert({
+        await supabase.schema(JOURNAL_SCHEMA).from('journal_entity_mentions').upsert({
           entry_id: entryId,
           entity_id: result.entity.id,
           mention_text: mentionText,

@@ -36,7 +36,7 @@ export const journalTools: Tool[] = [
         },
         entry_type: {
           type: 'string',
-          enum: ['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review'],
+          enum: ['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'],
           description: 'Type of journal entry. Defaults to freeform.',
         },
         mode: {
@@ -58,6 +58,18 @@ export const journalTools: Tool[] = [
         entry_date: {
           type: 'string',
           description: 'Date of the entry (YYYY-MM-DD). Defaults to today.',
+        },
+        energy_level: {
+          type: 'number',
+          minimum: 1,
+          maximum: 10,
+          description: 'Physical energy level 1-10 (1=exhausted, 10=energized)',
+        },
+        stress_level: {
+          type: 'number',
+          minimum: 1,
+          maximum: 10,
+          description: 'Stress level 1-10 (1=calm, 10=highly stressed)',
         },
       },
       required: ['content'],
@@ -102,6 +114,18 @@ export const journalTools: Tool[] = [
           type: 'boolean',
           description: 'Re-run entity extraction on updated content. Defaults to false.',
         },
+        energy_level: {
+          type: 'number',
+          minimum: 1,
+          maximum: 10,
+          description: 'Physical energy level 1-10',
+        },
+        stress_level: {
+          type: 'number',
+          minimum: 1,
+          maximum: 10,
+          description: 'Stress level 1-10',
+        },
       },
       required: ['id'],
     },
@@ -136,7 +160,7 @@ export const journalTools: Tool[] = [
         },
         entry_type: {
           type: 'string',
-          enum: ['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review'],
+          enum: ['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'],
           description: 'Filter by entry type',
         },
         mood: {
@@ -281,7 +305,7 @@ const CreateEntrySchema = z.object({
   content: z.string(),
   title: z.string().optional(),
   entry_type: z
-    .enum(['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review'])
+    .enum(['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'])
     .optional(),
   mode: z.string().optional(),
   moods: z
@@ -293,6 +317,8 @@ const CreateEntrySchema = z.object({
     )
     .optional(),
   entry_date: z.string().optional(),
+  energy_level: z.number().min(1).max(10).optional(),
+  stress_level: z.number().min(1).max(10).optional(),
 });
 
 const UpdateEntrySchema = z.object({
@@ -309,13 +335,15 @@ const UpdateEntrySchema = z.object({
     .optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   reanalyze: z.boolean().optional(),
+  energy_level: z.number().min(1).max(10).optional(),
+  stress_level: z.number().min(1).max(10).optional(),
 });
 
 const ListEntriesSchema = z.object({
   after: z.string().optional(),
   before: z.string().optional(),
   entry_type: z
-    .enum(['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review'])
+    .enum(['freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'])
     .optional(),
   mood: z.string().optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
@@ -353,7 +381,7 @@ function toJournalContext(ctx: ToolContext): JournalServiceContext {
   return {
     supabaseUrl: ctx.supabaseUrl,
     supabaseKey: ctx.supabaseKey,
-    userId: ctx.userId,
+    userId: ctx.userUUID, // Use UUID for database operations
     layer: ctx.layer,
   };
 }
@@ -385,6 +413,8 @@ export async function handleJournalTools(
         mode: data.mode,
         moods: data.moods,
         entryDate: data.entry_date ? new Date(data.entry_date) : undefined,
+        energyLevel: data.energy_level,
+        stressLevel: data.stress_level,
       });
 
       return {
@@ -395,6 +425,8 @@ export async function handleJournalTools(
         status: entry.status,
         primaryMood: entry.primaryMood?.name,
         moodIntensity: entry.moodIntensity,
+        energyLevel: entry.energyLevel,
+        stressLevel: entry.stressLevel,
         message: 'Journal entry created successfully.',
       };
     }
@@ -409,6 +441,8 @@ export async function handleJournalTools(
         moods: data.moods,
         status: data.status,
         reanalyze: data.reanalyze,
+        energyLevel: data.energy_level,
+        stressLevel: data.stress_level,
       });
 
       return {
@@ -457,6 +491,8 @@ export async function handleJournalTools(
           entityType: em.entity?.entityType,
           relationshipType: em.relationshipType,
         })),
+        energyLevel: entry.energyLevel,
+        stressLevel: entry.stressLevel,
         aiSummary: entry.aiSummary,
         extractedThemes: entry.extractedThemes,
         createdAt: entry.createdAt.toISOString(),
@@ -486,6 +522,8 @@ export async function handleJournalTools(
           entryDate: e.entryDate.toISOString().split('T')[0],
           status: e.status,
           primaryMood: e.primaryMood?.name,
+          energyLevel: e.energyLevel,
+          stressLevel: e.stressLevel,
           contentPreview: e.content.substring(0, 150) + (e.content.length > 150 ? '...' : ''),
         })),
         totalCount: result.totalCount,

@@ -27,6 +27,8 @@ export function mapEntryRow(row: Record<string, unknown>): JournalEntry {
     primaryMoodId: row.primary_mood_id as string | undefined,
     moodIntensity: row.mood_intensity as number | undefined,
     valence: row.valence as number | undefined,
+    energyLevel: row.energy_level as number | undefined,
+    stressLevel: row.stress_level as number | undefined,
     aiSummary: row.ai_summary as string | undefined,
     aiInsights: row.ai_insights as string[] | undefined,
     extractedThemes: row.extracted_themes as string[] | undefined,

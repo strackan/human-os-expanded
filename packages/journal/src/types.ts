@@ -242,7 +242,8 @@ export type JournalEntryType =
   | 'mood_check'
   | 'mindfulness'
   | 'reflection'
-  | 'daily_review';
+  | 'daily_review'
+  | 'daily_plan';
 
 /**
  * Entry status
@@ -270,6 +271,9 @@ export interface JournalEntry {
   primaryMood?: MoodDefinition;
   moodIntensity?: number;
   valence?: number;
+  // Physical vitals
+  energyLevel?: number;
+  stressLevel?: number;
   // AI analysis
   aiSummary?: string;
   aiInsights?: string[];
@@ -434,6 +438,9 @@ export interface CreateJournalEntryInput {
   }>;
   entryDate?: Date;
   isPrivate?: boolean;
+  // Physical vitals (1-10)
+  energyLevel?: number;
+  stressLevel?: number;
 }
 
 /**
@@ -448,6 +455,9 @@ export interface UpdateJournalEntryInput {
   }>;
   status?: JournalEntryStatus;
   reanalyze?: boolean;
+  // Physical vitals (1-10)
+  energyLevel?: number;
+  stressLevel?: number;
 }
 
 /**
