@@ -43,6 +43,8 @@ import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 import { voiceTools, handleVoiceTools } from './tools/voice.js';
 import { skillsTools, handleSkillsTools } from './tools/skills.js';
 import { contextTools, handleContextTools } from './tools/context.js';
+import { identityTools, handleIdentityTools } from './tools/identity.js';
+import { priorityTools, handlePriorityTools } from './tools/priorities.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -110,6 +112,8 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: voiceTools, handler: handleVoiceTools },
   { tools: skillsTools, handler: handleSkillsTools },
   { tools: contextTools, handler: handleContextTools },
+  { tools: identityTools, handler: handleIdentityTools },
+  { tools: priorityTools, handler: handlePriorityTools },
 ];
 
 /** Flat list of all tools for MCP registration, with mode property added */
