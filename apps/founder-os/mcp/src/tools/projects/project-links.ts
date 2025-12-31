@@ -211,7 +211,7 @@ async function getProjectLinks(
         const { data: goal } = await ctx
           .getClient()
           .schema(DB_SCHEMAS.FOUNDER_OS)
-          .from('goals')
+          .from('okr_goals')
           .select('title')
           .eq('id', link.linked_id)
           .single();
