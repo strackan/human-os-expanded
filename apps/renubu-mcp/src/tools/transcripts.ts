@@ -2,8 +2,8 @@
  * Renubu Transcript Tools - Multi-Tenant
  *
  * Tools for ingesting call transcripts with hybrid storage:
- * - Metadata in renubu.transcripts table
- * - Full content in context_files at layer renubu:tenant-{tenant_id}
+ * - Metadata in human_os.transcripts table with layer = renubu:tenant-{tenant_id}
+ * - Full content in Supabase Storage
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -330,10 +330,10 @@ interface NotableQuote {
 
 interface TranscriptRow {
   id: string;
-  tenant_id: string;
-  uploaded_by: string | null;
+  layer: string;
+  user_id: string | null;
+  storage_path: string;
   title: string;
-  slug: string;
   call_date: string | null;
   call_type: string | null;
   duration_minutes: number | null;
@@ -345,9 +345,11 @@ interface TranscriptRow {
   action_items: ActionItem[];
   notable_quotes: NotableQuote[];
   relationship_insights: string | null;
-  context_file_id: string | null;
+  labels: Record<string, unknown>;
   entity_ids: string[];
   context_tags: string[];
+  project_id: string | null;
+  opportunity_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -509,16 +511,14 @@ async function ingestOrgTranscript(
 ): Promise<{
   id: string;
   title: string;
-  slug: string;
+  storage_path: string;
   call_date: string | null;
   participants_count: number;
   topics_count: number;
-  context_file_id: string | null;
 }> {
   const supabase = ctx.getClient();
-  const contextEngine = ctx.getContextEngine();
 
-  // Generate slug
+  // Generate slug for storage path
   const slug = slugify(data.title, data.call_date);
 
   // Build layer for this tenant
@@ -527,14 +527,21 @@ async function ingestOrgTranscript(
   // Generate markdown content
   const markdownContent = generateTranscriptMarkdown(data, slug);
 
-  // Save to context_files via ContextEngine
-  let contextFileId: string | null = null;
-  try {
-    const savedFile = await contextEngine.saveContext(layer, 'transcripts', slug, markdownContent);
-    contextFileId = savedFile.id;
-  } catch (err) {
-    console.error('Failed to save context file:', err);
-    // Continue without context file - metadata will still be saved
+  // Generate a UUID for this transcript
+  const transcriptId = crypto.randomUUID();
+  const storagePath = `transcripts/${layer}/${transcriptId}.md`;
+
+  // Save content to Supabase Storage
+  const { error: storageError } = await supabase.storage
+    .from('human-os')
+    .upload(storagePath, markdownContent, {
+      contentType: 'text/markdown',
+      upsert: false,
+    });
+
+  if (storageError) {
+    console.error('Failed to save to storage:', storageError);
+    throw new Error(`Failed to save transcript content: ${storageError.message}`);
   }
 
   // Auto-link participants to existing entities
@@ -557,14 +564,16 @@ async function ingestOrgTranscript(
     }
   }
 
-  // Insert metadata into renubu.transcripts
+  // Insert metadata into human_os.transcripts
   const { data: inserted, error } = await supabase
-    .from('renubu.transcripts')
+    .schema('human_os')
+    .from('transcripts')
     .insert({
-      tenant_id: data.tenant_id,
-      uploaded_by: ctx.ownerId || null,
+      id: transcriptId,
+      layer,
+      user_id: ctx.ownerId || null,
+      storage_path: storagePath,
       title: data.title,
-      slug,
       call_date: data.call_date || null,
       call_type: data.call_type || null,
       duration_minutes: data.duration_minutes || null,
@@ -576,33 +585,33 @@ async function ingestOrgTranscript(
       action_items: data.action_items || [],
       notable_quotes: data.notable_quotes || [],
       relationship_insights: data.relationship_insights || null,
-      context_file_id: contextFileId,
+      labels: {},
       entity_ids: Array.from(entityIds),
       context_tags: data.context_tags || [],
     })
-    .select('id, title, slug, call_date, context_file_id')
+    .select('id, title, storage_path, call_date')
     .single();
 
   if (error) {
+    // Clean up storage on insert failure
+    await supabase.storage.from('human-os').remove([storagePath]);
     throw new Error(`Failed to ingest transcript: ${error.message}`);
   }
 
   const result = inserted as {
     id: string;
     title: string;
-    slug: string;
+    storage_path: string;
     call_date: string | null;
-    context_file_id: string | null;
   };
 
   return {
     id: result.id,
     title: result.title,
-    slug: result.slug,
+    storage_path: result.storage_path,
     call_date: result.call_date,
     participants_count: data.participants?.length || 0,
     topics_count: data.key_topics?.length || 0,
-    context_file_id: result.context_file_id,
   };
 }
 
@@ -616,7 +625,7 @@ async function listOrgTranscripts(
   transcripts: Array<{
     id: string;
     title: string;
-    slug: string;
+    storage_path: string;
     call_date: string | null;
     call_type: string | null;
     duration_minutes: number | null;
@@ -629,17 +638,19 @@ async function listOrgTranscripts(
   has_more: boolean;
 }> {
   const supabase = ctx.getClient();
+  const layer = `renubu:tenant-${params.tenant_id}`;
 
   const limit = Math.min(params.limit || 20, 50);
   const offset = params.offset || 0;
 
   let query = supabase
-    .from('renubu.transcripts')
+    .schema('human_os')
+    .from('transcripts')
     .select(
-      'id, title, slug, call_date, call_type, duration_minutes, participants, key_topics, summary, source',
+      'id, title, storage_path, call_date, call_type, duration_minutes, participants, key_topics, summary, source',
       { count: 'exact' }
     )
-    .eq('tenant_id', params.tenant_id)
+    .eq('layer', layer)
     .order('call_date', { ascending: false, nullsFirst: false })
     .range(offset, offset + limit - 1);
 
@@ -668,7 +679,7 @@ async function listOrgTranscripts(
   const rows = (data || []) as Array<{
     id: string;
     title: string;
-    slug: string;
+    storage_path: string;
     call_date: string | null;
     call_type: string | null;
     duration_minutes: number | null;
@@ -699,7 +710,7 @@ async function listOrgTranscripts(
     transcripts: filtered.map((t) => ({
       id: t.id,
       title: t.title,
-      slug: t.slug,
+      storage_path: t.storage_path,
       call_date: t.call_date,
       call_type: t.call_type,
       duration_minutes: t.duration_minutes,
@@ -723,7 +734,7 @@ async function searchOrgTranscripts(
   results: Array<{
     id: string;
     title: string;
-    slug: string;
+    storage_path: string;
     call_date: string | null;
     call_type: string | null;
     participants: Array<{ name: string }>;
@@ -733,13 +744,15 @@ async function searchOrgTranscripts(
   }>;
 }> {
   const supabase = ctx.getClient();
+  const layer = `renubu:tenant-${params.tenant_id}`;
 
   const limit = Math.min(params.limit || 10, 50);
 
   let query = supabase
-    .from('renubu.transcripts')
-    .select('id, title, slug, call_date, call_type, participants, key_topics, summary')
-    .eq('tenant_id', params.tenant_id)
+    .schema('human_os')
+    .from('transcripts')
+    .select('id, title, storage_path, call_date, call_type, participants, key_topics, summary')
+    .eq('layer', layer)
     .or(`summary.ilike.%${params.query}%,title.ilike.%${params.query}%`)
     .limit(limit);
 
@@ -760,7 +773,7 @@ async function searchOrgTranscripts(
   const rows = (data || []) as Array<{
     id: string;
     title: string;
-    slug: string;
+    storage_path: string;
     call_date: string | null;
     call_type: string | null;
     participants: Participant[];
@@ -786,7 +799,7 @@ async function searchOrgTranscripts(
       return {
         id: r.id,
         title: r.title,
-        slug: r.slug,
+        storage_path: r.storage_path,
         call_date: r.call_date,
         call_type: r.call_type,
         participants: r.participants.map((p) => ({ name: p.name })),
@@ -807,7 +820,7 @@ async function getOrgTranscript(
 ): Promise<{
   id: string;
   title: string;
-  slug: string;
+  storage_path: string;
   call_date: string | null;
   call_type: string | null;
   duration_minutes: number | null;
@@ -826,12 +839,14 @@ async function getOrgTranscript(
   updated_at: string;
 }> {
   const supabase = ctx.getClient();
+  const layer = `renubu:tenant-${params.tenant_id}`;
 
   const { data, error } = await supabase
-    .from('renubu.transcripts')
+    .schema('human_os')
+    .from('transcripts')
     .select('*')
     .eq('id', params.id)
-    .eq('tenant_id', params.tenant_id)
+    .eq('layer', layer)
     .single();
 
   if (error) {
@@ -858,24 +873,16 @@ async function getOrgTranscript(
     }
   }
 
-  // Fetch raw content from context_file if requested
+  // Fetch raw content from storage if requested
   let rawContent: string | null = null;
-  if (params.include_raw && row.context_file_id) {
+  if (params.include_raw && row.storage_path) {
     try {
-      const { data: fileData } = await supabase
-        .from('context_files')
-        .select('file_path, storage_bucket')
-        .eq('id', row.context_file_id)
-        .single();
+      const { data: content } = await supabase.storage
+        .from('human-os')
+        .download(row.storage_path);
 
-      if (fileData) {
-        const { data: content } = await supabase.storage
-          .from(fileData.storage_bucket || 'contexts')
-          .download(fileData.file_path);
-
-        if (content) {
-          rawContent = await content.text();
-        }
+      if (content) {
+        rawContent = await content.text();
       }
     } catch (err) {
       console.error('Failed to fetch raw content:', err);
@@ -885,7 +892,7 @@ async function getOrgTranscript(
   return {
     id: row.id,
     title: row.title,
-    slug: row.slug,
+    storage_path: row.storage_path,
     call_date: row.call_date,
     call_type: row.call_type,
     duration_minutes: row.duration_minutes,

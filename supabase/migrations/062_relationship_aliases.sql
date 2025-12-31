@@ -135,3 +135,17 @@ ON CONFLICT (pattern) DO UPDATE SET
   tools_required = EXCLUDED.tools_required,
   actions = EXCLUDED.actions,
   priority = EXCLUDED.priority;
+
+-- =============================================================================
+-- CLEANUP: Drop legacy transcript tables
+-- =============================================================================
+-- These tables are empty and superseded by human_os.transcripts (migration 051).
+-- - founder_os.transcripts: original table, raw_content stored in DB
+-- - renubu.transcripts: tenant-scoped variant, never populated
+-- Both have been replaced by human_os.transcripts which:
+--   1. Uses layer-based scoping (works for all products)
+--   2. Stores content in Supabase Storage (not raw_content in DB)
+--   3. Has proper entity linking and metadata
+
+DROP TABLE IF EXISTS founder_os.transcripts CASCADE;
+DROP TABLE IF EXISTS renubu.transcripts CASCADE;
