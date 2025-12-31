@@ -214,6 +214,9 @@ function extractParticipantNames(participants: unknown[]): string[] {
 /**
  * Store emotion analysis result
  */
+/** Schema where emotion_analyses lives */
+const EMOTION_SCHEMA = 'human_os';
+
 async function storeEmotionAnalysis(
   ctx: ToolContext,
   sourceType: 'transcript' | 'journal' | 'text' | 'social',
@@ -227,6 +230,7 @@ async function storeEmotionAnalysis(
   const client = ctx.getClient();
 
   const { data, error } = await client
+    .schema(EMOTION_SCHEMA)
     .from('emotion_analyses')
     .insert({
       source_type: sourceType,
@@ -253,6 +257,7 @@ async function storeEmotionAnalysis(
       keyword_count: analysis.detectedKeywords.length,
       detected_keywords: analysis.detectedKeywords,
       analysis_method: analysis.method,
+      layer: ctx.layer,
     })
     .select('id')
     .single();
@@ -382,8 +387,9 @@ export async function handleEmotionTools(
   if (name === 'analyze_transcript_emotions') {
     const { transcript_id, store_results } = AnalyzeTranscriptSchema.parse(args);
 
-    // Fetch transcript
+    // Fetch transcript (transcripts are in human_os schema)
     const { data: transcript, error } = await client
+      .schema(EMOTION_SCHEMA)
       .from('transcripts')
       .select('id, title, raw_content, call_date, participants, context_tags')
       .eq('id', transcript_id)
@@ -444,8 +450,9 @@ export async function handleEmotionTools(
     const { call_type, participant_name, context_tag, date_from, date_to, limit } =
       BatchAnalyzeSchema.parse(args);
 
-    // Build query
+    // Build query (transcripts are in human_os schema)
     let query = client
+      .schema(EMOTION_SCHEMA)
       .from('transcripts')
       .select('id, title, raw_content, call_date, call_type, participants, context_tags')
       .order('call_date', { ascending: false })
@@ -554,12 +561,13 @@ export async function handleEmotionTools(
     const { group_by, date_from, date_to, participant, source_type } = GetTrendsSchema.parse(args);
 
     // Use the database function for trend aggregation
-    const { data, error } = await client.rpc('get_emotion_trends', {
+    const { data, error } = await client.schema(EMOTION_SCHEMA).rpc('get_emotion_trends', {
       p_group_by: group_by,
       p_date_from: date_from || null,
       p_date_to: date_to || null,
       p_participant: participant || null,
       p_source_type: source_type || null,
+      p_layer: ctx.layer,
     });
 
     if (error) {
