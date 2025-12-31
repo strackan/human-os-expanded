@@ -42,13 +42,14 @@ import { journalTools, handleJournalTools } from './tools/journal.js';
 import { emotionTools, handleEmotionTools } from './tools/emotions.js';
 import { voiceTools, handleVoiceTools } from './tools/voice.js';
 import { skillsTools, handleSkillsTools } from './tools/skills.js';
+import { contextTools, handleContextTools } from './tools/context.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
 import { recallTools, handleRecallTools } from './tools/recall.js';
 import { learnAliasTools, handleLearnAliasTools } from './tools/learn-alias.js';
 
-import { createToolContext, withModeProperties, type ToolHandler } from './lib/context.js';
+import { createToolContext, withModeProperties, resolveUserUUID, type ToolHandler } from './lib/context.js';
 
 // Declare globals for embedded data (set by bundle script for standalone exe)
 declare global {
@@ -108,6 +109,7 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: emotionTools, handler: handleEmotionTools },
   { tools: voiceTools, handler: handleVoiceTools },
   { tools: skillsTools, handler: handleSkillsTools },
+  { tools: contextTools, handler: handleContextTools },
 ];
 
 /** Flat list of all tools for MCP registration, with mode property added */
@@ -144,6 +146,10 @@ async function main() {
     process.exit(1);
   }
 
+  // Resolve user UUID from slug (for database operations)
+  const USER_UUID = await resolveUserUUID(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+  console.error(`Resolved user "${USER_ID}" to UUID: ${USER_UUID}`);
+
   // Initialize services
   const supabase = createSupabaseClient({
     supabaseUrl: SUPABASE_URL,
@@ -166,6 +172,7 @@ async function main() {
     supabaseUrl: SUPABASE_URL,
     supabaseKey: SUPABASE_SERVICE_KEY,
     userId: USER_ID,
+    userUUID: USER_UUID,
     layer: LAYER,
     contextEngine,
     knowledgeGraph,
