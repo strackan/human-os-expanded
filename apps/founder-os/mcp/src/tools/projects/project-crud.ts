@@ -195,7 +195,7 @@ async function createProject(ctx: ToolContext, params: CreateProjectParams) {
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('projects')
     .insert({
-      user_id: ctx.userId,
+      user_id: ctx.userUUID,
       name: params.name,
       slug,
       description: params.description,
@@ -233,7 +233,7 @@ export async function getProject(ctx: ToolContext, params: { project_id?: string
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('projects')
     .select('*')
-    .eq('user_id', ctx.userId);
+    .eq('user_id', ctx.userUUID);
 
   if (project_id) {
     query = query.eq('id', project_id);
@@ -269,7 +269,7 @@ export async function getProject(ctx: ToolContext, params: { project_id?: string
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .select('status')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .eq('project_id', project.id);
 
   const taskCounts = {
@@ -294,7 +294,7 @@ async function listProjects(ctx: ToolContext, params: { status?: string; priorit
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('projects')
     .select('id, name, slug, description, status, priority, start_date, target_end_date, created_at')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .order('priority', { ascending: true })
     .order('name', { ascending: true });
 
@@ -347,7 +347,7 @@ async function updateProject(ctx: ToolContext, params: UpdateProjectParams) {
     .from('projects')
     .update(updates)
     .eq('id', projectId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .select()
     .single();
 
@@ -384,7 +384,7 @@ async function closeProject(
     .from('tasks')
     .select('id, title, status')
     .eq('project_id', projectId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .not('status', 'in', `(${TASK_STATUS.DONE},${TASK_STATUS.ARCHIVED})`);
 
   const warnings: string[] = [];
@@ -404,7 +404,7 @@ async function closeProject(
       actual_end_date: new Date().toISOString().split('T')[0],
     })
     .eq('id', projectId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .select()
     .single();
 

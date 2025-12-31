@@ -14,6 +14,9 @@ import type {
   CreateAliasInput,
 } from './types.js'
 
+/** Schema where aliases tables and functions live */
+const ALIASES_SCHEMA = 'human_os'
+
 /**
  * AliasResolver handles pattern matching for natural language commands
  */
@@ -24,6 +27,13 @@ export class AliasResolver {
   constructor(config: ResolverConfig) {
     this.config = config
     this.supabase = createClient(config.supabaseUrl, config.supabaseKey)
+  }
+
+  /**
+   * Get schema-specific query builder
+   */
+  private schema() {
+    return this.supabase.schema(ALIASES_SCHEMA)
   }
 
   /**
@@ -102,7 +112,7 @@ export class AliasResolver {
   ): Promise<Array<{ pattern: string; description?: string; mode?: string; usageCount: number }>> {
     const effectiveLayer = layer ?? this.config.defaultLayer
 
-    const { data, error } = await this.supabase.rpc('list_aliases', {
+    const { data, error } = await this.schema().rpc('list_aliases', {
       p_layer: effectiveLayer,
       p_include_descriptions: includeDescriptions,
     })
@@ -127,7 +137,7 @@ export class AliasResolver {
       ? await this.config.generateEmbedding(input.pattern)
       : null
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.schema()
       .from('aliases')
       .insert({
         pattern: input.pattern,
@@ -154,7 +164,7 @@ export class AliasResolver {
    * Get an alias by ID
    */
   async getAlias(id: string): Promise<Alias | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.schema()
       .from('aliases')
       .select('*')
       .eq('id', id)
@@ -179,7 +189,7 @@ export class AliasResolver {
     layer: Layer,
     context?: string[]
   ): Promise<AliasMatchResult | null> {
-    const { data, error } = await this.supabase.rpc('find_alias', {
+    const { data, error } = await this.schema().rpc('find_alias', {
       p_request: request,
       p_layer: layer,
       p_context: context ?? [],
@@ -214,7 +224,7 @@ export class AliasResolver {
     layer: Layer,
     context?: string[]
   ): Promise<AliasMatchResult | null> {
-    const { data, error } = await this.supabase.rpc('find_alias', {
+    const { data, error } = await this.schema().rpc('find_alias', {
       p_request: request,
       p_layer: layer,
       p_context: context ?? [],
@@ -254,7 +264,7 @@ export class AliasResolver {
 
     const embedding = await this.config.generateEmbedding(request)
 
-    const { data, error } = await this.supabase.rpc('find_alias_semantic', {
+    const { data, error } = await this.schema().rpc('find_alias_semantic', {
       p_embedding: embedding,
       p_layer: layer,
       p_threshold: this.config.semanticThreshold,

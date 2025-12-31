@@ -103,9 +103,17 @@ ALTER INDEX IF EXISTS idx_founder_os_goals_timeframe RENAME TO idx_founder_os_ok
 ALTER INDEX IF EXISTS idx_founder_os_goals_parent_id RENAME TO idx_founder_os_okr_goals_parent_id;
 ALTER INDEX IF EXISTS idx_founder_os_goals_project_id RENAME TO idx_founder_os_okr_goals_project_id;
 
--- Rename trigger
-ALTER TRIGGER IF EXISTS update_founder_os_goals_updated_at ON founder_os.okr_goals
-  RENAME TO update_founder_os_okr_goals_updated_at;
+-- Rename trigger (wrapped in DO block since ALTER TRIGGER doesn't support IF EXISTS)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'update_founder_os_goals_updated_at'
+  ) THEN
+    ALTER TRIGGER update_founder_os_goals_updated_at ON founder_os.okr_goals
+      RENAME TO update_founder_os_okr_goals_updated_at;
+  END IF;
+END $$;
 
 -- Update task_goal_links table reference
 ALTER TABLE IF EXISTS founder_os.task_goal_links

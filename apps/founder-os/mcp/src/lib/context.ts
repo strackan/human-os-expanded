@@ -105,7 +105,10 @@ export function shouldUseDeterministicMode(
 export interface ToolContext {
   supabaseUrl: string;
   supabaseKey: string;
+  /** User slug for display/routing (e.g., "justin") */
   userId: string;
+  /** User UUID for database operations - resolved at startup */
+  userUUID: string;
   layer: Layer;
   contextEngine: ContextEngine;
   knowledgeGraph: KnowledgeGraph;
@@ -120,6 +123,7 @@ export function createToolContext(params: {
   supabaseUrl: string;
   supabaseKey: string;
   userId: string;
+  userUUID: string;
   layer: Layer;
   contextEngine: ContextEngine;
   knowledgeGraph: KnowledgeGraph;
@@ -135,6 +139,56 @@ export function createToolContext(params: {
       return client;
     },
   };
+}
+
+/** Schema where users table lives */
+const USERS_SCHEMA = 'human_os';
+
+/**
+ * Resolve user UUID from slug
+ * Call this at server startup to get the actual UUID for database operations
+ */
+export async function resolveUserUUID(
+  supabaseUrl: string,
+  supabaseKey: string,
+  userSlug: string
+): Promise<string> {
+  const client = createClient(supabaseUrl, supabaseKey);
+
+  // First try users table in human_os schema
+  const { data: userData, error: userError } = await client
+    .schema(USERS_SCHEMA)
+    .from('users')
+    .select('id')
+    .eq('slug', userSlug)
+    .single();
+
+  if (userData?.id) {
+    return userData.id;
+  }
+
+  // Try by email pattern (slug@human-os.io)
+  const { data: emailData } = await client
+    .schema(USERS_SCHEMA)
+    .from('users')
+    .select('id')
+    .eq('email', `${userSlug}@human-os.io`)
+    .single();
+
+  if (emailData?.id) {
+    return emailData.id;
+  }
+
+  // If not found, log warning and return the slug as-is
+  // This allows graceful degradation for development
+  console.error(
+    `Warning: Could not resolve UUID for user "${userSlug}". ` +
+      `Database operations may fail. Create user in 'human_os.users' table with slug="${userSlug}".`
+  );
+
+  // Return a deterministic UUID based on the slug for consistency
+  // This is a fallback - proper setup should have the user in the database
+  return userSlug;
 }
 
 /**

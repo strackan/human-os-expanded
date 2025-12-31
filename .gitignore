@@ -46,3 +46,5 @@ supabase/.temp/
 **/standalone/*.exe
 **/standalone/*.cjs
 .vercel
+jazzroom/
+.claude/settings.local.json

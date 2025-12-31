@@ -6,7 +6,6 @@
  * - Milestones: add_milestone, update_milestone, list_milestones, complete_milestone
  * - Project Tasks: add_project_task, update_project_task, list_project_tasks, get_project_dashboard
  * - Project Links: link_to_project, unlink_from_project, get_project_links
- * - Project Members: add_project_member, remove_project_member, list_project_members
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
@@ -17,7 +16,6 @@ import { projectCrudTools, handleProjectCrudTools } from './project-crud.js';
 import { milestoneTools, handleMilestoneTools } from './milestones.js';
 import { projectTaskTools, handleProjectTaskTools } from './project-tasks.js';
 import { projectLinkTools, handleProjectLinkTools } from './project-links.js';
-import { projectMemberTools, handleProjectMemberTools } from './project-members.js';
 
 // Re-export types and utilities
 export * from './types.js';
@@ -33,7 +31,6 @@ export const projectTools: Tool[] = [
   ...milestoneTools,
   ...projectTaskTools,
   ...projectLinkTools,
-  ...projectMemberTools,
 ];
 
 // =============================================================================
@@ -62,9 +59,6 @@ export async function handleProjectTools(
   if (result !== null) return result;
 
   result = await handleProjectLinkTools(name, args, ctx);
-  if (result !== null) return result;
-
-  result = await handleProjectMemberTools(name, args, ctx);
   if (result !== null) return result;
 
   return null; // Not handled by this module

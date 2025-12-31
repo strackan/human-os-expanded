@@ -58,21 +58,96 @@ export const demoTools: Tool[] = [
     },
   },
   {
+    name: 'lookup_contacts',
+    description: `Search contacts by name, location, tier, or labels. Use this to find contacts before messaging.
+Returns matches with delivery method info (can_message via Founder OS, can_email via email).
+If multiple matches found, present options to user for disambiguation.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Name to search (partial match supported)',
+        },
+        location: {
+          type: 'string',
+          description: 'Location/region filter (e.g., "DC", "Research Triangle", "SF")',
+        },
+        tier: {
+          type: 'string',
+          enum: ['inner_5', 'key_50', 'network_500', 'outer'],
+          description: 'Contact tier filter',
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Custom labels to filter by',
+        },
+        limit: {
+          type: 'number',
+          description: 'Max results to return. Defaults to 10.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'ping_person',
-    description: 'Send a message to another person in the Founder OS network. Use when user wants to message, ping, or ask someone something.',
+    description: `Send a message to another person. Supports Founder OS forest messaging and email fallback.
+If person_name matches multiple contacts, returns disambiguation options.
+If contact is not on Founder OS but has email, suggests email fallback.`,
     inputSchema: {
       type: 'object',
       properties: {
         person_name: {
           type: 'string',
-          description: 'Name or alias of the person (e.g., "Scott", "Scott Leese")',
+          description: 'Name of the person (e.g., "Scott", "Scott Leese")',
+        },
+        contact_id: {
+          type: 'string',
+          description: 'Contact UUID from lookup_contacts (use this after disambiguation)',
         },
         message: {
           type: 'string',
           description: 'The message content to send',
         },
       },
-      required: ['person_name', 'message'],
+      required: ['message'],
+    },
+  },
+  {
+    name: 'send_group_message',
+    description: `Send a message to multiple contacts at once. Filter by location, tier, or labels.
+Splits recipients into Founder OS (direct) vs email-only delivery.
+Returns summary of who received messages and who needs email follow-up.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          description: 'The message content to send to all recipients',
+        },
+        location: {
+          type: 'string',
+          description: 'Send to everyone in this location (e.g., "DC", "Research Triangle")',
+        },
+        tier: {
+          type: 'string',
+          enum: ['inner_5', 'key_50', 'network_500'],
+          description: 'Send to all contacts in this tier',
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Send to contacts with these labels',
+        },
+        contact_ids: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Specific contact UUIDs to message',
+        },
+      },
+      required: ['message'],
     },
   },
   {
@@ -132,14 +207,35 @@ export async function handleDemoTools(
       return scheduleTime(title, duration_minutes ?? 30, target_date);
     }
 
+    case 'lookup_contacts': {
+      const { query, location, tier, labels, limit } = args as {
+        query?: string;
+        location?: string;
+        tier?: string;
+        labels?: string[];
+        limit?: number;
+      };
+      return lookupContacts(ctx, { query, location, tier, labels, limit: limit ?? 10 });
+    }
+
     case 'ping_person': {
-      const { person_name, message } = args as { person_name: string; message: string };
-      const contact = resolveContact(person_name);
-      const toForest = contact?.forest || buildFounderLayer(person_name.toLowerCase().replace(/\s+/g, '-'));
-      const toName = contact?.fullName || person_name;
-      // Get sender name from known users or use userId
-      const fromName = KNOWN_USERS[ctx.userId] || ctx.userId;
-      return pingPerson(ctx, fromName, toForest, toName, message);
+      const { person_name, contact_id, message } = args as {
+        person_name?: string;
+        contact_id?: string;
+        message: string;
+      };
+      return handlePingPerson(ctx, { person_name, contact_id, message });
+    }
+
+    case 'send_group_message': {
+      const { message, location, tier, labels, contact_ids } = args as {
+        message: string;
+        location?: string;
+        tier?: string;
+        labels?: string[];
+        contact_ids?: string[];
+      };
+      return sendGroupMessage(ctx, { message, location, tier, labels, contact_ids });
     }
 
     case 'grab_messages': {
@@ -148,7 +244,7 @@ export async function handleDemoTools(
 
     case 'reply_message': {
       const { to_name, message } = args as { to_name: string; message: string };
-      const fromName = KNOWN_USERS[ctx.userId] || ctx.userId;
+      const fromName = await getSenderName(ctx);
       return quickReply(ctx, fromName, to_name, message);
     }
 
@@ -199,6 +295,42 @@ interface SendMessageResult {
   to: string;
   content: string;
   status: string;
+}
+
+/** Resolved contact from database lookup */
+interface ResolvedContact {
+  id: string;
+  name: string;
+  company: string | null;
+  location: string | null;
+  email: string | null;
+  forest: string | null;
+  can_message: boolean;
+  can_email: boolean;
+}
+
+/** Contact lookup result */
+interface ContactLookupResult {
+  success: boolean;
+  action_required?: 'disambiguation' | 'email_fallback' | 'no_delivery_method';
+  message?: string;
+  matches?: ResolvedContact[];
+  contact?: ResolvedContact;
+  next_step?: string;
+}
+
+/** Group message result */
+interface GroupMessageResult {
+  success: boolean;
+  summary: string;
+  details: {
+    via_forest: number;
+    via_email_needed: number;
+    forest_recipients: string[];
+    email_recipients: string[];
+  };
+  email_follow_up?: string;
+  errors?: string[];
 }
 
 // =============================================================================
@@ -483,10 +615,429 @@ async function quickReply(
 }
 
 // =============================================================================
-// CONTACT LOOKUP
+// CONTACT LOOKUP (Database-based)
 // =============================================================================
 
-const DEMO_CONTACTS: Record<string, { forest: string; fullName: string }> = {
+/**
+ * Get sender name for the current user
+ */
+async function getSenderName(ctx: ToolContext): Promise<string> {
+  const supabase = ctx.getClient();
+
+  // Try to get from human_os.users
+  const { data: user } = await supabase
+    .schema('human_os')
+    .from('users')
+    .select('display_name')
+    .eq('slug', ctx.userId)
+    .single();
+
+  if (user?.display_name) {
+    return user.display_name;
+  }
+
+  // Fallback to KNOWN_USERS or userId
+  return KNOWN_USERS[ctx.userId] || ctx.userId;
+}
+
+/**
+ * Resolve contacts matching location query
+ * Tries regions first, then falls back to text search
+ */
+async function resolveContactIdsByLocation(
+  ctx: ToolContext,
+  locationQuery: string
+): Promise<string[]> {
+  const supabase = ctx.getClient();
+
+  // 1. Try region match first (name, display_name, or state_code)
+  const { data: regions } = await supabase
+    .schema('gft')
+    .from('regions')
+    .select('id, name, display_name')
+    .or(
+      `name.ilike.%${locationQuery}%,display_name.ilike.%${locationQuery}%,state_code.eq.${locationQuery.toUpperCase()}`
+    );
+
+  if (regions && regions.length > 0) {
+    // Get contacts by region_id
+    const regionIds = regions.map(r => r.id);
+    const { data: contacts } = await supabase
+      .schema('gft')
+      .from('contacts')
+      .select('id')
+      .eq('owner_id', ctx.userUUID)
+      .in('region_id', regionIds);
+
+    if (contacts && contacts.length > 0) {
+      return contacts.map(c => c.id);
+    }
+  }
+
+  // 2. Fallback to text search on location fields
+  const { data: contacts } = await supabase
+    .schema('gft')
+    .from('contacts')
+    .select('id')
+    .eq('owner_id', ctx.userUUID)
+    .or(`location.ilike.%${locationQuery}%,location_raw.ilike.%${locationQuery}%`);
+
+  return contacts?.map(c => c.id) || [];
+}
+
+/**
+ * Resolve a contact to its forest (if Founder OS user) or email
+ */
+async function resolveContactDelivery(
+  ctx: ToolContext,
+  contactId: string
+): Promise<{ forest: string | null; email: string | null; name: string }> {
+  const supabase = ctx.getClient();
+
+  // Get contact with linked user
+  const { data: contact } = await supabase
+    .schema('gft')
+    .from('contacts')
+    .select('name, email, linked_user_id')
+    .eq('id', contactId)
+    .single();
+
+  if (!contact) {
+    throw new Error('Contact not found');
+  }
+
+  let forest: string | null = null;
+
+  if (contact.linked_user_id) {
+    // Get user slug for forest
+    const { data: user } = await supabase
+      .schema('human_os')
+      .from('users')
+      .select('slug')
+      .eq('id', contact.linked_user_id)
+      .single();
+
+    if (user?.slug) {
+      forest = buildFounderLayer(user.slug);
+    }
+  }
+
+  return { forest, email: contact.email, name: contact.name };
+}
+
+/**
+ * Lookup contacts from database with filters
+ */
+async function lookupContacts(
+  ctx: ToolContext,
+  options: {
+    query?: string;
+    location?: string;
+    tier?: string;
+    labels?: string[];
+    limit: number;
+  }
+): Promise<{ success: boolean; contacts: ResolvedContact[]; count: number }> {
+  const supabase = ctx.getClient();
+  const { query, location, tier, labels, limit } = options;
+
+  // Build the query
+  let dbQuery = supabase
+    .schema('gft')
+    .from('contacts')
+    .select(
+      `
+      id,
+      name,
+      company,
+      location,
+      location_raw,
+      email,
+      linked_user_id,
+      tier
+    `
+    )
+    .eq('owner_id', ctx.userUUID)
+    .limit(limit);
+
+  // Apply name filter
+  if (query) {
+    dbQuery = dbQuery.ilike('name', `%${query}%`);
+  }
+
+  // Apply tier filter
+  if (tier) {
+    dbQuery = dbQuery.eq('tier', tier);
+  }
+
+  // Apply labels filter (using contains for array)
+  if (labels && labels.length > 0) {
+    dbQuery = dbQuery.contains('custom_labels', labels);
+  }
+
+  // Get initial results
+  let { data: contacts, error } = await dbQuery;
+
+  if (error) {
+    console.error('Contact lookup error:', error);
+    return { success: false, contacts: [], count: 0 };
+  }
+
+  // Apply location filter (more complex - requires separate lookup)
+  if (location && contacts) {
+    const locationContactIds = await resolveContactIdsByLocation(ctx, location);
+    contacts = contacts.filter(c => locationContactIds.includes(c.id));
+  }
+
+  if (!contacts || contacts.length === 0) {
+    return { success: true, contacts: [], count: 0 };
+  }
+
+  // Resolve forest for each contact
+  const resolvedContacts: ResolvedContact[] = await Promise.all(
+    contacts.map(async contact => {
+      let forest: string | null = null;
+
+      if (contact.linked_user_id) {
+        const { data: user } = await supabase
+          .schema('human_os')
+          .from('users')
+          .select('slug')
+          .eq('id', contact.linked_user_id)
+          .single();
+
+        if (user?.slug) {
+          forest = buildFounderLayer(user.slug);
+        }
+      }
+
+      return {
+        id: contact.id,
+        name: contact.name,
+        company: contact.company,
+        location: contact.location || contact.location_raw,
+        email: contact.email,
+        forest,
+        can_message: !!forest,
+        can_email: !!contact.email,
+      };
+    })
+  );
+
+  return {
+    success: true,
+    contacts: resolvedContacts,
+    count: resolvedContacts.length,
+  };
+}
+
+/**
+ * Handle ping_person with disambiguation support
+ */
+async function handlePingPerson(
+  ctx: ToolContext,
+  options: { person_name?: string; contact_id?: string; message: string }
+): Promise<ContactLookupResult | SendMessageResult> {
+  const { person_name, contact_id, message } = options;
+  const fromName = await getSenderName(ctx);
+
+  // If contact_id provided, use it directly
+  if (contact_id) {
+    try {
+      const delivery = await resolveContactDelivery(ctx, contact_id);
+
+      if (delivery.forest) {
+        return pingPerson(ctx, fromName, delivery.forest, delivery.name, message);
+      } else if (delivery.email) {
+        return {
+          success: false,
+          action_required: 'email_fallback',
+          message: `${delivery.name} is not on Founder OS but has an email address. Use email to reach them.`,
+          contact: {
+            id: contact_id,
+            name: delivery.name,
+            company: null,
+            location: null,
+            email: delivery.email,
+            forest: null,
+            can_message: false,
+            can_email: true,
+          },
+          next_step: `Use prepare_email tool with contact='${contact_id}' to send via email`,
+        };
+      } else {
+        return {
+          success: false,
+          action_required: 'no_delivery_method',
+          message: `Cannot reach ${delivery.name} - no Founder OS account or email on file.`,
+        };
+      }
+    } catch (err) {
+      return {
+        success: false,
+        message: `Contact not found: ${contact_id}`,
+      };
+    }
+  }
+
+  // If person_name provided, look up contacts
+  if (person_name) {
+    const lookup = await lookupContacts(ctx, { query: person_name, limit: 5 });
+
+    if (!lookup.success || lookup.contacts.length === 0) {
+      // Fallback to legacy behavior for demo contacts
+      const legacyContact = resolveLegacyContact(person_name);
+      if (legacyContact) {
+        return pingPerson(ctx, fromName, legacyContact.forest, legacyContact.fullName, message);
+      }
+
+      return {
+        success: false,
+        message: `No contact found matching "${person_name}". Try using their full name or add them to your contacts.`,
+      };
+    }
+
+    if (lookup.contacts.length === 1) {
+      const contact = lookup.contacts[0]!;
+
+      if (contact.can_message && contact.forest) {
+        return pingPerson(ctx, fromName, contact.forest, contact.name, message);
+      } else if (contact.can_email) {
+        return {
+          success: false,
+          action_required: 'email_fallback',
+          message: `${contact.name} is not on Founder OS but has an email address. Would you like to send via email instead?`,
+          contact,
+          next_step: `Use prepare_email tool with contact='${contact.id}' to send via email`,
+        };
+      } else {
+        return {
+          success: false,
+          action_required: 'no_delivery_method',
+          message: `Cannot reach ${contact.name} - no Founder OS account or email on file.`,
+        };
+      }
+    }
+
+    // Multiple matches - return disambiguation
+    return {
+      success: false,
+      action_required: 'disambiguation',
+      message: `I found ${lookup.contacts.length} contacts matching "${person_name}". Which one did you mean?`,
+      matches: lookup.contacts,
+    };
+  }
+
+  return {
+    success: false,
+    message: 'Either person_name or contact_id is required.',
+  };
+}
+
+/**
+ * Send message to multiple contacts
+ */
+async function sendGroupMessage(
+  ctx: ToolContext,
+  options: {
+    message: string;
+    location?: string;
+    tier?: string;
+    labels?: string[];
+    contact_ids?: string[];
+  }
+): Promise<GroupMessageResult> {
+  const { message, location, tier, labels, contact_ids } = options;
+  const fromName = await getSenderName(ctx);
+
+  // Collect contacts from various sources
+  let allContactIds: string[] = [];
+
+  // Add specific contact_ids
+  if (contact_ids && contact_ids.length > 0) {
+    allContactIds.push(...contact_ids);
+  }
+
+  // Lookup by location
+  if (location) {
+    const locationIds = await resolveContactIdsByLocation(ctx, location);
+    allContactIds.push(...locationIds);
+  }
+
+  // Lookup by tier/labels
+  if (tier || (labels && labels.length > 0)) {
+    const lookup = await lookupContacts(ctx, { tier, labels, limit: 100 });
+    allContactIds.push(...lookup.contacts.map(c => c.id));
+  }
+
+  // Deduplicate
+  allContactIds = [...new Set(allContactIds)];
+
+  if (allContactIds.length === 0) {
+    return {
+      success: false,
+      summary: 'No contacts found matching the criteria.',
+      details: {
+        via_forest: 0,
+        via_email_needed: 0,
+        forest_recipients: [],
+        email_recipients: [],
+      },
+    };
+  }
+
+  // Resolve each contact and categorize by delivery method
+  const forestRecipients: { id: string; name: string; forest: string }[] = [];
+  const emailRecipients: { id: string; name: string; email: string }[] = [];
+  const errors: string[] = [];
+
+  for (const contactId of allContactIds) {
+    try {
+      const delivery = await resolveContactDelivery(ctx, contactId);
+
+      if (delivery.forest) {
+        forestRecipients.push({ id: contactId, name: delivery.name, forest: delivery.forest });
+      } else if (delivery.email) {
+        emailRecipients.push({ id: contactId, name: delivery.name, email: delivery.email });
+      }
+    } catch (err) {
+      errors.push(`Contact ${contactId}: ${err}`);
+    }
+  }
+
+  // Send to all forest recipients
+  for (const recipient of forestRecipients) {
+    try {
+      await pingPerson(ctx, fromName, recipient.forest, recipient.name, message);
+    } catch (err) {
+      errors.push(`Failed to message ${recipient.name}: ${err}`);
+    }
+  }
+
+  const locationLabel = location ? ` in ${location}` : '';
+  const tierLabel = tier ? ` (${tier})` : '';
+
+  return {
+    success: true,
+    summary: `Sent message to ${forestRecipients.length + emailRecipients.length} contacts${locationLabel}${tierLabel}`,
+    details: {
+      via_forest: forestRecipients.length,
+      via_email_needed: emailRecipients.length,
+      forest_recipients: forestRecipients.map(r => r.name),
+      email_recipients: emailRecipients.map(r => r.name),
+    },
+    email_follow_up:
+      emailRecipients.length > 0
+        ? `Call prepare_email for each email recipient: ${emailRecipients.map(r => r.name).join(', ')}`
+        : undefined,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
+/**
+ * Legacy contact resolution for demo contacts (fallback)
+ */
+const LEGACY_CONTACTS: Record<string, { forest: string; fullName: string }> = {
   scott: { forest: buildFounderLayer('scott-leese'), fullName: 'Scott Leese' },
   'scott leese': { forest: buildFounderLayer('scott-leese'), fullName: 'Scott Leese' },
   grace: { forest: buildFounderLayer('grace-chen'), fullName: 'Grace Chen' },
@@ -494,7 +1045,12 @@ const DEMO_CONTACTS: Record<string, { forest: string; fullName: string }> = {
   lisa: { forest: buildFounderLayer('lisa'), fullName: 'Lisa Martinez' },
 };
 
-export function resolveContact(nameOrAlias: string): { forest: string; fullName: string } | null {
+function resolveLegacyContact(nameOrAlias: string): { forest: string; fullName: string } | null {
   const key = nameOrAlias.toLowerCase().trim();
-  return DEMO_CONTACTS[key] || null;
+  return LEGACY_CONTACTS[key] || null;
+}
+
+/** @deprecated Use lookupContacts instead */
+export function resolveContact(nameOrAlias: string): { forest: string; fullName: string } | null {
+  return resolveLegacyContact(nameOrAlias);
 }

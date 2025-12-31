@@ -226,7 +226,7 @@ async function queueItem(ctx: ToolContext, input: QueueItemInput): Promise<Queue
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .insert({
-      user_id: ctx.userId,
+      user_id: ctx.userUUID,
       intent_type: input.intent_type,
       payload: input.payload,
       target_table: input.target_table || null,
@@ -267,7 +267,7 @@ async function updateQueueItem(
     .from('claude_queue')
     .select('*')
     .eq('id', itemId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .single();
 
   if (fetchError || !existing) {
@@ -322,7 +322,7 @@ async function processQueueItem(ctx: ToolContext, itemId: string): Promise<Singl
     .from('claude_queue')
     .select('*')
     .eq('id', itemId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .single();
 
   if (fetchError || !item) {
@@ -378,7 +378,7 @@ async function processQueueItems(ctx: ToolContext): Promise<ProcessResult> {
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('claude_queue')
     .select('*')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
 

@@ -32,7 +32,7 @@ export async function resolveProjectId(
       .schema(DB_SCHEMAS.FOUNDER_OS)
       .from('projects')
       .select('id')
-      .eq('user_id', ctx.userId)
+      .eq('user_id', ctx.userUUID)
       .eq('slug', projectSlug)
       .single();
 
@@ -53,7 +53,7 @@ export async function isProjectOwner(ctx: ToolContext, projectId: string): Promi
     .from('projects')
     .select('id')
     .eq('id', projectId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .single();
 
   return !error && !!data;

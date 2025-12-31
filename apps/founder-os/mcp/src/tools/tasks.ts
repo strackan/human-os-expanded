@@ -19,7 +19,11 @@ import { DB_SCHEMAS, TASK_STATUS, TASK_PRIORITY, DEFAULTS } from '@human-os/core
 export const taskTools: Tool[] = [
   {
     name: 'get_urgent_tasks',
-    description: 'Get tasks that need attention, ordered by urgency. Returns overdue, critical (due today), urgent (due in 1-2 days), and upcoming tasks. Call this at session start to check for tasks needing immediate attention.',
+    description: `Get tasks that need attention, ordered by urgency. Returns overdue, critical (due today), urgent (due in 1-2 days), upcoming, AND stale tasks.
+
+**Stale tasks** are open tasks not updated in 7+ days -- they need review to either complete, update, or archive.
+
+Call this at session start to check for tasks needing immediate attention.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -27,6 +31,42 @@ export const taskTools: Tool[] = [
           type: 'boolean',
           description: 'Include tasks due in 3-7 days',
           default: true,
+        },
+        include_stale: {
+          type: 'boolean',
+          description: 'Include tasks not updated in 7+ days',
+          default: true,
+        },
+        stale_days: {
+          type: 'number',
+          description: 'Days without update to consider stale (default: 7)',
+          default: 7,
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_stale_tasks',
+    description: `Get tasks that haven't been updated in X days. These need review -- either complete them, update their status, or archive them.
+
+Stale tasks are a sign of:
+- Tasks that are done but not marked complete
+- Tasks that are no longer relevant
+- Tasks that are blocked but not marked as such
+- Tasks that need to be broken down into smaller pieces`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Days without update to consider stale (default: 7)',
+          default: 7,
+        },
+        limit: {
+          type: 'number',
+          description: 'Max tasks to return (default: 20)',
+          default: 20,
         },
       },
       required: [],
@@ -100,8 +140,21 @@ export async function handleTaskTools(
 ): Promise<unknown | null> {
   switch (name) {
     case 'get_urgent_tasks': {
-      const { include_upcoming } = args as { include_upcoming?: boolean };
-      return getUrgentTasks(ctx, include_upcoming ?? true);
+      const { include_upcoming, include_stale, stale_days } = args as {
+        include_upcoming?: boolean;
+        include_stale?: boolean;
+        stale_days?: number;
+      };
+      return getUrgentTasks(ctx, {
+        includeUpcoming: include_upcoming ?? true,
+        includeStale: include_stale ?? true,
+        staleDays: stale_days ?? 7,
+      });
+    }
+
+    case 'get_stale_tasks': {
+      const { days, limit } = args as { days?: number; limit?: number };
+      return getStaleTasks(ctx, days ?? 7, limit ?? 20);
     }
 
     case 'add_task': {
@@ -142,6 +195,9 @@ interface TaskFromDB {
   priority: string;
   status: string;
   context_tags?: string[];
+  updated_at?: string;
+  created_at?: string;
+  project_id?: string;
 }
 
 interface TaskWithUrgency {
@@ -150,7 +206,8 @@ interface TaskWithUrgency {
   due_date?: string;
   priority: string;
   days_until_due?: number;
-  urgency: 'overdue' | 'critical' | 'urgent' | 'upcoming' | 'normal';
+  days_since_update?: number;
+  urgency: 'overdue' | 'critical' | 'urgent' | 'upcoming' | 'stale' | 'normal';
   message?: string;
 }
 
@@ -159,6 +216,7 @@ interface TaskSummary {
   critical: TaskWithUrgency[];
   urgent: TaskWithUrgency[];
   upcoming: TaskWithUrgency[];
+  stale: TaskWithUrgency[];
 }
 
 /**
@@ -215,40 +273,62 @@ function getUrgencyMessage(title: string, urgency: string, daysUntilDue?: number
 // =============================================================================
 
 /**
+ * Calculate days since last update
+ */
+function daysSinceUpdate(updatedAt: string | null | undefined): number | undefined {
+  if (!updatedAt) return undefined;
+
+  const today = new Date();
+  const updated = new Date(updatedAt);
+  const diffTime = today.getTime() - updated.getTime();
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+}
+
+/**
  * Get tasks that need attention, ordered by urgency.
  */
 async function getUrgentTasks(
   ctx: ToolContext,
-  includeUpcoming: boolean = true
+  options: {
+    includeUpcoming?: boolean;
+    includeStale?: boolean;
+    staleDays?: number;
+  } = {}
 ): Promise<{
   attention_needed: string[];
   tasks: TaskSummary;
   total_requiring_attention: number;
 }> {
-  const { data, error } = await ctx
+  const { includeUpcoming = true, includeStale = true, staleDays = 7 } = options;
+
+  // Get tasks with due dates for urgency calculation
+  const { data: dueDateTasks, error: dueError } = await ctx
     .getClient()
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
-    .select('id, title, description, due_date, priority, status, context_tags')
-    .eq('user_id', ctx.userId)
+    .select('id, title, description, due_date, priority, status, context_tags, updated_at')
+    .eq('user_id', ctx.userUUID)
     .in('status', [TASK_STATUS.TODO, TASK_STATUS.IN_PROGRESS, TASK_STATUS.BLOCKED])
     .not('due_date', 'is', null)
     .order('due_date', { ascending: true });
 
-  if (error) {
-    throw new Error(`Failed to get urgent tasks: ${error.message}`);
+  if (dueError) {
+    throw new Error(`Failed to get urgent tasks: ${dueError.message}`);
   }
-
-  const tasks: TaskFromDB[] = data || [];
 
   const summary: TaskSummary = {
     overdue: [],
     critical: [],
     urgent: [],
     upcoming: [],
+    stale: [],
   };
 
-  for (const t of tasks) {
+  // Track IDs we've already categorized (to avoid duplicates in stale)
+  const categorizedIds = new Set<string>();
+
+  // Process due date tasks
+  for (const t of dueDateTasks || []) {
     const { urgency, daysUntilDue } = calculateUrgency(t.due_date);
 
     if (urgency === 'normal') continue;
@@ -265,6 +345,43 @@ async function getUrgentTasks(
     };
 
     summary[urgency].push(taskWithUrgency);
+    categorizedIds.add(t.id);
+  }
+
+  // Get stale tasks (not updated in X days)
+  if (includeStale) {
+    const staleDate = new Date();
+    staleDate.setDate(staleDate.getDate() - staleDays);
+
+    const { data: staleTasks, error: staleError } = await ctx
+      .getClient()
+      .schema(DB_SCHEMAS.FOUNDER_OS)
+      .from('tasks')
+      .select('id, title, description, due_date, priority, status, context_tags, updated_at')
+      .eq('user_id', ctx.userUUID)
+      .in('status', [TASK_STATUS.TODO, TASK_STATUS.IN_PROGRESS, TASK_STATUS.BLOCKED])
+      .lt('updated_at', staleDate.toISOString())
+      .order('updated_at', { ascending: true })
+      .limit(10);
+
+    if (!staleError && staleTasks) {
+      for (const t of staleTasks) {
+        // Skip if already categorized by urgency
+        if (categorizedIds.has(t.id)) continue;
+
+        const daysSince = daysSinceUpdate(t.updated_at);
+
+        summary.stale.push({
+          id: t.id,
+          title: t.title,
+          due_date: t.due_date,
+          priority: t.priority,
+          days_since_update: daysSince,
+          urgency: 'stale',
+          message: `"${t.title}" hasn't been updated in ${daysSince} days -- still relevant?`,
+        });
+      }
+    }
   }
 
   const attention_needed: string[] = [];
@@ -277,17 +394,102 @@ async function getUrgentTasks(
   if (summary.urgent.length > 0) {
     attention_needed.push(`${summary.urgent.length} urgent task(s) due soon`);
   }
+  if (summary.stale.length > 0) {
+    attention_needed.push(`${summary.stale.length} stale task(s) need review`);
+  }
 
   const totalCount =
     summary.overdue.length +
     summary.critical.length +
     summary.urgent.length +
-    (includeUpcoming ? summary.upcoming.length : 0);
+    (includeUpcoming ? summary.upcoming.length : 0) +
+    (includeStale ? summary.stale.length : 0);
 
   return {
     attention_needed,
     tasks: summary,
     total_requiring_attention: totalCount,
+  };
+}
+
+/**
+ * Get tasks that haven't been updated in X days.
+ */
+async function getStaleTasks(
+  ctx: ToolContext,
+  days: number = 7,
+  limit: number = 20
+): Promise<{
+  stale_threshold_days: number;
+  count: number;
+  tasks: Array<{
+    id: string;
+    title: string;
+    status: string;
+    priority: string;
+    due_date?: string;
+    days_since_update: number;
+    updated_at: string;
+    created_at: string;
+    suggestion: string;
+  }>;
+  action_prompt: string;
+}> {
+  const staleDate = new Date();
+  staleDate.setDate(staleDate.getDate() - days);
+
+  const { data, error } = await ctx
+    .getClient()
+    .schema(DB_SCHEMAS.FOUNDER_OS)
+    .from('tasks')
+    .select('id, title, description, due_date, priority, status, updated_at, created_at')
+    .eq('user_id', ctx.userUUID)
+    .in('status', [TASK_STATUS.TODO, TASK_STATUS.IN_PROGRESS, TASK_STATUS.BLOCKED])
+    .lt('updated_at', staleDate.toISOString())
+    .order('updated_at', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    throw new Error(`Failed to get stale tasks: ${error.message}`);
+  }
+
+  const tasks = (data || []).map(t => {
+    const daysSince = daysSinceUpdate(t.updated_at) || 0;
+    let suggestion = '';
+
+    if (daysSince > 30) {
+      suggestion = 'Consider archiving if no longer relevant';
+    } else if (t.status === TASK_STATUS.TODO && daysSince > 14) {
+      suggestion = 'Either start this, break it down, or archive it';
+    } else if (t.status === TASK_STATUS.IN_PROGRESS) {
+      suggestion = 'Is this actually done? Or is it blocked?';
+    } else if (t.status === TASK_STATUS.BLOCKED) {
+      suggestion = 'What would unblock this?';
+    } else {
+      suggestion = 'Review and update status';
+    }
+
+    return {
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      priority: t.priority,
+      due_date: t.due_date,
+      days_since_update: daysSince,
+      updated_at: t.updated_at,
+      created_at: t.created_at,
+      suggestion,
+    };
+  });
+
+  return {
+    stale_threshold_days: days,
+    count: tasks.length,
+    tasks,
+    action_prompt:
+      tasks.length > 0
+        ? `You have ${tasks.length} task(s) that haven't been touched in ${days}+ days. Let's do a quick review -- for each one, is it done, blocked, or should we archive it?`
+        : 'No stale tasks -- nice work keeping things current!',
   };
 }
 
@@ -330,7 +532,7 @@ async function addTask(
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .insert({
-      user_id: ctx.userId,
+      user_id: ctx.userUUID,
       title: params.title,
       description: params.description,
       due_date: params.due_date,
@@ -382,7 +584,7 @@ async function completeTask(
       completed_at: new Date().toISOString(),
     })
     .eq('id', taskId)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .select()
     .single();
 
@@ -433,7 +635,7 @@ async function listAllTasks(
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .select('id, title, description, due_date, priority, status, context_tags, created_at')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .eq('status', status)
     .order('due_date', { ascending: true, nullsFirst: false });
 

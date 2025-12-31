@@ -14,6 +14,9 @@ import type {
   JournalServiceContext,
 } from './types.js';
 
+/** Schema where journal tables live */
+const JOURNAL_SCHEMA = 'human_os';
+
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
@@ -240,7 +243,7 @@ export class EntityLinker {
 
     try {
       const { data: lead } = await supabase
-        .from('journal_leads')
+        .schema(JOURNAL_SCHEMA).from('journal_leads')
         .insert({
           owner_id: this.ctx.userId,
           name: mention,
@@ -370,7 +373,7 @@ export class EntityLinker {
 
     try {
       const { data } = await supabase
-        .from('journal_leads')
+        .schema(JOURNAL_SCHEMA).from('journal_leads')
         .select('id, name')
         .eq('owner_id', this.ctx.userId)
         .eq('status', 'pending')
@@ -399,7 +402,7 @@ export class EntityLinker {
     const supabase = this.getClient();
 
     const { data, error } = await supabase
-      .from('journal_leads')
+      .schema(JOURNAL_SCHEMA).from('journal_leads')
       .select('id, name, mention_context, inferred_relationship, created_at')
       .eq('owner_id', this.ctx.userId)
       .eq('status', 'pending')

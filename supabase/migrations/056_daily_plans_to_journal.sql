@@ -5,38 +5,38 @@
 -- STEP 1: Add energy and stress columns to journal_entries
 -- =============================================================================
 
-ALTER TABLE journal_entries
+ALTER TABLE human_os.journal_entries
 ADD COLUMN IF NOT EXISTS energy_level INTEGER CHECK (energy_level >= 1 AND energy_level <= 10),
 ADD COLUMN IF NOT EXISTS stress_level INTEGER CHECK (stress_level >= 1 AND stress_level <= 10);
 
-COMMENT ON COLUMN journal_entries.energy_level IS 'Physical energy level 1-10 (1=exhausted, 10=energized)';
-COMMENT ON COLUMN journal_entries.stress_level IS 'Stress level 1-10 (1=calm, 10=highly stressed)';
+COMMENT ON COLUMN human_os.journal_entries.energy_level IS 'Physical energy level 1-10 (1=exhausted, 10=energized)';
+COMMENT ON COLUMN human_os.journal_entries.stress_level IS 'Stress level 1-10 (1=calm, 10=highly stressed)';
 
 -- Index for querying by vitals
-CREATE INDEX IF NOT EXISTS idx_journal_entries_energy ON journal_entries(energy_level) WHERE energy_level IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_journal_entries_stress ON journal_entries(stress_level) WHERE stress_level IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_journal_entries_energy ON human_os.journal_entries(energy_level) WHERE energy_level IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_journal_entries_stress ON human_os.journal_entries(stress_level) WHERE stress_level IS NOT NULL;
 
 -- =============================================================================
 -- STEP 2: Update entry_type constraint to include 'daily_plan'
 -- =============================================================================
 
 -- Drop and recreate constraint with new type
-ALTER TABLE journal_entries DROP CONSTRAINT IF EXISTS journal_entries_entry_type_check;
-ALTER TABLE journal_entries ADD CONSTRAINT journal_entries_entry_type_check
+ALTER TABLE human_os.journal_entries DROP CONSTRAINT IF EXISTS journal_entries_entry_type_check;
+ALTER TABLE human_os.journal_entries ADD CONSTRAINT journal_entries_entry_type_check
   CHECK (entry_type IN ('freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'));
 
 -- =============================================================================
 -- STEP 3: Add legacy reference column
 -- =============================================================================
 
-ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS legacy_daily_plan_id UUID;
-CREATE INDEX IF NOT EXISTS idx_journal_entries_legacy_daily_plan ON journal_entries(legacy_daily_plan_id);
+ALTER TABLE human_os.journal_entries ADD COLUMN IF NOT EXISTS legacy_daily_plan_id UUID;
+CREATE INDEX IF NOT EXISTS idx_journal_entries_legacy_daily_plan ON human_os.journal_entries(legacy_daily_plan_id);
 
 -- =============================================================================
 -- STEP 4: Migrate morning intentions
 -- =============================================================================
 
-INSERT INTO journal_entries (
+INSERT INTO human_os.journal_entries (
   owner_id,
   layer,
   title,
@@ -69,7 +69,7 @@ FROM founder_os.daily_plans dp
 WHERE dp.morning_intention IS NOT NULL
   AND dp.morning_intention != ''
   AND NOT EXISTS (
-    SELECT 1 FROM journal_entries j
+    SELECT 1 FROM human_os.journal_entries j
     WHERE j.legacy_daily_plan_id = dp.id
       AND j.entry_type = 'daily_plan'
   );
@@ -78,7 +78,7 @@ WHERE dp.morning_intention IS NOT NULL
 -- STEP 5: Migrate evening reflections
 -- =============================================================================
 
-INSERT INTO journal_entries (
+INSERT INTO human_os.journal_entries (
   owner_id,
   layer,
   title,
@@ -111,7 +111,7 @@ FROM founder_os.daily_plans dp
 WHERE dp.evening_reflection IS NOT NULL
   AND dp.evening_reflection != ''
   AND NOT EXISTS (
-    SELECT 1 FROM journal_entries j
+    SELECT 1 FROM human_os.journal_entries j
     WHERE j.legacy_daily_plan_id = dp.id
       AND j.entry_type = 'daily_review'
   );
@@ -121,7 +121,7 @@ WHERE dp.evening_reflection IS NOT NULL
 -- =============================================================================
 
 COMMENT ON TABLE founder_os.daily_plans IS
-  'DEPRECATED: Use journal_entries with entry_type=''daily_plan'' or ''daily_review'' instead.
+  'DEPRECATED: Use human_os.journal_entries with entry_type=''daily_plan'' or ''daily_review'' instead.
    Morning intentions migrated to entry_type=daily_plan, mode=morning.
    Evening reflections migrated to entry_type=daily_review, mode=evening.
    Energy and stress levels are now columns on journal_entries.
@@ -144,8 +144,8 @@ SELECT
   COALESCE(j_morning.stress_level, j_evening.stress_level) as stress_level,
   j_morning.created_at,
   GREATEST(j_morning.updated_at, j_evening.updated_at) as updated_at
-FROM journal_entries j_morning
-LEFT JOIN journal_entries j_evening
+FROM human_os.journal_entries j_morning
+LEFT JOIN human_os.journal_entries j_evening
   ON j_evening.legacy_daily_plan_id = j_morning.legacy_daily_plan_id
   AND j_evening.entry_type = 'daily_review'
 WHERE j_morning.entry_type = 'daily_plan'
@@ -153,7 +153,7 @@ WHERE j_morning.entry_type = 'daily_plan'
 
 COMMENT ON VIEW founder_os.daily_plans_view IS
   'Backwards-compatible view combining daily_plan and daily_review journal entries.
-   For new code, query journal_entries directly with entry_type filters.';
+   For new code, query human_os.journal_entries directly with entry_type filters.';
 
 GRANT SELECT ON founder_os.daily_plans_view TO service_role;
 
@@ -168,8 +168,8 @@ DECLARE
   evening_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO old_count FROM founder_os.daily_plans;
-  SELECT COUNT(*) INTO morning_count FROM journal_entries WHERE entry_type = 'daily_plan' AND legacy_daily_plan_id IS NOT NULL;
-  SELECT COUNT(*) INTO evening_count FROM journal_entries WHERE entry_type = 'daily_review' AND legacy_daily_plan_id IS NOT NULL;
+  SELECT COUNT(*) INTO morning_count FROM human_os.journal_entries WHERE entry_type = 'daily_plan' AND legacy_daily_plan_id IS NOT NULL;
+  SELECT COUNT(*) INTO evening_count FROM human_os.journal_entries WHERE entry_type = 'daily_review' AND legacy_daily_plan_id IS NOT NULL;
   RAISE NOTICE 'Daily plans migration: % original records -> % morning intentions + % evening reflections',
     old_count, morning_count, evening_count;
 END $$;

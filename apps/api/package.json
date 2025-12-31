@@ -12,8 +12,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@human-os/aliases": "workspace:*",
     "@human-os/core": "workspace:*",
     "@human-os/journal": "workspace:*",
+    "@human-os/services": "workspace:*",
     "@supabase/supabase-js": "^2.39.0",
     "express": "^4.21.0",
     "cors": "^2.8.5",

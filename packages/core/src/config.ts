@@ -12,6 +12,8 @@ import type { Layer } from './types.js';
 // =============================================================================
 
 export const DB_SCHEMAS = {
+  /** Human OS core data (users, journal, mood definitions) */
+  HUMAN_OS: 'human_os',
   /** Founder OS personal data (tasks, goals, check-ins) */
   FOUNDER_OS: 'founder_os',
   /** GFT CRM data (contacts, companies, posts) */
@@ -29,6 +31,8 @@ export const DB_SCHEMAS = {
 export const STORAGE_BUCKETS = {
   /** Context files storage bucket */
   CONTEXTS: 'contexts',
+  /** Human-OS corpus bucket (experts, sources, skills) */
+  HUMAN_OS: 'human-os',
 } as const;
 
 // =============================================================================

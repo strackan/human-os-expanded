@@ -23,6 +23,8 @@
     "start": "node dist/index.js",
     "clean": "rimraf dist",
     "typecheck": "tsc --noEmit",
+    "test:tools": "npx tsx src/test-all-tools.ts",
+    "test:tools:verbose": "npx tsx src/test-all-tools.ts --verbose",
     "bundle": "node scripts/bundle.mjs",
     "build:exe": "pnpm bundle && pnpm pkg:win",
     "pkg:win": "node scripts/pkg.mjs"

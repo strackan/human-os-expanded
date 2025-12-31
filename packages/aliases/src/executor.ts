@@ -15,6 +15,9 @@ import type {
   ExecutionStep,
 } from './types.js'
 
+/** Schema where aliases tables and functions live */
+const ALIASES_SCHEMA = 'human_os'
+
 /**
  * Configuration for the executor
  */
@@ -55,6 +58,13 @@ export class AliasExecutor {
   constructor(config: ExecutorConfig) {
     this.config = config
     this.supabase = createClient(config.supabaseUrl, config.supabaseKey)
+  }
+
+  /**
+   * Get schema-specific query builder
+   */
+  private schema() {
+    return this.supabase.schema(ALIASES_SCHEMA)
   }
 
   /**
@@ -371,7 +381,7 @@ export class AliasExecutor {
       ? await this.config.generateEmbedding(log.inputRequest)
       : null
 
-    const { data, error } = await this.supabase
+    const { data, error } = await this.schema()
       .from('execution_logs')
       .insert({
         alias_id: log.aliasId,
@@ -439,6 +449,13 @@ export class ExecutionRecaller {
   }
 
   /**
+   * Get schema-specific query builder
+   */
+  private schema() {
+    return this.supabase.schema(ALIASES_SCHEMA)
+  }
+
+  /**
    * Search past executions
    */
   async recall(
@@ -465,7 +482,7 @@ export class ExecutionRecaller {
       embedding = await this.generateEmbedding(query)
     }
 
-    const { data, error } = await this.supabase.rpc('recall_executions', {
+    const { data, error } = await this.schema().rpc('recall_executions', {
       p_query: query,
       p_embedding: embedding,
       p_entity: entity,

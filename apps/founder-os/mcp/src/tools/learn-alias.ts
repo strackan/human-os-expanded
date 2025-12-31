@@ -21,6 +21,9 @@ import {
   type ExecutionMode,
 } from '@human-os/aliases';
 
+/** Schema where aliases table lives */
+const ALIASES_SCHEMA = 'human_os';
+
 // =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
@@ -326,7 +329,7 @@ async function updateAlias(
   success: boolean;
   message: string;
 }> {
-  const supabase = ctx.getClient();
+  const supabase = ctx.getClient().schema(ALIASES_SCHEMA);
 
   // Build query
   let query = supabase.from('aliases').update({
@@ -368,7 +371,7 @@ async function disableAlias(
   success: boolean;
   message: string;
 }> {
-  const supabase = ctx.getClient();
+  const supabase = ctx.getClient().schema(ALIASES_SCHEMA);
 
   let query = supabase.from('aliases').update({
     enabled: false,

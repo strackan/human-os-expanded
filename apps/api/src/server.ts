@@ -27,6 +27,10 @@ import { createEntitiesRoutes } from './routes/v1/entities.js';
 import { createVoiceRoutes } from './routes/v1/voice.js';
 import { createExpertsRoutes } from './routes/v1/experts.js';
 import { createAnalyzeRoutes } from './routes/v1/analyze.js';
+import { createQueueRoutes } from './routes/v1/queue.js';
+import { createTasksRoutes } from './routes/v1/tasks.js';
+import { createAliasesRoutes } from './routes/v1/aliases.js';
+import { createDoRoutes } from './routes/v1/do.js';
 
 /**
  * Environment configuration
@@ -86,6 +90,12 @@ async function main() {
   app.use('/v1/voice', createVoiceRoutes(contextEngine));
   app.use('/v1/experts', createExpertsRoutes(supabase, contextEngine));
   app.use('/v1/analyze', createAnalyzeRoutes());
+
+  // Founder-OS routes (mobile sync, task management)
+  app.use('/v1/queue', createQueueRoutes(supabase));
+  app.use('/v1/tasks', createTasksRoutes(supabase));
+  app.use('/v1/aliases', createAliasesRoutes(supabase));
+  app.use('/v1/do', createDoRoutes(supabase, contextEngine, knowledgeGraph));
 
   // 404 handler
   app.use((req, res) => {

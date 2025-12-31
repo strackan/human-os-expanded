@@ -516,7 +516,7 @@ async function handlePublishNote(ctx: ToolContext, input: PublishNoteInput): Pro
   const isPublishing = input.visibility !== 'private';
 
   const noteData = {
-    owner_id: ctx.userId,
+    owner_id: ctx.userUUID,
     contact_entity_id: input.contact_entity_id,
     opinion_type: input.opinion_type,
     content: input.private_content || input.community_content,
@@ -540,7 +540,7 @@ async function handlePublishNote(ctx: ToolContext, input: PublishNoteInput): Pro
       .from('relationship_context')
       .update(noteData)
       .eq('id', input.existing_note_id)
-      .eq('owner_id', ctx.userId)
+      .eq('owner_id', ctx.userUUID)
       .select('id')
       .single();
 
@@ -605,7 +605,7 @@ async function handleRequestNote(ctx: ToolContext, input: RequestNoteInput): Pro
   const { data: requester } = await supabase
     .from('human_os.users')
     .select('full_name')
-    .eq('id', ctx.userId)
+    .eq('id', ctx.userUUID)
     .single();
 
   const expiresAt = new Date();
@@ -614,7 +614,7 @@ async function handleRequestNote(ctx: ToolContext, input: RequestNoteInput): Pro
   const { data, error } = await supabase
     .from('intel_requests')
     .insert({
-      requester_id: ctx.userId,
+      requester_id: ctx.userUUID,
       requester_name: requester?.full_name,
       target_user_id: input.target_user_id,
       contact_entity_id: input.contact_entity_id,
@@ -654,7 +654,7 @@ async function handleListIntelRequests(
   let query = supabase
     .from('intel_requests')
     .select('*', { count: 'exact' })
-    .eq('target_user_id', ctx.userId)
+    .eq('target_user_id', ctx.userUUID)
     .order('created_at', { ascending: false });
 
   if (input.status && input.status !== 'all') {
@@ -695,7 +695,7 @@ async function handleFulfillIntelRequest(
     .from('intel_requests')
     .select('*')
     .eq('id', input.request_id)
-    .eq('target_user_id', ctx.userId)
+    .eq('target_user_id', ctx.userUUID)
     .single();
 
   if (requestError || !request) {
@@ -780,7 +780,7 @@ async function handleDeclineIntelRequest(
       responded_at: new Date().toISOString(),
     })
     .eq('id', input.request_id)
-    .eq('target_user_id', ctx.userId);
+    .eq('target_user_id', ctx.userUUID);
 
   if (error) {
     throw new Error(`Failed to decline request: ${error.message}`);
@@ -894,7 +894,7 @@ async function handleMyIntelRequests(
     `,
       { count: 'exact' }
     )
-    .eq('requester_id', ctx.userId)
+    .eq('requester_id', ctx.userUUID)
     .order('created_at', { ascending: false });
 
   if (input.status && input.status !== 'all') {

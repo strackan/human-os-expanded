@@ -8,6 +8,9 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js'
 import type { ToolContext, ToolHandler } from '../lib/context.js'
 
+/** Schema where voice tables and functions live */
+const VOICE_SCHEMA = 'human_os'
+
 // =============================================================================
 // TOOL DEFINITIONS
 // =============================================================================
@@ -138,13 +141,14 @@ export const handleVoiceTools: ToolHandler = async (
   ctx: ToolContext
 ) => {
   const supabase = ctx.getClient()
+  const schema = supabase.schema(VOICE_SCHEMA)
   const { layer } = ctx
 
   switch (name) {
     case 'list_voice_profiles': {
       const filterLayer = (args.layer as string) || layer
 
-      const { data, error } = await supabase.rpc('list_voice_profiles', {
+      const { data, error } = await schema.rpc('list_voice_profiles', {
         p_layer: filterLayer,
       })
 
@@ -161,7 +165,7 @@ export const handleVoiceTools: ToolHandler = async (
     case 'get_voice_profile': {
       const entitySlug = args.entity_slug as string
 
-      const { data, error } = await supabase.rpc('get_voice_profile_full', {
+      const { data, error } = await schema.rpc('get_voice_profile_full', {
         p_entity_slug: entitySlug,
         p_layer: layer,
       })
@@ -194,7 +198,7 @@ export const handleVoiceTools: ToolHandler = async (
       const commandmentType = args.commandment_type as string
 
       // First get the profile
-      const { data: profiles, error: profileError } = await supabase
+      const { data: profiles, error: profileError } = await schema
         .from('voice_profiles')
         .select('id')
         .eq('entity_slug', entitySlug)
@@ -207,7 +211,7 @@ export const handleVoiceTools: ToolHandler = async (
       }
 
       // Then get the commandment
-      const { data: commandment, error } = await supabase
+      const { data: commandment, error } = await schema
         .from('voice_commandments')
         .select('*')
         .eq('profile_id', profile.id)
@@ -240,7 +244,7 @@ export const handleVoiceTools: ToolHandler = async (
       const description = args.description as string | undefined
       const profileLayer = (args.layer as string) || layer
 
-      const { data, error } = await supabase
+      const { data, error } = await schema
         .from('voice_profiles')
         .insert({
           entity_slug: entitySlug,
@@ -275,7 +279,7 @@ export const handleVoiceTools: ToolHandler = async (
       const content = args.content as string
 
       // Get the profile
-      const { data: profiles, error: profileError } = await supabase
+      const { data: profiles, error: profileError } = await schema
         .from('voice_profiles')
         .select('id')
         .eq('entity_slug', entitySlug)
@@ -315,7 +319,7 @@ export const handleVoiceTools: ToolHandler = async (
       }
 
       // Upsert the commandment
-      const { data, error } = await supabase
+      const { data, error } = await schema
         .from('voice_commandments')
         .upsert(
           {
@@ -338,14 +342,14 @@ export const handleVoiceTools: ToolHandler = async (
       }
 
       // Update profile completeness
-      const { count } = await supabase
+      const { count } = await schema
         .from('voice_commandments')
         .select('*', { count: 'exact', head: true })
         .eq('profile_id', profileId)
 
       const completeness = Math.min(100, Math.round(((count || 0) / 10) * 100))
 
-      await supabase
+      await schema
         .from('voice_profiles')
         .update({ completeness, updated_at: new Date().toISOString() })
         .eq('id', profileId)
@@ -365,7 +369,7 @@ export const handleVoiceTools: ToolHandler = async (
       const query = args.query as string
       const limit = (args.limit as number) || 10
 
-      const { data, error } = await supabase
+      const { data, error } = await schema
         .from('voice_profiles')
         .select('*')
         .or(`layer.eq.public,layer.eq.${layer}`)

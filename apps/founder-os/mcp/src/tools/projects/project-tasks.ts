@@ -166,7 +166,7 @@ async function addProjectTask(ctx: ToolContext, params: AddProjectTaskParams) {
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .insert({
-      user_id: ctx.userId,
+      user_id: ctx.userUUID,
       project_id: projectId,
       milestone_id: params.milestone_id,
       title: params.title,
@@ -213,7 +213,7 @@ async function updateProjectTask(ctx: ToolContext, params: UpdateProjectTaskPara
     .from('tasks')
     .update(updates)
     .eq('id', params.task_id)
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .select()
     .single();
 
@@ -236,7 +236,7 @@ async function listProjectTasks(ctx: ToolContext, params: ListProjectTasksParams
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .select('*')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .eq('project_id', projectId)
     .order('due_date', { ascending: true, nullsFirst: false });
 
@@ -295,7 +295,7 @@ async function getProjectDashboard(
     .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('tasks')
     .select('*')
-    .eq('user_id', ctx.userId)
+    .eq('user_id', ctx.userUUID)
     .eq('project_id', projectId);
 
   // Find overdue tasks
