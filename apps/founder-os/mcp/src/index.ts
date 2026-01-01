@@ -48,6 +48,7 @@ import { priorityTools, handlePriorityTools } from './tools/priorities.js';
 import { emailTools, handleEmailTools } from './tools/email.js';
 import { moodTools, handleMoodTools } from './tools/moods.js';
 import { relationshipTools, handleRelationshipTools } from './tools/relationships.js';
+import { conductorTools, handleConductorTools } from './tools/conductor.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -120,6 +121,7 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: emailTools, handler: handleEmailTools },
   { tools: moodTools, handler: handleMoodTools },
   { tools: relationshipTools, handler: handleRelationshipTools },
+  { tools: conductorTools, handler: handleConductorTools },
 ];
 
 /** Flat list of all tools for MCP registration, with mode property added */
