@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
@@ -91,6 +92,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
       return () => clearInterval(interval);
     }
   }, [user?.id]);
+  // Check if we're on a standalone page (no app chrome)
+  const pathname = usePathname();
+  const isStandalonePage = pathname?.startsWith('/sculptor');
+  
+  // For standalone pages, just render children without app layout
+  if (isStandalonePage) {
+    return <>{children}</>;
+  }
+
 
 
   return (

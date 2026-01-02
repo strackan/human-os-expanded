@@ -263,7 +263,7 @@ export default function SculptorChat({
                 className={cn(
                   'max-w-[80%] rounded-2xl px-4 py-3',
                   message.role === 'user'
-                    ? 'bg-purple-600'
+                    ? 'bg-purple-600 text-white'
                     : 'bg-slate-100',
                   // Highlight the active question
                   isLatestAssistant && 'ring-2 ring-red-200 shadow-lg shadow-red-100/50'
@@ -275,9 +275,9 @@ export default function SculptorChat({
                       p: ({ children }) => {
                         const text = String(children);
                         const isDialogue = text.startsWith('"') || text.startsWith('"');
-                        
+
                         if (message.role === 'user') {
-                          return <p className="text-white text-sm">{children}</p>;
+                          return <p style={{ color: 'white' }} className="text-sm">{children}</p>;
                         }
                         
                         return isDialogue ? (
@@ -289,8 +289,8 @@ export default function SculptorChat({
                         );
                       },
                       em: ({ children }) => (
-                        message.role === 'user' 
-                          ? <em className="text-purple-200">{children}</em>
+                        message.role === 'user'
+                          ? <em style={{ color: 'rgba(255,255,255,0.8)' }}>{children}</em>
                           : <span className="block text-xs text-slate-400 italic leading-relaxed">{children}</span>
                       ),
                     }}
@@ -305,10 +305,8 @@ export default function SculptorChat({
                   )}
                 >
                   <p
-                    className={cn(
-                      'text-xs',
-                      message.role === 'user' ? '!text-purple-200' : 'text-slate-400'
-                    )}
+                    className="text-xs"
+                    style={{ color: message.role === 'user' ? 'rgba(255,255,255,0.7)' : undefined }}
                   >
                     {message.timestamp.toLocaleTimeString([], {
                       hour: '2-digit',
