@@ -397,7 +397,7 @@ async function main() {
 
       // D&D Output
       console.log('\n   🎲 D&D CHARACTER SHEET:');
-      console.log(`      Class: ${dnd.class} | Level: ${dnd.level}`);
+      console.log(`      Race: ${dnd.race} | Class: ${dnd.class} | Level: ${dnd.level}`);
       console.log(`      Stats: STR:${dnd.stats.STR} DEX:${dnd.stats.DEX} CON:${dnd.stats.CON} INT:${dnd.stats.INT} WIS:${dnd.stats.WIS} CHA:${dnd.stats.CHA}`);
       console.log(`      Proficiencies: ${dnd.proficiencies.join(', ') || 'None'}`);
       if (dnd.traits.length > 0) console.log(`      Traits: ${dnd.traits.slice(0, 2).join('; ')}`);

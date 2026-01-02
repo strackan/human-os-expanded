@@ -110,7 +110,20 @@ export {
 // =============================================================================
 
 export {
-  // Engine
+  // Protocol-driven approach (recommended)
+  SessionManager,
+  createSessionManager,
+
+  // Attribute system
+  ATTRIBUTES,
+  ATTRIBUTE_SETS,
+  getAttributesForSet,
+  getRequiredAttributesForSet,
+  checkRequiredAttributesCaptured,
+  getCaptureProgress,
+  getSuggestedQuestions,
+
+  // State-machine approach (legacy)
   ConductorEngine,
   createConductorEngine,
 
@@ -130,6 +143,14 @@ export {
   formatResult,
 
   // Types
+  type Attribute,
+  type AttributeSet,
+  type AttributeCategory,
+  type CaptureMethod,
+  type InterviewSession,
+  type CapturedAttribute,
+  type CaptureResult,
+  type SessionContext,
   type Scene,
   type Character,
   type SceneConfig,
@@ -140,6 +161,7 @@ export {
   type AssessmentHandler,
   type DnDStats,
   type DnDClass,
+  type DnDRace,
   type DnDSheet,
   type CompetencyRating,
   type HiringRecommendation,
@@ -147,4 +169,11 @@ export {
   type InterviewState,
   type HiringManagerReport,
   type CandidateSummary,
+
+  // LLM Assessment (hybrid scoring)
+  LLMAssessmentSchema,
+  validateAssessment,
+  buildHybridAssessment,
+  generateAssessmentPrompt,
+  type LLMAssessment,
 } from './conductor/index.js';

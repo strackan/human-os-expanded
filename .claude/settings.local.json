@@ -17,7 +17,17 @@
       "Bash(npx tsx:*)",
       "WebSearch",
       "WebFetch(domain:docs.claude.com)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:renubu-staging.vercel.app)",
+      "Bash(scripts/setup-sculptor-hippie-bill.sql )",
+      "Bash(scripts/setup-sculptor-hippie-bill.ts )",
+      "Bash(scripts/setup-sculptor-scott-leese.sql )",
+      "Bash(scripts/setup-sculptor-session.ts )",
+      "Bash(scripts/test-sculptor-scenarios.ts )",
+      "Bash(docs/SCULPTOR_TEMPLATE_GUIDE.md )",
+      "Bash(supabase/migrations/20260209000000_sculptor_system.sql )",
+      "Bash(timeout 15 vercel logs:*)"
     ]
   }
 }

@@ -160,10 +160,34 @@ export type DnDClass =
   | 'Cleric';        // Domain Expert (specialized knowledge)
 
 /**
+ * D&D race mapping based on personality + archetype
+ *
+ * Race represents the candidate's core nature/approach:
+ * - Gnome: Curious tinkerers, love learning and building
+ * - Dwarf: Resilient craftspeople, deep expertise, steady
+ * - Elf: Long-term thinkers, elegant solutions, refined
+ * - Human: Adaptable, ambitious, versatile
+ * - Half-Elf: Diplomatic, bridges gaps, charismatic
+ * - Tiefling: Unconventional thinkers, unique perspective
+ * - Halfling: Resourceful, optimistic, team-oriented
+ * - Dragonborn: Bold leaders, commanding presence
+ */
+export type DnDRace =
+  | 'Gnome'          // High curiosity, loves learning
+  | 'Dwarf'          // Resilient, deep expertise, steady
+  | 'Elf'            // Refined, strategic, long-term thinker
+  | 'Human'          // Adaptable, ambitious, versatile
+  | 'Half-Elf'       // Diplomatic, bridges gaps, charismatic
+  | 'Tiefling'       // Unconventional, unique perspective
+  | 'Halfling'       // Resourceful, optimistic, team player
+  | 'Dragonborn';    // Bold leader, commanding presence
+
+/**
  * D&D character sheet output
  */
 export interface DnDSheet {
   name: string;
+  race: DnDRace;
   class: DnDClass;
   level: number;              // 1-20 based on tier
   stats: DnDStats;

@@ -1,24 +1,40 @@
 /**
  * Interview Conductor Tools
  *
- * MCP tools for running immersive interview experiences.
- * Manages multi-turn conversations through 3 scenes (elevator → reception → office)
- * and produces assessments in multiple formats.
+ * Protocol-driven MCP tools for running immersive interview experiences.
+ * Claude IS the interviewer -- these tools provide context and track signals.
+ *
+ * Flow:
+ * 1. interview_start - Get protocol context and character guidance
+ * 2. Claude (as character) conducts natural conversation
+ * 3. interview_log - Log exchanges, track captured attributes
+ * 4. interview_transition - Move between scenes when ready
+ * 5. interview_complete - End interview and get assessment
+ * 6. interview_format - Format results for different audiences
  */
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolContext } from '../lib/context.js';
 import { z } from 'zod';
+import { readFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import {
-  createConductorEngine,
+  createSessionManager,
+  ATTRIBUTE_SETS,
   dndHandler,
   professionalHandler,
   hiringManagerHandler,
   candidateSummaryHandler,
   formatResult,
-  type ConductorEngine,
-  type ScenePrompt,
-  type InterviewComplete,
+  LLMAssessmentSchema,
+  buildHybridAssessment,
+  generateAssessmentPrompt,
+  type SessionManager,
+  type SessionContext,
+  type AssessmentResult,
+  type Scene,
+  type LLMAssessment,
 } from '@human-os/analysis';
 
 // =============================================================================
@@ -26,23 +42,84 @@ import {
 // =============================================================================
 
 /**
- * Store active interview sessions by session ID
- * In production, this could be persisted to database
+ * Store active session managers by user ID
  */
-const activeSessions = new Map<string, {
-  engine: ConductorEngine;
-  candidateName: string;
-  startedAt: Date;
-}>();
+const userSessions = new Map<string, SessionManager>();
 
 /**
- * Generate a session ID from user context
+ * Store completed results for formatting
  */
-function getSessionId(ctx: ToolContext, candidateName?: string): string {
-  // Use user ID + candidate name as session key
-  // This allows one interview per candidate per user
-  return `${ctx.userId}:${candidateName || 'current'}`;
+const completedResults = new Map<string, AssessmentResult>();
+
+/**
+ * Get or create session manager for a user
+ */
+function getSessionManager(userId: string): SessionManager {
+  let manager = userSessions.get(userId);
+  if (!manager) {
+    manager = createSessionManager();
+    userSessions.set(userId, manager);
+  }
+  return manager;
 }
+
+/**
+ * Load the interview protocol
+ */
+function loadProtocol(): string {
+  try {
+    // Try to load from file system (development)
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const protocolPath = join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      '..',
+      '..',
+      'packages',
+      'analysis',
+      'src',
+      'conductor',
+      'protocol.md'
+    );
+    return readFileSync(protocolPath, 'utf-8');
+  } catch {
+    // Return embedded version for standalone builds
+    return EMBEDDED_PROTOCOL;
+  }
+}
+
+// Embedded protocol for standalone builds
+const EMBEDDED_PROTOCOL = `# Interview Conductor Protocol
+
+You are conducting an immersive interview experience.
+
+## Your Role
+
+You ARE the interviewer. You don't execute scripts -- you embody characters and respond naturally.
+
+**Your twin objectives:**
+1. Create a positive, memorable experience for the candidate
+2. Capture signals across the required attribute set
+
+## The Journey
+
+**Scene 1: Elevator (Earl)** - 2-3 exchanges, warmup
+**Scene 2: Reception (Maria)** - 3-4 exchanges, interests/goals
+**Scene 3: Office (You)** - 5-7 exchanges, deep dive
+
+## Handling Creative Directions
+
+Let candidates explore IF positive/playful.
+Redirect IF dismissive, negative, or cruel.
+You have autonomy to make the call.
+
+## The North Star
+
+Create a conversation so good they'd want to do it again.
+`;
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -51,13 +128,16 @@ function getSessionId(ctx: ToolContext, candidateName?: string): string {
 export const conductorTools: Tool[] = [
   {
     name: 'interview_start',
-    description: `Start a new immersive interview session. The interview flows through 3 scenes:
-1. Elevator - Warmup with Earl the elevator operator (2-3 exchanges)
-2. Reception - Maria asks about goals and interests (3-4 exchanges)
-3. Office - Deep dive interview questions (5-7 exchanges)
+    description: `Start a new protocol-driven interview session.
 
-Each scene has a distinct character. The candidate's responses are analyzed across 11 dimensions
-to produce scores, archetype classification, and hiring recommendations.`,
+Returns:
+- Protocol guidance for conducting the interview
+- Character personas for each scene
+- Attribute set to capture
+- Session context
+
+You (Claude) then conduct the interview naturally as each character.
+Use interview_log to track exchanges and capture signals.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -65,59 +145,146 @@ to produce scores, archetype classification, and hiring recommendations.`,
           type: 'string',
           description: 'Name of the candidate being interviewed',
         },
+        attribute_set: {
+          type: 'string',
+          enum: Object.keys(ATTRIBUTE_SETS),
+          description: 'Which attribute set to capture (default: goodhang_full)',
+        },
       },
       required: ['candidate_name'],
     },
   },
   {
-    name: 'interview_respond',
-    description: `Submit the candidate's response and get the next prompt from the current character.
-The interview automatically transitions between scenes. When the interview is complete,
-returns the full assessment results including scores, archetype, and recommendations.`,
+    name: 'interview_log',
+    description: `Log an interview exchange and detect captured attributes.
+
+Call this after each exchange to:
+- Track the conversation transcript
+- Detect which attributes were signaled
+- Get progress toward complete capture
+- Get suggestions for uncaptured attributes`,
     inputSchema: {
       type: 'object',
       properties: {
-        response: {
+        session_id: {
           type: 'string',
-          description: "The candidate's response to the previous prompt",
+          description: 'The session ID from interview_start',
         },
-        candidate_name: {
+        character_line: {
           type: 'string',
-          description: 'Name of the candidate (to identify the session)',
+          description: 'What you (as the character) said',
+        },
+        candidate_response: {
+          type: 'string',
+          description: "The candidate's response",
         },
       },
-      required: ['response', 'candidate_name'],
+      required: ['session_id', 'character_line', 'candidate_response'],
+    },
+  },
+  {
+    name: 'interview_transition',
+    description: `Transition to the next scene.
+
+Call when you're ready to move:
+- elevator -> reception
+- reception -> office
+
+The tool updates the session and returns the new scene context.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: 'The session ID',
+        },
+        new_scene: {
+          type: 'string',
+          enum: ['elevator', 'reception', 'office'],
+          description: 'The scene to transition to',
+        },
+      },
+      required: ['session_id', 'new_scene'],
     },
   },
   {
     name: 'interview_status',
-    description: `Get the current status of an interview session.
-Shows the current scene, exchange count, and whether the interview is in progress.`,
+    description: `Get current interview status and capture progress.
+
+Returns session context, progress, and suggestions.`,
     inputSchema: {
       type: 'object',
       properties: {
-        candidate_name: {
+        session_id: {
           type: 'string',
-          description: 'Name of the candidate to check status for',
+          description: 'The session ID',
         },
       },
-      required: ['candidate_name'],
+      required: ['session_id'],
+    },
+  },
+  {
+    name: 'interview_complete',
+    description: `Complete the interview using algorithmic-only scoring (legacy).
+
+For better results, use interview_submit_assessment instead.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: 'The session ID',
+        },
+      },
+      required: ['session_id'],
+    },
+  },
+  {
+    name: 'interview_submit_assessment',
+    description: `Submit your assessment of the candidate (RECOMMENDED).
+
+After conducting the interview, provide your evaluation. Your semantic assessment
+will be validated against transcript evidence to detect potential bias.
+
+The assessment JSON should include:
+- dimensions: Your 0-10 scores for each of the 11 dimensions
+- archetype: Primary archetype with confidence and reasoning
+- observedAttributes: Evidence for observed attributes
+- greenFlags/redFlags: Signals you noticed
+- overallImpression: 1-2 sentence summary
+- recommendedTier: top_1%, strong, moderate, weak, or pass
+
+Your assessment will be validated and bias-adjusted before final output.`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id: {
+          type: 'string',
+          description: 'The session ID',
+        },
+        assessment: {
+          type: 'object',
+          description: 'Your assessment in the specified JSON format',
+        },
+      },
+      required: ['session_id', 'assessment'],
     },
   },
   {
     name: 'interview_format',
-    description: `Format a completed interview result in a specific format.
+    description: `Format a completed interview in a specific style.
+
 Available formats:
 - dnd: D&D Character Sheet (gamified, fun)
 - professional: Standard HR assessment (formal)
-- hiring_manager: Detailed internal report with risks and follow-up questions
-- candidate: Shareable summary for the candidate (no scores exposed)`,
+- hiring_manager: Detailed internal report
+- candidate: Shareable summary (no scores)`,
     inputSchema: {
       type: 'object',
       properties: {
-        candidate_name: {
+        session_id: {
           type: 'string',
-          description: 'Name of the candidate',
+          description: 'The session ID of a completed interview',
         },
         format: {
           type: 'string',
@@ -125,12 +292,20 @@ Available formats:
           description: 'Output format to use',
         },
       },
-      required: ['candidate_name', 'format'],
+      required: ['session_id', 'format'],
     },
   },
   {
     name: 'interview_list',
-    description: 'List all active interview sessions for the current user.',
+    description: 'List all interview sessions for the current user.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
+    name: 'interview_protocol',
+    description: 'Get the full interview protocol guidance.',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -144,27 +319,36 @@ Available formats:
 
 const StartSchema = z.object({
   candidate_name: z.string().min(1),
+  attribute_set: z.string().optional().default('goodhang_full'),
 });
 
-const RespondSchema = z.object({
-  response: z.string().min(1),
-  candidate_name: z.string().min(1),
+const LogSchema = z.object({
+  session_id: z.string().min(1),
+  character_line: z.string().min(1),
+  candidate_response: z.string().min(1),
 });
 
-const StatusSchema = z.object({
-  candidate_name: z.string().min(1),
+const TransitionSchema = z.object({
+  session_id: z.string().min(1),
+  new_scene: z.enum(['elevator', 'reception', 'office']),
+});
+
+const SessionIdSchema = z.object({
+  session_id: z.string().min(1),
 });
 
 const FormatSchema = z.object({
-  candidate_name: z.string().min(1),
+  session_id: z.string().min(1),
   format: z.enum(['dnd', 'professional', 'hiring_manager', 'candidate']),
 });
 
-// =============================================================================
-// RESULT STORAGE (for formatting after completion)
-// =============================================================================
+const SubmitAssessmentSchema = z.object({
+  session_id: z.string().min(1),
+  assessment: z.any(), // Will be validated against LLMAssessmentSchema
+});
 
-const completedResults = new Map<string, InterviewComplete>();
+// Store session start times for duration calculation
+const sessionStartTimes = new Map<string, Date>();
 
 // =============================================================================
 // HANDLER
@@ -175,224 +359,291 @@ export async function handleConductorTools(
   args: Record<string, unknown>,
   ctx: ToolContext
 ): Promise<unknown | null> {
+  const manager = getSessionManager(ctx.userId);
+
   switch (name) {
     case 'interview_start': {
       const input = StartSchema.parse(args);
-      const sessionId = getSessionId(ctx, input.candidate_name);
 
-      // Check if session already exists
-      if (activeSessions.has(sessionId)) {
-        const existing = activeSessions.get(sessionId)!;
+      // Validate attribute set
+      if (!ATTRIBUTE_SETS[input.attribute_set]) {
         return {
           error: true,
-          message: `Interview already in progress for ${input.candidate_name}. Use interview_respond to continue or start with a different name.`,
-          session: {
-            candidateName: existing.candidateName,
-            startedAt: existing.startedAt.toISOString(),
-            currentScene: existing.engine.getState()?.currentScene,
-          },
+          message: `Unknown attribute set: ${input.attribute_set}`,
+          available: Object.keys(ATTRIBUTE_SETS),
         };
       }
 
-      // Create new conductor engine
-      const engine = createConductorEngine();
-      const prompt = engine.startInterview(input.candidate_name);
+      // Start session
+      const context = manager.startSession(input.candidate_name, input.attribute_set);
 
-      // Store session
-      activeSessions.set(sessionId, {
-        engine,
-        candidateName: input.candidate_name,
-        startedAt: new Date(),
-      });
+      // Store start time for duration calculation
+      sessionStartTimes.set(context.session.id, new Date());
+
+      // Load protocol
+      const protocol = loadProtocol();
+
+      // Get assessment prompt
+      const assessmentPrompt = generateAssessmentPrompt(input.attribute_set);
 
       return {
         success: true,
-        message: `Interview started for ${input.candidate_name}`,
-        scene: prompt.scene,
-        character: prompt.characterName,
-        prompt: prompt.prompt,
-        hint: 'The candidate should respond naturally. Their responses will be analyzed for signals across 11 dimensions.',
+        message: `Interview session started for ${input.candidate_name}`,
+        session: context.session,
+        attributeSet: context.attributeSet,
+        characters: context.characters,
+        guidance: context.guidance,
+        protocol,
+        assessmentPrompt,
+        hint: 'You are now Earl. Start the elevator scene naturally. When done, use interview_submit_assessment with your evaluation.',
       };
     }
 
-    case 'interview_respond': {
-      const input = RespondSchema.parse(args);
-      const sessionId = getSessionId(ctx, input.candidate_name);
+    case 'interview_log': {
+      const input = LogSchema.parse(args);
 
-      // Get session
-      const session = activeSessions.get(sessionId);
-      if (!session) {
+      try {
+        const result = manager.logExchange(
+          input.session_id,
+          input.character_line,
+          input.candidate_response
+        );
+
+        return {
+          success: true,
+          newCaptures: result.newCaptures,
+          progress: result.progress,
+          suggestions: result.suggestions,
+          hint:
+            result.progress.requiredComplete
+              ? 'All required attributes captured! You can continue or complete the interview.'
+              : `${result.progress.percentage}% captured. Missing required: ${result.progress.missingRequired.join(', ')}`,
+        };
+      } catch (error) {
         return {
           error: true,
-          message: `No active interview for ${input.candidate_name}. Use interview_start to begin.`,
+          message: error instanceof Error ? error.message : 'Failed to log exchange',
         };
       }
+    }
 
-      // Process response
-      const result = session.engine.processResponse(input.response);
+    case 'interview_transition': {
+      const input = TransitionSchema.parse(args);
 
-      // Check if complete
-      if ('complete' in result) {
-        // Store result for formatting later
-        completedResults.set(sessionId, result);
+      try {
+        manager.transitionScene(input.session_id, input.new_scene as Scene);
+        const context = manager.getSessionContext(input.session_id);
 
-        // Remove from active sessions
-        activeSessions.delete(sessionId);
+        return {
+          success: true,
+          message: `Transitioned to ${input.new_scene} scene`,
+          currentScene: input.new_scene,
+          guidance: context.guidance,
+          hint: `You are now ${context.guidance.currentCharacter}. ${context.guidance.sceneGoal}`,
+        };
+      } catch (error) {
+        return {
+          error: true,
+          message: error instanceof Error ? error.message : 'Failed to transition',
+        };
+      }
+    }
 
-        // Format results with all handlers
-        const assessment = result.result;
+    case 'interview_status': {
+      const input = SessionIdSchema.parse(args);
+
+      try {
+        const context = manager.getSessionContext(input.session_id);
+
+        return {
+          session: context.session,
+          progress: context.progress,
+          guidance: context.guidance,
+        };
+      } catch (error) {
+        return {
+          error: true,
+          message: error instanceof Error ? error.message : 'Session not found',
+        };
+      }
+    }
+
+    case 'interview_complete': {
+      const input = SessionIdSchema.parse(args);
+
+      try {
+        const result = manager.completeSession(input.session_id);
+
+        // Store for later formatting
+        completedResults.set(input.session_id, result);
+
+        // Format previews
+        const dnd = formatResult(result, dndHandler);
+        const professional = formatResult(result, professionalHandler);
+
+        return {
+          complete: true,
+          candidateName: result.candidateName,
+          summary: {
+            overallScore: result.overallScore.toFixed(1),
+            tier: result.tier,
+            archetype: result.archetype.primary,
+            recommendation: professional.recommendation,
+          },
+          dndPreview: {
+            race: dnd.race,
+            class: dnd.class,
+            level: dnd.level,
+            stats: dnd.stats,
+          },
+          greenFlags: result.greenFlags.slice(0, 5),
+          redFlags: result.redFlags.slice(0, 5),
+          hint: 'Use interview_format to get detailed reports in different styles.',
+        };
+      } catch (error) {
+        return {
+          error: true,
+          message: error instanceof Error ? error.message : 'Failed to complete interview',
+        };
+      }
+    }
+
+    case 'interview_submit_assessment': {
+      const input = SubmitAssessmentSchema.parse(args);
+
+      try {
+        // Validate Claude's assessment against schema
+        const llmAssessment = LLMAssessmentSchema.parse(input.assessment);
+
+        // Get session context for transcript
+        const context = manager.getSessionContext(input.session_id);
+        const startTime = sessionStartTimes.get(input.session_id) || new Date();
+
+        // Get transcript from session (we need to access it from the manager)
+        // For now, we'll complete the session to get the transcript
+        const algorithmicResult = manager.completeSession(input.session_id);
+
+        // Build hybrid assessment with bias validation
+        const { assessment, validation } = buildHybridAssessment(
+          algorithmicResult.candidateName,
+          algorithmicResult.transcript,
+          llmAssessment,
+          startTime
+        );
+
+        // Store for later formatting
+        completedResults.set(input.session_id, assessment);
+
+        // Format previews
         const dnd = formatResult(assessment, dndHandler);
         const professional = formatResult(assessment, professionalHandler);
 
         return {
           complete: true,
+          method: 'hybrid',
           candidateName: assessment.candidateName,
+          validation: {
+            isValid: validation.isValid,
+            biasWarnings: validation.biasWarnings,
+            confidenceAdjustment: validation.confidenceAdjustment.toFixed(2),
+          },
           summary: {
             overallScore: assessment.overallScore.toFixed(1),
             tier: assessment.tier,
             archetype: assessment.archetype.primary,
+            archetypeConfidence: (assessment.archetype.confidence * 100).toFixed(0) + '%',
             recommendation: professional.recommendation,
           },
+          llmImpression: llmAssessment.overallImpression,
           dndPreview: {
+            race: dnd.race,
             class: dnd.class,
             level: dnd.level,
             stats: dnd.stats,
           },
           greenFlags: assessment.greenFlags.slice(0, 5),
           redFlags: assessment.redFlags.slice(0, 5),
-          hint: 'Use interview_format to get detailed reports in different formats.',
+          hint: validation.biasWarnings.length > 0
+            ? `⚠️ ${validation.biasWarnings.length} bias warning(s) detected. Scores adjusted.`
+            : '✅ Assessment validated. Use interview_format for detailed reports.',
         };
-      }
-
-      // Continue interview
-      const prompt = result as ScenePrompt;
-      return {
-        complete: false,
-        scene: prompt.scene,
-        character: prompt.characterName,
-        prompt: prompt.prompt,
-        isTransition: prompt.isTransition,
-        progress: `${prompt.exchangeNumber}/${prompt.totalExchanges} exchanges`,
-      };
-    }
-
-    case 'interview_status': {
-      const input = StatusSchema.parse(args);
-      const sessionId = getSessionId(ctx, input.candidate_name);
-
-      // Check active sessions
-      const session = activeSessions.get(sessionId);
-      if (session) {
-        const state = session.engine.getState();
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return {
+            error: true,
+            message: 'Invalid assessment format',
+            details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+          };
+        }
         return {
-          status: 'in_progress',
-          candidateName: session.candidateName,
-          startedAt: session.startedAt.toISOString(),
-          currentScene: state?.currentScene,
-          currentExchange: state?.currentExchange,
-          transcriptLength: state?.transcript.length,
+          error: true,
+          message: error instanceof Error ? error.message : 'Failed to submit assessment',
         };
       }
-
-      // Check completed results
-      if (completedResults.has(sessionId)) {
-        const result = completedResults.get(sessionId)!;
-        return {
-          status: 'completed',
-          candidateName: result.result.candidateName,
-          overallScore: result.result.overallScore.toFixed(1),
-          tier: result.result.tier,
-          archetype: result.result.archetype.primary,
-          completedAt: result.result.completedAt.toISOString(),
-        };
-      }
-
-      return {
-        status: 'not_found',
-        message: `No interview found for ${input.candidate_name}`,
-      };
     }
 
     case 'interview_format': {
       const input = FormatSchema.parse(args);
-      const sessionId = getSessionId(ctx, input.candidate_name);
 
-      // Get completed result
-      const completed = completedResults.get(sessionId);
-      if (!completed) {
+      const result = completedResults.get(input.session_id);
+      if (!result) {
         return {
           error: true,
-          message: `No completed interview found for ${input.candidate_name}. Complete an interview first.`,
+          message: 'No completed interview found. Complete the interview first.',
         };
       }
-
-      const assessment = completed.result;
 
       switch (input.format) {
         case 'dnd':
           return {
             format: 'D&D Character Sheet',
-            ...formatResult(assessment, dndHandler),
+            ...formatResult(result, dndHandler),
           };
 
         case 'professional':
           return {
             format: 'Professional Assessment',
-            ...formatResult(assessment, professionalHandler),
+            ...formatResult(result, professionalHandler),
           };
 
         case 'hiring_manager':
           return {
             format: 'Hiring Manager Report',
-            ...formatResult(assessment, hiringManagerHandler),
+            ...formatResult(result, hiringManagerHandler),
           };
 
         case 'candidate':
           return {
             format: 'Candidate Summary',
-            ...formatResult(assessment, candidateSummaryHandler),
+            ...formatResult(result, candidateSummaryHandler),
           };
       }
       break;
     }
 
     case 'interview_list': {
-      const userPrefix = `${ctx.userId}:`;
-      const sessions: Array<{
-        candidateName: string;
-        status: string;
-        scene?: string;
-        startedAt?: string;
-      }> = [];
-
-      // Active sessions
-      for (const [key, session] of activeSessions.entries()) {
-        if (key.startsWith(userPrefix)) {
-          sessions.push({
-            candidateName: session.candidateName,
-            status: 'in_progress',
-            scene: session.engine.getState()?.currentScene,
-            startedAt: session.startedAt.toISOString(),
-          });
-        }
-      }
-
-      // Completed sessions
-      for (const [key, result] of completedResults.entries()) {
-        if (key.startsWith(userPrefix)) {
-          sessions.push({
-            candidateName: result.result.candidateName,
-            status: 'completed',
-          });
-        }
-      }
+      const sessions = manager.listSessions();
 
       return {
         sessions,
         total: sessions.length,
-        message: sessions.length === 0
-          ? 'No interview sessions found. Use interview_start to begin.'
-          : `Found ${sessions.length} interview session(s).`,
+        message:
+          sessions.length === 0
+            ? 'No interview sessions found. Use interview_start to begin.'
+            : `Found ${sessions.length} interview session(s).`,
+      };
+    }
+
+    case 'interview_protocol': {
+      return {
+        protocol: loadProtocol(),
+        attributeSets: Object.entries(ATTRIBUTE_SETS).map(([id, set]) => ({
+          id,
+          name: set.name,
+          description: set.description,
+          attributeCount: set.attributes.length,
+          requiredCount: set.requiredAttributes.length,
+        })),
       };
     }
 

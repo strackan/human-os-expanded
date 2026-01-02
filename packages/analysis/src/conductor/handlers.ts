@@ -11,6 +11,7 @@ import type {
   DnDSheet,
   DnDStats,
   DnDClass,
+  DnDRace,
   ProfessionalAssessment,
   CompetencyRating,
   HiringRecommendation,
@@ -61,6 +62,117 @@ function archetypeToClass(archetype: CandidateArchetype): DnDClass {
     domain_expert: 'Cleric',
   };
   return mapping[archetype];
+}
+
+/**
+ * Determine D&D race based on personality traits and scores
+ *
+ * Race represents the candidate's core nature/approach:
+ * - Gnome: High curiosity, loves learning, tinkering mindset
+ * - Dwarf: Resilient, deep expertise, steady and reliable
+ * - Elf: Refined, strategic, long-term thinker
+ * - Human: Adaptable, ambitious, versatile
+ * - Half-Elf: Diplomatic, bridges gaps, charismatic communicator
+ * - Tiefling: Unconventional thinker, unique perspective
+ * - Halfling: Resourceful, optimistic, team player
+ * - Dragonborn: Bold leader, commanding presence
+ */
+function determineRace(result: AssessmentResult): DnDRace {
+  const { dimensions, competencies, archetype, emotions } = result;
+
+  // Score each race based on matching traits
+  const raceScores: Record<DnDRace, number> = {
+    Gnome: 0,
+    Dwarf: 0,
+    Elf: 0,
+    Human: 0,
+    'Half-Elf': 0,
+    Tiefling: 0,
+    Halfling: 0,
+    Dragonborn: 0,
+  };
+
+  // Gnome: Curiosity + learning + technical
+  raceScores.Gnome +=
+    (competencies.signals.growth_mindset || 0) * 3 +
+    (dimensions.passions.score / 10) * 2 +
+    (dimensions.technical.score / 10) * 1;
+
+  // Dwarf: Resilience + expertise + steady work
+  raceScores.Dwarf +=
+    (competencies.signals.accountability || 0) * 3 +
+    (dimensions.work_history.score / 10) * 2 +
+    (dimensions.motivation.score / 10) * 1;
+
+  // Elf: Strategic + refined + self-aware
+  raceScores.Elf +=
+    (dimensions.self_awareness.score / 10) * 3 +
+    (dimensions.iq.score / 10) * 2 +
+    (archetype.primary === 'creative_strategist' ? 2 : 0);
+
+  // Human: Adaptable + ambitious + versatile
+  raceScores.Human +=
+    (dimensions.culture_fit.score / 10) * 2 +
+    (archetype.primary === 'generalist_orchestrator' ? 2 : 0) +
+    (dimensions.motivation.score / 10) * 1;
+
+  // Half-Elf: Diplomatic + charismatic + bridges gaps
+  raceScores['Half-Elf'] +=
+    (competencies.signals.communication || 0) * 3 +
+    (dimensions.empathy.score / 10) * 2 +
+    (dimensions.personality.score / 10) * 1;
+
+  // Tiefling: Unconventional + unique + provocative
+  raceScores.Tiefling +=
+    (archetype.primary === 'creative_strategist' ? 1.5 : 0) +
+    (emotions.dominance > 0.6 ? 1 : 0) +
+    (result.greenFlags.some(f => f.toLowerCase().includes('unique') || f.toLowerCase().includes('creative')) ? 2 : 0);
+
+  // Halfling: Team player + optimistic + resourceful
+  raceScores.Halfling +=
+    (competencies.signals.collaboration || 0) * 3 +
+    (emotions.valence > 0.5 ? 1.5 : 0) +
+    (dimensions.empathy.score / 10) * 1;
+
+  // Dragonborn: Leadership + confidence + bold
+  raceScores.Dragonborn +=
+    (competencies.signals.leadership || 0) * 3 +
+    (competencies.signals.confidence || 0) * 2 +
+    (archetype.primary === 'execution_machine' ? 1.5 : 0);
+
+  // Archetype-based bonuses
+  switch (archetype.primary) {
+    case 'technical_builder':
+      raceScores.Gnome += 1;
+      raceScores.Dwarf += 0.5;
+      break;
+    case 'gtm_operator':
+      raceScores['Half-Elf'] += 1;
+      raceScores.Human += 0.5;
+      break;
+    case 'creative_strategist':
+      raceScores.Elf += 1;
+      raceScores.Tiefling += 0.5;
+      break;
+    case 'execution_machine':
+      raceScores.Dwarf += 1;
+      raceScores.Dragonborn += 0.5;
+      break;
+    case 'generalist_orchestrator':
+      raceScores.Human += 1;
+      raceScores['Half-Elf'] += 0.5;
+      break;
+    case 'domain_expert':
+      raceScores.Elf += 1;
+      raceScores.Dwarf += 0.5;
+      break;
+  }
+
+  // Find highest scoring race
+  const sortedRaces = Object.entries(raceScores)
+    .sort(([, a], [, b]) => b - a);
+
+  return sortedRaces[0][0] as DnDRace;
 }
 
 /**
@@ -183,13 +295,17 @@ export const dndHandler: AssessmentHandler<DnDSheet> = {
         .join(' ');
     });
 
-    // Generate backstory from assessment data
+    // Determine race and class
+    const race = determineRace(result);
     const className = archetypeToClass(archetype.primary);
     const level = tierToLevel(tier);
-    const backstory = generateBackstory(candidateName, className, level, stats, proficiencies);
+
+    // Generate backstory from assessment data
+    const backstory = generateBackstory(candidateName, race, className, level, stats, proficiencies);
 
     return {
       name: candidateName,
+      race,
       class: className,
       level,
       stats,
@@ -206,6 +322,7 @@ export const dndHandler: AssessmentHandler<DnDSheet> = {
  */
 function generateBackstory(
   name: string,
+  race: DnDRace,
   className: DnDClass,
   level: number,
   stats: DnDStats,
@@ -218,6 +335,17 @@ function generateBackstory(
     Fighter: 'a disciplined warrior who executes with precision',
     Ranger: 'a versatile explorer who adapts to any terrain',
     Cleric: 'a devoted specialist who channels deep domain knowledge',
+  };
+
+  const raceDescriptions: Record<DnDRace, string> = {
+    Gnome: 'With insatiable curiosity and a tinkerer\'s spirit',
+    Dwarf: 'With steadfast resilience and master-craftsman dedication',
+    Elf: 'With refined elegance and a strategist\'s patience',
+    Human: 'With ambitious versatility and adaptive spirit',
+    'Half-Elf': 'With diplomatic grace and bridge-building instincts',
+    Tiefling: 'With unconventional thinking and bold perspective',
+    Halfling: 'With optimistic resourcefulness and team-first mentality',
+    Dragonborn: 'With commanding presence and bold leadership',
   };
 
   const levelDescriptor =
@@ -241,7 +369,7 @@ function generateBackstory(
       ? `Trained in ${proficiencies.join(', ').toLowerCase()}, they`
       : 'They';
 
-  return `${name} is ${levelDescriptor} ${className}, ${classDescriptions[className]}. ${statDescriptions[strongestStat]}, ${proficiencyText} seek new challenges to prove their worth.`;
+  return `${name} is a ${levelDescriptor} ${race} ${className}, ${classDescriptions[className]}. ${raceDescriptions[race]}, ${statDescriptions[strongestStat]}, ${proficiencyText} seek new challenges to prove their worth.`;
 }
 
 // =============================================================================
