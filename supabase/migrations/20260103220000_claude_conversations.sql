@@ -1,6 +1,9 @@
 -- Claude Conversation Capture Schema
 -- Stores all Claude API interactions for searchability and cross-org intelligence
 
+-- Enable pgvector extension for semantic search
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
+
 -- Conversations table
 CREATE TABLE IF NOT EXISTS claude_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -36,7 +39,7 @@ CREATE TABLE IF NOT EXISTS conversation_turns (
   entities JSONB DEFAULT '[]',
 
   -- Semantic embedding (populated async)
-  embedding vector(1536),
+  embedding extensions.vector(1536),
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   metadata JSONB DEFAULT '{}'
@@ -65,16 +68,10 @@ CREATE INDEX IF NOT EXISTS idx_conversation_turns_created_at
 CREATE INDEX IF NOT EXISTS idx_conversation_turns_content_fts
   ON conversation_turns USING gin(to_tsvector('english', content));
 
--- Semantic search via HNSW (if pgvector with HNSW is available)
--- Falls back to IVFFlat if HNSW not supported
-DO $$
-BEGIN
-  CREATE INDEX IF NOT EXISTS idx_conversation_turns_embedding_hnsw
-    ON conversation_turns USING hnsw(embedding vector_cosine_ops);
-EXCEPTION WHEN undefined_object THEN
-  CREATE INDEX IF NOT EXISTS idx_conversation_turns_embedding_ivfflat
-    ON conversation_turns USING ivfflat(embedding vector_cosine_ops) WITH (lists = 100);
-END $$;
+-- Semantic search index (create after data is populated for better performance)
+-- Run manually after accumulating data:
+-- CREATE INDEX idx_conversation_turns_embedding ON conversation_turns
+--   USING hnsw(embedding extensions.vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- Capture queue for async processing
 CREATE TABLE IF NOT EXISTS claude_capture_queue (
@@ -123,7 +120,7 @@ CREATE POLICY "Service can manage queue"
 
 -- Helper function: Search conversations semantically
 CREATE OR REPLACE FUNCTION search_conversations(
-  query_embedding vector(1536),
+  query_embedding extensions.vector(1536),
   user_id_filter UUID DEFAULT NULL,
   match_threshold FLOAT DEFAULT 0.7,
   match_count INT DEFAULT 10
