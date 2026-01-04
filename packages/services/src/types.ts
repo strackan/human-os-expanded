@@ -2,16 +2,16 @@
  * Shared types for service layer
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { OperationContext } from '@human-os/core';
 
 /**
- * Context passed to all service methods
+ * Context passed to all service methods.
+ * Alias for OperationContext for backwards compatibility.
  */
-export interface ServiceContext {
-  supabase: SupabaseClient;
-  userId: string;
-  layer: string;
-}
+export type ServiceContext = OperationContext;
+
+// Re-export for consumers that import from services
+export type { OperationContext } from '@human-os/core';
 
 /**
  * Standard service result wrapper

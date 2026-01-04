@@ -10,7 +10,7 @@
  */
 
 import { z } from 'zod';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { OperationContext } from '@human-os/core';
 
 /**
  * Human-OS Platforms
@@ -36,14 +36,14 @@ export interface PlatformAccess {
 }
 
 /**
- * Context passed to all tool handlers
- * Works for both MCP and REST - transport agnostic
+ * Context passed to all tool handlers.
+ * Works for both MCP and REST - transport agnostic.
+ * Alias for OperationContext for backwards compatibility.
  */
-export interface ToolContext {
-  supabase: SupabaseClient;
-  userId: string;
-  layer: string;
-}
+export type ToolContext = OperationContext;
+
+// Re-export for consumers that import from tools
+export type { OperationContext } from '@human-os/core';
 
 /**
  * Tool handler function

@@ -41,6 +41,30 @@ export interface Viewer {
 }
 
 // =============================================================================
+// OPERATION CONTEXT
+// =============================================================================
+
+/**
+ * Context passed to service and tool handlers.
+ * Transport-agnostic - works for MCP, REST, and direct invocation.
+ *
+ * @remarks
+ * This is the unified context type used across:
+ * - @human-os/services (ServiceContext)
+ * - @human-os/tools (ToolContext)
+ * - MCP tool handlers
+ * - REST API handlers
+ */
+export interface OperationContext {
+  /** Supabase client for database operations */
+  supabase: import('@supabase/supabase-js').SupabaseClient;
+  /** Authenticated user ID */
+  userId: string;
+  /** Privacy layer for the operation */
+  layer: string;
+}
+
+// =============================================================================
 // ENTITIES
 // =============================================================================
 
