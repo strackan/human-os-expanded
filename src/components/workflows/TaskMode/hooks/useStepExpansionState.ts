@@ -65,15 +65,19 @@ export function useStepExpansionState({
   useEffect(() => {
     setExpansionStates((prev) => {
       const updated = { ...prev };
-      // Add any new steps as collapsed
+      // Add any new steps as collapsed, but ensure current step is expanded
       for (let i = 0; i < totalSteps; i++) {
         if (updated[i] === undefined) {
-          updated[i] = 'collapsed';
+          updated[i] = i === currentStepIndex ? 'expanded' : 'collapsed';
         }
+      }
+      // Always ensure current step is expanded (in case it was set before slides loaded)
+      if (totalSteps > 0 && updated[currentStepIndex] === 'collapsed') {
+        updated[currentStepIndex] = 'expanded';
       }
       return updated;
     });
-  }, [totalSteps]);
+  }, [totalSteps, currentStepIndex]);
 
   /**
    * Get expansion state for a step

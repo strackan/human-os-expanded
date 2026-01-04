@@ -6,6 +6,7 @@
  * Shows:
  * - Status icon (pending/active/success/error/snoozed)
  * - Step title (double-click to edit)
+ * - Snooze/skip icons with inline popovers (on hover for active/pending steps)
  * - Pin button (on hover)
  * - Expand/collapse chevron
  */
@@ -19,9 +20,12 @@ import {
   Clock,
   Pin,
   PinOff,
+  AlarmClock,
+  SkipForward,
 } from 'lucide-react';
 import type { StepHeaderProps } from '../../types/step-chat';
 import { getStepDisplayTitle } from '../../types/step-chat';
+import { SnoozePopover, SkipPopover } from './StepActionPopovers';
 
 /**
  * Status icon component
@@ -58,10 +62,14 @@ export function StepHeader({
   onTogglePin,
   onTitleChange,
   isCurrentStep,
+  actionContext,
+  onActionSuccess,
 }: StepHeaderProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [isHovered, setIsHovered] = useState(false);
+  const [showSnoozePopover, setShowSnoozePopover] = useState(false);
+  const [showSkipPopover, setShowSkipPopover] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const displayTitle = getStepDisplayTitle(step);
@@ -105,6 +113,33 @@ export function StepHeader({
     },
     [onTogglePin]
   );
+
+  const handleSnoozeClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setShowSkipPopover(false);
+      setShowSnoozePopover((prev) => !prev);
+    },
+    []
+  );
+
+  const handleSkipClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setShowSnoozePopover(false);
+      setShowSkipPopover((prev) => !prev);
+    },
+    []
+  );
+
+  const handlePopoverSuccess = useCallback(() => {
+    setShowSnoozePopover(false);
+    setShowSkipPopover(false);
+    onActionSuccess?.();
+  }, [onActionSuccess]);
+
+  // Show action buttons for steps that can be snoozed/skipped
+  const canSnoozeOrSkip = step.status === 'active' || step.status === 'pending';
 
   // Determine background based on state
   const bgClass = isCurrentStep
@@ -156,6 +191,61 @@ export function StepHeader({
           <span className="text-xs text-gray-500">{step.slideLabel}</span>
         )}
       </div>
+
+      {/* Action buttons with popovers (shown on hover for active/pending steps) */}
+      {(isHovered || showSnoozePopover || showSkipPopover) && canSnoozeOrSkip && actionContext && (
+        <div className="flex items-center gap-1">
+          {/* Snooze button + popover */}
+          <div className="relative">
+            <button
+              onClick={handleSnoozeClick}
+              className={`p-1 rounded transition-colors ${
+                showSnoozePopover
+                  ? 'text-purple-500 bg-purple-50'
+                  : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50'
+              }`}
+              title="Snooze step"
+            >
+              <AlarmClock className="w-3.5 h-3.5" />
+            </button>
+            <SnoozePopover
+              isOpen={showSnoozePopover}
+              onClose={() => setShowSnoozePopover(false)}
+              onSuccess={handlePopoverSuccess}
+              executionId={actionContext.executionId}
+              userId={actionContext.userId}
+              stepIndex={step.stepIndex}
+              stepId={step.slideId}
+              stepLabel={displayTitle}
+            />
+          </div>
+
+          {/* Skip button + popover */}
+          <div className="relative">
+            <button
+              onClick={handleSkipClick}
+              className={`p-1 rounded transition-colors ${
+                showSkipPopover
+                  ? 'text-orange-500 bg-orange-50'
+                  : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'
+              }`}
+              title="Skip step"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+            </button>
+            <SkipPopover
+              isOpen={showSkipPopover}
+              onClose={() => setShowSkipPopover(false)}
+              onSuccess={handlePopoverSuccess}
+              executionId={actionContext.executionId}
+              userId={actionContext.userId}
+              stepIndex={step.stepIndex}
+              stepId={step.slideId}
+              stepLabel={displayTitle}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Pin button (shown on hover or when pinned) */}
       {(isHovered || isPinned) && (

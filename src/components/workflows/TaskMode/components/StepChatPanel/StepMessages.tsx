@@ -12,7 +12,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Bot, User, Loader2 } from 'lucide-react';
 import type { StepMessagesProps } from '../../types/step-chat';
-import type { ChatMessage } from '@/types';
+import type { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 
 /**
  * Single message bubble

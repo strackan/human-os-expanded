@@ -37,6 +37,8 @@ export function StepChatPanel({
   isGeneratingLLM: _isGeneratingLLM,
   panelWidth,
   onPanelWidthChange,
+  actionContext,
+  onActionSuccess,
 }: StepChatPanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<HTMLDivElement>(null);
@@ -114,6 +116,8 @@ export function StepChatPanel({
                 onButtonClick={onButtonClick}
                 onBranchNavigation={onBranchNavigation}
                 onComponentValueChange={onComponentValueChange}
+                actionContext={actionContext}
+                onActionSuccess={onActionSuccess}
               />
             </div>
           ))}

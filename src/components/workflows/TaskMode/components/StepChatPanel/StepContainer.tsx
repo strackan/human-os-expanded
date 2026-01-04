@@ -28,6 +28,8 @@ export function StepContainer({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onBranchNavigation: _onBranchNavigation,
   onComponentValueChange,
+  actionContext,
+  onActionSuccess,
 }: StepContainerProps) {
   const contentRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,6 +103,8 @@ export function StepContainer({
         onTogglePin={handleTogglePin}
         onTitleChange={onTitleChange}
         isCurrentStep={isCurrentStep}
+        actionContext={actionContext}
+        onActionSuccess={onActionSuccess}
       />
 
       {/* Collapsible content */}

@@ -5,7 +5,7 @@
  * Each workflow step becomes a collapsible container with its own messages.
  */
 
-import type { ChatMessage } from '@/types';
+import type { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 
 // ============================================================================
 // STEP STATUS & EXPANSION STATES
@@ -132,6 +132,12 @@ export interface StepContainerProps {
 
   /** Handle inline component value change */
   onComponentValueChange: (componentId: string, value: unknown) => void;
+
+  /** Execution context for step actions (snooze/skip) */
+  actionContext?: StepActionContext;
+
+  /** Callback when step action succeeds (snooze/skip) */
+  onActionSuccess?: () => void;
 }
 
 /**
@@ -175,7 +181,7 @@ export interface StepChatPanelProps {
   onChatInputChange: (value: string) => void;
 
   /** Chat input ref for focus management */
-  chatInputRef?: React.RefObject<HTMLInputElement>;
+  chatInputRef?: React.RefObject<HTMLInputElement | null>;
 
   /** Is LLM currently generating? */
   isGeneratingLLM?: boolean;
@@ -185,6 +191,23 @@ export interface StepChatPanelProps {
 
   /** Update panel width (for resize) */
   onPanelWidthChange: (width: number) => void;
+
+  /** Execution context for step actions (snooze/skip) */
+  actionContext?: StepActionContext;
+
+  /** Callback when step action succeeds (snooze/skip) */
+  onActionSuccess?: () => void;
+}
+
+/**
+ * Execution context for step actions (snooze/skip popovers)
+ */
+export interface StepActionContext {
+  /** Workflow execution ID */
+  executionId: string;
+
+  /** Current user ID */
+  userId: string;
 }
 
 /**
@@ -211,6 +234,12 @@ export interface StepHeaderProps {
 
   /** Whether this is the current step */
   isCurrentStep: boolean;
+
+  /** Execution context for step actions (snooze/skip) */
+  actionContext?: StepActionContext;
+
+  /** Callback when step action succeeds (snooze/skip) */
+  onActionSuccess?: () => void;
 }
 
 /**
@@ -244,7 +273,7 @@ export interface StepInputProps {
   onSubmit: () => void;
 
   /** Input ref for focus management */
-  inputRef?: React.RefObject<HTMLInputElement>;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
 
   /** Is LLM generating? */
   isGenerating?: boolean;

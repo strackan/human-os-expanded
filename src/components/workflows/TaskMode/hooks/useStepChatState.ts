@@ -12,7 +12,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import type { WorkflowSlide } from '@/components/artifacts/workflows/config/WorkflowConfig';
-import type { ChatMessage } from '@/types';
+import type { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
 import type {
   StepChatGroup,
   StepStatus,
@@ -53,10 +53,12 @@ function getStepStatus(
   skippedSlides: Set<number>,
   snoozedSlides: Set<number>
 ): StepStatus {
+  // Current step is always 'active' - this takes priority
+  if (stepIndex === currentStepIndex) return 'active';
+  // Past steps
   if (completedSlides.has(stepIndex)) return 'success';
   if (snoozedSlides.has(stepIndex)) return 'snoozed';
   if (skippedSlides.has(stepIndex)) return 'snoozed'; // Treat skipped same as snoozed visually
-  if (stepIndex === currentStepIndex) return 'active';
   if (stepIndex < currentStepIndex) return 'success'; // Past steps default to success
   return 'pending';
 }

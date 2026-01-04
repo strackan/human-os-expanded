@@ -23,7 +23,8 @@ import TaskModeOverlays from './components/TaskModeOverlays';
 import TaskModeModals from './components/TaskModeModals';
 import { StepChatPanel } from './components/StepChatPanel';
 import { DEFAULT_STEP_CHAT_LAYOUT } from './types/step-chat';
-import { WorkflowStepActionService } from '@/lib/workflows/actions/WorkflowStepActionService';
+import { WorkflowStepActionService, type StepState } from '@/lib/workflows/actions/WorkflowStepActionService';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenceService';
 import { createWorkflowExecution } from '@/lib/workflows/actions';
 import { snoozeWithTriggers, requestReviewWithTriggers } from '@/lib/api/workflow-triggers';
@@ -140,15 +141,20 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
       }
 
       try {
-        const resumeInfo = await WorkflowPersistenceService.getResumableExecution({
-          workflowConfigId: workflowId,
+        const resumable = await WorkflowPersistenceService.checkForResumable(
+          workflowId,
           customerId,
-          userId,
-        });
+          userId
+        );
 
-        if (resumeInfo) {
-          setResumableData(resumeInfo);
+        if (resumable) {
+          setResumableData({
+            executionId: resumable.executionId,
+            slideIndex: resumable.snapshot.currentSlideIndex,
+            savedAt: resumable.snapshot.savedAt,
+          });
           setShowResumeDialog(true);
+          setIsCheckingResume(false);
         } else {
           await createNewExecution();
         }
@@ -184,12 +190,15 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
   const reloadStepStates = useCallback(async () => {
     if (!effectiveExecutionId) return;
     try {
-      const states = await WorkflowStepActionService.getStepStates(effectiveExecutionId);
-      const statesMap: Record<number, { status: string; snooze_until?: string }> = {};
-      states.forEach((s: { step_index: number; status: string; snooze_until?: string }) => {
-        statesMap[s.step_index] = s;
-      });
-      setStepStates(statesMap);
+      const service = new WorkflowStepActionService();
+      const result = await service.getStepStates(effectiveExecutionId);
+      if (result.success && result.states) {
+        const statesMap: Record<number, { status: string; snooze_until?: string }> = {};
+        result.states.forEach((s: StepState) => {
+          statesMap[s.step_index] = { status: s.status, snooze_until: s.snooze_until ?? undefined };
+        });
+        setStepStates(statesMap);
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error loading step states:', error);
     }
@@ -198,12 +207,21 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
   const reloadStepExecutions = useCallback(async () => {
     if (!effectiveExecutionId) return;
     try {
-      const executions = await WorkflowStepActionService.getStepExecutions(effectiveExecutionId);
-      const execMap: Record<number, unknown> = {};
-      executions.forEach((e: { step_index: number }) => {
-        execMap[e.step_index] = e;
-      });
-      setStepExecutions(execMap);
+      const service = new WorkflowStepActionService();
+      // Access supabase directly for step executions query
+      const supabase = (service as unknown as { supabase: SupabaseClient }).supabase;
+      const { data, error } = await supabase
+        .from('workflow_step_executions')
+        .select('step_index, review_status, review_required_from, profiles!workflow_step_executions_review_required_from_fkey(full_name)')
+        .eq('workflow_execution_id', effectiveExecutionId);
+
+      if (!error && data) {
+        const execMap: Record<number, unknown> = {};
+        data.forEach((e: { step_index: number }) => {
+          execMap[e.step_index] = e;
+        });
+        setStepExecutions(execMap);
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error loading step executions:', error);
     }
@@ -222,12 +240,7 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
     customerName,
     customerId,
     onClose,
-    onComplete: () => {
-      showToast('Workflow completed!', 'success');
-      onClose(true);
-    },
-    executionId: effectiveExecutionId,
-    workflowPurpose: 'renewal_preparation',
+    sequenceInfo,
   });
 
   // ============================================================
@@ -267,115 +280,154 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
   // ============================================================
   // WORKFLOW ACTION HANDLERS
   // ============================================================
-  const handleWorkflowSnooze = useCallback(async (params: {
-    triggers: WakeTrigger[];
-    logic: TriggerLogic;
-  }) => {
+  const handleWorkflowSnooze = useCallback(async (triggers: WakeTrigger[], logic?: TriggerLogic) => {
     if (!effectiveExecutionId || !userId) return;
     try {
-      await snoozeWithTriggers({
-        executionId: effectiveExecutionId,
-        userId,
-        triggers: params.triggers,
-        logic: params.logic,
-      });
-      showToast('Workflow snoozed', 'success');
-      state.closeSnoozeModal();
-      onClose(false);
+      const result = await snoozeWithTriggers(effectiveExecutionId, userId, triggers, logic);
+      if (result.success) {
+        showToast({ message: 'Workflow snoozed', type: 'success', duration: 3000 });
+        state.closeSnoozeModal();
+        onClose(false);
+      } else {
+        showToast({ message: result.error || 'Failed to snooze', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error snoozing:', error);
-      showToast('Failed to snooze workflow', 'error');
+      showToast({ message: 'Failed to snooze workflow', type: 'error', duration: 4000 });
     }
   }, [effectiveExecutionId, userId, state, showToast, onClose]);
 
-  const handleWorkflowReview = useCallback(async (params: {
-    triggers: ReviewTrigger[];
-    priority: string;
-    assignedTo?: string;
-    message?: string;
-  }) => {
-    if (!effectiveExecutionId || !userId) return;
+  const handleWorkflowReview = useCallback(async (triggers: ReviewTrigger[], reviewerId: string, logic?: TriggerLogic, reason?: string) => {
+    if (!effectiveExecutionId) return;
     try {
-      await requestReviewWithTriggers({
-        executionId: effectiveExecutionId,
-        userId,
-        triggers: params.triggers,
-        priority: params.priority,
-        assignedTo: params.assignedTo,
-        message: params.message,
-      });
-      showToast('Review requested', 'success');
-      state.closeEscalateModal();
-      onClose(false);
+      const result = await requestReviewWithTriggers(effectiveExecutionId, reviewerId, triggers, reason, logic);
+      if (result.success) {
+        showToast({ message: 'Review requested', type: 'success', duration: 3000 });
+        state.closeEscalateModal();
+        onClose(false);
+      } else {
+        showToast({ message: result.error || 'Failed to request review', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error requesting review:', error);
-      showToast('Failed to request review', 'error');
+      showToast({ message: 'Failed to request review', type: 'error', duration: 4000 });
     }
-  }, [effectiveExecutionId, userId, state, showToast, onClose]);
+  }, [effectiveExecutionId, state, showToast, onClose]);
 
-  const handleApproveWorkflowReview = useCallback(async () => {
-    if (!effectiveExecutionId || !userId) return;
+  const handleApproveWorkflowReview = useCallback(async (comments?: string) => {
+    if (!effectiveExecutionId) return;
     try {
-      await approveWorkflowReview({ executionId: effectiveExecutionId, userId });
-      showToast('Review approved', 'success');
-      setShowReviewApprovalModal(false);
+      const result = await approveWorkflowReview(effectiveExecutionId, comments);
+      if (result.success) {
+        showToast({ message: 'Review approved', type: 'success', duration: 3000 });
+        setShowReviewApprovalModal(false);
+      } else {
+        showToast({ message: result.error || 'Failed to approve', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error approving:', error);
-      showToast('Failed to approve', 'error');
+      showToast({ message: 'Failed to approve', type: 'error', duration: 4000 });
     }
-  }, [effectiveExecutionId, userId, showToast]);
+  }, [effectiveExecutionId, showToast]);
 
-  const handleRequestWorkflowChanges = useCallback(async (message: string) => {
-    if (!effectiveExecutionId || !userId) return;
+  const handleRequestWorkflowChanges = useCallback(async (comments: string) => {
+    if (!effectiveExecutionId) return;
     try {
-      await requestWorkflowChanges({ executionId: effectiveExecutionId, userId, message });
-      showToast('Changes requested', 'success');
-      setShowReviewApprovalModal(false);
+      const result = await requestWorkflowChanges(effectiveExecutionId, comments);
+      if (result.success) {
+        showToast({ message: 'Changes requested', type: 'info', duration: 3000 });
+        setShowReviewApprovalModal(false);
+      } else {
+        showToast({ message: result.error || 'Failed to request changes', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error requesting changes:', error);
-      showToast('Failed to request changes', 'error');
+      showToast({ message: 'Failed to request changes', type: 'error', duration: 4000 });
     }
-  }, [effectiveExecutionId, userId, showToast]);
+  }, [effectiveExecutionId, showToast]);
 
-  const handleRejectWorkflowReview = useCallback(async (message: string) => {
-    if (!effectiveExecutionId || !userId) return;
+  const handleRejectWorkflowReview = useCallback(async (reason: string | undefined, comments: string) => {
+    if (!effectiveExecutionId) return;
     try {
-      await rejectWorkflowReview({ executionId: effectiveExecutionId, userId, message });
-      showToast('Review rejected', 'success');
-      setShowReviewApprovalModal(false);
+      const result = await rejectWorkflowReview(effectiveExecutionId, reason, comments);
+      if (result.success) {
+        showToast({ message: 'Review rejected', type: 'info', duration: 3000 });
+        setShowReviewApprovalModal(false);
+      } else {
+        showToast({ message: result.error || 'Failed to reject', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error rejecting:', error);
-      showToast('Failed to reject', 'error');
+      showToast({ message: 'Failed to reject', type: 'error', duration: 4000 });
     }
-  }, [effectiveExecutionId, userId, showToast]);
+  }, [effectiveExecutionId, showToast]);
 
-  const handleResubmitWorkflow = useCallback(async (message: string) => {
-    if (!effectiveExecutionId || !userId) return;
+  const handleResubmitWorkflow = useCallback(async (notes?: string) => {
+    if (!effectiveExecutionId) return;
     try {
-      await resubmitWorkflowForReview({ executionId: effectiveExecutionId, userId, message });
-      showToast('Resubmitted for review', 'success');
-      setShowResubmitModal(false);
+      const result = await resubmitWorkflowForReview(effectiveExecutionId, notes);
+      if (result.success) {
+        showToast({ message: 'Resubmitted for review', type: 'success', duration: 3000 });
+        setShowResubmitModal(false);
+      } else {
+        showToast({ message: result.error || 'Failed to resubmit', type: 'error', duration: 4000 });
+      }
     } catch (error) {
       console.error('[TaskModeStepChat] Error resubmitting:', error);
-      showToast('Failed to resubmit', 'error');
+      showToast({ message: 'Failed to resubmit', type: 'error', duration: 4000 });
     }
-  }, [effectiveExecutionId, userId, showToast]);
+  }, [effectiveExecutionId, showToast]);
+
+  // ============================================================
+  // ARTIFACT STATE (always visible in step chat layout)
+  // ============================================================
+  const [artifactsPanelWidth, setArtifactsPanelWidth] = useState(50);
+  const [isArtifactResizing, setIsArtifactResizing] = useState(false);
 
   // ============================================================
   // CONTEXT VALUE
   // ============================================================
   const contextValue: TaskModeContextValue = {
     currentSlide: state.currentSlide,
-    chatMessages: state.chatMessages,
+    slides: state.slides,
+    currentSlideIndex: state.currentSlideIndex,
     workflowState: state.workflowState,
+    chatMessages: state.chatMessages,
+    showArtifacts: true, // Always visible in step chat layout
+    currentBranch: state.currentBranch,
+    chatInputValue: state.chatInputValue,
+    customerName,
     customer: state.customer,
     expansionData: state.expansionData,
-    stakeholders: state.stakeholders,
-    updateWorkflowState: state.updateWorkflowState,
+    stakeholders: state.stakeholders ?? null,
+    showMetricsSlideup: state.showMetricsSlideup,
+    showPlaysDropdown: state.showPlaysDropdown,
+    stepActionMenu: state.stepActionMenu,
+    artifactsPanelWidth,
+    isArtifactResizing,
+    contextLoading: state.contextLoading,
+    contextError: state.contextError,
     goToNextSlide: state.goToNextSlide,
     goToPreviousSlide: state.goToPreviousSlide,
+    goToSlide: state.goToSlide,
+    sendMessage: state.handleSendMessage,
+    handleButtonClick: state.handleButtonClick,
+    handleBranchNavigation: state.handleBranchNavigation,
+    setChatInputValue: state.setChatInputValue,
+    handleComponentValueChange: state.handleComponentValueChange,
+    toggleArtifacts: () => {}, // No-op in step chat layout
+    updateWorkflowState: state.updateWorkflowState,
+    setArtifactsPanelWidth,
+    setIsArtifactResizing,
+    toggleMetricsSlideup: state.toggleMetricsSlideup,
+    togglePlaysDropdown: state.togglePlaysDropdown,
+    setStepActionMenu: state.setStepActionMenu,
     handleComplete: state.handleComplete,
-    currentSlideIndex: state.currentSlideIndex,
+    handleSnooze: state.handleSnooze,
+    handleSkip: state.handleSkip,
+    handleClose: state.handleClose,
+    skipStep: state.skipStep,
+    snoozeStep: state.snoozeStep,
   };
 
   // ============================================================
@@ -503,6 +555,10 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
               isGeneratingLLM={state.isGeneratingLLM}
               panelWidth={stepPanelWidth}
               onPanelWidthChange={setStepPanelWidth}
+              actionContext={effectiveExecutionId && userId ? { executionId: effectiveExecutionId, userId } : undefined}
+              onActionSuccess={async () => {
+                await reloadStepStates();
+              }}
             />
 
             {/* Right: Artifact Panel (focal point) */}
@@ -577,6 +633,8 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
             slides={state.slides}
             workflowTitle={workflowTitle}
             rejectionHistory={[]}
+            workflowReviewerData={workflowReviewerData}
+            workflowRejectionData={workflowRejectionData}
           />
         </div>
       </div>
