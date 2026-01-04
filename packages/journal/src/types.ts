@@ -8,21 +8,27 @@
 import type { Layer, Sentiment } from '@human-os/core';
 
 // =============================================================================
-// PLUTCHIK MOOD SYSTEM
+// SHARED TYPES (from @human-os/analysis)
 // =============================================================================
 
-/**
- * The 8 primary Plutchik emotions
- */
-export type PlutchikEmotion =
-  | 'joy'
-  | 'trust'
-  | 'fear'
-  | 'surprise'
-  | 'sadness'
-  | 'anticipation'
-  | 'anger'
-  | 'disgust';
+// Re-export shared Plutchik and emotion analysis types from the canonical source
+export type {
+  PlutchikEmotion,
+  PlutchikVector,
+  DetectedKeyword,
+  TextEmotionAnalysis,
+  EmotionComparison,
+  LexiconEntry,
+  Lexicon,
+  KeywordIntensity,
+} from '@human-os/analysis';
+
+// Import for internal use
+import type { PlutchikEmotion, PlutchikVector, DetectedKeyword } from '@human-os/analysis';
+
+// =============================================================================
+// PLUTCHIK MOOD SYSTEM (Journal-specific extensions)
+// =============================================================================
 
 /**
  * Plutchik emotion profile with ratings for each dimension
@@ -88,72 +94,8 @@ export interface EmotionCategory {
 }
 
 // =============================================================================
-// TEXT EMOTION ANALYSIS (Text → Plutchik Vector)
+// JOURNAL-SPECIFIC EMOTION EXTENSIONS
 // =============================================================================
-
-/**
- * Plutchik 8-dimension vector with normalized scores (0-1)
- * Used for text emotion analysis and comparison
- */
-export interface PlutchikVector {
-  joy: number;        // 0-1 normalized
-  trust: number;      // 0-1 normalized
-  fear: number;       // 0-1 normalized
-  surprise: number;   // 0-1 normalized
-  sadness: number;    // 0-1 normalized
-  anticipation: number; // 0-1 normalized
-  anger: number;      // 0-1 normalized
-  disgust: number;    // 0-1 normalized
-}
-
-/**
- * A detected emotional keyword in text
- */
-export interface DetectedKeyword {
-  word: string;
-  emotion: PlutchikEmotion;
-  confidence: number;       // 0-1, how strongly this word indicates the emotion
-  intensity?: 'mild' | 'moderate' | 'intense';
-}
-
-/**
- * Result of text emotion analysis
- * Combines VAD (Valence-Arousal-Dominance) model with Plutchik categorical emotions
- */
-export interface TextEmotionAnalysis {
-  // VAD Dimensions (continuous, for intensity/polarity)
-  valence: number;           // -1 (negative) to +1 (positive) - emotional polarity
-  arousal: number;           // 0 (calm) to 1 (intense) - emotional intensity
-  dominance: number;         // 0 (submissive) to 1 (dominant) - sense of control
-
-  // Plutchik Vector (categorical, for specific emotion identification)
-  plutchikVector: PlutchikVector;  // 8 dimensions, 0-1 each
-  dominantEmotion: PlutchikEmotion;
-  emotionConfidence: number;       // 0-1, confidence in dominant emotion
-
-  // Detection details
-  detectedKeywords: DetectedKeyword[];
-  wordCount: number;
-  emotionDensity: number;    // detectedKeywords.length / wordCount
-
-  // Analysis metadata
-  method: 'keyword' | 'transformer';  // Which analysis method was used
-}
-
-/**
- * Result of comparing two texts emotionally
- */
-export interface EmotionComparison {
-  distance: number;          // Euclidean distance between vectors (0 = identical)
-  similarity: number;        // 0-1, cosine similarity
-  shift: PlutchikVector;     // Change from text1 to text2 (positive = increase)
-  valenceChange: number;     // Change in valence (-2 to +2)
-  arousalChange: number;     // Change in arousal (-1 to +1)
-  dominantShift: {
-    from: PlutchikEmotion;
-    to: PlutchikEmotion;
-  };
-}
 
 /**
  * Emotion trend data point for time-series analysis

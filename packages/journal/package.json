@@ -22,6 +22,7 @@
     "test": "vitest"
   },
   "dependencies": {
+    "@human-os/analysis": "workspace:*",
     "@human-os/core": "workspace:*",
     "@supabase/supabase-js": "^2.47.0",
     "zod": "^3.23.0"

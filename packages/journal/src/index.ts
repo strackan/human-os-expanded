@@ -83,6 +83,7 @@ export { mapEntryRow, mapMoodRow, mapEntryMoodRow } from './mappers.js';
 
 // =============================================================================
 // EMOTION ANALYZER EXPORTS (Text → Plutchik Vector)
+// Re-exported from @human-os/analysis for backwards compatibility
 // =============================================================================
 
 export {
@@ -90,14 +91,13 @@ export {
   emotionAnalyzer,
   analyzeTextEmotion,
   compareTextEmotions,
-} from './emotion-analyzer.js';
-
-export {
+  OPPOSITE_EMOTIONS,
   EMOTION_LEXICON,
   getKeywordsForEmotion,
   getLexiconStats,
   type LexiconEntry,
-} from './data/emotion-lexicon.js';
+  type Lexicon,
+} from '@human-os/analysis';
 
 // =============================================================================
 // UTILITY EXPORTS

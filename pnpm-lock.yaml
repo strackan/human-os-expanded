@@ -460,6 +460,9 @@ importers:
 
   packages/journal:
     dependencies:
+      '@human-os/analysis':
+        specifier: workspace:*
+        version: link:../analysis
       '@human-os/core':
         specifier: workspace:*
         version: link:../core
