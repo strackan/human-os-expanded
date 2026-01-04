@@ -5,14 +5,44 @@
  * with returning candidates. Shows their history and captures updates.
  *
  * Release 1.6: Return Visit System - Phase 2
+ * Updated: Now uses LLM-powered responses via /api/talent/chat
  */
 
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { SessionTimeline } from './SessionTimeline';
-import { getCheckInOpeningMessage } from '@/lib/prompts/checkInPrompts';
 import type { IntelligenceFile, InterviewMessage } from '@/types/talent';
+
+/**
+ * Fetch LLM response from talent chat API
+ */
+async function fetchTalentChat(params: {
+  action: 'opening' | 'respond';
+  candidateId: string;
+  candidateName: string;
+  intelligenceFile: IntelligenceFile;
+  sessionType?: 'initial' | 'check_in' | 'deep_dive';
+  conversationHistory?: InterviewMessage[];
+  userMessage?: string;
+}): Promise<{
+  text: string;
+  tokensUsed: number;
+  sentiment?: string;
+  cached?: boolean;
+}> {
+  const response = await fetch('/api/talent/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Talent chat API failed: ${response.status}`);
+  }
+
+  return response.json();
+}
 
 interface CheckInSlideProps {
   candidateId: string;
@@ -24,11 +54,13 @@ interface CheckInSlideProps {
 }
 
 export function CheckInSlide(props: CheckInSlideProps) {
-  const { candidateName, intelligenceFile, onComplete, onCancel } = props;
+  const { candidateId, candidateName, intelligenceFile, onComplete, onCancel } = props;
   const [messages, setMessages] = useState<InterviewMessage[]>([]);
   const [currentMessage, setCurrentMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
+  const [totalTokensUsed, setTotalTokensUsed] = useState(0);
+  const [detectedSentiment, setDetectedSentiment] = useState<string>('content');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Calculate days since last contact
@@ -36,24 +68,43 @@ export function CheckInSlide(props: CheckInSlideProps) {
     (Date.now() - new Date(intelligenceFile.last_contact).getTime()) / (1000 * 60 * 60 * 24)
   );
 
-  // Initialize with opening message
+  // Initialize with LLM-generated opening message
   useEffect(() => {
-    const openingMessage = getCheckInOpeningMessage({
-      candidateName: candidateName.split(' ')[0], // First name only
-      lastSessionDate: intelligenceFile.last_contact,
-      daysSinceLastContact,
-      relationshipStrength: intelligenceFile.relationship_strength,
-      intelligenceFile,
-      sessionNumber: intelligenceFile.total_sessions + 1,
-    });
+    const fetchOpening = async () => {
+      setIsLoading(true);
+      try {
+        const result = await fetchTalentChat({
+          action: 'opening',
+          candidateId,
+          candidateName,
+          intelligenceFile,
+          sessionType: 'check_in',
+        });
 
-    setMessages([
-      {
-        role: 'assistant',
-        content: openingMessage,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+        setMessages([
+          {
+            role: 'assistant',
+            content: result.text,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+        setTotalTokensUsed(result.tokensUsed);
+      } catch (error) {
+        console.error('[CheckInSlide] Error fetching opening:', error);
+        // Fallback to a simple greeting
+        setMessages([
+          {
+            role: 'assistant',
+            content: `Hey ${candidateName.split(' ')[0]}! Great to catch up again. What's been happening since we last talked?`,
+            timestamp: new Date().toISOString(),
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOpening();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -72,49 +123,58 @@ export function CheckInSlide(props: CheckInSlideProps) {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const messageText = currentMessage;
     setCurrentMessage('');
     setIsLoading(true);
 
     try {
-      // TODO: Replace with actual Claude API call
-      // For now, simulate a response
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Call the talent chat API for LLM response
+      const result = await fetchTalentChat({
+        action: 'respond',
+        candidateId,
+        candidateName,
+        intelligenceFile,
+        sessionType: 'check_in',
+        conversationHistory: [...messages, userMessage],
+        userMessage: messageText,
+      });
 
       const aiResponse: InterviewMessage = {
         role: 'assistant',
-        content: generateMockResponse(userMessage.content, messages.length),
+        content: result.text,
         timestamp: new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, aiResponse]);
+      setTotalTokensUsed((prev) => prev + result.tokensUsed);
+      if (result.sentiment) {
+        setDetectedSentiment(result.sentiment);
+      }
     } catch (error) {
-      console.error('Error generating response:', error);
+      console.error('[CheckInSlide] Error generating response:', error);
+      // Fallback response on error
+      const fallbackResponse: InterviewMessage = {
+        role: 'assistant',
+        content: "That's really interesting! Tell me more about that.",
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, fallbackResponse]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleComplete = () => {
-    // Extract updates from conversation
+    // Extract updates from conversation with LLM-detected sentiment
     const updates = {
       session_type: 'check_in',
-      duration_minutes: Math.floor((Date.now() - new Date(messages[0].timestamp).getTime()) / (1000 * 60)),
-      sentiment: 'content', // TODO: Detect from conversation
+      duration_minutes: Math.floor((Date.now() - new Date(messages[0]?.timestamp || Date.now()).getTime()) / (1000 * 60)),
+      sentiment: detectedSentiment,
+      tokens_used: totalTokensUsed,
     };
 
     onComplete(messages, updates);
   };
-
-  // Mock response generator (replace with Claude API)
-  function generateMockResponse(userInput: string, messageCount: number): string {
-    if (messageCount < 3) {
-      return "That's really interesting! Tell me more about that.";
-    }
-    if (messageCount < 5) {
-      return "Thanks for sharing that update. Any other big changes since we last talked?";
-    }
-    return "This has been a great catch-up! I really appreciate you taking the time to stay in touch. I'll keep you on my radar and reach out when something interesting comes up. Feel free to ping me anytime things change on your end.";
-  }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
