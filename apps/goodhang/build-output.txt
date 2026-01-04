@@ -1,0 +1,54 @@
+
+> goodhang-web@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\strac\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\strac\dev\goodhang\goodhang-web\package-lock.json
+   * C:\Users\strac\dev\goodhang\package-lock.json
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2.5s
+   Linting and checking validity of types ...
+
+./app/assessment/lightning/page.tsx
+95:6  Warning: React Hook useEffect has a missing dependency: 'startLightningRound'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/assessment/start/page.tsx
+26:6  Warning: React Hook useEffect has a missing dependency: 'checkAuth'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/members/invites/page.tsx
+61:6  Warning: React Hook useEffect has a missing dependency: 'loadInvites'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/assessment/MicrophoneButton.tsx
+47:6  Warning: React Hook useEffect has missing dependencies: 'onChange', 'resetTranscript', and 'value'. Either include them or remove the dependency array. If 'onChange' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./components/assessment/results/ResultsActions.tsx
+49:6  Warning: React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./components/ui/Toast.tsx
+31:6  Warning: React Hook useEffect has a missing dependency: 'handleClose'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/hooks/useUser.ts
+26:6  Warning: React Hook useEffect has a missing dependency: 'supabase.auth'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+Failed to compile.
+
+./components/assessment/results/ResultsActions.tsx:100:13
+Type error: Type 'CategoryScores | undefined' is not assignable to type 'Record<string, number> | undefined' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+
+[0m [90m  98 |[39m             public_summary[33m:[39m results[33m.[39mpublic_summary [33m||[39m undefined[33m,[39m
+ [90m  99 |[39m             overall_score[33m:[39m results[33m.[39moverall_score[33m,[39m
+[31m[1m>[22m[39m[90m 100 |[39m             category_scores[33m:[39m results[33m.[39mcategory_scores [33m||[39m undefined[33m,[39m
+ [90m     |[39m             [31m[1m^[22m[39m
+ [90m 101 |[39m           }}
+ [90m 102 |[39m           onPublishChange[33m=[39m{(published[33m,[39m slug) [33m=>[39m {
+ [90m 103 |[39m             [36mif[39m (published [33m&&[39m slug) {[0m
+Next.js build worker exited with code: 1 and signal: null

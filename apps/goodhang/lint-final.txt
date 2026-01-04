@@ -1,0 +1,125 @@
+
+> goodhang-web@0.1.0 lint
+> eslint
+
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\admin\cleanup-duplicate-rsvps\route.ts
+   5:28  warning  '_request' is defined but never used      @typescript-eslint/no-unused-vars
+  77:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\assessment\[sessionId]\answer\route.ts
+  76:23  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\assessment\lightning\start\route.ts
+   35:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  112:13  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\assessment\lightning\submit\route.ts
+  32:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\assessment\start\route.ts
+  9:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\assessment\status\route.ts
+   9:27  warning  '_request' is defined but never used      @typescript-eslint/no-unused-vars
+  49:46  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  50:30  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\emails\assessment-completed\route.ts
+  6:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\emails\membership-approved\route.ts
+  59:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\emails\rsvp-confirmation\route.ts
+  89:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\emails\talent-bench-welcome\route.ts
+  6:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\emails\test\route.ts
+  76:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\invites\create\route.ts
+  88:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\invites\send-magic-link\route.ts
+  67:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\invites\signup\route.ts
+   62:22  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\invites\validate\route.ts
+  47:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\leaderboard\route.ts
+  175:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\profile\publish\route.ts
+  63:19  warning  '_profile' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\profiles\[slug]\route.ts
+  47:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\rsvp\route.ts
+  55:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\speech-to-text\route.ts
+  66:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\api\typeform-webhook\route.ts
+  18:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\apply\page.tsx
+  88:41  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\assessment\absurdist\page.tsx
+  111:45  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  141:19  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\assessment\interview\page.tsx
+   29:5   warning  'isFirstQuestion' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   31:5   warning  'canGoNext' is assigned a value but never used                   @typescript-eslint/no-unused-vars
+   45:10  warning  'currentSectionIndexState' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  269:20  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\assessment\lightning\page.tsx
+  95:6  warning  React Hook useEffect has a missing dependency: 'startLightningRound'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\assessment\results\[sessionId]\page.tsx
+  50:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\assessment\start\page.tsx
+  26:6  warning  React Hook useEffect has a missing dependency: 'checkAuth'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\auth\set-password\page.tsx
+   21:10  warning  'userName' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  130:19  error    Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\events\[id]\page.tsx
+   28:45  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   33:66  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  142:22  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  145:21  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  170:40  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  181:20  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\events\page.tsx
+   70:66  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  101:56  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\launch\page.tsx
+  246:36  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\login\page.tsx
+  155:18  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\members\invite\page.tsx
+   25:10  warning  'userRegionId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  127:19  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+C:\Users\strac\dev\goodhang\goodhang-web\app\members\invites\page.tsx
+   25:10  warning  'userRole' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+   61:6   warning  React Hook useEffect has a missing dependency: 'loadInvites'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  102:19  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any

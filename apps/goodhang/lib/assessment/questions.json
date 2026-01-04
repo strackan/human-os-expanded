@@ -1,0 +1,297 @@
+{
+  "id": "cs-skills-v1",
+  "title": "CS Skills Assessment",
+  "version": "1.0",
+  "estimatedMinutes": 25,
+  "completionMessage": "That's it! You've completed the assessment. Thank you for sharing your experiences and insights with us.",
+  "sections": [
+    {
+      "id": "background",
+      "title": "Getting to Know You",
+      "description": "Let's start with your background and what brought you to Customer Success.",
+      "order": 1,
+      "transitionMessage": "Great! Now let's explore how you connect with customers.",
+      "questions": [
+        {
+          "id": "bg-1",
+          "section": "background",
+          "order": 1,
+          "text": "Tell me about your current role. What does a typical day look like for you?",
+          "type": "open_ended",
+          "dimensions": ["work_history", "motivation"],
+          "required": true
+        },
+        {
+          "id": "bg-2",
+          "section": "background",
+          "order": 2,
+          "text": "What drew you to Customer Success as a career? What keeps you in it?",
+          "type": "open_ended",
+          "dimensions": ["motivation", "passions"],
+          "required": true
+        },
+        {
+          "id": "bg-3",
+          "section": "background",
+          "order": 3,
+          "text": "Walk me through a customer success story you're particularly proud of. What made it successful?",
+          "type": "open_ended",
+          "dimensions": ["work_history", "eq"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "emotional_intelligence",
+      "title": "Emotional Intelligence & Customer Empathy",
+      "description": "Understanding and managing emotions is critical in Customer Success.",
+      "order": 2,
+      "transitionMessage": "Perfect. Now let's shift to your technical approach.",
+      "questions": [
+        {
+          "id": "eq-1",
+          "section": "emotional_intelligence",
+          "order": 1,
+          "text": "Describe a time when you had to deliver bad news to a customer (e.g., product limitation, delayed feature, price increase). How did you approach it?",
+          "type": "open_ended",
+          "dimensions": ["eq", "empathy"],
+          "required": true
+        },
+        {
+          "id": "eq-2",
+          "section": "emotional_intelligence",
+          "order": 2,
+          "text": "Tell me about a customer who was frustrated or angry. What was happening beneath the surface? How did you address their underlying concern?",
+          "type": "open_ended",
+          "dimensions": ["empathy", "self_awareness"],
+          "required": true
+        },
+        {
+          "id": "eq-3",
+          "section": "emotional_intelligence",
+          "order": 3,
+          "text": "When have you received critical feedback that was hard to hear? How did you respond?",
+          "type": "open_ended",
+          "dimensions": ["self_awareness", "eq"],
+          "required": true
+        },
+        {
+          "id": "eq-4",
+          "section": "emotional_intelligence",
+          "order": 4,
+          "text": "On a scale of 1-10, how well do you typically understand what a customer is really asking for (vs. what they say they want)? Give an example.",
+          "type": "open_ended",
+          "dimensions": ["empathy", "eq"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "technical",
+      "title": "Technical Aptitude & Problem-Solving",
+      "description": "Let's explore how you handle technical challenges and tools.",
+      "order": 3,
+      "transitionMessage": "Great! Now I want to understand your AI experience and potential.",
+      "questions": [
+        {
+          "id": "tech-1",
+          "section": "technical",
+          "order": 1,
+          "text": "What technical tools or systems do you use daily in your CS work? Which one has had the biggest impact on your effectiveness?",
+          "type": "open_ended",
+          "dimensions": ["technical"],
+          "required": true
+        },
+        {
+          "id": "tech-2",
+          "section": "technical",
+          "order": 2,
+          "text": "A customer reports a bug that you've never seen before. Walk me through your troubleshooting process step-by-step.",
+          "type": "open_ended",
+          "dimensions": ["iq", "technical"],
+          "required": true
+        },
+        {
+          "id": "tech-3",
+          "section": "technical",
+          "order": 3,
+          "text": "How are you currently using AI tools (like ChatGPT, Claude, etc.) in your CS work? Give a specific example.",
+          "type": "open_ended",
+          "dimensions": ["technical", "iq"],
+          "required": true
+        },
+        {
+          "id": "tech-4",
+          "section": "technical",
+          "order": 4,
+          "text": "If you could build or improve one tool/system to make CS work more effective, what would it be and why?",
+          "type": "open_ended",
+          "dimensions": ["iq", "technical"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ai_readiness",
+      "title": "AI Readiness & Prompt Engineering",
+      "description": "This section evaluates your practical AI skills through real-world scenarios.",
+      "order": 4,
+      "transitionMessage": "Excellent! Let's talk about strategic thinking.",
+      "questions": [
+        {
+          "id": "ai-1",
+          "section": "ai_readiness",
+          "order": 1,
+          "text": "In your own words, what's the difference between a \"prompt\" and a \"system message\" when working with AI tools like ChatGPT or Claude?",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-2",
+          "section": "ai_readiness",
+          "order": 2,
+          "text": "You hear someone say \"I got hallucinations from ChatGPT.\" What does that mean? Have you experienced this? How did you handle it?",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-3",
+          "section": "ai_readiness",
+          "order": 3,
+          "text": "What's the difference between GPT-4, Claude, and Gemini? When would you choose one over another?",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-4",
+          "section": "ai_readiness",
+          "order": 4,
+          "text": "**Scenario:** You need to draft a renewal email to a customer whose contract expires in 30 days. The customer is an IT Director at a 500-person company, they've been using your product for 2 years with 80% adoption, but they haven't responded to your last 2 emails.\n\n**Your Task:** Write the EXACT prompt you would give to an AI tool (like ChatGPT or Claude) to draft this email. Don't describe what you'd do - write the actual prompt as if you're typing it into the tool right now.",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-5",
+          "section": "ai_readiness",
+          "order": 5,
+          "text": "**Scenario:** You need to analyze 50 customer support tickets to identify common themes and prioritize which issues to address first.\n\n**Your Task:** Write the EXACT prompt you would give to an AI tool to help you analyze these tickets. Show us your actual prompt - not a description of what you'd do.",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-6",
+          "section": "ai_readiness",
+          "order": 6,
+          "text": "**Scenario:** A customer asks: \"Can your product integrate with our CRM?\" You don't know the answer off the top of your head. You need to research and draft a response.\n\n**Your Task:** Write the EXACT prompt you would give to an AI tool to help you craft a good response (assume you'll paste the question + any product docs into the prompt).",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        },
+        {
+          "id": "ai-7",
+          "section": "ai_readiness",
+          "order": 7,
+          "text": "**Scenario:** You're creating a customer health scoring system. You have data on: product usage (logins/week), support ticket count, NPS score, contract value, and days since last engagement.\n\n**Your Task:** Write the EXACT prompt you would give to an AI tool to help you design this scoring algorithm.",
+          "type": "open_ended",
+          "dimensions": ["ai_readiness"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "strategic",
+      "title": "Strategic Thinking & Business Acumen",
+      "description": "Let's explore how you think about the bigger picture in Customer Success.",
+      "order": 5,
+      "transitionMessage": "Almost done! Last section - communication and culture fit.",
+      "questions": [
+        {
+          "id": "strat-1",
+          "section": "strategic",
+          "order": 1,
+          "text": "How do you determine which customers to prioritize when everyone seems urgent? What's your framework?",
+          "type": "open_ended",
+          "dimensions": ["gtm", "iq"],
+          "required": true
+        },
+        {
+          "id": "strat-2",
+          "section": "strategic",
+          "order": 2,
+          "text": "Tell me about a time you identified an expansion opportunity that wasn't obvious. What signals did you notice?",
+          "type": "open_ended",
+          "dimensions": ["gtm", "iq"],
+          "required": true
+        },
+        {
+          "id": "strat-3",
+          "section": "strategic",
+          "order": 3,
+          "text": "How do you measure your own success as a CS professional? What metrics matter most to you (beyond retention/NRR)?",
+          "type": "open_ended",
+          "dimensions": ["self_awareness", "gtm"],
+          "required": true
+        },
+        {
+          "id": "strat-4",
+          "section": "strategic",
+          "order": 4,
+          "text": "If you were advising a startup on building their CS function from scratch, what's the first thing you'd tell them to get right?",
+          "type": "open_ended",
+          "dimensions": ["iq", "gtm"],
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "communication",
+      "title": "Communication & Culture Fit",
+      "description": "Finally, let's understand how you work and communicate with others.",
+      "order": 6,
+      "transitionMessage": "That's it! You've completed the assessment. Thank you for sharing your experiences and insights with us.",
+      "questions": [
+        {
+          "id": "comm-1",
+          "section": "communication",
+          "order": 1,
+          "text": "Describe your communication style. How do you adapt when talking to a technical buyer vs. an executive?",
+          "type": "open_ended",
+          "dimensions": ["personality", "eq"],
+          "required": true
+        },
+        {
+          "id": "comm-2",
+          "section": "communication",
+          "order": 2,
+          "text": "What kind of work environment brings out your best? (Team structure, culture, pace, etc.)",
+          "type": "open_ended",
+          "dimensions": ["culture_fit", "self_awareness"],
+          "required": true
+        },
+        {
+          "id": "comm-3",
+          "section": "communication",
+          "order": 3,
+          "text": "Tell me about a time you disagreed with a teammate or leader. How did you handle it?",
+          "type": "open_ended",
+          "dimensions": ["eq", "personality"],
+          "required": true
+        },
+        {
+          "id": "comm-4",
+          "section": "communication",
+          "order": 4,
+          "text": "What energizes you? What drains you? (In work context)",
+          "type": "open_ended",
+          "dimensions": ["passions", "self_awareness"],
+          "required": true
+        }
+      ]
+    }
+  ]
+}

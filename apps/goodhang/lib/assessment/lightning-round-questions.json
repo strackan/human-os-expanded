@@ -1,0 +1,1239 @@
+{
+  "id": "lightning-round-v1",
+  "title": "Lightning Round Challenge",
+  "version": "1.0",
+  "description": "2-minute rapid-fire challenge. Answer as many as you can!",
+  "totalQuestions": 150,
+  "difficulty_modes": {
+    "beginner": {
+      "description": "3-minute timer, easier questions",
+      "time_seconds": 180,
+      "distribution": {"easy": 0.70, "intermediate": 0.30}
+    },
+    "intermediate": {
+      "description": "2.5-minute timer, mixed difficulty",
+      "time_seconds": 150,
+      "distribution": {"easy": 0.20, "intermediate": 0.50, "advanced": 0.30}
+    },
+    "advanced": {
+      "description": "2-minute timer, challenging questions",
+      "time_seconds": 120,
+      "distribution": {"intermediate": 0.30, "advanced": 0.50, "insane": 0.20}
+    },
+    "insane": {
+      "description": "90-second timer, brutal difficulty",
+      "time_seconds": 90,
+      "distribution": {"advanced": 0.30, "insane": 0.70}
+    }
+  },
+  "questions": {
+    "easy": [
+      {
+        "id": "easy-1",
+        "question": "Is it legal for a man to marry his widow's sister?",
+        "correct_answer": "No",
+        "explanation": "For a man to have a widow, he would need to be dead",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-2",
+        "question": "What is the capital of Delaware?",
+        "correct_answer": "Dover",
+        "explanation": "Dover is the state capital of Delaware",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-3",
+        "question": "How many ounces are in a quart?",
+        "correct_answer": "32",
+        "explanation": "1 quart = 32 fluid ounces",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-4",
+        "question": "Who is the current Vice President of the United States?",
+        "correct_answer": "J.D. Vance",
+        "explanation": "J.D. Vance is the current VP (as of 2025)",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-5",
+        "question": "How many animals of each kind did Moses take onto the ark?",
+        "correct_answer": "Zero",
+        "explanation": "It was Noah, not Moses, who built the ark",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-6",
+        "question": "Who is the greatest TV sitcom dad of all time?",
+        "correct_answer": "Various",
+        "explanation": "Subjective - Homer Simpson, Phil Dunphy, etc. Any reasonable answer works",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-7",
+        "question": "How many months have 28 days?",
+        "correct_answer": "12",
+        "explanation": "All 12 months have at least 28 days",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-8",
+        "question": "What do you get when you combine green and blue?",
+        "correct_answer": "Turquoise",
+        "explanation": "Green + Blue = Turquoise (or cyan/teal)",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-9",
+        "question": "Who popularized the song 'My Way'?",
+        "correct_answer": "Frank Sinatra",
+        "explanation": "Frank Sinatra's version became iconic",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-10",
+        "question": "How do you make a Margarita?",
+        "correct_answer": "Tequila, triple sec, lime juice",
+        "explanation": "Classic margarita: tequila, triple sec, fresh lime juice. Bonus for measurements!",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-11",
+        "question": "What number does the Roman numeral 'L' stand for?",
+        "correct_answer": "50",
+        "explanation": "L = 50 in Roman numerals",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-12",
+        "question": "What is the square root of 81?",
+        "correct_answer": "9",
+        "explanation": "9 × 9 = 81",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-13",
+        "question": "Who was the second President of the United States?",
+        "correct_answer": "John Adams",
+        "explanation": "John Adams succeeded George Washington",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-14",
+        "question": "What is 12 times 7?",
+        "correct_answer": "84",
+        "explanation": "12 × 7 = 84",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-15",
+        "question": "How many A's are in the phrase 'Aardvark and anteater'?",
+        "correct_answer": "6",
+        "explanation": "Aardvark (3) + and (1) + anteater (2) = 6",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-16",
+        "question": "At what temperature does water boil?",
+        "correct_answer": "212°F or 100°C",
+        "explanation": "Water boils at 212°F (100°C) at sea level",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-17",
+        "question": "Who wrote Macbeth?",
+        "correct_answer": "William Shakespeare",
+        "explanation": "Shakespeare wrote Macbeth around 1606",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-18",
+        "question": "What did the 7 dwarves do for money?",
+        "correct_answer": "Miners",
+        "explanation": "They were diamond miners in Snow White",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-19",
+        "question": "What is the name of the youngest member of the Simpson family?",
+        "correct_answer": "Maggie Simpson",
+        "explanation": "Maggie is the baby of the family",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-20",
+        "question": "What does HTML stand for?",
+        "correct_answer": "Hypertext Markup Language",
+        "explanation": "HTML = Hypertext Markup Language",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-21",
+        "question": "What planet is nearest to the Sun?",
+        "correct_answer": "Mercury",
+        "explanation": "Mercury is the closest planet to the Sun",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-22",
+        "question": "How many events are there in a decathlon? Name one of them.",
+        "correct_answer": "10 events",
+        "explanation": "Decathlon has 10 events (high jump, javelin, 100m, etc.)",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-23",
+        "question": "How many squares does a chessboard have?",
+        "correct_answer": "64",
+        "explanation": "A standard chessboard has 8×8 = 64 squares",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-24",
+        "question": "If you have a bowl with 6 apples and you take away 4, how many do you have?",
+        "correct_answer": "4",
+        "explanation": "You have 4 - the ones you took",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-25",
+        "question": "What is the name of Batman's butler?",
+        "correct_answer": "Alfred",
+        "explanation": "Alfred Pennyworth is Batman's butler",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-26",
+        "question": "What color do you get when you mix red and yellow?",
+        "correct_answer": "Orange",
+        "explanation": "Red + Yellow = Orange",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-27",
+        "question": "How many legs does a spider have?",
+        "correct_answer": "8",
+        "explanation": "Spiders have 8 legs",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-28",
+        "question": "What's the capital of France?",
+        "correct_answer": "Paris",
+        "explanation": "Paris is the capital of France",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-29",
+        "question": "Who painted the Mona Lisa?",
+        "correct_answer": "Leonardo da Vinci",
+        "explanation": "Leonardo da Vinci painted the Mona Lisa",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-30",
+        "question": "What gas do plants absorb from the atmosphere?",
+        "correct_answer": "Carbon dioxide",
+        "explanation": "Plants absorb CO2 during photosynthesis",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-31",
+        "question": "Who was the first person to walk on the moon?",
+        "correct_answer": "Neil Armstrong",
+        "explanation": "Neil Armstrong was first on the moon in 1969",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-32",
+        "question": "If you're running a race and you pass the person in second place, what place are you in?",
+        "correct_answer": "Second",
+        "explanation": "You take their position - second place",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-33",
+        "question": "A farmer has 17 sheep, and all but 9 die. How many are left?",
+        "correct_answer": "9",
+        "explanation": "'All but 9' means 9 survived",
+        "type": "brain_teaser",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-34",
+        "question": "In Ring Around the Rosie, what do we all do at the end?",
+        "correct_answer": "Fall down",
+        "explanation": "'We all fall down' is the ending",
+        "type": "nursery_rhyme",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-35",
+        "question": "Complete: 'Peter Piper picked a peck of...'",
+        "correct_answer": "Pickled peppers",
+        "explanation": "Peter Piper picked a peck of pickled peppers",
+        "type": "nursery_rhyme",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-36",
+        "question": "What is 10 + 10?",
+        "correct_answer": "20",
+        "explanation": "10 + 10 = 20",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-37",
+        "question": "How many continents are there?",
+        "correct_answer": "7",
+        "explanation": "Asia, Africa, North America, South America, Antarctica, Europe, Australia",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-38",
+        "question": "What is the largest ocean on Earth?",
+        "correct_answer": "Pacific Ocean",
+        "explanation": "The Pacific is the largest ocean",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-39",
+        "question": "How many sides does a hexagon have?",
+        "correct_answer": "6",
+        "explanation": "A hexagon has 6 sides",
+        "type": "math",
+        "difficulty": "easy"
+      },
+      {
+        "id": "easy-40",
+        "question": "What do you call a baby dog?",
+        "correct_answer": "Puppy",
+        "explanation": "A baby dog is called a puppy",
+        "type": "general_knowledge",
+        "difficulty": "easy"
+      }
+    ],
+    "intermediate": [
+      {
+        "id": "int-1",
+        "question": "What's the only continent with land in all four hemispheres?",
+        "correct_answer": "Africa",
+        "explanation": "Africa spans North, South, East, and West hemispheres",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-2",
+        "question": "Who invented the telephone?",
+        "correct_answer": "Alexander Graham Bell",
+        "explanation": "Bell patented the telephone (though contested with Meucci)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-3",
+        "question": "In baseball, how many strikes before you're out?",
+        "correct_answer": "3",
+        "explanation": "Three strikes and you're out",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-4",
+        "question": "What does URL stand for?",
+        "correct_answer": "Uniform Resource Locator",
+        "explanation": "URL = Uniform Resource Locator",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-5",
+        "question": "Which chess piece can only move diagonally?",
+        "correct_answer": "Bishop",
+        "explanation": "The bishop moves only on diagonals",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-6",
+        "question": "What's the smallest prime number?",
+        "correct_answer": "2",
+        "explanation": "2 is the only even prime and the smallest",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-7",
+        "question": "You have a 5-gallon jug and a 3-gallon jug. How do you measure exactly 4 gallons?",
+        "correct_answer": "Fill 5, pour into 3, empty 3, pour remaining 2 into 3, fill 5, top off 3 = 4 left",
+        "explanation": "Classic water jug puzzle",
+        "type": "brain_teaser",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-8",
+        "question": "A doctor gives you three pills and tells you to take one every half hour. How long will they last?",
+        "correct_answer": "1 hour",
+        "explanation": "Take first at 0:00, second at 0:30, third at 1:00 = 1 hour total",
+        "type": "brain_teaser",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-9",
+        "question": "What's the next number: 2, 4, 8, 16, 32...?",
+        "correct_answer": "64",
+        "explanation": "Each number doubles: 32 × 2 = 64",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-10",
+        "question": "In Sing a Song of Sixpence, how many blackbirds were baked in a pie?",
+        "correct_answer": "24",
+        "explanation": "Four and twenty blackbirds = 24",
+        "type": "nursery_rhyme",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-11",
+        "question": "What is the speed of light?",
+        "correct_answer": "186,000 miles per second",
+        "explanation": "Speed of light is ~186,000 mi/s or ~300,000 km/s",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-12",
+        "question": "What does DNA stand for?",
+        "correct_answer": "Deoxyribonucleic acid",
+        "explanation": "DNA = Deoxyribonucleic acid",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-13",
+        "question": "How many teeth does an adult human have?",
+        "correct_answer": "32",
+        "explanation": "Adults have 32 teeth including wisdom teeth",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-14",
+        "question": "What is the currency of Japan?",
+        "correct_answer": "Yen",
+        "explanation": "Japan uses the yen (¥)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-15",
+        "question": "Who wrote '1984'?",
+        "correct_answer": "George Orwell",
+        "explanation": "George Orwell wrote 1984",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-16",
+        "question": "What is the chemical symbol for gold?",
+        "correct_answer": "Au",
+        "explanation": "Au (from Latin 'aurum') is gold's symbol",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-17",
+        "question": "How many keys are on a standard piano?",
+        "correct_answer": "88",
+        "explanation": "A standard piano has 88 keys",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-18",
+        "question": "What is the tallest mountain in the world?",
+        "correct_answer": "Mount Everest",
+        "explanation": "Mount Everest is Earth's highest peak",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-19",
+        "question": "If a train leaves at 60 mph and another at 40 mph heading toward each other from 200 miles apart, when do they meet?",
+        "correct_answer": "2 hours",
+        "explanation": "Combined speed 100 mph, distance 200 mi = 2 hours",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-20",
+        "question": "What does HTTP stand for?",
+        "correct_answer": "Hypertext Transfer Protocol",
+        "explanation": "HTTP = Hypertext Transfer Protocol",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-21",
+        "question": "How many cards are in a standard deck?",
+        "correct_answer": "52",
+        "explanation": "52 cards (plus jokers)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-22",
+        "question": "What is the capital of Australia?",
+        "correct_answer": "Canberra",
+        "explanation": "Canberra, not Sydney or Melbourne",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-23",
+        "question": "What year did World War II end?",
+        "correct_answer": "1945",
+        "explanation": "WWII ended in 1945",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-24",
+        "question": "How many zeros are in a billion?",
+        "correct_answer": "9",
+        "explanation": "1,000,000,000 = 9 zeros",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-25",
+        "question": "What is the smallest country in the world?",
+        "correct_answer": "Vatican City",
+        "explanation": "Vatican City is the world's smallest country",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-26",
+        "question": "Who painted the Sistine Chapel ceiling?",
+        "correct_answer": "Michelangelo",
+        "explanation": "Michelangelo painted the Sistine Chapel ceiling",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-27",
+        "question": "What does RAM stand for in computers?",
+        "correct_answer": "Random Access Memory",
+        "explanation": "RAM = Random Access Memory",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-28",
+        "question": "How many bones are in the human body?",
+        "correct_answer": "206",
+        "explanation": "Adults have 206 bones",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-29",
+        "question": "What is the largest organ in the human body?",
+        "correct_answer": "Skin",
+        "explanation": "The skin is the largest organ",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-30",
+        "question": "What comes next: 1, 1, 2, 3, 5, 8...?",
+        "correct_answer": "13",
+        "explanation": "Fibonacci sequence: each number is sum of previous two (5+8=13)",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-31",
+        "question": "Who wrote 'The Great Gatsby'?",
+        "correct_answer": "F. Scott Fitzgerald",
+        "explanation": "F. Scott Fitzgerald wrote The Great Gatsby",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-32",
+        "question": "What is the freezing point of water in Celsius?",
+        "correct_answer": "0",
+        "explanation": "Water freezes at 0°C (32°F)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-33",
+        "question": "How many stripes are on the American flag?",
+        "correct_answer": "13",
+        "explanation": "13 stripes for the original colonies",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-34",
+        "question": "What is the longest river in the world?",
+        "correct_answer": "Nile",
+        "explanation": "The Nile River is the longest (Amazon is largest by volume)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-35",
+        "question": "How many days are in a leap year?",
+        "correct_answer": "366",
+        "explanation": "Leap years have 366 days (Feb 29)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-36",
+        "question": "What is the chemical formula for water?",
+        "correct_answer": "H2O",
+        "explanation": "Water is H2O (2 hydrogen, 1 oxygen)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-37",
+        "question": "Who discovered penicillin?",
+        "correct_answer": "Alexander Fleming",
+        "explanation": "Fleming discovered penicillin in 1928",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-38",
+        "question": "What is the square of 15?",
+        "correct_answer": "225",
+        "explanation": "15 × 15 = 225",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-39",
+        "question": "How many minutes are in a day?",
+        "correct_answer": "1440",
+        "explanation": "24 hours × 60 minutes = 1440",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-40",
+        "question": "What does CPU stand for?",
+        "correct_answer": "Central Processing Unit",
+        "explanation": "CPU = Central Processing Unit",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-41",
+        "question": "Who was the first female Prime Minister of the United Kingdom?",
+        "correct_answer": "Margaret Thatcher",
+        "explanation": "Margaret Thatcher (1979-1990)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-42",
+        "question": "What is the capital of Canada?",
+        "correct_answer": "Ottawa",
+        "explanation": "Ottawa is Canada's capital",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-43",
+        "question": "How many planets are in our solar system?",
+        "correct_answer": "8",
+        "explanation": "8 planets (Pluto was reclassified)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-44",
+        "question": "What is 20% of 200?",
+        "correct_answer": "40",
+        "explanation": "200 × 0.20 = 40",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-45",
+        "question": "Who invented the light bulb?",
+        "correct_answer": "Thomas Edison",
+        "explanation": "Edison perfected the practical light bulb",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-46",
+        "question": "What is the hardest natural substance on Earth?",
+        "correct_answer": "Diamond",
+        "explanation": "Diamond is the hardest natural material",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-47",
+        "question": "How many chambers does the human heart have?",
+        "correct_answer": "4",
+        "explanation": "The heart has 4 chambers (2 atria, 2 ventricles)",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-48",
+        "question": "What year did the Berlin Wall fall?",
+        "correct_answer": "1989",
+        "explanation": "The Berlin Wall fell in 1989",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-49",
+        "question": "What is the cube root of 27?",
+        "correct_answer": "3",
+        "explanation": "3 × 3 × 3 = 27",
+        "type": "math",
+        "difficulty": "intermediate"
+      },
+      {
+        "id": "int-50",
+        "question": "Who painted 'Starry Night'?",
+        "correct_answer": "Vincent van Gogh",
+        "explanation": "Van Gogh painted Starry Night in 1889",
+        "type": "general_knowledge",
+        "difficulty": "intermediate"
+      }
+    ],
+    "advanced": [
+      {
+        "id": "adv-1",
+        "question": "Explain the difference between median and mean",
+        "correct_answer": "Mean is average (sum/count), median is middle value when sorted",
+        "explanation": "Mean = arithmetic average. Median = middle value in sorted list",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-2",
+        "question": "What programming paradigm does Haskell primarily use?",
+        "correct_answer": "Functional",
+        "explanation": "Haskell is a purely functional programming language",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-3",
+        "question": "What's the accounting equation?",
+        "correct_answer": "Assets = Liabilities + Equity",
+        "explanation": "Fundamental accounting equation",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-4",
+        "question": "In poker, what beats a flush?",
+        "correct_answer": "Full house, four of a kind, straight flush, royal flush",
+        "explanation": "These hands rank higher than a flush",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-5",
+        "question": "What's the second derivative of position with respect to time?",
+        "correct_answer": "Acceleration",
+        "explanation": "Position → Velocity → Acceleration",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-6",
+        "question": "On a chessboard, how many total squares are there if you count all sizes?",
+        "correct_answer": "204",
+        "explanation": "64 (1×1) + 49 (2×2) + 36 (3×3) + 25 (4×4) + 16 (5×5) + 9 (6×6) + 4 (7×7) + 1 (8×8) = 204",
+        "type": "brain_teaser",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-7",
+        "question": "A plane crashes exactly on the border of the US and Canada. Where do you bury the survivors?",
+        "correct_answer": "You don't bury survivors",
+        "explanation": "Trick question - survivors aren't buried",
+        "type": "brain_teaser",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-8",
+        "question": "What's the only number that has the same number of letters as its value?",
+        "correct_answer": "Four",
+        "explanation": "'Four' has 4 letters",
+        "type": "brain_teaser",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-9",
+        "question": "What is the Pythagorean theorem?",
+        "correct_answer": "a² + b² = c²",
+        "explanation": "In a right triangle, the square of the hypotenuse equals the sum of squares of the other two sides",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-10",
+        "question": "What does API stand for in software development?",
+        "correct_answer": "Application Programming Interface",
+        "explanation": "API = Application Programming Interface",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-11",
+        "question": "Who developed the theory of general relativity?",
+        "correct_answer": "Albert Einstein",
+        "explanation": "Einstein published general relativity in 1915",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-12",
+        "question": "What is the powerhouse of the cell?",
+        "correct_answer": "Mitochondria",
+        "explanation": "Mitochondria produce ATP (cell energy)",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-13",
+        "question": "What is the value of pi to 5 decimal places?",
+        "correct_answer": "3.14159",
+        "explanation": "π ≈ 3.14159...",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-14",
+        "question": "What does SQL stand for?",
+        "correct_answer": "Structured Query Language",
+        "explanation": "SQL = Structured Query Language",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-15",
+        "question": "What is the derivative of x²?",
+        "correct_answer": "2x",
+        "explanation": "Power rule: d/dx(x²) = 2x",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-16",
+        "question": "What is the first law of thermodynamics?",
+        "correct_answer": "Energy cannot be created or destroyed",
+        "explanation": "Conservation of energy principle",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-17",
+        "question": "How many bits in a byte?",
+        "correct_answer": "8",
+        "explanation": "1 byte = 8 bits",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-18",
+        "question": "What is Avogadro's number (approximately)?",
+        "correct_answer": "6.022 × 10²³",
+        "explanation": "Avogadro's number ≈ 6.022 × 10²³",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-19",
+        "question": "What is the SI unit of force?",
+        "correct_answer": "Newton",
+        "explanation": "Force is measured in Newtons (N)",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-20",
+        "question": "If 5 machines can make 5 widgets in 5 minutes, how long does it take 100 machines to make 100 widgets?",
+        "correct_answer": "5 minutes",
+        "explanation": "Each machine makes 1 widget in 5 minutes, so 100 machines make 100 widgets in 5 minutes",
+        "type": "brain_teaser",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-21",
+        "question": "What does REST stand for in web APIs?",
+        "correct_answer": "Representational State Transfer",
+        "explanation": "REST = Representational State Transfer",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-22",
+        "question": "What is the atomic number of carbon?",
+        "correct_answer": "6",
+        "explanation": "Carbon has atomic number 6 (6 protons)",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-23",
+        "question": "What is the capital of Kazakhstan?",
+        "correct_answer": "Astana",
+        "explanation": "Astana (formerly Nur-Sultan) is the capital",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-24",
+        "question": "What does JSON stand for?",
+        "correct_answer": "JavaScript Object Notation",
+        "explanation": "JSON = JavaScript Object Notation",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-25",
+        "question": "What is the smallest unit of life?",
+        "correct_answer": "Cell",
+        "explanation": "The cell is the basic unit of life",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-26",
+        "question": "What is e (Euler's number) to 3 decimal places?",
+        "correct_answer": "2.718",
+        "explanation": "e ≈ 2.71828...",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-27",
+        "question": "What does GPU stand for?",
+        "correct_answer": "Graphics Processing Unit",
+        "explanation": "GPU = Graphics Processing Unit",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-28",
+        "question": "What is the speed of sound at sea level?",
+        "correct_answer": "343 m/s or 767 mph",
+        "explanation": "Sound travels at ~343 m/s at sea level",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-29",
+        "question": "What is the half-life of Carbon-14?",
+        "correct_answer": "5,730 years",
+        "explanation": "C-14 has a half-life of ~5,730 years",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-30",
+        "question": "What does MVP stand for in product development?",
+        "correct_answer": "Minimum Viable Product",
+        "explanation": "MVP = Minimum Viable Product",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-31",
+        "question": "What is the integral of 1/x?",
+        "correct_answer": "ln|x| + C",
+        "explanation": "∫(1/x)dx = ln|x| + C",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-32",
+        "question": "What is the Turing test?",
+        "correct_answer": "Test of machine's ability to exhibit intelligent behavior indistinguishable from human",
+        "explanation": "Test proposed by Alan Turing for AI",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-33",
+        "question": "What does CRUD stand for in database operations?",
+        "correct_answer": "Create, Read, Update, Delete",
+        "explanation": "CRUD = basic database operations",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-34",
+        "question": "What is the quadratic formula?",
+        "correct_answer": "x = (-b ± √(b²-4ac)) / 2a",
+        "explanation": "Solves ax² + bx + c = 0",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-35",
+        "question": "What does OAuth stand for?",
+        "correct_answer": "Open Authorization",
+        "explanation": "OAuth = Open Authorization protocol",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-36",
+        "question": "What is the boiling point of water at high altitude compared to sea level?",
+        "correct_answer": "Lower",
+        "explanation": "Lower pressure at altitude = lower boiling point",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-37",
+        "question": "What does LIFO stand for in data structures?",
+        "correct_answer": "Last In First Out",
+        "explanation": "LIFO = stack behavior",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-38",
+        "question": "What is the golden ratio (phi) approximately?",
+        "correct_answer": "1.618",
+        "explanation": "φ ≈ 1.618...",
+        "type": "math",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-39",
+        "question": "What does MVC stand for in software architecture?",
+        "correct_answer": "Model View Controller",
+        "explanation": "MVC = Model-View-Controller pattern",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-40",
+        "question": "What is the uncertainty principle in quantum mechanics?",
+        "correct_answer": "Cannot simultaneously know position and momentum with perfect accuracy",
+        "explanation": "Heisenberg's uncertainty principle",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-41",
+        "question": "What does IDE stand for in programming?",
+        "correct_answer": "Integrated Development Environment",
+        "explanation": "IDE = Integrated Development Environment",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-42",
+        "question": "What is the time complexity of binary search?",
+        "correct_answer": "O(log n)",
+        "explanation": "Binary search has logarithmic time complexity",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-43",
+        "question": "What is Schrödinger's cat thought experiment about?",
+        "correct_answer": "Quantum superposition - cat is both alive and dead until observed",
+        "explanation": "Illustrates quantum superposition paradox",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-44",
+        "question": "What does SOLID stand for in OOP principles?",
+        "correct_answer": "Single responsibility, Open-closed, Liskov substitution, Interface segregation, Dependency inversion",
+        "explanation": "SOLID = 5 OOP design principles",
+        "type": "general_knowledge",
+        "difficulty": "advanced"
+      },
+      {
+        "id": "adv-45",
+        "question": "What is the Monty Hall problem's correct solution?",
+        "correct_answer": "Always switch doors (2/3 probability)",
+        "explanation": "Switching gives 2/3 chance, staying gives 1/3",
+        "type": "brain_teaser",
+        "difficulty": "advanced"
+      }
+    ],
+    "insane": [
+      {
+        "id": "insane-1",
+        "question": "What's the only US state capital without a McDonald's?",
+        "correct_answer": "Montpelier, Vermont",
+        "explanation": "Montpelier is the only state capital with no McDonald's",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-2",
+        "question": "What's the only letter that doesn't appear in any US state name?",
+        "correct_answer": "Q",
+        "explanation": "Q is the only letter not in any state name",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-3",
+        "question": "What's the only word in English that ends in 'mt'?",
+        "correct_answer": "Dreamt",
+        "explanation": "Dreamt is the only common word ending in 'mt'",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-4",
+        "question": "Who was president during the War of 1812?",
+        "correct_answer": "James Madison",
+        "explanation": "Madison was president from 1809-1817",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-5",
+        "question": "What's heavier: a pound of feathers or a pound of gold?",
+        "correct_answer": "Feathers",
+        "explanation": "Gold uses troy pounds (12 oz), regular pounds are 16 oz",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-6",
+        "question": "What comes next: 1, 11, 21, 1211, 111221, 312211...?",
+        "correct_answer": "13112221",
+        "explanation": "Look-and-say sequence: describe what you see (one 1, two 1s, one 2 one 1, etc.)",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-7",
+        "question": "How many times can you subtract 10 from 100?",
+        "correct_answer": "Once",
+        "explanation": "After first subtraction, you're subtracting from 90",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-8",
+        "question": "A rooster lays an egg on top of a barn roof. Which way does it roll?",
+        "correct_answer": "Roosters don't lay eggs",
+        "explanation": "Trick question - only hens lay eggs",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-9",
+        "question": "In the original Mary Had a Little Lamb, what happened when the lamb followed Mary to school?",
+        "correct_answer": "It made the children laugh and play",
+        "explanation": "Classic nursery rhyme verse",
+        "type": "nursery_rhyme",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-10",
+        "question": "What is the Riemannhypothesis about?",
+        "correct_answer": "Distribution of prime numbers and zeros of zeta function",
+        "explanation": "Unsolved problem in mathematics about prime number distribution",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-11",
+        "question": "What is the Planck constant's value?",
+        "correct_answer": "6.626 × 10⁻³⁴ J·s",
+        "explanation": "Fundamental constant in quantum mechanics",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-12",
+        "question": "What does CAP theorem stand for in distributed systems?",
+        "correct_answer": "Consistency, Availability, Partition tolerance",
+        "explanation": "CAP = you can only have 2 of 3",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-13",
+        "question": "What is the Halting Problem?",
+        "correct_answer": "Determining if a program will finish running or run forever is undecidable",
+        "explanation": "Fundamental limitation in computer science proven by Turing",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-14",
+        "question": "If a tree falls in a forest and no one is around to hear it, does it make a sound? (Philosophy answer)",
+        "correct_answer": "Depends on definition of 'sound'",
+        "explanation": "Philosophical question about observation and reality",
+        "type": "brain_teaser",
+        "difficulty": "insane"
+      },
+      {
+        "id": "insane-15",
+        "question": "What is P vs NP problem asking?",
+        "correct_answer": "Whether problems whose solution can be verified quickly can also be solved quickly",
+        "explanation": "Major unsolved problem in computer science",
+        "type": "general_knowledge",
+        "difficulty": "insane"
+      }
+    ]
+  }
+}

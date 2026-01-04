@@ -1,0 +1,329 @@
+'use client';
+
+/**
+ * Absurdist Questions Finale
+ *
+ * Whimsical, creative questions after Lightning Round.
+ * - Colorful gradients (orange/yellow/pink theme)
+ * - One question at a time
+ * - Voice input support
+ * - Fun transitions
+ * - Playful design
+ */
+
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { AnswerInput } from '@/components/assessment/AnswerInput';
+
+export const dynamic = 'error';
+interface AbsurdistQuestion {
+  id: string;
+  title: string;
+  tone: string;
+  question: string;
+}
+
+export default function AbsurdistQuestionsPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+
+  const [questions, setQuestions] = useState<AbsurdistQuestion[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [currentAnswer, setCurrentAnswer] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch questions on mount
+  useEffect(() => {
+    async function fetchQuestions() {
+      try {
+        const response = await fetch('/api/assessment/absurdist/questions');
+        if (!response.ok) throw new Error('Failed to fetch questions');
+
+        const data = await response.json();
+        setQuestions(data.questions);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching absurdist questions:', err);
+        setError('Failed to load questions. Please try again.');
+        setIsLoading(false);
+      }
+    }
+
+    fetchQuestions();
+  }, []);
+
+  // Load existing answer when navigating
+  useEffect(() => {
+    if (questions[currentIndex]) {
+      const existingAnswer = answers[questions[currentIndex].id];
+      setCurrentAnswer(existingAnswer || '');
+    }
+  }, [currentIndex, questions, answers]);
+
+  const handleNext = () => {
+    // Save current answer
+    const currentQuestion = questions[currentIndex];
+    if (currentAnswer.trim() && currentQuestion) {
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestion.id]: currentAnswer,
+      }));
+    }
+
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    // Save current answer
+    const currentQuestion = questions[currentIndex];
+    if (currentAnswer.trim() && currentQuestion) {
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestion.id]: currentAnswer,
+      }));
+    }
+
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!sessionId) {
+      setError('No session ID provided');
+      return;
+    }
+
+    // Save current answer
+    const finalAnswers = { ...answers };
+    const currentQuestion = questions[currentIndex];
+    if (currentAnswer.trim() && currentQuestion) {
+      finalAnswers[currentQuestion.id] = currentAnswer;
+    }
+
+    // Filter out empty answers
+    const validAnswers = Object.fromEntries(
+      Object.entries(finalAnswers).filter(([_key, answer]) => answer.trim())
+    );
+
+    if (Object.keys(validAnswers).length === 0) {
+      setError('Please answer at least one question before submitting');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/assessment/absurdist/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionId,
+          answers: validAnswers,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to submit answers');
+      }
+
+      const data = await response.json();
+
+      // Redirect to results page
+      router.push(data.redirect_url);
+    } catch (err: unknown) {
+      console.error('Error submitting absurdist answers:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit answers';
+      setError(errorMessage);
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-950 via-black to-pink-950 flex items-center justify-center">
+        <div className="text-center text-white">
+          <h2 className="text-2xl font-bold mb-4">Session Not Found</h2>
+          <p className="text-gray-400 mb-6">Please complete the main assessment first.</p>
+          <button
+            onClick={() => router.push('/assessment/start')}
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-pink-500 rounded-lg font-semibold"
+          >
+            Start Assessment
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-950 via-black to-pink-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-400 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-semibold text-white">Loading the weird questions...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-950 via-black to-pink-950 flex items-center justify-center">
+        <div className="text-center text-white">
+          <h2 className="text-2xl font-bold mb-4">No Questions Available</h2>
+          <p className="text-gray-400">Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentIndex];
+  const progress = ((currentIndex + 1) / questions.length) * 100;
+  const answeredCount = Object.keys(answers).length + (currentAnswer.trim() ? 1 : 0);
+  const isLastQuestion = currentIndex === questions.length - 1;
+
+  if (!currentQuestion) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-950 via-black to-pink-950 flex items-center justify-center">
+        <div className="text-center text-white">
+          <h2 className="text-2xl font-bold mb-4">Question Not Found</h2>
+          <p className="text-gray-400">Please refresh the page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-950 via-black to-pink-950 text-white">
+      {/* Header with Progress */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-orange-500/30">
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <span className="text-lg font-bold bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                Absurdist Finale
+              </span>
+              <span className="text-sm text-gray-400">
+                Question {currentIndex + 1} of {questions.length}
+              </span>
+            </div>
+            <span className="text-sm text-orange-400">
+              {answeredCount}/{questions.length} answered
+            </span>
+          </div>
+          <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-orange-500 via-yellow-500 to-pink-500 h-2 transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="pt-28 pb-12 px-4">
+        <div className="max-w-3xl mx-auto">
+          {/* Question Card with Fun Animation */}
+          <div
+            key={currentQuestion.id}
+            className="animate-in fade-in slide-in-from-right-4 duration-500"
+          >
+            <div className="bg-gradient-to-br from-orange-900/30 via-yellow-900/20 to-pink-900/30 border-2 border-orange-500/40 rounded-2xl p-8 mb-6 shadow-2xl">
+              {/* Question Title */}
+              <div className="mb-6">
+                <div className="inline-block px-4 py-2 bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-400/30 rounded-full mb-4">
+                  <span className="text-sm font-semibold text-orange-300">
+                    {currentQuestion.tone.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+                <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-orange-300 via-yellow-300 to-pink-300 bg-clip-text text-transparent">
+                  {currentQuestion.title}
+                </h2>
+              </div>
+
+              {/* Question Text */}
+              <div className="mb-8 prose prose-invert max-w-none">
+                <p className="text-lg text-gray-200 leading-relaxed whitespace-pre-line">
+                  {currentQuestion.question}
+                </p>
+              </div>
+
+              {/* Answer Input */}
+              <div className="mb-6">
+                <AnswerInput
+                  value={currentAnswer}
+                  onChange={setCurrentAnswer}
+                  disabled={isSubmitting}
+                  placeholder="Let your creativity flow... or use voice to dictate your answer!"
+                />
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={handlePrevious}
+                  disabled={currentIndex === 0 || isSubmitting}
+                  className="px-6 py-3 bg-gray-800/80 hover:bg-gray-700/80 disabled:bg-gray-900/50 disabled:cursor-not-allowed text-white rounded-xl transition-all duration-200 font-semibold border border-gray-700/50"
+                >
+                  Previous
+                </button>
+
+                {!isLastQuestion ? (
+                  <button
+                    onClick={handleNext}
+                    disabled={isSubmitting}
+                    className="px-8 py-3 bg-gradient-to-r from-orange-500 via-yellow-500 to-pink-500 hover:from-orange-400 hover:via-yellow-400 hover:to-pink-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-orange-500/50"
+                  >
+                    Next Question
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || answeredCount === 0}
+                    className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 disabled:from-gray-700 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-all duration-200 shadow-lg hover:shadow-green-500/50"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Complete Assessment'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Fun Encouragement */}
+            <div className="text-center text-gray-400 text-sm italic">
+              {currentIndex === 0 && "No wrong answers here. Let your freak flag fly."}
+              {currentIndex === Math.floor(questions.length / 3) && "You're doing great. This is supposed to be weird."}
+              {currentIndex === Math.floor(questions.length / 2) && "Halfway through the absurdity!"}
+              {currentIndex === Math.floor(questions.length * 2 / 3) && "The finish line is in sight. Keep going!"}
+              {isLastQuestion && "Last one! Make it count."}
+            </div>
+          </div>
+
+          {/* Skip Note */}
+          {answeredCount === 0 && (
+            <div className="mt-6 text-center">
+              <p className="text-gray-500 text-sm">
+                Feel free to skip questions, but we recommend answering at least a few to show your creative side.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

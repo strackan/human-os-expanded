@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+/* Tech Noir / Synthwave Color Palette */
+:root {
+  /* Near-black backgrounds */
+  --background: #0a0a0f;
+  --background-lighter: #131318;
+
+  /* Neon accent colors - toned down for comfort */
+  --neon-cyan: #00ccdd;
+  --neon-magenta: #bb00aa;
+  --neon-purple: #7700cc;
+
+  /* Muted versions for subtle use */
+  --cyan-muted: #00cccc;
+  --magenta-muted: #cc00cc;
+
+  /* Text colors */
+  --foreground: #e0e0e0;
+  --foreground-dim: #808080;
+
+  /* VHS grain overlay */
+  --grain-opacity: 0.03;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-lighter: var(--background-lighter);
+  --color-foreground: var(--foreground);
+  --color-foreground-dim: var(--foreground-dim);
+  --color-neon-cyan: var(--neon-cyan);
+  --color-neon-magenta: var(--neon-magenta);
+  --color-neon-purple: var(--neon-purple);
+  --color-cyan-muted: var(--cyan-muted);
+  --color-magenta-muted: var(--magenta-muted);
+  --font-sans: var(--font-vt323);
+  --font-mono: var(--font-vt323);
+  --font-retro: var(--font-press-start);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-vt323), monospace;
+  position: relative;
+  font-size: 1.1rem;
+  letter-spacing: 0.5px;
+}
+
+/* VHS Grain Effect - very subtle on main site */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  animation: grain 8s steps(10) infinite;
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+/* Scanlines Effect */
+.scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9998;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.3) 51%
+  );
+  background-size: 100% 4px;
+  animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* Neon glow utility classes - subtle glow */
+.neon-cyan {
+  color: var(--neon-cyan);
+  text-shadow:
+    0 0 3px rgba(0, 204, 221, 0.5),
+    0 0 6px rgba(0, 204, 221, 0.3),
+    0 0 12px rgba(0, 204, 221, 0.2);
+}
+
+.neon-magenta {
+  color: var(--neon-magenta);
+  text-shadow:
+    0 0 3px rgba(187, 0, 170, 0.5),
+    0 0 6px rgba(187, 0, 170, 0.3),
+    0 0 12px rgba(187, 0, 170, 0.2);
+}
+
+.neon-purple {
+  color: var(--neon-purple);
+  text-shadow:
+    0 0 3px rgba(119, 0, 204, 0.5),
+    0 0 6px rgba(119, 0, 204, 0.3),
+    0 0 12px rgba(119, 0, 204, 0.2);
+}
+
+/* CRT flicker effect for headings */
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  41.99%, 42.99% { opacity: 0.8; }
+  43%, 43.99% { opacity: 1; }
+  45%, 45.99% { opacity: 0.9; }
+}
+
+/* Fade in and out animation for success message */
+@keyframes fade-in-out {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in-out {
+  animation: fade-in-out 5s ease-in-out forwards;
+}

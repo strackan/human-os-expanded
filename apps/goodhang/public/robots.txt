@@ -1,0 +1,22 @@
+# Good Hang - Robots.txt
+# https://goodhang.club/robots.txt
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /members/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /members/
+
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /members/
+
+Sitemap: https://goodhang.club/sitemap.xml

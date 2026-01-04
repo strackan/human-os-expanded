@@ -1,0 +1,70 @@
+# Good Hang - Tech Noir Social Club
+
+## Project Overview
+Good Hang is an exclusive social club for tech professionals in Raleigh, NC who want more than networking—they want adventure. The platform combines a tech-noir aesthetic with modern web technologies to create an immersive, members-only experience.
+
+## Purpose
+This website serves as the digital gateway to Good Hang, providing:
+- Information about the club and its philosophy
+- Event listings and RSVP functionality
+- Membership application process
+- Member authentication and exclusive content access
+- Launch party registration
+
+## Technology Stack
+- **Framework**: Next.js 16.0.0 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4 with custom tech-noir theme
+- **Authentication**: Supabase Auth
+- **Database**: Supabase
+- **Email**: Resend API
+- **Forms**: Typeform integration
+- **Deployment**: Vercel
+
+## Brand & Aesthetic
+Good Hang features a distinctive tech-noir/synthwave aesthetic characterized by:
+- Dark backgrounds (#0a0a0f)
+- Neon accent colors: cyan (#00ccdd), magenta (#bb00aa), purple (#7700cc)
+- Retro-futuristic typography (VT323, Press Start 2P)
+- VHS grain effects, scanlines, and CRT flicker animations
+- Glitch effects and digital artifacts
+- Vintage tech meets underground club atmosphere
+
+## Content Guidelines
+When generating content for Good Hang:
+- Maintain the mysterious, exclusive club vibe
+- Use tech-noir language (dystopian meets sophisticated)
+- Emphasize adventure, connection, and curated experiences
+- Target audience: tech professionals seeking meaningful social experiences
+- Location context: Raleigh, NC tech community
+- Tone: Edgy yet welcoming, exclusive yet inclusive for approved members
+
+## Key Features
+- Member authentication and protected routes
+- Event management and RSVP system
+- Application/vetting process for new members
+- Admin dashboard for member management
+- Launch party registration with Typeform integration
+- Responsive design with glitch/VHS aesthetic effects
+
+## Site Structure
+- `/` - Homepage with glitch wrapper effect
+- `/about` - Club information and philosophy
+- `/events` - Event listings for members
+- `/launch` - Launch party RSVP
+- `/apply` - Membership application
+- `/login` - Authentication
+- `/members` - Members-only area
+- `/admin` - Administrative functions
+
+## SEO & Discoverability
+- Primary keywords: tech social club Raleigh, tech professionals networking, tech noir, exclusive social club
+- Target location: Raleigh, NC
+- Focus: Community building, curated events, tech culture
+
+## Development Notes
+- Uses Next.js App Router conventions
+- Server and client components pattern
+- Supabase for backend services
+- Custom middleware for auth protection
+- Static export capability for deployment
