@@ -20,6 +20,7 @@
 
 import { createProxy } from '@human-os/proxy';
 import { createClient } from '@/lib/supabase/server';
+import { kv } from '@vercel/kv';
 
 // Lazy initialization to avoid build-time API key check
 let proxyInstance: ReturnType<typeof createProxy> | null = null;
@@ -28,6 +29,7 @@ function getProxy() {
   if (!proxyInstance) {
     proxyInstance = createProxy({
       captureEnabled: true,
+      kv, // Vercel KV for Redis queue (~1-2ms latency)
       getUserId: async () => {
         try {
           const supabase = await createClient();

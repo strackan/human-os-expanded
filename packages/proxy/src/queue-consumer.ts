@@ -1,70 +1,64 @@
 /**
- * Fire-and-forget capture logging
+ * Queue Consumer
  *
- * Logs conversation data to queue/database without blocking the response.
- * Target latency: <2ms for fire-and-forget operations.
- *
- * Priority:
- * 1. Vercel KV (Redis) - ~1-2ms, recommended for production
- * 2. Direct Supabase - ~5-15ms, fallback
+ * Reads from Vercel KV (Redis) queue and persists to Supabase.
+ * Designed to be called by Inngest or a cron job.
  */
 
 import type { CapturePayload } from './types.js';
+import { CAPTURE_QUEUE_KEY } from './capture.js';
 
-// Vercel KV client type (optional peer dependency)
+// Vercel KV client type
 type KVClient = {
-  lpush: (key: string, ...values: string[]) => Promise<number>;
+  lpop: (key: string) => Promise<string | null>;
+  llen: (key: string) => Promise<number>;
 };
 
-export interface CaptureConfig {
-  supabaseUrl?: string;
-  supabaseKey?: string;
-  /** Vercel KV client instance from @vercel/kv */
-  kv?: KVClient;
-  enabled?: boolean;
+export interface QueueConsumerConfig {
+  kv: KVClient;
+  supabaseUrl: string;
+  supabaseKey: string;
+  batchSize?: number;
 }
 
-/** Queue name for capture payloads */
-export const CAPTURE_QUEUE_KEY = 'claude_capture_queue';
-
-/**
- * Queue capture payload for async processing
- * Fire-and-forget - does not await result
- */
-export function queueCapture(payload: CapturePayload, config: CaptureConfig): void {
-  if (!config.enabled) return;
-
-  // Fire and forget - don't await
-  captureAsync(payload, config).catch((err) => {
-    console.error('[proxy/capture] Failed to queue:', err);
-  });
+export interface ConsumeResult {
+  processed: number;
+  failed: number;
+  remaining: number;
 }
 
 /**
- * Async capture implementation
- * Tries KV first (fastest), falls back to direct Supabase insert
+ * Process a batch of items from the capture queue
  */
-async function captureAsync(payload: CapturePayload, config: CaptureConfig): Promise<void> {
-  // Option 1: Push to Vercel KV queue (preferred - ~1-2ms)
-  if (config.kv) {
+export async function consumeQueue(config: QueueConsumerConfig): Promise<ConsumeResult> {
+  const { kv, supabaseUrl, supabaseKey, batchSize = 10 } = config;
+
+  let processed = 0;
+  let failed = 0;
+
+  for (let i = 0; i < batchSize; i++) {
+    const item = await kv.lpop(CAPTURE_QUEUE_KEY);
+    if (!item) break;
+
     try {
-      await config.kv.lpush(CAPTURE_QUEUE_KEY, JSON.stringify(payload));
-      return;
+      const payload: CapturePayload = JSON.parse(item);
+      await persistToSupabase(payload, supabaseUrl, supabaseKey);
+      processed++;
     } catch (err) {
-      console.warn('[proxy/capture] KV push failed, falling back to Supabase:', err);
+      console.error('[queue-consumer] Failed to process item:', err);
+      failed++;
     }
   }
 
-  // Option 2: Direct Supabase insert (~5-15ms)
-  if (config.supabaseUrl && config.supabaseKey) {
-    await insertToSupabase(payload, config.supabaseUrl, config.supabaseKey);
-  }
+  const remaining = await kv.llen(CAPTURE_QUEUE_KEY);
+
+  return { processed, failed, remaining };
 }
 
 /**
- * Direct insert to Supabase
+ * Persist a capture payload to Supabase
  */
-async function insertToSupabase(
+async function persistToSupabase(
   payload: CapturePayload,
   supabaseUrl: string,
   supabaseKey: string
@@ -92,7 +86,7 @@ async function insertToSupabase(
 
   // Upsert is fine - conversation may already exist
   if (!conversationResponse.ok && conversationResponse.status !== 409) {
-    console.warn('[proxy/capture] Conversation insert warning:', conversationResponse.status);
+    console.warn('[queue-consumer] Conversation insert warning:', conversationResponse.status);
   }
 
   // Extract text content from messages
@@ -118,7 +112,6 @@ async function insertToSupabase(
 
   // Insert assistant turn (if response exists)
   if (payload.response) {
-    // Build metadata with streaming metrics
     const metadata: Record<string, unknown> = {};
     if (payload.ttft_ms !== undefined) {
       metadata.ttft_ms = payload.ttft_ms;
@@ -168,15 +161,4 @@ function extractTextContent(messages: CapturePayload['messages']): string {
       return '';
     })
     .join('\n\n');
-}
-
-/**
- * Generate a unique conversation ID
- */
-export function generateConversationId(): string {
-  // Use crypto.randomUUID if available (Edge runtime), fallback to timestamp-based
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return `conv_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }

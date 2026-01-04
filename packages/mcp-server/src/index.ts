@@ -24,6 +24,7 @@ import {
 import { contextTools, handleContextTool } from './context-tools.js';
 import { graphTools, handleGraphTool } from './graph-tools.js';
 import { entityTools, handleEntityTool } from './entity-tools.js';
+import { logToolCall, summarizeResult } from './capture.js';
 
 /**
  * Environment configuration
@@ -82,9 +83,10 @@ async function main() {
     };
   });
 
-  // Register tool call handler
+  // Register tool call handler with capture
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    const startTime = Date.now();
 
     try {
       let result: unknown;
@@ -100,6 +102,16 @@ async function main() {
         throw new Error(`Unknown tool: ${name}`);
       }
 
+      // Fire-and-forget capture
+      logToolCall({
+        tool: name,
+        params: args || {},
+        result: summarizeResult(result),
+        latencyMs: Date.now() - startTime,
+        userId: USER_ID,
+        timestamp: new Date().toISOString(),
+      });
+
       return {
         content: [
           {
@@ -110,6 +122,17 @@ async function main() {
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
+
+      // Log failed calls too
+      logToolCall({
+        tool: name,
+        params: args || {},
+        result: `Error: ${message}`,
+        latencyMs: Date.now() - startTime,
+        userId: USER_ID,
+        timestamp: new Date().toISOString(),
+      });
+
       return {
         content: [
           {

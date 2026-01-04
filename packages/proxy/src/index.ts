@@ -68,7 +68,7 @@ export function createProxy(config: ProxyConfig = {}): ClaudeProxy {
   const captureConfig: CaptureConfig = {
     supabaseUrl: config.supabaseUrl || process.env.SUPABASE_URL,
     supabaseKey: config.supabaseKey || process.env.SUPABASE_SERVICE_KEY,
-    kvUrl: config.kvUrl || process.env.KV_REST_API_URL,
+    kv: config.kv, // Vercel KV client for Redis queue (~1-2ms)
     enabled: config.captureEnabled ?? true,
   };
 
@@ -312,6 +312,9 @@ function handleStreamingResponse(
   });
 }
 
-// Re-export types
+// Re-export types and utilities
 export * from './types.js';
-export { generateConversationId } from './capture.js';
+export { generateConversationId, queueCapture, CAPTURE_QUEUE_KEY } from './capture.js';
+export type { CaptureConfig } from './capture.js';
+export { consumeQueue } from './queue-consumer.js';
+export type { QueueConsumerConfig, ConsumeResult } from './queue-consumer.js';

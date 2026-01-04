@@ -2,6 +2,13 @@
  * Types for Claude API Proxy
  */
 
+/** Vercel KV client interface (from @vercel/kv) */
+export interface KVClient {
+  lpush: (key: string, ...values: string[]) => Promise<number>;
+  lpop: (key: string) => Promise<string | null>;
+  llen: (key: string) => Promise<number>;
+}
+
 export interface ProxyConfig {
   /** Anthropic API key (defaults to ANTHROPIC_API_KEY env var) */
   apiKey?: string;
@@ -11,8 +18,8 @@ export interface ProxyConfig {
   supabaseUrl?: string;
   /** Supabase service key for logging (optional) */
   supabaseKey?: string;
-  /** Redis/KV URL for queue (optional) */
-  kvUrl?: string;
+  /** Vercel KV client for Redis queue (preferred, ~1-2ms latency) */
+  kv?: KVClient;
   /** Enable capture logging (defaults to true) */
   captureEnabled?: boolean;
   /** User ID resolver function */
