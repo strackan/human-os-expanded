@@ -1,24 +1,41 @@
 // Assessment Types for CS Skills Assessment - Backend
 // Enhanced with 14 dimensions, personality typing, and badge system
 
-export type QuestionType = 'open_ended' | 'scale' | 'multiple_choice';
+// =============================================================================
+// SHARED TYPES (from @human-os/analysis)
+// =============================================================================
 
-// Enhanced with organization and executive_leadership dimensions
-export type ScoringDimension =
-  | 'iq'
-  | 'eq'
-  | 'empathy'
-  | 'self_awareness'
-  | 'technical'
-  | 'ai_readiness'
-  | 'gtm'
-  | 'personality'
-  | 'motivation'
-  | 'work_history'
-  | 'passions'
-  | 'culture_fit'
-  | 'organization'
-  | 'executive_leadership';
+// Re-export shared scoring types from the canonical source
+export type {
+  GoodHangDimension as ScoringDimension,
+  GoodHangTier as AssessmentTier,
+  GoodHangCategoryScores as CategoryScores,
+  GoodHangPersonalityProfile as PersonalityProfile,
+  AIOrchestrationScores,
+  GoodHangBadge,
+} from '@human-os/analysis';
+
+// Import for internal use
+import type {
+  GoodHangDimension,
+  GoodHangCategoryScores,
+  GoodHangTier,
+  GoodHangPersonalityProfile,
+  AIOrchestrationScores as AIOrchestrationScoresType,
+} from '@human-os/analysis';
+
+// Local aliases for internal use (re-exported above for external consumers)
+type ScoringDimension = GoodHangDimension;
+type CategoryScores = GoodHangCategoryScores;
+type AssessmentTier = GoodHangTier;
+type PersonalityProfile = GoodHangPersonalityProfile;
+type AIOrchestrationScores = AIOrchestrationScoresType;
+
+// =============================================================================
+// GOOD HANG APP-SPECIFIC TYPES
+// =============================================================================
+
+export type QuestionType = 'open_ended' | 'scale' | 'multiple_choice';
 
 export interface AssessmentQuestion {
   id: string;
@@ -59,93 +76,34 @@ export interface InterviewMessage {
   timestamp: string;
 }
 
-// Enhanced with 14 dimensions
-export interface AssessmentDimensions {
-  iq: number;
-  eq: number;
-  empathy: number;
-  self_awareness: number;
-  technical: number;
-  ai_readiness: number;
-  gtm: number;
-  personality: number;
-  motivation: number;
-  work_history: number;
-  passions: number;
-  culture_fit: number;
-  organization: number;
-  executive_leadership: number;
-}
+// Enhanced with 14 dimensions - uses GoodHangDimension from analysis
+export type AssessmentDimensions = Record<GoodHangDimension, number>;
 
 export interface AssessmentFlags {
   red_flags: string[];
   green_flags: string[];
 }
 
-export type AssessmentTier = 'top_1' | 'benched' | 'passed';
+// AssessmentTier, PersonalityProfile, AIOrchestrationScores, CategoryScores
+// are now imported from @human-os/analysis above
 
 export type ArchetypeConfidence = 'high' | 'medium' | 'low';
 
-// MBTI Personality Types (all 16 types)
+// MBTI Personality Types (all 16 types) - used for UI display
 export type PersonalityType =
   | 'INTJ' | 'INTP' | 'ENTJ' | 'ENTP'
   | 'INFJ' | 'INFP' | 'ENFJ' | 'ENFP'
   | 'ISTJ' | 'ISFJ' | 'ESTJ' | 'ESFJ'
   | 'ISTP' | 'ISFP' | 'ESTP' | 'ESFP';
 
-// Enneagram Types
+// Enneagram Types - used for UI display
 export type EnneagramType =
   | 'Type 1' | 'Type 2' | 'Type 3' | 'Type 4' | 'Type 5'
   | 'Type 6' | 'Type 7' | 'Type 8' | 'Type 9';
 
 export type CategoryType = 'technical' | 'emotional' | 'creative';
 
-// Enhanced Results Types (Phase 1)
-export interface PersonalityProfile {
-  mbti: PersonalityType; // e.g., "INTJ"
-  enneagram: EnneagramType; // e.g., "Type 5"
-  traits: string[]; // e.g., ["Analytical", "Independent", "Strategic"]
-}
-
-export interface AIOrchestrationScores {
-  technical_foundation: number;
-  practical_use: number;
-  conceptual_understanding: number;
-  systems_thinking: number;
-  judgment: number;
-}
-
-export interface CategoryScores {
-  technical: {
-    overall: number;
-    subscores: {
-      technical: number;
-      ai_readiness: number;
-      organization: number;
-      iq: number;
-    };
-  };
-  emotional: {
-    overall: number;
-    subscores: {
-      eq: number;
-      empathy: number;
-      self_awareness: number;
-      executive_leadership: number;
-      gtm: number;
-    };
-  };
-  creative: {
-    overall: number;
-    subscores: {
-      passions: number;
-      culture_fit: number;
-      personality: number;
-      motivation: number;
-    };
-  };
-}
-
+// Badge type for Good Hang app (uses snake_case for DB compatibility)
 export interface Badge {
   id: string;
   name: string;

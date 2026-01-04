@@ -171,7 +171,7 @@ export default function IndividualProfilePage() {
                   {Object.entries(profile.category_scores.technical.subscores).map(([key, value]) => (
                     <div key={key} className="flex justify-between text-sm">
                       <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value}</span>
+                      <span className="text-white font-semibold">{value as number}</span>
                     </div>
                   ))}
                 </div>
@@ -187,7 +187,7 @@ export default function IndividualProfilePage() {
                   {Object.entries(profile.category_scores.emotional.subscores).map(([key, value]) => (
                     <div key={key} className="flex justify-between text-sm">
                       <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value}</span>
+                      <span className="text-white font-semibold">{value as number}</span>
                     </div>
                   ))}
                 </div>
@@ -203,7 +203,7 @@ export default function IndividualProfilePage() {
                   {Object.entries(profile.category_scores.creative.subscores).map(([key, value]) => (
                     <div key={key} className="flex justify-between text-sm">
                       <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value}</span>
+                      <span className="text-white font-semibold">{value as number}</span>
                     </div>
                   ))}
                 </div>
