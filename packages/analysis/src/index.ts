@@ -47,6 +47,17 @@ export type {
   InterviewScore,
   InterviewTier,
 
+  // Good Hang Scoring (14-dimension system)
+  GoodHangDimension,
+  GoodHangDimensionScore,
+  GoodHangScore,
+  GoodHangCategoryScores,
+  GoodHangTier,
+  GoodHangPersonalityProfile,
+  AIOrchestrationScores,
+  GoodHangBadge,
+  GoodHangScoringOptions,
+
   // Archetype Classification
   CandidateArchetype,
   ArchetypeClassification,
@@ -88,7 +99,14 @@ export {
   ArchetypeClassifier,
   archetypeClassifier,
   classifyArchetype,
+  // Good Hang Scorer
+  GoodHangScorer,
+  goodHangScorer,
+  scoreGoodHangAssessment,
 } from './scoring/index.js';
+
+// Good Hang dimension constants
+export { GOODHANG_DIMENSIONS, CORE_DIMENSIONS } from './types/index.js';
 
 // =============================================================================
 // LEXICONS

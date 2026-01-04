@@ -119,7 +119,7 @@ export interface EmotionComparison {
 // =============================================================================
 
 /**
- * The 11 interview assessment dimensions
+ * The 11 core interview assessment dimensions
  */
 export type InterviewDimension =
   | 'iq'              // Cognitive ability, problem-solving
@@ -133,6 +133,35 @@ export type InterviewDimension =
   | 'eq'              // Emotional intelligence
   | 'empathy'         // Understanding others
   | 'self_awareness'; // Self-knowledge, growth mindset
+
+/**
+ * Extended dimensions for Good Hang assessment (14 total)
+ * Includes the 11 core dimensions plus 3 Good Hang-specific
+ */
+export type GoodHangDimension =
+  | InterviewDimension
+  | 'organization'         // Organizational skills, planning, structure
+  | 'executive_leadership' // Executive presence, strategic leadership
+  | 'ai_readiness';        // AI fluency, prompt engineering, AI tool usage
+
+/**
+ * All 14 Good Hang dimensions as an array
+ */
+export const GOODHANG_DIMENSIONS: readonly GoodHangDimension[] = [
+  'iq', 'eq', 'empathy', 'self_awareness',
+  'technical', 'ai_readiness', 'gtm', 'personality',
+  'motivation', 'work_history', 'passions', 'culture_fit',
+  'organization', 'executive_leadership'
+] as const;
+
+/**
+ * The 11 core dimensions as an array
+ */
+export const CORE_DIMENSIONS: readonly InterviewDimension[] = [
+  'iq', 'personality', 'motivation', 'work_history',
+  'passions', 'culture_fit', 'technical', 'gtm',
+  'eq', 'empathy', 'self_awareness'
+] as const;
 
 /**
  * Score for a single dimension
@@ -168,6 +197,150 @@ export interface InterviewScore {
  * Interview tier for routing
  */
 export type InterviewTier = 'top_1%' | 'strong' | 'moderate' | 'weak' | 'pass';
+
+/**
+ * Good Hang tier (3-tier system)
+ */
+export type GoodHangTier = 'top_1' | 'benched' | 'passed';
+
+// =============================================================================
+// GOOD HANG SCORING (14-dimension system)
+// =============================================================================
+
+/**
+ * Score for a Good Hang dimension (extends DimensionScore)
+ */
+export interface GoodHangDimensionScore {
+  dimension: GoodHangDimension;
+  score: number;        // 0-10 (normalized from 0-100)
+  rawScore: number;     // 0-100 (original Good Hang scale)
+  confidence: number;   // 0-1
+  signals: string[];    // Evidence from transcript
+  flags?: {
+    green: string[];
+    red: string[];
+  };
+}
+
+/**
+ * Good Hang category scores (aggregated from dimensions)
+ */
+export interface GoodHangCategoryScores {
+  technical: {
+    overall: number;      // 0-10
+    subscores: {
+      technical: number;
+      ai_readiness: number;
+      organization: number;
+      iq: number;
+    };
+  };
+  emotional: {
+    overall: number;      // 0-10
+    subscores: {
+      eq: number;
+      empathy: number;
+      self_awareness: number;
+      executive_leadership: number;
+      gtm: number;
+    };
+  };
+  creative: {
+    overall: number;      // 0-10
+    subscores: {
+      passions: number;
+      culture_fit: number;
+      personality: number;
+      motivation: number;
+    };
+  };
+}
+
+/**
+ * Good Hang personality profile (MBTI + Enneagram)
+ */
+export interface GoodHangPersonalityProfile {
+  mbti: string;           // e.g., "INTJ", "ENFP"
+  enneagram: string;      // e.g., "Type 1", "Type 9"
+  traits: string[];       // 3-5 descriptive traits
+}
+
+/**
+ * AI Orchestration sub-scores (Good Hang specific)
+ */
+export interface AIOrchestrationScores {
+  technical_foundation: number;     // 0-10
+  practical_use: number;            // 0-10
+  conceptual_understanding: number; // 0-10
+  systems_thinking: number;         // 0-10
+  judgment: number;                 // 0-10
+}
+
+/**
+ * Good Hang badge earned
+ */
+export interface GoodHangBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt: string;
+}
+
+/**
+ * Complete Good Hang assessment result
+ */
+export interface GoodHangScore {
+  // Core identification
+  sessionId: string;
+  userId: string;
+
+  // Dimension scores (14 dimensions)
+  dimensions: Record<GoodHangDimension, GoodHangDimensionScore>;
+  categoryScores: GoodHangCategoryScores;
+  overallScore: number;           // 0-10 (normalized)
+  overallScoreRaw: number;        // 0-100 (original scale)
+  overallConfidence: number;      // 0-1
+
+  // Emotional analysis (from @human-os/analysis)
+  emotionalProfile: TextEmotionAnalysis;
+
+  // Classification
+  archetype: string;              // Custom descriptor e.g., "Technical Strategist"
+  archetypeConfidence: 'high' | 'medium' | 'low';
+  tier: GoodHangTier;
+
+  // Personality (Good Hang specific)
+  personalityProfile?: GoodHangPersonalityProfile;
+  aiOrchestrationScores?: AIOrchestrationScores;
+
+  // Flags and recommendations
+  greenFlags: string[];
+  redFlags: string[];
+  recommendation: string;
+  bestFitRoles: string[];
+
+  // Badges
+  badges: GoodHangBadge[];
+
+  // Summaries
+  publicSummary: string;
+  detailedSummary: string;
+
+  // Timestamps
+  analyzedAt: string;
+}
+
+/**
+ * Options for Good Hang scoring
+ */
+export interface GoodHangScoringOptions extends ScoringOptions {
+  includePersonality?: boolean;        // Include MBTI/Enneagram
+  includeAIOrchestration?: boolean;    // Include AI sub-scores
+  includeBadges?: boolean;             // Evaluate and award badges
+  experienceYears?: number;            // For badge evaluation
+  dimensionWeights?: Partial<Record<GoodHangDimension, number>>;
+}
 
 // =============================================================================
 // ARCHETYPE CLASSIFICATION

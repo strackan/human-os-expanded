@@ -167,13 +167,14 @@ export interface AssessmentResults {
   best_fit_roles: string[];
   analyzed_at: string;
   // Enhanced fields (Phase 1)
-  personality_profile?: PersonalityProfile;
-  ai_orchestration_scores?: AIOrchestrationScores;
-  category_scores?: CategoryScores;
-  badges?: Badge[];
-  public_summary?: string;
-  detailed_summary?: string;
-  is_published?: boolean;
+  // Note: Added `| undefined` for exactOptionalPropertyTypes compatibility
+  personality_profile?: PersonalityProfile | undefined;
+  ai_orchestration_scores?: AIOrchestrationScores | undefined;
+  category_scores?: CategoryScores | undefined;
+  badges?: Badge[] | undefined;
+  public_summary?: string | undefined;
+  detailed_summary?: string | undefined;
+  is_published?: boolean | undefined;
 }
 
 // Database types for sessions

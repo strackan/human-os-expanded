@@ -1,16 +1,28 @@
 // POST /api/assessment/[sessionId]/complete
-// Triggers Claude AI scoring and completes the assessment
+// Triggers scoring and completes the assessment
+// Supports scoring modes: 'claude' (default), 'hybrid', 'lexicon'
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { AssessmentScoringService } from '@/lib/services/AssessmentScoringService';
+import { AssessmentScoringService, type ScoringMode } from '@/lib/services/AssessmentScoringService';
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
     const supabase = await createClient();
+
+    // Parse optional scoring mode from request body
+    let scoringMode: ScoringMode = 'claude'; // Default to full Claude scoring
+    try {
+      const body = await request.json();
+      if (body.mode && ['claude', 'hybrid', 'lexicon'].includes(body.mode)) {
+        scoringMode = body.mode as ScoringMode;
+      }
+    } catch {
+      // No body or invalid JSON - use default mode
+    }
 
     // Get authenticated user
     const {
@@ -71,16 +83,17 @@ export async function POST(
       );
     }
 
-    // Generate scoring using Claude AI
-    console.log(`Starting Claude AI scoring for session ${sessionId}...`);
+    // Generate scoring using specified mode
+    console.log(`Starting ${scoringMode} scoring for session ${sessionId}...`);
 
     const scoringResults = await AssessmentScoringService.scoreAssessment({
       session_id: sessionId,
       user_id: user.id,
       transcript: session.interview_transcript,
+      mode: scoringMode,
     });
 
-    console.log(`Scoring complete for session ${sessionId}`);
+    console.log(`Scoring complete for session ${sessionId} (mode: ${scoringMode})`);
 
     // Save results to database
     const { error: updateError } = await supabase

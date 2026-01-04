@@ -1,6 +1,11 @@
-// AssessmentScoringService - Claude AI-powered scoring with 14 dimensions, personality typing, and hard grading
+// AssessmentScoringService - Hybrid scoring combining lexicon-based analysis with Claude AI
+// Supports three modes: 'claude' (default), 'hybrid' (blend), 'lexicon' (fast/cheap)
 
 import Anthropic from '@anthropic-ai/sdk';
+import {
+  scoreGoodHangAssessment,
+  type GoodHangScore,
+} from '@human-os/analysis';
 import {
   AssessmentDimensions,
   PersonalityProfile,
@@ -17,6 +22,14 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
+/**
+ * Scoring mode options:
+ * - 'claude': Full Claude API scoring (most accurate, highest cost)
+ * - 'hybrid': Lexicon baseline + Claude enhancement (balanced)
+ * - 'lexicon': Pure lexicon-based scoring (fastest, lowest cost)
+ */
+export type ScoringMode = 'claude' | 'hybrid' | 'lexicon';
+
 interface TranscriptEntry {
   role: 'assistant' | 'user';
   content: string;
@@ -28,6 +41,7 @@ interface ScoringInput {
   session_id: string;
   user_id: string;
   transcript: TranscriptEntry[];
+  mode?: ScoringMode;
 }
 
 interface ClaudeScoringResponse {
@@ -47,8 +61,27 @@ interface ClaudeScoringResponse {
 export class AssessmentScoringService {
   /**
    * Main scoring method - orchestrates the entire scoring process
+   * Supports multiple modes: 'claude' (default), 'hybrid', 'lexicon'
    */
   static async scoreAssessment(input: ScoringInput): Promise<AssessmentResults> {
+    const mode = input.mode ?? 'claude';
+
+    // Route to appropriate scoring method based on mode
+    switch (mode) {
+      case 'lexicon':
+        return this.scoreLexiconOnly(input);
+      case 'hybrid':
+        return this.scoreHybrid(input);
+      case 'claude':
+      default:
+        return this.scoreClaudeOnly(input);
+    }
+  }
+
+  /**
+   * Full Claude AI scoring (original behavior)
+   */
+  private static async scoreClaudeOnly(input: ScoringInput): Promise<AssessmentResults> {
     // 1. Generate Claude AI scoring
     const claudeScoring = await this.generateClaudeScoring(input.transcript);
 
@@ -95,6 +128,239 @@ export class AssessmentScoringService {
     };
 
     return results;
+  }
+
+  /**
+   * Pure lexicon-based scoring using @human-os/analysis (fastest, no LLM cost)
+   */
+  private static scoreLexiconOnly(input: ScoringInput): AssessmentResults {
+    const transcriptText = this.transcriptToText(input.transcript);
+
+    // Use the analysis package GoodHangScorer
+    const lexiconScore = scoreGoodHangAssessment(
+      transcriptText,
+      input.session_id,
+      input.user_id
+    );
+
+    // Convert lexicon scores to AssessmentResults format
+    return this.convertLexiconToResults(lexiconScore, input);
+  }
+
+  /**
+   * Hybrid scoring: Lexicon baseline + Claude for personality/summaries
+   * Reduces LLM calls while maintaining quality for nuanced assessments
+   */
+  private static async scoreHybrid(input: ScoringInput): Promise<AssessmentResults> {
+    const transcriptText = this.transcriptToText(input.transcript);
+
+    // 1. Get lexicon-based scoring for dimension baseline
+    const lexiconScore = scoreGoodHangAssessment(
+      transcriptText,
+      input.session_id,
+      input.user_id
+    );
+
+    // 2. Use Claude for personality typing and summaries only (lighter prompt)
+    const personalityScoring = await this.generatePersonalityScoring(input.transcript);
+
+    // 3. Merge the scores - lexicon dimensions + Claude personality/summaries
+    return this.mergeHybridScores(lexiconScore, personalityScoring, input);
+  }
+
+  /**
+   * Convert transcript entries to plain text for lexicon analysis
+   */
+  private static transcriptToText(transcript: TranscriptEntry[]): string {
+    return transcript
+      .filter(entry => entry.role === 'user')
+      .map(entry => entry.content)
+      .join('\n\n');
+  }
+
+  /**
+   * Convert GoodHangScore from analysis package to AssessmentResults format
+   */
+  private static convertLexiconToResults(
+    score: GoodHangScore,
+    input: ScoringInput
+  ): AssessmentResults {
+    // Convert 0-10 scale dimensions to 0-100 for Good Hang format
+    const dimensions: AssessmentDimensions = {
+      iq: Math.round(score.dimensions.iq.rawScore),
+      eq: Math.round(score.dimensions.eq.rawScore),
+      empathy: Math.round(score.dimensions.empathy.rawScore),
+      self_awareness: Math.round(score.dimensions.self_awareness.rawScore),
+      technical: Math.round(score.dimensions.technical.rawScore),
+      ai_readiness: Math.round(score.dimensions.ai_readiness.rawScore),
+      gtm: Math.round(score.dimensions.gtm.rawScore),
+      personality: Math.round(score.dimensions.personality.rawScore),
+      motivation: Math.round(score.dimensions.motivation.rawScore),
+      work_history: Math.round(score.dimensions.work_history.rawScore),
+      passions: Math.round(score.dimensions.passions.rawScore),
+      culture_fit: Math.round(score.dimensions.culture_fit.rawScore),
+      organization: Math.round(score.dimensions.organization.rawScore),
+      executive_leadership: Math.round(score.dimensions.executive_leadership.rawScore),
+    };
+
+    // Convert category scores to 0-100 scale
+    const categoryScores: CategoryScores = {
+      technical: {
+        overall: Math.round(score.categoryScores.technical.overall * 10),
+        subscores: {
+          technical: Math.round(score.categoryScores.technical.subscores.technical * 10),
+          ai_readiness: Math.round(score.categoryScores.technical.subscores.ai_readiness * 10),
+          organization: Math.round(score.categoryScores.technical.subscores.organization * 10),
+          iq: Math.round(score.categoryScores.technical.subscores.iq * 10),
+        },
+      },
+      emotional: {
+        overall: Math.round(score.categoryScores.emotional.overall * 10),
+        subscores: {
+          eq: Math.round(score.categoryScores.emotional.subscores.eq * 10),
+          empathy: Math.round(score.categoryScores.emotional.subscores.empathy * 10),
+          self_awareness: Math.round(score.categoryScores.emotional.subscores.self_awareness * 10),
+          executive_leadership: Math.round(score.categoryScores.emotional.subscores.executive_leadership * 10),
+          gtm: Math.round(score.categoryScores.emotional.subscores.gtm * 10),
+        },
+      },
+      creative: {
+        overall: Math.round(score.categoryScores.creative.overall * 10),
+        subscores: {
+          passions: Math.round(score.categoryScores.creative.subscores.passions * 10),
+          culture_fit: Math.round(score.categoryScores.creative.subscores.culture_fit * 10),
+          personality: Math.round(score.categoryScores.creative.subscores.personality * 10),
+          motivation: Math.round(score.categoryScores.creative.subscores.motivation * 10),
+        },
+      },
+    };
+
+    // Extract experience years for badge evaluation
+    const experienceYears = BadgeEvaluatorService.extractExperienceYearsFromTranscript(input.transcript);
+
+    // Evaluate badges
+    const overallScore = Math.round(score.overallScoreRaw);
+    const badgeIds = BadgeEvaluatorService.evaluateBadges({
+      dimensions,
+      category_scores: categoryScores,
+      overall_score: overallScore,
+      ...(experienceYears !== undefined && { experience_years: experienceYears }),
+    });
+    const badges = BadgeEvaluatorService.formatBadgesForResponse(badgeIds);
+
+    return {
+      session_id: input.session_id,
+      user_id: input.user_id,
+      archetype: score.archetype,
+      archetype_confidence: score.archetypeConfidence,
+      overall_score: overallScore,
+      dimensions,
+      tier: score.tier as AssessmentTier,
+      flags: {
+        red_flags: score.redFlags,
+        green_flags: score.greenFlags,
+      },
+      recommendation: score.recommendation,
+      best_fit_roles: score.bestFitRoles,
+      analyzed_at: score.analyzedAt,
+      // Note: personality_profile and ai_orchestration_scores not available in lexicon mode
+      personality_profile: undefined,
+      ai_orchestration_scores: undefined,
+      category_scores: categoryScores,
+      badges,
+      public_summary: score.publicSummary,
+      detailed_summary: score.detailedSummary,
+      is_published: false,
+    };
+  }
+
+  /**
+   * Generate personality typing using a lighter Claude prompt
+   */
+  private static async generatePersonalityScoring(
+    transcript: TranscriptEntry[]
+  ): Promise<{
+    personality_profile: PersonalityProfile;
+    ai_orchestration_scores: AIOrchestrationScores;
+    flags: AssessmentFlags;
+    public_summary: string;
+    detailed_summary: string;
+  }> {
+    const prompt = this.buildPersonalityPrompt(transcript);
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2048,
+      temperature: 0.3,
+      system: PERSONALITY_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: prompt }],
+    });
+
+    const firstContent = message.content[0];
+    const responseText = firstContent?.type === 'text' ? firstContent.text : '';
+
+    try {
+      const jsonMatch = responseText.match(/<personality>([\s\S]*?)<\/personality>/);
+      if (!jsonMatch) {
+        throw new Error('No personality JSON found in Claude response');
+      }
+      return JSON.parse(jsonMatch[1] || '{}');
+    } catch (error) {
+      console.error('Error parsing personality response:', error);
+      // Return fallback values
+      return {
+        personality_profile: { mbti: 'INTP' as PersonalityProfile['mbti'], enneagram: 'Type 5' as PersonalityProfile['enneagram'], traits: ['Analytical'] },
+        ai_orchestration_scores: { technical_foundation: 50, practical_use: 50, conceptual_understanding: 50, systems_thinking: 50, judgment: 50 },
+        flags: { red_flags: [], green_flags: [] },
+        public_summary: 'Assessment completed via hybrid scoring.',
+        detailed_summary: 'Detailed analysis pending.',
+      };
+    }
+  }
+
+  /**
+   * Build personality-only prompt (lighter than full scoring)
+   */
+  private static buildPersonalityPrompt(transcript: TranscriptEntry[]): string {
+    const formattedQA: string[] = [];
+    for (let i = 0; i < transcript.length; i++) {
+      const entry = transcript[i];
+      const nextEntry = transcript[i + 1];
+      if (entry && entry.role === 'assistant' && nextEntry?.role === 'user') {
+        formattedQA.push(`Q: ${entry.content}\nA: ${nextEntry.content}\n`);
+        i++;
+      }
+    }
+
+    return `Analyze this interview transcript for personality typing and flags only:\n\n${formattedQA.join('\n---\n\n')}`;
+  }
+
+  /**
+   * Merge lexicon dimension scores with Claude personality assessment
+   */
+  private static mergeHybridScores(
+    lexiconScore: GoodHangScore,
+    personalityScoring: {
+      personality_profile: PersonalityProfile;
+      ai_orchestration_scores: AIOrchestrationScores;
+      flags: AssessmentFlags;
+      public_summary: string;
+      detailed_summary: string;
+    },
+    input: ScoringInput
+  ): AssessmentResults {
+    // Start with lexicon-based results
+    const baseResults = this.convertLexiconToResults(lexiconScore, input);
+
+    // Overlay Claude-generated personality data
+    return {
+      ...baseResults,
+      personality_profile: personalityScoring.personality_profile,
+      ai_orchestration_scores: personalityScoring.ai_orchestration_scores,
+      flags: personalityScoring.flags,
+      public_summary: personalityScoring.public_summary,
+      detailed_summary: personalityScoring.detailed_summary,
+    };
   }
 
   /**
@@ -432,4 +698,92 @@ Return your scoring in this exact JSON structure wrapped in <scoring> tags:
 </scoring>
 
 Remember: HARD GRADING. 50 is average. Only award 85+ for truly exceptional evidence. Most candidates score 40-70 in most dimensions.
+`;
+
+// =====================================================
+// PERSONALITY SYSTEM PROMPT (for hybrid mode)
+// =====================================================
+
+const PERSONALITY_SYSTEM_PROMPT = `You are an expert at personality typing and interview assessment. Your job is to analyze interview transcripts and extract personality profiles, red/green flags, and summaries.
+
+## PERSONALITY TYPING
+
+### MBTI Detection
+Determine the 4-letter MBTI type based on these dimensions:
+- **E/I (Extroversion/Introversion)**: How they recharge - social vs solitude
+- **S/N (Sensing/Intuition)**: How they learn - concrete vs abstract
+- **T/F (Thinking/Feeling)**: How they decide - logic vs people
+- **J/P (Judging/Perceiving)**: How they structure - planned vs flexible
+
+### Enneagram Detection
+Determine the Enneagram type (Type 1-9) based on:
+- Stress responses and coping mechanisms
+- Core motivations and fears
+- Communication patterns
+
+### Personality Traits
+Generate 3-5 descriptive adjectives based on their answers.
+
+## AI ORCHESTRATION SUB-SCORES (0-100 each)
+
+If AI-related questions are present, score these 5 sub-dimensions:
+1. **technical_foundation**: Understanding of systems, internet, technology
+2. **practical_use**: Actual use of AI tools with specific examples
+3. **conceptual_understanding**: Understanding of prompting vs agents
+4. **systems_thinking**: Multi-agent system design understanding
+5. **judgment**: Knowing when NOT to use AI
+
+## FLAGS
+
+**Red Flags** (concerns):
+- Lack of self-awareness
+- Dismissive or arrogant tone
+- No concrete examples
+- Copy-pasted or generic answers
+- Contradictory statements
+
+**Green Flags** (positive signals):
+- Specific, detailed examples
+- High self-awareness
+- Growth mindset
+- Structured thinking
+- Honest about limitations
+
+## SUMMARIES
+
+**Public Summary** (3-5 sentences, shareable, positive framing):
+- Highlight top 2-3 strengths
+- Mention personality type
+- Focus on what they'd bring to a team
+
+**Detailed Summary** (internal analysis):
+- Section-by-section breakdown
+- Evidence-based reasoning
+
+## OUTPUT FORMAT
+
+Return your analysis in this JSON structure wrapped in <personality> tags:
+
+<personality>
+{
+  "personality_profile": {
+    "mbti": "INTJ",
+    "enneagram": "Type 5",
+    "traits": ["Analytical", "Independent", "Strategic"]
+  },
+  "ai_orchestration_scores": {
+    "technical_foundation": 75,
+    "practical_use": 80,
+    "conceptual_understanding": 70,
+    "systems_thinking": 75,
+    "judgment": 80
+  },
+  "flags": {
+    "red_flags": [],
+    "green_flags": ["High self-awareness", "Strong examples"]
+  },
+  "public_summary": "Highly analytical professional with strong technical aptitude...",
+  "detailed_summary": "**Personality**: Clear INTJ profile..."
+}
+</personality>
 `;

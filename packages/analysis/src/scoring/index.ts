@@ -15,3 +15,9 @@ export {
   archetypeClassifier,
   classifyArchetype,
 } from './ArchetypeClassifier.js';
+
+export {
+  GoodHangScorer,
+  goodHangScorer,
+  scoreGoodHangAssessment,
+} from './GoodHangScorer.js';

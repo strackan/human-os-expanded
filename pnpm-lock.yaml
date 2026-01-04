@@ -260,6 +260,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.69.0
         version: 0.69.0(zod@4.3.4)
+      '@human-os/analysis':
+        specifier: workspace:*
+        version: link:../../packages/analysis
       '@supabase/ssr':
         specifier: ^0.7.0
         version: 0.7.0(@supabase/supabase-js@2.87.1)
