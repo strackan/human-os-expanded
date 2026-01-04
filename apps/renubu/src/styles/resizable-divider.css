@@ -1,0 +1,72 @@
+/* Resizable Divider Styles - Shared across components */
+
+/* Resizable divider base styles */
+.resizable-divider {
+  margin-left: -1px;
+  margin-right: -1px;
+}
+
+/* Cursor management for resizing */
+body.resizing {
+  cursor: col-resize !important;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Panel width styles - these will be applied dynamically via CSS custom properties */
+.resizable-panel-left {
+  width: var(--panel-width-left, 50%);
+  min-width: var(--panel-min-width, 320px);
+}
+
+.resizable-panel-right {
+  width: var(--panel-width-right, 50%);
+  min-width: var(--panel-min-width, 320px);
+}
+
+/* Smooth transitions for panel resizing */
+.resizable-panel-left,
+.resizable-panel-right {
+  transition: width 0.05s ease-out;
+}
+
+/* Disable transitions during active dragging for better performance */
+.resizing .resizable-panel-left,
+.resizing .resizable-panel-right {
+  transition: none;
+}
+
+/* Divider handle styles */
+.divider-handle {
+  position: relative;
+  width: 24px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  cursor: col-resize;
+  pointer-events: auto;
+  transition: colors 0.15s;
+}
+
+.divider-handle:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.divider-handle-knob {
+  height: 24px;
+  width: 8px;
+  position: relative;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.divider-handle:hover .divider-handle-knob {
+  border-color: #ea580c;
+  background-color: #ea580c;
+  transition-delay: 75ms;
+} 

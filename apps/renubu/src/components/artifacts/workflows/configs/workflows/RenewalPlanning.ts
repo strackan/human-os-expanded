@@ -1,0 +1,483 @@
+/**
+ * Renewal Planning Workflow
+ *
+ * Complete workflow for customer renewal planning with 6 steps.
+ *
+ * Implementation Status:
+ * ✅ Step 1: Start Planning (IMPLEMENTED)
+ * ✅ Step 2: Review Contract (IMPLEMENTED)
+ * 🚧 Step 3: Set Price (PLACEHOLDER - to be implemented)
+ * 🚧 Step 4: Confirm Contacts (PLACEHOLDER - to be implemented)
+ * 🚧 Step 5: Send Renewal Notice (PLACEHOLDER - to be implemented)
+ * 🚧 Step 6: Review Action Items (PLACEHOLDER - to be implemented)
+ */
+
+import { WorkflowConfig } from '../../config/WorkflowConfig';
+import {
+  createEmailArtifact,
+  createContractArtifact,
+  createPlanningChecklistArtifact,
+  createWorkflowSummaryArtifact,
+  createLicenseAnalysisArtifact
+} from '../../config/artifactTemplates';
+import {
+  createSnoozeSkipBranches,
+  createEmailFlowBranch,
+  createEmailCompleteBranch,
+  createContractReviewBranch,
+  createContractDetailsBranch,
+  createNotReadyConcernBranches,
+  createNextCustomerBranch,
+  createExitTaskModeBranch,
+  createWorkflowSummaryBranch
+} from '../../config/branchTemplates';
+
+export const renewalPlanningWorkflow: WorkflowConfig = {
+  customer: {
+    name: 'Dynamic Corp',
+    nextCustomer: 'UserFirst Inc.'
+  },
+  layout: {
+    modalDimensions: { width: 80, height: 80, top: 10, left: 10 },
+    dividerPosition: 50,
+    chatWidth: 50,
+    splitModeDefault: false
+  },
+  customerOverview: {
+    metrics: {
+      arr: {
+        label: 'ARR',
+        value: '$725,000',
+        trend: 'up',
+        trendValue: '+25.5%',
+        status: 'green'
+      },
+      licenseUnitPrice: {
+        label: 'License Unit Price',
+        value: '$7.25',
+        sublabel: '(95% value)',
+        status: 'green',
+        trend: 'Pays more than 95% of customers'
+      },
+      renewalDate: {
+        label: 'Renewal Date',
+        value: 'Feb 28, 2026',
+        sublabel: '90 days',
+        status: 'orange'
+      },
+      primaryContact: {
+        label: 'Primary Contact',
+        value: 'Michael Roberts',
+        role: 'CTO'
+      },
+      riskScore: {
+        label: 'Risk Score',
+        value: '2.1/10',
+        status: 'green',
+        sublabel: 'No critical tickets'
+      },
+      growthScore: {
+        label: 'Growth Score',
+        value: '9.2/10',
+        status: 'green',
+        sublabel: 'High expansion potential'
+      },
+      yoyGrowth: {
+        label: 'YoY Growth',
+        value: '+35.2%',
+        status: 'green',
+        sparkData: [3, 4, 5, 6, 7, 8, 9],
+        sublabel: 'Annual'
+      },
+      lastMonth: {
+        label: 'Last Month',
+        value: '+22.3%',
+        status: 'green',
+        sparkData: [5, 6, 7, 8, 9, 10, 11],
+        sublabel: 'Growing'
+      }
+    }
+  },
+  analytics: {
+    usageTrend: '{{chart.usageTrend.rising}}',
+    userLicenses: '{{chart.userLicenses.rising}}',
+    renewalInsights: {
+      renewalStage: 'Negotiation',
+      confidence: 92,
+      recommendedAction: 'Proactive Expansion Offer',
+      keyReasons: [
+        { category: 'Adoption', detail: '65% usage growth YTD' },
+        { category: 'Company Growth', detail: 'Series C funding announced' },
+        { category: 'News', detail: 'Expanding to APAC region' },
+        { category: 'Sentiment', detail: 'Champion actively advocating internally' }
+      ]
+    }
+  },
+  sidePanel: {
+    enabled: true,
+    title: {
+      text: "Renewal Planning",
+      subtitle: "Dynamic Corp - 6 Steps",
+      icon: "📋"
+    },
+    steps: [
+      // ✅ IMPLEMENTED STEPS
+      {
+        id: "start-planning",
+        title: "Start Planning",
+        description: "Begin renewal planning process",
+        status: 'pending' as const,
+        workflowBranch: "expansion",
+        icon: "🚀"
+      },
+      {
+        id: "review-contract",
+        title: "Review Contract",
+        description: "Analyze current contract terms and conditions",
+        status: 'pending' as const,
+        workflowBranch: "contract-planning",
+        icon: "📋"
+      },
+      // 🚧 PLACEHOLDER STEPS (to be implemented)
+      {
+        id: "set-price",
+        title: "Set Price",
+        description: "Determine renewal pricing strategy",
+        status: 'pending' as const,
+        workflowBranch: "pricing-strategy", // TODO: Implement branch
+        icon: "💰"
+      },
+      {
+        id: "confirm-contacts",
+        title: "Confirm Contacts",
+        description: "Verify decision makers and stakeholders",
+        status: 'pending' as const,
+        workflowBranch: "contact-confirmation", // TODO: Implement branch
+        icon: "👥"
+      },
+      {
+        id: "send-renewal-notice",
+        title: "Send Renewal Notice",
+        description: "Send renewal notification to customer",
+        status: 'pending' as const,
+        workflowBranch: "send-notice", // TODO: Implement branch
+        icon: "📧"
+      },
+      {
+        id: "review-action-items",
+        title: "Review Action Items",
+        description: "Final review of all renewal activities",
+        status: 'pending' as const,
+        workflowBranch: "final-review", // TODO: Implement branch
+        icon: "✅"
+      }
+    ],
+    progressMeter: {
+      currentStep: 1,
+      totalSteps: 6,
+      progressPercentage: 0,
+      showPercentage: true,
+      showStepNumbers: true
+    },
+    showSteps: true,
+    showProgressMeter: false
+  },
+  chat: {
+    placeholder: 'Type your question or select an option...',
+    aiGreeting: "Hi! Let's plan the renewal for Dynamic Corp.",
+    mode: 'dynamic',
+    features: {
+      attachments: false,
+      voiceRecording: false,
+      designMode: false,
+      editMode: false,
+      artifactsToggle: true
+    },
+    dynamicFlow: {
+      startsWith: 'ai',
+      defaultMessage: "I understand you'd like to discuss something else. How can I help?",
+      initialMessage: {
+        text: "Hi {{user.first}}! Dynamic Corp's renewal is coming up on February 27th, which means we have about a week to decide if we're going to increase their license fees. Shall we make a plan? It should take about <b>7 minutes</b>.",
+        buttons: [
+          { label: "Start Planning", value: "plan", "label-background": "#3b82f6", "label-text": "#ffffff" },
+          { label: "Snooze", value: "snooze", "label-background": "#f3f4f6", "label-text": "#374151" },
+          { label: "Skip this workflow", value: "skip", "label-background": "#f3f4f6", "label-text": "#374151" }
+        ],
+        nextBranches: {
+          'plan': 'expansion',
+          'snooze': 'snooze',
+          'skip': 'skip'
+        }
+      },
+      branches: {
+        // ============================================
+        // STEP 1: START PLANNING (✅ IMPLEMENTED)
+        // ============================================
+        'expansion': {
+          response: "Great! Let's review what we need to accomplish for the renewal planning. Please review the checklist on the right.",
+          actions: ['showArtifact', 'enterStep'],
+          artifactId: 'planning-checklist-renewal',
+          stepNumber: 1 // Enter Step 1 when this branch is triggered
+          // No buttons - artifact handles interactions with "Let's Do It!", "Not Yet" buttons
+        },
+
+        // Transition: User confirmed, show contract artifact
+        'confirm-planning': {
+          response: "Perfect! I've pulled up the contract details on the right. Please review the information and let me know if you have any questions.",
+          delay: 1,
+          actions: ['showArtifact', 'showMenu'],
+          artifactId: 'enterprise-contract'
+          // No buttons - user will interact via artifact or type questions
+        },
+
+        // ============================================
+        // STEP 2: REVIEW CONTRACT (✅ IMPLEMENTED)
+        // ============================================
+        'contract-planning': {
+          response: "Perfect! Let's dive into the contract details to inform our renewal strategy.",
+          delay: 1,
+          actions: ['enterStep'], // Only enterStep; artifact and menu already shown by artifact button
+          stepNumber: 2, // Enter Step 2
+          buttons: [
+            {
+              label: 'Review contract terms',
+              value: 'review-contract',
+              'label-background': 'bg-blue-100',
+              'label-text': 'text-blue-800'
+            },
+            {
+              label: 'Continue to email',
+              value: 'continue-flow',
+              'label-background': 'bg-green-100',
+              'label-text': 'text-green-800'
+            }
+          ],
+          nextBranches: {
+            'review-contract': 'contract-review',
+            'continue-flow': 'email-flow'
+          }
+        },
+        'contract-review': createContractDetailsBranch({
+          highlights: [
+            '8% price cap',
+            '60-day notice',
+            'Multi-year discounts available'
+          ],
+          proceedBranch: 'email-flow',
+          reviewMoreBranch: 'contract-planning'
+        }),
+
+        // ============================================
+        // STEPS 3-6: PLACEHOLDERS (🚧 TO BE IMPLEMENTED)
+        // ============================================
+        // TODO: Add branches for:
+        // - pricing-strategy (Step 3)
+        // - contact-confirmation (Step 4)
+        // - send-notice (Step 5)
+        // - final-review (Step 6)
+
+        // ============================================
+        // SUPPORTING BRANCHES
+        // ============================================
+        'email-flow': createEmailFlowBranch({
+          artifactId: 'email-draft',
+          workingDelay: 3000,
+          nextBranch: 'email-complete'
+        }),
+        'email-complete': createEmailCompleteBranch({
+          recipientName: 'Michael Roberts',
+          emailPurpose: 'with a request to meet',
+          confirmBranch: 'email-confirmation',
+          alternativeBranch: 'alternative-options'
+        }),
+        'email-confirmation': createWorkflowSummaryBranch({
+          artifactId: 'workflow-summary'
+        }),
+        'alternative-options': {
+          response: "No problem! What would you like to focus on instead?",
+          buttons: [
+            { label: 'Review expansion options', value: 'expansion' },
+            { label: 'Analyze usage patterns', value: 'usage' },
+            { label: 'Prepare renewal offer', value: 'renewal' },
+            { label: 'Something else', value: 'free-chat' }
+          ]
+        },
+        'usage': {
+          response: "Let me analyze their usage patterns for you. They're currently at 85% of their license capacity with consistent growth.",
+          actions: ['showArtifact'],
+          artifactId: 'usage-analysis'
+        },
+        'renewal': {
+          response: "I'll help you prepare a compelling renewal offer. Which approach would you prefer?",
+          buttons: [
+            { label: 'Early renewal discount', value: 'early' },
+            { label: 'Multi-year package', value: 'multi-year' },
+            { label: 'Standard renewal', value: 'standard' }
+          ]
+        },
+
+        // Navigation actions
+        ...createNotReadyConcernBranches({
+          nextCustomerBranch: 'next-customer-action',
+          continueBranch: 'contract-planning'
+        }),
+        ...createSnoozeSkipBranches(),
+        'exit-task-mode': createExitTaskModeBranch(),
+        'next-customer-action': createNextCustomerBranch()
+      },
+      userTriggers: {
+        ".*help.*": "help-flow",
+        ".*renewal.*": "renewal",
+        ".*expand.*|.*expansion.*": "expansion",
+        ".*usage.*|.*analyze.*": "usage",
+        ".*email.*|.*draft.*": "email-flow"
+      }
+    }
+  },
+  artifacts: {
+    sections: [
+      // Planning Checklist - shows renewal steps
+      {
+        ...createPlanningChecklistArtifact({
+          id: 'planning-checklist-renewal',
+          title: 'Renewal Planning Checklist',
+          description: "Let's systematically prepare for Dynamic Corp's renewal:",
+          items: [
+            { id: 'start-planning', label: 'Start planning', completed: false },
+            { id: 'review-contract', label: 'Review contract', completed: false },
+            { id: 'set-price', label: 'Set price', completed: false },
+            { id: 'confirm-contacts', label: 'Confirm contacts', completed: false },
+            { id: 'send-renewal-notice', label: 'Send renewal notice', completed: false },
+            { id: 'review-action-items', label: 'Review action items', completed: false }
+          ],
+          showActions: true,
+          visible: false
+        })
+      },
+      // Contract Artifact - contract details
+      {
+        ...createContractArtifact({
+          id: 'enterprise-contract',
+          title: 'Contract Review',
+          contractId: 'DYN-2024-0512',
+          customerName: 'Dynamic Corp',
+          contractValue: 725000,
+          renewalDate: 'February 28, 2026',
+          signerBaseAmount: 725000,
+          pricingCalculation: {
+            basePrice: 725000,
+            volumeDiscount: 0,
+            additionalServices: 0,
+            totalPrice: 725000
+          },
+          businessTerms: {
+            unsigned: [],
+            nonStandardRenewal: [
+              'Standard 12-month renewal cycle',
+              'Automatic renewal with 60-day notice'
+            ],
+            nonStandardPricing: [
+              'Multi-year discount available (10% for 2-year, 20% for 3-year)',
+              'Volume pricing tiers unlock at 150,000+ licenses'
+            ],
+            pricingCaps: [
+              'Annual price increases capped at 8% maximum'
+            ],
+            otherTerms: [
+              'Standard support with 24-hour response SLA',
+              'Quarterly business reviews included',
+              'API access with standard rate limits'
+            ]
+          },
+          riskLevel: 'low',
+          lastUpdated: 'January 15, 2025',
+          visible: false
+        })
+      },
+      // License Analysis
+      {
+        ...createLicenseAnalysisArtifact({
+          id: 'license-analysis',
+          title: 'License Analysis',
+          currentTokens: 100000,
+          currentUnitPrice: 7.25,
+          renewalTokens: 150000,
+          renewalUnitPrice: 7.25,
+          earlyDiscountPercentage: 15,
+          multiYearDiscountPercentage: 25,
+          visible: false
+        })
+      },
+      // Email Artifact - renewal outreach
+      {
+        ...createEmailArtifact({
+          id: 'email-draft',
+          title: 'Email Composer',
+          to: 'michael.roberts@dynamiccorp.com',
+          subject: 'Dynamic Corp - Expansion Opportunity & Strategic Renewal Discussion',
+          body: `Hi Michael,
+
+I hope this email finds you well! I've been reviewing Dynamic Corp's impressive performance metrics, and I'm excited about the 65% growth you've achieved this year. Your expansion into APAC and the recent Series C funding announcement clearly demonstrate Dynamic Corp's trajectory toward becoming a market leader.
+
+Given your current usage patterns and the approaching renewal date, I'd love to discuss how we can support your continued growth with a strategic renewal package that aligns with your expansion goals.
+
+I'm proposing a multi-year expansion deal that would:
+• Provide capacity for your anticipated growth
+• Include priority support for your APAC operations
+• Offer significant cost savings through our enterprise pricing
+
+Are you available for a brief call next week to explore how we can structure this to support Dynamic Corp's continued success?
+
+Best regards,
+{{user.first}}
+
+P.S. I've also prepared some usage analytics that I think you'll find valuable for your planning discussions.`,
+          editable: true,
+          visible: false
+        })
+      },
+      // Workflow Summary
+      {
+        ...createWorkflowSummaryArtifact({
+          id: 'workflow-summary',
+          title: 'Workflow Summary',
+          customerName: 'Dynamic Corp',
+          currentStage: 'Needs Assessment',
+          progressPercentage: 50,
+          completedActions: [
+            'Initial customer contact established',
+            'Growth analysis completed (65% YoY growth)',
+            'Expansion opportunity identified',
+            'Email drafted to Michael Roberts (CTO)'
+          ],
+          pendingActions: [
+            'Schedule follow-up meeting with Michael Roberts',
+            'Prepare detailed expansion proposal',
+            'Coordinate with technical team for APAC support details',
+            'Review Series C funding impact on pricing'
+          ],
+          nextSteps: [
+            'Wait for response to initial email (2-3 days)',
+            'Prepare comprehensive renewal package',
+            'Schedule technical consultation for APAC expansion',
+            'Draft multi-year contract terms'
+          ],
+          keyMetrics: {
+            currentARR: '$725,000',
+            projectedARR: '$1,087,500',
+            growthRate: '65%',
+            riskScore: '2.1/10',
+            renewalDate: 'Feb 28, 2026'
+          },
+          recommendations: [
+            'Prioritize multi-year deal to lock in growth',
+            'Leverage APAC expansion for premium pricing',
+            'Use Series C funding as negotiation point',
+            'Offer priority support as differentiator'
+          ],
+          visible: false
+        })
+      }
+    ]
+  }
+};
