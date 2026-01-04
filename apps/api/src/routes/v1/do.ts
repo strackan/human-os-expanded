@@ -9,7 +9,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { ContextEngine, KnowledgeGraph } from '@human-os/core';
+import type { ContextEngine, KnowledgeGraph, Layer } from '@human-os/core';
 import { type AuthenticatedRequest, requireScope } from '../../middleware/auth.js';
 
 const DoRequestSchema = z.object({
@@ -52,7 +52,7 @@ export function createDoRoutes(
       // Import alias system dynamically
       const { AliasResolver, AliasExecutor } = await import('@human-os/aliases');
 
-      const layer = `founder:${userId}`;
+      const layer: Layer = `founder:${userId}`;
 
       // Initialize resolver
       const resolver = new AliasResolver({
@@ -134,7 +134,7 @@ export function createDoRoutes(
 
       const { AliasResolver } = await import('@human-os/aliases');
 
-      const layer = `founder:${userId}`;
+      const layer: Layer = `founder:${userId}`;
 
       const resolver = new AliasResolver({
         supabaseUrl: process.env['SUPABASE_URL']!,
