@@ -51,7 +51,8 @@ export async function updateSession(request: NextRequest) {
   const isCallbackRoute = pathname === '/auth/callback'
   const isHeroRoute = pathname === '/hero'
   const isJoinRoute = pathname.startsWith('/join') // Public careers/talent application pages
-  const isPublicRoute = pathname === '/' || isAuthRoute || isCallbackRoute || isHeroRoute || isJoinRoute
+  const isApiRoute = pathname.startsWith('/api/') // API routes handle their own auth
+  const isPublicRoute = pathname === '/' || isAuthRoute || isCallbackRoute || isHeroRoute || isJoinRoute || isApiRoute
 
   console.log("🧐 [Middleware] Route check:", { pathname, isAuthRoute, isCallbackRoute, isJoinRoute, isPublicRoute })
 
