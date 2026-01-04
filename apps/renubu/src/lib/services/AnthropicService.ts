@@ -3,10 +3,22 @@
  *
  * Handles integration with Anthropic's Claude API for AI-powered email generation.
  * Uses Claude Haiku 4.5 for fast, cost-effective email composition.
+ *
+ * Integrates with @human-os/proxy for conversation capture (searchability).
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { CLAUDE_HAIKU_CURRENT } from '@/lib/constants/claude-models';
+import { queueCapture, generateConversationId } from '@human-os/proxy/capture';
+import type { CapturePayload } from '@human-os/proxy';
+
+// Capture config - enabled when Supabase is configured
+const captureConfig = {
+  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
+  supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
+  kvUrl: process.env.KV_REST_API_URL,
+  enabled: !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY),
+};
 
 export interface AnthropicCompletionParams {
   prompt: string;
@@ -87,6 +99,9 @@ export class AnthropicService {
   static async generateCompletion(
     params: AnthropicCompletionParams
   ): Promise<AnthropicCompletionResponse> {
+    const startTime = Date.now();
+    const conversationId = generateConversationId();
+
     try {
       // Validate API key
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
@@ -127,6 +142,25 @@ export class AnthropicService {
         .filter((block) => block.type === 'text')
         .map((block) => ('text' in block ? block.text : ''))
         .join('\n');
+
+      // Fire-and-forget capture for searchability
+      const capturePayload: CapturePayload = {
+        conversation_id: conversationId,
+        user_id: null, // Server-side calls don't have user context here
+        model,
+        messages: [{ role: 'user', content: params.prompt }],
+        response: {
+          content: textContent,
+          stop_reason: response.stop_reason || 'end_turn',
+          usage: {
+            input_tokens: response.usage.input_tokens,
+            output_tokens: response.usage.output_tokens,
+          },
+        },
+        latency_ms: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+      };
+      queueCapture(capturePayload, captureConfig);
 
       // Build response object
       return {
@@ -169,6 +203,9 @@ export class AnthropicService {
   static async generateConversation(
     params: AnthropicConversationParams
   ): Promise<AnthropicConversationResponse> {
+    const startTime = Date.now();
+    const conversationId = generateConversationId();
+
     try {
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -223,6 +260,25 @@ export class AnthropicService {
           });
         }
       }
+
+      // Fire-and-forget capture for searchability
+      const capturePayload: CapturePayload = {
+        conversation_id: conversationId,
+        user_id: null, // Server-side calls don't have user context here
+        model,
+        messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
+        response: {
+          content: textContent,
+          stop_reason: response.stop_reason || 'end_turn',
+          usage: {
+            input_tokens: response.usage.input_tokens,
+            output_tokens: response.usage.output_tokens,
+          },
+        },
+        latency_ms: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+      };
+      queueCapture(capturePayload, captureConfig);
 
       return {
         content: textContent,
