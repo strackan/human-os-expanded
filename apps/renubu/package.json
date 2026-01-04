@@ -13,6 +13,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "@human-os/proxy": "workspace:*",
     "@anthropic-ai/sdk": "^0.68.0",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-popover": "^1.1.13",
