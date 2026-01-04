@@ -6,9 +6,12 @@
  * - Sends to Claude API with comprehensive scoring prompt
  * - Parses structured JSON response
  * - Returns scored analysis with dimensions, archetype, tier, flags
+ *
+ * Updated: Now uses AnthropicService for consistency with other LLM services
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { AnthropicService } from '@/lib/services/AnthropicService';
+import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
 import { buildScoringPrompt, parseAssessmentResponse } from '@/lib/prompts/cs-assessment-scoring';
 import { determineTier } from '@/lib/assessment/scoring-rubrics';
 import { InterviewMessage, CandidateAnalysis } from '@/types/talent';
@@ -17,35 +20,15 @@ export interface ScoringResult {
   analysis: CandidateAnalysis;
   success: boolean;
   error?: string;
+  tokensUsed?: number;
 }
 
 export class ScoringService {
-  private static anthropic: Anthropic | null = null;
-
-  /**
-   * Initialize Anthropic client (lazy initialization)
-   */
-  private static getClient(): Anthropic {
-    if (!this.anthropic) {
-      const apiKey = process.env.ANTHROPIC_API_KEY;
-
-      if (!apiKey) {
-        throw new Error('ANTHROPIC_API_KEY environment variable not set');
-      }
-
-      this.anthropic = new Anthropic({
-        apiKey,
-      });
-    }
-
-    return this.anthropic;
-  }
-
   /**
    * Score an interview transcript using Claude API
    *
    * @param transcript - Array of interview messages (questions and answers)
-   * @returns Structured analysis with scores, archetype, tier, flags
+   * @returns Structured analysis with scores, archetype, tier, flags, and token usage
    */
   static async scoreAssessment(transcript: InterviewMessage[]): Promise<ScoringResult> {
     try {
@@ -61,23 +44,16 @@ export class ScoringService {
       // Build scoring prompt
       const scoringPrompt = buildScoringPrompt(transcript);
 
-      // Get Anthropic client
-      const client = this.getClient();
-
-      // Call Claude API
-      const message = await client.messages.create({
-        model: 'claude-sonnet-4-5-20250929',
-        max_tokens: 4000,
-        messages: [
-          {
-            role: 'user',
-            content: scoringPrompt,
-          },
-        ],
+      // Use AnthropicService for consistency
+      const response = await AnthropicService.generateCompletion({
+        prompt: scoringPrompt,
+        systemPrompt: 'You are an expert talent assessment specialist. Analyze the interview transcript and provide a structured JSON assessment.',
+        model: CLAUDE_SONNET_CURRENT, // Use centralized model constant
+        maxTokens: 4000,
+        temperature: 0.3, // Lower temperature for more consistent scoring
       });
 
-      // Extract text from response
-      const responseText = message.content[0].type === 'text' ? message.content[0].text : '';
+      const responseText = response.content;
 
       if (!responseText) {
         return {
@@ -109,12 +85,15 @@ export class ScoringService {
         analyzed_at: new Date().toISOString(),
       };
 
+      console.log('[ScoringService] Assessment scored successfully, tokens used:', response.tokensUsed.total);
+
       return {
         success: true,
         analysis,
+        tokensUsed: response.tokensUsed.total,
       };
     } catch (error: any) {
-      console.error('Error scoring assessment:', error);
+      console.error('[ScoringService] Error scoring assessment:', error);
       return {
         success: false,
         error: error.message || 'Failed to score assessment',

@@ -135,6 +135,7 @@ export const TEAM_ROUTES = {
 // =====================================================
 
 export const USER_ROUTES = {
+  PROFILE: '/api/user/profile',
   PREFERENCES: '/api/user/preferences',
   UPDATE_PROFILE_NAME: '/api/update-profile-name',
 } as const;
