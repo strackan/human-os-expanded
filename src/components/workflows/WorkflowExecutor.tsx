@@ -21,10 +21,8 @@ import { ArtifactDisplay } from './ArtifactDisplay';
 import { CustomerMetrics } from './CustomerMetrics';
 import { WorkflowChatPanel } from './WorkflowChatPanel';
 import { TaskPanel } from './TaskPanel';
-import { AccountPlanIndicator } from './AccountPlanIndicator';
 import { AccountPlanType } from './AccountPlanSelector';
 import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
-import { createClient } from '@/lib/supabase';
 import { API_ROUTES } from '@/lib/constants/api-routes';
 
 // =====================================================
@@ -78,15 +76,9 @@ export interface WorkflowExecutorProps {
 // WorkflowExecutor Component
 // =====================================================
 
-export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
-  workflowDefinition,
-  customerId,
-  executionId: initialExecutionId,
-  onComplete,
-  onExit
-}) => {
-  const supabase = createClient();
-
+export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = (props) => {
+  const { workflowDefinition, customerId, executionId: initialExecutionId, onComplete } = props;
+  // onExit available via props if needed
   // State
   const [executionState, setExecutionState] = useState<WorkflowExecutionState>({
     executionId: initialExecutionId || '',
@@ -108,7 +100,8 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [accountPlan, setAccountPlan] = useState<AccountPlanType | null>(null);
+  // Account plan state - setter used, getter available if needed
+  const [, setAccountPlan] = useState<AccountPlanType | null>(null);
   const [customerName, setCustomerName] = useState<string>('');
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -160,9 +153,7 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   };
 
   const createExecution = async (): Promise<string> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('User not authenticated');
-
+    // API route handles authentication
     const response = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.LIST, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -194,12 +185,10 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
 
     const { execution } = await response.json();
 
-    // Get step executions
-    const { data: stepExecutions } = await supabase
-      .from('workflow_step_executions')
-      .select('*')
-      .eq('workflow_execution_id', executionId)
-      .order('step_index', { ascending: true });
+    // Get step executions via API
+    const stepsResponse = await fetch(API_ROUTES.WORKFLOWS.EXECUTIONS.STEPS(executionId));
+    const stepsData = stepsResponse.ok ? await stepsResponse.json() : { stepExecutions: [] };
+    const stepExecutions = stepsData.stepExecutions || [];
 
     // Reconstruct state from loaded data
     const stepData = new Map();

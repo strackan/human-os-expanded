@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { Clock, X, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, X, UserPlus } from 'lucide-react';
 import { WorkflowActionService } from '@/lib/workflows/actions';
 import { EnhancedSnoozeModal } from './EnhancedSnoozeModal';
 import { WakeTrigger } from '@/types/wake-triggers';
@@ -272,17 +272,13 @@ function EscalateModal({ executionId, userId, onClose, onSuccess, setIsProcessin
 
     setIsLoadingUsers(true);
     try {
-      const { createClient } = await import('@/lib/supabase/client');
-      const supabase = createClient();
-
-      const { data, error: searchError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
-        .or(`full_name.ilike.%${query}%,email.ilike.%${query}%`)
-        .limit(10);
-
-      if (searchError) throw searchError;
-      setUsers(data || []);
+      // Use API instead of direct Supabase
+      const response = await fetch(`/api/team/members?search=${encodeURIComponent(query)}`);
+      if (!response.ok) {
+        throw new Error('Failed to search users');
+      }
+      const data = await response.json();
+      setUsers(data.members || []);
     } catch (err: any) {
       console.error('Error searching users:', err);
     } finally {
@@ -339,7 +335,7 @@ function EscalateModal({ executionId, userId, onClose, onSuccess, setIsProcessin
         <h3 className="text-lg font-semibold mb-4 text-gray-900">Escalate Workflow</h3>
 
         <p className="text-sm text-gray-600 mb-4">
-          Escalate this workflow to another team member. You'll be able to monitor progress but won't be able to manage it.
+          Escalate this workflow to another team member. You&apos;ll be able to monitor progress but won&apos;t be able to manage it.
         </p>
 
         <div className="space-y-4">

@@ -64,6 +64,9 @@ interface Customer360SidePanelProps {
   };
 }
 
+// Stable empty arrays to prevent useEffect infinite loops
+const EMPTY_WORKFLOWS: RelatedWorkflow[] = [];
+
 export default function Customer360SidePanel({
   isOpen,
   onToggle,
@@ -71,10 +74,13 @@ export default function Customer360SidePanel({
   customerId: _customerId,
   customerName,
   currentWorkflowId,
-  seriesWorkflows = [],
-  eventWorkflows = [],
+  seriesWorkflows,
+  eventWorkflows,
   metrics,
 }: Customer360SidePanelProps) {
+  // Use stable defaults
+  const stableSeriesWorkflows = seriesWorkflows ?? EMPTY_WORKFLOWS;
+  const stableEventWorkflows = eventWorkflows ?? EMPTY_WORKFLOWS;
   // customerId reserved for future API calls
   void _customerId;
   // Mock data for demo - in production, this would come from props or API
@@ -84,7 +90,7 @@ export default function Customer360SidePanel({
   useEffect(() => {
     // Set mock data based on workflow type
     if (workflowType === 'date') {
-      setRelatedWorkflows(seriesWorkflows.length > 0 ? seriesWorkflows : [
+      setRelatedWorkflows(stableSeriesWorkflows.length > 0 ? stableSeriesWorkflows : [
         { id: '1', name: '180-Day Strategic Planning', type: 'date', status: 'completed', date: '2024-09-15' },
         { id: '2', name: '120-Day Account Review', type: 'date', status: 'completed', date: '2024-10-15' },
         { id: '3', name: '90-Day Renewal Prep', type: 'date', status: 'in_progress', date: '2024-11-15' },
@@ -92,7 +98,7 @@ export default function Customer360SidePanel({
         { id: '5', name: '30-Day Final Review', type: 'date', status: 'scheduled', date: '2025-01-15' },
       ]);
     } else {
-      setRelatedWorkflows(eventWorkflows.length > 0 ? eventWorkflows : [
+      setRelatedWorkflows(stableEventWorkflows.length > 0 ? stableEventWorkflows : [
         { id: '1', name: 'Expansion Opportunity', type: 'event', status: 'in_progress', priority: 'high' },
         { id: '2', name: 'Risk Mitigation', type: 'event', status: 'scheduled', priority: 'medium' },
         { id: '3', name: 'Champion Change Alert', type: 'event', status: 'completed', priority: 'low' },
@@ -115,7 +121,7 @@ export default function Customer360SidePanel({
         { label: 'Usage', value: '87%', trend: 'up', changePercent: 3 },
       ]);
     }
-  }, [workflowType, seriesWorkflows, eventWorkflows, metrics]);
+  }, [workflowType, stableSeriesWorkflows, stableEventWorkflows, metrics]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
