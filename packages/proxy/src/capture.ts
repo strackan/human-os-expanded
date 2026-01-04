@@ -124,6 +124,15 @@ async function insertToSupabase(
 
   // Insert assistant turn (if response exists)
   if (payload.response) {
+    // Build metadata with streaming metrics
+    const metadata: Record<string, unknown> = {};
+    if (payload.ttft_ms !== undefined) {
+      metadata.ttft_ms = payload.ttft_ms;
+    }
+    if (payload.streaming !== undefined) {
+      metadata.streaming = payload.streaming;
+    }
+
     await fetch(`${supabaseUrl}/rest/v1/conversation_turns`, {
       method: 'POST',
       headers: {
@@ -139,6 +148,7 @@ async function insertToSupabase(
         tokens_input: payload.response.usage?.input_tokens,
         tokens_output: payload.response.usage?.output_tokens,
         latency_ms: payload.latency_ms,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         created_at: new Date().toISOString(),
       }),
     });

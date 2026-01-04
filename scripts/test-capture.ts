@@ -8,8 +8,9 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Load env from original renubu
-const SUPABASE_URL = 'https://amugmkrihnjsxlpwdzcy.supabase.co';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFtdWdta3JpaG5qc3hscHdkemN5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTUwNjg5MiwiZXhwIjoyMDc3MDgyODkyfQ.gnUWQYmviaKUcm3haH672v-VK-G1p-Bqyq-EfBNXYfo';
+// Use environment variable for service key
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://zulowgscotdrqlccomht.supabase.co';
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 async function testCapture() {
   console.log('=== Phase 1 Capture Test ===\n');
 

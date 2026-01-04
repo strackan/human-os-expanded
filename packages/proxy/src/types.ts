@@ -55,7 +55,12 @@ export interface CapturePayload {
       output_tokens: number;
     };
   };
+  /** Total latency from request to complete response */
   latency_ms: number;
+  /** Time to first token (streaming only) */
+  ttft_ms?: number;
+  /** Whether this was a streaming request */
+  streaming?: boolean;
   timestamp: string;
 }
 
