@@ -232,6 +232,9 @@ importers:
       '@human-os/journal':
         specifier: workspace:*
         version: link:../../../packages/journal
+      '@human-os/services':
+        specifier: workspace:*
+        version: link:../../../packages/services
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.24.3(zod@3.25.76)
@@ -342,6 +345,9 @@ importers:
       '@human-os/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@human-os/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.4
         version: 1.24.3(zod@3.25.76)
