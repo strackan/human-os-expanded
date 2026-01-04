@@ -23,11 +23,11 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
-    "@supabase/supabase-js": "^2.50.0"
+    "@supabase/supabase-js": "^2.50.0",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/node": "^20",
-    "typescript": "^5.9.3"
+    "@types/node": "^20"
   },
   "peerDependencies": {
     "@vercel/kv": "^2.0.0"
