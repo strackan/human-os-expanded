@@ -87,10 +87,10 @@ export {
   hiringManagerHandler,
   candidateSummaryHandler,
   formatResult,
-} from './handlers.js';
+} from './handlers/index.js';
 
 // Handler Types
-export type { HiringManagerReport, CandidateSummary } from './handlers.js';
+export type { HiringManagerReport, CandidateSummary } from './handlers/index.js';
 
 // LLM Assessment (hybrid scoring)
 export {
