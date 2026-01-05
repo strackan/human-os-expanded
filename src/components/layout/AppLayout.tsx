@@ -84,17 +84,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
-  // Fetch notifications on mount and every 2 minutes
+  // Check if we're on a standalone page (no app chrome)
+  const pathname = usePathname();
+  const isStandalonePage = pathname?.startsWith('/sculptor');
+
+  // Fetch notifications on mount and every 2 minutes (skip for standalone pages)
   useEffect(() => {
-    if (user?.id) {
+    if (user?.id && !isStandalonePage) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 120000); // 2 minutes
       return () => clearInterval(interval);
     }
-  }, [user?.id]);
-  // Check if we're on a standalone page (no app chrome)
-  const pathname = usePathname();
-  const isStandalonePage = pathname?.startsWith('/sculptor');
+  }, [user?.id, isStandalonePage]);
   
   // For standalone pages, just render children without app layout
   if (isStandalonePage) {

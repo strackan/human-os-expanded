@@ -375,6 +375,7 @@ export default function SculptorChat({
             <div className="flex-1">
               <textarea
                 ref={inputRef}
+                autoFocus
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
