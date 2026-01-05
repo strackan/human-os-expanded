@@ -1,0 +1,248 @@
+/* Roadtrip-specific CSS variables and styles */
+/* Prefixed with rt- to avoid conflicts with main site styles */
+
+/* Font assignments for roadtrip section */
+.roadtrip-fonts .rt-typewriter {
+  font-family: var(--font-special-elite), var(--font-courier-prime), monospace;
+}
+
+.roadtrip-fonts .rt-heading-elegant {
+  font-family: var(--font-playfair), serif;
+}
+
+.roadtrip-fonts {
+  font-family: var(--font-courier-prime), monospace;
+}
+
+:root {
+  /* Wes Anderson / Camp color palette */
+  --rt-cream: #F5F0E6;
+  --rt-paper: #FDF8F0;
+  --rt-cork: #C4A574;
+  --rt-cork-dark: #8B7355;
+  --rt-mustard: #D4A84B;
+  --rt-rust: #B85C38;
+  --rt-forest: #2D5A4A;
+  --rt-dusty-pink: #D4A5A5;
+  --rt-navy: #2C3E50;
+  --rt-burgundy: #722F37;
+  --rt-sage: #87A878;
+  --rt-sky: #87CEEB;
+}
+
+/* Cork board texture background */
+.rt-cork-board {
+  background-color: var(--rt-cork);
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.15'/%3E%3C/svg%3E");
+  box-shadow: inset 0 0 100px rgba(0,0,0,0.3);
+}
+
+/* Paper note styling */
+.rt-paper-note {
+  background: var(--rt-paper);
+  box-shadow:
+    2px 2px 8px rgba(0,0,0,0.15),
+    0 0 1px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.rt-paper-note::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(circle, #C41E3A 40%, #8B0000 60%);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset -2px -2px 4px rgba(0,0,0,0.2);
+}
+
+/* Index card styling */
+.rt-index-card {
+  background: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 24px,
+    #ccc 24px,
+    #ccc 25px,
+    transparent 25px
+  );
+  background-size: 100% 25px;
+  background-color: var(--rt-paper);
+  border: 1px solid #ddd;
+}
+
+/* Postcard styling */
+.rt-postcard {
+  background: var(--rt-paper);
+  border: 1px solid var(--rt-cork);
+  box-shadow: 4px 4px 0 var(--rt-cork);
+  position: relative;
+  overflow: hidden;
+}
+
+.rt-postcard::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 60px;
+  height: 40px;
+  border: 2px dashed var(--rt-cork);
+  opacity: 0.5;
+}
+
+/* Typewriter font styling */
+.rt-typewriter {
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Elegant heading font */
+.rt-heading-elegant {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Vintage map styling for Leaflet */
+.leaflet-container {
+  background: #E8DCC4 !important;
+  font-family: 'Courier Prime', monospace;
+}
+
+.leaflet-tile {
+  filter: sepia(20%) saturate(90%) brightness(105%);
+}
+
+/* Custom checkbox styling */
+.rt-camp-checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--rt-cork-dark);
+  border-radius: 3px;
+  background: var(--rt-paper);
+  cursor: pointer;
+  position: relative;
+}
+
+.rt-camp-checkbox:checked {
+  background: var(--rt-forest);
+  border-color: var(--rt-forest);
+}
+
+.rt-camp-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Camp button styling */
+.rt-camp-button {
+  background: var(--rt-forest);
+  color: var(--rt-paper);
+  font-family: 'Special Elite', monospace;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 2px 2px 0 var(--rt-cork-dark);
+}
+
+.rt-camp-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--rt-cork-dark);
+}
+
+.rt-camp-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--rt-cork-dark);
+}
+
+.rt-camp-button-secondary {
+  background: var(--rt-mustard);
+  color: var(--rt-navy);
+}
+
+.rt-camp-button-rust {
+  background: var(--rt-rust);
+  color: var(--rt-paper);
+}
+
+/* Input styling */
+.rt-camp-input {
+  background: var(--rt-paper);
+  border: 2px solid var(--rt-cork);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: 'Courier Prime', monospace;
+  color: var(--rt-navy);
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+
+.rt-camp-input:focus {
+  outline: none;
+  border-color: var(--rt-forest);
+}
+
+.rt-camp-input::placeholder {
+  color: var(--rt-cork-dark);
+  opacity: 0.7;
+}
+
+/* Stamp effect for highlights */
+.rt-stamp {
+  display: inline-block;
+  padding: 4px 12px;
+  border: 3px solid var(--rt-burgundy);
+  border-radius: 4px;
+  color: var(--rt-burgundy);
+  font-family: 'Special Elite', monospace;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+  opacity: 0.9;
+}
+
+/* Leaflet popup custom styling */
+.leaflet-popup-content-wrapper {
+  background: var(--rt-paper) !important;
+  border-radius: 8px !important;
+  box-shadow: 3px 3px 10px rgba(0,0,0,0.2) !important;
+  border: 2px solid var(--rt-cork) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--rt-paper) !important;
+  border: 2px solid var(--rt-cork) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+  font-family: 'Courier Prime', monospace !important;
+}
+
+/* Washi tape effect */
+.rt-washi-tape {
+  position: absolute;
+  height: 24px;
+  background: var(--rt-dusty-pink);
+  opacity: 0.7;
+  transform: rotate(-2deg);
+}
+
+.rt-washi-tape-yellow {
+  background: var(--rt-mustard);
+}
+
+.rt-washi-tape-sage {
+  background: var(--rt-sage);
+}

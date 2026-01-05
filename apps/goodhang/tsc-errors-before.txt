@@ -1,0 +1,345 @@
+app/api/admin/cleanup-duplicate-rsvps/route.ts(5,28): error TS6133: 'request' is declared but its value is never read.
+app/api/assessment/[sessionId]/complete/route.ts(9,3): error TS6133: 'request' is declared but its value is never read.
+app/api/assessment/[sessionId]/results/route.ts(10,3): error TS6133: 'request' is declared but its value is never read.
+app/api/assessment/start/route.ts(9,28): error TS6133: 'request' is declared but its value is never read.
+app/api/assessment/start/route.ts(88,53): error TS2532: Object is possibly 'undefined'.
+app/api/assessment/status/route.ts(9,27): error TS6133: 'request' is declared but its value is never read.
+app/api/emails/assessment-completed/route.ts(3,10): error TS2305: Module '"@/lib/resend/templates"' has no exported member 'generateAssessmentCompletedHTML'.
+app/api/emails/talent-bench-welcome/route.ts(3,10): error TS2305: Module '"@/lib/resend/templates"' has no exported member 'generateTalentBenchWelcomeHTML'.
+app/api/leaderboard/route.ts(175,28): error TS6133: 'request' is declared but its value is never read.
+app/api/profile/publish/route.ts(63,19): error TS6133: 'profile' is declared but its value is never read.
+app/assessment/interview/page.tsx(29,5): error TS6133: 'isFirstQuestion' is declared but its value is never read.
+app/assessment/interview/page.tsx(31,5): error TS6133: 'canGoNext' is declared but its value is never read.
+app/assessment/interview/page.tsx(45,10): error TS6133: 'currentSectionIndexState' is declared but its value is never read.
+app/assessment/interview/page.tsx(86,13): error TS7030: Not all code paths return a value.
+app/assessment/interview/page.tsx(280,18): error TS2367: This comparison appears to be unintentional because the types '"error" | "completed" | "in_progress" | "not_started" | "submitting_answer"' and '"completing"' have no overlap.
+app/assessment/start/page.tsx(17,1): error TS6133: 'createClient' is declared but its value is never read.
+app/assessment/start/page.tsx(22,9): error TS6133: 'router' is declared but its value is never read.
+app/assessment/start/page.tsx(24,9): error TS6133: 'start' is declared but its value is never read.
+app/assessment/start/page.tsx(28,10): error TS6133: 'contactInfo' is declared but its value is never read.
+app/assessment/start/page.tsx(268,12): error TS2367: This comparison appears to be unintentional because the types 'Step' and '"starting"' have no overlap.
+app/auth/set-password/page.tsx(21,10): error TS6133: 'userName' is declared but its value is never read.
+app/members/invite/page.tsx(25,10): error TS6133: 'userRegionId' is declared but its value is never read.
+app/members/invites/page.tsx(25,10): error TS6133: 'userRole' is declared but its value is never read.
+components/assessment/EnhancedQuestionCard.tsx(58,26): error TS2554: Expected 1 arguments, but got 0.
+components/assessment/NavigationButtons.tsx(25,3): error TS6133: 'canGoNext' is declared but its value is never read.
+components/assessment/results/ResultsActions.tsx(11,34): error TS6133: 'sessionId' is declared but its value is never read.
+components/assessment/results/ResultsActions.tsx(12,9): error TS6133: 'router' is declared but its value is never read.
+components/GlitchIntro.tsx(23,10): error TS6133: 'elapsed' is declared but its value is never read.
+components/GlitchIntro.tsx(27,10): error TS6133: 'flashIndex' is declared but its value is never read.
+components/GlitchIntroV2.tsx(69,5): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+components/GlitchIntroV2.tsx(75,10): error TS6133: 'elapsed' is declared but its value is never read.
+components/GlitchIntroV2.tsx(84,10): error TS6133: 'contentLoaded' is declared but its value is never read.
+components/GlitchIntroV2.tsx(253,56): error TS6133: 'index' is declared but its value is never read.
+components/GlitchIntroV2.tsx(267,54): error TS6133: 'index' is declared but its value is never read.
+components/GlitchIntroV2.tsx(269,24): error TS6133: 'index' is declared but its value is never read.
+components/GlitchIntroV2.tsx(397,18): error TS2532: Object is possibly 'undefined'.
+components/HomePage.tsx(47,13): error TS6133: 'response' is declared but its value is never read.
+components/ui/ErrorBoundary.tsx(34,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+components/ui/ErrorBoundary.tsx(51,3): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Component<Props, State, any>'.
+components/ui/Toast.tsx(177,15): error TS2345: Argument of type '(prev: Omit<ToastProps, "onClose">[]) => (Omit<ToastProps, "onClose"> | { id: string; type: ToastType; message: string; duration: number | undefined; })[]' is not assignable to parameter of type 'SetStateAction<Omit<ToastProps, "onClose">[]>'.
+  Type '(prev: Omit<ToastProps, "onClose">[]) => (Omit<ToastProps, "onClose"> | { id: string; type: ToastType; message: string; duration: number | undefined; })[]' is not assignable to type '(prevState: Omit<ToastProps, "onClose">[]) => Omit<ToastProps, "onClose">[]'.
+    Type '(Omit<ToastProps, "onClose"> | { id: string; type: ToastType; message: string; duration: number | undefined; })[]' is not assignable to type 'Omit<ToastProps, "onClose">[]'.
+      Type 'Omit<ToastProps, "onClose"> | { id: string; type: ToastType; message: string; duration: number | undefined; }' is not assignable to type 'Omit<ToastProps, "onClose">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+        Type '{ id: string; type: ToastType; message: string; duration: number | undefined; }' is not assignable to type 'Omit<ToastProps, "onClose">' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+          Types of property 'duration' are incompatible.
+            Type 'number | undefined' is not assignable to type 'number'.
+              Type 'undefined' is not assignable to type 'number'.
+lib/api/swr-config.ts(126,3): error TS6133: 'key' is declared but its value is never read.
+lib/api/swr-config.ts(127,3): error TS6133: 'updateFn' is declared but its value is never read.
+lib/assessment/__tests__/category-scoring.test.ts(11,32): error TS6133: 'CategoryScores' is declared but its value is never read.
+lib/assessment/__tests__/category-scoring.test.ts(13,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(35,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(36,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(40,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(41,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(42,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(43,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(44,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(47,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(51,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(52,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(53,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(54,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(55,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(56,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(59,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(63,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(64,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(65,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(66,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(67,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(70,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(81,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(85,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(86,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(91,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(94,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(105,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(109,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(110,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(114,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(117,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(128,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(132,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(133,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(137,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(141,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(142,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(151,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(154,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(163,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(166,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(176,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(180,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(181,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(185,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(186,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(187,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(188,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(191,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(202,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(203,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(204,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(207,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(218,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(222,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(223,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(232,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(233,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(234,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(237,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(240,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/category-scoring.test.ts(249,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(250,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(251,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(254,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/category-scoring.test.ts(256,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(13,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(31,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(32,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(41,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(42,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(46,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(49,11): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(50,11): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(55,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(57,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(58,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(61,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(62,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(65,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(69,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(70,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(74,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(75,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(78,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(82,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(83,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(86,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(90,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(93,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(100,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(108,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(111,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(118,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(122,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(123,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(126,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(127,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(128,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(131,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(134,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(139,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(142,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(146,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(150,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(151,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(154,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(155,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(156,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(159,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(162,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(166,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(170,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(171,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(180,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(183,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(193,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(196,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(206,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(209,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(218,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(222,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(223,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(234,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(235,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(238,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(247,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(250,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(260,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(261,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(264,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(275,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(278,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(292,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(293,7): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(297,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(298,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(310,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(311,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(315,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(327,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(331,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/assessment/__tests__/personality-weights.test.ts(343,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/__tests__/personality-weights.test.ts(344,9): error TS2304: Cannot find name 'expect'.
+lib/assessment/badge-definitions.ts(4,27): error TS6133: 'BadgeCriteria' is declared but its value is never read.
+lib/assessment/category-scoring.ts(106,9): error TS2488: Type '[string, number] | undefined' must have a '[Symbol.iterator]()' method that returns an iterator.
+lib/assessment/personality-weights.ts(213,3): error TS6133: 'threshold' is declared but its value is never read.
+lib/errors/AssessmentError.ts(111,19): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+lib/errors/AssessmentError.ts(132,5): error TS2412: Type 'AssessmentErrorContext | undefined' is not assignable to type 'AssessmentErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'AssessmentErrorContext'.
+lib/errors/AssessmentError.ts(134,5): error TS2412: Type 'Error | undefined' is not assignable to type 'Error' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'Error'.
+lib/errors/AssessmentError.ts(190,7): error TS2379: Argument of type '{ sessionId: string; userId: string | undefined; }' is not assignable to parameter of type 'AssessmentErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'userId' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/errors/ScoringError.ts(123,19): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'Error'.
+lib/errors/ScoringError.ts(151,5): error TS2412: Type 'ScoringErrorContext | undefined' is not assignable to type 'ScoringErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'ScoringErrorContext'.
+lib/errors/ScoringError.ts(153,5): error TS2412: Type 'Error | undefined' is not assignable to type 'Error' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'Error'.
+lib/errors/ScoringError.ts(255,7): error TS2379: Argument of type '{ sessionId: string; rawResponse: string | undefined; }' is not assignable to parameter of type 'ScoringErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'rawResponse' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/errors/ValidationError.ts(123,5): error TS2412: Type 'ValidationErrorContext | undefined' is not assignable to type 'ValidationErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'ValidationErrorContext'.
+lib/errors/ValidationError.ts(125,5): error TS2412: Type 'ZodError<unknown> | undefined' is not assignable to type 'ZodError<unknown>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the type of the target.
+  Type 'undefined' is not assignable to type 'ZodError<unknown>'.
+lib/errors/ValidationError.ts(141,52): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+lib/errors/ValidationError.ts(141,64): error TS7006: Parameter 'err' implicitly has an 'any' type.
+lib/errors/ValidationError.ts(157,7): error TS2379: Argument of type '{ entity: string | undefined; }' is not assignable to parameter of type 'ValidationErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entity' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/errors/ValidationError.ts(176,34): error TS2339: Property 'errors' does not exist on type 'ZodError<unknown>'.
+lib/errors/ValidationError.ts(236,7): error TS2379: Argument of type '{ entity: string | undefined; field: string; }' is not assignable to parameter of type 'ValidationErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entity' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/errors/ValidationError.ts(318,7): error TS2379: Argument of type '{ entity: string | undefined; from: string; to: string; }' is not assignable to parameter of type 'ValidationErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entity' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/errors/ValidationError.ts(354,7): error TS2379: Argument of type '{ entity: string | undefined; field: string; }' is not assignable to parameter of type 'ValidationErrorContext' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'entity' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/hooks/useAssessment.ts(213,31): error TS18048: 'prevSection' is possibly 'undefined'.
+lib/hooks/useAssessment.ts(237,13): error TS6133: 'completionData' is declared but its value is never read.
+lib/hooks/useSpeechToText.ts(128,32): error TS18048: 'result' is possibly 'undefined'.
+lib/hooks/useSpeechToText.ts(128,32): error TS2532: Object is possibly 'undefined'.
+lib/hooks/useSpeechToText.ts(130,13): error TS18048: 'result' is possibly 'undefined'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(6,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(55,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(56,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(66,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(69,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(83,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(86,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(108,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(111,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(126,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(129,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(139,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(142,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(152,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(155,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(165,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(168,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(183,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(186,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(201,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(204,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(218,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(221,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(254,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(255,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(256,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(257,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(258,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(261,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(294,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(298,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(299,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(305,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(308,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(314,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(317,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(323,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(326,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(332,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(335,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(341,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(344,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(350,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(353,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(359,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(363,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(364,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(368,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(369,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(369,14): error TS2532: Object is possibly 'undefined'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(370,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(370,14): error TS2532: Object is possibly 'undefined'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(373,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(377,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(380,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(384,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(385,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(386,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(390,3): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(391,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(395,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(396,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(397,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(398,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(399,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(400,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(403,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(408,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(408,14): error TS2532: Object is possibly 'undefined'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(411,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(415,7): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(417,9): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(418,9): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(419,9): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(420,9): error TS2304: Cannot find name 'expect'.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(424,5): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+lib/services/__tests__/BadgeEvaluatorService.test.ts(427,7): error TS2304: Cannot find name 'expect'.
+lib/services/AssessmentScoringService.ts(115,26): error TS2532: Object is possibly 'undefined'.
+lib/services/AssessmentScoringService.ts(115,63): error TS2532: Object is possibly 'undefined'.
+lib/services/AssessmentScoringService.ts(115,82): error TS2339: Property 'text' does not exist on type 'ContentBlock'.
+  Property 'text' does not exist on type 'ThinkingBlock'.
+lib/supabase/middleware.ts(27,48): error TS6133: 'options' is declared but its value is never read.
+lib/utils/error-messages.ts(153,5): error TS2375: Type '{ message: string; name: string; stack: string | undefined; timestamp: string; }' is not assignable to type '{ message: string; name: string; stack?: string; timestamp: string; }' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Types of property 'stack' are incompatible.
+    Type 'string | undefined' is not assignable to type 'string'.
+      Type 'undefined' is not assignable to type 'string'.
+lib/utils/retry-logic.ts(97,38): error TS6133: 'attempt' is declared but its value is never read.
+lib/utils/retry-logic.ts(206,15): error TS18048: 'item' is possibly 'undefined'.
+lib/utils/retry-logic.ts(211,9): error TS18048: 'item' is possibly 'undefined'.
+lib/utils/retry-logic.ts(212,13): error TS18048: 'item' is possibly 'undefined'.
+lib/utils/retry-logic.ts(214,46): error TS18048: 'item' is possibly 'undefined'.
+scripts/check-session-data.ts(41,11): error TS6133: 'questionCount' is declared but its value is never read.
+scripts/cleanup-rsvp-duplicates.ts(17,11): error TS6133: 'data' is declared but its value is never read.
+scripts/seed-lightning-questions.ts(31,11): error TS6133: 'sqlContent' is declared but its value is never read.
+scripts/seed-lightning-questions.ts(74,13): error TS6133: 'data' is declared but its value is never read.
+utils/glitchImages.ts(37,3): error TS2322: Type 'GlitchImage | undefined' is not assignable to type 'GlitchImage'.
+  Type 'undefined' is not assignable to type 'GlitchImage'.
+utils/glitchSequence.ts(88,13): error TS6133: 'index' is declared but its value is never read.
+utils/glitchSequence.ts(113,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.

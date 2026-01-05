@@ -1,0 +1,575 @@
+/* Enhanced Horror Glitch Effects - I Love Bees Style */
+
+/* ============================================
+   LOOPING BACKGROUND EFFECTS
+   ============================================ */
+
+/* Triangle Fusion Pattern (inspired by robdimarzo) */
+@keyframes triangleFusion {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 0.1;
+  }
+  25% {
+    transform: translateY(-20px) rotate(90deg) scale(1.2);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translateY(0) rotate(180deg) scale(1);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translateY(20px) rotate(270deg) scale(0.8);
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateY(0) rotate(360deg) scale(1);
+    opacity: 0.1;
+  }
+}
+
+.triangle-chaos {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: 50px solid transparent;
+  border-right: 50px solid transparent;
+  border-bottom: 86px solid rgba(255, 0, 255, 0.15);
+  animation: triangleFusion 4s ease-in-out infinite;
+  pointer-events: none;
+  filter: blur(2px);
+}
+
+/* Heat Distortion Wave Effect */
+@keyframes heatWave {
+  0%, 100% {
+    transform: translateX(0) scaleY(1);
+  }
+  25% {
+    transform: translateX(10px) scaleY(1.02);
+  }
+  50% {
+    transform: translateX(-10px) scaleY(0.98);
+  }
+  75% {
+    transform: translateX(5px) scaleY(1.01);
+  }
+}
+
+.heat-distortion {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 255, 255, 0.03) 50%,
+    transparent 100%
+  );
+  animation: heatWave 3s ease-in-out infinite;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* VHS Tape Artifacts - Continuous */
+@keyframes tapeWrinkle {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(50vh) scaleY(1.5);
+    opacity: 0.5;
+  }
+  90% {
+    opacity: 0.3;
+  }
+}
+
+.vhs-tape-wrinkle {
+  position: absolute;
+  width: 100%;
+  height: 8px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    rgba(0, 0, 0, 0.3),
+    transparent
+  );
+  animation: tapeWrinkle 6s linear infinite;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+/* Color Channel Separation - Slow Cycle */
+@keyframes colorSeparation {
+  0%, 100% {
+    filter: hue-rotate(0deg) saturate(1);
+  }
+  25% {
+    filter: hue-rotate(15deg) saturate(1.3);
+  }
+  50% {
+    filter: hue-rotate(-15deg) saturate(0.8);
+  }
+  75% {
+    filter: hue-rotate(10deg) saturate(1.1);
+  }
+}
+
+.color-channel-shift {
+  animation: colorSeparation 8s ease-in-out infinite;
+}
+
+/* Film Grain - Always Visible */
+.film-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.15;
+  z-index: 9997;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grainFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='5' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grainFilter)' opacity='0.5'/%3E%3C/svg%3E");
+  animation: grainShift 0.5s steps(10) infinite;
+  mix-blend-mode: multiply;
+}
+
+@keyframes grainShift {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2%, -2%); }
+  20% { transform: translate(2%, 2%); }
+  30% { transform: translate(-2%, 2%); }
+  40% { transform: translate(2%, -2%); }
+  50% { transform: translate(-1%, 1%); }
+  60% { transform: translate(1%, -1%); }
+  70% { transform: translate(-1%, -1%); }
+  80% { transform: translate(1%, 1%); }
+  90% { transform: translate(-1%, 2%); }
+}
+
+/* ============================================
+   EDGE CORRUPTION EFFECTS
+   ============================================ */
+
+/* Corruption Creeping from Top */
+@keyframes corruptionTop {
+  0% {
+    clip-path: inset(0 0 100% 0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    clip-path: inset(0 0 70% 0);
+    opacity: 0.4;
+  }
+}
+
+/* Corruption Creeping from Bottom */
+@keyframes corruptionBottom {
+  0% {
+    clip-path: inset(100% 0 0 0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    clip-path: inset(70% 0 0 0);
+    opacity: 0.4;
+  }
+}
+
+/* Corruption Creeping from Left */
+@keyframes corruptionLeft {
+  0% {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    clip-path: inset(0 80% 0 0);
+    opacity: 0.3;
+  }
+}
+
+/* Corruption Creeping from Right */
+@keyframes corruptionRight {
+  0% {
+    clip-path: inset(0 0 0 100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    clip-path: inset(0 0 0 80%);
+    opacity: 0.3;
+  }
+}
+
+.edge-corruption {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(45deg, #ff00ff 0%, #00ffff 50%, #ff00ff 100%);
+  mix-blend-mode: color-dodge;
+  pointer-events: none;
+  filter: blur(3px);
+}
+
+.edge-corruption.top {
+  animation: corruptionTop 3s ease-out forwards;
+}
+
+.edge-corruption.bottom {
+  animation: corruptionBottom 3s ease-out forwards;
+  animation-delay: 0.3s;
+}
+
+.edge-corruption.left {
+  animation: corruptionLeft 3s ease-out forwards;
+  animation-delay: 0.6s;
+}
+
+.edge-corruption.right {
+  animation: corruptionRight 3s ease-out forwards;
+  animation-delay: 0.9s;
+}
+
+/* ============================================
+   SLOW GLITCH EFFECTS (Not Eye-Straining)
+   ============================================ */
+
+/* Slow RGB Drift (not rapid split) */
+@keyframes slowRGBDrift {
+  0%, 100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  33% {
+    text-shadow: -3px 0 0 rgba(255, 0, 0, 0.5), 3px 0 0 rgba(0, 255, 255, 0.5);
+  }
+  66% {
+    text-shadow: 3px 0 0 rgba(255, 0, 0, 0.5), -3px 0 0 rgba(0, 255, 255, 0.5);
+  }
+}
+
+.slow-rgb-drift {
+  animation: slowRGBDrift 4s ease-in-out infinite;
+}
+
+/* Occasional Text Fragment (not constant) */
+@keyframes textFragment {
+  0%, 90%, 100% {
+    transform: translateX(0) skewX(0);
+    opacity: 1;
+  }
+  92% {
+    transform: translateX(-5px) skewX(-2deg);
+    opacity: 0.8;
+  }
+  94% {
+    transform: translateX(5px) skewX(2deg);
+    opacity: 0.9;
+  }
+  96% {
+    transform: translateX(-2px) skewX(-1deg);
+    opacity: 0.85;
+  }
+}
+
+.occasional-fragment {
+  animation: textFragment 6s ease-in-out infinite;
+}
+
+/* ============================================
+   IMAGE FLASH ZONES
+   ============================================ */
+
+/* Slow Fade-in Flash (not rapid) */
+@keyframes slowFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  30% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0.35;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.macabre-flash {
+  position: absolute;
+  opacity: 0;
+  animation: slowFlash 1.2s ease-in-out;
+  pointer-events: none;
+  filter: blur(1px);
+  mix-blend-mode: screen;
+}
+
+/* Positioned zones for flashes - varied sizes and rotations */
+.flash-zone-top-left {
+  top: 5%;
+  left: 5%;
+  width: 35%;
+  height: 40%;
+  transform: rotate(-5deg);
+}
+
+.flash-zone-top-right {
+  top: 10%;
+  right: 8%;
+  width: 25%;
+  height: 35%;
+  transform: rotate(8deg);
+}
+
+.flash-zone-bottom-left {
+  bottom: 8%;
+  left: 3%;
+  width: 40%;
+  height: 30%;
+  transform: rotate(3deg);
+}
+
+.flash-zone-bottom-right {
+  bottom: 5%;
+  right: 5%;
+  width: 30%;
+  height: 45%;
+  transform: rotate(-7deg);
+}
+
+/* ============================================
+   GLITCH PHOTO FILTERS (inspired by canti23)
+   ============================================ */
+
+.glitch-filter-1 {
+  filter: contrast(150%) brightness(90%) hue-rotate(10deg);
+  animation: filterCycle1 5s ease-in-out infinite;
+}
+
+@keyframes filterCycle1 {
+  0%, 100% {
+    filter: contrast(150%) brightness(90%) hue-rotate(0deg);
+  }
+  50% {
+    filter: contrast(120%) brightness(110%) hue-rotate(30deg);
+  }
+}
+
+.glitch-filter-2 {
+  filter: saturate(200%) blur(0.5px);
+  animation: filterCycle2 4s ease-in-out infinite;
+}
+
+@keyframes filterCycle2 {
+  0%, 100% {
+    filter: saturate(200%) blur(0px);
+  }
+  50% {
+    filter: saturate(80%) blur(1px);
+  }
+}
+
+/* ============================================
+   CRT EFFECTS
+   ============================================ */
+
+/* CRT Bulge Effect */
+.crt-bulge {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    transparent 60%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+  pointer-events: none;
+}
+
+/* CRT Scan Lines - Slow moving */
+@keyframes slowScanlines {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 8px;
+  }
+}
+
+.crt-scanlines {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.15) 51%
+  );
+  background-size: 100% 4px;
+  animation: slowScanlines 8s linear infinite;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* ============================================
+   PHASE-SPECIFIC UTILITIES
+   ============================================ */
+
+.phase-initial {
+  /* Clean state */
+}
+
+.phase-something-wrong {
+  /* Subtle hints */
+}
+
+.phase-corruption {
+  /* Spreading chaos */
+}
+
+.phase-chaos {
+  /* Peak horror */
+}
+
+.phase-resolution {
+  /* Reveal transition */
+}
+
+/* ============================================
+   IMAGE GLITCH FILTERS
+   ============================================ */
+
+/* Macabre images - red/dark tint with heavy distortion */
+.glitch-filter-1 {
+  mix-blend-mode: screen;
+  animation: macabre-glitch 0.3s infinite;
+}
+
+@keyframes macabre-glitch {
+  0%, 100% {
+    filter: hue-rotate(0deg) brightness(0.8);
+  }
+  25% {
+    filter: hue-rotate(-10deg) brightness(0.9);
+  }
+  50% {
+    filter: hue-rotate(10deg) brightness(0.7);
+  }
+  75% {
+    filter: hue-rotate(-5deg) brightness(0.85);
+  }
+}
+
+/* Tech images - cyan/magenta chromatic aberration */
+.glitch-filter-2 {
+  mix-blend-mode: lighten;
+  animation: tech-glitch 0.4s infinite;
+}
+
+@keyframes tech-glitch {
+  0%, 100% {
+    filter: brightness(1.1) contrast(1.3);
+  }
+  33% {
+    filter: brightness(0.9) contrast(1.5);
+  }
+  66% {
+    filter: brightness(1.2) contrast(1.2);
+  }
+}
+
+/* Social images - vintage washed out with grain */
+.glitch-filter-3 {
+  mix-blend-mode: overlay;
+  animation: social-glitch 0.5s infinite;
+}
+
+@keyframes social-glitch {
+  0%, 100% {
+    filter: sepia(0.3) brightness(0.8) contrast(1.2);
+  }
+  50% {
+    filter: sepia(0.5) brightness(0.9) contrast(1.1);
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .triangle-chaos,
+  .heat-distortion,
+  .vhs-tape-wrinkle,
+  .color-channel-shift,
+  .film-grain,
+  .edge-corruption,
+  .slow-rgb-drift,
+  .occasional-fragment,
+  .macabre-flash,
+  .glitch-filter-1,
+  .glitch-filter-2,
+  .glitch-filter-3,
+  .crt-scanlines {
+    animation: none !important;
+  }
+
+  .macabre-flash {
+    display: none !important;
+  }
+}
+
+/* Skip button - fades in after 3 seconds in upper right corner */
+@keyframes skipFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 0.7;
+  }
+}
+
+.glitch-skip-btn-fade {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 10000;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  animation: skipFadeIn 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+.glitch-skip-btn-fade:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: white;
+}

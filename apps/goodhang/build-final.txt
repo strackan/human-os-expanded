@@ -1,0 +1,297 @@
+
+> goodhang-web@0.1.0 build
+> next build
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of C:\Users\strac\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * C:\Users\strac\dev\goodhang\goodhang-web\package-lock.json
+   * C:\Users\strac\dev\goodhang\package-lock.json
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 3.5s
+   Linting and checking validity of types ...
+
+Failed to compile.
+
+./app/api/admin/cleanup-duplicate-rsvps/route.ts
+5:28  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+77:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/assessment/lightning/start/route.ts
+35:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+112:13  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/assessment/lightning/submit/route.ts
+32:14  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/assessment/start/route.ts
+9:28  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/assessment/status/route.ts
+9:27  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+49:46  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:30  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/assessment/[sessionId]/answer/route.ts
+76:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/emails/assessment-completed/route.ts
+6:28  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/emails/membership-approved/route.ts
+59:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/emails/rsvp-confirmation/route.ts
+89:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/emails/talent-bench-welcome/route.ts
+6:28  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/emails/test/route.ts
+76:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/invites/create/route.ts
+88:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/invites/send-magic-link/route.ts
+67:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/invites/signup/route.ts
+62:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+132:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/invites/validate/route.ts
+47:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/leaderboard/route.ts
+175:28  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/profile/publish/route.ts
+63:19  Warning: '_profile' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/profiles/[slug]/route.ts
+47:35  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/rsvp/route.ts
+55:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/speech-to-text/route.ts
+66:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/typeform-webhook/route.ts
+18:39  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/apply/page.tsx
+88:41  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/assessment/absurdist/page.tsx
+111:45  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
+141:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/assessment/interview/page.tsx
+51:36  Warning: '_sectionIndex' is defined but never used.  @typescript-eslint/no-unused-vars
+267:20  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/assessment/lightning/page.tsx
+95:6  Warning: React Hook useEffect has a missing dependency: 'startLightningRound'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/assessment/results/[sessionId]/page.tsx
+50:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/assessment/start/page.tsx
+26:6  Warning: React Hook useEffect has a missing dependency: 'checkAuth'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/auth/set-password/page.tsx
+21:10  Warning: 'userName' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+130:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/events/page.tsx
+70:66  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+101:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/events/[id]/page.tsx
+28:45  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+33:66  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+142:22  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+145:21  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+170:40  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+181:20  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/launch/page.tsx
+246:36  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/login/page.tsx
+155:18  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/members/invite/page.tsx
+25:10  Warning: 'userRegionId' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+127:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/members/invites/page.tsx
+25:10  Warning: 'userRole' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+61:6  Warning: React Hook useEffect has a missing dependency: 'loadInvites'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+102:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/members/page.tsx
+111:29  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/members/pending/page.tsx
+75:19  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+85:24  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+85:56  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+102:23  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+102:86  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+132:37  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/privacy/page.tsx
+32:26  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+32:29  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+32:32  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+32:36  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+32:42  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+32:45  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+176:76  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+188:68  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+188:81  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./app/profiles/[slug]/page.tsx
+42:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/ApplicationReviewForm.tsx
+50:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+106:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+143:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+185:39  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/assessment/CompletionCard.tsx
+22:12  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/assessment/LightningResults.tsx
+160:28  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/assessment/LightningTimer.tsx
+164:15  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/assessment/MicrophoneButton.tsx
+47:6  Warning: React Hook useEffect has missing dependencies: 'onChange', 'resetTranscript', and 'value'. Either include them or remove the dependency array. If 'onChange' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./components/assessment/NavigationButtons.tsx
+25:3  Warning: 'canGoNext' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/assessment/OnboardingIntro.tsx
+141:77  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+175:46  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+175:52  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./components/assessment/PublishProfileToggle.tsx
+29:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+87:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+117:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/assessment/results/ResultsActions.tsx
+49:6  Warning: React Hook useEffect has a missing dependency: 'supabase'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+61:18  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/EventCard.tsx
+6:13  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+8:14  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+75:20  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/glitch-intro/GlitchSubliminalFlash.tsx
+9:56  Warning: 'flashBackground' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/GlitchIntro.tsx
+23:10  Warning: 'elapsed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+27:10  Warning: 'flashIndex' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+52:9  Error: 'startTime' is never reassigned. Use 'const' instead.  prefer-const
+
+./components/GlitchIntroV2.tsx
+28:37  Warning: 'contentLoaded' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+36:5  Warning: 'elapsed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/HomePage.tsx
+47:13  Warning: 'response' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/ui/ErrorBoundary.tsx
+184:14  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./components/ui/Toast.tsx
+31:6  Warning: React Hook useEffect has a missing dependency: 'handleClose'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/api/privacy.ts
+10:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+68:50  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+76:55  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+76:69  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:44  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:58  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/api/renubu-client.ts
+271:13  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/api/swr-config.ts
+126:3  Warning: '_key' is defined but never used.  @typescript-eslint/no-unused-vars
+127:3  Warning: '_updateFn' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/assessment/badge-definitions.ts
+4:27  Warning: 'BadgeCriteria' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/assessment/personality-weights.ts
+213:3  Warning: 'threshold' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/assessment/scoring-prompt.ts
+6:48  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+216:60  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/hooks/glitch/useGlitchAnimation.ts
+116:56  Warning: '_index' is defined but never used.  @typescript-eslint/no-unused-vars
+130:54  Warning: '_index' is defined but never used.  @typescript-eslint/no-unused-vars
+132:24  Warning: '_index' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/hooks/useAssessment.ts
+126:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+176:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+237:13  Warning: 'completionData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+254:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+279:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/hooks/useSpeechToText.ts
+174:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+190:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/hooks/useUser.ts
+26:6  Warning: React Hook useEffect has a missing dependency: 'supabase.auth'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/services/AssessmentScoringService.ts
+97:29  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+135:61  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/services/BadgeEvaluatorService.ts
+136:57  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/services/LightningRoundScoringService.ts
+72:11  Warning: 'questionMap' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/utils/analytics.ts
+46:31  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+48:17  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/utils/debounce.ts
+8:46  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+8:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+30:71  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/utils/retry-logic.ts
+97:38  Warning: '_attempt' is defined but never used.  @typescript-eslint/no-unused-vars
+171:30  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+187:44  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+211:16  Warning: 'error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

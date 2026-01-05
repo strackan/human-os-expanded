@@ -1,0 +1,358 @@
+/* Hover-based glitch effects - subtle and eye-friendly */
+
+/* Slow looping glitch for hero text - always active with MULTIPLE effects */
+.hero-glitch {
+  position: relative;
+  display: inline-block;
+  animation: hero-glitch-loop 8s ease-in-out infinite;
+}
+
+.hero-glitch::before,
+.hero-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  clip-path: inset(0);
+}
+
+.hero-glitch::before {
+  color: rgba(0, 204, 221, 0.8);
+  z-index: -1;
+  animation: glitch-before 8s ease-in-out infinite;
+}
+
+.hero-glitch::after {
+  color: rgba(187, 0, 170, 0.8);
+  z-index: -2;
+  animation: glitch-after 8s ease-in-out infinite;
+}
+
+@keyframes glitch-before {
+  0%, 85%, 100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  86% {
+    opacity: 0.8;
+    transform: translate(-5px, 0);
+    clip-path: inset(20% 0 30% 0);
+  }
+  87% {
+    opacity: 0.7;
+    transform: translate(3px, 2px);
+    clip-path: inset(40% 0 10% 0);
+  }
+  88% {
+    opacity: 0.6;
+    transform: translate(-2px, -1px);
+    clip-path: inset(10% 0 60% 0);
+  }
+  89% {
+    opacity: 0.5;
+    transform: translate(4px, 1px);
+    clip-path: inset(50% 0 20% 0);
+  }
+}
+
+@keyframes glitch-after {
+  0%, 85%, 100% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  86.2% {
+    opacity: 0.7;
+    transform: translate(4px, 0);
+    clip-path: inset(30% 0 20% 0);
+  }
+  87.2% {
+    opacity: 0.8;
+    transform: translate(-3px, 1px);
+    clip-path: inset(15% 0 45% 0);
+  }
+  88.2% {
+    opacity: 0.6;
+    transform: translate(2px, -2px);
+    clip-path: inset(55% 0 15% 0);
+  }
+  89.2% {
+    opacity: 0.5;
+    transform: translate(-4px, 0);
+    clip-path: inset(25% 0 35% 0);
+  }
+}
+
+@keyframes hero-glitch-loop {
+  0%, 85%, 100% {
+    text-shadow: 0 0 0 transparent;
+    transform: translate(0, 0);
+    filter: blur(0);
+  }
+
+  /* First glitch burst */
+  86% {
+    text-shadow:
+      -3px 0 rgba(0, 204, 221, 0.8),
+      3px 0 rgba(187, 0, 170, 0.8);
+    transform: translate(-3px, 0) skew(-2deg);
+  }
+  86.5% {
+    text-shadow:
+      3px 0 rgba(0, 204, 221, 0.8),
+      -3px 0 rgba(187, 0, 170, 0.8);
+    transform: translate(3px, 2px) skew(2deg);
+  }
+
+  /* RGB split */
+  87% {
+    text-shadow:
+      -2px 0 rgba(0, 204, 221, 0.9),
+      2px 0 rgba(187, 0, 170, 0.9),
+      0 0 10px rgba(119, 0, 204, 0.5);
+    transform: translate(-2px, -1px);
+    filter: blur(0.5px);
+  }
+  87.5% {
+    text-shadow:
+      2px 0 rgba(0, 204, 221, 0.7),
+      -2px 0 rgba(187, 0, 170, 0.7);
+    transform: translate(2px, 1px);
+  }
+
+  /* Scanline distortion */
+  88% {
+    text-shadow:
+      -1px 0 rgba(0, 204, 221, 0.6),
+      1px 0 rgba(187, 0, 170, 0.6);
+    transform: translate(-1px, 0) scaleY(0.98);
+  }
+
+  /* Double vision */
+  88.5% {
+    text-shadow:
+      -4px 0 rgba(0, 204, 221, 0.5),
+      4px 0 rgba(187, 0, 170, 0.5),
+      -2px 2px rgba(0, 204, 221, 0.3),
+      2px -2px rgba(187, 0, 170, 0.3);
+    transform: translate(1px, -1px);
+  }
+
+  /* Static burst */
+  89% {
+    text-shadow:
+      0 0 5px rgba(0, 204, 221, 0.8),
+      0 0 10px rgba(187, 0, 170, 0.6);
+    transform: translate(-1px, 1px);
+    filter: contrast(1.2);
+  }
+
+  /* Final twitch */
+  89.5% {
+    text-shadow:
+      -1px 0 rgba(0, 204, 221, 0.4),
+      1px 0 rgba(187, 0, 170, 0.4);
+    transform: translate(1px, 0);
+  }
+}
+
+/* Chromatic aberration on hover with scanlines */
+.glitch-hover {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.glitch-hover:hover {
+  animation: glitch-chromatic-scanline 0.4s ease-in-out;
+}
+
+@keyframes glitch-chromatic {
+  0%, 100% {
+    text-shadow: 0 0 0 transparent;
+  }
+  25% {
+    text-shadow: -1px 0 0 rgba(0, 204, 221, 0.4), 1px 0 0 rgba(187, 0, 170, 0.4);
+  }
+  50% {
+    text-shadow: -2px 0 0 rgba(0, 204, 221, 0.5), 2px 0 0 rgba(187, 0, 170, 0.5);
+  }
+  75% {
+    text-shadow: -1px 0 0 rgba(0, 204, 221, 0.4), 1px 0 0 rgba(187, 0, 170, 0.4);
+  }
+}
+
+/* Glitch text on hover - with scanlines and chromatic aberration */
+.glitch-text {
+  position: relative;
+  overflow: hidden;
+}
+
+.glitch-text::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 204, 221, 0.1) 0px,
+    transparent 1px,
+    transparent 2px,
+    rgba(0, 204, 221, 0.1) 3px
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.glitch-text:hover::after {
+  opacity: 1;
+}
+
+.glitch-text:hover {
+  animation: glitch-distort-chromatic 0.3s ease-in-out;
+}
+
+@keyframes glitch-distort-chromatic {
+  0%, 100% {
+    transform: translate(0, 0);
+    text-shadow: 0 0 0 transparent;
+  }
+  20% {
+    transform: translate(-2px, 1px);
+    text-shadow: 2px 0 rgba(0, 204, 221, 0.6), -2px 0 rgba(187, 0, 170, 0.6);
+  }
+  40% {
+    transform: translate(2px, -1px);
+    text-shadow: -2px 0 rgba(0, 204, 221, 0.6), 2px 0 rgba(187, 0, 170, 0.6);
+  }
+  60% {
+    transform: translate(-1px, -1px);
+    text-shadow: 1px 0 rgba(0, 204, 221, 0.5), -1px 0 rgba(187, 0, 170, 0.5);
+  }
+  80% {
+    transform: translate(1px, 1px);
+    text-shadow: -1px 0 rgba(0, 204, 221, 0.5), 1px 0 rgba(187, 0, 170, 0.5);
+  }
+}
+
+/* Subtle RGB split on hover - for headings */
+.glitch-heading {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch-heading:hover::before,
+.glitch-heading:hover::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  animation: glitch-split 0.5s ease-in-out;
+}
+
+.glitch-heading:hover::before {
+  color: rgba(0, 204, 221, 0.6);
+  animation: glitch-split-before 0.5s ease-in-out;
+}
+
+.glitch-heading:hover::after {
+  color: rgba(187, 0, 170, 0.6);
+  animation: glitch-split-after 0.5s ease-in-out;
+}
+
+@keyframes glitch-split-before {
+  0%, 100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  25% {
+    transform: translateX(-2px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(-3px);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateX(-2px);
+    opacity: 0.7;
+  }
+}
+
+@keyframes glitch-split-after {
+  0%, 100% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  25% {
+    transform: translateX(2px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(3px);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateX(2px);
+    opacity: 0.7;
+  }
+}
+
+/* Scanline sweep on hover - very subtle */
+.glitch-scanline {
+  position: relative;
+  overflow: hidden;
+}
+
+.glitch-scanline::after {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 204, 221, 0.1) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.glitch-scanline:hover::after {
+  opacity: 1;
+  animation: scanline-sweep 0.6s ease-in-out;
+}
+
+@keyframes scanline-sweep {
+  0% {
+    top: -100%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+/* Accessibility - disable on reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .glitch-hover:hover,
+  .glitch-text:hover,
+  .glitch-heading:hover::before,
+  .glitch-heading:hover::after,
+  .glitch-scanline:hover::after {
+    animation: none !important;
+  }
+
+  .glitch-hover:hover {
+    text-shadow: none;
+  }
+}

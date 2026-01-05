@@ -27,7 +27,9 @@
       "Bash(scripts/test-sculptor-scenarios.ts )",
       "Bash(docs/SCULPTOR_TEMPLATE_GUIDE.md )",
       "Bash(supabase/migrations/20260209000000_sculptor_system.sql )",
-      "Bash(timeout 15 vercel logs:*)"
+      "Bash(timeout 15 vercel logs:*)",
+      "Bash(git -C \"C:/Users/strac/dev/human-os-convergence\" show feature/goodhang-integration:apps/goodhang/src/lib/supabase/client.ts)",
+      "Bash(git -C:*)"
     ]
   }
 }

@@ -1,0 +1,40 @@
+/* Saloon sign swinging animation */
+.saloon-sign {
+  transform-origin: top center;
+  animation: saloon-entrance 1s ease-out forwards, saloon-swing 4s ease-in-out 1s infinite;
+}
+
+@keyframes saloon-entrance {
+  0% {
+    transform: translateY(-100%) rotate(0deg);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(10%) rotate(-5deg);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-5%) rotate(3deg);
+  }
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+}
+
+@keyframes saloon-swing {
+  0%, 100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Western-style title text */
+.saloon-title {
+  text-shadow:
+    3px 3px 0 rgba(0, 0, 0, 0.5),
+    -1px -1px 0 rgba(255, 255, 255, 0.1);
+  font-family: Georgia, 'Times New Roman', serif;
+  letter-spacing: 0.05em;
+}
