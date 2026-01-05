@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { getHumanOSPublicClient } from '@/lib/supabase/human-os';
 import { SculptorService } from '@/lib/sculptor';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = await createClient();
+    const supabase = getHumanOSPublicClient();
     const sculptorService = new SculptorService(supabase);
 
     // Get session
@@ -157,7 +157,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { sessionId } = await params;
 
-    const supabase = await createClient();
+    const supabase = getHumanOSPublicClient();
     const sculptorService = new SculptorService(supabase);
 
     // Get session and responses
