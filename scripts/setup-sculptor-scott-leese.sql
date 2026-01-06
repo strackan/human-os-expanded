@@ -1,9 +1,13 @@
 -- Setup Sculptor Template for Scott Leese Session
--- Run this after the migration to add the full theatrical prompt
+-- Creates or updates the sculptor template and session
 
--- Update the Sculptor template with the full prompt
-UPDATE sculptor_templates
-SET system_prompt = $PROMPT$# The Sculptor: Scott Leese Session
+-- Insert or update the Sculptor template with the full prompt
+INSERT INTO sculptor_templates (slug, name, description, system_prompt, metadata)
+VALUES (
+  'sculptor',
+  'The Sculptor',
+  'Guided interview session for Voice-OS - theatrical fishing boat narrative',
+  $PROMPT$# The Sculptor: Scott Leese Session
 
 ## Setup Notes
 
@@ -266,9 +270,13 @@ Route answers to appropriate files:
 | Surf and Sales origin | STORIES.md (new entry if substantial) |
 
 Update each _SUMMARY.md file to mark resolved questions and add Scott's direct quotes where valuable.$PROMPT$,
-metadata = '{"version": "1.0", "entity": "scott-leese", "entity_placeholder": "[ENTITY_NAME]"}'::jsonb,
-updated_at = now()
-WHERE slug = 'sculptor';
+  '{"version": "1.0", "entity": "scott-leese", "entity_placeholder": "[ENTITY_NAME]"}'::jsonb
+)
+ON CONFLICT (slug) DO UPDATE SET
+  system_prompt = EXCLUDED.system_prompt,
+  description = EXCLUDED.description,
+  metadata = EXCLUDED.metadata,
+  updated_at = now();
 
 -- Create a test session for Scott Leese
 INSERT INTO sculptor_sessions (access_code, template_id, entity_name, status, metadata)
