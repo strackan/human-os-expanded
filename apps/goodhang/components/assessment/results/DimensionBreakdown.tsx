@@ -3,10 +3,14 @@
 import type { AssessmentDimensions } from '@/lib/assessment/types';
 
 interface DimensionBreakdownProps {
-  dimensions: AssessmentDimensions;
+  dimensions?: AssessmentDimensions | undefined;
 }
 
 export function DimensionBreakdown({ dimensions }: DimensionBreakdownProps) {
+  if (!dimensions || Object.keys(dimensions).length === 0) {
+    return null;
+  }
+
   return (
     <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg p-8 mb-8">
       <h2 className="text-3xl font-bold mb-6 text-white">14 Dimension Breakdown</h2>

@@ -17,10 +17,10 @@ export function calculateCategoryScores(dimensions: AssessmentDimensions): Categ
   // Technical Category
   // Subscores: technical, ai_readiness, organization, iq
   const technicalSubscores = {
-    technical: dimensions.technical,
-    ai_readiness: dimensions.ai_readiness,
-    organization: dimensions.organization,
-    iq: dimensions.iq,
+    technical: dimensions.technical ?? 0,
+    ai_readiness: dimensions.ai_readiness ?? 0,
+    organization: dimensions.organization ?? 0,
+    iq: dimensions.iq ?? 0,
   };
 
   const technicalOverall = Math.round(
@@ -33,11 +33,11 @@ export function calculateCategoryScores(dimensions: AssessmentDimensions): Categ
   // Emotional Category
   // Subscores: eq, empathy, self_awareness, executive_leadership, gtm
   const emotionalSubscores = {
-    eq: dimensions.eq,
-    empathy: dimensions.empathy,
-    self_awareness: dimensions.self_awareness,
-    executive_leadership: dimensions.executive_leadership,
-    gtm: dimensions.gtm,
+    eq: dimensions.eq ?? 0,
+    empathy: dimensions.empathy ?? 0,
+    self_awareness: dimensions.self_awareness ?? 0,
+    executive_leadership: dimensions.executive_leadership ?? 0,
+    gtm: dimensions.gtm ?? 0,
   };
 
   const emotionalOverall = Math.round(
@@ -51,10 +51,10 @@ export function calculateCategoryScores(dimensions: AssessmentDimensions): Categ
   // Creative Category
   // Subscores: passions, culture_fit, personality, motivation
   const creativeSubscores = {
-    passions: dimensions.passions,
-    culture_fit: dimensions.culture_fit,
-    personality: dimensions.personality,
-    motivation: dimensions.motivation,
+    passions: dimensions.passions ?? 0,
+    culture_fit: dimensions.culture_fit ?? 0,
+    personality: dimensions.personality ?? 0,
+    motivation: dimensions.motivation ?? 0,
   };
 
   const creativeOverall = Math.round(
@@ -85,11 +85,11 @@ export function calculateCategoryScores(dimensions: AssessmentDimensions): Categ
  * Simple average of the three category scores
  */
 export function calculateOverallScore(categoryScores: CategoryScores): number {
-  return Math.round(
-    (categoryScores.technical.overall +
-      categoryScores.emotional.overall +
-      categoryScores.creative.overall) / 3
-  );
+  const technical = categoryScores.technical?.overall ?? 0;
+  const emotional = categoryScores.emotional?.overall ?? 0;
+  const creative = categoryScores.creative?.overall ?? 0;
+
+  return Math.round((technical + emotional + creative) / 3);
 }
 
 /**
@@ -98,9 +98,9 @@ export function calculateOverallScore(categoryScores: CategoryScores): number {
  */
 export function getStrongestCategory(categoryScores: CategoryScores): 'technical' | 'emotional' | 'creative' {
   const scores = {
-    technical: categoryScores.technical.overall,
-    emotional: categoryScores.emotional.overall,
-    creative: categoryScores.creative.overall,
+    technical: categoryScores.technical?.overall ?? 0,
+    emotional: categoryScores.emotional?.overall ?? 0,
+    creative: categoryScores.creative?.overall ?? 0,
   };
 
   const sortedEntries = Object.entries(scores).sort(([, a], [, b]) => b - a);
@@ -118,13 +118,13 @@ export function getStrongestCategory(categoryScores: CategoryScores): 'technical
  */
 export function getWeakestCategory(categoryScores: CategoryScores): 'technical' | 'emotional' | 'creative' {
   const scores = {
-    technical: categoryScores.technical.overall,
-    emotional: categoryScores.emotional.overall,
-    creative: categoryScores.creative.overall,
+    technical: categoryScores.technical?.overall ?? 0,
+    emotional: categoryScores.emotional?.overall ?? 0,
+    creative: categoryScores.creative?.overall ?? 0,
   };
 
   const weakest = Object.entries(scores).sort(([, a], [, b]) => a - b)[0]?.[0];
-  return weakest as 'technical' | 'emotional' | 'creative';
+  return (weakest ?? 'technical') as 'technical' | 'emotional' | 'creative';
 }
 
 /**
@@ -132,9 +132,9 @@ export function getWeakestCategory(categoryScores: CategoryScores): 'technical' 
  */
 export function isWellRounded(categoryScores: CategoryScores): boolean {
   const scores = [
-    categoryScores.technical.overall,
-    categoryScores.emotional.overall,
-    categoryScores.creative.overall,
+    categoryScores.technical?.overall ?? 0,
+    categoryScores.emotional?.overall ?? 0,
+    categoryScores.creative?.overall ?? 0,
   ];
 
   const max = Math.max(...scores);
@@ -159,21 +159,31 @@ export function generateCategoryInsights(categoryScores: CategoryScores): {
   const gaps: string[] = [];
 
   // Identify specific gaps (subscores < 50)
-  if (categoryScores.technical.subscores.technical < 50) gaps.push('Technical skills need development');
-  if (categoryScores.technical.subscores.ai_readiness < 50) gaps.push('AI readiness is below average');
-  if (categoryScores.technical.subscores.organization < 50) gaps.push('Organizational skills need work');
-  if (categoryScores.technical.subscores.iq < 50) gaps.push('Problem-solving could be stronger');
+  const techSubscores = categoryScores.technical?.subscores;
+  const emoSubscores = categoryScores.emotional?.subscores;
+  const creativeSubscores = categoryScores.creative?.subscores;
 
-  if (categoryScores.emotional.subscores.eq < 50) gaps.push('Emotional intelligence needs development');
-  if (categoryScores.emotional.subscores.empathy < 50) gaps.push('Empathy could be stronger');
-  if (categoryScores.emotional.subscores.self_awareness < 50) gaps.push('Self-awareness needs improvement');
-  if (categoryScores.emotional.subscores.executive_leadership < 50) gaps.push('Leadership skills underdeveloped');
-  if (categoryScores.emotional.subscores.gtm < 50) gaps.push('Business acumen needs work');
+  if (techSubscores) {
+    if ((techSubscores.technical ?? 0) < 50) gaps.push('Technical skills need development');
+    if ((techSubscores.ai_readiness ?? 0) < 50) gaps.push('AI readiness is below average');
+    if ((techSubscores.organization ?? 0) < 50) gaps.push('Organizational skills need work');
+    if ((techSubscores.iq ?? 0) < 50) gaps.push('Problem-solving could be stronger');
+  }
 
-  if (categoryScores.creative.subscores.passions < 50) gaps.push('Lacking clear passions or drive');
-  if (categoryScores.creative.subscores.culture_fit < 50) gaps.push('Cultural fit concerns');
-  if (categoryScores.creative.subscores.personality < 50) gaps.push('Communication style needs refinement');
-  if (categoryScores.creative.subscores.motivation < 50) gaps.push('Motivation appears limited');
+  if (emoSubscores) {
+    if ((emoSubscores.eq ?? 0) < 50) gaps.push('Emotional intelligence needs development');
+    if ((emoSubscores.empathy ?? 0) < 50) gaps.push('Empathy could be stronger');
+    if ((emoSubscores.self_awareness ?? 0) < 50) gaps.push('Self-awareness needs improvement');
+    if ((emoSubscores.executive_leadership ?? 0) < 50) gaps.push('Leadership skills underdeveloped');
+    if ((emoSubscores.gtm ?? 0) < 50) gaps.push('Business acumen needs work');
+  }
+
+  if (creativeSubscores) {
+    if ((creativeSubscores.passions ?? 0) < 50) gaps.push('Lacking clear passions or drive');
+    if ((creativeSubscores.culture_fit ?? 0) < 50) gaps.push('Cultural fit concerns');
+    if ((creativeSubscores.personality ?? 0) < 50) gaps.push('Communication style needs refinement');
+    if ((creativeSubscores.motivation ?? 0) < 50) gaps.push('Motivation appears limited');
+  }
 
   return {
     strongest: strongest.charAt(0).toUpperCase() + strongest.slice(1),

@@ -23,40 +23,46 @@ function getSupabase() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, expiresInDays = 7 } = body;
+    const { sessionId, product = 'goodhang', expiresInDays = 7, metadata = {} } = body;
 
-    if (!sessionId || typeof sessionId !== 'string') {
+    // Validate product
+    if (!['goodhang', 'renubu'].includes(product)) {
       return NextResponse.json(
-        { success: false, error: 'Session ID is required' },
+        { success: false, error: 'Invalid product. Must be "goodhang" or "renubu"' },
         { status: 400 }
       );
     }
 
-    // Verify the session exists and is completed
-    const { data: session, error: sessionError } = await getSupabase()
-      .from('cs_assessment_sessions')
-      .select('id, status')
-      .eq('id', sessionId)
-      .single();
+    // Session ID is optional - keys can be generated without a session
+    // (e.g., for invite codes, promotional keys)
 
-    if (sessionError || !session) {
-      return NextResponse.json(
-        { success: false, error: 'Session not found' },
-        { status: 404 }
-      );
-    }
+    // If session provided, verify it exists
+    if (sessionId) {
+      const { data: session, error: sessionError } = await getSupabase()
+        .from('cs_assessment_sessions')
+        .select('id, status, tier, archetype')
+        .eq('id', sessionId)
+        .single();
 
-    if (session.status !== 'completed') {
-      return NextResponse.json(
-        { success: false, error: 'Assessment is not completed' },
-        { status: 400 }
-      );
+      if (sessionError || !session) {
+        return NextResponse.json(
+          { success: false, error: 'Session not found' },
+          { status: 404 }
+        );
+      }
+
+      // Add session info to metadata for preview
+      metadata.tier = session.tier;
+      metadata.archetype_hint = session.archetype;
+      metadata.session_status = session.status;
     }
 
     // Generate the activation key
     const { data, error } = await getSupabase().rpc('create_activation_key', {
-      p_session_id: sessionId,
+      p_product: product,
+      p_session_id: sessionId || null,
       p_expires_in_days: expiresInDays,
+      p_metadata: metadata,
     });
 
     if (error) {
@@ -79,6 +85,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       code: result.code,
+      product,
       expiresAt: result.expires_at,
       deepLink: result.deep_link,
     });

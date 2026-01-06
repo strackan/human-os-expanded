@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       userId,
+      product: result.product,
     });
   } catch (error) {
     console.error('Unexpected error in claim:', error);

@@ -25,6 +25,7 @@ import { DimensionBreakdown } from '@/components/assessment/results/DimensionBre
 import { BestFitRolesCard } from '@/components/assessment/results/BestFitRolesCard';
 import { PublicSummaryCard } from '@/components/assessment/results/PublicSummaryCard';
 import { ResultsActions } from '@/components/assessment/results/ResultsActions';
+import { ActivationKeyCard } from '@/components/assessment/results/ActivationKeyCard';
 
 export default function AssessmentResultsPage() {
   const params = useParams();
@@ -98,6 +99,13 @@ export default function AssessmentResultsPage() {
           tier={results.tier}
         />
 
+        {/* Activation Key for Desktop App */}
+        <ActivationKeyCard
+          sessionId={sessionId}
+          tier={results.tier}
+          archetype={results.archetype}
+        />
+
         {/* Personality Profile */}
         {results.personality_profile && (
           <PersonalityProfileCard profile={results.personality_profile} />
@@ -136,10 +144,10 @@ export default function AssessmentResultsPage() {
         )}
 
         {/* Flags */}
-        {(results.flags?.green_flags?.length > 0 || results.flags?.red_flags?.length > 0) && (
+        {(results.flags?.green_flags?.length && results.flags.green_flags.length > 0 || results.flags?.red_flags?.length && results.flags.red_flags.length > 0) && (
           <div className="grid md:grid-cols-2 gap-6 mb-8">
             {/* Green Flags */}
-            {results.flags.green_flags.length > 0 && (
+            {results.flags?.green_flags && results.flags.green_flags.length > 0 && (
               <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
                 <h3 className="text-xl font-semibold text-green-400 mb-4">Strengths</h3>
                 <ul className="space-y-2">
@@ -153,7 +161,7 @@ export default function AssessmentResultsPage() {
             )}
 
             {/* Red Flags */}
-            {results.flags.red_flags.length > 0 && (
+            {results.flags?.red_flags && results.flags.red_flags.length > 0 && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
                 <h3 className="text-xl font-semibold text-red-400 mb-4">Areas to Develop</h3>
                 <ul className="space-y-2">

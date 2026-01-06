@@ -1,35 +1,95 @@
 // BadgeEvaluatorService - Evaluates and awards badges based on assessment results
+// Supports both personality (Module A/B) and work (Module C/D) assessments
 
+import type { Attributes, Alignment, AssessmentSignals } from '../assessment/types';
 import {
-  AssessmentDimensions,
-  CategoryScores,
   BadgeDefinition,
   BadgeCondition,
-  ScoringDimension
-} from '../assessment/types';
-import { BADGE_DEFINITIONS } from '../assessment/badge-definitions';
+  isAttributeCondition,
+  isAlignmentCondition,
+  isSocialPatternCondition,
+  isWorkDimensionCondition,
+  isWorkCategoryCondition,
+  isExperienceCondition,
+} from '../assessment/badge-types';
+import {
+  BADGE_DEFINITIONS,
+  getPersonalityBadges,
+  getWorkBadges,
+} from '../assessment/badge-definitions';
 
-export interface BadgeEvaluationContext {
-  dimensions: AssessmentDimensions;
-  category_scores: CategoryScores;
+// Context for personality badge evaluation (Module A/B)
+export interface PersonalityBadgeContext {
+  attributes: Attributes;
+  alignment: Alignment;
+  signals: AssessmentSignals;
+  overall_score: number;
+}
+
+// Context for work badge evaluation (Module C/D - future)
+export interface WorkBadgeContext {
+  dimensions: Record<string, number>;
+  category_scores: Record<string, { overall: number }>;
   overall_score: number;
   experience_years?: number;
 }
 
+// Combined context type
+export type BadgeEvaluationContext = PersonalityBadgeContext | WorkBadgeContext;
+
+// Type guard for personality context
+function isPersonalityContext(context: BadgeEvaluationContext): context is PersonalityBadgeContext {
+  return 'attributes' in context && 'alignment' in context;
+}
+
+// Type guard for work context
+function isWorkContext(context: BadgeEvaluationContext): context is WorkBadgeContext {
+  return 'dimensions' in context && 'category_scores' in context;
+}
+
 export class BadgeEvaluatorService {
   /**
-   * Evaluates all badges and returns IDs of earned badges
+   * Evaluates personality badges and returns IDs of earned badges
    */
-  static evaluateBadges(context: BadgeEvaluationContext): string[] {
+  static evaluatePersonalityBadges(context: PersonalityBadgeContext): string[] {
     const earnedBadges: string[] = [];
+    const personalityBadges = getPersonalityBadges();
 
-    for (const badge of BADGE_DEFINITIONS) {
+    for (const badge of personalityBadges) {
       if (this.evaluateBadge(badge, context)) {
         earnedBadges.push(badge.id);
       }
     }
 
     return earnedBadges;
+  }
+
+  /**
+   * Evaluates work badges and returns IDs of earned badges (for future Module C/D)
+   */
+  static evaluateWorkBadges(context: WorkBadgeContext): string[] {
+    const earnedBadges: string[] = [];
+    const workBadges = getWorkBadges();
+
+    for (const badge of workBadges) {
+      if (this.evaluateBadge(badge, context)) {
+        earnedBadges.push(badge.id);
+      }
+    }
+
+    return earnedBadges;
+  }
+
+  /**
+   * Evaluates all applicable badges based on context type
+   */
+  static evaluateBadges(context: BadgeEvaluationContext): string[] {
+    if (isPersonalityContext(context)) {
+      return this.evaluatePersonalityBadges(context);
+    } else if (isWorkContext(context)) {
+      return this.evaluateWorkBadges(context);
+    }
+    return [];
   }
 
   /**
@@ -60,53 +120,84 @@ export class BadgeEvaluatorService {
   }
 
   /**
-   * Evaluates a single condition
+   * Evaluates a single condition against the context
    */
   private static evaluateCondition(
     condition: BadgeCondition,
     context: BadgeEvaluationContext
   ): boolean {
-    const {
-      dimension,
-      category,
-      min_score,
-      max_score,
-      experience_years,
-    } = condition;
+    // Personality badge conditions
+    if (isPersonalityContext(context)) {
+      // Check attribute condition (e.g., INT >= 9)
+      if (isAttributeCondition(condition)) {
+        const attrValue = context.attributes[condition.attribute];
+        return attrValue >= condition.min_score;
+      }
 
-    // Check dimension score
-    if (dimension) {
-      const dimensionScore = context.dimensions[dimension as ScoringDimension];
-      if (dimensionScore === undefined) return false;
+      // Check alignment condition
+      if (isAlignmentCondition(condition)) {
+        if (condition.alignment) {
+          const alignments = Array.isArray(condition.alignment)
+            ? condition.alignment
+            : [condition.alignment];
+          if (!alignments.includes(context.alignment)) {
+            return false;
+          }
+        }
+        // Could also check order_axis and moral_axis if needed
+        return true;
+      }
 
-      if (min_score !== undefined && dimensionScore < min_score) return false;
-      if (max_score !== undefined && dimensionScore > max_score) return false;
+      // Check social pattern condition
+      if (isSocialPatternCondition(condition)) {
+        if (condition.social_energy && context.signals.social_energy !== condition.social_energy) {
+          return false;
+        }
+        if (condition.relationship_style && context.signals.relationship_style !== condition.relationship_style) {
+          return false;
+        }
+        // Note: connection_style and energy_pattern are in matching profile, not signals
+        // If needed, we could extend the context to include matching profile
+        return true;
+      }
     }
 
-    // Check category score
-    if (category) {
-      const categoryScore = context.category_scores[category]?.overall;
-      if (categoryScore === undefined) return false;
+    // Work badge conditions (for future Module C/D)
+    if (isWorkContext(context)) {
+      // Check work dimension condition
+      if (isWorkDimensionCondition(condition)) {
+        const dimensionScore = context.dimensions[condition.dimension];
+        if (dimensionScore === undefined) return false;
+        return dimensionScore >= condition.min_score;
+      }
 
-      if (min_score !== undefined && categoryScore < min_score) return false;
-      if (max_score !== undefined && categoryScore > max_score) return false;
+      // Check work category condition
+      if (isWorkCategoryCondition(condition)) {
+        const categoryScore = context.category_scores[condition.category]?.overall;
+        if (categoryScore === undefined) return false;
+        return categoryScore >= condition.min_score;
+      }
+
+      // Check experience condition
+      if (isExperienceCondition(condition)) {
+        // Check overall score requirement
+        if (condition.min_score !== undefined && context.overall_score < condition.min_score) {
+          return false;
+        }
+
+        // Check experience years
+        if (condition.experience_years) {
+          if (context.experience_years === undefined) return false;
+          const { min, max } = condition.experience_years;
+          if (min !== undefined && context.experience_years < min) return false;
+          if (max !== undefined && context.experience_years > max) return false;
+        }
+        return true;
+      }
     }
 
-    // Check overall score (for achievement badges)
-    if (!dimension && !category && min_score !== undefined) {
-      if (context.overall_score < min_score) return false;
-    }
-
-    // Check experience years
-    if (experience_years) {
-      if (context.experience_years === undefined) return false;
-
-      const { min, max } = experience_years;
-      if (min !== undefined && context.experience_years < min) return false;
-      if (max !== undefined && context.experience_years > max) return false;
-    }
-
-    return true;
+    // Fallback for unhandled condition types
+    return false;
   }
 
   /**
@@ -125,6 +216,7 @@ export class BadgeEvaluatorService {
       name: badge.name,
       description: badge.description,
       icon: badge.icon,
+      rarity: badge.rarity || 'common',
       earned_at: earnedAt,
     }));
   }

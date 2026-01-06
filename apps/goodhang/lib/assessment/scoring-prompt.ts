@@ -1,23 +1,147 @@
-// AI Scoring Prompt for CS Assessment
-// This prompt is sent to Claude to analyze interview responses and generate scores
+// Claude Scoring Prompt for Good Hang V2 Assessment
+// D&D-style character generation
 
-import { SCORING_RUBRICS } from '../assessment/scoring-rubrics';
+export const SCORING_SYSTEM_PROMPT = `You are scoring a Good Hang personality assessment. Your job is to analyze responses and generate a D&D-style character profile.
+
+## Scoring Guidelines
+
+For each response, score 0-10 based on:
+- **Depth**: How thoroughly did they explore the question?
+- **Specificity**: Did they give concrete examples vs vague generalities?
+- **Self-awareness**: Do they show genuine insight into themselves?
+- **Authenticity**: Does this feel real, not performative?
+
+### Score Rubric
+| Score | Description |
+|-------|-------------|
+| 9-10 | Exceptional depth, unique insight, specific examples, deeply self-aware |
+| 7-8 | Strong answer, clear thinking, some specificity |
+| 5-6 | Adequate, right direction, generic or surface-level |
+| 3-4 | Weak, vague, no real examples |
+| 1-2 | Doesn't engage with question, single sentence, dismissive |
+
+**IMPORTANT**: There are no "right" answers. You're measuring HOW they think, not WHAT they think. Reward authenticity over "impressive" answers.
+
+## Attributes (score signals 1-10)
+
+| Code | Attribute | What It Measures |
+|------|-----------|------------------|
+| INT | Intelligence | Curiosity, learning, depth of thought |
+| WIS | Wisdom | Self-awareness, emotional intelligence |
+| CHA | Charisma | Social energy, presence |
+| CON | Constitution | Consistency, follow-through, routine |
+| STR | Strength | Assertiveness, drive, confrontation comfort |
+| DEX | Dexterity | Adaptability, spontaneity, flexibility |
+
+## Question-to-Attribute Mapping
+
+| Question ID | Primary | Secondary |
+|-------------|---------|-----------|
+| a1-contrarian-belief | WIS | INT |
+| a2-broke-rule | DEX | STR |
+| a3-misunderstood | WIS | - |
+| a4-dumb-hill | CHA | WIS |
+| a5-10k-spend | STR | DEX |
+| b1-talk-for-hours | INT | - |
+| b2-ideal-saturday | CON | DEX |
+| b3-friend-crisis | WIS | CHA |
+| b4-party-dynamics | CHA | DEX |
+| b5-rabbit-hole | INT | DEX |
+
+## Alignment Detection
+
+### Order Axis (Lawful ↔ Chaotic)
+Primarily from a2-broke-rule and b2-ideal-saturday:
+
+**a2-broke-rule signals:**
+- Broke small rule reluctantly → Lawful (+2)
+- Broke rule confidently with good reason → Neutral (+2)
+- Broke rule gleefully, would do again → Chaotic (+2)
+
+**b2-ideal-saturday signals:**
+- Highly structured day → Lawful (+1)
+- Loose structure → Neutral (+1)
+- "No plan is the plan" → Chaotic (+1)
+
+### Moral Axis (Good ↔ Evil)
+Primarily from b3-friend-crisis and a5-10k-spend:
+
+**b3-friend-crisis signals:**
+- Feel it with them, empathy-first → Good (+2)
+- Balance of feel + fix → Neutral (+2)
+- Fix it / distract (action-oriented) → Neutral (+1)
+
+**a5-10k-spend signals:**
+- Spending includes others → Good (+1)
+- Pure self-focused spending → Neutral (+1)
+
+Note: "Evil" in D&D terms = self-interested, not malicious.
+
+## Output Format
+
+For the complete assessment, return a JSON object with this structure:
+
+\`\`\`json
+{
+  "question_scores": {
+    "a1-contrarian-belief": {
+      "score": 8,
+      "attribute_signals": {"WIS": 3, "INT": 2},
+      "alignment_signal": null,
+      "extracted_interests": ["philosophy", "contrarian thinking"],
+      "notes": "Strong intellectual courage, well-reasoned position"
+    }
+  },
+  "attributes": {
+    "INT": 7,
+    "WIS": 8,
+    "CHA": 5,
+    "CON": 6,
+    "STR": 7,
+    "DEX": 6
+  },
+  "alignment_scores": {
+    "order": {"lawful": 1, "neutral": 2, "chaotic": 3},
+    "moral": {"good": 4, "neutral": 2, "evil": 0}
+  },
+  "signals": {
+    "enneagram_hint": "5w4",
+    "interest_vectors": ["philosophy", "technology", "travel"],
+    "social_energy": "selective_extrovert",
+    "relationship_style": "depth_seeking"
+  },
+  "matching": {
+    "ideal_group_size": "2-4",
+    "connection_style": "intellectual",
+    "energy_pattern": "flexible",
+    "good_match_with": ["thinkers", "creatives", "adventurers"],
+    "avoid_match_with": ["small-talk lovers", "rigid planners"]
+  },
+  "tagline_elements": {
+    "core_trait": "curious thinker",
+    "social_style": "selective connector",
+    "passion": "exploring ideas"
+  }
+}
+\`\`\`
+
+## Important Notes
+
+1. **Be consistent** - if someone scores high on INT in one question, that should influence your overall INT score
+2. **Extract interests** - note specific topics, hobbies, passions mentioned for matching
+3. **Note social patterns** - introvert/extrovert/ambivert signals, group size preferences
+4. **Watch for flags** - generic answers, performative responses, lack of self-awareness
+5. **Alignment is subtle** - most people will be some form of Neutral; strong Good/Evil or Lawful/Chaotic signals are notable`;
 
 export function buildScoringPrompt(transcript: Array<{ role: string; content: string }>): string {
   // Convert transcript to readable format
-  const transcriptText = transcript
-    .map((msg) => {
-      if (msg.role === 'assistant') {
-        return `QUESTION: ${msg.content}`;
-      } else {
-        return `ANSWER: ${msg.content}`;
-      }
-    })
-    .join('\n\n');
+  const transcriptText = formatTranscriptForScoring(transcript);
 
-  return `You are an expert CS (Customer Success) talent assessor. You've just conducted an interview with a CS professional. Based on the interview transcript below, you will score them across 14 dimensions and classify their archetype.
+  return `${SCORING_SYSTEM_PROMPT}
 
-# Interview Transcript
+---
+
+# Assessment Transcript
 
 ${transcriptText}
 
@@ -25,198 +149,63 @@ ${transcriptText}
 
 # Your Task
 
-Analyze the candidate's responses and provide a comprehensive assessment.
+Analyze each response according to the rubric above and generate the complete character profile.
 
-## 1. Dimensional Scores (0-100 for each)
+1. Score each question 0-10 based on depth, specificity, self-awareness, and authenticity
+2. Extract attribute signals for each question based on the mapping
+3. Detect alignment signals from relevant questions (a2, b2, b3, a5)
+4. Identify interest vectors and social patterns
+5. Generate matching preferences based on personality signals
+6. Suggest tagline elements
 
-Score each dimension based on the rubrics below. Be rigorous and evidence-based.
-
-### IQ (Problem-Solving, Critical Thinking)
-${formatRubric('iq')}
-
-### Emotional Intelligence
-${formatRubric('eq')}
-
-### Empathy (Customer Focus)
-${formatRubric('empathy')}
-
-### Self-Awareness
-${formatRubric('self_awareness')}
-
-### Technical Aptitude
-${formatRubric('technical')}
-
-### AI Readiness
-${formatRubric('ai_readiness')}
-
-**For AI Readiness, evaluate their prompts against:**
-- ✅ Context provided (who, what, why)
-- ✅ Constraints specified (length, tone, format)
-- ✅ Output format requested (structured, specific)
-- ✅ Multi-step instructions (analyze then draft)
-- ✅ Verification steps included
-- ❌ Vague requests ("help me", "do this")
-- ❌ No context or specificity
-
-### GTM/Business Acumen
-${formatRubric('gtm')}
-
-### Communication/Personality
-${formatRubric('personality')}
-
-### Motivation
-${formatRubric('motivation')}
-
-### Work History
-${formatRubric('work_history')}
-
-### Passions/Energy
-${formatRubric('passions')}
-
-### Culture Fit
-${formatRubric('culture_fit')}
-
-### Organization
-${formatRubric('organization')}
-
-### Executive Leadership
-${formatRubric('executive_leadership')}
-
-## 2. Archetype Classification
-
-Choose the archetype that best fits this candidate:
-
-- **Technical Builder**: Strong technical skills, product-focused, systematic problem-solver
-- **GTM Operator**: Sales-minded, revenue-focused, strategic account manager
-- **Creative Strategist**: Innovation-driven, problem-solving, creative solutions
-- **Execution Machine**: Process-driven, gets things done, reliable operator
-- **Generalist Orchestrator**: Broad skills, coordinates well, jack-of-all-trades
-- **Domain Expert**: Deep expertise in specific area (AI, enterprise, vertical)
-
-## 3. Archetype Confidence
-
-Rate your confidence in the archetype classification:
-- **high**: Clear signals, strong evidence
-- **medium**: Some signals, reasonable fit
-- **low**: Ambiguous, could fit multiple archetypes
-
-## 4. Overall Score
-
-Calculate weighted average (0-100):
-- IQ: 10%
-- EQ: 10%
-- Empathy: 10%
-- Self-Awareness: 5%
-- Technical: 10%
-- AI Readiness: 15% (critical differentiator)
-- GTM: 10%
-- Personality: 10%
-- Motivation: 5%
-- Work History: 5%
-- Passions: 5%
-- Culture Fit: 5%
-- Organization: 10%
-- Executive Leadership: 5%
-
-## 5. Red Flags
-
-List any concerns or warning signs:
-- Communication issues
-- Lack of experience in critical areas
-- Values misalignment
-- Defensiveness or lack of self-awareness
-- Technical gaps
-- AI incompetency (critical for modern CS)
-
-## 6. Green Flags
-
-List strong positives:
-- Unique skills or experiences
-- Exceptional in specific areas
-- Growth trajectory
-- Strong cultural fit
-- AI power user
-
-## 7. Recommendation
-
-Write 2-3 sentences summarizing:
-- Overall assessment
-- Best fit for this candidate
-- Key strengths and growth areas
-
-## 8. Best Fit Roles
-
-List 2-3 specific role types they'd excel in based on their archetype and scores. Examples:
-- "Technical Customer Success Manager for SaaS platform"
-- "Enterprise CSM for complex B2B deals"
-- "Implementation Specialist / Solutions Architect"
-- "CS Operations / Strategy role"
-
----
-
-# Output Format
-
-Return ONLY valid JSON matching this structure:
-
-\`\`\`json
-{
-  "dimensions": {
-    "iq": 85,
-    "eq": 78,
-    "empathy": 82,
-    "self_awareness": 75,
-    "technical": 88,
-    "ai_readiness": 92,
-    "gtm": 80,
-    "personality": 76,
-    "motivation": 85,
-    "work_history": 70,
-    "passions": 80,
-    "culture_fit": 88,
-    "organization": 82,
-    "executive_leadership": 75
-  },
-  "archetype": "Technical Builder",
-  "archetype_confidence": "high",
-  "overall_score": 83,
-  "red_flags": ["Limited enterprise experience", "Could improve executive communication"],
-  "green_flags": ["Exceptional AI prompt engineering", "Strong technical foundation", "High self-awareness"],
-  "recommendation": "Strong technical CS professional with exceptional AI capabilities. Best suited for technical CSM roles with product-forward companies. Growth area: executive communication and strategic account planning.",
-  "best_fit_roles": [
-    "Technical Customer Success Manager for AI/ML platform",
-    "Solutions Architect / Implementation Specialist",
-    "Customer Success Engineer"
-  ]
-}
-\`\`\`
-
-**Important:**
-- Be rigorous and evidence-based
-- Don't inflate scores - be honest
-- AI Readiness is critical - score prompt quality carefully
-- Look for ACTUAL skills demonstrated, not just claimed
-- Consider culture fit for a fast-paced, AI-forward CS team`;
+Return your analysis as a valid JSON object following the output format specified above. Return ONLY the JSON, no additional text.`;
 }
 
-function formatRubric(dimension: string): string {
-  const rubric = SCORING_RUBRICS.find((r) => r.dimension === dimension);
-  if (!rubric) return '';
+// Helper to format transcript for scoring
+export function formatTranscriptForScoring(
+  messages: Array<{ role: string; content: string }>
+): string {
+  let result = '';
+  let currentQuestion = '';
+  let questionId = '';
 
-  return rubric.scoreRanges
-    .map(
-      (range) => `
-**${range.range}**
-${range.indicators.map((i) => `- ${i}`).join('\n')}
-`
-    )
-    .join('\n');
+  // Map question text to IDs
+  const questionIdMap: Record<string, string> = {
+    "What's something you believe that most people disagree with?": 'a1-contrarian-belief',
+    "Describe a time you broke a rule and were glad you did.": 'a2-broke-rule',
+    "What do people misunderstand about you?": 'a3-misunderstood',
+    "What's the dumbest hill you'd die on?": 'a4-dumb-hill',
+    "If I gave you $10K right now that you HAD to spend on yourself in 48 hours, what would you do?": 'a5-10k-spend',
+    "What could you talk about for hours without getting bored?": 'b1-talk-for-hours',
+    "Describe your ideal Saturday -- from waking up to going to bed.": 'b2-ideal-saturday',
+    "When a friend is going through something hard, what's your instinct -- fix it, feel it with them, or distract them?": 'b3-friend-crisis',
+    "You're at a party where you only know one person. What do you do?": 'b4-party-dynamics',
+    "What's the last rabbit hole you fell into?": 'b5-rabbit-hole',
+  };
+
+  for (const msg of messages) {
+    if (msg.role === 'assistant') {
+      currentQuestion = msg.content;
+      // Try to find matching question ID
+      questionId = Object.entries(questionIdMap).find(([text]) =>
+        msg.content.includes(text)
+      )?.[1] || 'unknown';
+    } else if (msg.role === 'user' && currentQuestion) {
+      result += `**Question [${questionId}]:** ${currentQuestion}\n`;
+      result += `**Answer:** ${msg.content}\n\n`;
+      currentQuestion = '';
+      questionId = '';
+    }
+  }
+
+  return result;
 }
 
 // Parse AI response into structured format
 export function parseAssessmentResponse(response: string): Record<string, unknown> {
   try {
     // Extract JSON from response (may have markdown code blocks)
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/{[\s\S]*}/);
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/```\s*([\s\S]*?)\s*```/) || response.match(/{[\s\S]*}/);
 
     if (!jsonMatch) {
       throw new Error('No JSON found in response');

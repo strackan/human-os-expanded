@@ -63,13 +63,22 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Preview data comes from metadata JSONB column
+    const preview = result.preview || {};
+
+    // Check if there's an existing user linked to this key
+    const hasExistingUser = !!preview.user_id;
+
     return NextResponse.json({
       valid: true,
+      product: result.product,
       sessionId: result.session_id,
+      hasExistingUser,
+      userId: preview.user_id || null,
       preview: {
-        tier: result.tier || 'unknown',
-        archetypeHint: result.archetype_hint || 'Your character awaits...',
-        overallScoreRange: '70-100', // TODO: Calculate from session
+        tier: preview.tier || 'unknown',
+        archetypeHint: preview.archetype_hint || 'Your character awaits...',
+        overallScoreRange: preview.score_range || '70-100',
       },
     });
   } catch (error) {

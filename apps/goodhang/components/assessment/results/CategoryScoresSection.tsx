@@ -7,37 +7,52 @@ interface CategoryScoresSectionProps {
 }
 
 export function CategoryScoresSection({ categoryScores }: CategoryScoresSectionProps) {
+  const technical = categoryScores.technical;
+  const emotional = categoryScores.emotional;
+  const creative = categoryScores.creative;
+
+  // Only render if at least one category exists
+  if (!technical && !emotional && !creative) {
+    return null;
+  }
+
   return (
     <div className="mb-8">
       <h2 className="text-3xl font-bold mb-6 text-white">Category Scores</h2>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Technical */}
-        <CategoryCard
-          title="Technical"
-          score={categoryScores.technical.overall}
-          subscores={categoryScores.technical.subscores}
-          color="blue"
-          icon="⚙️"
-        />
+        {technical && (
+          <CategoryCard
+            title="Technical"
+            score={technical.overall}
+            subscores={technical.subscores}
+            color="blue"
+            icon="⚙️"
+          />
+        )}
 
         {/* Emotional */}
-        <CategoryCard
-          title="Emotional"
-          score={categoryScores.emotional.overall}
-          subscores={categoryScores.emotional.subscores}
-          color="purple"
-          icon="❤️"
-        />
+        {emotional && (
+          <CategoryCard
+            title="Emotional"
+            score={emotional.overall}
+            subscores={emotional.subscores}
+            color="purple"
+            icon="❤️"
+          />
+        )}
 
         {/* Creative */}
-        <CategoryCard
-          title="Creative"
-          score={categoryScores.creative.overall}
-          subscores={categoryScores.creative.subscores}
-          color="pink"
-          icon="🎨"
-        />
+        {creative && (
+          <CategoryCard
+            title="Creative"
+            score={creative.overall}
+            subscores={creative.subscores}
+            color="pink"
+            icon="🎨"
+          />
+        )}
       </div>
     </div>
   );
@@ -46,7 +61,7 @@ export function CategoryScoresSection({ categoryScores }: CategoryScoresSectionP
 interface CategoryCardProps {
   title: string;
   score: number;
-  subscores: Record<string, number>;
+  subscores?: Record<string, number> | undefined;
   color: 'blue' | 'purple' | 'pink';
   icon: string;
 }
@@ -65,14 +80,16 @@ function CategoryCard({ title, score, subscores, color, icon }: CategoryCardProp
       <div className="text-5xl font-bold text-white mb-4">{score}</div>
 
       {/* Subscores */}
-      <div className="space-y-2">
-        {Object.entries(subscores).map(([name, value]) => (
-          <div key={name} className="flex justify-between items-center text-sm">
-            <span className="text-gray-300 capitalize">{name.replace('_', ' ')}</span>
-            <span className="text-white font-semibold">{value}</span>
-          </div>
-        ))}
-      </div>
+      {subscores && (
+        <div className="space-y-2">
+          {Object.entries(subscores).map(([name, value]) => (
+            <div key={name} className="flex justify-between items-center text-sm">
+              <span className="text-gray-300 capitalize">{name.replace('_', ' ')}</span>
+              <span className="text-white font-semibold">{value}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,8 +1,10 @@
 // POST /api/assessment/[sessionId]/complete
 // Triggers Claude AI scoring and completes the assessment
+// Generates an activation key for desktop app access
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { AssessmentScoringService } from '@/lib/services/AssessmentScoringService';
 
 export async function POST(
@@ -82,29 +84,23 @@ export async function POST(
 
     console.log(`Scoring complete for session ${sessionId}`);
 
-    // Save results to database
+    // Save results to database (V2: D&D-style character generation)
     const { error: updateError } = await supabase
       .from('cs_assessment_sessions')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
         analyzed_at: scoringResults.analyzed_at,
-        dimensions: scoringResults.dimensions,
         overall_score: scoringResults.overall_score,
-        personality_type: scoringResults.personality_profile?.mbti,
-        personality_profile: scoringResults.personality_profile,
-        category_scores: scoringResults.category_scores,
-        ai_orchestration_scores: scoringResults.ai_orchestration_scores,
-        archetype: scoringResults.archetype,
-        archetype_confidence: scoringResults.archetype_confidence,
-        tier: scoringResults.tier,
-        flags: scoringResults.flags,
-        recommendation: scoringResults.recommendation,
-        best_fit_roles: scoringResults.best_fit_roles,
-        badges: scoringResults.badges?.map((b) => b.id) || [],
-        public_summary: scoringResults.public_summary,
-        detailed_summary: scoringResults.detailed_summary,
-        is_published: false,
+        // V2 Character Profile
+        character_profile: scoringResults.profile,
+        attributes: scoringResults.attributes,
+        signals: scoringResults.signals,
+        matching: scoringResults.matching,
+        question_scores: scoringResults.question_scores,
+        // Keep archetype for backwards compatibility (use class name)
+        archetype: scoringResults.profile.class,
+        tier: scoringResults.overall_score >= 70 ? 'top_1' : scoringResults.overall_score >= 50 ? 'benched' : 'passed',
       })
       .eq('id', sessionId);
 
@@ -138,10 +134,48 @@ export async function POST(
         .eq('id', user.id);
     }
 
+    // Generate activation key for desktop app
+    let activationKey = null;
+    try {
+      const serviceClient = createServiceClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      );
+
+      const { data: keyData, error: keyError } = await serviceClient.rpc('create_activation_key', {
+        p_product: 'goodhang',
+        p_session_id: sessionId,
+        p_expires_in_days: 30, // Longer expiry since they're already authenticated
+        p_metadata: {
+          // V2 Character info
+          character_class: scoringResults.profile.class,
+          race: scoringResults.profile.race,
+          alignment: scoringResults.profile.alignment,
+          overall_score: scoringResults.overall_score,
+          user_id: user.id,
+        },
+      });
+
+      if (!keyError && keyData && keyData.length > 0) {
+        activationKey = {
+          code: keyData[0].code,
+          deepLink: keyData[0].deep_link,
+          expiresAt: keyData[0].expires_at,
+        };
+        console.log(`Generated activation key ${keyData[0].code} for session ${sessionId}`);
+      } else if (keyError) {
+        console.error('Error generating activation key:', keyError);
+      }
+    } catch (keyGenError) {
+      console.error('Error generating activation key:', keyGenError);
+      // Don't fail the completion if key generation fails
+    }
+
     return NextResponse.json({
       session_id: sessionId,
       status: 'completed',
       redirect_url: `/assessment/results/${sessionId}`,
+      activation_key: activationKey,
     });
   } catch (error) {
     console.error('Error in /api/assessment/[sessionId]/complete:', error);

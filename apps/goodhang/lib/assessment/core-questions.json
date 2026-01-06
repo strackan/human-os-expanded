@@ -1,341 +1,159 @@
 {
-  "id": "cs-elite-assessment-v2",
-  "title": "GoodHang CS Assessment",
+  "id": "goodhang-personality-v2",
+  "title": "Good Hang Personality Assessment",
   "version": "2.0",
-  "estimatedMinutes": 30,
-  "completionMessage": "Assessment complete. Your results are being analyzed.",
-  "scoringPhilosophy": "Hard grading: 50 = average. Most candidates score 40-60. Elite performers (top 10%) score 85+.",
+  "estimatedMinutes": 15,
+  "completionMessage": "Assessment complete. Your character is being generated.",
+  "scoringPhilosophy": "Score 0-10 based on depth, specificity, self-awareness, and authenticity. There are no right answers - we measure HOW you think, not WHAT you think.",
   "sections": [
     {
-      "id": "personality_warmup",
+      "id": "module_a_identity",
       "title": "Who You Are",
-      "description": "Quick personality and work style questions",
+      "description": "Let's start with who you are at your core. There are no right answers -- just be honest.",
       "order": 1,
-      "transitionMessage": "Great start. Now let's dig into your CS expertise.",
+      "transitionMessage": "Great. Now let's explore how you connect with others.",
       "questions": [
         {
-          "id": "pers-0",
-          "section": "personality_warmup",
+          "id": "a1-contrarian-belief",
+          "section": "module_a_identity",
           "order": 1,
-          "text": "Hey! Tell us a bit about yourself - who you are, what you're working on, and anything else you'd like us to know.",
+          "text": "What's something you believe that most people disagree with?",
           "type": "open_ended",
-          "dimensions": ["personality", "culture_fit", "passions"],
-          "scoring_guidance": "Look for: authenticity, warmth, communication style, what they choose to highlight. No wrong answers - this is about getting to know them as a person.",
+          "attributes": {
+            "primary": "WIS",
+            "secondary": "INT"
+          },
+          "scoring_guidance": "Look for: intellectual courage, genuine contrarian thinking, ability to articulate reasoning. Reward specific examples and nuanced reasoning. Red flag: picks something safe or popular, or can't defend position.",
           "required": true
         },
         {
-          "id": "pers-1",
-          "section": "personality_warmup",
+          "id": "a2-broke-rule",
+          "section": "module_a_identity",
           "order": 2,
-          "text": "When you're under significant stress at work, what does your behavior look like? Be honest - we all have patterns.",
+          "text": "Describe a time you broke a rule and were glad you did.",
           "type": "open_ended",
-          "dimensions": ["self_awareness", "personality", "eq"],
-          "enneagram_indicator": "stress_response",
-          "scoring_guidance": "Look for: genuine self-awareness, specific behavioral patterns, evidence of growth. Red flag: 'I thrive under pressure' without nuance. Maps to Enneagram stress patterns.",
+          "attributes": {
+            "primary": "DEX",
+            "secondary": "STR"
+          },
+          "alignment_indicator": "order_axis",
+          "scoring_guidance": "Look for: self-awareness about rule-breaking, reasoning behind it, outcome reflection. Alignment signals: reluctant = Lawful, confident with reason = Neutral, gleeful = Chaotic.",
           "required": true
         },
         {
-          "id": "pers-2",
-          "section": "personality_warmup",
+          "id": "a3-misunderstood",
+          "section": "module_a_identity",
           "order": 3,
-          "text": "What kind of humor do you enjoy most? Describe how you like to spend time with friends - what makes for a great hangout?",
+          "text": "What do people misunderstand about you?",
           "type": "open_ended",
-          "dimensions": ["culture_fit", "personality", "passions"],
-          "scoring_guidance": "Look for: specificity, authenticity, social preferences, warmth. Red flag: 'I don't have time for fun' or overly performative answers.",
+          "attributes": {
+            "primary": "WIS",
+            "secondary": null
+          },
+          "scoring_guidance": "Look for: deep self-awareness, specific examples, insight into perception gaps. Reward vulnerability and honesty. Red flag: 'nothing' or generic answers like 'I'm actually nice'.",
           "required": true
         },
         {
-          "id": "pers-3",
-          "section": "personality_warmup",
+          "id": "a4-dumb-hill",
+          "section": "module_a_identity",
           "order": 4,
-          "text": "What's a belief you held strongly 5 years ago that you've since changed your mind about? What changed it?",
+          "text": "What's the dumbest hill you'd die on?",
           "type": "open_ended",
-          "dimensions": ["self_awareness", "iq", "personality"],
-          "scoring_guidance": "Look for: intellectual humility, specific example, clear reasoning about what changed. Red flag: can't think of anything or picks something trivial.",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "strategic_accounts",
-      "title": "Strategic Account Management",
-      "description": "How you manage complex enterprise relationships",
-      "order": 2,
-      "transitionMessage": "Now let's get into the hard CS scenarios.",
-      "questions": [
-        {
-          "id": "strat-1",
-          "section": "strategic_accounts",
-          "order": 1,
-          "text": "Your executive sponsor just resigned with no notice. Walk me through exactly what you do in the first 72 hours.",
-          "type": "open_ended",
-          "dimensions": ["gtm", "eq", "executive_leadership"],
-          "scoring_guidance": "Elite answers include: immediate outreach to other contacts, research on successor, internal escalation, risk assessment, documentation of relationship history. Look for multi-threading awareness and urgency without panic.",
+          "attributes": {
+            "primary": "CHA",
+            "secondary": "WIS"
+          },
+          "scoring_guidance": "Look for: personality showing through, self-aware humor, passionate defense of something trivial. Reward authenticity and entertainment value. Red flag: picks something actually important or can't commit.",
           "required": true
         },
         {
-          "id": "strat-2",
-          "section": "strategic_accounts",
-          "order": 2,
-          "text": "You have 50 accounts. You can only give white-glove attention to 10. What's your framework for deciding which 10?",
-          "type": "open_ended",
-          "dimensions": ["gtm", "iq", "organization"],
-          "scoring_guidance": "Look for: multi-factor framework (ARR, expansion potential, risk, strategic value, logo value). Red flag: only mentions revenue or only mentions risk. Elite answers acknowledge tradeoffs.",
-          "required": true
-        },
-        {
-          "id": "strat-3",
-          "section": "strategic_accounts",
-          "order": 3,
-          "text": "Your customer's IT team wants one thing, their business team wants another, and they're both your stakeholders. The requests are mutually exclusive. How do you navigate this?",
-          "type": "open_ended",
-          "dimensions": ["eq", "executive_leadership", "gtm"],
-          "scoring_guidance": "Look for: stakeholder mapping, understanding underlying needs vs stated wants, facilitation skills, escalation path awareness. Elite answers bring parties together rather than picking sides.",
-          "required": true
-        },
-        {
-          "id": "strat-4",
-          "section": "strategic_accounts",
-          "order": 4,
-          "text": "Describe a QBR you ran that actually changed the trajectory of an account. What made it different from a checkbox QBR?",
-          "type": "open_ended",
-          "dimensions": ["gtm", "executive_leadership", "iq"],
-          "scoring_guidance": "Look for: specific outcomes, executive engagement, data-driven insights, strategic recommendations. Red flag: describes a standard update meeting. Elite answers show QBR as strategic inflection point.",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "churn_retention",
-      "title": "Churn & Retention",
-      "description": "How you fight for customers and learn from losses",
-      "order": 3,
-      "transitionMessage": "Let's talk about the hard conversations.",
-      "questions": [
-        {
-          "id": "churn-1",
-          "section": "churn_retention",
-          "order": 1,
-          "text": "Tell me about a customer you lost that you initially classified as 'unavoidable churn' - acquisition, went out of business, etc. Looking back now, what would you do differently?",
-          "type": "open_ended",
-          "dimensions": ["self_awareness", "gtm", "iq"],
-          "scoring_guidance": "Key insight: 'unavoidable churn' mindset is toxic. Elite CSMs find leverage even in hard situations. Look for: root cause analysis, earlier intervention opportunities, systemic learnings. Red flag: still blames external factors.",
-          "required": true
-        },
-        {
-          "id": "churn-2",
-          "section": "churn_retention",
-          "order": 2,
-          "text": "You need to communicate a 15% price increase to a strategic account that's already frustrated with your product. Walk me through your approach.",
-          "type": "open_ended",
-          "dimensions": ["eq", "gtm", "empathy"],
-          "scoring_guidance": "Look for: direct language (not 'adjustment'), value-first framing, acknowledgment of their frustration, creative options (multi-year lock, value trades like case studies). Red flag: avoids the conversation or leads with apology.",
-          "required": true
-        },
-        {
-          "id": "churn-3",
-          "section": "churn_retention",
-          "order": 3,
-          "text": "A customer is churning and there's genuinely nothing you can do to save them - the decision is made. How do you handle the offboarding? What do you try to accomplish?",
-          "type": "open_ended",
-          "dimensions": ["eq", "self_awareness", "gtm"],
-          "scoring_guidance": "Look for: graceful exit, learning extraction, door-left-open mentality, reference/referral ask, internal feedback loop. Elite answers see offboarding as relationship continuation, not ending.",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "expansion_growth",
-      "title": "Expansion & Growth",
-      "description": "How you identify and execute growth opportunities",
-      "order": 4,
-      "transitionMessage": "Now let's talk about growing accounts.",
-      "questions": [
-        {
-          "id": "exp-1",
-          "section": "expansion_growth",
-          "order": 1,
-          "text": "Describe 3 implicit signals that a customer is ready for expansion - signals they wouldn't directly tell you.",
-          "type": "open_ended",
-          "dimensions": ["gtm", "iq", "eq"],
-          "scoring_guidance": "Look for: usage patterns, org changes (hiring, new initiatives), questions about features outside current scope, champion promotion, increased executive engagement. Red flag: only mentions explicit asks.",
-          "required": true
-        },
-        {
-          "id": "exp-2",
-          "section": "expansion_growth",
-          "order": 2,
-          "text": "What's the difference between a CSM who 'supports' expansion and one who 'drives' it? Which are you, and why?",
-          "type": "open_ended",
-          "dimensions": ["gtm", "self_awareness", "executive_leadership"],
-          "scoring_guidance": "Look for: understanding of the spectrum, honest self-assessment, specific examples. Elite answers show nuance - knowing when to drive vs support based on context.",
-          "required": true
-        },
-        {
-          "id": "exp-3",
-          "section": "expansion_growth",
-          "order": 3,
-          "text": "You've identified a significant expansion opportunity but your sales counterpart isn't prioritizing it. How do you handle this?",
-          "type": "open_ended",
-          "dimensions": ["eq", "executive_leadership", "gtm"],
-          "scoring_guidance": "Look for: collaboration skills, data-driven persuasion, escalation judgment, understanding of sales priorities. Red flag: goes around sales or gives up. Elite answers build cross-functional trust.",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "onboarding_ttv",
-      "title": "Onboarding & Time-to-Value",
-      "description": "How you get customers to success quickly",
-      "order": 5,
-      "transitionMessage": "Let's talk about getting customers started right.",
-      "questions": [
-        {
-          "id": "onb-1",
-          "section": "onboarding_ttv",
-          "order": 1,
-          "text": "You're designing onboarding for a new enterprise customer segment you've never served before. How do you identify their 'aha moment' and what's your approach to setting a time-to-value target?",
-          "type": "open_ended",
-          "dimensions": ["iq", "gtm", "organization"],
-          "scoring_guidance": "Look for: customer research methodology, segment-specific thinking, measurable TTV targets, understanding that 'aha moment' varies by persona. Red flag: one-size-fits-all answer.",
-          "required": true
-        },
-        {
-          "id": "onb-2",
-          "section": "onboarding_ttv",
-          "order": 2,
-          "text": "An enterprise customer's onboarding is stalling because their internal champion doesn't have bandwidth to drive adoption. What do you do?",
-          "type": "open_ended",
-          "dimensions": ["eq", "gtm", "executive_leadership"],
-          "scoring_guidance": "Look for: finding alternative champions, escalation to exec sponsor, reducing champion burden, creative engagement tactics. Elite answers address root cause (champion capacity) not symptom (slow adoption).",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "internal_influence",
-      "title": "Internal Influence & Product",
-      "description": "How you advocate internally for customers",
-      "order": 6,
-      "transitionMessage": "Now let's talk about working with your own company.",
-      "questions": [
-        {
-          "id": "int-1",
-          "section": "internal_influence",
-          "order": 1,
-          "text": "Give me an example where you successfully got a product feature prioritized. What data did you bring? What approaches didn't work before that?",
-          "type": "open_ended",
-          "dimensions": ["executive_leadership", "iq", "organization"],
-          "scoring_guidance": "Look for: data-driven approach, understanding of product priorities, persistence with iteration, cross-functional relationship building. Red flag: just escalated or complained.",
-          "required": true
-        },
-        {
-          "id": "int-2",
-          "section": "internal_influence",
-          "order": 2,
-          "text": "A customer escalates an issue that's actually caused by a limitation in your product that won't be fixed soon. How do you handle both the customer and internal stakeholders?",
-          "type": "open_ended",
-          "dimensions": ["eq", "executive_leadership", "empathy"],
-          "scoring_guidance": "Look for: transparent communication with customer, workaround creativity, internal escalation without blame, setting realistic expectations. Elite answers are 'product shields' while maintaining customer trust.",
-          "required": true
-        }
-      ]
-    },
-    {
-      "id": "ai_orchestration",
-      "title": "AI & Systems Thinking",
-      "description": "How you leverage AI and think about complex systems",
-      "order": 7,
-      "transitionMessage": "Let's see how you work with AI tools.",
-      "questions": [
-        {
-          "id": "ai-0",
-          "section": "ai_orchestration",
-          "order": 1,
-          "text": "How does the Internet work?",
-          "type": "open_ended",
-          "dimensions": ["iq", "technical"],
-          "scoring_guidance": "Look for: clarity of explanation, appropriate depth, ability to simplify complex concepts. Elite answers show layered understanding (physical, protocol, application layers) without being pedantic.",
-          "required": true
-        },
-        {
-          "id": "ai-1",
-          "section": "ai_orchestration",
-          "order": 2,
-          "text": "How are you currently using AI tools in your CS work? Give me 2-3 specific examples with the actual prompts or workflows you use.",
-          "type": "open_ended",
-          "dimensions": ["ai_readiness", "technical", "iq"],
-          "scoring_guidance": "Look for: specific, practical applications; prompt sophistication; workflow integration. Red flag: vague 'I use ChatGPT for emails' without specifics. Elite answers show systematic AI integration.",
-          "required": true
-        },
-        {
-          "id": "ai-2",
-          "section": "ai_orchestration",
-          "order": 3,
-          "text": "**Scenario:** You need to analyze 50 customer support tickets to identify common themes and prioritize which issues to address first.\n\n**Your Task:** Write the EXACT prompt you would give to an AI tool to help you analyze these tickets.",
-          "type": "open_ended",
-          "dimensions": ["ai_readiness", "iq"],
-          "scoring_guidance": "Look for: clear instructions, structured output request, categorization framework, priority criteria. Elite prompts show understanding of prompt engineering - context, constraints, format.",
-          "required": true
-        },
-        {
-          "id": "ai-3",
-          "section": "ai_orchestration",
-          "order": 4,
-          "text": "**Scenario:** You're designing a customer health scoring algorithm. You have: product usage (logins/week), support tickets, NPS score, contract value, days since last engagement, and executive sponsor engagement.\n\n**Your Task:** Write the EXACT prompt you would give to an AI to help you design this scoring system.",
-          "type": "open_ended",
-          "dimensions": ["ai_readiness", "iq", "gtm"],
-          "scoring_guidance": "Look for: understanding of weighted factors, awareness of edge cases, request for reasoning, practical implementation focus. Elite answers translate business intuition into AI-executable tasks.",
-          "required": true
-        },
-        {
-          "id": "ai-4",
-          "section": "ai_orchestration",
+          "id": "a5-10k-spend",
+          "section": "module_a_identity",
           "order": 5,
-          "text": "When should you NOT use AI? Give me 3 specific CS scenarios where AI would be the wrong choice.",
+          "text": "If I gave you $10K right now that you HAD to spend on yourself in 48 hours, what would you do?",
           "type": "open_ended",
-          "dimensions": ["ai_readiness", "iq", "eq"],
-          "scoring_guidance": "Look for: emotional conversations, legal/compliance sensitivity, creative strategy, relationship moments. Red flag: can't think of limitations. Elite answers show AI judgment, not just AI enthusiasm.",
+          "attributes": {
+            "primary": "STR",
+            "secondary": "DEX"
+          },
+          "alignment_indicator": "moral_axis",
+          "scoring_guidance": "Look for: decisiveness, values revealed through spending choices, creativity. Alignment signals: includes others = Good lean, pure self-focused = Neutral. Note interests for matching.",
           "required": true
         }
       ]
     },
     {
-      "id": "self_awareness_closing",
-      "title": "Self-Awareness & Growth",
-      "description": "Final questions about who you are",
-      "order": 8,
-      "transitionMessage": "Last section - almost done.",
+      "id": "module_b_connection",
+      "title": "How You Relate",
+      "description": "Now let's explore how you connect with the world and other people.",
+      "order": 2,
+      "transitionMessage": null,
       "questions": [
         {
-          "id": "self-1",
-          "section": "self_awareness_closing",
+          "id": "b1-talk-for-hours",
+          "section": "module_b_connection",
           "order": 1,
-          "text": "What's the biggest gap in your CS skillset right now? What are you doing about it?",
+          "text": "What could you talk about for hours without getting bored?",
           "type": "open_ended",
-          "dimensions": ["self_awareness", "passions", "personality"],
-          "scoring_guidance": "Look for: genuine self-awareness, specific gap identification, concrete improvement plan. Red flag: 'I work too hard' or false humility. Elite answers show growth mindset with action.",
+          "attributes": {
+            "primary": "INT",
+            "secondary": null
+          },
+          "scoring_guidance": "Look for: passion, depth of knowledge, curiosity signals. Extract interest vectors for matching. Reward specificity and enthusiasm. Red flag: 'nothing' or very generic topics.",
           "required": true
         },
         {
-          "id": "self-2",
-          "section": "self_awareness_closing",
+          "id": "b2-ideal-saturday",
+          "section": "module_b_connection",
           "order": 2,
-          "text": "Describe a time you received feedback that was hard to hear. How did you respond in the moment vs. after you had time to process?",
+          "text": "Describe your ideal Saturday -- from waking up to going to bed.",
           "type": "open_ended",
-          "dimensions": ["self_awareness", "eq", "personality"],
-          "enneagram_indicator": "feedback_response",
-          "scoring_guidance": "Look for: honest initial reaction, processing journey, behavioral change. Maps to Enneagram integration/disintegration patterns. Elite answers show emotional maturity arc.",
+          "attributes": {
+            "primary": "CON",
+            "secondary": "DEX"
+          },
+          "alignment_indicator": "order_axis",
+          "scoring_guidance": "Look for: lifestyle preferences, routine vs spontaneity, social patterns. Alignment signals: highly structured = Lawful, loose structure = Neutral, 'no plan is the plan' = Chaotic.",
           "required": true
         },
         {
-          "id": "self-3",
-          "section": "self_awareness_closing",
+          "id": "b3-friend-crisis",
+          "section": "module_b_connection",
           "order": 3,
-          "text": "What energizes you at work? What drains you? Be specific.",
+          "text": "When a friend is going through something hard, what's your instinct -- fix it, feel it with them, or distract them?",
           "type": "open_ended",
-          "dimensions": ["passions", "self_awareness", "culture_fit"],
-          "scoring_guidance": "Look for: specific examples, self-knowledge, honesty about limitations. Helps identify role fit and potential burnout risks. Elite answers show pattern recognition in their own motivation.",
+          "attributes": {
+            "primary": "WIS",
+            "secondary": "CHA"
+          },
+          "alignment_indicator": "moral_axis",
+          "scoring_guidance": "Look for: emotional intelligence, self-awareness about support style. Alignment signals: feel with them = Good (+2), balance = Neutral (+2), fix/distract = action-oriented (+1 Neutral).",
+          "required": true
+        },
+        {
+          "id": "b4-party-dynamics",
+          "section": "module_b_connection",
+          "order": 4,
+          "text": "You're at a party where you only know one person. What do you do?",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "CHA",
+            "secondary": "DEX"
+          },
+          "scoring_guidance": "Look for: social strategy, comfort level, authenticity about social preferences. Extract social energy pattern (introvert/extrovert/ambivert). Reward honest self-assessment.",
+          "required": true
+        },
+        {
+          "id": "b5-rabbit-hole",
+          "section": "module_b_connection",
+          "order": 5,
+          "text": "What's the last rabbit hole you fell into?",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "INT",
+            "secondary": "DEX"
+          },
+          "scoring_guidance": "Look for: curiosity, ability to get absorbed in learning, specificity. Extract interest vectors. Reward depth and enthusiasm. Red flag: can't think of anything or very shallow answer.",
           "required": true
         }
       ]
