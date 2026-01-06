@@ -13,14 +13,15 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export function createHumanOSClient(useServiceRole = false) {
-  const supabaseUrl = process.env.HUMAN_OS_SUPABASE_URL;
-  const supabaseAnonKey = process.env.HUMAN_OS_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.HUMAN_OS_SUPABASE_SERVICE_ROLE_KEY;
+  // Fall back to main Supabase if Human-OS vars not set
+  const supabaseUrl = process.env.HUMAN_OS_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.HUMAN_OS_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const supabaseServiceKey = process.env.HUMAN_OS_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error(
-      'Missing Human-OS Supabase environment variables. ' +
-      'Please set HUMAN_OS_SUPABASE_URL and HUMAN_OS_SUPABASE_ANON_KEY.'
+      'Missing Supabase environment variables. ' +
+      'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
     );
   }
 
