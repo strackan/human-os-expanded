@@ -4,6 +4,8 @@ import { listen } from '@tauri-apps/api/event';
 import { useNavigate } from 'react-router-dom';
 import ActivatePage from './routes/activate';
 import SignupPage from './routes/signup';
+import SigninPage from './routes/signin';
+import AuthCallbackPage from './routes/auth-callback';
 import ResultsPage from './routes/results';
 import { useAuthStore } from './lib/stores/auth';
 
@@ -49,6 +51,8 @@ function App() {
           />
           <Route path="/activate" element={<ActivatePage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signin" element={<SigninPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/results" element={<ResultsPage />} />
         </Routes>
       </main>

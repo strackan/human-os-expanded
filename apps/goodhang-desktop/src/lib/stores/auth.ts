@@ -5,19 +5,24 @@ interface AuthState {
   isAuthenticated: boolean;
   userId: string | null;
   sessionId: string | null;
+  token: string | null;
   loading: boolean;
   error: string | null;
 
   // Actions
   checkSession: () => Promise<void>;
-  setSession: (userId: string, sessionId: string) => void;
+  setSession: (userId: string, sessionId: string, token: string) => void;
   clearSession: () => Promise<void>;
 }
+
+// In-memory token storage (cleared on app restart)
+let memoryToken: string | null = null;
 
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   userId: null,
   sessionId: null,
+  token: null,
   loading: true,
   error: null,
 
@@ -32,6 +37,7 @@ export const useAuthStore = create<AuthState>((set) => ({
           isAuthenticated: true,
           userId: session.userId,
           sessionId: session.sessionId,
+          token: memoryToken, // Restore from memory if available
           loading: false,
         });
       } else {
@@ -43,17 +49,20 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  setSession: (userId, sessionId) => {
-    set({ isAuthenticated: true, userId, sessionId, loading: false });
+  setSession: (userId, sessionId, token) => {
+    memoryToken = token; // Store in memory
+    set({ isAuthenticated: true, userId, sessionId, token, loading: false });
   },
 
   clearSession: async () => {
     try {
       await invoke('clear_session');
+      memoryToken = null;
       set({
         isAuthenticated: false,
         userId: null,
         sessionId: null,
+        token: null,
         loading: false,
       });
     } catch (err) {

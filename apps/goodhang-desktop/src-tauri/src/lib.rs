@@ -1,6 +1,7 @@
 mod commands;
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
+use tauri_plugin_deep_link::DeepLinkExt;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -13,12 +14,25 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 let handle = app.handle().clone();
-                app.deep_link().on_open_url(move |event| {
+                app.deep_link().on_open_url(move |event: tauri_plugin_deep_link::OpenUrlEvent| {
                     for url in event.urls() {
                         if url.scheme() == "goodhang" {
-                            if let Some(code) = url.path().strip_prefix("/activate/") {
+                            // Extract activation code from path
+                            // URL format: goodhang://activate/GH-XXXX-XXXX
+                            let path = url.path();
+                            // Handle both "/activate/CODE" and "activate/CODE" (Windows may omit leading slash)
+                            let code = path
+                                .strip_prefix("/activate/")
+                                .or_else(|| path.strip_prefix("activate/"))
+                                .or_else(|| path.strip_prefix("/"))
+                                .unwrap_or(path);
+
+                            if !code.is_empty() {
                                 if let Some(window) = handle.get_webview_window("main") {
+                                    println!("Deep link received: code={}", code);
                                     let _ = window.emit("activation-code", code);
+                                    // Focus the window
+                                    let _ = window.set_focus();
                                 }
                             }
                         }

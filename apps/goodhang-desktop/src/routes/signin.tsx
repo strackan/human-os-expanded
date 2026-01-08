@@ -17,20 +17,20 @@ interface Preview {
   overallScoreRange: string;
 }
 
-export default function SignupPage() {
+export default function SigninPage() {
   const navigate = useNavigate();
   const { setSession } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
     password: '',
   });
 
   const activationCode = sessionStorage.getItem('activationCode');
   const sessionId = sessionStorage.getItem('sessionId');
+  const existingUserId = sessionStorage.getItem('existingUserId');
 
   useEffect(() => {
     if (!activationCode) {
@@ -56,19 +56,22 @@ export default function SignupPage() {
     setError(null);
 
     try {
-      // Create Supabase account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.name,
-          },
-        },
-      });
+      // Sign in with email/password
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create account');
+      if (!authData.user) throw new Error('Failed to sign in');
+
+      // Verify user matches the activation key's user
+      if (existingUserId && authData.user.id !== existingUserId) {
+        throw new Error(
+          'This activation key belongs to a different account. Please sign in with the account you used to take the assessment.'
+        );
+      }
 
       // Claim the activation key
       const claimResult = await claimActivationKey(
@@ -80,7 +83,7 @@ export default function SignupPage() {
         throw new Error(claimResult.error || 'Failed to claim activation key');
       }
 
-      // Store session securely (use sessionId if available, otherwise use a placeholder)
+      // Store session securely
       const token = authData.session?.access_token || '';
       const effectiveSessionId = sessionId || 'no-session';
       await storeSession(authData.user.id, effectiveSessionId, token);
@@ -92,14 +95,39 @@ export default function SignupPage() {
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
+      sessionStorage.removeItem('existingUserId');
 
-      // Navigate to results (or home if no session)
+      // Navigate to results
       navigate(sessionId ? '/results' : '/');
     } catch (err: unknown) {
-      console.error('Signup error:', err);
-      const message = err instanceof Error ? err.message : 'Failed to create account. Please try again.';
+      console.error('Signin error:', err);
+      const message =
+        err instanceof Error ? err.message : 'Failed to sign in. Please try again.';
       setError(message);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (oauthError) throw oauthError;
+      // OAuth will redirect the user
+    } catch (err: unknown) {
+      console.error('LinkedIn signin error:', err);
+      const message =
+        err instanceof Error ? err.message : 'Failed to sign in with LinkedIn';
+      setError(message);
       setLoading(false);
     }
   };
@@ -112,11 +140,9 @@ export default function SignupPage() {
         className="w-full max-w-md"
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Create Your Account
-          </h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
           <p className="text-gray-400">
-            One more step to reveal your character
+            Sign in to reveal your character profile
           </p>
         </div>
 
@@ -147,27 +173,30 @@ export default function SignupPage() {
         )}
 
         <div className="bg-gh-dark-800 rounded-2xl p-8 shadow-xl">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Full Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                required
-                className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
-                placeholder="Your name"
-              />
-            </div>
+          {/* LinkedIn Sign In Button */}
+          <button
+            onClick={handleLinkedInSignIn}
+            disabled={loading}
+            className="w-full py-3 px-4 bg-[#0077B5] hover:bg-[#006097] disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-3 mb-6"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+            </svg>
+            Continue with LinkedIn
+          </button>
 
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-700" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-gh-dark-800 text-gray-500">
+                or sign in with email
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="email"
@@ -203,9 +232,8 @@ export default function SignupPage() {
                   setFormData({ ...formData, password: e.target.value })
                 }
                 required
-                minLength={8}
                 className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
-                placeholder="At least 8 characters"
+                placeholder="Your password"
               />
             </div>
 
@@ -222,7 +250,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 bg-gh-purple-600 hover:bg-gh-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors mt-6"
+              className="w-full py-3 px-4 bg-gh-purple-600 hover:bg-gh-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors mt-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -245,17 +273,22 @@ export default function SignupPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                     />
                   </svg>
-                  Creating account...
+                  Signing in...
                 </span>
               ) : (
-                'Create Account & Reveal Character'
+                'Sign In & Reveal Character'
               )}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-gray-500 text-xs">
-            By creating an account, you agree to our Terms of Service and
-            Privacy Policy.
+          <p className="mt-4 text-center text-gray-500 text-sm">
+            Don't have an account?{' '}
+            <button
+              onClick={() => navigate('/signup')}
+              className="text-gh-purple-400 hover:text-gh-purple-300"
+            >
+              Create one
+            </button>
           </p>
         </div>
       </motion.div>

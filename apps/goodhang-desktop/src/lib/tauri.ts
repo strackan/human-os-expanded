@@ -7,6 +7,8 @@ import { invoke } from '@tauri-apps/api/core';
 export interface ValidationResult {
   valid: boolean;
   sessionId?: string;
+  hasExistingUser?: boolean;
+  userId?: string;
   preview?: AssessmentPreview;
   error?: string;
 }
@@ -23,17 +25,34 @@ export interface ClaimResult {
   error?: string;
 }
 
+export interface PersonalityProfile {
+  mbti?: string;
+  enneagram?: string;
+  enneagram_wing?: string;
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  category?: string;
+}
+
 export interface AssessmentResults {
-  sessionId: string;
+  session_id: string;
+  user_id?: string;
   archetype: string;
-  tier: string;
-  personality: {
-    mbti: string;
-    enneagram: string;
-  };
+  archetype_confidence?: number;
+  overall_score: number;
   dimensions: Record<string, number>;
-  badges: string[];
-  summary: string;
+  tier: string;
+  best_fit_roles?: string[];
+  personality_profile?: PersonalityProfile;
+  badges?: Badge[];
+  public_summary?: string;
+  detailed_summary?: string;
+  category_scores?: Record<string, number>;
 }
 
 // Commands
@@ -51,9 +70,10 @@ export async function claimActivationKey(
 }
 
 export async function fetchAssessmentResults(
-  sessionId: string
+  sessionId: string,
+  token: string
 ): Promise<AssessmentResults> {
-  return invoke('fetch_assessment_results', { sessionId });
+  return invoke('fetch_assessment_results', { sessionId, token });
 }
 
 export async function storeSession(

@@ -34,12 +34,26 @@ export default function ActivatePage() {
     try {
       const result = await validateActivationKey(codeToValidate.trim());
 
-      if (result.valid && result.sessionId) {
+      if (result.valid) {
         setPreview(result.preview || null);
-        // Store session ID and navigate to signup
+        // Store activation data
         sessionStorage.setItem('activationCode', codeToValidate.trim());
-        sessionStorage.setItem('sessionId', result.sessionId);
-        navigate('/signup');
+        if (result.sessionId) {
+          sessionStorage.setItem('sessionId', result.sessionId);
+        }
+        if (result.preview) {
+          sessionStorage.setItem('preview', JSON.stringify(result.preview));
+        }
+        if (result.hasExistingUser && result.userId) {
+          sessionStorage.setItem('existingUserId', result.userId);
+        }
+
+        // Navigate to signin for existing users, signup for new users
+        if (result.hasExistingUser) {
+          navigate('/signin');
+        } else {
+          navigate('/signup');
+        }
       } else {
         setError(result.error || 'Invalid activation code');
       }
