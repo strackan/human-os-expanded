@@ -39,6 +39,7 @@
     "@human-os/aliases": "workspace:*",
     "@human-os/analysis": "workspace:*",
     "@human-os/core": "workspace:*",
+    "@human-os/entity-resolution": "workspace:*",
     "@human-os/journal": "workspace:*",
     "@human-os/services": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",

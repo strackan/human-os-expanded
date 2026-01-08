@@ -20,6 +20,14 @@ import {
   type ResolverConfig,
   type ExecutorConfig,
 } from '@human-os/aliases';
+import {
+  EntityResolver,
+  buildInjectedContext,
+  substituteEntityReferences,
+  createCachedOpenAIProvider,
+  type ResolvedContext,
+  type InjectedContext,
+} from '@human-os/entity-resolution';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -136,15 +144,58 @@ async function executeDoRequest(
   matchType?: string;
   error?: string;
   suggestions?: string[];
+  resolvedEntities?: string[];
+  clarificationNeeded?: boolean;
+  clarificationPrompt?: string;
+  canTraverseNetwork?: boolean;
 }> {
-  // Initialize resolver
+  // ==========================================================================
+  // STEP 1: Entity Resolution (pre-process before alias matching)
+  // ==========================================================================
+
+  // Create embedding provider (Tier 4) if OpenAI key available
+  const openaiKey = process.env['OPENAI_API_KEY'];
+  const embeddingProvider = openaiKey ? createCachedOpenAIProvider(openaiKey) : undefined;
+
+  // Create entity resolver
+  const entityResolver = new EntityResolver({
+    supabaseUrl: ctx.supabaseUrl,
+    supabaseKey: ctx.supabaseKey,
+    layer: ctx.layer,
+    generateEmbedding: embeddingProvider
+      ? (text) => embeddingProvider.generate(text)
+      : undefined,
+  });
+
+  // Resolve entities in the request (tiered: glossary → exact → fuzzy → semantic)
+  const resolvedContext = await entityResolver.resolve(request);
+  const injectedContext = buildInjectedContext(resolvedContext);
+
+  // Handle ambiguous entities - return clarification request
+  if (injectedContext.clarificationNeeded && injectedContext.clarificationPrompt) {
+    return {
+      success: false,
+      summary: injectedContext.clarificationPrompt,
+      clarificationNeeded: true,
+      clarificationPrompt: injectedContext.clarificationPrompt,
+      canTraverseNetwork: injectedContext.canTraverseNetwork,
+    };
+  }
+
+  // ==========================================================================
+  // STEP 2: Alias Resolution
+  // ==========================================================================
+
+  // Initialize alias resolver
   const resolverConfig: ResolverConfig = {
     supabaseUrl: ctx.supabaseUrl,
     supabaseKey: ctx.supabaseKey,
     defaultLayer: ctx.layer,
     enableSemanticFallback: true,
     semanticThreshold: 0.7,
-    // TODO: Add embedding generation function when available
+    generateEmbedding: embeddingProvider
+      ? (text) => embeddingProvider.generate(text)
+      : undefined,
   };
 
   const resolver = new AliasResolver(resolverConfig);
@@ -153,35 +204,62 @@ async function executeDoRequest(
   const match = await resolver.resolve(request, ctx.layer, context?.modes);
 
   if (!match) {
-    // No match found - return suggestions
+    // No match found
+    // If network traversal is allowed (general knowledge query), indicate that
+    if (injectedContext.canTraverseNetwork) {
+      return {
+        success: false,
+        summary: `No matching alias found. This appears to be a general knowledge question that can be answered directly.`,
+        canTraverseNetwork: true,
+        resolvedEntities: Object.keys(injectedContext.entityMap),
+      };
+    }
+
+    // Otherwise, return suggestions
     const aliases = await resolver.listAliases(ctx.layer, false);
     return {
       success: false,
       summary: `No matching alias found for: "${request}"`,
       suggestions: aliases.slice(0, 5).map(a => a.pattern),
       error: 'No matching alias. Try one of the suggested patterns or use learn_alias to create a new one.',
+      resolvedEntities: Object.keys(injectedContext.entityMap),
+      canTraverseNetwork: false,
     };
   }
+
+  // ==========================================================================
+  // STEP 3: Execute Alias with Resolved Entities
+  // ==========================================================================
 
   // Initialize executor
   const executorConfig: ExecutorConfig = {
     supabaseUrl: ctx.supabaseUrl,
     supabaseKey: ctx.supabaseKey,
-    // TODO: Add embedding and summarization functions
+    generateEmbedding: embeddingProvider
+      ? (text) => embeddingProvider.generate(text)
+      : undefined,
   };
 
   const executor = new AliasExecutor(executorConfig);
 
-  // Build execution context
+  // Build execution context with resolved entities
   const execCtx: ExecutionContext = {
     layer: ctx.layer,
     userId: ctx.userId,
     modeContext: context?.modes,
     vars: {},
     outputs: {},
+    // Store resolved entities for reference in tool handlers
+    resolvedEntities: {
+      entities: injectedContext.entityMap,
+      systemContext: injectedContext.systemContext,
+      canTraverseNetwork: injectedContext.canTraverseNetwork,
+    },
     invokeTool: async (toolName: string, params: Record<string, unknown>) => {
+      // Substitute entity references in params with resolved IDs/slugs
+      const enhancedParams = substituteEntityReferences(params, injectedContext.entityMap);
       // Route to existing tool handlers
-      return invokeToolInternal(toolName, params, ctx);
+      return invokeToolInternal(toolName, enhancedParams, ctx);
     },
     log: (message, data) => {
       console.error(`[do] ${message}`, data ? JSON.stringify(data) : '');
@@ -197,6 +275,8 @@ async function executeDoRequest(
     matchedAlias: match.alias.pattern,
     matchType: match.matchType,
     error: result.error,
+    resolvedEntities: Object.keys(injectedContext.entityMap),
+    canTraverseNetwork: injectedContext.canTraverseNetwork,
   };
 }
 

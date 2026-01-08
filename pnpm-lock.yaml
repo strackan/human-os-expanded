@@ -229,6 +229,9 @@ importers:
       '@human-os/core':
         specifier: workspace:*
         version: link:../../../packages/core
+      '@human-os/entity-resolution':
+        specifier: workspace:*
+        version: link:../../../packages/entity-resolution
       '@human-os/journal':
         specifier: workspace:*
         version: link:../../../packages/journal
@@ -453,6 +456,22 @@ importers:
 
   packages/core:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.47.0
+        version: 2.87.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@24.10.2)(lightningcss@1.30.2)
+
+  packages/entity-resolution:
+    dependencies:
+      '@human-os/core':
+        specifier: workspace:*
+        version: link:../core
       '@supabase/supabase-js':
         specifier: ^2.47.0
         version: 2.87.1

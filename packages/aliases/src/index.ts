@@ -34,6 +34,7 @@ export type {
   ExecutionStep,
   ExecutionLog,
   ExecutionContext,
+  ResolvedEntityInfo,
   ResolverConfig,
   CreateAliasInput,
 } from './types.js'

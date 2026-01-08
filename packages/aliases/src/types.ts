@@ -229,6 +229,16 @@ export const ExecutionLogSchema = z.object({
 // =============================================================================
 
 /**
+ * Resolved entity from semantic entity resolution
+ */
+export interface ResolvedEntityInfo {
+  id: string
+  slug: string
+  name: string
+  type: string
+}
+
+/**
  * Context passed to the executor
  */
 export interface ExecutionContext {
@@ -246,6 +256,19 @@ export interface ExecutionContext {
 
   /** Accumulated outputs from previous steps */
   outputs: Record<string, unknown>
+
+  /**
+   * Resolved entities from semantic entity resolution (pre-processing)
+   * Maps mention text (lowercase) to resolved entity info
+   */
+  resolvedEntities?: {
+    /** Entity lookup map: mention -> entity info */
+    entities: Record<string, ResolvedEntityInfo>
+    /** Formatted context string for system prompt injection */
+    systemContext: string
+    /** Whether the query can traverse outside HumanOS network */
+    canTraverseNetwork: boolean
+  }
 
   /** Tool invoker function */
   invokeTool: (name: string, params: Record<string, unknown>) => Promise<unknown>
