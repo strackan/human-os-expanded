@@ -31,7 +31,8 @@
       "Bash(git -C \"C:/Users/strac/dev/human-os-convergence\" show feature/goodhang-integration:apps/goodhang/src/lib/supabase/client.ts)",
       "Bash(git -C:*)",
       "Bash(cargo:*)",
-      "Bash(rustc:*)"
+      "Bash(rustc:*)",
+      "Bash(curl:*)"
     ]
   }
 }
