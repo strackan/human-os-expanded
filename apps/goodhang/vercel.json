@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "cd ../.. && DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy pnpm install --filter=@human-os/goodhang...",
-  "buildCommand": "pnpm next build"
+  "installCommand": "npm install",
+  "buildCommand": "npm run build"
 }
