@@ -28,6 +28,10 @@ import {
   type ResolvedContext,
   type InjectedContext,
 } from '@human-os/entity-resolution';
+import {
+  ToolDiscoveryService,
+  type ToolMatch,
+} from '../lib/tool-discovery.js';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -142,8 +146,10 @@ async function executeDoRequest(
   summary: string;
   matchedAlias?: string;
   matchType?: string;
+  confidence?: number;
   error?: string;
   suggestions?: string[];
+  suggestedTools?: ToolMatch[];
   resolvedEntities?: string[];
   clarificationNeeded?: boolean;
   clarificationPrompt?: string;
@@ -215,13 +221,43 @@ async function executeDoRequest(
       };
     }
 
-    // Otherwise, return suggestions
+    // ==========================================================================
+    // STEP 2b: Semantic Tool Discovery (Tier 4 fallback)
+    // ==========================================================================
+
+    // Get all available tools for semantic search
+    const allTools = await getAllAvailableTools();
+    const toolDiscovery = new ToolDiscoveryService(allTools, {
+      generateEmbedding: embeddingProvider
+        ? (text) => embeddingProvider.generate(text)
+        : undefined,
+    });
+
+    // Search for relevant tools by intent
+    const discoveryResult = await toolDiscovery.search(request, 5);
+
+    if (discoveryResult.matches.length > 0) {
+      // Found relevant tools - suggest them
+      const topMatch = discoveryResult.matches[0]!;
+      return {
+        success: false,
+        summary: `No alias found, but found ${discoveryResult.matches.length} relevant tool(s). ` +
+          `Top match: "${topMatch.name}" (${(topMatch.confidence * 100).toFixed(0)}% confidence). ` +
+          `${topMatch.reason}`,
+        suggestedTools: discoveryResult.matches,
+        error: 'No matching alias. Consider using one of the suggested tools directly, or use learn_alias to create an alias for this pattern.',
+        resolvedEntities: Object.keys(injectedContext.entityMap),
+        canTraverseNetwork: false,
+      };
+    }
+
+    // No tools matched either - fall back to alias suggestions
     const aliases = await resolver.listAliases(ctx.layer, false);
     return {
       success: false,
-      summary: `No matching alias found for: "${request}"`,
+      summary: `No matching alias or tool found for: "${request}"`,
       suggestions: aliases.slice(0, 5).map(a => a.pattern),
-      error: 'No matching alias. Try one of the suggested patterns or use learn_alias to create a new one.',
+      error: 'No matching alias or tool. Try one of the suggested patterns or use learn_alias to create a new one.',
       resolvedEntities: Object.keys(injectedContext.entityMap),
       canTraverseNetwork: false,
     };
@@ -274,6 +310,7 @@ async function executeDoRequest(
     summary: result.summary,
     matchedAlias: match.alias.pattern,
     matchType: match.matchType,
+    confidence: match.confidence,
     error: result.error,
     resolvedEntities: Object.keys(injectedContext.entityMap),
     canTraverseNetwork: injectedContext.canTraverseNetwork,
@@ -354,4 +391,79 @@ async function listAvailableAliases(
     aliases,
     hint: 'Use the do() tool with any of these patterns. Variables in {braces} will be extracted from your request.',
   };
+}
+
+/**
+ * Get all available tools from the MCP server
+ * Used for semantic tool discovery when alias matching fails
+ */
+async function getAllAvailableTools(): Promise<Tool[]> {
+  // Dynamically import all tool modules to get their definitions
+  const [
+    { taskTools },
+    { queueTools },
+    { glossaryTools },
+    { searchTools },
+    { sessionTools },
+    { gftTools },
+    { transcriptTools },
+    { communityIntelTools },
+    { projectTools },
+    { journalTools },
+    { emotionTools },
+    { voiceTools },
+    { skillsTools },
+    { contextTools },
+    { identityTools },
+    { priorityTools },
+    { emailTools },
+    { moodTools },
+    { relationshipTools },
+    { conductorTools },
+  ] = await Promise.all([
+    import('./tasks.js'),
+    import('./queue.js'),
+    import('./glossary.js'),
+    import('./search.js'),
+    import('./session.js'),
+    import('./gft-ingestion.js'),
+    import('./transcripts.js'),
+    import('./community-intel.js'),
+    import('./projects/index.js'),
+    import('./journal.js'),
+    import('./emotions.js'),
+    import('./voice.js'),
+    import('./skills.js'),
+    import('./context.js'),
+    import('./identity.js'),
+    import('./priorities.js'),
+    import('./email.js'),
+    import('./moods.js'),
+    import('./relationships.js'),
+    import('./conductor.js'),
+  ]);
+
+  // Combine all tools (excluding do/recall/learn_alias to avoid recursion)
+  return [
+    ...taskTools,
+    ...queueTools,
+    ...glossaryTools,
+    ...searchTools,
+    ...sessionTools,
+    ...gftTools,
+    ...transcriptTools,
+    ...communityIntelTools,
+    ...projectTools,
+    ...journalTools,
+    ...emotionTools,
+    ...voiceTools,
+    ...skillsTools,
+    ...contextTools,
+    ...identityTools,
+    ...priorityTools,
+    ...emailTools,
+    ...moodTools,
+    ...relationshipTools,
+    ...conductorTools,
+  ];
 }
