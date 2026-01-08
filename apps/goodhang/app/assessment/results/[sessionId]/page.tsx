@@ -56,14 +56,11 @@ const CLASS_ICONS: Record<string, string> = {
   Cleric: '🙏',
 };
 
-const RACE_ICONS: Record<string, string> = {
-  Elven: '🧝',
-  'Half-Orc': '👹',
-  Tiefling: '😈',
-  Dwarven: '🧔',
-  Human: '👤',
-  Halfling: '🍀',
-};
+// Race icons available for future use when full results are shown
+// const RACE_ICONS: Record<string, string> = {
+//   Elven: '🧝', 'Half-Orc': '👹', Tiefling: '😈',
+//   Dwarven: '🧔', Human: '👤', Halfling: '🍀',
+// };
 
 export default function CharacterResultsPage() {
   const params = useParams();
@@ -131,7 +128,6 @@ export default function CharacterResultsPage() {
   const race = character?.race || 'Human';
   const alignment = character?.alignment || 'True Neutral';
   const classIcon = CLASS_ICONS[characterClass] || '⚔️';
-  const raceIcon = RACE_ICONS[race] || '👤';
 
   return (
     <div className="min-h-screen bg-black text-white">

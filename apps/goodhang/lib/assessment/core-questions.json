@@ -1,159 +1,165 @@
 {
-  "id": "goodhang-personality-v2",
+  "id": "goodhang-personality-v3",
   "title": "Good Hang Personality Assessment",
-  "version": "2.0",
-  "estimatedMinutes": 15,
+  "version": "3.0",
+  "estimatedMinutes": 20,
   "completionMessage": "Assessment complete. Your character is being generated.",
-  "scoringPhilosophy": "Score 0-10 based on depth, specificity, self-awareness, and authenticity. There are no right answers - we measure HOW you think, not WHAT you think.",
+  "scoringPhilosophy": "Score 0-10 based on depth, specificity, self-awareness, and vulnerability. There are no right answers - we measure HOW they reflect, not WHAT they say. Reward authentic struggle over polished answers.",
   "sections": [
     {
-      "id": "module_a_identity",
-      "title": "Who You Are",
-      "description": "Let's start with who you are at your core. There are no right answers -- just be honest.",
+      "id": "module_a_life_story",
+      "title": "Your Story",
+      "description": "We're going to ask about some key moments in your life. There are no right answers - just be honest and specific.",
       "order": 1,
-      "transitionMessage": "Great. Now let's explore how you connect with others.",
+      "transitionMessage": "Thank you for sharing. Now let's explore who you are beneath the surface.",
       "questions": [
         {
-          "id": "a1-contrarian-belief",
-          "section": "module_a_identity",
+          "id": "a1-turning-point",
+          "section": "module_a_life_story",
           "order": 1,
-          "text": "What's something you believe that most people disagree with?",
+          "text": "Describe a moment or experience that fundamentally changed who you are or how you see the world.",
           "type": "open_ended",
           "attributes": {
             "primary": "WIS",
             "secondary": "INT"
           },
-          "scoring_guidance": "Look for: intellectual courage, genuine contrarian thinking, ability to articulate reasoning. Reward specific examples and nuanced reasoning. Red flag: picks something safe or popular, or can't defend position.",
+          "scoring_guidance": "Look for: specific memory (not vague), clear before/after shift, insight into how it changed them. Reward vulnerability about difficult moments. High scores show the person understands WHY it changed them, not just THAT it did. Red flag: generic life events without personal meaning ('graduating college').",
           "required": true
         },
         {
-          "id": "a2-broke-rule",
-          "section": "module_a_identity",
+          "id": "a2-happiest-memory",
+          "section": "module_a_life_story",
           "order": 2,
-          "text": "Describe a time you broke a rule and were glad you did.",
-          "type": "open_ended",
-          "attributes": {
-            "primary": "DEX",
-            "secondary": "STR"
-          },
-          "alignment_indicator": "order_axis",
-          "scoring_guidance": "Look for: self-awareness about rule-breaking, reasoning behind it, outcome reflection. Alignment signals: reluctant = Lawful, confident with reason = Neutral, gleeful = Chaotic.",
-          "required": true
-        },
-        {
-          "id": "a3-misunderstood",
-          "section": "module_a_identity",
-          "order": 3,
-          "text": "What do people misunderstand about you?",
-          "type": "open_ended",
-          "attributes": {
-            "primary": "WIS",
-            "secondary": null
-          },
-          "scoring_guidance": "Look for: deep self-awareness, specific examples, insight into perception gaps. Reward vulnerability and honesty. Red flag: 'nothing' or generic answers like 'I'm actually nice'.",
-          "required": true
-        },
-        {
-          "id": "a4-dumb-hill",
-          "section": "module_a_identity",
-          "order": 4,
-          "text": "What's the dumbest hill you'd die on?",
+          "text": "Tell me about your single happiest memory.",
           "type": "open_ended",
           "attributes": {
             "primary": "CHA",
             "secondary": "WIS"
           },
-          "scoring_guidance": "Look for: personality showing through, self-aware humor, passionate defense of something trivial. Reward authenticity and entertainment value. Red flag: picks something actually important or can't commit.",
+          "scoring_guidance": "Look for: sensory details, emotional specificity, what made it meaningful. The WHAT reveals values (achievement vs connection vs freedom vs peace). Reward memories that show vulnerability or unexpected joy. Red flag: can't pick one, or picks something performative.",
           "required": true
         },
         {
-          "id": "a5-10k-spend",
-          "section": "module_a_identity",
-          "order": 5,
-          "text": "If I gave you $10K right now that you HAD to spend on yourself in 48 hours, what would you do?",
+          "id": "a3-difficult-time",
+          "section": "module_a_life_story",
+          "order": 3,
+          "text": "Tell me about a difficult time in your life and how you got through it.",
           "type": "open_ended",
           "attributes": {
-            "primary": "STR",
+            "primary": "CON",
+            "secondary": "STR"
+          },
+          "scoring_guidance": "Look for: honesty about the difficulty, specific coping mechanisms, growth or learning. Reveals resilience style (endurance vs action vs support-seeking vs reframing). Reward vulnerability about struggle. Red flag: minimizes difficulty, or focuses only on triumph without acknowledging pain.",
+          "required": true
+        },
+        {
+          "id": "a4-redemption",
+          "section": "module_a_life_story",
+          "order": 4,
+          "text": "Tell me about something bad that happened to you that ultimately led to something good.",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "WIS",
             "secondary": "DEX"
           },
-          "alignment_indicator": "moral_axis",
-          "scoring_guidance": "Look for: decisiveness, values revealed through spending choices, creativity. Alignment signals: includes others = Good lean, pure self-focused = Neutral. Note interests for matching.",
+          "alignment_indicator": "optimism_lens",
+          "scoring_guidance": "Look for: genuine adversity (not humble-brag), authentic silver lining (not forced positivity), insight into the transformation. Reveals meaning-making capacity and optimism/pessimism orientation. Reward complexity ('it was both terrible and necessary'). Red flag: can't think of one, or the 'bad' thing is actually good.",
           "required": true
         }
       ]
     },
     {
-      "id": "module_b_connection",
-      "title": "How You Relate",
-      "description": "Now let's explore how you connect with the world and other people.",
+      "id": "module_b_inner_self",
+      "title": "Who You Are",
+      "description": "Now let's go deeper into who you are beneath the roles you play.",
       "order": 2,
-      "transitionMessage": null,
+      "transitionMessage": "Almost there. Finally, let's explore how you connect with others.",
       "questions": [
         {
-          "id": "b1-talk-for-hours",
-          "section": "module_b_connection",
+          "id": "b1-failed-someone",
+          "section": "module_b_inner_self",
           "order": 1,
-          "text": "What could you talk about for hours without getting bored?",
-          "type": "open_ended",
-          "attributes": {
-            "primary": "INT",
-            "secondary": null
-          },
-          "scoring_guidance": "Look for: passion, depth of knowledge, curiosity signals. Extract interest vectors for matching. Reward specificity and enthusiasm. Red flag: 'nothing' or very generic topics.",
-          "required": true
-        },
-        {
-          "id": "b2-ideal-saturday",
-          "section": "module_b_connection",
-          "order": 2,
-          "text": "Describe your ideal Saturday -- from waking up to going to bed.",
-          "type": "open_ended",
-          "attributes": {
-            "primary": "CON",
-            "secondary": "DEX"
-          },
-          "alignment_indicator": "order_axis",
-          "scoring_guidance": "Look for: lifestyle preferences, routine vs spontaneity, social patterns. Alignment signals: highly structured = Lawful, loose structure = Neutral, 'no plan is the plan' = Chaotic.",
-          "required": true
-        },
-        {
-          "id": "b3-friend-crisis",
-          "section": "module_b_connection",
-          "order": 3,
-          "text": "When a friend is going through something hard, what's your instinct -- fix it, feel it with them, or distract them?",
+          "text": "Tell me about a time you failed someone you care about.",
           "type": "open_ended",
           "attributes": {
             "primary": "WIS",
             "secondary": "CHA"
           },
-          "alignment_indicator": "moral_axis",
-          "scoring_guidance": "Look for: emotional intelligence, self-awareness about support style. Alignment signals: feel with them = Good (+2), balance = Neutral (+2), fix/distract = action-oriented (+1 Neutral).",
+          "scoring_guidance": "Look for: accountability (not blaming circumstances), specific impact on the other person, how they carry it now. Reveals moral seriousness and capacity for guilt/growth. Reward genuine remorse without excessive self-flagellation. Red flag: can't think of one, deflects blame, or turns it into a humble-brag.",
           "required": true
         },
         {
-          "id": "b4-party-dynamics",
-          "section": "module_b_connection",
-          "order": 4,
-          "text": "You're at a party where you only know one person. What do you do?",
+          "id": "b2-core-identity",
+          "section": "module_b_inner_self",
+          "order": 2,
+          "text": "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "CON",
+            "secondary": "STR"
+          },
+          "scoring_guidance": "Look for: answers that go beyond roles and labels, genuine reflection on essential self. Could be values, ways of being, core drives, or honest uncertainty. Reward struggle with the question ('I don't know' + genuine exploration). Red flag: lists achievements anyway, or gives platitudes ('my values').",
+          "required": true
+        },
+        {
+          "id": "b3-simple-thing",
+          "section": "module_b_inner_self",
+          "order": 3,
+          "text": "What's a simple thing that matters a lot to you?",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "WIS",
+            "secondary": "CON"
+          },
+          "scoring_guidance": "Look for: specific small thing (not 'family' or 'love'), WHY it matters, what it reveals about values. The contrast between 'simple' and 'matters a lot' reveals character. Reward unexpected answers with clear meaning. Red flag: picks something big/obvious, or can't explain why it matters.",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "module_c_connection",
+      "title": "How You Connect",
+      "description": "Finally, let's explore how you relate to others and yourself.",
+      "order": 3,
+      "transitionMessage": null,
+      "questions": [
+        {
+          "id": "c1-relationship-need",
+          "section": "module_c_connection",
+          "order": 1,
+          "text": "What do you need from close relationships that you rarely ask for directly?",
           "type": "open_ended",
           "attributes": {
             "primary": "CHA",
-            "secondary": "DEX"
+            "secondary": "CON"
           },
-          "scoring_guidance": "Look for: social strategy, comfort level, authenticity about social preferences. Extract social energy pattern (introvert/extrovert/ambivert). Reward honest self-assessment.",
+          "scoring_guidance": "Look for: specific unmet need, self-awareness about why they don't ask, vulnerability about longing. Reveals attachment style and emotional honesty. Reward answers that show the gap between need and expression. Red flag: 'nothing' or 'I ask for everything I need' (unlikely), or generic ('support').",
           "required": true
         },
         {
-          "id": "b5-rabbit-hole",
-          "section": "module_b_connection",
-          "order": 5,
-          "text": "What's the last rabbit hole you fell into?",
+          "id": "c2-intellectual-gap",
+          "section": "module_c_connection",
+          "order": 2,
+          "text": "What's something you believe in intellectually but can't fully commit to in practice?",
           "type": "open_ended",
           "attributes": {
-            "primary": "INT",
-            "secondary": "DEX"
+            "primary": "WIS",
+            "secondary": "CON"
           },
-          "scoring_guidance": "Look for: curiosity, ability to get absorbed in learning, specificity. Extract interest vectors. Reward depth and enthusiasm. Red flag: can't think of anything or very shallow answer.",
+          "scoring_guidance": "Look for: genuine cognitive dissonance, self-awareness about the gap, insight into why commitment fails. Reveals honesty about hypocrisy and where willpower breaks down. Reward specific examples over abstract beliefs. Red flag: claims perfect alignment between beliefs and actions, or picks trivial example ('eating healthy').",
+          "required": true
+        },
+        {
+          "id": "c3-happiness-barrier",
+          "section": "module_c_connection",
+          "order": 3,
+          "text": "What's really keeping you from being happy?",
+          "type": "open_ended",
+          "attributes": {
+            "primary": "WIS",
+            "secondary": "STR"
+          },
+          "scoring_guidance": "Look for: honest self-examination, specific barrier (internal or external), awareness of own role in it. Reveals self-knowledge and relationship to happiness. Reward answers that show complexity ('maybe nothing external - it's how I'm wired'). Red flag: 'nothing, I'm happy' (deflection), or blames only external circumstances.",
           "required": true
         }
       ]
