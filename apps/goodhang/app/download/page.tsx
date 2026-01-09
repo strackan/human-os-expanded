@@ -179,7 +179,7 @@ export default function DownloadPage() {
                       href={primaryRelease.download_url}
                       className="inline-block"
                     >
-                      <NeonButton variant="cyan" size="lg">
+                      <NeonButton variant="cyan">
                         Download v{primaryRelease.version}
                       </NeonButton>
                     </a>

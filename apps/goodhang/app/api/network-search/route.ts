@@ -72,12 +72,15 @@ export async function POST(request: NextRequest) {
     );
 
     // Execute search
-    const results = await searchEngine.search({
+    const searchRequest: Parameters<typeof searchEngine.search>[0] = {
       query: body.query,
       mode: body.mode,
-      filters: body.filters,
       limit: body.limit || 10,
-    });
+    };
+    if (body.filters) {
+      searchRequest.filters = body.filters;
+    }
+    const results = await searchEngine.search(searchRequest);
 
     return NextResponse.json(results);
   } catch (error) {

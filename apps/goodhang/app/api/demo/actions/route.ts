@@ -80,55 +80,66 @@ export async function POST(request: NextRequest) {
     let result: unknown;
 
     switch (body.action) {
-      case 'draft_intro':
-        result = await actionEngine.draftIntro(
-          {
-            targetId: body.data.targetId as string,
-            targetName: body.data.targetName as string,
-            targetTitle: body.data.targetTitle as string | undefined,
-            targetCompany: body.data.targetCompany as string | undefined,
-            introducerName: body.data.introducerName as string,
-            context: body.data.context as string | undefined,
-          },
-          body.context
-        );
+      case 'draft_intro': {
+        const draftIntroRequest: Parameters<typeof actionEngine.draftIntro>[0] = {
+          targetId: body.data.targetId as string,
+          targetName: body.data.targetName as string,
+          introducerName: body.data.introducerName as string,
+        };
+        if (typeof body.data.targetTitle === 'string') {
+          draftIntroRequest.targetTitle = body.data.targetTitle;
+        }
+        if (typeof body.data.targetCompany === 'string') {
+          draftIntroRequest.targetCompany = body.data.targetCompany;
+        }
+        if (typeof body.data.context === 'string') {
+          draftIntroRequest.context = body.data.context;
+        }
+        result = await actionEngine.draftIntro(draftIntroRequest, body.context);
         break;
+      }
 
-      case 'schedule_meeting':
-        result = await actionEngine.scheduleMeeting(
-          {
-            targetId: body.data.targetId as string,
-            targetName: body.data.targetName as string,
-            sharedInterests: body.data.sharedInterests as string[] | undefined,
-            suggestedActivity: body.data.suggestedActivity as string | undefined,
-          },
-          body.context
-        );
+      case 'schedule_meeting': {
+        const scheduleMeetingRequest: Parameters<typeof actionEngine.scheduleMeeting>[0] = {
+          targetId: body.data.targetId as string,
+          targetName: body.data.targetName as string,
+        };
+        if (Array.isArray(body.data.sharedInterests)) {
+          scheduleMeetingRequest.sharedInterests = body.data.sharedInterests as string[];
+        }
+        if (typeof body.data.suggestedActivity === 'string') {
+          scheduleMeetingRequest.suggestedActivity = body.data.suggestedActivity;
+        }
+        result = await actionEngine.scheduleMeeting(scheduleMeetingRequest, body.context);
         break;
+      }
 
-      case 'save_to_list':
-        result = await actionEngine.saveToList(
-          {
-            entityId: body.data.entityId as string,
-            name: body.data.name as string,
-            listName: body.data.listName as string || 'Saved',
-            notes: body.data.notes as string | undefined,
-          },
-          body.context
-        );
+      case 'save_to_list': {
+        const saveToListRequest: Parameters<typeof actionEngine.saveToList>[0] = {
+          entityId: body.data.entityId as string,
+          name: body.data.name as string,
+          listName: (typeof body.data.listName === 'string' ? body.data.listName : 'Saved'),
+        };
+        if (typeof body.data.notes === 'string') {
+          saveToListRequest.notes = body.data.notes;
+        }
+        result = await actionEngine.saveToList(saveToListRequest, body.context);
         break;
+      }
 
-      case 'request_intro':
-        result = await actionEngine.requestIntro(
-          {
-            targetId: body.data.targetId as string,
-            targetName: body.data.targetName as string,
-            reason: body.data.reason as string || 'Would like to connect',
-            urgency: body.data.urgency as 'low' | 'medium' | 'high' | undefined,
-          },
-          body.context
-        );
+      case 'request_intro': {
+        const requestIntroRequest: Parameters<typeof actionEngine.requestIntro>[0] = {
+          targetId: body.data.targetId as string,
+          targetName: body.data.targetName as string,
+          reason: (typeof body.data.reason === 'string' ? body.data.reason : 'Would like to connect'),
+        };
+        const urgency = body.data.urgency;
+        if (urgency === 'low' || urgency === 'medium' || urgency === 'high') {
+          requestIntroRequest.urgency = urgency;
+        }
+        result = await actionEngine.requestIntro(requestIntroRequest, body.context);
         break;
+      }
     }
 
     return NextResponse.json({

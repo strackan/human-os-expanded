@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
     const localDb = getLocalSupabase();
 
     // Try to get user from auth token first
-    let localUser: { id: string; email: string | null; user_metadata?: { full_name?: string } } | null = null;
+    let localUser: { id: string; email?: string; user_metadata?: { full_name?: string } } | null = null;
 
     if (token) {
       const { data: { user }, error } = await localDb.auth.getUser(token);
@@ -128,46 +128,59 @@ export async function GET(request: NextRequest) {
       // Get profile
       const { data: profile } = await localDb
         .from('profiles')
-        .select('*')
+        .select('id, email, full_name')
         .eq('id', resolvedUserId)
         .single();
 
-      if (profile) {
+      const profileData = profile as { id: string; email: string | null; full_name: string | null } | null;
+
+      if (profileData) {
         result.found = true;
         result.user = {
-          id: profile.id,
-          email: profile.email,
-          full_name: profile.full_name,
+          id: profileData.id,
+          email: profileData.email,
+          full_name: profileData.full_name,
         };
 
         // Get most recent assessment session
         const { data: assessment } = await localDb
           .from('cs_assessment_sessions')
-          .select('*')
+          .select('id, status, tier, archetype, overall_score, dimensions, badges')
           .eq('user_id', resolvedUserId)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
 
-        if (assessment) {
+        interface AssessmentData {
+          id: string;
+          status: string;
+          tier: string | null;
+          archetype: string | null;
+          overall_score: number | null;
+          dimensions: Record<string, number> | null;
+          badges: string[] | null;
+        }
+        const assessmentData = assessment as AssessmentData | null;
+
+        if (assessmentData) {
           result.products.goodhang = {
             enabled: true,
             assessment: {
-              completed: assessment.status === 'completed',
-              status: assessment.status,
-              tier: assessment.tier,
-              archetype: assessment.archetype,
-              overall_score: assessment.overall_score,
-              dimensions: assessment.dimensions,
-              badges: assessment.badges,
-              session_id: assessment.id,
+              completed: assessmentData.status === 'completed',
+              status: assessmentData.status,
+              tier: assessmentData.tier,
+              archetype: assessmentData.archetype,
+              overall_score: assessmentData.overall_score,
+              dimensions: assessmentData.dimensions,
+              badges: assessmentData.badges,
+              session_id: assessmentData.id,
             },
           };
 
           // Update recommended action based on assessment
-          if (assessment.status === 'completed') {
+          if (assessmentData.status === 'completed') {
             result.recommended_action = 'view_assessment';
-          } else if (assessment.status === 'in_progress') {
+          } else if (assessmentData.status === 'in_progress') {
             result.recommended_action = 'complete_assessment';
           }
         }
