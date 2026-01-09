@@ -74,7 +74,7 @@ jobs:
 
       - name: Install Node dependencies
         working-directory: apps/goodhang-desktop
-        run: pnpm install
+        run: pnpm install --ignore-workspace
 
       - name: Build frontend
         working-directory: apps/goodhang-desktop
