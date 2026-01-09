@@ -68,6 +68,11 @@ export default function AssessmentInterviewPage() {
     fetchProfile();
   }, [user]);
 
+  // Get avatar display info - use profile if available, fall back to user metadata
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const displayName = profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email || '';
+  const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : '?';
+
   const loadingMessages = [
     "Analyzing your responses...",
     "Calculating your archetype...",
@@ -203,19 +208,19 @@ export default function AssessmentInterviewPage() {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-purple-400">{Math.round(progress)}% Complete</span>
-              {profile && (
+              {user && (
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-800 border border-purple-500/50 flex-shrink-0">
-                  {profile.avatar_url ? (
+                  {avatarUrl ? (
                     <Image
-                      src={profile.avatar_url}
-                      alt={profile.name}
+                      src={avatarUrl}
+                      alt={displayName}
                       width={32}
                       height={32}
                       className="object-cover w-full h-full"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-purple-400 font-mono text-sm">
-                      {profile.name.charAt(0).toUpperCase()}
+                      {avatarInitial}
                     </div>
                   )}
                 </div>
