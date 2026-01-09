@@ -13,12 +13,21 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAssessment } from '@/lib/hooks/useAssessment';
+import { useUser } from '@/lib/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 import { MicrophoneButton } from '@/components/assessment/MicrophoneButton';
 import { SectionTimeline } from '@/components/assessment/SectionTimeline';
 
+interface UserProfile {
+  name: string;
+  avatar_url: string | null;
+}
+
 export default function AssessmentInterviewPage() {
   const router = useRouter();
+  const { user } = useUser();
   const {
     status,
     currentQuestion,
@@ -40,6 +49,24 @@ export default function AssessmentInterviewPage() {
 
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  // Fetch user profile for avatar
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('profiles')
+        .select('name, avatar_url')
+        .eq('id', user.id)
+        .single();
+      if (data) {
+        setProfile(data);
+      }
+    };
+    fetchProfile();
+  }, [user]);
 
   const loadingMessages = [
     "Analyzing your responses...",
@@ -174,7 +201,26 @@ export default function AssessmentInterviewPage() {
                 Save & Exit to Members Area
               </button>
             </div>
-            <span className="text-sm text-purple-400">{Math.round(progress)}% Complete</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-purple-400">{Math.round(progress)}% Complete</span>
+              {profile && (
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-800 border border-purple-500/50 flex-shrink-0">
+                  {profile.avatar_url ? (
+                    <Image
+                      src={profile.avatar_url}
+                      alt={profile.name}
+                      width={32}
+                      height={32}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-purple-400 font-mono text-sm">
+                      {profile.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
             <div
