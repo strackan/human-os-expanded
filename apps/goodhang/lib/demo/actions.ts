@@ -233,7 +233,7 @@ Provide a JSON response:
       items.push({
         entityId: request.entityId,
         name: request.name,
-        notes: request.notes,
+        ...(request.notes ? { notes: request.notes } : {}),
         addedAt: new Date().toISOString(),
       });
 

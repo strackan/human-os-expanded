@@ -14,7 +14,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   ALIGNMENT_DEFINITIONS,
   CLASS_DISPLAY_NAMES,
-  RACE_DEFINITIONS,
+
 } from '@/lib/character/types';
 import type {
   CharacterAlignment,
@@ -395,7 +395,7 @@ export class NetworkSearchEngine {
       // Apply attribute boosts
       for (const [attr, boost] of Object.entries(boosts.attributeBoosts)) {
         const attrValue = profile.attributes[attr as keyof typeof profile.attributes];
-        if (attrValue && attrValue >= 14) {
+        if (attrValue && attrValue >= 14 && boost !== undefined) {
           relevanceScore *= boost;
           matchReasons.push(`High ${attr}`);
         }
@@ -522,7 +522,11 @@ Be specific about why they're a good match for the query.`;
       if (jsonMatch) {
         const explanations = JSON.parse(jsonMatch[0]) as string[];
         for (let i = 0; i < Math.min(explanations.length, topResults.length); i++) {
-          topResults[i]!.explanation = explanations[i];
+          const explanation = explanations[i];
+          const result = topResults[i];
+          if (explanation && result) {
+            result.explanation = explanation;
+          }
         }
       }
     } catch (err) {
