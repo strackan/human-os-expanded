@@ -3,6 +3,7 @@
  *
  * Returns latest app releases for all platforms.
  * Used by download page to show available downloads.
+ * Fetches from GitHub releases API.
  *
  * Query params:
  * - platform: Filter by platform (windows, macos, linux)
@@ -10,7 +11,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getHumanOsClient, isHumanOsConfigured } from '@/lib/supabase/human-os';
+
+const GITHUB_REPO = 'strackan/human-os-expanded';
 
 interface Release {
   version: string;
@@ -32,82 +34,95 @@ interface LatestReleases {
   release_notes: string | null;
 }
 
+interface GitHubAsset {
+  name: string;
+  browser_download_url: string;
+  size: number;
+}
+
+interface GitHubRelease {
+  tag_name: string;
+  name: string;
+  body: string;
+  published_at: string;
+  assets: GitHubAsset[];
+}
+
+// Asset name patterns for each platform
+const PLATFORM_PATTERNS: Record<string, RegExp> = {
+  windows: /\.msi$/i,
+  macos: /\.dmg$/i,
+  linux: /\.AppImage$/i,
+};
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform');
-    const version = searchParams.get('version');
 
-    // Check if Human OS is configured
-    if (!isHumanOsConfigured()) {
-      // Return mock data for development
+    // Fetch latest release from GitHub
+    const response = await fetch(
+      `https://api.github.com/repos/${GITHUB_REPO}/releases/latest`,
+      {
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'GoodHang-Web',
+        },
+        next: { revalidate: 300 }, // Cache for 5 minutes
+      }
+    );
+
+    if (!response.ok) {
+      console.error('GitHub API error:', response.status, response.statusText);
       return NextResponse.json(getMockReleases(platform));
     }
 
-    const db = getHumanOsClient();
+    const release: GitHubRelease = await response.json();
+    const version = release.tag_name.replace(/^v/, '');
 
-    if (version) {
-      // Get specific version
-      let query = db
-        .from('app_releases')
-        .select('*')
-        .eq('version', version);
-
-      if (platform) {
-        query = query.eq('platform', platform);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching release:', error);
-        return NextResponse.json(
-          { error: 'Failed to fetch release' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({ releases: data || [] });
-    }
-
-    // Get latest releases for each platform
+    // Build releases object from GitHub assets
     const result: LatestReleases = {
       windows: null,
       macos: null,
       linux: null,
-      latest_version: null,
-      release_notes: null,
+      latest_version: version,
+      release_notes: release.body || null,
     };
 
-    const platforms = platform ? [platform] : ['windows', 'macos', 'linux'];
+    // Match assets to platforms
+    for (const asset of release.assets) {
+      for (const [platformKey, pattern] of Object.entries(PLATFORM_PATTERNS)) {
+        if (pattern.test(asset.name)) {
+          const releaseObj: Release = {
+            version,
+            platform: platformKey,
+            filename: asset.name,
+            download_url: asset.browser_download_url,
+            signature: null,
+            file_size: asset.size,
+            release_notes: release.body || null,
+            is_latest: true,
+            published_at: release.published_at,
+          };
 
-    for (const p of platforms) {
-      const { data } = await db.rpc('get_latest_release', { p_platform: p });
-
-      if (data && data.length > 0) {
-        const release = data[0];
-        const releaseObj: Release = {
-          version: release.version,
-          platform: p,
-          filename: `goodhang-${release.version}-${p}${getExtension(p)}`,
-          download_url: release.download_url,
-          signature: release.signature,
-          file_size: release.file_size,
-          release_notes: release.release_notes,
-          is_latest: true,
-          published_at: release.published_at,
-        };
-
-        if (p === 'windows') result.windows = releaseObj;
-        else if (p === 'macos') result.macos = releaseObj;
-        else if (p === 'linux') result.linux = releaseObj;
-
-        // Track latest version
-        if (!result.latest_version || release.version > result.latest_version) {
-          result.latest_version = release.version;
-          result.release_notes = release.release_notes;
+          if (platformKey === 'windows') result.windows = releaseObj;
+          else if (platformKey === 'macos') result.macos = releaseObj;
+          else if (platformKey === 'linux') result.linux = releaseObj;
+          break;
         }
       }
+    }
+
+    // Filter by platform if requested
+    if (platform) {
+      const filtered: LatestReleases = {
+        windows: platform === 'windows' ? result.windows : null,
+        macos: platform === 'macos' ? result.macos : null,
+        linux: platform === 'linux' ? result.linux : null,
+        latest_version: result.latest_version,
+        release_notes: result.release_notes,
+      };
+      return NextResponse.json(filtered);
     }
 
     return NextResponse.json(result);
@@ -120,32 +135,23 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function getExtension(platform: string): string {
-  switch (platform) {
-    case 'windows':
-      return '.msi';
-    case 'macos':
-      return '.dmg';
-    case 'linux':
-      return '.AppImage';
-    default:
-      return '';
-  }
-}
-
 function getMockReleases(platform: string | null): LatestReleases {
-  const mockVersion = '0.1.0';
-  const mockRelease = (p: string): Release => ({
-    version: mockVersion,
-    platform: p,
-    filename: `goodhang-${mockVersion}-${p}${getExtension(p)}`,
-    download_url: `https://github.com/your-org/goodhang-desktop/releases/download/v${mockVersion}/goodhang-${mockVersion}-${p}${getExtension(p)}`,
-    signature: null,
-    file_size: null,
-    release_notes: 'Initial release - includes activation key support and multi-product routing.',
-    is_latest: true,
-    published_at: new Date().toISOString(),
-  });
+  const mockVersion = '0.1.1';
+  const mockRelease = (p: string): Release | null => {
+    // Only Windows has a release currently
+    if (p !== 'windows') return null;
+    return {
+      version: mockVersion,
+      platform: p,
+      filename: `Good.Hang_${mockVersion}_x64_en-US.msi`,
+      download_url: `https://github.com/${GITHUB_REPO}/releases/download/v${mockVersion}/Good.Hang_${mockVersion}_x64_en-US.msi`,
+      signature: null,
+      file_size: null,
+      release_notes: 'Initial release - includes activation key support and multi-product routing.',
+      is_latest: true,
+      published_at: new Date().toISOString(),
+    };
+  };
 
   if (platform) {
     return {
@@ -159,8 +165,8 @@ function getMockReleases(platform: string | null): LatestReleases {
 
   return {
     windows: mockRelease('windows'),
-    macos: mockRelease('macos'),
-    linux: mockRelease('linux'),
+    macos: null,
+    linux: null,
     latest_version: mockVersion,
     release_notes: 'Initial release - includes activation key support and multi-product routing.',
   };
