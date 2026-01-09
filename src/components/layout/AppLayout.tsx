@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
@@ -84,23 +83,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
     }
   };
 
-  // Check if we're on a standalone page (no app chrome)
-  const pathname = usePathname();
-  const isStandalonePage = pathname?.startsWith('/sculptor');
-
-  // Fetch notifications on mount and every 2 minutes (skip for standalone pages)
+  // Fetch notifications on mount and every 2 minutes
   useEffect(() => {
-    if (user?.id && !isStandalonePage) {
+    if (user?.id) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 120000); // 2 minutes
       return () => clearInterval(interval);
     }
-  }, [user?.id, isStandalonePage]);
-  
-  // For standalone pages, just render children without app layout
-  if (isStandalonePage) {
-    return <>{children}</>;
-  }
+  }, [user?.id]);
 
 
 

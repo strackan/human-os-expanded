@@ -15,7 +15,6 @@ export const AUTH_CONFIG = {
     '/debug-auth', // Add debug page
     '/test-auth', // Add test page
     '/test', // Test pages (including /test/calendar)
-    '/sculptor', // Sculptor interview sessions (Voice-OS Premier)
     '/favicon.ico',
     '/robots.txt',
     '/sitemap.xml'
