@@ -54,14 +54,22 @@ export default function AssessmentInterviewPage() {
   // Fetch user profile for avatar
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('[Avatar] No user available yet');
+        return;
+      }
+      console.log('[Avatar] Fetching profile for user:', user.id);
       const supabase = createClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .select('name, avatar_url')
         .eq('id', user.id)
         .single();
+      if (error) {
+        console.error('[Avatar] Profile fetch error:', error);
+      }
       if (data) {
+        console.log('[Avatar] Profile loaded:', data);
         setProfile(data);
       }
     };
