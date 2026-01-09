@@ -3,9 +3,13 @@
  */
 import { invoke } from '@tauri-apps/api/core';
 
+// Product types - matches human_os.products table
+export type ProductType = 'human_os' | 'founder_os' | 'renubu' | 'gft' | 'voice_os' | 'goodhang';
+
 // Types
 export interface ValidationResult {
   valid: boolean;
+  product?: ProductType;
   sessionId?: string;
   hasExistingUser?: boolean;
   userId?: string;
@@ -21,6 +25,7 @@ export interface AssessmentPreview {
 
 export interface ClaimResult {
   success: boolean;
+  product?: ProductType;
   userId?: string;
   error?: string;
 }
@@ -39,20 +44,71 @@ export interface Badge {
   category?: string;
 }
 
+// V3 Types (D&D Character Profile)
+export interface CharacterProfile {
+  tagline: string;
+  alignment: string;
+  race: string;
+  class: string;
+}
+
+export interface Attributes {
+  INT: number;
+  WIS: number;
+  CHA: number;
+  CON: number;
+  STR: number;
+  DEX: number;
+}
+
+export interface AssessmentSignals {
+  enneagram_hint?: string;
+  interest_vectors?: string[];
+  social_energy?: string;
+  relationship_style?: string;
+}
+
+export interface MatchingProfile {
+  ideal_group_size?: string;
+  connection_style?: string;
+  energy_pattern?: string;
+  good_match_with?: string[];
+  avoid_match_with?: string[];
+}
+
+// Assessment Results - supports both V1 (work) and V3 (D&D) formats
 export interface AssessmentResults {
   session_id: string;
   user_id?: string;
-  archetype: string;
-  archetype_confidence?: number;
   overall_score: number;
-  dimensions: Record<string, number>;
-  tier: string;
+
+  // V1 fields (work assessment) - optional for V3 compatibility
+  archetype?: string;
+  archetype_confidence?: number;
+  dimensions?: Record<string, number>;
+  tier?: string;
   best_fit_roles?: string[];
   personality_profile?: PersonalityProfile;
   badges?: Badge[];
   public_summary?: string;
   detailed_summary?: string;
   category_scores?: Record<string, number>;
+
+  // V3 fields (D&D character profile)
+  character_profile?: CharacterProfile;
+  attributes?: Attributes;
+  signals?: AssessmentSignals;
+  matching?: MatchingProfile;
+  question_scores?: Record<string, unknown>;
+}
+
+// Helper to detect which format the results are in
+export function isV3Results(results: AssessmentResults): boolean {
+  return !!results.character_profile;
+}
+
+export function isV1Results(results: AssessmentResults): boolean {
+  return !!results.archetype && !!results.dimensions;
 }
 
 // Commands

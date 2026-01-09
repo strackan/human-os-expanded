@@ -83,20 +83,21 @@ export async function GET(
       );
     }
 
-    // Construct AssessmentResults object
+    // Construct AssessmentResults object - supports both V1 and V3 formats
     const results: AssessmentResults = {
       session_id: session.id,
       user_id: session.user_id,
+      overall_score: session.overall_score,
+      analyzed_at: session.analyzed_at,
+
+      // V1 fields (work assessment)
       archetype: session.archetype,
       archetype_confidence: session.archetype_confidence,
-      overall_score: session.overall_score,
       dimensions: session.dimensions,
       tier: session.tier,
       flags: session.flags,
       recommendation: session.recommendation,
       best_fit_roles: session.best_fit_roles,
-      analyzed_at: session.analyzed_at,
-      // Enhanced fields
       personality_profile: session.personality_profile,
       ai_orchestration_scores: session.ai_orchestration_scores,
       category_scores: session.category_scores,
@@ -104,6 +105,13 @@ export async function GET(
       public_summary: session.public_summary,
       detailed_summary: session.detailed_summary,
       is_published: session.is_published,
+
+      // V3 fields (D&D character profile)
+      character_profile: session.character_profile,
+      attributes: session.attributes,
+      signals: session.signals,
+      matching: session.matching,
+      question_scores: session.question_scores,
     };
 
     return NextResponse.json(results);

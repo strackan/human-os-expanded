@@ -18,6 +18,8 @@ pub struct AssessmentPreview {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ValidationResult {
     pub valid: bool,
+    #[serde(default)]
+    pub product: Option<String>,
     #[serde(rename = "sessionId")]
     pub session_id: Option<String>,
     #[serde(rename = "hasExistingUser")]
@@ -31,6 +33,8 @@ pub struct ValidationResult {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClaimResult {
     pub success: bool,
+    #[serde(default)]
+    pub product: Option<String>,
     #[serde(rename = "userId")]
     pub user_id: Option<String>,
     pub error: Option<String>,
@@ -60,18 +64,78 @@ pub struct Badge {
     pub category: Option<String>,
 }
 
-// Full assessment results from API (snake_case to match server)
+// V3 Types (D&D Character Profile)
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct CharacterProfile {
+    #[serde(default)]
+    pub tagline: Option<String>,
+    #[serde(default)]
+    pub alignment: Option<String>,
+    #[serde(default)]
+    pub race: Option<String>,
+    #[serde(default, rename = "class")]
+    pub character_class: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct Attributes {
+    #[serde(default, rename = "INT")]
+    pub int: Option<f64>,
+    #[serde(default, rename = "WIS")]
+    pub wis: Option<f64>,
+    #[serde(default, rename = "CHA")]
+    pub cha: Option<f64>,
+    #[serde(default, rename = "CON")]
+    pub con: Option<f64>,
+    #[serde(default, rename = "STR")]
+    pub str_attr: Option<f64>,
+    #[serde(default, rename = "DEX")]
+    pub dex: Option<f64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct AssessmentSignals {
+    #[serde(default)]
+    pub enneagram_hint: Option<String>,
+    #[serde(default)]
+    pub interest_vectors: Option<Vec<String>>,
+    #[serde(default)]
+    pub social_energy: Option<String>,
+    #[serde(default)]
+    pub relationship_style: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct MatchingProfile {
+    #[serde(default)]
+    pub ideal_group_size: Option<String>,
+    #[serde(default)]
+    pub connection_style: Option<String>,
+    #[serde(default)]
+    pub energy_pattern: Option<String>,
+    #[serde(default)]
+    pub good_match_with: Option<Vec<String>>,
+    #[serde(default)]
+    pub avoid_match_with: Option<Vec<String>>,
+}
+
+// Full assessment results from API - supports both V1 and V3 formats
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssessmentResults {
     pub session_id: String,
     #[serde(default)]
     pub user_id: Option<String>,
-    pub archetype: String,
+    pub overall_score: f64,
+
+    // V1 fields (work assessment) - optional for V3 compatibility
+    #[serde(default)]
+    pub archetype: Option<String>,
     #[serde(default)]
     pub archetype_confidence: Option<f64>,
-    pub overall_score: f64,
-    pub dimensions: HashMap<String, f64>,
-    pub tier: String,
+    #[serde(default)]
+    pub dimensions: Option<HashMap<String, f64>>,
+    #[serde(default)]
+    pub tier: Option<String>,
     #[serde(default)]
     pub best_fit_roles: Option<Vec<String>>,
     #[serde(default)]
@@ -84,6 +148,18 @@ pub struct AssessmentResults {
     pub detailed_summary: Option<String>,
     #[serde(default)]
     pub category_scores: Option<HashMap<String, f64>>,
+
+    // V3 fields (D&D character profile)
+    #[serde(default)]
+    pub character_profile: Option<CharacterProfile>,
+    #[serde(default)]
+    pub attributes: Option<Attributes>,
+    #[serde(default)]
+    pub signals: Option<AssessmentSignals>,
+    #[serde(default)]
+    pub matching: Option<MatchingProfile>,
+    #[serde(default)]
+    pub question_scores: Option<serde_json::Value>,
 }
 
 #[tauri::command]
@@ -100,6 +176,7 @@ pub async fn validate_activation_key(code: String) -> Result<ValidationResult, S
     if !response.status().is_success() {
         return Ok(ValidationResult {
             valid: false,
+            product: None,
             session_id: None,
             has_existing_user: None,
             user_id: None,
@@ -131,6 +208,7 @@ pub async fn claim_activation_key(code: String, user_id: String) -> Result<Claim
     if !response.status().is_success() {
         return Ok(ClaimResult {
             success: false,
+            product: None,
             user_id: None,
             error: Some(format!("Server error: {}", response.status())),
         });

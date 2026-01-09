@@ -139,8 +139,8 @@ export interface MatchingProfile {
   avoid_match_with: string[]; // e.g., ["rigid planners", "small-talk lovers"]
 }
 
-// Complete Assessment Results (V2)
-// AssessmentResults supports both V1 (work) and V2 (personality) formats
+// Complete Assessment Results (V2/V3)
+// AssessmentResults supports both V1 (work) and V2/V3 (personality/D&D) formats
 // Type-specific fields are optional to allow gradual migration
 export interface AssessmentResults {
   session_id: string;
@@ -149,8 +149,9 @@ export interface AssessmentResults {
   analyzed_at: string;
   // Badges (shared between both systems)
   badges?: Badge[];
-  // V2 Personality Assessment (Module A/B) - optional for backward compat
+  // V2/V3 Personality Assessment (D&D character profile)
   profile?: CharacterProfile;
+  character_profile?: CharacterProfile; // Alias for database column name
   attributes?: Attributes;
   signals?: AssessmentSignals;
   matching?: MatchingProfile;

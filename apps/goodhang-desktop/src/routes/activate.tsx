@@ -41,6 +41,9 @@ export default function ActivatePage() {
         if (result.sessionId) {
           sessionStorage.setItem('sessionId', result.sessionId);
         }
+        if (result.product) {
+          sessionStorage.setItem('product', result.product);
+        }
         if (result.preview) {
           sessionStorage.setItem('preview', JSON.stringify(result.preview));
         }
