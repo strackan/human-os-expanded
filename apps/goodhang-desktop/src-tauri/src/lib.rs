@@ -9,6 +9,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             // Handle deep links
             #[cfg(desktop)]
@@ -48,6 +49,7 @@ pub fn run() {
             commands::auth::store_session,
             commands::auth::get_session,
             commands::auth::clear_session,
+            commands::user_status::fetch_user_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
