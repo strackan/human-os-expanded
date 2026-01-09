@@ -302,7 +302,7 @@ export default function AssessmentInterviewPage() {
       </div>
 
       {/* Main Content */}
-      <div className="pt-24 pb-12 px-4">
+      <div className="pt-36 pb-12 px-4">
         <div className="max-w-3xl mx-auto">
           {/* Section Transition Message */}
           {currentSection.transitionMessage && (
