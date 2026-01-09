@@ -18,10 +18,17 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { LinkedInSignInButton } from '@/components/auth/LinkedInSignInButton';
 
+interface ActivationKeyInfo {
+  code: string;
+  expiresAt: string;
+}
+
 function AssessmentStartContent() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showRetakeDialog, setShowRetakeDialog] = useState(false);
+  const [showCompletedView, setShowCompletedView] = useState(false);
+  const [activationKey, setActivationKey] = useState<ActivationKeyInfo | null>(null);
+  const [copied, setCopied] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   // Create client lazily to avoid SSR issues during build
@@ -43,7 +50,7 @@ function AssessmentStartContent() {
   // Check if redirected here with completed=true (already completed assessment)
   useEffect(() => {
     if (searchParams.get('completed') === 'true') {
-      setShowRetakeDialog(true);
+      setShowCompletedView(true);
       setIsLoading(false);
     }
   }, [searchParams]);
@@ -97,8 +104,9 @@ function AssessmentStartContent() {
             case 'pending_review':
             case 'trial':
             case 'approved':
-              // Show retake dialog
-              setShowRetakeDialog(true);
+              // Fetch activation key for completed user
+              await fetchActivationKey(session.user.id);
+              setShowCompletedView(true);
               setIsLoading(false);
               return;
             case 'waitlist':
@@ -122,12 +130,43 @@ function AssessmentStartContent() {
     }
   };
 
-  const handleRetake = () => {
-    router.push('/assessment/interview?retake=true');
+  const fetchActivationKey = async (userId: string) => {
+    try {
+      // Fetch the user's activation key
+      const { data: keyData } = await supabase
+        .from('activation_keys')
+        .select('code, expires_at')
+        .eq('user_id', userId)
+        .eq('product', 'goodhang')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (keyData) {
+        setActivationKey({
+          code: keyData.code,
+          expiresAt: keyData.expires_at,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching activation key:', error);
+    }
+  };
+
+  const handleCopyKey = () => {
+    if (activationKey) {
+      navigator.clipboard.writeText(activationKey.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleGoToMembers = () => {
     router.push('/members');
+  };
+
+  const handleGoToDownload = () => {
+    router.push('/download');
   };
 
   if (isLoading) {
@@ -226,33 +265,96 @@ function AssessmentStartContent() {
     );
   }
 
-  // Show retake dialog for users who have already completed assessment
-  if (showRetakeDialog) {
+  // Show completed view with activation key and download instructions
+  if (showCompletedView) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="max-w-md w-full">
+        <div className="max-w-lg w-full">
           <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-lg p-8">
             <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                You&apos;ve Already Completed This Assessment
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
+                Assessment Complete!
               </h1>
               <p className="text-gray-300">
-                Would you like to take it again? Your previous results will be replaced.
+                Download the Good Hang app and enter your activation key to get started.
               </p>
             </div>
 
-            <div className="space-y-4">
+            {/* Activation Key Display */}
+            {activationKey ? (
+              <div className="mb-6">
+                <p className="text-sm text-gray-400 mb-2 text-center">Your Activation Key</p>
+                <div className="flex items-center justify-center gap-2 px-4 py-3 bg-black/50 border border-green-500/30 rounded-lg">
+                  <span className="font-mono text-xl text-green-400 tracking-wider">
+                    {activationKey.code}
+                  </span>
+                  <button
+                    onClick={handleCopyKey}
+                    className="p-2 text-gray-400 hover:text-green-400 transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? (
+                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {activationKey.expiresAt && (
+                  <p className="text-xs text-gray-500 text-center mt-2">
+                    Expires: {new Date(activationKey.expiresAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                <p className="text-yellow-300 text-sm text-center">
+                  Activation key not found. Please contact support if you need assistance.
+                </p>
+              </div>
+            )}
+
+            {/* Instructions */}
+            <div className="mb-6 space-y-3">
+              <h3 className="text-sm font-semibold text-gray-300">Next Steps:</h3>
+              <ol className="space-y-2 text-sm text-gray-400">
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 font-mono">1.</span>
+                  Download the Good Hang desktop app for your platform
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 font-mono">2.</span>
+                  Install and launch the application
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-purple-400 font-mono">3.</span>
+                  Enter your activation key when prompted
+                </li>
+              </ol>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
               <button
-                onClick={handleRetake}
+                onClick={handleGoToDownload}
                 className="w-full px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-semibold rounded-lg transition-all duration-200"
               >
-                Yes, Take It Again
+                Download Desktop App
               </button>
               <button
                 onClick={handleGoToMembers}
                 className="w-full px-8 py-3 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white font-semibold rounded-lg transition-all duration-200"
               >
-                No Thanks, Go to Members Area
+                Go to Members Area
               </button>
             </div>
           </div>

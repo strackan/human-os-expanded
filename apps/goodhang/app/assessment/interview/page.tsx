@@ -23,6 +23,7 @@ import { SectionTimeline } from '@/components/assessment/SectionTimeline';
 interface UserProfile {
   name: string;
   avatar_url: string | null;
+  assessment_status?: string;
 }
 
 export default function AssessmentInterviewPage() {
@@ -52,7 +53,7 @@ export default function AssessmentInterviewPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showAvatarMenu, setShowAvatarMenu] = useState(false);
 
-  // Fetch user profile for avatar
+  // Fetch user profile for avatar and check if already completed
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
@@ -63,7 +64,7 @@ export default function AssessmentInterviewPage() {
       const supabase = createClient();
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, avatar_url')
+        .select('name, avatar_url, assessment_status')
         .eq('id', user.id)
         .single();
       if (error) {
@@ -72,10 +73,17 @@ export default function AssessmentInterviewPage() {
       if (data) {
         console.log('[Avatar] Profile loaded:', data);
         setProfile(data);
+
+        // Redirect completed users to start page (which shows activation key)
+        const completedStatuses = ['completed', 'pending_review', 'trial', 'approved'];
+        if (completedStatuses.includes(data.assessment_status)) {
+          console.log('[Assessment] User already completed, redirecting to start page');
+          router.push('/assessment/start');
+        }
       }
     };
     fetchProfile();
-  }, [user]);
+  }, [user, router]);
 
   // Get avatar display info - use profile if available, fall back to user metadata
   const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
