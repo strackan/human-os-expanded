@@ -69,11 +69,11 @@ export default function ActivatePage() {
   };
 
   const formatCode = (value: string) => {
-    // Format as GH-XXXX-XXXX
+    // Format as XXXX-XXXX-XXXX (matches website activation key format)
     const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-    if (cleaned.length <= 2) return cleaned;
-    if (cleaned.length <= 6) return `${cleaned.slice(0, 2)}-${cleaned.slice(2)}`;
-    return `${cleaned.slice(0, 2)}-${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    if (cleaned.length <= 4) return cleaned;
+    if (cleaned.length <= 8) return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
+    return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}`;
   };
 
   return (
@@ -101,9 +101,9 @@ export default function ActivatePage() {
               type="text"
               value={code}
               onChange={(e) => setCode(formatCode(e.target.value))}
-              placeholder="GH-XXXX-XXXX"
+              placeholder="XXXX-XXXX-XXXX"
               className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white text-center text-xl font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-gh-purple-500 focus:border-transparent"
-              maxLength={12}
+              maxLength={14}
               disabled={loading}
             />
           </div>

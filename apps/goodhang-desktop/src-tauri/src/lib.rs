@@ -19,7 +19,7 @@ pub fn run() {
                     for url in event.urls() {
                         if url.scheme() == "goodhang" {
                             // Extract activation code from path
-                            // URL format: goodhang://activate/GH-XXXX-XXXX
+                            // URL format: goodhang://activate/XXXX-XXXX-XXXX
                             let path = url.path();
                             // Handle both "/activate/CODE" and "activate/CODE" (Windows may omit leading slash)
                             let code = path

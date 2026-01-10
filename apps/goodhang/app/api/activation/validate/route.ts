@@ -34,51 +34,52 @@ export async function POST(request: NextRequest) {
 
     const normalizedCode = code.toUpperCase().trim();
 
-    // Call the database function
-    const { data, error } = await getSupabase().rpc('validate_activation_key', {
-      p_code: normalizedCode,
-    });
+    // Query activation_keys table directly (avoids schema mismatch with x_human)
+    const { data: keyData, error } = await getSupabase()
+      .from('activation_keys')
+      .select('*')
+      .eq('code', normalizedCode)
+      .single();
 
-    if (error) {
-      console.error('Validation error:', error);
-      return NextResponse.json(
-        { valid: false, error: 'Failed to validate activation code' },
-        { status: 500 }
-      );
-    }
-
-    if (!data || data.length === 0) {
-      return NextResponse.json(
-        { valid: false, error: 'Invalid activation code' },
-        { status: 200 }
-      );
-    }
-
-    const result = data[0];
-
-    if (!result.valid) {
+    if (error || !keyData) {
       return NextResponse.json({
         valid: false,
-        error: result.error || 'Invalid activation code',
+        error: 'Invalid activation code',
+      });
+    }
+
+    // Check if already redeemed
+    if (keyData.redeemed_at) {
+      return NextResponse.json({
+        valid: false,
+        error: 'This activation code has already been used',
+      });
+    }
+
+    // Check if expired
+    if (new Date(keyData.expires_at) < new Date()) {
+      return NextResponse.json({
+        valid: false,
+        error: 'This activation code has expired',
       });
     }
 
     // Preview data comes from metadata JSONB column
-    const preview = result.preview || {};
+    const metadata = keyData.metadata || {};
 
     // Check if there's an existing user linked to this key
-    const hasExistingUser = !!preview.user_id;
+    const hasExistingUser = !!keyData.user_id;
 
     return NextResponse.json({
       valid: true,
-      product: result.product,
-      sessionId: result.session_id,
+      product: keyData.product,
+      sessionId: keyData.session_id,
       hasExistingUser,
-      userId: preview.user_id || null,
+      userId: keyData.user_id || null,
       preview: {
-        tier: preview.tier || 'unknown',
-        archetypeHint: preview.archetype_hint || 'Your character awaits...',
-        overallScoreRange: preview.score_range || '70-100',
+        tier: metadata.tier || 'unknown',
+        archetypeHint: metadata.archetype_hint || metadata.character_class || 'Your character awaits...',
+        overallScoreRange: metadata.score_range || '70-100',
       },
     });
   } catch (error) {

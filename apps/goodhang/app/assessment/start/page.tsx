@@ -104,10 +104,24 @@ function AssessmentStartContent() {
             case 'pending_review':
             case 'trial':
             case 'approved':
-              // Fetch activation key for completed user
-              await fetchActivationKey(session.user.id);
-              setShowCompletedView(true);
-              setIsLoading(false);
+              // Redirect to latest completed session results
+              const { data: latestSession } = await supabase
+                .from('cs_assessment_sessions')
+                .select('id')
+                .eq('user_id', session.user.id)
+                .eq('status', 'completed')
+                .order('completed_at', { ascending: false })
+                .limit(1)
+                .single();
+
+              if (latestSession) {
+                router.push(`/assessment/results/${latestSession.id}`);
+              } else {
+                // Fallback: show completed view if no session found
+                await fetchActivationKey(session.user.id);
+                setShowCompletedView(true);
+                setIsLoading(false);
+              }
               return;
             case 'waitlist':
             case 'rejected':

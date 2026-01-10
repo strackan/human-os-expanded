@@ -74,11 +74,25 @@ export default function AssessmentInterviewPage() {
         console.log('[Avatar] Profile loaded:', data);
         setProfile(data);
 
-        // Redirect completed users to start page (which shows activation key)
+        // Redirect completed users to their results page
         const completedStatuses = ['completed', 'pending_review', 'trial', 'approved'];
         if (completedStatuses.includes(data.assessment_status)) {
-          console.log('[Assessment] User already completed, redirecting to start page');
-          router.push('/assessment/start');
+          console.log('[Assessment] User already completed, redirecting to results');
+          // Fetch latest completed session to get the results page URL
+          const { data: latestSession } = await supabase
+            .from('cs_assessment_sessions')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .order('completed_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestSession) {
+            router.push(`/assessment/results/${latestSession.id}`);
+          } else {
+            router.push('/assessment/start');
+          }
         }
       }
     };
