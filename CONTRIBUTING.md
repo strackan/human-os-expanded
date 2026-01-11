@@ -9,7 +9,7 @@ This project uses git worktrees to isolate major feature development from the st
 | Directory | Branch | Purpose |
 |-----------|--------|---------|
 | `human-os/` | `master` | Production-stable code |
-| `human-os-convergence/` | `feature/renubu-convergence` | Renubu platform convergence |
+| `human-os-convergence/` | `main` | Development branch (all active work) |
 
 ### Working with Worktrees
 
@@ -32,9 +32,9 @@ git worktree remove ../human-os-<feature>
 
 ### Branch Strategy
 
-1. **master** - Production-ready code. Protected.
-2. **feature/renubu-convergence** - Long-running convergence work
-3. **feature/*** - Short-lived feature branches (branch from master or convergence)
+1. **master** (human-os) - Production-ready code. Protected. Cherry-pick when ready.
+2. **main** (human-os-convergence) - Development branch. All active work happens here.
+3. **feature/*** - Short-lived feature branches (branch from main)
 
 ### Committing Changes
 
@@ -42,14 +42,14 @@ When working in a worktree:
 
 ```bash
 # You're automatically on the correct branch
-git status  # Shows feature/renubu-convergence
+git status  # Shows main
 
 # Commit as normal
 git add .
 git commit -m "feat: description"
 
 # Push to remote
-git push -u origin feature/renubu-convergence
+git push origin main
 ```
 
 ### Cherry-picking Between Branches
@@ -74,9 +74,9 @@ git rebase origin/master
 # git merge origin/master
 ```
 
-## Renubu Convergence Project
+## Human-OS Monorepo Convergence
 
-This feature branch consolidates:
+This development branch consolidates:
 - Human OS (core platform)
 - Founder OS (productivity)
 - Voice OS (voice interface)
