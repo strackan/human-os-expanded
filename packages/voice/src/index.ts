@@ -36,3 +36,18 @@ export {
 
 // Profile Manager
 export { VoiceProfileManager } from './profile.js'
+
+// Voice Engine (from PowerPak migration)
+export { VoiceEngine, RuleEnforcer } from './engine/index.js'
+export type {
+  VoiceAnalysisResult,
+  VoiceSuggestion,
+  WritingRule,
+  RuleCategory,
+  Template,
+  TemplateCategory,
+  BlendRecipe,
+  ContentGenerationRequest,
+  ContentGenerationResponse,
+  VoiceEngineConfig,
+} from './engine/types.js'
