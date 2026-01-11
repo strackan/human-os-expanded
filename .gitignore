@@ -48,3 +48,5 @@ supabase/.temp/
 .vercel
 jazzroom/
 .claude/settings.local.json
+# Git worktrees (code orchestrator isolation)
+.worktrees/
