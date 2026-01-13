@@ -36,6 +36,7 @@ interface TranscriptEntry {
 }
 
 interface ScoringInput {
+  mode?: 'claude' | 'hybrid' | 'lexicon';
   session_id: string;
   user_id: string;
   transcript: TranscriptEntry[];
