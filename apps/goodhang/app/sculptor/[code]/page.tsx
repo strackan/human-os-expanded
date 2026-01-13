@@ -97,10 +97,10 @@ export default function SculptorSessionPage() {
   // Loading state
   if (pageState === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 text-red-500 animate-spin mx-auto mb-4" />
-          <p className="text-slate-300">Preparing your session...</p>
+          <Loader2 className="w-12 h-12 text-amber-500 animate-spin mx-auto mb-4" />
+          <p className="text-stone-400 text-lg">Preparing your session...</p>
         </div>
       </div>
     );
@@ -109,18 +109,18 @@ export default function SculptorSessionPage() {
   // Invalid or error state
   if (pageState === 'invalid' || pageState === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-900 to-slate-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950">
         <div className="text-center max-w-md px-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-400" />
+          <div className="w-16 h-16 rounded-full bg-amber-600/20 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-amber-400" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
+          <h1 className="text-2xl font-bold text-amber-100 mb-2">
             {pageState === 'invalid' ? 'Invalid Session' : 'Connection Error'}
           </h1>
-          <p className="text-slate-400 mb-6">{errorMessage}</p>
+          <p className="text-stone-400 text-base mb-6">{errorMessage}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors"
+            className="px-6 py-2 bg-stone-800 border border-amber-800/30 hover:bg-stone-700 text-amber-100 rounded-xl transition-colors"
           >
             Try Again
           </button>

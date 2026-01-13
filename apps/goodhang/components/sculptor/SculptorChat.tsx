@@ -8,7 +8,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, User, Bot, Loader2, RotateCcw } from 'lucide-react';
+import { Send, Loader2, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import VoiceInputToggle from './VoiceInputToggle';
@@ -207,32 +207,32 @@ export default function SculptorChat({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-200 bg-slate-50">
+      <div className="px-6 py-4 border-b border-amber-900/20">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center">
               <span className="text-white text-xs font-bold">S</span>
             </div>
             <div>
-              <h2 className="font-medium text-slate-900">{templateName}</h2>
-              <p className="text-xs text-slate-500">Session with {entityName}</p>
+              <h2 className="font-semibold text-amber-100/90 tracking-wide">{templateName}</h2>
+              <p className="text-xs text-amber-200/40">Session with {entityName}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleReset}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-2 text-amber-200/30 hover:text-amber-200/60 hover:bg-gradient-to-br from-stone-800/80 to-stone-800/40 border border-amber-800/20 rounded-lg transition-colors"
             title="Reset session"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 pb-8 space-y-4 min-h-0">
+      <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8 min-h-0">
         {messages.map((message, index) => {
           // Check if this is the latest assistant message awaiting response
           const isLatestAssistant =
@@ -251,22 +251,22 @@ export default function SculptorChat({
               {message.role === 'assistant' && (
                 <div
                   className={cn(
-                    'w-8 h-8 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0',
-                    isLatestAssistant && 'ring-2 ring-red-300 ring-offset-2'
+                    'w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center flex-shrink-0',
+                    isLatestAssistant && 'ring-2 ring-amber-600/30 ring-offset-2'
                   )}
                 >
-                  <Bot className="w-4 h-4 text-white" />
+                  S
                 </div>
               )}
 
               <div
                 className={cn(
-                  'max-w-[80%] rounded-2xl px-4 py-3',
+                  'max-w-3xl mx-auto rounded-2xl px-6 py-4',
                   message.role === 'user'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-slate-100',
+                    ? 'bg-amber-600/20 border border-amber-600/30 text-white'
+                    : 'bg-gradient-to-br from-stone-800/80 to-stone-800/40 border border-amber-800/20',
                   // Highlight the active question
-                  isLatestAssistant && 'ring-2 ring-red-200 shadow-lg shadow-red-100/50'
+                  isLatestAssistant && 'ring-2 ring-amber-600/30 shadow-lg shadow-amber-900/20'
                 )}
               >
                 <div className="space-y-3">
@@ -277,21 +277,21 @@ export default function SculptorChat({
                         const isDialogue = text.startsWith('"') || text.startsWith('"');
 
                         if (message.role === 'user') {
-                          return <p style={{ color: 'white' }} className="text-sm">{children}</p>;
+                          return <p style={{ color: 'white' }} className="text-base leading-relaxed">{children}</p>;
                         }
                         
                         return isDialogue ? (
-                          <p className="text-slate-900 text-base font-medium leading-relaxed pl-3 border-l-2 border-red-400 bg-red-50/50 py-2 pr-3 rounded-r">
+                          <p className="text-amber-50 text-lg font-medium leading-relaxed pl-3 border-l-2 border-amber-500/60 bg-transparent py-2 pr-3 rounded-r">
                             {children}
                           </p>
                         ) : (
-                          <p className="text-sm text-slate-600">{children}</p>
+                          <p className="text-stone-300 text-base leading-relaxed">{children}</p>
                         );
                       },
                       em: ({ children }) => (
                         message.role === 'user'
                           ? <em style={{ color: 'rgba(255,255,255,0.8)' }}>{children}</em>
-                          : <span className="block text-xs text-slate-400 italic leading-relaxed">{children}</span>
+                          : <span className="block text-amber-200/50 text-base italic leading-relaxed">{children}</span>
                       ),
                     }}
                   >
@@ -313,19 +313,19 @@ export default function SculptorChat({
                       minute: '2-digit',
                     })}
                   </p>
-                  {/* "Your turn" indicator for active question */}
+                  {/* "Your turn to respond" indicator for active question */}
                   {isLatestAssistant && (
-                    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 animate-pulse">
-                      <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                      Your turn
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400/80 animate-pulse">
+                      <span className="w-1.5 h-1.5 bg-amber-600 rounded-full" />
+                      Your turn to respond
                     </span>
                   )}
                 </div>
               </div>
 
               {message.role === 'user' && (
-                <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
-                  <User className="w-4 h-4 text-white" />
+                <div className="w-10 h-10 rounded-full bg-amber-600/20 border border-amber-600/30 flex items-center justify-center flex-shrink-0">
+                  <User className="w-5 h-5 text-white" />
                 </div>
               )}
             </div>
@@ -335,10 +335,10 @@ export default function SculptorChat({
         {/* Loading indicator */}
         {isLoading && (
           <div className="flex gap-3 justify-start">
-            <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-white" />
+            <div className="w-10 h-10 rounded-full bg-amber-600 flex items-center justify-center">
+              S
             </div>
-            <div className="bg-slate-100 rounded-2xl px-4 py-3">
+            <div className="bg-gradient-to-br from-stone-800/80 to-stone-800/40 border border-amber-800/20 rounded-2xl px-6 py-4">
               <div className="flex gap-1">
                 <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" />
                 <span
@@ -367,10 +367,10 @@ export default function SculptorChat({
       {/* Input - with ~4rem gap from last message */}
       <div className="relative pt-8 pb-[18vh] px-4">
         {/* Gradient fade overlay */}
-        <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+        <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-t from-stone-900 to-transparent pointer-events-none" />
 
         {/* Claude-style input container */}
-        <div className="bg-stone-100 border border-stone-300 rounded-2xl shadow-sm p-4">
+        <div className="bg-stone-800/60 border border-amber-800/30 rounded-2xl shadow-sm p-4">
           <div className="flex gap-3 items-start">
             <div className="flex-1">
               <textarea
@@ -379,13 +379,13 @@ export default function SculptorChat({
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Reply..."
+                placeholder="What would you say?"
                 disabled={isLoading}
                 rows={1}
                 className={cn(
                   'w-full resize-none bg-transparent px-1 py-1',
                   'focus:outline-none',
-                  'placeholder:text-stone-400 text-stone-800',
+                  'placeholder:text-amber-100 text-lg',
                   'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
                 style={{ minHeight: '24px', maxHeight: '120px' }}
@@ -399,8 +399,8 @@ export default function SculptorChat({
               className={cn(
                 'p-2.5 rounded-lg transition-all flex-shrink-0',
                 inputValue.trim() && !isLoading
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white'
-                  : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                  ? 'bg-amber-600/20 border border-amber-600/30 hover:bg-amber-500 text-white'
+                  : 'bg-stone-700/50 text-stone-500 cursor-not-allowed'
               )}
             >
               {isLoading ? (
@@ -412,7 +412,7 @@ export default function SculptorChat({
           </div>
 
           {/* Bottom toolbar row */}
-          <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-200">
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-700/50">
             <VoiceInputToggle
               onTranscript={handleVoiceTranscript}
               disabled={isLoading}
