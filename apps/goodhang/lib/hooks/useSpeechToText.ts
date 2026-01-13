@@ -73,12 +73,8 @@ interface SpeechRecognition extends EventTarget {
   onstart: (() => void) | null;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: new () => SpeechRecognition;
-    webkitSpeechRecognition: new () => SpeechRecognition;
-  }
-}
+// Note: SpeechRecognition type is defined locally in this file
+// We use type assertion when accessing window.SpeechRecognition to avoid conflicts
 
 export function useSpeechToText(options: UseSpeechToTextOptions = {}): UseSpeechToTextReturn {
   const {
@@ -100,11 +96,13 @@ export function useSpeechToText(options: UseSpeechToTextOptions = {}): UseSpeech
   // Check browser support on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      setIsSupported(!!SpeechRecognition);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const win = window as any;
+      const SpeechRecognitionAPI = win.SpeechRecognition || win.webkitSpeechRecognition;
+      setIsSupported(!!SpeechRecognitionAPI);
 
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition();
+      if (SpeechRecognitionAPI) {
+        recognitionRef.current = new SpeechRecognitionAPI() as SpeechRecognition;
       }
     }
   }, []);

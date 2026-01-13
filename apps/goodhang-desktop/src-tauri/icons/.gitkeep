@@ -1,0 +1,9 @@
+# App icons go here
+# Required formats:
+# - 32x32.png
+# - 128x128.png
+# - 128x128@2x.png
+# - icon.icns (macOS)
+# - icon.ico (Windows)
+#
+# Generate with: pnpm tauri icon path/to/source-icon.png

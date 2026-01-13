@@ -1,6 +1,6 @@
 // Privacy validation and sanitization utilities for public profiles
 
-import type { PublicProfile, CategoryScores } from '@/lib/assessment/types';
+import type { PublicProfile, CategoryScores, Badge } from '@/lib/assessment/types';
 
 /**
  * Sanitize a public profile to respect privacy settings
@@ -38,7 +38,7 @@ export function sanitizePublicProfile(profile: Record<string, unknown>): PublicP
   }
 
   if (profile.badges) {
-    sanitized.badges = profile.badges as string[];
+    sanitized.badges = profile.badges as Badge[];
   }
 
   if (profile.best_fit_roles) {

@@ -96,10 +96,12 @@ export default function IndividualProfilePage() {
                 </p>
               )}
               <div className="flex flex-wrap gap-3">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  {profile.career_level.replace('_', ' ').toUpperCase()}
-                </span>
-                {profile.years_experience > 0 && (
+                {profile.career_level && (
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    {profile.career_level.replace('_', ' ').toUpperCase()}
+                  </span>
+                )}
+                {profile.years_experience && profile.years_experience > 0 && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-500/20 text-green-300 border border-green-500/30">
                     {profile.years_experience} years experience
                   </span>
@@ -146,8 +148,8 @@ export default function IndividualProfilePage() {
                   key={idx}
                   className="bg-gray-900/50 border border-yellow-500/20 rounded-lg p-4 text-center hover:border-yellow-500/40 transition-all"
                 >
-                  <div className="text-4xl mb-2">🏆</div>
-                  <div className="text-sm font-semibold text-yellow-300">{badge}</div>
+                  <div className="text-4xl mb-2">{typeof badge === 'object' ? badge.icon : '🏆'}</div>
+                  <div className="text-sm font-semibold text-yellow-300">{typeof badge === 'object' ? badge.name : badge}</div>
                 </div>
               ))}
             </div>
@@ -162,52 +164,64 @@ export default function IndividualProfilePage() {
             </h2>
             <div className="grid md:grid-cols-3 gap-6">
               {/* Technical */}
-              <div className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-blue-500/30 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-blue-300 mb-4">Technical</h3>
-                <div className="text-5xl font-bold text-white mb-4">
-                  {profile.category_scores.technical.overall}
-                </div>
-                <div className="space-y-2">
-                  {Object.entries(profile.category_scores.technical.subscores).map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm">
-                      <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value as number}</span>
+              {profile.category_scores.technical && (
+                <div className="bg-gradient-to-br from-blue-900/20 to-cyan-900/20 border border-blue-500/30 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-blue-300 mb-4">Technical</h3>
+                  <div className="text-5xl font-bold text-white mb-4">
+                    {profile.category_scores.technical.overall}
+                  </div>
+                  {profile.category_scores.technical.subscores && (
+                    <div className="space-y-2">
+                      {Object.entries(profile.category_scores.technical.subscores).map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
+                          <span className="text-white font-semibold">{value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* Emotional */}
-              <div className="bg-gradient-to-br from-pink-900/20 to-rose-900/20 border border-pink-500/30 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-pink-300 mb-4">Emotional</h3>
-                <div className="text-5xl font-bold text-white mb-4">
-                  {profile.category_scores.emotional.overall}
-                </div>
-                <div className="space-y-2">
-                  {Object.entries(profile.category_scores.emotional.subscores).map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm">
-                      <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value as number}</span>
+              {profile.category_scores.emotional && (
+                <div className="bg-gradient-to-br from-pink-900/20 to-rose-900/20 border border-pink-500/30 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-pink-300 mb-4">Emotional</h3>
+                  <div className="text-5xl font-bold text-white mb-4">
+                    {profile.category_scores.emotional.overall}
+                  </div>
+                  {profile.category_scores.emotional.subscores && (
+                    <div className="space-y-2">
+                      {Object.entries(profile.category_scores.emotional.subscores).map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
+                          <span className="text-white font-semibold">{value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
+              )}
 
               {/* Creative */}
-              <div className="bg-gradient-to-br from-purple-900/20 to-fuchsia-900/20 border border-purple-500/30 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-purple-300 mb-4">Creative</h3>
-                <div className="text-5xl font-bold text-white mb-4">
-                  {profile.category_scores.creative.overall}
-                </div>
-                <div className="space-y-2">
-                  {Object.entries(profile.category_scores.creative.subscores).map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm">
-                      <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
-                      <span className="text-white font-semibold">{value as number}</span>
+              {profile.category_scores.creative && (
+                <div className="bg-gradient-to-br from-purple-900/20 to-fuchsia-900/20 border border-purple-500/30 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-purple-300 mb-4">Creative</h3>
+                  <div className="text-5xl font-bold text-white mb-4">
+                    {profile.category_scores.creative.overall}
+                  </div>
+                  {profile.category_scores.creative.subscores && (
+                    <div className="space-y-2">
+                      {Object.entries(profile.category_scores.creative.subscores).map(([key, value]) => (
+                        <div key={key} className="flex justify-between text-sm">
+                          <span className="text-gray-400 capitalize">{key.replace('_', ' ')}</span>
+                          <span className="text-white font-semibold">{value}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

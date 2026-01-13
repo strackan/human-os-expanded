@@ -1,0 +1,120 @@
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from './AuthProvider'
+import { isPublicRoute } from '@/lib/auth-config'
+import { getDemoModeConfig } from '@/lib/demo-mode-config'
+
+interface RouteGuardProps {
+  children: React.ReactNode
+}
+
+export default function RouteGuard({ children }: RouteGuardProps) {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  // Check if DEMO_MODE is enabled (auto-enabled on localhost)
+  const demoConfig = getDemoModeConfig()
+
+  useEffect(() => {
+    console.log('🛡️ RouteGuard check:', {
+      pathname,
+      isPublicRoute: isPublicRoute(pathname),
+      hasUser: !!user,
+      loading,
+      userEmail: user?.email,
+      demoMode: demoConfig.enabled,
+      demoReason: demoConfig.reason
+    })
+
+    // Fix: redirect signed-in users away from /signin (even in demo mode)
+    if (user && pathname === '/signin') {
+      console.log('🛡️ Signed in user on /signin, redirecting to /dashboard')
+      router.replace('/dashboard')
+      return
+    }
+
+    // If DEMO_MODE is enabled, skip other auth checks
+    if (demoConfig.enabled) {
+      console.log('🎮 DEMO MODE: Skipping remaining auth checks for:', pathname)
+      console.log('🎮 DEMO MODE:', demoConfig.reason)
+      return
+    }
+
+    // Don't redirect if we're still loading or on a public route
+    if (loading || isPublicRoute(pathname)) {
+      console.log('🛡️ Skipping redirect - loading or public route')
+      return
+    }
+
+    // If no user and not on a public route, redirect to signin
+    if (!user) {
+      // Preserve templateGroup parameters in the redirect
+      const urlParams = new URLSearchParams(window.location.search)
+      const templateGroup = urlParams.get('templateGroup')
+      const templateGroupId = urlParams.get('templateGroupId')
+      const templateId = urlParams.get('templateId')
+      const template = urlParams.get('template')
+      
+      let redirectUrl = `/signin?next=${encodeURIComponent(pathname)}`
+      
+      if (templateGroup) {
+        redirectUrl += `&templateGroup=${encodeURIComponent(templateGroup)}`
+      }
+      if (templateGroupId) {
+        redirectUrl += `&templateGroupId=${encodeURIComponent(templateGroupId)}`
+      }
+      if (templateId) {
+        redirectUrl += `&templateId=${encodeURIComponent(templateId)}`
+      }
+      if (template) {
+        redirectUrl += `&template=${encodeURIComponent(template)}`
+      }
+      
+      router.replace(redirectUrl) // Use replace to avoid back button issues
+      return
+    }
+
+    // If authenticated and on root page, allow access
+    if (user && pathname === '/') {
+      console.log('🛡️ Authenticated user on root, allowing access')
+      return
+    }
+
+    console.log('🛡️ User authenticated, allowing access to:', pathname)
+  }, [user, loading, pathname, router, demoConfig.enabled, demoConfig.reason])
+
+  // If DEMO_MODE is enabled, always render children
+  if (demoConfig.enabled) {
+    return <>{children}</>
+  }
+
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render children if not authenticated and not on public route
+  if (!user && !isPublicRoute(pathname)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to sign in...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Render children if authenticated or on public route
+  return <>{children}</>
+}

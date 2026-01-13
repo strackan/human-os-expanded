@@ -42,12 +42,14 @@ export function ProfileCard({ profile }: ProfileCardProps) {
         </div>
 
         {/* Career Level Badge */}
-        <div className="mb-4">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
-            {profile.career_level.replace('_', ' ').toUpperCase()}
-            {profile.years_experience > 0 && ` • ${profile.years_experience}y exp`}
-          </span>
-        </div>
+        {profile.career_level && (
+          <div className="mb-4">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+              {profile.career_level.replace('_', ' ').toUpperCase()}
+              {profile.years_experience && profile.years_experience > 0 && ` • ${profile.years_experience}y exp`}
+            </span>
+          </div>
+        )}
 
         {/* Personality Type */}
         {profile.personality_type && (
@@ -69,7 +71,8 @@ export function ProfileCard({ profile }: ProfileCardProps) {
                   key={idx}
                   className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-300 border border-yellow-500/20"
                 >
-                  {badge}
+                  {badge.icon && <span className="mr-1">{badge.icon}</span>}
+                  {badge.name}
                 </span>
               ))}
             </div>

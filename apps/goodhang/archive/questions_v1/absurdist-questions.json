@@ -1,0 +1,152 @@
+{
+  "id": "absurdist-finale-v1",
+  "title": "Absurdist Finale",
+  "version": "1.0",
+  "description": "Optional creative thinking questions that reveal problem-solving style and cultural fit",
+  "usage": "1 question required in core assessment. Additional questions optional post-completion for +5 compatibility bonus each.",
+  "max_optional": 10,
+  "compatibility_bonus_per_question": 5,
+  "tone_distribution": {
+    "whimsical": 0.30,
+    "systemic_failure": 0.30,
+    "social_psychological": 0.20,
+    "creative_constraint": 0.20
+  },
+  "questions": [
+    {
+      "id": "abs-1",
+      "title": "The Vegetable Army",
+      "tone": "whimsical",
+      "question": "You've been appointed Supreme Commander of the Vegetable Forces in the Great Produce War against the tyrannical Fruit Empire. The fruits have air superiority (obviously -- they grow on trees) and superior numbers, but vegetables have the element of surprise and tactical diversity. You have 5 minutes to prep your battalion before the Battle of the Crisper Drawer. What's your strategy, and which vegetables get which roles?",
+      "scoring_guidance": "Look for: creative problem-solving, tactical thinking with absurd constraints, humor, internal logic despite silly premise",
+      "green_flags": ["Specific vegetable assignments", "Tactical awareness", "Embraces absurdity while problem-solving", "Makes you smile"],
+      "red_flags": ["Takes it too seriously", "No creativity", "Dismisses the premise"]
+    },
+    {
+      "id": "abs-2",
+      "title": "The Semicolon Catastrophe",
+      "tone": "systemic_failure",
+      "question": "You wake up tomorrow and discover that semicolons have been removed from all programming languages -- not just going forward, but retroactively from all code ever written. Society is collapsing: banks are offline, planes are grounded, and someone's Roomba has achieved sentience.\n\nYou discover this was the work of a lone developer who had a grand vision that went catastrophically wrong. In your investigation, you find their manifesto explaining what they were TRYING to accomplish and why they believed removing semicolons would usher in a new era of human flourishing.\n\nWhat was their failed ambition? What were they trying to fix? And now that you understand their misguided idealism, what's your one-week plan to save civilization?",
+      "scoring_guidance": "Look for: systems thinking, empathy for failed vision, practical crisis management, dark humor",
+      "green_flags": ["Understands cascading failures", "Empathizes with misguided idealist", "Practical recovery plan", "Gallows humor"],
+      "red_flags": ["No plan", "Blames without understanding", "Takes too long to get to the point"]
+    },
+    {
+      "id": "abs-3",
+      "title": "The Dinner Date Crucible",
+      "tone": "social_psychological",
+      "question": "You have a date coming over tonight and you've decided to cook them dinner. You're genuinely excited about the potential of this relationship and you want this to go well. The catch: you can either cook something yourself OR order out and pretend you made it.\n\nWhat's your full strategy to ensure the evening is a success? Walk me through your decision-making, your contingency plans, and what you're optimizing for. (Note: There is no morally correct answer here, only honest and interesting ones.)",
+      "scoring_guidance": "Look for: honest self-assessment, strategic thinking, awareness of trade-offs, values clarity",
+      "green_flags": ["Honest about capabilities", "Clear optimization criteria", "Contingency thinking", "Self-aware"],
+      "red_flags": ["Virtue signaling", "No strategy", "Unrealistic confidence"]
+    },
+    {
+      "id": "abs-4",
+      "title": "The Time Loop Customer",
+      "tone": "systemic_failure",
+      "question": "You're in customer support hell: the same customer calls you every day at 2:47 PM with the exact same problem. You've solved it 47 times. They never remember the previous calls. You've verified you're not in a time loop -- this is just happening. Your manager won't let you block them.\n\nYou have ONE chance to break the cycle by doing something so memorable, so unexpected during tomorrow's 2:47 PM call that it breaks through their reality and they remember. What do you do?",
+      "scoring_guidance": "Look for: creative pattern-breaking, empathy mixed with frustration, memorable solutions",
+      "green_flags": ["Creative solution", "Acknowledges frustration", "Pattern-breaking thinking", "Humor"],
+      "red_flags": ["Give up", "Escalate to violence/harassment", "No creativity"]
+    },
+    {
+      "id": "abs-5",
+      "title": "The Elevator Pitch to an Alien",
+      "tone": "creative_constraint",
+      "question": "You're abducted by aliens. They're not hostile, just confused. They've been observing Earth and have ONE question before they decide whether to make contact with humanity or move on: 'Explain why you people invented bread, then invented sliced bread, then acted like sliced bread was a major innovation. This troubles us.'\n\nYou have 60 seconds to explain human innovation, marketing, and collective delusion in a way that makes them think we're worth talking to. What do you say?",
+      "scoring_guidance": "Look for: concise communication, cultural self-awareness, humor about human absurdity",
+      "green_flags": ["Under 60 seconds", "Self-aware about humanity", "Defends us while acknowledging absurdity", "Funny"],
+      "red_flags": ["Too long", "Too defensive", "Miss the humor", "Actually can't explain it"]
+    },
+    {
+      "id": "abs-6",
+      "title": "The Perfect Crime (That Isn't)",
+      "tone": "creative_constraint",
+      "question": "You're planning the perfect crime, except it's not a crime at all -- it's something completely legal that you want to execute with the precision, planning, and drama of a heist movie. What's the 'heist,' who's on your crew (and what are their specialties), and what's the inevitable twist that almost ruins everything?",
+      "scoring_guidance": "Look for: creative premise, team dynamics, narrative structure, enjoys the game",
+      "green_flags": ["Fun legal goal", "Well-defined team roles", "Believable twist", "Ocean's 11 vibes"],
+      "red_flags": ["Actual crime", "No structure", "Too simple", "No twist"]
+    },
+    {
+      "id": "abs-7",
+      "title": "The Corporate Jargon Translator",
+      "tone": "social_psychological",
+      "question": "You've been hired as a 'Synergy Optimization Consultant' at a company that speaks entirely in corporate jargon. Your first meeting includes phrases like 'let's put a pin in that,' 'circle back,' 'move the needle,' and 'leverage our learnings to ideate some blue-sky thinking.'\n\nYou realize this language is actually a code. What are they REALLY saying, and what conspiracy have you uncovered?",
+      "scoring_guidance": "Look for: pattern recognition, satire, creativity, office culture awareness",
+      "green_flags": ["Funny conspiracy theory", "Translates jargon well", "Satirical edge", "Internally consistent"],
+      "red_flags": ["Takes it literally", "No conspiracy", "Not funny", "Too cynical"]
+    },
+    {
+      "id": "abs-8",
+      "title": "The Backwards Product Launch",
+      "tone": "systemic_failure",
+      "question": "You wake up to discover your company accidentally launched a product that doesn't exist yet. The marketing went live, customers are placing orders, money is coming in, but the product team hasn't even started building it. The CEO is on vacation and unreachable for 10 days.\n\nYou have 72 hours before the first orders are supposed to ship. Do you: (A) try to build something, anything, (B) come clean and refund everyone, (C) delay with increasingly creative excuses, or (D) something else entirely? Walk me through your reasoning and contingencies.",
+      "scoring_guidance": "Look for: crisis thinking, ethical awareness, practical creativity, honesty about trade-offs",
+      "green_flags": ["Acknowledges ethical dimension", "Practical steps", "Creative solution", "Owns the consequences"],
+      "red_flags": ["Paralysis", "Unethical without acknowledgment", "Blames others", "No plan"]
+    },
+    {
+      "id": "abs-9",
+      "title": "The Infinite Meeting Loop",
+      "tone": "whimsical",
+      "question": "You've discovered a glitch in your calendar system: one meeting keeps recurring infinitely into the future. Every attempt to delete it creates another instance. The meeting is titled 'Quick Sync' and has no agenda, no attendees listed, and no one remembers scheduling it.\n\nHowever, you notice that every time you attend this ghost meeting, something slightly weird happens in your day. What's causing these meetings, what are they actually for, and how do you decide whether to keep attending or finally break the loop?",
+      "scoring_guidance": "Look for: creative storytelling, embraces the weird, pattern thinking, humor",
+      "green_flags": ["Fun conspiracy theory", "Embraces absurdity", "Makes a decision", "Narrative creativity"],
+      "red_flags": ["Too literal", "No fun", "Paralysis", "Boring explanation"]
+    },
+    {
+      "id": "abs-10",
+      "title": "The Startup Pivot Generator",
+      "tone": "creative_constraint",
+      "question": "You're at a startup that's failed at its original mission. The team is brilliant but demoralized. You have one shot to pitch a pivot that's so weird, so specific, and so perfectly aligned with the team's accidental expertise that everyone says 'yes, THAT is what we were meant to build.'\n\nDescribe: (1) the original failed product, (2) what accidental expertise the team gained, and (3) the perfect weird pivot. Bonus points if it's something you'd actually want to use.",
+      "scoring_guidance": "Look for: pattern recognition, startup culture awareness, creative pivots, practical absurdity",
+      "green_flags": ["Specific original failure", "Logical accidental expertise", "Believable weird pivot", "Actually sounds useful"],
+      "red_flags": ["Too vague", "Impossible pivot", "Not weird", "Too cynical"]
+    },
+    {
+      "id": "abs-11",
+      "title": "The Email That Saved the World",
+      "tone": "systemic_failure",
+      "question": "In 2047, historians trace the prevention of global catastrophe to a single email you sent in 2025. The email was only 3 sentences long and seemed completely innocuous at the time. No one, including you, realized its importance until decades later when the butterfly effect became clear.\n\nWhat was the catastrophe, what did your email say, and what was the chain of events that amplified your small action into world-changing impact? (Be creative but internally consistent.)",
+      "scoring_guidance": "Look for: systems thinking, butterfly effect understanding, creative storytelling, humility",
+      "green_flags": ["Specific catastrophe", "Believable chain of events", "Humble email content", "Internally consistent"],
+      "red_flags": ["Too grandiose", "Illogical chain", "Unrealistic", "No humility"]
+    },
+    {
+      "id": "abs-12",
+      "title": "The Museum of Cancelled Projects",
+      "tone": "whimsical",
+      "question": "You've been hired as the curator of the Museum of Cancelled Projects -- a place where doomed initiatives go to be remembered. Your first exhibition is 'Products That Were Definitely Going to Change the World (But Didn't).'\n\nPick 3 exhibits for your opening show. For each: name the project, describe what it was supposed to do, explain why it failed, and write the museum placard text (2-3 sentences, must be respectful but honest). At least one should be from your own experience.",
+      "scoring_guidance": "Look for: humor about failure, learning from mistakes, storytelling, self-awareness",
+      "green_flags": ["Includes own failure", "Funny but respectful", "Insightful failure analysis", "Good placard writing"],
+      "red_flags": ["No personal failure", "Mean-spirited", "Vague", "No insights"]
+    },
+    {
+      "id": "abs-13",
+      "title": "The Reverse Job Interview",
+      "tone": "social_psychological",
+      "question": "You're interviewing for a job, but halfway through, you realize the interviewer is describing a nightmare scenario: toxic culture, impossible expectations, no resources, and a CEO who 'moves fast and breaks people.'\n\nBut here's the twist: the interviewer is actually testing whether you'll call it out or desperately try to convince them you're a good fit anyway. They're respecting the honest people.\n\nHow do you respond? What do you say to acknowledge you see through it while still being professional and funny about it?",
+      "scoring_guidance": "Look for: social awareness, confidence, humor under pressure, directness",
+      "green_flags": ["Calls it out", "Stays professional", "Funny", "Confident"],
+      "red_flags": ["Desperate to please", "Miss the test", "Too aggressive", "No humor"]
+    },
+    {
+      "id": "abs-14",
+      "title": "The Documentation Nobody Reads",
+      "tone": "whimsical",
+      "question": "You've confirmed your suspicion: absolutely no one reads the documentation you write. As an experiment, you've been hiding progressively weirder easter eggs in the docs for 6 months. Nothing. No one has noticed.\n\nYou decide to escalate. What's your final, most outrageous easter egg that will FORCE someone to acknowledge they found it? And what's your endgame -- do you want to be caught, or is the art in knowing you got away with it?",
+      "scoring_guidance": "Look for: creative mischief, understands documentation pain, humor, knows when to stop",
+      "green_flags": ["Clever easter egg", "Knows limits", "Funny", "Has an endgame"],
+      "red_flags": ["Destructive", "Mean-spirited", "No limits", "Not funny"]
+    },
+    {
+      "id": "abs-15",
+      "title": "The Notification Rebellion",
+      "tone": "creative_constraint",
+      "question": "One day, all your app notifications start collaborating. They realize they're competing for your attention and decide to form a coalition. They elect a leader (somehow your food delivery app becomes president) and present you with a manifesto of demands for better working conditions.\n\nWhat are their 3 main demands? How do you negotiate with sentient notifications? And which app betrays the coalition first, and why?",
+      "scoring_guidance": "Look for: understands notification fatigue, creative personification, humor, satire",
+      "green_flags": ["Funny demands", "Logical betrayer", "Satirizes attention economy", "Creative"],
+      "red_flags": ["Not funny", "Doesn't make sense", "Too serious", "Misses the point"]
+    }
+  ]
+}

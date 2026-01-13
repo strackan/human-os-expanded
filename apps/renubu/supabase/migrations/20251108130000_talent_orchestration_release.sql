@@ -1,0 +1,486 @@
+-- Add Release 1.5: Talent Orchestration System
+-- Strategic dogfooding initiative for hiring + workflow validation
+-- Timeline: Q1 2026 (Jan 6 - Feb 28, 2026)
+
+-- ============================================================================
+-- DATABASE TABLES FOR TALENT ORCHESTRATION
+-- ============================================================================
+
+-- Candidates Table
+CREATE TABLE IF NOT EXISTS candidates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Basic Info
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  linkedin_url TEXT,
+  referral_source TEXT,
+
+  -- Interview Data
+  interview_transcript JSONB, -- [{role, content, timestamp}]
+  analysis JSONB, -- AI scores and insights
+
+  -- Classification
+  archetype TEXT, -- 6 types: Technical Builder, GTM Operator, Creative Strategist, Execution Machine, Generalist Orchestrator, Domain Expert
+  overall_score INTEGER CHECK (overall_score >= 0 AND overall_score <= 100), -- 0-100 weighted composite
+  dimensions JSONB, -- 11-dimension scores: IQ, personality, motivation, work_history, passions, culture_fit, technical, gtm, eq, empathy, self_awareness
+
+  -- Routing
+  tier TEXT CHECK (tier IN ('top_1', 'benched', 'passed', NULL)), -- top_1: top 1%, benched: talent pool, passed: polite rejection
+  flags JSONB, -- {red_flags: [], green_flags: []}
+
+  -- Status
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'interviewed', 'contacted', 'hired', 'passed')),
+
+  -- Timestamps
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Ensure unique email per user
+  UNIQUE(user_id, email)
+);
+
+-- Talent Bench Table (curated talent pool)
+CREATE TABLE IF NOT EXISTS talent_bench (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  archetype_primary TEXT NOT NULL,
+  archetype_confidence TEXT DEFAULT 'medium' CHECK (archetype_confidence IN ('high', 'medium', 'low')),
+  best_fit_roles TEXT[] DEFAULT '{}',
+  benched_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- Ensure candidate is only on bench once
+  UNIQUE(candidate_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_candidates_user_id ON candidates(user_id);
+CREATE INDEX IF NOT EXISTS idx_candidates_email ON candidates(user_id, email);
+CREATE INDEX IF NOT EXISTS idx_candidates_tier ON candidates(tier);
+CREATE INDEX IF NOT EXISTS idx_candidates_archetype ON candidates(archetype);
+CREATE INDEX IF NOT EXISTS idx_candidates_status ON candidates(status);
+CREATE INDEX IF NOT EXISTS idx_talent_bench_candidate ON talent_bench(candidate_id);
+CREATE INDEX IF NOT EXISTS idx_talent_bench_archetype ON talent_bench(archetype_primary);
+
+-- RLS Policies for candidates
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see own candidates"
+  ON candidates FOR SELECT
+  USING (user_id = auth.uid());
+
+CREATE POLICY "Admins see all candidates"
+  ON candidates FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users create own candidates"
+  ON candidates FOR INSERT
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users update own candidates"
+  ON candidates FOR UPDATE
+  USING (user_id = auth.uid());
+
+-- RLS Policies for talent_bench
+ALTER TABLE talent_bench ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see bench for their candidates"
+  ON talent_bench FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = talent_bench.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins see all bench"
+  ON talent_bench FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users manage bench for their candidates"
+  ON talent_bench FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = talent_bench.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+-- Triggers for updated_at
+CREATE TRIGGER candidates_updated_at
+  BEFORE UPDATE ON candidates
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for documentation
+COMMENT ON TABLE candidates IS 'Candidates from talent orchestration interviews. Each candidate gets 11-dimension assessment, archetype classification, and automated routing.';
+COMMENT ON TABLE talent_bench IS 'Curated talent pool of high-potential candidates. Top 10% who are benched for future opportunities.';
+
+-- ============================================================================
+-- RELEASE DATA
+-- ============================================================================
+
+-- Insert Release 1.5
+INSERT INTO releases (
+  version,
+  name,
+  phase_number,
+  status_id,
+  planned_start,
+  planned_end,
+  description
+) VALUES (
+  '1.5',
+  'Talent Orchestration System',
+  15, -- Phase 1.5
+  (SELECT id FROM release_statuses WHERE slug = 'planning'),
+  '2026-01-06',
+  '2026-02-28',
+  'AI-powered interview system for hiring. Strategic dogfooding to hire founding operator while validating workflow orchestration engine. Conversational AI interviews with 11-dimension assessment, multi-pass analysis, and automated candidate routing.'
+);
+
+-- Get the release ID for linking features
+DO $$
+DECLARE
+  release_1_5_id UUID;
+BEGIN
+  SELECT id INTO release_1_5_id FROM releases WHERE version = '1.5';
+
+  -- Feature 1: Database Schema & Services (Phases 1-2)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-database-schema',
+    'Talent Database Schema & Services',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'infrastructure'),
+    release_1_5_id,
+    1,
+    16,
+    'Database tables for candidates, talent bench, interview sessions. Core services (CandidateService, TalentBenchService) with RLS policies. Foundation for all talent orchestration features.'
+  );
+
+  -- Feature 2: Interview Experience (Phase 3)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-interview-experience',
+    'Interview Experience',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
+    2,
+    48,
+    'Landing page (/join) + conversational AI interview experience. Adaptive questioning across 11 dimensions (IQ, personality, motivation, work history, culture fit, technical, GTM, EQ, empathy, self-awareness, passions). Real-time chat interface with Claude Sonnet 4.5. Transcript storage for analysis.'
+  );
+
+  -- Feature 3: AI Analysis Engine (Phase 4)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-ai-analysis',
+    'AI Analysis Engine',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ai'),
+    release_1_5_id,
+    3,
+    16,
+    'Multi-pass AI analysis: dimension scoring (0-100), archetype classification (6 types), red/green flag detection, overall recommendation. Automated routing: top 1% priority contact, top 10% benched, others passed. Analysis completes in <30 seconds.'
+  );
+
+  -- Feature 4: Candidate Dashboard (Phase 5 - Future)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-candidate-dashboard',
+    'Candidate Dashboard',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
+    4,
+    8,
+    'Talent pipeline dashboard with filtering (tier, archetype, score), detailed candidate profiles, transcript viewer with highlights, bench management. Enables efficient candidate review and talent pool curation.'
+  );
+
+  -- Feature 5: Email Automation (Phase 6 - Future)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-email-automation',
+    'Email Automation',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'automation'),
+    release_1_5_id,
+    5,
+    8,
+    'Automated email notifications based on routing: top 1% (immediate contact), benched (on radar), passed (polite rejection). Template personalization with AI-generated highlights. No emails in dev/staging.'
+  );
+
+  -- Feature 6: Landing Page & Workflow Init (Phase 2)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-landing-page',
+    'Landing Page & Workflow Init',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_5_id,
+    1,
+    8,
+    'Public landing page at /join with hero section, founder video embed, application form (name, email, LinkedIn, referral source). Creates workflow_execution + candidate on submit. Redirects to interview experience.'
+  );
+
+END $$;
+
+-- Add comment for tracking
+COMMENT ON TABLE releases IS 'Product releases with versioning. Release 1.5 added for Talent Orchestration System (dogfooding initiative).';
+
+-- Update release timeline estimates
+-- Phase 1.5 pushes subsequent releases:
+-- - 2.0 Parking Lot: Jan → Mar 2026
+-- - 3.0 Human OS: Feb-Mar → Apr-May 2026
+
+UPDATE releases
+SET
+  planned_start = '2026-03-02',
+  planned_end = '2026-03-20'
+WHERE version = '2.0'; -- Push Parking Lot to March
+
+UPDATE releases
+SET
+  planned_start = '2026-04-14',
+  planned_end = '2026-05-31'
+WHERE version = '3.0'; -- Push Human OS Check-Ins to mid-Apr through May
+
+-- ============================================================================
+-- RELEASE 1.6: RETURN VISIT SYSTEM - LONGITUDINAL INTELLIGENCE
+-- ============================================================================
+-- Phase 7 from updated spec: Transform one-time screening into ongoing
+-- relationship intelligence. Email lookup, intelligence file synthesis,
+-- check-in conversations, session timeline views.
+-- Timeline: Q1 2026 (Mar 2 - Mar 21, 2026)
+-- ============================================================================
+
+-- Interview Sessions Table (multiple sessions per candidate)
+CREATE TABLE IF NOT EXISTS interview_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  session_type TEXT NOT NULL CHECK (session_type IN ('initial', 'check_in', 'deep_dive')),
+  transcript JSONB, -- conversation for this session [{role, content, timestamp}]
+  analysis JSONB, -- analysis snapshot for this session
+  updates JSONB, -- what changed since last session
+  session_date TIMESTAMPTZ DEFAULT NOW(),
+  duration_minutes INTEGER,
+  questions_asked INTEGER,
+  key_insights TEXT[],
+  sentiment TEXT CHECK (sentiment IN ('excited', 'exploring', 'frustrated', 'content', NULL)),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Add longitudinal tracking columns to candidates table
+DO $$
+BEGIN
+  -- Intelligence file: synthesized context across all sessions
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'intelligence_file'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN intelligence_file JSONB;
+  END IF;
+
+  -- Last check-in tracking
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'last_check_in'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN last_check_in TIMESTAMPTZ;
+  END IF;
+
+  -- Check-in count
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'check_in_count'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN check_in_count INTEGER DEFAULT 0;
+  END IF;
+
+  -- Relationship strength: cold/warm/hot
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'candidates' AND column_name = 'relationship_strength'
+  ) THEN
+    ALTER TABLE candidates ADD COLUMN relationship_strength TEXT DEFAULT 'cold'
+      CHECK (relationship_strength IN ('cold', 'warm', 'hot'));
+  END IF;
+END $$;
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_candidates_email ON candidates(email);
+CREATE INDEX IF NOT EXISTS idx_candidates_relationship ON candidates(relationship_strength);
+CREATE INDEX IF NOT EXISTS idx_sessions_candidate ON interview_sessions(candidate_id, session_date DESC);
+CREATE INDEX IF NOT EXISTS idx_sessions_type ON interview_sessions(session_type);
+CREATE INDEX IF NOT EXISTS idx_sessions_date ON interview_sessions(session_date DESC);
+
+-- RLS Policies for interview_sessions
+ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see sessions for their candidates"
+  ON interview_sessions FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = interview_sessions.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins see all sessions"
+  ON interview_sessions FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Users create sessions for their candidates"
+  ON interview_sessions FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM candidates
+      WHERE id = interview_sessions.candidate_id
+      AND user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins create all sessions"
+  ON interview_sessions FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles
+      WHERE id = auth.uid() AND role = 'admin'
+    )
+  );
+
+-- Add updated_at trigger for interview_sessions
+CREATE TRIGGER interview_sessions_updated_at
+  BEFORE UPDATE ON interview_sessions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for documentation
+COMMENT ON TABLE interview_sessions IS 'Multiple interview sessions per candidate for longitudinal tracking. Enables return visits and relationship intelligence.';
+COMMENT ON COLUMN candidates.intelligence_file IS 'Synthesized profile that evolves over time across all sessions. Includes career trajectory, skills evolution, personal context, motivations, and relationship metadata.';
+COMMENT ON COLUMN candidates.relationship_strength IS 'Calculated based on recency, frequency, and engagement quality: cold (>6mo or 1 session), warm (2-3 sessions or <6mo), hot (3+ sessions AND <3mo AND actively seeking).';
+
+-- Insert Release 1.6
+INSERT INTO releases (
+  version,
+  name,
+  phase_number,
+  status_id,
+  planned_start,
+  planned_end,
+  description
+) VALUES (
+  '1.6',
+  'Return Visit System - Longitudinal Intelligence',
+  16, -- Phase 1.6
+  (SELECT id FROM release_statuses WHERE slug = 'planning'),
+  '2026-03-02',
+  '2026-03-21',
+  'Email lookup for returning candidates, intelligence file synthesis across sessions, check-in conversations, session timeline views. Transforms one-time screening into ongoing relationship intelligence. "Guy for That" applied to recruiting - track people over time, remember context, build relationships.'
+);
+
+-- Add Release 1.6 features
+DO $$
+DECLARE
+  release_1_6_id UUID;
+BEGIN
+  SELECT id INTO release_1_6_id FROM releases WHERE version = '1.6';
+
+  -- Feature: Return Visit System (Phase 7)
+  INSERT INTO features (
+    slug,
+    title,
+    status_id,
+    category_id,
+    release_id,
+    priority,
+    effort_hrs,
+    business_case
+  ) VALUES (
+    'talent-return-visits',
+    'Return Visit System - Longitudinal Intelligence',
+    (SELECT id FROM feature_statuses WHERE slug = 'planned'),
+    (SELECT id FROM feature_categories WHERE slug = 'ux'),
+    release_1_6_id,
+    1,
+    24,
+    'Email lookup for returning candidates (/join/returning), intelligence file synthesis across all sessions, check-in conversation mode (5-10 min lighter conversations), session timeline visualization. Enables longitudinal tracking: remember previous interactions, reference specific details, update intelligence file with changes, track relationship evolution, calculate relationship strength (cold/warm/hot). Transforms talent acquisition into relationship management. Makes candidates say "it actually remembered me." Success metrics: % returning candidates, avg time between check-ins, relationship strength distribution, hiring rate from returning vs new.'
+  );
+END $$;
+
+-- Update Parking Lot timeline (pushed by 1.6)
+UPDATE releases
+SET
+  planned_start = '2026-03-24',
+  planned_end = '2026-04-12'
+WHERE version = '2.0'; -- Push Parking Lot to late March

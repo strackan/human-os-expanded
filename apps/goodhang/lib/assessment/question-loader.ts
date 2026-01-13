@@ -9,7 +9,8 @@ import type { AssessmentConfig } from './types';
  * @returns Complete assessment config with all questions
  */
 export function loadAssessmentConfig(): AssessmentConfig {
-  return questionsData as AssessmentConfig;
+  // Cast through unknown for JSON compatibility (different question formats)
+  return questionsData as unknown as AssessmentConfig;
 }
 
 /**

@@ -1,0 +1,269 @@
+@import "tailwindcss";
+@import "../styles/layout.css";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Dark mode - activated via .dark class on <html> */
+.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
+.dark body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Custom thin scrollbar for panels */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(148 163 184);
+}
+
+/* Chat panel scrollbar - bluish-gray, 4px */
+.scrollbar-chat {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(191 219 254) transparent;
+}
+
+.scrollbar-chat::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.scrollbar-chat::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb {
+  background-color: rgb(191 219 254);
+  border-radius: 2px;
+}
+
+.scrollbar-chat::-webkit-scrollbar-thumb:hover {
+  background-color: rgb(147 197 253);
+}
+
+/* Toast notification animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+/* Task Mode animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out forwards;
+}
+
+/* Step Chat Panel - Collapsible step animations */
+.step-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 200ms ease-out;
+}
+
+.step-content.expanded {
+  grid-template-rows: 1fr;
+}
+
+.step-content > div {
+  overflow: hidden;
+}
+
+/* Step status pulse animation */
+@keyframes step-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-step-pulse {
+  animation: step-pulse 2s ease-in-out infinite;
+}
+
+/* Global input/textarea styles - fix light text issue */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+textarea,
+select {
+  color: rgb(17 24 39) !important; /* gray-900 for input text in light mode */
+}
+
+/* Dark mode disabled - app is light-mode only
+@media (prefers-color-scheme: dark) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  textarea,
+  select {
+    color: rgb(243 244 246) !important;
+  }
+} */
+
+input::placeholder,
+textarea::placeholder {
+  color: rgb(107 114 128) !important; /* gray-500 for better placeholder visibility */
+  opacity: 1;
+}
+
+/* Typography defaults for consistent readability */
+p {
+  color: rgb(55 65 81); /* gray-700 - standard body text */
+}
+
+.dark p {
+  color: rgb(203 213 225); /* slate-300 */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: rgb(17 24 39); /* gray-900 - headings should be darker */
+  font-weight: 600;
+}
+
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: rgb(241 245 249); /* slate-100 */
+}
+
+/* Button text should inherit from button styling, not override */
+button {
+  font-weight: 500;
+}
+
+/* Table elements */
+th {
+  color: rgb(55 65 81); /* gray-700 */
+  font-weight: 600;
+}
+
+.dark th {
+  color: rgb(203 213 225); /* slate-300 */
+}
+
+td {
+  color: rgb(75 85 99); /* gray-600 */
+}
+
+.dark td {
+  color: rgb(148 163 184); /* slate-400 */
+}
+
+/* Labels */
+label {
+  color: rgb(55 65 81); /* gray-700 */
+  font-weight: 500;
+}
+
+.dark label {
+  color: rgb(203 213 225); /* slate-300 */
+}

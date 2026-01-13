@@ -89,10 +89,10 @@ export class ProfilePrivacyService {
     return {
       user_id: profile.user_id.substring(0, 8) + '...',
       profile_slug: profile.profile_slug,
-      name: profile.name,
-      career_level: profile.career_level,
+      ...(profile.name !== undefined && { name: profile.name }),
+      ...(profile.career_level !== undefined && { career_level: profile.career_level }),
       ...(profile.archetype && { archetype: profile.archetype }),
-      show_scores: profile.show_scores,
+      ...(profile.show_scores !== undefined && { show_scores: profile.show_scores }),
       // Email intentionally omitted for privacy
     };
   }

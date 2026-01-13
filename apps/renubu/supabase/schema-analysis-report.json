@@ -1,0 +1,56 @@
+{
+  "timestamp": "2025-08-09T12:00:46.257Z",
+  "schemaAnalysis": {
+    "tables": [],
+    "schemas": [
+      "public",
+      "mvp"
+    ],
+    "policies": [],
+    "functions": [],
+    "issues": [],
+    "migrationIssues": [],
+    "migrationConflicts": []
+  },
+  "migrationConflicts": {
+    "tableConflicts": [
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000002_create_mvp_schema.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000002_create_mvp_schema.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000002_create_mvp_schema.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000002_create_mvp_schema.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000002_create_mvp_schema.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000004_fix_contacts_migration.sql",
+      "Table 'mvp' defined in both 20250101000002_create_mvp_schema.sql and 20250101000005_schema_configuration.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619190000_event_priority_and_workflow.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619200000_customer_properties_and_date_monitoring.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619200000_customer_properties_and_date_monitoring.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250619200000_customer_properties_and_date_monitoring.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250621171617_action_scoring_system.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250621171617_action_scoring_system.sql",
+      "Table 'public' defined in both 20250618023606_create_profiles_table.sql and 20250621171617_action_scoring_system.sql"
+    ],
+    "policyConflicts": [
+      "Policy 'Users can view their own profile' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Policy 'Users can update their own profile' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql",
+      "Policy 'Users can insert their own profile' defined in both 20250618023606_create_profiles_table.sql and 20250619182010_create_essential_tables.sql"
+    ],
+    "schemaInconsistencies": [
+      "20250101000002_create_mvp_schema.sql: Mixed schema references detected",
+      "20250101000004_fix_contacts_migration.sql: Mixed schema references detected",
+      "20250101000005_schema_configuration.sql: Mixed schema references detected",
+      "20250619182010_create_essential_tables.sql: Mixed schema references detected",
+      "20250619200000_customer_properties_and_date_monitoring.sql: Mixed schema references detected"
+    ]
+  },
+  "diffReport": {
+    "hasDifferences": false,
+    "output": ""
+  },
+  "recommendations": []
+}

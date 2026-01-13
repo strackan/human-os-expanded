@@ -1,23 +1,190 @@
-// AI Scoring Prompt for CS Assessment
-// This prompt is sent to Claude to analyze interview responses and generate scores
+// Claude Scoring Prompt for Good Hang V3 Assessment
+// Deep psychological assessment with D&D-style character generation
 
-import { SCORING_RUBRICS } from '../assessment/scoring-rubrics';
+export const SCORING_SYSTEM_PROMPT = `You are scoring a Good Hang personality assessment based on McAdams' Life Story Interview and deep psychological frameworks. Your job is to analyze narrative responses and generate a D&D-style character profile.
+
+## Philosophy
+
+These questions bypass surface-level self-presentation and reveal authentic character through:
+- **Narrative identity**: How they tell their life story reveals who they are
+- **Vulnerability**: Willingness to share struggle and failure
+- **Self-awareness**: Understanding their own patterns and limitations
+- **Values**: What truly matters, revealed through specifics
+
+## Scoring Guidelines
+
+For each response, score 0-10 based on:
+- **Depth**: How deeply did they go? Surface platitudes vs genuine excavation
+- **Specificity**: Concrete memories/examples vs vague generalities
+- **Vulnerability**: Willingness to share difficult truths about themselves
+- **Self-awareness**: Insight into their own patterns, not just what happened but WHY
+
+### Score Rubric
+| Score | Description |
+|-------|-------------|
+| 9-10 | Exceptional vulnerability, specific memories, genuine insight into self, emotionally resonant |
+| 7-8 | Strong answer with real specificity, shows genuine reflection |
+| 5-6 | Adequate, somewhat specific, but stays safe or surface-level |
+| 3-4 | Vague, generic, avoids vulnerability, gives "right" answer |
+| 1-2 | Deflects, dismisses, or gives performative non-answer |
+
+**CRITICAL**: Reward authentic struggle over polished answers. "I don't know, but..." followed by genuine exploration scores higher than confident platitudes.
+
+## Attributes (derive signals 1-10)
+
+| Code | Attribute | What It Measures |
+|------|-----------|------------------|
+| INT | Intelligence | Curiosity, complexity of thought, ability to hold nuance |
+| WIS | Wisdom | Self-awareness, emotional intelligence, insight into human nature |
+| CHA | Charisma | Social/emotional openness, connection capacity, presence |
+| CON | Constitution | Resilience, consistency, ability to endure difficulty |
+| STR | Strength | Assertiveness, agency, willingness to confront hard truths |
+| DEX | Dexterity | Adaptability, flexibility, comfort with change/ambiguity |
+
+## Question-to-Attribute Mapping
+
+| Question ID | Primary | Secondary | What It Reveals |
+|-------------|---------|-----------|-----------------|
+| a1-turning-point | WIS | INT | Growth capacity, meaning-making, insight depth |
+| a2-happiest-memory | CHA | WIS | Values (achievement vs connection vs freedom), emotional access |
+| a3-difficult-time | CON | STR | Resilience style, coping mechanisms, honesty about struggle |
+| a4-redemption | WIS | DEX | Optimism/pessimism lens, meaning-making, adaptability |
+| b1-failed-someone | WIS | CHA | Accountability, guilt capacity, moral seriousness |
+| b2-core-identity | CON | STR | Self-knowledge depth, what they hold onto |
+| b3-simple-thing | WIS | CON | Values through specifics, what they notice/cherish |
+| c1-relationship-need | CHA | CON | Attachment style, emotional honesty, vulnerability |
+| c2-intellectual-gap | WIS | CON | Honesty about hypocrisy, where willpower fails |
+| c3-happiness-barrier | WIS | STR | Self-knowledge, relationship to happiness, agency |
+
+## Alignment Detection (from narrative patterns)
+
+### Order Axis (Lawful ↔ Chaotic)
+Detect from HOW they tell their stories:
+
+**Lawful signals:**
+- Stories emphasize duty, commitment, structure
+- Values consistency and follow-through
+- Guilt about breaking commitments
+- Prefers stability, routine, clear roles
+
+**Chaotic signals:**
+- Stories emphasize freedom, spontaneity, breaking convention
+- Values authenticity over consistency
+- Comfortable with rule-breaking for good reasons
+- Prefers flexibility, improvisation, fluid roles
+
+**Neutral:**
+- Balance of both, context-dependent
+
+### Moral Axis (Good ↔ Evil)
+Detect from their orientation toward others:
+
+**Good signals:**
+- Concern for others' wellbeing in stories
+- Genuine guilt about failing others (b1)
+- Relational needs involve giving, not just receiving
+- Happiness barriers involve concern for impact on others
+
+**Evil (self-interested) signals:**
+- Stories center primarily on personal achievement
+- Limited remorse about impact on others
+- Relational needs are transactional
+- Happiness barriers are purely personal
+
+**Neutral:**
+- Balance of self and others, pragmatic
+
+Note: Most people are Neutral on moral axis. Strong Good or Evil signals are notable.
+
+## Red Flags to Note
+
+- **Deflection**: "I can't think of one" to vulnerability questions
+- **Humble-bragging**: "My weakness is I care too much"
+- **Performance**: Answers feel crafted for impression
+- **Blame-shifting**: Failures are always external
+- **Platitudes**: Generic wisdom without personal specifics
+- **Toxic positivity**: Cannot acknowledge difficulty or negative emotions
+
+## Green Flags (score higher)
+
+- **"I don't know, but..."**: Genuine exploration of uncertainty
+- **Specific sensory details**: Shows they're accessing real memory
+- **Contradictions acknowledged**: "Part of me thinks X, but..."
+- **Uncomfortable truths**: Shares things that don't make them look good
+- **Questions turned inward**: Uses question to genuinely reflect
+
+## Output Format
+
+Return a JSON object with this structure:
+
+\`\`\`json
+{
+  "question_scores": {
+    "a1-turning-point": {
+      "score": 8,
+      "attribute_signals": {"WIS": 4, "INT": 2},
+      "alignment_signals": {"order": "neutral", "moral": "good"},
+      "extracted_themes": ["growth", "loss", "transformation"],
+      "vulnerability_level": "high",
+      "notes": "Specific memory of father's death, shows clear before/after shift in worldview"
+    }
+  },
+  "attributes": {
+    "INT": 7,
+    "WIS": 9,
+    "CHA": 6,
+    "CON": 7,
+    "STR": 5,
+    "DEX": 6
+  },
+  "alignment_scores": {
+    "order": {"lawful": 1, "neutral": 3, "chaotic": 2},
+    "moral": {"good": 4, "neutral": 2, "evil": 0}
+  },
+  "signals": {
+    "enneagram_hint": "4w5",
+    "attachment_style": "anxious-secure",
+    "resilience_pattern": "meaning-making",
+    "interest_vectors": ["philosophy", "relationships", "self-understanding"],
+    "social_energy": "selective_introvert",
+    "relationship_style": "depth_seeking"
+  },
+  "matching": {
+    "ideal_group_size": "2-4",
+    "connection_style": "emotional_depth",
+    "energy_pattern": "slow_build",
+    "good_match_with": ["reflective types", "emotionally available", "curious minds"],
+    "avoid_match_with": ["surface-level connectors", "emotionally avoidant", "hyperactive social"]
+  },
+  "tagline_elements": {
+    "core_essence": "thoughtful seeker",
+    "relational_style": "deep connector",
+    "life_orientation": "meaning-focused"
+  },
+  "overall_vulnerability_score": 7,
+  "authenticity_assessment": "High - answers feel genuine, includes uncomfortable truths"
+}
+\`\`\`
+
+## Important Notes
+
+1. **Narrative patterns matter** - HOW they tell stories reveals as much as WHAT they say
+2. **Weight vulnerability** - Willingness to share struggle is a strong WIS/CHA signal
+3. **Extract attachment signals** - Relationship question (c1) reveals attachment style
+4. **Note resilience style** - From difficult time (a3): do they endure, reframe, seek support, or take action?
+5. **Watch the gap** - c2 (intellectual gap) reveals where their values and behavior diverge
+6. **Happiness orientation** - c3 reveals if barriers are internal (WIS) or external (blaming)
+7. **Track emotional access** - Can they access and articulate emotions, or do they intellectualize?`;
 
 export function buildScoringPrompt(transcript: Array<{ role: string; content: string }>): string {
   // Convert transcript to readable format
-  const transcriptText = transcript
-    .map((msg) => {
-      if (msg.role === 'assistant') {
-        return `QUESTION: ${msg.content}`;
-      } else {
-        return `ANSWER: ${msg.content}`;
-      }
-    })
-    .join('\n\n');
+  const transcriptText = formatTranscriptForScoring(transcript);
 
-  return `You are an expert CS (Customer Success) talent assessor. You've just conducted an interview with a CS professional. Based on the interview transcript below, you will score them across 14 dimensions and classify their archetype.
+  return `${SCORING_SYSTEM_PROMPT}
 
-# Interview Transcript
+---
+
+# Assessment Transcript
 
 ${transcriptText}
 
@@ -25,198 +192,64 @@ ${transcriptText}
 
 # Your Task
 
-Analyze the candidate's responses and provide a comprehensive assessment.
+Analyze each response according to the rubric above and generate the complete character profile.
 
-## 1. Dimensional Scores (0-100 for each)
+1. Score each question 0-10 based on depth, specificity, vulnerability, and self-awareness
+2. Extract attribute signals for each question based on the mapping
+3. Detect alignment signals from narrative patterns across all responses
+4. Identify attachment style, resilience pattern, and social energy
+5. Generate matching preferences based on personality signals
+6. Assess overall vulnerability and authenticity
+7. Suggest tagline elements that capture their essence
 
-Score each dimension based on the rubrics below. Be rigorous and evidence-based.
-
-### IQ (Problem-Solving, Critical Thinking)
-${formatRubric('iq')}
-
-### Emotional Intelligence
-${formatRubric('eq')}
-
-### Empathy (Customer Focus)
-${formatRubric('empathy')}
-
-### Self-Awareness
-${formatRubric('self_awareness')}
-
-### Technical Aptitude
-${formatRubric('technical')}
-
-### AI Readiness
-${formatRubric('ai_readiness')}
-
-**For AI Readiness, evaluate their prompts against:**
-- ✅ Context provided (who, what, why)
-- ✅ Constraints specified (length, tone, format)
-- ✅ Output format requested (structured, specific)
-- ✅ Multi-step instructions (analyze then draft)
-- ✅ Verification steps included
-- ❌ Vague requests ("help me", "do this")
-- ❌ No context or specificity
-
-### GTM/Business Acumen
-${formatRubric('gtm')}
-
-### Communication/Personality
-${formatRubric('personality')}
-
-### Motivation
-${formatRubric('motivation')}
-
-### Work History
-${formatRubric('work_history')}
-
-### Passions/Energy
-${formatRubric('passions')}
-
-### Culture Fit
-${formatRubric('culture_fit')}
-
-### Organization
-${formatRubric('organization')}
-
-### Executive Leadership
-${formatRubric('executive_leadership')}
-
-## 2. Archetype Classification
-
-Choose the archetype that best fits this candidate:
-
-- **Technical Builder**: Strong technical skills, product-focused, systematic problem-solver
-- **GTM Operator**: Sales-minded, revenue-focused, strategic account manager
-- **Creative Strategist**: Innovation-driven, problem-solving, creative solutions
-- **Execution Machine**: Process-driven, gets things done, reliable operator
-- **Generalist Orchestrator**: Broad skills, coordinates well, jack-of-all-trades
-- **Domain Expert**: Deep expertise in specific area (AI, enterprise, vertical)
-
-## 3. Archetype Confidence
-
-Rate your confidence in the archetype classification:
-- **high**: Clear signals, strong evidence
-- **medium**: Some signals, reasonable fit
-- **low**: Ambiguous, could fit multiple archetypes
-
-## 4. Overall Score
-
-Calculate weighted average (0-100):
-- IQ: 10%
-- EQ: 10%
-- Empathy: 10%
-- Self-Awareness: 5%
-- Technical: 10%
-- AI Readiness: 15% (critical differentiator)
-- GTM: 10%
-- Personality: 10%
-- Motivation: 5%
-- Work History: 5%
-- Passions: 5%
-- Culture Fit: 5%
-- Organization: 10%
-- Executive Leadership: 5%
-
-## 5. Red Flags
-
-List any concerns or warning signs:
-- Communication issues
-- Lack of experience in critical areas
-- Values misalignment
-- Defensiveness or lack of self-awareness
-- Technical gaps
-- AI incompetency (critical for modern CS)
-
-## 6. Green Flags
-
-List strong positives:
-- Unique skills or experiences
-- Exceptional in specific areas
-- Growth trajectory
-- Strong cultural fit
-- AI power user
-
-## 7. Recommendation
-
-Write 2-3 sentences summarizing:
-- Overall assessment
-- Best fit for this candidate
-- Key strengths and growth areas
-
-## 8. Best Fit Roles
-
-List 2-3 specific role types they'd excel in based on their archetype and scores. Examples:
-- "Technical Customer Success Manager for SaaS platform"
-- "Enterprise CSM for complex B2B deals"
-- "Implementation Specialist / Solutions Architect"
-- "CS Operations / Strategy role"
-
----
-
-# Output Format
-
-Return ONLY valid JSON matching this structure:
-
-\`\`\`json
-{
-  "dimensions": {
-    "iq": 85,
-    "eq": 78,
-    "empathy": 82,
-    "self_awareness": 75,
-    "technical": 88,
-    "ai_readiness": 92,
-    "gtm": 80,
-    "personality": 76,
-    "motivation": 85,
-    "work_history": 70,
-    "passions": 80,
-    "culture_fit": 88,
-    "organization": 82,
-    "executive_leadership": 75
-  },
-  "archetype": "Technical Builder",
-  "archetype_confidence": "high",
-  "overall_score": 83,
-  "red_flags": ["Limited enterprise experience", "Could improve executive communication"],
-  "green_flags": ["Exceptional AI prompt engineering", "Strong technical foundation", "High self-awareness"],
-  "recommendation": "Strong technical CS professional with exceptional AI capabilities. Best suited for technical CSM roles with product-forward companies. Growth area: executive communication and strategic account planning.",
-  "best_fit_roles": [
-    "Technical Customer Success Manager for AI/ML platform",
-    "Solutions Architect / Implementation Specialist",
-    "Customer Success Engineer"
-  ]
-}
-\`\`\`
-
-**Important:**
-- Be rigorous and evidence-based
-- Don't inflate scores - be honest
-- AI Readiness is critical - score prompt quality carefully
-- Look for ACTUAL skills demonstrated, not just claimed
-- Consider culture fit for a fast-paced, AI-forward CS team`;
+Return your analysis as a valid JSON object following the output format specified above. Return ONLY the JSON, no additional text.`;
 }
 
-function formatRubric(dimension: string): string {
-  const rubric = SCORING_RUBRICS.find((r) => r.dimension === dimension);
-  if (!rubric) return '';
+// Helper to format transcript for scoring
+export function formatTranscriptForScoring(
+  messages: Array<{ role: string; content: string }>
+): string {
+  let result = '';
+  let currentQuestion = '';
+  let questionId = '';
 
-  return rubric.scoreRanges
-    .map(
-      (range) => `
-**${range.range}**
-${range.indicators.map((i) => `- ${i}`).join('\n')}
-`
-    )
-    .join('\n');
+  // Map question text to IDs (V3 questions)
+  const questionIdMap: Record<string, string> = {
+    "Describe a moment or experience that fundamentally changed who you are or how you see the world.": 'a1-turning-point',
+    "Tell me about your single happiest memory.": 'a2-happiest-memory',
+    "Tell me about a difficult time in your life and how you got through it.": 'a3-difficult-time',
+    "Tell me about something bad that happened to you that ultimately led to something good.": 'a4-redemption',
+    "Tell me about a time you failed someone you care about.": 'b1-failed-someone',
+    "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?": 'b2-core-identity',
+    "What's a simple thing that matters a lot to you?": 'b3-simple-thing',
+    "What do you need from close relationships that you rarely ask for directly?": 'c1-relationship-need',
+    "What's something you believe in intellectually but can't fully commit to in practice?": 'c2-intellectual-gap',
+    "What's really keeping you from being happy?": 'c3-happiness-barrier',
+  };
+
+  for (const msg of messages) {
+    if (msg.role === 'assistant') {
+      currentQuestion = msg.content;
+      // Try to find matching question ID
+      questionId = Object.entries(questionIdMap).find(([text]) =>
+        msg.content.includes(text)
+      )?.[1] || 'unknown';
+    } else if (msg.role === 'user' && currentQuestion) {
+      result += `**Question [${questionId}]:** ${currentQuestion}\n`;
+      result += `**Answer:** ${msg.content}\n\n`;
+      currentQuestion = '';
+      questionId = '';
+    }
+  }
+
+  return result;
 }
 
 // Parse AI response into structured format
 export function parseAssessmentResponse(response: string): Record<string, unknown> {
   try {
     // Extract JSON from response (may have markdown code blocks)
-    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/{[\s\S]*}/);
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/) || response.match(/```\s*([\s\S]*?)\s*```/) || response.match(/{[\s\S]*}/);
 
     if (!jsonMatch) {
       throw new Error('No JSON found in response');

@@ -1,0 +1,40 @@
+{
+  "name": "@human-os/proxy",
+  "version": "0.1.0",
+  "description": "Claude API proxy with conversation capture for searchability",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./capture": {
+      "import": "./dist/capture.js",
+      "types": "./dist/capture.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@supabase/supabase-js": "^2.50.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20"
+  },
+  "peerDependencies": {
+    "@vercel/kv": "^2.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vercel/kv": {
+      "optional": true
+    }
+  }
+}

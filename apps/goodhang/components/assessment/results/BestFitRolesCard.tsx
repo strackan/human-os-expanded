@@ -1,7 +1,7 @@
 'use client';
 
 interface BestFitRolesCardProps {
-  roles: string[];
+  roles?: string[] | undefined;
 }
 
 export function BestFitRolesCard({ roles }: BestFitRolesCardProps) {

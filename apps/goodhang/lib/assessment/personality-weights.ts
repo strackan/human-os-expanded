@@ -171,9 +171,10 @@ export function applyPersonalityWeights(
   // Apply weights to each dimension
   (Object.keys(weighted) as ScoringDimension[]).forEach((dimension) => {
     const weight = weights[dimension];
-    if (weight !== undefined) {
+    const currentScore = weighted[dimension];
+    if (weight !== undefined && currentScore !== undefined) {
       weighted[dimension] = Math.round(
-        Math.max(0, Math.min(100, weighted[dimension] * weight))
+        Math.max(0, Math.min(100, currentScore * weight))
       );
     }
   });
@@ -217,12 +218,15 @@ export function scoresMatchPersonality(
 
   // Check if strengths are actually high
   const strengthsMatch = expectedStrengths.every(
-    (dimension) => scores[dimension] >= 60
+    (dimension) => (scores[dimension] ?? 0) >= 60
   );
 
   // Check if challenges are actually lower (but allow high achievers to overcome)
   const challengesReasonable = expectedChallenges.every(
-    (dimension) => scores[dimension] <= 80 || scores[dimension] >= 85
+    (dimension) => {
+      const score = scores[dimension] ?? 0;
+      return score <= 80 || score >= 85;
+    }
   );
 
   return strengthsMatch || challengesReasonable;
@@ -248,7 +252,7 @@ export function generatePersonalityInsights(
 
   (Object.keys(weights) as ScoringDimension[]).forEach((dimension) => {
     const weight = weights[dimension]!;
-    const score = scores[dimension];
+    const score = scores[dimension] ?? 0;
 
     if (weight >= 1.05 && score >= 70) {
       expectedStrengths.push(formatDimensionName(dimension));
@@ -290,6 +294,7 @@ function formatDimensionName(dimension: ScoringDimension): string {
     culture_fit: 'Culture Fit',
     organization: 'Organization',
     executive_leadership: 'Executive Leadership',
+    adaptability: 'Adaptability',
   };
 
   return nameMap[dimension] || dimension;

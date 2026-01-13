@@ -13,12 +13,22 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAssessment } from '@/lib/hooks/useAssessment';
+import { useUser } from '@/lib/hooks/useUser';
+import { createClient } from '@/lib/supabase/client';
 import { MicrophoneButton } from '@/components/assessment/MicrophoneButton';
 import { SectionTimeline } from '@/components/assessment/SectionTimeline';
 
+interface UserProfile {
+  name: string;
+  avatar_url: string | null;
+  assessment_status?: string;
+}
+
 export default function AssessmentInterviewPage() {
   const router = useRouter();
+  const { user } = useUser();
   const {
     status,
     currentQuestion,
@@ -40,6 +50,72 @@ export default function AssessmentInterviewPage() {
 
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [showAvatarMenu, setShowAvatarMenu] = useState(false);
+
+  // Fetch user profile for avatar and check if already completed
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        console.log('[Avatar] No user available yet');
+        return;
+      }
+      console.log('[Avatar] Fetching profile for user:', user.id);
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name, avatar_url, assessment_status')
+        .eq('id', user.id)
+        .single();
+      if (error) {
+        console.error('[Avatar] Profile fetch error:', error);
+      }
+      if (data) {
+        console.log('[Avatar] Profile loaded:', data);
+        setProfile(data);
+
+        // Redirect completed users to their results page
+        const completedStatuses = ['completed', 'pending_review', 'trial', 'approved'];
+        if (completedStatuses.includes(data.assessment_status)) {
+          console.log('[Assessment] User already completed, redirecting to results');
+          // Fetch latest completed session to get the results page URL
+          const { data: latestSession } = await supabase
+            .from('cs_assessment_sessions')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('status', 'completed')
+            .order('completed_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestSession) {
+            router.push(`/assessment/results/${latestSession.id}`);
+          } else {
+            router.push('/assessment/start');
+          }
+        }
+      }
+    };
+    fetchProfile();
+  }, [user, router]);
+
+  // Get avatar display info - use profile if available, fall back to user metadata
+  const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const displayName = profile?.name || user?.user_metadata?.name || user?.user_metadata?.full_name || user?.email || '';
+  const avatarInitial = displayName ? displayName.charAt(0).toUpperCase() : '?';
+
+  // Close avatar menu when clicking outside
+  useEffect(() => {
+    if (!showAvatarMenu) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('[data-avatar-menu]')) {
+        setShowAvatarMenu(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showAvatarMenu]);
 
   const loadingMessages = [
     "Analyzing your responses...",
@@ -174,7 +250,69 @@ export default function AssessmentInterviewPage() {
                 Save & Exit to Members Area
               </button>
             </div>
-            <span className="text-sm text-purple-400">{Math.round(progress)}% Complete</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-purple-400">{Math.round(progress)}% Complete</span>
+              {user && (
+                <div className="relative" data-avatar-menu>
+                  <button
+                    onClick={() => setShowAvatarMenu(!showAvatarMenu)}
+                    className="w-8 h-8 rounded-full overflow-hidden bg-gray-800 border border-purple-500/50 flex-shrink-0 hover:border-purple-400 transition-colors cursor-pointer"
+                  >
+                    {avatarUrl ? (
+                      <Image
+                        src={avatarUrl}
+                        alt={displayName}
+                        width={32}
+                        height={32}
+                        className="object-cover w-full h-full"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-purple-400 font-mono text-sm">
+                        {avatarInitial}
+                      </div>
+                    )}
+                  </button>
+                  {showAvatarMenu && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-gray-900 border border-purple-500/30 rounded-lg shadow-xl py-1 z-50">
+                      <div className="px-4 py-2 border-b border-gray-800">
+                        <p className="text-sm text-white font-medium truncate">{displayName}</p>
+                        {user.email && (
+                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setShowAvatarMenu(false);
+                          router.push('/profiles');
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-purple-500/20 hover:text-white transition-colors"
+                      >
+                        View My Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowAvatarMenu(false);
+                          router.push('/members');
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-purple-500/20 hover:text-white transition-colors"
+                      >
+                        View Account
+                      </button>
+                      <div className="border-t border-gray-800 mt-1 pt-1">
+                        <form action="/logout" method="POST">
+                          <button
+                            type="submit"
+                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors"
+                          >
+                            Log Out
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
             <div
@@ -186,7 +324,7 @@ export default function AssessmentInterviewPage() {
       </div>
 
       {/* Main Content */}
-      <div className="pt-24 pb-12 px-4">
+      <div className="pt-36 pb-12 px-4">
         <div className="max-w-3xl mx-auto">
           {/* Section Transition Message */}
           {currentSection.transitionMessage && (

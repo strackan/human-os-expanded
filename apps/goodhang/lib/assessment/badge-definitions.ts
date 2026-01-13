@@ -1,7 +1,7 @@
-// Badge Definitions for CS Assessment
-// These match the database seed data in the migration
+// Badge Definitions for Good Hang Assessments
+// Supports both personality (Module A/B) and work (Module C/D) badges
 
-import { BadgeDefinition } from './types';
+import { BadgeDefinition } from './badge-types';
 
 export const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
@@ -218,7 +218,330 @@ export const BADGE_DEFINITIONS: BadgeDefinition[] = [
         },
       ],
     },
+    assessment_type: 'work',
     created_at: new Date().toISOString(),
+  },
+
+  // ============================================================
+  // PERSONALITY BADGES (Module A/B - Social Assessment)
+  // ============================================================
+
+  // --- Single Attribute Badges (9+ score) ---
+  {
+    id: 'curious_mind',
+    name: 'Curious Mind',
+    description: 'Exceptional intellectual curiosity and depth of thought (INT 9+)',
+    icon: '🧠',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'INT', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+  {
+    id: 'sage',
+    name: 'Sage',
+    description: 'Profound self-awareness and emotional intelligence (WIS 9+)',
+    icon: '🦉',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'WIS', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+  {
+    id: 'life_of_the_party',
+    name: 'Life of the Party',
+    description: 'Natural social magnetism and presence (CHA 9+)',
+    icon: '🎉',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'CHA', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+  {
+    id: 'rock_solid',
+    name: 'Rock Solid',
+    description: 'Exceptional consistency and follow-through (CON 9+)',
+    icon: '🪨',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'CON', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+  {
+    id: 'fearless',
+    name: 'Fearless',
+    description: 'Remarkable assertiveness and drive (STR 9+)',
+    icon: '💪',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'STR', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+  {
+    id: 'free_spirit',
+    name: 'Free Spirit',
+    description: 'Exceptional adaptability and spontaneity (DEX 9+)',
+    icon: '🦋',
+    category: 'attribute',
+    criteria: {
+      type: 'single_attribute',
+      conditions: [{ attribute: 'DEX', min_score: 9 }],
+    },
+    assessment_type: 'personality',
+    rarity: 'rare',
+  },
+
+  // --- Alignment Badges ---
+  {
+    id: 'rebel_with_heart',
+    name: 'Rebel with Heart',
+    description: 'Breaks rules for the greater good (Chaotic Good)',
+    icon: '🔥',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'Chaotic Good' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'paragon',
+    name: 'Paragon',
+    description: 'Principled protector who follows the code (Lawful Good)',
+    icon: '⚔️',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'Lawful Good' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'wild_card',
+    name: 'Wild Card',
+    description: 'Unpredictable free spirit (Chaotic Neutral)',
+    icon: '🃏',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'Chaotic Neutral' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'the_balanced',
+    name: 'The Balanced',
+    description: 'Adapts to any situation with equilibrium (True Neutral)',
+    icon: '⚖️',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'True Neutral' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'common',
+  },
+  {
+    id: 'pragmatic_helper',
+    name: 'Pragmatic Helper',
+    description: 'Does good however it works best (Neutral Good)',
+    icon: '🤝',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'Neutral Good' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'common',
+  },
+  {
+    id: 'disciplined',
+    name: 'Disciplined',
+    description: 'Values order and structure above all (Lawful Neutral)',
+    icon: '📐',
+    category: 'alignment',
+    criteria: {
+      type: 'alignment',
+      conditions: [{ alignment: 'Lawful Neutral' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'uncommon',
+  },
+
+  // --- Personality Combo Badges (multiple attributes 8+) ---
+  {
+    id: 'philosopher',
+    name: 'Philosopher',
+    description: 'Deep thinker with profound wisdom (INT 8+ AND WIS 8+)',
+    icon: '📚',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'INT', min_score: 8 },
+        { attribute: 'WIS', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+  {
+    id: 'social_butterfly',
+    name: 'Social Butterfly',
+    description: 'Charming and adaptable in any social setting (CHA 8+ AND DEX 8+)',
+    icon: '🦋',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'CHA', min_score: 8 },
+        { attribute: 'DEX', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+  {
+    id: 'unstoppable',
+    name: 'Unstoppable',
+    description: 'Powerful drive with unshakeable consistency (STR 8+ AND CON 8+)',
+    icon: '🏔️',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'STR', min_score: 8 },
+        { attribute: 'CON', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+  {
+    id: 'quick_wit',
+    name: 'Quick Wit',
+    description: 'Sharp mind with lightning adaptability (INT 8+ AND DEX 8+)',
+    icon: '⚡',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'INT', min_score: 8 },
+        { attribute: 'DEX', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+  {
+    id: 'natural_leader',
+    name: 'Natural Leader',
+    description: 'Commanding presence with inner strength (CHA 8+ AND STR 8+)',
+    icon: '👑',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'CHA', min_score: 8 },
+        { attribute: 'STR', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+  {
+    id: 'empathic_anchor',
+    name: 'Empathic Anchor',
+    description: 'Wise and reliable friend (WIS 8+ AND CON 8+)',
+    icon: '⚓',
+    category: 'personality',
+    criteria: {
+      type: 'multiple_attributes',
+      conditions: [
+        { attribute: 'WIS', min_score: 8 },
+        { attribute: 'CON', min_score: 8 },
+      ],
+      requires_all: true,
+    },
+    assessment_type: 'personality',
+    rarity: 'legendary',
+  },
+
+  // --- Social Style Badges ---
+  {
+    id: 'deep_connector',
+    name: 'Deep Connector',
+    description: 'Forms meaningful, lasting bonds',
+    icon: '🔗',
+    category: 'social',
+    criteria: {
+      type: 'social_pattern',
+      conditions: [{ relationship_style: 'depth_seeking' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'common',
+  },
+  {
+    id: 'social_explorer',
+    name: 'Social Explorer',
+    description: 'Builds wide networks and knows everyone',
+    icon: '🌐',
+    category: 'social',
+    criteria: {
+      type: 'social_pattern',
+      conditions: [{ relationship_style: 'breadth_seeking' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'common',
+  },
+  {
+    id: 'selective_socialite',
+    name: 'Selective Socialite',
+    description: 'Extroverted with the right people',
+    icon: '✨',
+    category: 'social',
+    criteria: {
+      type: 'social_pattern',
+      conditions: [{ social_energy: 'selective_extrovert' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'uncommon',
+  },
+  {
+    id: 'spontaneous_soul',
+    name: 'Spontaneous Soul',
+    description: 'Lives for the moment and unexpected adventures',
+    icon: '🎲',
+    category: 'social',
+    criteria: {
+      type: 'social_pattern',
+      conditions: [{ energy_pattern: 'spontaneous' }],
+    },
+    assessment_type: 'personality',
+    rarity: 'common',
   },
 ];
 
@@ -230,4 +553,28 @@ export function getBadgeById(id: string): BadgeDefinition | undefined {
 // Helper to get badges by category
 export function getBadgesByCategory(category: BadgeDefinition['category']): BadgeDefinition[] {
   return BADGE_DEFINITIONS.filter((badge) => badge.category === category);
+}
+
+// Helper to get badges by assessment type
+export function getBadgesByAssessmentType(type: 'personality' | 'work' | 'both'): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((badge) =>
+    badge.assessment_type === type || badge.assessment_type === 'both' || !badge.assessment_type
+  );
+}
+
+// Get all personality badges (for Module A/B)
+export function getPersonalityBadges(): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((badge) => badge.assessment_type === 'personality');
+}
+
+// Get all work badges (for future Module C/D)
+export function getWorkBadges(): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((badge) =>
+    badge.assessment_type === 'work' || !badge.assessment_type
+  );
+}
+
+// Get badges by rarity
+export function getBadgesByRarity(rarity: BadgeDefinition['rarity']): BadgeDefinition[] {
+  return BADGE_DEFINITIONS.filter((badge) => badge.rarity === rarity);
 }

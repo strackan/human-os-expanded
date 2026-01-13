@@ -1,0 +1,156 @@
+/**
+ * Feature Flags for Release 0.1.8.1 - Code Optimizations
+ *
+ * Controls gradual rollout of refactored code with instant rollback capability.
+ * All flags default to false (use legacy code) for maximum safety.
+ */
+
+export const FEATURE_FLAGS = {
+  /**
+   * Phase 1: Use consolidated BaseTriggerEvaluator instead of separate evaluators
+   *
+   * When enabled: SkipTriggerEvaluatorV2, ReviewTriggerEvaluatorV2, EscalateTriggerEvaluatorV2
+   * When disabled: Original SkipTriggerEvaluator, ReviewTriggerEvaluator, EscalateTriggerEvaluator
+   *
+   * Benefit: Reduces 1,707 lines of 95% duplicate code to 700 lines
+   * Risk: Low (pure refactor, behavior identical)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_BASE_TRIGGER_EVALUATOR:
+    process.env.NEXT_PUBLIC_USE_BASE_TRIGGER_EVALUATOR === 'true',
+
+  /**
+   * Phase 2: Use modular TaskMode components instead of monolithic component
+   *
+   * When enabled: TaskModeFullscreenV2 (composed of 6 child components)
+   * When disabled: Original TaskModeFullscreen (1,151 line monolith)
+   *
+   * Benefit: Splits 1,151 lines into 6 focused components for easier maintenance
+   * Risk: Medium (component refactor with state dependencies)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_MODULAR_TASK_MODE:
+    process.env.NEXT_PUBLIC_USE_MODULAR_TASK_MODE === 'true',
+
+  /**
+   * Phase 3: Use modular workflow config system instead of monolithic configs
+   *
+   * When enabled: WorkflowBuilder with composable patterns and stages
+   * When disabled: Original DynamicChatFixed hardcoded config
+   *
+   * Benefit: Modularizes 1,248-line config into reusable patterns and stages
+   * Risk: Low (config generation, no logic changes)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_MODULAR_WORKFLOW_CONFIGS:
+    process.env.NEXT_PUBLIC_USE_MODULAR_WORKFLOW_CONFIGS === 'true',
+
+  /**
+   * Phase 4 (InHerSight 0.1.9): Use database-driven workflow template system
+   *
+   * When enabled: WorkflowCompilationService with template inheritance and modifications
+   * When disabled: Original hardcoded TypeScript workflow configs
+   *
+   * Benefit:
+   * - No more per-customer workflow files (eliminates bloat)
+   * - Runtime modification based on customer state (risk_score, company, etc.)
+   * - Templates and modifications managed via database (no code deploys)
+   * - Scalable across customers and workflows
+   *
+   * Risk: High (fundamental architecture change)
+   * Rollback: Toggle to false in .env.local
+   * Test Customer: Obsidian Black (renewal_base template + at-risk freebie mod)
+   */
+  USE_WORKFLOW_TEMPLATE_SYSTEM:
+    process.env.NEXT_PUBLIC_USE_WORKFLOW_TEMPLATE_SYSTEM === 'true',
+
+  /**
+   * Phase 5: Use encapsulated TaskMode layout (side-by-side chat + artifact)
+   *
+   * When enabled: TaskModeEncapsulated with 50/50 chat/artifact split
+   * When disabled: Original layout with toggleable artifact panel
+   *
+   * Benefit:
+   * - Each slide shows its own chat and artifact side-by-side
+   * - Cleaner per-slide experience (no continuous chat scroll)
+   * - Artifacts always visible (no toggle needed)
+   * - Better alignment with Obsidian Black demo UX
+   *
+   * Risk: Medium (layout change, same underlying logic)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_ENCAPSULATED_TASK_MODE:
+    process.env.NEXT_PUBLIC_USE_ENCAPSULATED_TASK_MODE === 'true',
+
+  /**
+   * Phase 6: Use LLM-driven workflow orchestration (V2 workflows)
+   *
+   * When enabled: InHerSight90DayRenewalV2 with LLM step orchestration
+   * When disabled: Original static workflow config
+   *
+   * Benefit:
+   * - LLM decides next steps based on context (hybrid control)
+   * - Dynamic artifact generation (presentations, emails)
+   * - Human-OS enrichment integration
+   * - Key decisions require user confirmation
+   *
+   * Risk: Medium (LLM latency, cost, requires API key)
+   * Rollback: Toggle to false in .env.local
+   */
+  USE_LLM_WORKFLOW_V2:
+    process.env.NEXT_PUBLIC_USE_LLM_WORKFLOW_V2 === 'true',
+
+  /**
+   * Phase 7: Use v0-style collapsible step chat layout
+   *
+   * When enabled: TaskModeStepChat with collapsible step containers
+   * When disabled: TaskModeEncapsulated (current 50/50 layout)
+   *
+   * Benefit:
+   * - Artifact becomes focal point (larger area)
+   * - Steps are collapsible accordions (cleaner progress)
+   * - Auto-collapse on completion creates momentum
+   * - Resizable step panel (280-450px)
+   * - "Quiet Mind" zen aesthetic
+   *
+   * Risk: Medium (layout + state structure change)
+   * Rollback: Set NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT=false in .env.local
+   *
+   * Default: Enabled in development only
+   */
+  USE_STEP_CHAT_LAYOUT:
+    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT === 'true' ||
+    (process.env.NODE_ENV === 'development' &&
+      process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT !== 'false'),
+} as const;
+
+/**
+ * Type-safe flag access
+ */
+export type FeatureFlagKey = keyof typeof FEATURE_FLAGS;
+
+/**
+ * Helper to check if a feature flag is enabled
+ *
+ * @param flag - The feature flag to check
+ * @returns true if flag is enabled, false otherwise
+ *
+ * @example
+ * if (isFeatureEnabled('USE_BASE_TRIGGER_EVALUATOR')) {
+ *   // Use new code
+ * } else {
+ *   // Use old code
+ * }
+ */
+export function isFeatureEnabled(flag: FeatureFlagKey): boolean {
+  return FEATURE_FLAGS[flag];
+}
+
+/**
+ * Get all feature flag states (useful for debugging)
+ *
+ * @returns Object with all flag states
+ */
+export function getAllFeatureFlags(): Record<FeatureFlagKey, boolean> {
+  return { ...FEATURE_FLAGS };
+}

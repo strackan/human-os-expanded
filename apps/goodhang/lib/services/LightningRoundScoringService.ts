@@ -20,8 +20,11 @@ export class LightningRoundScoringService {
   // Difficulty multipliers for scoring
   private static readonly DIFFICULTY_MULTIPLIERS: Record<LightningDifficulty, number> = {
     easy: 1.0,
+    medium: 1.25,
     intermediate: 1.5,
+    hard: 1.75,
     advanced: 2.0,
+    expert: 2.5,
     insane: 3.0,
   };
 
@@ -77,7 +80,7 @@ export class LightningRoundScoringService {
       const answer = answerMap.get(question.id);
       if (!answer) continue; // Question not answered
 
-      totalTimeMs += answer.time_taken_ms;
+      totalTimeMs += answer.time_taken_ms ?? 0;
 
       if (this.scoreAnswer(answer.answer, question.correct_answer)) {
         correctCount++;

@@ -43,7 +43,7 @@ Example: Add Ruth to 'marriage' context with notes about weekly planning.`,
         },
         product_id: {
           type: 'string',
-          enum: ['human_os', 'founder_os', 'renubu', 'gft', 'voice_os'],
+          enum: ['human_os', 'founder_os', 'renubu', 'gft', 'voice_os', 'goodhang'],
           description: 'Which product this context belongs to (default: founder_os)',
         },
       },
@@ -170,7 +170,7 @@ const AddContextSchema = z.object({
   object_type: z.string(),
   context_slug: z.string().min(1).transform(s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
   notes: z.string().optional(),
-  product_id: z.enum(['human_os', 'founder_os', 'renubu', 'gft', 'voice_os']).optional().default('founder_os'),
+  product_id: z.enum(['human_os', 'founder_os', 'renubu', 'gft', 'voice_os', 'goodhang']).optional().default('founder_os'),
 });
 
 const UpdateContextSchema = z.object({

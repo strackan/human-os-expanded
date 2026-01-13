@@ -52,7 +52,7 @@ export function createDoRoutes(
       // Import alias system dynamically
       const { AliasResolver, AliasExecutor } = await import('@human-os/aliases');
 
-      const layer = `founder:${userId}` as Layer;
+      const layer: Layer = `founder:${userId}`;
 
       // Initialize resolver
       const resolver = new AliasResolver({
@@ -134,7 +134,7 @@ export function createDoRoutes(
 
       const { AliasResolver } = await import('@human-os/aliases');
 
-      const layer = `founder:${userId}` as Layer;
+      const layer: Layer = `founder:${userId}`;
 
       const resolver = new AliasResolver({
         supabaseUrl: process.env['SUPABASE_URL']!,
