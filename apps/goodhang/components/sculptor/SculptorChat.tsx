@@ -323,11 +323,6 @@ export default function SculptorChat({
                 </div>
               </div>
 
-              {message.role === 'user' && (
-                <div className="w-10 h-10 rounded-full bg-amber-600/20 border border-amber-600/30 flex items-center justify-center flex-shrink-0">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-              )}
             </div>
           );
         })}
