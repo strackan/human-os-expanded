@@ -99,34 +99,6 @@ importers:
         specifier: ^5.7.2
         version: 5.9.3
 
-  apps/do-mcp:
-    dependencies:
-      '@human-os/aliases':
-        specifier: workspace:*
-        version: link:../../packages/aliases
-      '@human-os/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@human-os/entity-resolution':
-        specifier: workspace:*
-        version: link:../../packages/entity-resolution
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.0.4
-        version: 1.24.3(zod@4.3.4)
-      '@supabase/supabase-js':
-        specifier: ^2.87.1
-        version: 2.87.1
-      dotenv:
-        specifier: ^16.0.0
-        version: 16.6.1
-    devDependencies:
-      '@types/node':
-        specifier: ^20.0.0
-        version: 20.19.26
-      typescript:
-        specifier: ^5.7.2
-        version: 5.9.3
-
   apps/founder-os/_base:
     dependencies:
       '@human-os/core':
