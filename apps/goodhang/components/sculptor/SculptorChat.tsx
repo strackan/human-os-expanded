@@ -207,7 +207,7 @@ export default function SculptorChat({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-stone-900 via-stone-900 to-stone-950" style={{ fontFamily: 'var(--font-geist-sans), system-ui, -apple-system, sans-serif' }}>
       {/* Header */}
       <div className="px-6 py-4 border-b border-amber-900/20">
         <div className="flex items-center justify-between">
@@ -360,7 +360,7 @@ export default function SculptorChat({
       </div>
 
       {/* Input - with ~4rem gap from last message */}
-      <div className="relative pt-8 pb-[18vh] px-4">
+      <div className="relative pt-8 pb-[18vh] px-4 max-w-5xl mx-auto w-full">
         {/* Gradient fade overlay */}
         <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-t from-stone-900 to-transparent pointer-events-none" />
 
