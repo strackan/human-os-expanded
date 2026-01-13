@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getHumanOSPublicClient } from '@/lib/supabase/human-os';
+import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import { SculptorService } from '@/lib/sculptor';
 
 interface RouteParams {
@@ -19,7 +19,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { sessionId } = await params;
 
-    const supabase = getHumanOSPublicClient();
+    const supabase = getHumanOSAdminClient();
     const sculptorService = new SculptorService(supabase);
 
     const session = await sculptorService.getSession(sessionId);
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = getHumanOSPublicClient();
+    const supabase = getHumanOSAdminClient();
 
     // Delete captured responses
     await supabase
@@ -129,7 +129,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = getHumanOSPublicClient();
+    const supabase = getHumanOSAdminClient();
     const sculptorService = new SculptorService(supabase);
 
     const success = await sculptorService.updateSessionStatus(sessionId, status);

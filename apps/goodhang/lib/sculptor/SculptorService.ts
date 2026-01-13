@@ -168,6 +168,7 @@ export class SculptorService {
         entity_name: params.entity_name,
         output_path: params.output_path,
         metadata: params.metadata || {},
+        scene_prompt: params.scene_prompt || null,
         status: 'active',
       })
       .select(`
@@ -338,11 +339,26 @@ export class SculptorService {
   }
 
   /**
-   * Build the system prompt with entity name substitution
+   * Build the system prompt with entity name substitution and scene composition
+   *
+   * Composition: template.system_prompt + session.scene_prompt
+   * - Base template provides shared infrastructure (objectives, D-series, output routing)
+   * - Scene prompt provides character/scene-specific content
    */
-  buildSystemPrompt(template: SculptorTemplate, entityName: string): string {
+  buildSystemPrompt(
+    template: SculptorTemplate,
+    entityName: string,
+    scenePrompt?: string | null
+  ): string {
     const placeholder = template.metadata?.entity_placeholder as string || '[ENTITY_NAME]';
-    return template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
+    let prompt = template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
+
+    // Compose with scene prompt if provided
+    if (scenePrompt) {
+      prompt = `${prompt}\n\n---\n\n${scenePrompt.replace(new RegExp(placeholder, 'g'), entityName)}`;
+    }
+
+    return prompt;
   }
 }
 

@@ -27,6 +27,7 @@ export interface SculptorSession {
   status: SculptorSessionStatus;
   thread_id: string | null;
   metadata: Record<string, unknown>;
+  scene_prompt: string | null; // Character/scene-specific prompt (composed with template.system_prompt)
   created_at: string;
   last_accessed_at: string | null;
   // Joined data
@@ -50,6 +51,7 @@ export interface CreateSessionParams {
   entity_name?: string;
   output_path?: string;
   metadata?: Record<string, unknown>;
+  scene_prompt?: string; // Optional scene-specific prompt
 }
 
 export interface ValidateCodeResult {

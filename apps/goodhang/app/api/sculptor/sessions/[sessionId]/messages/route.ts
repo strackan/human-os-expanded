@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getHumanOSPublicClient } from '@/lib/supabase/human-os';
+import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import { SculptorService } from '@/lib/sculptor';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
@@ -35,7 +35,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const supabase = getHumanOSPublicClient();
+    // Use AdminClient to bypass RLS for full context access
+    const supabase = getHumanOSAdminClient();
     const sculptorService = new SculptorService(supabase);
 
     // Get session
@@ -62,11 +63,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Build system prompt with entity name
+    // Build system prompt with entity name and scene composition
     const systemPrompt = sculptorService.buildSystemPrompt(
       session.template,
-      session.entity_name || 'the subject'
+      session.entity_name || 'the subject',
+      session.scene_prompt // Pass scene_prompt for hybrid composition
     );
+
+    // Debug log to see what's being composed
+    console.log('[API /sculptor/messages] System prompt length:', systemPrompt.length);
+    console.log('[API /sculptor/messages] Scene prompt exists:', !!session.scene_prompt);
+    console.log('[API /sculptor/messages] Scene prompt length:', session.scene_prompt?.length || 0);
 
     // Add completed session handling
     const isCompleted = session.status === 'completed';
@@ -157,7 +164,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     const { sessionId } = await params;
 
-    const supabase = getHumanOSPublicClient();
+    // Use AdminClient for full access
+    const supabase = getHumanOSAdminClient();
     const sculptorService = new SculptorService(supabase);
 
     // Get session and responses
@@ -181,6 +189,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         status: session.status,
         entity_name: session.entity_name,
         template_name: session.template?.name,
+        scene_prompt_length: session.scene_prompt?.length || 0, // Debug info
       },
       conversation_history: conversationHistory,
       responses,

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getHumanOSPublicClient } from '@/lib/supabase/human-os';
+import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import { SculptorService } from '@/lib/sculptor';
 
 interface ExportRequestBody {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = getHumanOSPublicClient();
+    const supabase = getHumanOSAdminClient();
     const sculptorService = new SculptorService(supabase);
 
     const session = await sculptorService.getSession(session_id);
