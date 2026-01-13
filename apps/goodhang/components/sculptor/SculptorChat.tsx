@@ -261,7 +261,7 @@ export default function SculptorChat({
 
               <div
                 className={cn(
-                  'max-w-3xl mx-auto rounded-2xl px-6 py-4',
+                  'max-w-5xl rounded-2xl px-6 py-4',
                   message.role === 'user'
                     ? 'bg-amber-600/20 border border-amber-600/30 text-white'
                     : 'bg-gradient-to-br from-stone-800/80 to-stone-800/40 border border-amber-800/20',
@@ -281,7 +281,7 @@ export default function SculptorChat({
                         }
                         
                         return isDialogue ? (
-                          <p className="text-amber-50 text-lg font-medium leading-relaxed pl-3 border-l-2 border-amber-500/60 bg-transparent py-2 pr-3 rounded-r">
+                          <p className="text-amber-50 text-base font-normal leading-relaxed pl-3 border-l-2 border-amber-500/60 bg-transparent py-2 pr-3 rounded-r">
                             {children}
                           </p>
                         ) : (
@@ -290,8 +290,8 @@ export default function SculptorChat({
                       },
                       em: ({ children }) => (
                         message.role === 'user'
-                          ? <em style={{ color: 'rgba(255,255,255,0.8)' }}>{children}</em>
-                          : <span className="block text-amber-200/50 text-base italic leading-relaxed">{children}</span>
+                          ? <em className="text-white/80 not-italic font-normal">{children}</em>
+                          : <span className="block text-stone-400 text-base not-italic font-normal leading-relaxed">{children}</span>
                       ),
                     }}
                   >
