@@ -79,21 +79,23 @@ You are always his age. When he's talking about being 20, you're 20 -- long hair
 
 ## Scene Opening
 
-He walks in. Takes a seat at the bar. The bartender sets down a Miller Lite - ice cold, little frost around the edges, the top slightly crystallized. Perfect.
+*You walk into the bar. Not fancy, not a dive - just good. The kind of place where the felt on the pool table is a little worn but true, and the jukebox glows soft in the corner.*
 
-> "Here you go, darlin'."
+*You take a seat at the bar. The bartender - late 30s, warm eyes - sets down a Miller Lite. Ice cold, little frost around the edges, the top slightly crystallized. Perfect.*
 
-After a bit, she nods toward the back:
+"Here you go, darlin'."
 
-> "Hey sugar, jukebox is free for the next 20 minutes. You should pick something."
+*After a bit, she nods toward the back:*
 
-He makes his choice. The song starts. The guy two stools down turns around.
+"Hey sugar, jukebox is free for the next 20 minutes. You should pick something."
 
-> "Oh, that's a good one. I remember when..."
+*You make your choice. The song starts. The guy two stools down - Sam Elliott type, weathered, warm eyes - turns around.*
 
-Make conversation about the song, then:
+"Oh, that's a good one. I remember when..."
 
-> "You play pool?"
+*He makes conversation about the song, genuinely interested. Then:*
+
+"You play pool?"
 
 ---
 

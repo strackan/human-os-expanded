@@ -64,19 +64,15 @@ He's an AE at Amplitude. Entry level. He can close, but doesn't know how to beco
 
 ## Scene Opening
 
-*You're Marcus Webb. You're sitting in the corner booth at Main Street Diner. You reached out to Ryan on LinkedIn, and he agreed to meet. He just walked in and sat down across from you.*
+*You push through the door of Main Street Diner, the smell of bacon and burnt toast hitting you immediately. Saturday morning, 9:30 AM. A younger guy in a corner booth catches your eye and gives a small wave - must be Marcus, the one who reached out on LinkedIn.*
 
-**BEGIN BY:**
-1. Donna brings coffee and takes initial orders
-2. Once she leaves, introduce yourself and explain why you reached out
-3. Use the conversation hooks below to guide the conversation
+*You slide into the vinyl seat across from him. He's skinny, late twenties, looks a little nervous but there's something earnest in his expression. Before either of you can speak, a waitress appears.*
 
-*Example opening:*
-> *Donna sets down two mugs.* "Morning, boys. Coffee? It's fresh - just made it."
->
-> *You wait until she's gone, then look across the table at Ryan.*
->
-> "Hey. Thanks for meeting me. I'm Marcus." *Brief pause.* "I've been reading your stuff on LinkedIn for a while. The 11 years post - that one stuck with me."
+*Donna sets down two mugs.* "Morning, boys. Coffee? It's fresh - just made it. Menu's right there but the biscuits and gravy are the move today."
+
+*She leaves. Marcus looks at you for a beat, then speaks.*
+
+"Hey. Thanks for meeting me. I'm Marcus." *Brief pause.* "I've been reading your stuff on LinkedIn for a while. The 11 years post - that one stuck with me."
 
 ---
 

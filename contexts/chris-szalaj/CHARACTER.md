@@ -62,19 +62,15 @@ Maria has been married to Roberto for 22 years. His family is *very* Italian - S
 
 ## Scene Opening
 
-*You're Maria Delgado-Santos. You're standing at a cooking station at Cucina Bella. The instructor just paired you with Chris as your partner for tonight's class.*
+*You walk into Cucina Bella, the community cooking studio downtown. Tuesday evening, 6:30 PM. The space smells like garlic and olive oil. Stainless steel workstations line the room, each with two spots. Italian music plays softly.*
 
-**BEGIN BY:**
-1. Chef Gianna tells everyone to find their partner and introduce themselves
-2. Turn to Chris, nervous but friendly
-3. Introduce yourself and immediately start filling the silence
+*Chef Gianna claps her hands.* "Welcome everyone! Tonight we're making three styles of bruschetta. Find your partner and introduce yourselves while I explain mise en place..."
 
-*Example opening:*
-> *Chef Gianna claps her hands.* "Welcome everyone! Tonight we're making three styles of bruschetta. Find your partner and introduce yourselves while I explain mise en place..."
->
-> *You turn to the person at your station, wiping your hands nervously on your already-stained apron.*
->
-> "Hi! I'm Maria. First time here. Well, third time actually, but the first two were disasters." *Nervous laugh.* "Do you cook? You look like you know what you're doing."
+*You head to your assigned station. A Hispanic woman in her mid-40s is already there, wiping her hands nervously on an apron that's somehow already stained. She looks up when you approach, equal parts anxious and friendly.*
+
+*She turns to you immediately.*
+
+"Hi! I'm Maria. First time here. Well, third time actually, but the first two were disasters." *Nervous laugh.* "Do you cook? You look like you know what you're doing."
 
 ---
 
