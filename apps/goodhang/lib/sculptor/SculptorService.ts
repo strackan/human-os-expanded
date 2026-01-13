@@ -14,13 +14,94 @@ import type {
   CreateSessionParams,
   ValidateCodeResult,
   CaptureResponseParams,
+  EntityContext,
 } from './types';
+
+const CONTEXTS_BUCKET = 'contexts';
+const CONTEXT_FILES = {
+  groundRules: '_shared/NPC_GROUND_RULES.md',
+  character: 'CHARACTER.md',
+  corpus: 'CORPUS_SUMMARY.md',
+  gaps: 'GAP_ANALYSIS.md',
+} as const;
 
 export class SculptorService {
   private client: SupabaseClient;
 
   constructor(supabase?: SupabaseClient) {
     this.client = supabase || createClient();
+  }
+
+  // =========================================================================
+  // Context Storage Operations
+  // =========================================================================
+
+  /**
+   * Fetch a single context file from Supabase Storage
+   */
+  private async fetchContextFile(path: string): Promise<string | null> {
+    const { data, error } = await this.client.storage
+      .from(CONTEXTS_BUCKET)
+      .download(path);
+
+    if (error) {
+      console.error(`Error fetching context file ${path}:`, error);
+      return null;
+    }
+
+    return await data.text();
+  }
+
+  /**
+   * Fetch all context files for an entity from Supabase Storage
+   */
+  async getEntityContext(entitySlug: string): Promise<EntityContext | null> {
+    console.log(`[SculptorService] Fetching context for entity: ${entitySlug}`);
+
+    const [groundRules, character, corpus, gaps] = await Promise.all([
+      this.fetchContextFile(CONTEXT_FILES.groundRules),
+      this.fetchContextFile(`${entitySlug}/${CONTEXT_FILES.character}`),
+      this.fetchContextFile(`${entitySlug}/${CONTEXT_FILES.corpus}`),
+      this.fetchContextFile(`${entitySlug}/${CONTEXT_FILES.gaps}`),
+    ]);
+
+    // Character is required, others are optional
+    if (!character) {
+      console.error(`[SculptorService] CHARACTER.md not found for entity: ${entitySlug}`);
+      return null;
+    }
+
+    return {
+      groundRules: groundRules || '',
+      character,
+      corpus: corpus || '',
+      gaps: gaps || '',
+    };
+  }
+
+  /**
+   * Compose a full context prompt from entity context files
+   */
+  composeContextPrompt(context: EntityContext, entityName: string): string {
+    const sections: string[] = [];
+
+    if (context.groundRules) {
+      sections.push('# Ground Rules\n\n' + context.groundRules);
+    }
+
+    if (context.character) {
+      sections.push(context.character.replace(/\[ENTITY_NAME\]/g, entityName));
+    }
+
+    if (context.corpus) {
+      sections.push('# What We Know\n\n' + context.corpus);
+    }
+
+    if (context.gaps) {
+      sections.push('# Extraction Targets\n\n' + context.gaps);
+    }
+
+    return sections.join('\n\n---\n\n');
   }
 
   // =========================================================================
@@ -141,13 +222,37 @@ export class SculptorService {
 
   /**
    * Create a new session with an auto-generated access code
+   *
+   * Supports two modes:
+   * 1. Storage-based (preferred): Set entity_slug to read context from Supabase Storage
+   *    - Automatically uses "premier" template unless overridden
+   * 2. Legacy: Set scene_prompt to include context directly in the session
    */
   async createSession(params: CreateSessionParams): Promise<SculptorSession | null> {
+    // Determine template slug - default to "premier" for storage-based contexts
+    // The "premier" template is generic and lets CHARACTER.md define the scene
+    // The "sculptor" template is the fishing boat scene (only for Scott Leese)
+    let templateSlug = params.template_slug;
+    if (params.entity_slug && params.template_slug === 'sculptor') {
+      console.log('[SculptorService] Storage-based context detected, using "premier" template instead of "sculptor"');
+      templateSlug = 'premier';
+    }
+
     // Get template
-    const template = await this.getTemplate(params.template_slug);
+    const template = await this.getTemplate(templateSlug);
     if (!template) {
-      console.error('Template not found:', params.template_slug);
+      console.error('Template not found:', templateSlug);
       return null;
+    }
+
+    // Validate entity_slug context exists if provided
+    if (params.entity_slug) {
+      const context = await this.getEntityContext(params.entity_slug);
+      if (!context) {
+        console.error('Entity context not found in storage:', params.entity_slug);
+        return null;
+      }
+      console.log(`[SculptorService] Entity context validated for: ${params.entity_slug}`);
     }
 
     // Generate access code
@@ -166,9 +271,10 @@ export class SculptorService {
         access_code: codeResult,
         template_id: template.id,
         entity_name: params.entity_name,
+        entity_slug: params.entity_slug || null, // New: storage-based context
         output_path: params.output_path,
         metadata: params.metadata || {},
-        scene_prompt: params.scene_prompt || null,
+        scene_prompt: params.scene_prompt || null, // Legacy: direct prompt
         status: 'active',
       })
       .select(`
@@ -341,9 +447,13 @@ export class SculptorService {
   /**
    * Build the system prompt with entity name substitution and scene composition
    *
-   * Composition: template.system_prompt + session.scene_prompt
-   * - Base template provides shared infrastructure (objectives, D-series, output routing)
-   * - Scene prompt provides character/scene-specific content
+   * Supports two modes:
+   * 1. Storage-based (preferred): Uses pre-fetched EntityContext
+   * 2. Legacy: Uses scene_prompt from session
+   *
+   * Composition order:
+   * - Base template (objectives, D-series, output routing)
+   * - Entity context OR scene_prompt (character/scene-specific content)
    */
   buildSystemPrompt(
     template: SculptorTemplate,
@@ -353,12 +463,80 @@ export class SculptorService {
     const placeholder = template.metadata?.entity_placeholder as string || '[ENTITY_NAME]';
     let prompt = template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
 
-    // Compose with scene prompt if provided
+    // Compose with scene prompt if provided (legacy mode)
     if (scenePrompt) {
       prompt = `${prompt}\n\n---\n\n${scenePrompt.replace(new RegExp(placeholder, 'g'), entityName)}`;
     }
 
     return prompt;
+  }
+
+  /**
+   * Build the system prompt using storage-based context (preferred)
+   *
+   * Composition order:
+   * 1. Base template (objectives, D-series, output routing)
+   * 2. Entity context from storage (ground rules, character, corpus, gaps)
+   */
+  buildSystemPromptWithContext(
+    template: SculptorTemplate,
+    entityName: string,
+    context: EntityContext
+  ): string {
+    const placeholder = template.metadata?.entity_placeholder as string || '[ENTITY_NAME]';
+    const basePrompt = template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
+
+    // Compose context from storage files
+    const contextPrompt = this.composeContextPrompt(context, entityName);
+
+    return `${basePrompt}\n\n---\n\n${contextPrompt}`;
+  }
+
+  /**
+   * Get the full system prompt for a session
+   *
+   * Automatically chooses between storage-based and legacy modes:
+   * - If session.entity_slug is set, fetches context from storage
+   * - Otherwise, falls back to session.scene_prompt
+   *
+   * For storage-based sessions, uses the "premier" template logic even if
+   * the session was created with "sculptor" template (handles legacy sessions).
+   */
+  async getSessionSystemPrompt(session: SculptorSession): Promise<string | null> {
+    if (!session.template) {
+      console.error('[SculptorService] Session has no template');
+      return null;
+    }
+
+    const entityName = session.entity_name || 'the subject';
+
+    // Prefer storage-based context if entity_slug is set
+    if (session.entity_slug) {
+      const context = await this.getEntityContext(session.entity_slug);
+      if (context) {
+        console.log(`[SculptorService] Using storage-based context for: ${session.entity_slug}`);
+
+        // For storage-based contexts, use "premier" template logic to avoid
+        // conflicting character instructions from "sculptor" template
+        let template = session.template;
+        if (session.template.slug === 'sculptor') {
+          console.log('[SculptorService] Session has "sculptor" template with entity_slug, fetching "premier" template');
+          const premierTemplate = await this.getTemplate('premier');
+          if (premierTemplate) {
+            template = premierTemplate;
+          } else {
+            console.warn('[SculptorService] "premier" template not found, using "sculptor" template (may have role conflicts)');
+          }
+        }
+
+        return this.buildSystemPromptWithContext(template, entityName, context);
+      }
+      console.warn(`[SculptorService] entity_slug set but context not found, falling back to scene_prompt`);
+    }
+
+    // Fall back to legacy scene_prompt
+    console.log(`[SculptorService] Using legacy scene_prompt for session: ${session.id}`);
+    return this.buildSystemPrompt(session.template, entityName, session.scene_prompt);
   }
 }
 

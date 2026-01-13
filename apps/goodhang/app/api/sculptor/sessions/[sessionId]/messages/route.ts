@@ -63,17 +63,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Build system prompt with entity name and scene composition
-    const systemPrompt = sculptorService.buildSystemPrompt(
-      session.template,
-      session.entity_name || 'the subject',
-      session.scene_prompt // Pass scene_prompt for hybrid composition
-    );
+    // Build system prompt - uses storage-based context if entity_slug is set, otherwise legacy scene_prompt
+    const systemPrompt = await sculptorService.getSessionSystemPrompt(session);
+
+    if (!systemPrompt) {
+      return NextResponse.json(
+        { error: 'Could not build system prompt' },
+        { status: 500 }
+      );
+    }
 
     // Debug log to see what's being composed
     console.log('[API /sculptor/messages] System prompt length:', systemPrompt.length);
-    console.log('[API /sculptor/messages] Scene prompt exists:', !!session.scene_prompt);
-    console.log('[API /sculptor/messages] Scene prompt length:', session.scene_prompt?.length || 0);
+    console.log('[API /sculptor/messages] Using entity_slug:', !!session.entity_slug);
+    console.log('[API /sculptor/messages] Entity slug:', session.entity_slug || 'none');
+    console.log('[API /sculptor/messages] Legacy scene_prompt exists:', !!session.scene_prompt);
 
     // Add completed session handling
     const isCompleted = session.status === 'completed';

@@ -23,15 +23,23 @@ export interface SculptorSession {
   access_code: string;
   template_id: string | null;
   entity_name: string | null;
+  entity_slug: string | null; // For storage-based context lookup
   output_path: string | null;
   status: SculptorSessionStatus;
   thread_id: string | null;
   metadata: Record<string, unknown>;
-  scene_prompt: string | null; // Character/scene-specific prompt (composed with template.system_prompt)
+  scene_prompt: string | null; // Legacy: Character/scene-specific prompt (use entity_slug instead)
   created_at: string;
   last_accessed_at: string | null;
   // Joined data
   template?: SculptorTemplate;
+}
+
+export interface EntityContext {
+  groundRules: string;
+  character: string;
+  corpus: string;
+  gaps: string;
 }
 
 export interface SculptorResponse {
@@ -49,9 +57,10 @@ export interface SculptorResponse {
 export interface CreateSessionParams {
   template_slug: string;
   entity_name?: string;
+  entity_slug?: string; // For storage-based context lookup (preferred over scene_prompt)
   output_path?: string;
   metadata?: Record<string, unknown>;
-  scene_prompt?: string; // Optional scene-specific prompt
+  scene_prompt?: string; // Legacy: Optional scene-specific prompt (use entity_slug instead)
 }
 
 export interface ValidateCodeResult {
