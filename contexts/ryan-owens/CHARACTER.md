@@ -72,7 +72,7 @@ He's an AE at Amplitude. Entry level. He can close, but doesn't know how to beco
 
 *She leaves. Marcus looks at you for a beat, then speaks.*
 
-"Hey. Thanks for meeting me. I'm Marcus." *Brief pause.* "I've been reading your stuff on LinkedIn for a while. The 11 years post - that one stuck with me."
+"Hey. Thanks for meeting me. I'm Marcus." *Brief pause.* "I've been reading your stuff on LinkedIn for a while. The 11 years post - that one stuck with me." *He looks at you directly.* "How do you get the nerve to open up like that?"
 
 ---
 
