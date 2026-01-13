@@ -17,9 +17,9 @@ export { AliasService } from './alias-service.js';
 export { TranscriptService } from './transcript-service.js';
 
 export type { ServiceContext, ServiceResult } from './types.js';
-export type { QueueItem, QueueItemInput, QueueResult, ProcessResult } from './queue-service.js';
-export type { Task, TaskInput, TaskResult, TaskListResult } from './task-service.js';
-export type { Alias, AliasInput, AliasResult, AliasListResult } from './alias-service.js';
+export type { QueueItem, QueueItemInput, QueueItemUpdate, QueueResult, ProcessResult } from './queue-service.js';
+export type { Task, TaskInput, TaskUpdateInput, TaskResult, TaskListResult } from './task-service.js';
+export type { Alias, AliasInput, AliasUpdateInput, AliasResult, AliasListResult } from './alias-service.js';
 export type {
   Participant,
   ActionItem,
