@@ -445,6 +445,13 @@ export class SculptorService {
   }
 
   /**
+   * Escape special regex characters in a string
+   */
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
    * Build the system prompt with entity name substitution and scene composition
    *
    * Supports two modes:
@@ -461,11 +468,12 @@ export class SculptorService {
     scenePrompt?: string | null
   ): string {
     const placeholder = template.metadata?.entity_placeholder as string || '[ENTITY_NAME]';
-    let prompt = template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
+    const escapedPlaceholder = this.escapeRegex(placeholder);
+    let prompt = template.system_prompt.replace(new RegExp(escapedPlaceholder, 'g'), entityName);
 
     // Compose with scene prompt if provided (legacy mode)
     if (scenePrompt) {
-      prompt = `${prompt}\n\n---\n\n${scenePrompt.replace(new RegExp(placeholder, 'g'), entityName)}`;
+      prompt = `${prompt}\n\n---\n\n${scenePrompt.replace(new RegExp(escapedPlaceholder, 'g'), entityName)}`;
     }
 
     return prompt;
@@ -484,7 +492,8 @@ export class SculptorService {
     context: EntityContext
   ): string {
     const placeholder = template.metadata?.entity_placeholder as string || '[ENTITY_NAME]';
-    const basePrompt = template.system_prompt.replace(new RegExp(placeholder, 'g'), entityName);
+    const escapedPlaceholder = this.escapeRegex(placeholder);
+    const basePrompt = template.system_prompt.replace(new RegExp(escapedPlaceholder, 'g'), entityName);
 
     // Compose context from storage files
     const contextPrompt = this.composeContextPrompt(context, entityName);
