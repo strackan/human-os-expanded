@@ -5,6 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import { claimActivationKey, storeSession } from '@/lib/tauri';
 import { useAuthStore } from '@/lib/stores/auth';
 
+// Debug: check env vars
+console.log('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL);
+console.log('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY?.slice(0, 20) + '...');
+
 // Initialize Supabase client
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL || '',
@@ -91,14 +95,24 @@ export default function SigninPage() {
       // Update auth store with token
       setSession(authData.user.id, effectiveSessionId, token);
 
+      // Get product before clearing storage
+      const product = sessionStorage.getItem('product');
+
       // Clear temp storage
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
       sessionStorage.removeItem('existingUserId');
+      sessionStorage.removeItem('product');
 
-      // Navigate to results
-      navigate(sessionId ? '/results' : '/');
+      // Navigate based on product type
+      if (sessionId) {
+        navigate('/results');
+      } else if (product === 'founder_os') {
+        navigate('/founder-os/onboarding');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: unknown) {
       console.error('Signin error:', err);
       const message =

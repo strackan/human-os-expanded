@@ -63,14 +63,24 @@ export default function AuthCallbackPage() {
         // Update auth store
         setSession(session.user.id, effectiveSessionId, token);
 
+        // Get product before clearing storage
+        const product = sessionStorage.getItem('product');
+
         // Clear temp storage
         sessionStorage.removeItem('activationCode');
         sessionStorage.removeItem('sessionId');
         sessionStorage.removeItem('preview');
         sessionStorage.removeItem('existingUserId');
+        sessionStorage.removeItem('product');
 
-        // Navigate to results
-        navigate(sessionId ? '/results' : '/');
+        // Navigate based on product type
+        if (sessionId) {
+          navigate('/results');
+        } else if (product === 'founder_os') {
+          navigate('/founder-os/onboarding');
+        } else {
+          navigate('/dashboard');
+        }
       } catch (err) {
         console.error('Auth callback error:', err);
         const message =

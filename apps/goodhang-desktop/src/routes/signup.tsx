@@ -88,13 +88,23 @@ export default function SignupPage() {
       // Update auth store with token
       setSession(authData.user.id, effectiveSessionId, token);
 
+      // Get product before clearing storage
+      const product = sessionStorage.getItem('product');
+
       // Clear temp storage
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
+      sessionStorage.removeItem('product');
 
-      // Navigate to results (or home if no session)
-      navigate(sessionId ? '/results' : '/');
+      // Navigate based on product type
+      if (sessionId) {
+        navigate('/results');
+      } else if (product === 'founder_os') {
+        navigate('/founder-os/onboarding');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: unknown) {
       console.error('Signup error:', err);
       const message = err instanceof Error ? err.message : 'Failed to create account. Please try again.';
