@@ -67,15 +67,15 @@ export async function POST(request: NextRequest) {
     // Preview data comes from metadata JSONB column
     const metadata = keyData.metadata || {};
 
-    // Check if there's an existing user linked to this key
-    const hasExistingUser = !!keyData.user_id;
+    // Check if there's an existing user linked to this key (prefer human_os_user_id)
+    const hasExistingUser = !!keyData.human_os_user_id;
 
     return NextResponse.json({
       valid: true,
       product: keyData.product,
       sessionId: keyData.session_id,
       hasExistingUser,
-      userId: keyData.user_id || null,
+      userId: keyData.human_os_user_id || null, // Now returns human_os.users.id
       preview: {
         tier: metadata.tier || 'unknown',
         archetypeHint: metadata.archetype_hint || metadata.character_class || 'Your character awaits...',

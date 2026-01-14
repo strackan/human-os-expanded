@@ -1,8 +1,8 @@
 /**
  * POST /api/activation/claim
  *
- * Claims an activation key for a user after account creation.
- * Links the assessment session to the user.
+ * Claims an activation key for a human_os user.
+ * Links the activation key and creates product membership.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,7 +23,7 @@ function getSupabase() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { code, userId } = body;
+    const { code, userId } = body; // userId is now human_os.users.id
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json(
@@ -40,41 +40,75 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedCode = code.toUpperCase().trim();
+    const supabase = getSupabase();
 
-    // Call the database function
-    const { data, error } = await getSupabase().rpc('claim_activation_key', {
-      p_code: normalizedCode,
-      p_user_id: userId,
-    });
+    // Get the activation key
+    const { data: keyData, error: keyError } = await supabase
+      .from('activation_keys')
+      .select('*')
+      .eq('code', normalizedCode)
+      .single();
 
-    if (error) {
-      console.error('Claim error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Failed to claim activation code' },
-        { status: 500 }
-      );
-    }
-
-    if (!data || data.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Failed to claim activation code' },
-        { status: 500 }
-      );
-    }
-
-    const result = data[0];
-
-    if (!result.success) {
+    if (keyError || !keyData) {
       return NextResponse.json({
         success: false,
-        error: result.error || 'Failed to claim activation code',
+        error: 'Invalid activation code',
       });
+    }
+
+    // Check if already redeemed
+    if (keyData.redeemed_at) {
+      return NextResponse.json({
+        success: false,
+        error: 'This activation code has already been used',
+      });
+    }
+
+    // Check if expired
+    if (new Date(keyData.expires_at) < new Date()) {
+      return NextResponse.json({
+        success: false,
+        error: 'This activation code has expired',
+      });
+    }
+
+    // Claim the key - update with human_os_user_id
+    const { error: updateError } = await supabase
+      .from('activation_keys')
+      .update({
+        human_os_user_id: userId,
+        redeemed_at: new Date().toISOString(),
+      })
+      .eq('id', keyData.id);
+
+    if (updateError) {
+      console.error('Claim update error:', updateError);
+      return NextResponse.json(
+        { success: false, error: 'Failed to claim activation code' },
+        { status: 500 }
+      );
+    }
+
+    // Create user_product entry in human_os schema
+    const { error: productError } = await supabase
+      .schema('human_os')
+      .from('user_products')
+      .upsert({
+        user_id: userId,
+        product: keyData.product,
+        activation_key_id: keyData.id,
+        metadata: keyData.metadata || {},
+      }, { onConflict: 'user_id,product' });
+
+    if (productError) {
+      console.error('Product entry error:', productError);
+      // Non-fatal - key is still claimed
     }
 
     return NextResponse.json({
       success: true,
       userId,
-      product: result.product,
+      product: keyData.product,
     });
   } catch (error) {
     console.error('Unexpected error in claim:', error);
