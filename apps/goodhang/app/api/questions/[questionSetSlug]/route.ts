@@ -76,8 +76,9 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
     }
 
-    // Transform the nested data
-    const formattedQuestions = (questions || []).map((q: { display_order: number; questions: Record<string, unknown> }) => ({
+    // Transform the nested data - use 'any' to handle Supabase's dynamic join types
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const formattedQuestions = (questions || []).map((q: any) => ({
       ...q.questions,
       display_order: q.display_order,
     }));
@@ -85,7 +86,8 @@ export async function GET(
     // If entity is provided, also get their existing answers
     let answers: Record<string, unknown> = {};
     if (entitySlug) {
-      const questionIds = formattedQuestions.map((q: { id: string }) => q.id);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const questionIds = formattedQuestions.map((q: any) => q.id);
       const { data: answerData } = await supabase
         .from('entity_answers')
         .select('question_id, value_text, value_choice, value_numeric, answered')
@@ -93,13 +95,11 @@ export async function GET(
         .in('question_id', questionIds);
 
       if (answerData) {
-        answers = answerData.reduce(
-          (acc: Record<string, unknown>, a: Record<string, unknown>) => {
-            acc[a.question_id as string] = a;
-            return acc;
-          },
-          {} as Record<string, unknown>
-        );
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        answers = answerData.reduce((acc: Record<string, unknown>, a: any) => {
+          acc[a.question_id] = a;
+          return acc;
+        }, {});
       }
     }
 
