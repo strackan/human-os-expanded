@@ -9,6 +9,8 @@ import AuthCallbackPage from './routes/auth-callback';
 import ResultsPage from './routes/results';
 import DashboardPage from './routes/dashboard';
 import FounderOSOnboardingPage from './routes/founder-os/onboarding';
+import QuestionEPage from './routes/founder-os/question-e';
+import QuestionECompletePage from './routes/founder-os/question-e-complete';
 import { useAuthStore } from './lib/stores/auth';
 import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
 
@@ -87,6 +89,8 @@ function App() {
           {/* Founder OS routes */}
           <Route path="/founder-os/onboarding" element={<FounderOSOnboardingPage />} />
           <Route path="/founder-os/dashboard" element={<FounderOSOnboardingPage />} />
+          <Route path="/founder-os/question-e" element={<QuestionEPage />} />
+          <Route path="/founder-os/question-e-complete" element={<QuestionECompletePage />} />
         </Routes>
       </main>
     </div>

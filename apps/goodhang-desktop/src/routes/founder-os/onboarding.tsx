@@ -28,10 +28,25 @@ export default function FounderOSOnboardingPage() {
   const identityProfile = founderOS?.identity_profile;
   const userName = status?.user?.full_name || 'Founder';
 
+  // Check if Question E is completed
+  const questionECompleted = (() => {
+    try {
+      const stored = localStorage.getItem('question-e-answers');
+      if (stored) {
+        const data = JSON.parse(stored);
+        return data.completedAt && data.answers?.length > 0;
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  })();
+
   // Determine current stage
   const getStage = () => {
     if (identityProfile?.completed) return 'ready';
-    if (sculptor?.completed) return 'polishing';
+    if (questionECompleted) return 'polishing';
+    if (sculptor?.completed) return 'question-e';
     if (sculptor && !sculptor.completed) return 'sculpting';
     return 'intro';
   };
@@ -106,6 +121,7 @@ export default function FounderOSOnboardingPage() {
           >
             {stage === 'intro' && `Welcome, ${userName}`}
             {stage === 'sculpting' && 'The Sculptor Awaits'}
+            {stage === 'question-e' && 'Personality Baseline'}
             {stage === 'polishing' && 'Almost Ready'}
             {stage === 'ready' && `Welcome Back, ${userName}`}
           </motion.h1>
@@ -121,6 +137,8 @@ export default function FounderOSOnboardingPage() {
               'Your personal operating system is being prepared...'}
             {stage === 'sculpting' &&
               'Continue your Sculptor interview to unlock your Founder OS'}
+            {stage === 'question-e' &&
+              'Complete Question E to calibrate your support protocols'}
             {stage === 'polishing' &&
               'Your identity profile is being finalized'}
             {stage === 'ready' && 'Your Founder OS is ready'}
@@ -189,6 +207,67 @@ export default function FounderOSOnboardingPage() {
               </div>
             </div>
 
+            {/* Question E Status */}
+            <div
+              className={`bg-gh-dark-800 rounded-xl p-6 text-left ${
+                questionECompleted ? 'border border-green-500/30' : sculptor?.completed ? 'border border-blue-500/30' : ''
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                      questionECompleted
+                        ? 'bg-green-600/20'
+                        : sculptor?.completed
+                        ? 'bg-blue-600/20'
+                        : 'bg-gray-700'
+                    }`}
+                  >
+                    {questionECompleted ? (
+                      <svg
+                        className="w-6 h-6 text-green-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    ) : (
+                      <span className={sculptor?.completed ? 'text-blue-400' : 'text-gray-400'}>2</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white">Question E: Personality Baseline</h3>
+                    <p className="text-sm text-gray-400">
+                      {questionECompleted
+                        ? 'Baseline captured'
+                        : sculptor?.completed
+                        ? 'Ready to begin - 24 questions'
+                        : 'Decision-making, energy, crisis patterns'}
+                    </p>
+                  </div>
+                </div>
+                {questionECompleted ? (
+                  <span className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-sm">
+                    Complete
+                  </span>
+                ) : sculptor?.completed ? (
+                  <button
+                    onClick={() => navigate('/founder-os/question-e')}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
+                  >
+                    Start
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             {/* Identity Profile Status */}
             <div
               className={`bg-gh-dark-800 rounded-xl p-6 text-left ${
@@ -219,7 +298,7 @@ export default function FounderOSOnboardingPage() {
                         />
                       </svg>
                     ) : (
-                      <span className="text-gray-400">2</span>
+                      <span className="text-gray-400">3</span>
                     )}
                   </div>
                   <div>
@@ -244,7 +323,7 @@ export default function FounderOSOnboardingPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-gray-700 flex items-center justify-center">
-                    <span className="text-gray-400">3</span>
+                    <span className="text-gray-400">4</span>
                   </div>
                   <div>
                     <h3 className="font-semibold text-white">Onboarding Call</h3>
@@ -275,11 +354,25 @@ export default function FounderOSOnboardingPage() {
               >
                 Open Founder OS
               </button>
+            ) : stage === 'question-e' ? (
+              <div className="space-y-4">
+                <p className="text-gray-500 text-sm">
+                  Complete Question E to build your personality baseline. This enables effective support.
+                </p>
+                <button
+                  onClick={() => navigate('/founder-os/question-e')}
+                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-lg transition-colors"
+                >
+                  Start Question E Assessment
+                </button>
+              </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-gray-500 text-sm">
                   {stage === 'intro'
                     ? 'Your Founder OS will be configured after completing The Sculptor interview.'
+                    : stage === 'polishing'
+                    ? 'Question E complete. Your identity profile is being finalized.'
                     : 'Complete the remaining steps to unlock your full Founder OS experience.'}
                 </p>
                 <button
@@ -288,6 +381,8 @@ export default function FounderOSOnboardingPage() {
                 >
                   {stage === 'sculpting'
                     ? 'Continue Sculptor Interview'
+                    : stage === 'polishing'
+                    ? 'Finalizing Profile...'
                     : 'Setup In Progress...'}
                 </button>
               </div>
