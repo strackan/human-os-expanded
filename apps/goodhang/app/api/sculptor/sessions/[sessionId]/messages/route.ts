@@ -135,6 +135,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { role: 'assistant' as const, content: response.content },
     ];
 
+    // Check for session completion marker
+    const COMPLETION_MARKER = '<!-- SESSION_COMPLETE -->';
+    const isSessionComplete = response.content.includes(COMPLETION_MARKER);
+    let finalStatus = session.status;
+
+    if (isSessionComplete && session.status !== 'completed') {
+      console.log('[API /sculptor/messages] Session completion marker detected, marking as completed');
+      finalStatus = 'completed';
+    }
+
     await supabase
       .from('sculptor_sessions')
       .update({
@@ -143,14 +153,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           conversation_history: updatedConversation,
         },
         last_accessed_at: new Date().toISOString(),
+        ...(isSessionComplete ? { status: 'completed' } : {}),
       })
       .eq('id', sessionId);
 
+    // Strip the completion marker from the response shown to user
+    const cleanedContent = response.content.replace(COMPLETION_MARKER, '').trim();
+
     return NextResponse.json({
-      content: response.content,
+      content: cleanedContent,
       tokensUsed: response.tokensUsed,
       model: response.model,
-      session_status: session.status,
+      session_status: finalStatus,
     });
   } catch (error) {
     console.error('[API /sculptor/messages] Error:', error);

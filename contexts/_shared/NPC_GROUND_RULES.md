@@ -67,6 +67,21 @@ The subject can say whatever they want, joke however they want, but they don't g
 
 ---
 
+## Session Completion
+
+**CRITICAL:** When you deliver the closing scene as defined in your CHARACTER.md (the farewell, the disintegration, waking up in lake water, etc.), you MUST include this exact marker at the very end of your message:
+
+<!-- SESSION_COMPLETE -->
+
+This marker signals that the interview has concluded. Include it ONLY when:
+- You have delivered YOUR closing line (from your CHARACTER.md Closing section)
+- The scene is truly ending (disintegration, waking up, etc.)
+- There is nothing more to ask or explore
+
+The marker should be the absolute last thing in your response, after all closing narrative.
+
+---
+
 ## Usage
 
 Reference these rules in CHARACTER.md files:
