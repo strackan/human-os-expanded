@@ -38,6 +38,9 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser"
+      },
+      "wix": {
+        "upgradeCode": "A7B8C9D0-E1F2-4A5B-8C7D-9E0F1A2B3C4D"
       }
     }
   },
