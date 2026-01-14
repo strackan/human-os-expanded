@@ -67,15 +67,32 @@ export async function POST(request: NextRequest) {
     // Preview data comes from metadata JSONB column
     const metadata = keyData.metadata || {};
 
-    // Check if there's an existing user linked to this key (prefer human_os_user_id)
-    const hasExistingUser = !!keyData.human_os_user_id;
+    // Check if there's an existing user linked to this key
+    // Need to return auth_id (auth.users.id) for desktop client comparison
+    let authUserId: string | null = null;
+    if (keyData.human_os_user_id) {
+      // Look up the human_os.users record to get auth_id
+      const { data: humanOsUser } = await getSupabase()
+        .schema('human_os')
+        .from('users')
+        .select('auth_id')
+        .eq('id', keyData.human_os_user_id)
+        .single();
+      authUserId = humanOsUser?.auth_id || null;
+    }
+    // Fallback to user_id column (legacy auth.users reference)
+    if (!authUserId && keyData.user_id) {
+      authUserId = keyData.user_id;
+    }
+
+    const hasExistingUser = !!authUserId;
 
     return NextResponse.json({
       valid: true,
       product: keyData.product,
       sessionId: keyData.session_id,
       hasExistingUser,
-      userId: keyData.human_os_user_id || null, // Now returns human_os.users.id
+      userId: authUserId, // Return auth.users.id for client comparison
       preview: {
         tier: metadata.tier || 'unknown',
         archetypeHint: metadata.archetype_hint || metadata.character_class || 'Your character awaits...',
