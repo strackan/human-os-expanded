@@ -1,12 +1,31 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/auth';
-import { useUserStatusStore } from '@/lib/stores/user';
+import { useUserStatusStore, getRecommendedRoute } from '@/lib/stores/user';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthStore();
-  const { status, loading } = useUserStatusStore();
+  const { clearSession, isAuthenticated, token, userId } = useAuthStore();
+  const { status, loading, fetchStatus } = useUserStatusStore();
+
+  // Fetch status if not loaded and authenticated
+  useEffect(() => {
+    if (isAuthenticated && token && !status && !loading) {
+      fetchStatus(token, userId || undefined);
+    }
+  }, [isAuthenticated, token, status, loading, userId, fetchStatus]);
+
+  // Auto-redirect based on user's products
+  useEffect(() => {
+    if (!loading && status?.found) {
+      const route = getRecommendedRoute(status);
+      // Only auto-redirect if it's a specific product route, not back to dashboard
+      if (route !== '/dashboard' && route !== '/activate') {
+        navigate(route, { replace: true });
+      }
+    }
+  }, [loading, status, navigate]);
 
   if (loading) {
     return (
