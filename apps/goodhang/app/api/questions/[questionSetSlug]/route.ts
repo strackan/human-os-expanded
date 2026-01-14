@@ -4,18 +4,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 
-interface QuestionResult {
-  question_id: string;
-  question_slug: string;
-  question_text: string;
-  question_type: string;
-  category: string;
-  subcategory: string;
-  display_order: number;
-  options?: string[] | null;
-  description?: string | null;
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ questionSetSlug: string }> }
