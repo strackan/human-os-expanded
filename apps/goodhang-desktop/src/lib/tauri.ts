@@ -143,6 +143,7 @@ export async function storeSession(
 export async function getSession(): Promise<{
   userId: string;
   sessionId: string;
+  token: string;
 } | null> {
   return invoke('get_session');
 }

@@ -43,6 +43,7 @@ pub struct SessionInfo {
     pub user_id: String,
     #[serde(rename = "sessionId")]
     pub session_id: String,
+    pub token: String,
 }
 
 #[tauri::command]
@@ -58,6 +59,7 @@ pub async fn get_session() -> Result<Option<SessionInfo>, String> {
             Ok(Some(SessionInfo {
                 user_id: session.user_id,
                 session_id: session.session_id,
+                token: session.token,
             }))
         }
         Err(keyring::Error::NoEntry) => Ok(None),

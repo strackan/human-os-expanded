@@ -29,15 +29,16 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     set({ loading: true, error: null });
     try {
-      const session = await invoke<{ userId: string; sessionId: string } | null>(
+      const session = await invoke<{ userId: string; sessionId: string; token: string } | null>(
         'get_session'
       );
       if (session) {
+        memoryToken = session.token; // Restore token to memory
         set({
           isAuthenticated: true,
           userId: session.userId,
           sessionId: session.sessionId,
-          token: memoryToken, // Restore from memory if available
+          token: session.token,
           loading: false,
         });
       } else {

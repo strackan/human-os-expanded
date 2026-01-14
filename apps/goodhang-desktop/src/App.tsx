@@ -16,8 +16,8 @@ import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
 
 function App() {
   const navigate = useNavigate();
-  const { isAuthenticated, checkSession, token, userId } = useAuthStore();
-  const { status, fetchStatus } = useUserStatusStore();
+  const { isAuthenticated, checkSession, token, userId, loading: authLoading } = useAuthStore();
+  const { status, fetchStatus, loading: statusLoading } = useUserStatusStore();
 
   // Check for existing session on mount
   useEffect(() => {
@@ -45,11 +45,15 @@ function App() {
 
   // Determine where to redirect authenticated users
   const getAuthenticatedRedirect = () => {
+    if (statusLoading) {
+      // Still loading status - go to dashboard which will handle loading state
+      return '/dashboard';
+    }
     if (status?.found) {
       return getRecommendedRoute(status);
     }
-    // Default to results for GoodHang users
-    return '/goodhang/results';
+    // Default to dashboard if no status found
+    return '/dashboard';
   };
 
   return (
@@ -65,7 +69,11 @@ function App() {
           <Route
             path="/"
             element={
-              isAuthenticated ? (
+              authLoading ? (
+                <div className="flex min-h-screen items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+                </div>
+              ) : isAuthenticated ? (
                 <Navigate to={getAuthenticatedRedirect()} replace />
               ) : (
                 <Navigate to="/activate" replace />
