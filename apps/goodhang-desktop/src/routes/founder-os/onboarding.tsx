@@ -42,12 +42,12 @@ export default function FounderOSOnboardingPage() {
     return false;
   })();
 
-  // Determine current stage
+  // Determine current stage based on sculptor status
   const getStage = () => {
     if (identityProfile?.completed) return 'ready';
     if (questionECompleted) return 'polishing';
-    if (sculptor?.completed) return 'question-e';
-    if (sculptor && !sculptor.completed) return 'sculpting';
+    if (sculptor?.completed || sculptor?.status === 'completed') return 'question-e';
+    if (sculptor?.status === 'active') return 'sculpting';
     return 'intro';
   };
 
@@ -154,7 +154,7 @@ export default function FounderOSOnboardingPage() {
             {/* Sculptor Status */}
             <div
               className={`bg-gh-dark-800 rounded-xl p-6 text-left ${
-                sculptor?.completed ? 'border border-green-500/30' : ''
+                sculptor?.completed ? 'border border-green-500/30' : sculptor?.status === 'active' ? 'border border-yellow-500/30' : ''
               }`}
             >
               <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export default function FounderOSOnboardingPage() {
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                       sculptor?.completed
                         ? 'bg-green-600/20'
-                        : sculptor
+                        : sculptor?.status === 'active'
                         ? 'bg-yellow-600/20'
                         : 'bg-gray-700'
                     }`}
@@ -182,6 +182,20 @@ export default function FounderOSOnboardingPage() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
+                    ) : sculptor?.status === 'active' ? (
+                      <svg
+                        className="w-6 h-6 text-yellow-400"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
                     ) : (
                       <span className="text-gray-400">1</span>
                     )}
@@ -192,18 +206,27 @@ export default function FounderOSOnboardingPage() {
                     </h3>
                     <p className="text-sm text-gray-400">
                       {sculptor?.completed
-                        ? 'Clarification complete'
-                        : sculptor
-                        ? `${sculptor.status} - ${sculptor.transcript_available ? 'Transcript available' : 'In progress'}`
+                        ? 'Identity clarification complete'
+                        : sculptor?.status === 'active'
+                        ? 'Interview in progress'
                         : 'Theatrical identity clarification'}
                     </p>
                   </div>
                 </div>
-                {sculptor?.completed && (
+                {sculptor?.completed ? (
                   <span className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-sm">
                     Complete
                   </span>
-                )}
+                ) : sculptor?.status === 'active' ? (
+                  <a
+                    href={`https://goodhang.com/sculptor/${status?.contexts?.active || 'session'}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors"
+                  >
+                    Continue
+                  </a>
+                ) : null}
               </div>
             </div>
 
@@ -366,24 +389,42 @@ export default function FounderOSOnboardingPage() {
                   Start Question E Assessment
                 </button>
               </div>
-            ) : (
+            ) : stage === 'sculpting' ? (
               <div className="space-y-4">
                 <p className="text-gray-500 text-sm">
-                  {stage === 'intro'
-                    ? 'Your Founder OS will be configured after completing The Sculptor interview.'
-                    : stage === 'polishing'
-                    ? 'Question E complete. Your identity profile is being finalized.'
-                    : 'Complete the remaining steps to unlock your full Founder OS experience.'}
+                  Continue your Sculptor interview to unlock your Founder OS.
+                </p>
+                <a
+                  href={`https://goodhang.com/sculptor/${status?.contexts?.active || 'session'}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block px-8 py-4 bg-yellow-600 hover:bg-yellow-700 text-white font-medium rounded-lg text-lg transition-colors"
+                >
+                  Continue Sculptor Interview
+                </a>
+              </div>
+            ) : stage === 'polishing' ? (
+              <div className="space-y-4">
+                <p className="text-gray-500 text-sm">
+                  Question E complete. Your identity profile is being finalized.
                 </p>
                 <button
                   disabled
                   className="px-8 py-4 bg-gray-700 text-gray-400 font-medium rounded-lg text-lg cursor-not-allowed"
                 >
-                  {stage === 'sculpting'
-                    ? 'Continue Sculptor Interview'
-                    : stage === 'polishing'
-                    ? 'Finalizing Profile...'
-                    : 'Setup In Progress...'}
+                  Finalizing Profile...
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-gray-500 text-sm">
+                  Your Founder OS will be configured after completing The Sculptor interview.
+                </p>
+                <button
+                  disabled
+                  className="px-8 py-4 bg-gray-700 text-gray-400 font-medium rounded-lg text-lg cursor-not-allowed"
+                >
+                  Awaiting Sculptor Session
                 </button>
               </div>
             )}
