@@ -72,13 +72,35 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Claim the key - update with human_os_user_id
+    // userId from client is auth.users.id - look up corresponding human_os.users.id
+    let humanOsUserId: string | null = keyData.human_os_user_id;
+
+    if (!humanOsUserId) {
+      // Try to find existing human_os.users record by auth_id
+      const { data: existingUser } = await supabase
+        .schema('human_os')
+        .from('users')
+        .select('id')
+        .eq('auth_id', userId)
+        .single();
+
+      humanOsUserId = existingUser?.id || null;
+    }
+
+    // Claim the key - update user_id (auth.users.id) and optionally human_os_user_id
+    const updateData: Record<string, unknown> = {
+      user_id: userId, // Always set auth.users.id
+      redeemed_at: new Date().toISOString(),
+    };
+
+    // Only set human_os_user_id if we have a valid one
+    if (humanOsUserId) {
+      updateData.human_os_user_id = humanOsUserId;
+    }
+
     const { error: updateError } = await supabase
       .from('activation_keys')
-      .update({
-        human_os_user_id: userId,
-        redeemed_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', keyData.id);
 
     if (updateError) {
@@ -89,20 +111,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user_product entry in human_os schema
-    const { error: productError } = await supabase
-      .schema('human_os')
-      .from('user_products')
-      .upsert({
-        user_id: userId,
-        product: keyData.product,
-        activation_key_id: keyData.id,
-        metadata: keyData.metadata || {},
-      }, { onConflict: 'user_id,product' });
+    // Create user_product entry in human_os schema (only if we have a human_os user)
+    if (humanOsUserId) {
+      const { error: productError } = await supabase
+        .schema('human_os')
+        .from('user_products')
+        .upsert({
+          user_id: humanOsUserId, // Must be human_os.users.id
+          product: keyData.product,
+          activation_key_id: keyData.id,
+          metadata: keyData.metadata || {},
+        }, { onConflict: 'user_id,product' });
 
-    if (productError) {
-      console.error('Product entry error:', productError);
-      // Non-fatal - key is still claimed
+      if (productError) {
+        console.error('Product entry error:', productError);
+        // Non-fatal - key is still claimed
+      }
     }
 
     return NextResponse.json({
