@@ -29,10 +29,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   checkSession: async () => {
     set({ loading: true, error: null });
     try {
+      console.log('[Auth] Checking for existing session...');
       const session = await invoke<{ userId: string; sessionId: string; token: string } | null>(
         'get_session'
       );
       if (session) {
+        console.log('[Auth] Session found:', { userId: session.userId, hasToken: !!session.token });
         memoryToken = session.token; // Restore token to memory
         set({
           isAuthenticated: true,
@@ -42,15 +44,17 @@ export const useAuthStore = create<AuthState>((set) => ({
           loading: false,
         });
       } else {
+        console.log('[Auth] No session found');
         set({ isAuthenticated: false, loading: false });
       }
     } catch (err) {
-      console.error('Failed to check session:', err);
+      console.error('[Auth] Failed to check session:', err);
       set({ isAuthenticated: false, loading: false, error: String(err) });
     }
   },
 
   setSession: (userId, sessionId, token) => {
+    console.log('[Auth] Setting session:', { userId, hasToken: !!token });
     memoryToken = token; // Store in memory
     set({ isAuthenticated: true, userId, sessionId, token, loading: false });
   },
