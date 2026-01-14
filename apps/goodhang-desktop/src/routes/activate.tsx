@@ -2,15 +2,24 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { validateActivationKey, type ValidationResult } from '@/lib/tauri';
+import { useAuthStore } from '@/lib/stores/auth';
 
 export default function ActivatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, loading: authLoading } = useAuthStore();
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Preview data stored for potential future use in signup page
   const [_preview, setPreview] = useState<ValidationResult['preview'] | null>(null);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Check for code in URL (from deep link)
   useEffect(() => {
@@ -75,6 +84,15 @@ export default function ActivatePage() {
     if (cleaned.length <= 8) return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}`;
   };
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-8">
