@@ -16,7 +16,7 @@ import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
 
 function App() {
   const navigate = useNavigate();
-  const { isAuthenticated, checkSession, token, userId, loading: authLoading } = useAuthStore();
+  const { isAuthenticated, checkSession, token, userId, product, loading: authLoading } = useAuthStore();
   const { status, fetchStatus, loading: statusLoading } = useUserStatusStore();
 
   // Check for existing session on mount
@@ -24,7 +24,7 @@ function App() {
     checkSession();
   }, [checkSession]);
 
-  // Fetch user status when authenticated
+  // Fetch user status when authenticated AND we have a token
   useEffect(() => {
     if (isAuthenticated && token) {
       fetchStatus(token, userId || undefined);
@@ -45,14 +45,24 @@ function App() {
 
   // Determine where to redirect authenticated users
   const getAuthenticatedRedirect = () => {
-    if (statusLoading) {
-      // Still loading status - go to dashboard which will handle loading state
+    // If we have a token and status is loading, wait for it
+    if (token && statusLoading) {
       return '/dashboard';
     }
+    // If we have status info, use it for routing
     if (status?.found) {
       return getRecommendedRoute(status);
     }
-    // Default to dashboard if no status found
+    // If no token but we have product from device registration, route based on product
+    if (!token && product) {
+      console.log('[App] No token but have product from device registration:', product);
+      if (product === 'founder_os') {
+        return '/founder-os/onboarding';
+      } else if (product === 'goodhang') {
+        return '/goodhang/results';
+      }
+    }
+    // Default to dashboard
     return '/dashboard';
   };
 

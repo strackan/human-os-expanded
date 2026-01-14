@@ -15,6 +15,7 @@ export interface ValidationResult {
   userId?: string;
   preview?: AssessmentPreview;
   error?: string;
+  alreadyRedeemed?: boolean; // True if code was already used but user can re-authenticate
 }
 
 export interface AssessmentPreview {
@@ -137,7 +138,14 @@ export async function storeSession(
   sessionId: string,
   token: string
 ): Promise<void> {
-  return invoke('store_session', { userId, sessionId, token });
+  console.log('[Tauri] Storing session...', { userId, hasToken: !!token });
+  try {
+    await invoke('store_session', { userId, sessionId, token });
+    console.log('[Tauri] Session stored successfully');
+  } catch (err) {
+    console.error('[Tauri] Failed to store session:', err);
+    throw err;
+  }
 }
 
 export async function getSession(): Promise<{
@@ -145,9 +153,64 @@ export async function getSession(): Promise<{
   sessionId: string;
   token: string;
 } | null> {
-  return invoke('get_session');
+  console.log('[Tauri] Getting session from keyring...');
+  try {
+    const result = await invoke<{ userId: string; sessionId: string; token: string } | null>('get_session');
+    console.log('[Tauri] Get session result:', result ? 'found' : 'not found');
+    return result;
+  } catch (err) {
+    console.error('[Tauri] Failed to get session:', err);
+    throw err;
+  }
 }
 
 export async function clearSession(): Promise<void> {
   return invoke('clear_session');
+}
+
+// Device Registration - permanent storage for activation code and refresh token
+export interface DeviceRegistration {
+  activationCode: string;
+  userId: string;
+  product: ProductType;
+  refreshToken: string;
+}
+
+export async function storeDeviceRegistration(
+  activationCode: string,
+  userId: string,
+  product: ProductType,
+  refreshToken: string
+): Promise<void> {
+  console.log('[Tauri] Storing device registration...', { userId, product, hasRefreshToken: !!refreshToken });
+  try {
+    await invoke('store_device_registration', { activationCode, userId, product, refreshToken });
+    console.log('[Tauri] Device registration stored successfully');
+  } catch (err) {
+    console.error('[Tauri] Failed to store device registration:', err);
+    throw err;
+  }
+}
+
+export async function getDeviceRegistration(): Promise<DeviceRegistration | null> {
+  console.log('[Tauri] Getting device registration from keyring...');
+  try {
+    const result = await invoke<DeviceRegistration | null>('get_device_registration');
+    console.log('[Tauri] Get device registration result:', result ? 'found' : 'not found');
+    return result;
+  } catch (err) {
+    console.error('[Tauri] Failed to get device registration:', err);
+    throw err;
+  }
+}
+
+export async function clearDeviceRegistration(): Promise<void> {
+  console.log('[Tauri] Clearing device registration...');
+  try {
+    await invoke('clear_device_registration');
+    console.log('[Tauri] Device registration cleared');
+  } catch (err) {
+    console.error('[Tauri] Failed to clear device registration:', err);
+    throw err;
+  }
 }

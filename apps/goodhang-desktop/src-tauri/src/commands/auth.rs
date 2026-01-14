@@ -1,7 +1,8 @@
-use keyring::Entry;
 use serde::{Deserialize, Serialize};
+use tauri_plugin_store::StoreExt;
+use std::path::PathBuf;
 
-const SERVICE_NAME: &str = "com.goodhang.desktop";
+const STORE_FILENAME: &str = "auth.json";
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionData {
@@ -12,8 +13,82 @@ pub struct SessionData {
     pub token: String,
 }
 
+/// Permanent device registration - stores the activation code and refresh token
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeviceRegistration {
+    #[serde(rename = "activationCode")]
+    pub activation_code: String,
+    #[serde(rename = "userId")]
+    pub user_id: String,
+    pub product: String,
+    #[serde(rename = "refreshToken")]
+    pub refresh_token: String,
+}
+
+#[tauri::command]
+pub async fn store_device_registration(
+    app: tauri::AppHandle,
+    activation_code: String,
+    user_id: String,
+    product: String,
+    refresh_token: String,
+) -> Result<(), String> {
+    let registration = DeviceRegistration {
+        activation_code,
+        user_id,
+        product,
+        refresh_token,
+    };
+
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
+
+    store.set("device_registration", serde_json::to_value(&registration)
+        .map_err(|e| format!("Failed to serialize registration: {}", e))?);
+
+    store.save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
+
+    println!("[Auth] Device registration stored successfully");
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_device_registration(app: tauri::AppHandle) -> Result<Option<DeviceRegistration>, String> {
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
+
+    match store.get("device_registration") {
+        Some(value) => {
+            let registration: DeviceRegistration = serde_json::from_value(value.clone())
+                .map_err(|e| format!("Failed to parse registration: {}", e))?;
+            println!("[Auth] Device registration found: userId={}", registration.user_id);
+            Ok(Some(registration))
+        }
+        None => {
+            println!("[Auth] No device registration found");
+            Ok(None)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn clear_device_registration(app: tauri::AppHandle) -> Result<(), String> {
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
+
+    let _ = store.delete("device_registration"); // Returns bool, ignore result
+
+    store.save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
+
+    println!("[Auth] Device registration cleared");
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn store_session(
+    app: tauri::AppHandle,
     user_id: String,
     session_id: String,
     token: String,
@@ -24,16 +99,16 @@ pub async fn store_session(
         token,
     };
 
-    let json = serde_json::to_string(&session)
-        .map_err(|e| format!("Failed to serialize session: {}", e))?;
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
 
-    let entry = Entry::new(SERVICE_NAME, "session")
-        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+    store.set("session", serde_json::to_value(&session)
+        .map_err(|e| format!("Failed to serialize session: {}", e))?);
 
-    entry
-        .set_password(&json)
-        .map_err(|e| format!("Failed to store session: {}", e))?;
+    store.save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
 
+    println!("[Auth] Session stored successfully");
     Ok(())
 }
 
@@ -47,34 +122,39 @@ pub struct SessionInfo {
 }
 
 #[tauri::command]
-pub async fn get_session() -> Result<Option<SessionInfo>, String> {
-    let entry = Entry::new(SERVICE_NAME, "session")
-        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+pub async fn get_session(app: tauri::AppHandle) -> Result<Option<SessionInfo>, String> {
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
 
-    match entry.get_password() {
-        Ok(json) => {
-            let session: SessionData = serde_json::from_str(&json)
+    match store.get("session") {
+        Some(value) => {
+            let session: SessionData = serde_json::from_value(value.clone())
                 .map_err(|e| format!("Failed to parse session: {}", e))?;
 
+            println!("[Auth] Session found: userId={}", session.user_id);
             Ok(Some(SessionInfo {
                 user_id: session.user_id,
                 session_id: session.session_id,
                 token: session.token,
             }))
         }
-        Err(keyring::Error::NoEntry) => Ok(None),
-        Err(e) => Err(format!("Failed to get session: {}", e)),
+        None => {
+            println!("[Auth] No session found");
+            Ok(None)
+        }
     }
 }
 
 #[tauri::command]
-pub async fn clear_session() -> Result<(), String> {
-    let entry = Entry::new(SERVICE_NAME, "session")
-        .map_err(|e| format!("Failed to create keyring entry: {}", e))?;
+pub async fn clear_session(app: tauri::AppHandle) -> Result<(), String> {
+    let store = app.store(PathBuf::from(STORE_FILENAME))
+        .map_err(|e| format!("Failed to open store: {}", e))?;
 
-    match entry.delete_credential() {
-        Ok(()) => Ok(()),
-        Err(keyring::Error::NoEntry) => Ok(()), // Already cleared
-        Err(e) => Err(format!("Failed to clear session: {}", e)),
-    }
+    let _ = store.delete("session"); // Ignore error if not exists
+
+    store.save()
+        .map_err(|e| format!("Failed to save store: {}", e))?;
+
+    println!("[Auth] Session cleared");
+    Ok(())
 }

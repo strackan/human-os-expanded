@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
-import { claimActivationKey, storeSession } from '@/lib/tauri';
+import { claimActivationKey, storeSession, storeDeviceRegistration, type ProductType } from '@/lib/tauri';
 import { useAuthStore } from '@/lib/stores/auth';
 
 // Initialize Supabase client
@@ -17,10 +17,13 @@ export default function AuthCallbackPage() {
 
   useEffect(() => {
     async function handleCallback() {
+      console.log('=== AUTH CALLBACK STARTED ===');
       try {
         // Get the session from the URL hash (Supabase puts it there after OAuth)
+        console.log('[AuthCallback] Getting Supabase session...');
         const { data: { session }, error: sessionError } =
           await supabase.auth.getSession();
+        console.log('[AuthCallback] Session result:', { hasSession: !!session, error: sessionError?.message });
 
         if (sessionError) throw sessionError;
         if (!session || !session.user) {
@@ -31,6 +34,7 @@ export default function AuthCallbackPage() {
         const activationCode = sessionStorage.getItem('activationCode');
         const sessionId = sessionStorage.getItem('sessionId');
         const existingUserId = sessionStorage.getItem('existingUserId');
+        const alreadyRedeemed = sessionStorage.getItem('alreadyRedeemed') === 'true';
 
         if (!activationCode) {
           // No activation code - just complete the auth
@@ -45,17 +49,52 @@ export default function AuthCallbackPage() {
           );
         }
 
-        // Claim the activation key
-        const claimResult = await claimActivationKey(
-          activationCode,
-          session.user.id
-        );
+        // Only claim if not already redeemed (re-authentication case)
+        if (!alreadyRedeemed) {
+          const claimResult = await claimActivationKey(
+            activationCode,
+            session.user.id
+          );
 
-        if (!claimResult.success) {
-          throw new Error(claimResult.error || 'Failed to claim activation key');
+          if (!claimResult.success) {
+            throw new Error(claimResult.error || 'Failed to claim activation key');
+          }
+        } else {
+          console.log('[AuthCallback] Skipping claim - key already redeemed, re-authenticating');
         }
 
-        // Store session securely
+        // Get product before clearing storage
+        const product = sessionStorage.getItem('product') as ProductType | null;
+        console.log('[AuthCallback] Retrieved from sessionStorage:', {
+          activationCode,
+          product,
+          hasRefreshToken: !!session.refresh_token,
+          refreshToken: session.refresh_token ? session.refresh_token.substring(0, 20) + '...' : null
+        });
+
+        // Store device registration permanently (this survives app restarts)
+        // Includes refresh token for automatic session restoration
+        if (product && session.refresh_token) {
+          console.log('[AuthCallback] Storing device registration...');
+          try {
+            await storeDeviceRegistration(
+              activationCode,
+              session.user.id,
+              product,
+              session.refresh_token
+            );
+            console.log('[AuthCallback] Device registration stored successfully!');
+          } catch (storeErr) {
+            console.error('[AuthCallback] Failed to store device registration:', storeErr);
+          }
+        } else {
+          console.warn('[AuthCallback] Skipping device registration storage:', {
+            hasProduct: !!product,
+            hasRefreshToken: !!session.refresh_token
+          });
+        }
+
+        // Store session securely (includes token for API calls)
         const token = session.access_token || '';
         const effectiveSessionId = sessionId || 'no-session';
         await storeSession(session.user.id, effectiveSessionId, token);
@@ -63,15 +102,13 @@ export default function AuthCallbackPage() {
         // Update auth store
         setSession(session.user.id, effectiveSessionId, token);
 
-        // Get product before clearing storage
-        const product = sessionStorage.getItem('product');
-
         // Clear temp storage
         sessionStorage.removeItem('activationCode');
         sessionStorage.removeItem('sessionId');
         sessionStorage.removeItem('preview');
         sessionStorage.removeItem('existingUserId');
         sessionStorage.removeItem('product');
+        sessionStorage.removeItem('alreadyRedeemed');
 
         // Navigate based on product type
         if (sessionId) {

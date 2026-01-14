@@ -11,6 +11,11 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
+            // Open devtools (temporarily enabled for debugging)
+            if let Some(window) = app.get_webview_window("main") {
+                window.open_devtools();
+            }
+
             // Handle deep links
             #[cfg(desktop)]
             {
@@ -49,6 +54,9 @@ pub fn run() {
             commands::auth::store_session,
             commands::auth::get_session,
             commands::auth::clear_session,
+            commands::auth::store_device_registration,
+            commands::auth::get_device_registration,
+            commands::auth::clear_device_registration,
             commands::user_status::fetch_user_status,
         ])
         .run(tauri::generate_context!())

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
-import { claimActivationKey, storeSession } from '@/lib/tauri';
+import { claimActivationKey, storeSession, storeDeviceRegistration, type ProductType } from '@/lib/tauri';
 import { useAuthStore } from '@/lib/stores/auth';
 
 // Debug: check env vars
@@ -77,14 +77,38 @@ export default function SigninPage() {
         );
       }
 
-      // Claim the activation key
-      const claimResult = await claimActivationKey(
-        activationCode,
-        authData.user.id
-      );
+      // Check if already redeemed (re-authentication case)
+      const alreadyRedeemed = sessionStorage.getItem('alreadyRedeemed') === 'true';
 
-      if (!claimResult.success) {
-        throw new Error(claimResult.error || 'Failed to claim activation key');
+      if (!alreadyRedeemed) {
+        // Claim the activation key
+        const claimResult = await claimActivationKey(
+          activationCode,
+          authData.user.id
+        );
+
+        if (!claimResult.success) {
+          throw new Error(claimResult.error || 'Failed to claim activation key');
+        }
+      } else {
+        console.log('[Signin] Skipping claim - key already redeemed, re-authenticating');
+      }
+
+      // Get product before clearing storage
+      const product = sessionStorage.getItem('product') as ProductType | null;
+      const refreshToken = authData.session?.refresh_token;
+
+      // Store device registration permanently (survives app restarts)
+      if (product && refreshToken) {
+        console.log('[Signin] Storing device registration...', { userId: authData.user.id, product });
+        try {
+          await storeDeviceRegistration(activationCode, authData.user.id, product, refreshToken);
+          console.log('[Signin] Device registration stored successfully!');
+        } catch (err) {
+          console.error('[Signin] Failed to store device registration:', err);
+        }
+      } else {
+        console.warn('[Signin] Skipping device registration:', { hasProduct: !!product, hasRefreshToken: !!refreshToken });
       }
 
       // Store session securely
@@ -95,15 +119,13 @@ export default function SigninPage() {
       // Update auth store with token
       setSession(authData.user.id, effectiveSessionId, token);
 
-      // Get product before clearing storage
-      const product = sessionStorage.getItem('product');
-
       // Clear temp storage
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
       sessionStorage.removeItem('existingUserId');
       sessionStorage.removeItem('product');
+      sessionStorage.removeItem('alreadyRedeemed');
 
       // Navigate based on product type
       if (sessionId) {

@@ -59,6 +59,10 @@ export default function ActivatePage() {
         if (result.hasExistingUser && result.userId) {
           sessionStorage.setItem('existingUserId', result.userId);
         }
+        // Mark if already redeemed (for claim endpoint to know not to re-claim)
+        if (result.alreadyRedeemed) {
+          sessionStorage.setItem('alreadyRedeemed', 'true');
+        }
 
         // Navigate to signin for existing users, signup for new users
         if (result.hasExistingUser) {

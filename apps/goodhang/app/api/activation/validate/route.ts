@@ -48,11 +48,37 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Check if already redeemed
+    // Check if already redeemed - but allow the same user to re-authenticate
+    // This handles the case where user reinstalls app or clears data
     if (keyData.redeemed_at) {
+      // Get the auth_id of the user who redeemed this key
+      let redeemedByAuthId: string | null = keyData.user_id; // Legacy auth.users reference
+      if (keyData.human_os_user_id) {
+        const { data: humanOsUser } = await getSupabase()
+          .schema('human_os')
+          .from('users')
+          .select('auth_id')
+          .eq('id', keyData.human_os_user_id)
+          .single();
+        if (humanOsUser?.auth_id) {
+          redeemedByAuthId = humanOsUser.auth_id;
+        }
+      }
+
+      // Return as valid but mark as already redeemed with user info
+      // Desktop client can then prompt user to sign in with the same account
       return NextResponse.json({
-        valid: false,
-        error: 'This activation code has already been used',
+        valid: true,
+        alreadyRedeemed: true,
+        product: keyData.product,
+        sessionId: keyData.session_id,
+        hasExistingUser: true,
+        userId: redeemedByAuthId,
+        preview: {
+          tier: (keyData.metadata as Record<string, string>)?.tier || 'unknown',
+          archetypeHint: (keyData.metadata as Record<string, string>)?.archetype_hint || 'Your character awaits...',
+          overallScoreRange: (keyData.metadata as Record<string, string>)?.score_range || '70-100',
+        },
       });
     }
 

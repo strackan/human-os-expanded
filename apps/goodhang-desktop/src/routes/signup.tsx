@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { createClient } from '@supabase/supabase-js';
-import { claimActivationKey, storeSession } from '@/lib/tauri';
+import { claimActivationKey, storeSession, storeDeviceRegistration, type ProductType } from '@/lib/tauri';
 import { useAuthStore } from '@/lib/stores/auth';
 
 // Initialize Supabase client
@@ -80,6 +80,23 @@ export default function SignupPage() {
         throw new Error(claimResult.error || 'Failed to claim activation key');
       }
 
+      // Get product before clearing storage
+      const product = sessionStorage.getItem('product') as ProductType | null;
+      const refreshToken = authData.session?.refresh_token;
+
+      // Store device registration permanently (survives app restarts)
+      if (product && refreshToken) {
+        console.log('[Signup] Storing device registration...', { userId: authData.user.id, product });
+        try {
+          await storeDeviceRegistration(activationCode, authData.user.id, product, refreshToken);
+          console.log('[Signup] Device registration stored successfully!');
+        } catch (err) {
+          console.error('[Signup] Failed to store device registration:', err);
+        }
+      } else {
+        console.warn('[Signup] Skipping device registration:', { hasProduct: !!product, hasRefreshToken: !!refreshToken });
+      }
+
       // Store session securely (use sessionId if available, otherwise use a placeholder)
       const token = authData.session?.access_token || '';
       const effectiveSessionId = sessionId || 'no-session';
@@ -88,14 +105,12 @@ export default function SignupPage() {
       // Update auth store with token
       setSession(authData.user.id, effectiveSessionId, token);
 
-      // Get product before clearing storage
-      const product = sessionStorage.getItem('product');
-
       // Clear temp storage
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
       sessionStorage.removeItem('product');
+      sessionStorage.removeItem('alreadyRedeemed');
 
       // Navigate based on product type
       if (sessionId) {
