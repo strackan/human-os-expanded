@@ -259,65 +259,149 @@ I'll start capturing what you share and building out your context.`;
     }
   };
 
-  const handleQuestionResponse = async (message: string) => {
-    const current = outstandingQuestions[currentQuestionIndex];
-    const questionId = isConsolidatedPrompt(current) ? current.id : current.slug;
+  // Track accumulated answers for the current question (for multi-turn conversations)
+  const [currentQuestionAnswers, setCurrentQuestionAnswers] = useState<string[]>([]);
 
-    // Save the answer via API
-    if (sessionId) {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://goodhang.com';
-      try {
-        await fetch(`${baseUrl}/api/sculptor/sessions/${sessionId}/answers`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            question_id: questionId,
-            answer: message,
-            ...(isConsolidatedPrompt(current) ? {
-              covers: current.covers,
-              maps_to: current.maps_to,
-            } : {}),
-          }),
-        });
-        console.log('[renubu-chat] Saved answer for:', questionId);
-      } catch (error) {
-        console.error('[renubu-chat] Failed to save answer:', error);
-      }
+  const callRenubuChat = async (
+    userMessage: string,
+    chatMode: 'questions' | 'context',
+    currentQuestion?: QuestionOrPrompt
+  ): Promise<{ content: string; next_action: string }> => {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://goodhang.com';
+
+    const response = await fetch(`${baseUrl}/api/renubu/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        conversation_history: messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        mode: chatMode,
+        current_question: currentQuestion
+          ? {
+              id: isConsolidatedPrompt(currentQuestion) ? currentQuestion.id : currentQuestion.slug,
+              title: isConsolidatedPrompt(currentQuestion) ? currentQuestion.title : undefined,
+              prompt: isConsolidatedPrompt(currentQuestion) ? currentQuestion.prompt : undefined,
+              text: !isConsolidatedPrompt(currentQuestion) ? currentQuestion.text : undefined,
+              slug: !isConsolidatedPrompt(currentQuestion) ? currentQuestion.slug : undefined,
+            }
+          : undefined,
+        persona_fingerprint: personaFingerprint,
+        session_id: sessionId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to get chat response');
     }
 
-    const nextIndex = currentQuestionIndex + 1;
+    return response.json();
+  };
 
-    if (nextIndex < outstandingQuestions.length) {
-      setCurrentQuestionIndex(nextIndex);
-      const next = outstandingQuestions[nextIndex];
+  const handleQuestionResponse = async (message: string) => {
+    const current = outstandingQuestions[currentQuestionIndex];
 
-      if (isConsolidatedPrompt(next)) {
-        addAssistantMessage(
-          `Got it.\n\n**${next.title}**\n\n${next.prompt}`
-        );
+    try {
+      // Call LLM for conversational response
+      const chatResponse = await callRenubuChat(message, 'questions', current);
+
+      // Track this answer
+      setCurrentQuestionAnswers((prev) => [...prev, message]);
+
+      // Check if LLM wants to move to next question
+      if (chatResponse.next_action === 'next_question') {
+        // Save the accumulated answers for this question
+        const questionId = isConsolidatedPrompt(current) ? current.id : current.slug;
+        const combinedAnswer = [...currentQuestionAnswers, message].join('\n\n');
+
+        if (sessionId) {
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://goodhang.com';
+          try {
+            await fetch(`${baseUrl}/api/sculptor/sessions/${sessionId}/answers`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({
+                question_id: questionId,
+                answer: combinedAnswer,
+                ...(isConsolidatedPrompt(current)
+                  ? {
+                      covers: current.covers,
+                      maps_to: current.maps_to,
+                    }
+                  : {}),
+              }),
+            });
+            console.log('[renubu-chat] Saved answer for:', questionId);
+          } catch (error) {
+            console.error('[renubu-chat] Failed to save answer:', error);
+          }
+        }
+
+        // Clear accumulated answers for next question
+        setCurrentQuestionAnswers([]);
+
+        const nextIndex = currentQuestionIndex + 1;
+
+        if (nextIndex < outstandingQuestions.length) {
+          // Move to next question - add LLM response, then show next question
+          setCurrentQuestionIndex(nextIndex);
+          const next = outstandingQuestions[nextIndex];
+
+          if (isConsolidatedPrompt(next)) {
+            addAssistantMessage(`${chatResponse.content}\n\n**${next.title}**\n\n${next.prompt}`);
+          } else {
+            addAssistantMessage(`${chatResponse.content}\n\n**${next.text}**`);
+          }
+        } else {
+          // All questions done - transition to context mode
+          setMode('context');
+          addAssistantMessage(
+            `${chatResponse.content}\n\nLet's start building out your world. What's on your mind right now?`
+          );
+        }
       } else {
+        // Continue conversation on current question
+        addAssistantMessage(chatResponse.content);
+      }
+    } catch (error) {
+      console.error('[renubu-chat] Error in question response:', error);
+      // Fallback: just acknowledge and move on
+      const nextIndex = currentQuestionIndex + 1;
+      if (nextIndex < outstandingQuestions.length) {
+        setCurrentQuestionIndex(nextIndex);
+        const next = outstandingQuestions[nextIndex];
+        if (isConsolidatedPrompt(next)) {
+          addAssistantMessage(`Got it.\n\n**${next.title}**\n\n${next.prompt}`);
+        } else {
+          addAssistantMessage(`Got it. Next question:\n\n**${next.text}**`);
+        }
+      } else {
+        setMode('context');
         addAssistantMessage(
-          `Got it. Next question:\n\n**${next.text}**`
+          `That's all of them! Let's start building out your world. What's on your mind?`
         );
       }
-    } else {
-      // All questions done
-      setMode('context');
-      addAssistantMessage(
-        `That's all of them! Now I've got a solid picture of how you work.\n\nLet's start building out your world. Tell me about something on your mind - your day, a project, people you're working with.`
-      );
     }
   };
 
   const handleContextResponse = async (message: string) => {
-    // Call extraction API
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://goodhang.com';
 
-    try {
-      const response = await fetch(`${baseUrl}/api/extraction/analyze`, {
+    // Run LLM chat and extraction in parallel
+    const [chatPromise, extractionPromise] = [
+      callRenubuChat(message, 'context').catch((e) => {
+        console.error('[renubu-chat] Chat error:', e);
+        return null;
+      }),
+      fetch(`${baseUrl}/api/extraction/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -330,36 +414,41 @@ I'll start capturing what you share and building out your context.`;
             content: m.content,
           })),
         }),
-      });
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch((e) => {
+          console.error('[renubu-chat] Extraction error:', e);
+          return null;
+        }),
+    ];
 
-      if (response.ok) {
-        const data = await response.json();
-        const entities = data.entities || [];
+    const [chatResponse, extractionData] = await Promise.all([chatPromise, extractionPromise]);
 
-        if (entities.length > 0) {
-          setPendingEntities(entities);
-          addAssistantMessage(
-            `Here's what I captured:\n\n${entities
-              .map((e: ExtractedEntity) => `- **${e.type}**: ${e.name}`)
-              .join('\n')}\n\nDoes this look right? Anything to add or correct?`,
-            entities
-          );
-        } else {
-          addAssistantMessage(
-            `Got it. Tell me more - what else is on your plate? People, projects, goals...`
-          );
-        }
-      } else {
-        // Fallback response
-        addAssistantMessage(
-          `Interesting. Tell me more about that. Who's involved? What's the context?`
-        );
-      }
-    } catch {
-      // Fallback response
-      addAssistantMessage(
-        `Got it. What else is on your mind? Keep going - I'm building out your world.`
-      );
+    // Get entities from extraction
+    const entities = extractionData?.entities || [];
+
+    // Build response
+    let responseContent: string;
+
+    if (chatResponse?.content) {
+      // Use LLM response
+      responseContent = chatResponse.content;
+    } else {
+      // Fallback if LLM failed
+      responseContent = entities.length > 0
+        ? `Here's what I captured:`
+        : `Got it. Tell me more - what else is on your plate?`;
+    }
+
+    // If we have entities, show them
+    if (entities.length > 0) {
+      setPendingEntities(entities);
+      const entityList = entities
+        .map((e: ExtractedEntity) => `- **${e.type}**: ${e.name}`)
+        .join('\n');
+      addAssistantMessage(`${responseContent}\n\n${entityList}`, entities);
+    } else {
+      addAssistantMessage(responseContent);
     }
   };
 
@@ -435,10 +524,79 @@ I'll start capturing what you share and building out your context.`;
         </div>
       </div>
 
+      {/* Step Progress */}
+      <div className="px-6 py-3 border-b border-gh-dark-700 bg-gh-dark-800">
+        <div className="flex items-center gap-2">
+          {/* Step 1: Questions (only show if there were questions) */}
+          {outstandingQuestions.length > 0 && (
+            <>
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                    mode === 'questions'
+                      ? 'bg-blue-600 text-white'
+                      : mode === 'context' || mode === 'done'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gh-dark-600 text-gray-400'
+                  }`}
+                >
+                  {mode === 'context' || mode === 'done' ? '✓' : '1'}
+                </div>
+                <span
+                  className={`text-sm ${
+                    mode === 'questions' ? 'text-white font-medium' : 'text-gray-400'
+                  }`}
+                >
+                  Questions
+                </span>
+              </div>
+              <div className="w-8 h-px bg-gh-dark-600" />
+            </>
+          )}
+
+          {/* Step 2: Context Building */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                mode === 'context'
+                  ? 'bg-blue-600 text-white'
+                  : mode === 'done'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gh-dark-600 text-gray-400'
+              }`}
+            >
+              {mode === 'done' ? '✓' : outstandingQuestions.length > 0 ? '2' : '1'}
+            </div>
+            <span
+              className={`text-sm ${
+                mode === 'context' ? 'text-white font-medium' : 'text-gray-400'
+              }`}
+            >
+              Context
+            </span>
+          </div>
+
+          {/* Progress indicator for questions mode */}
+          {mode === 'questions' && outstandingQuestions.length > 0 && (
+            <div className="ml-auto flex items-center gap-2">
+              <div className="h-1.5 w-24 bg-gh-dark-600 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${((currentQuestionIndex + 1) / outstandingQuestions.length) * 100}%`,
+                  }}
+                />
+              </div>
+              <span className="text-xs text-gray-400">
+                {currentQuestionIndex + 1}/{outstandingQuestions.length}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {/* Debug: show message count */}
-        {console.log('[renubu-chat] Rendering messages:', messages.length, 'mode:', mode)}
         <AnimatePresence>
           {messages.map((message, index) => (
             <motion.div
@@ -450,11 +608,13 @@ I'll start capturing what you share and building out your context.`;
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === 'user'
-                    ? 'bg-gray-100 text-gray-800'
-                    : 'bg-gh-dark-700 text-gray-100'
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'bg-gh-dark-700 text-white'
                 }`}
               >
-                <div className="whitespace-pre-wrap">{message.content}</div>
+                <div className={`whitespace-pre-wrap ${message.role === 'user' ? 'text-gray-900' : 'text-white'}`}>
+                  {message.content}
+                </div>
 
                 {/* Entity preview */}
                 {message.extractedEntities && message.extractedEntities.length > 0 && (
