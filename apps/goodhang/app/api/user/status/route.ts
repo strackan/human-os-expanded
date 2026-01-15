@@ -187,68 +187,86 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get Human OS data (Founder OS, Voice OS) if configured
+    // Get Human OS data (Founder OS, Voice OS) via direct queries
     if (isHumanOsConfigured()) {
       try {
         const humanOsDb = getHumanOsClient();
+        console.log('[user/status] Human OS configured, resolvedUserId:', resolvedUserId);
 
-        // Try to get user status from Human OS
-        const queryParams: { p_user_id?: string; p_user_slug?: string } = {};
-        if (resolvedUserId) queryParams.p_user_id = resolvedUserId;
-        if (userSlug) queryParams.p_user_slug = userSlug;
+        // Get human_os user by auth_id
+        let humanOsUserId: string | null = null;
 
-        const { data: humanOsStatus, error } = await humanOsDb.rpc(
-          'get_user_status',
-          queryParams
-        );
+        if (resolvedUserId) {
+          // Query human_os schema for users
+          const { data: humanOsUser, error: userError } = await humanOsDb
+            .schema('human_os')
+            .from('users')
+            .select('id, slug, display_name, email')
+            .eq('auth_id', resolvedUserId)
+            .single();
 
-        if (!error && humanOsStatus && humanOsStatus.found) {
-          // Merge Human OS data into result
-          result.found = true;
+          console.log('[user/status] humanOsUser lookup:', { humanOsUser, error: userError?.message });
 
-          if (!result.user && humanOsStatus.user) {
-            result.user = humanOsStatus.user;
+          if (humanOsUser) {
+            humanOsUserId = humanOsUser.id;
+            result.found = true;
+            if (!result.user) {
+              result.user = {
+                id: humanOsUser.id,
+                email: humanOsUser.email,
+                full_name: humanOsUser.display_name,
+              };
+            }
           }
+        }
 
-          // Founder OS status
-          if (humanOsStatus.products?.founder_os) {
-            result.products.founder_os = {
-              enabled: humanOsStatus.products.founder_os.enabled || false,
-              sculptor: humanOsStatus.products.founder_os.sculptor || null,
-              identity_profile: humanOsStatus.products.founder_os.identity_profile || null,
-            };
-          }
+        // Check for founder_os product
+        if (humanOsUserId) {
+          // Query human_os schema for user_products
+          const { data: founderOsProduct, error: productError } = await humanOsDb
+            .schema('human_os')
+            .from('user_products')
+            .select('*')
+            .eq('user_id', humanOsUserId)
+            .eq('product', 'founder_os')
+            .single();
 
-          // Voice OS status
-          if (humanOsStatus.products?.voice_os) {
-            result.products.voice_os = {
-              enabled: humanOsStatus.products.voice_os.enabled || false,
-              context_files_count: humanOsStatus.products.voice_os.context_files_count || 0,
-            };
-          }
+          console.log('[user/status] founderOsProduct lookup:', { found: !!founderOsProduct, error: productError?.message });
 
-          // Entities
-          if (humanOsStatus.entities) {
-            result.entities = {
-              count: humanOsStatus.entities.count || 0,
-              has_entity: humanOsStatus.entities.has_entity || false,
-            };
-          }
+          if (founderOsProduct) {
+            result.products.founder_os.enabled = true;
 
-          // Contexts
-          if (humanOsStatus.contexts) {
-            result.contexts = {
-              available: humanOsStatus.contexts.available || [],
-              active: humanOsStatus.contexts.active || null,
-            };
-          }
+            // Get sculptor session by user_id (public schema)
+            const { data: sculptorSession, error: sculptorError } = await humanOsDb
+              .from('sculptor_sessions')
+              .select('id, status, entity_slug, metadata')
+              .eq('user_id', humanOsUserId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .single();
 
-          // Update recommended action based on Founder OS status
-          if (result.products.founder_os.enabled) {
+            console.log('[user/status] sculptorSession lookup:', {
+              found: !!sculptorSession,
+              status: sculptorSession?.status,
+              id: sculptorSession?.id,
+              error: sculptorError?.message
+            });
+
+            if (sculptorSession) {
+              result.products.founder_os.sculptor = {
+                completed: sculptorSession.status === 'completed',
+                status: sculptorSession.status,
+                transcript_available: !!sculptorSession.metadata?.conversation_history,
+              };
+
+              // Set active context to sculptor session ID
+              result.contexts.active = sculptorSession.id;
+              result.contexts.available = [sculptorSession.entity_slug];
+            }
+
+            // Update recommended action based on Founder OS status
             const sculptor = result.products.founder_os.sculptor;
-            const identity = result.products.founder_os.identity_profile;
-
-            if (sculptor?.completed || identity?.completed) {
+            if (sculptor?.completed) {
               result.recommended_action = 'continue_context';
             } else if (sculptor && !sculptor.completed) {
               result.recommended_action = 'start_onboarding';
