@@ -88,6 +88,7 @@ export const useUserStatusStore = create<UserStatusState>((set) => ({
 
   fetchStatus: async (token: string, userId?: string) => {
     set({ loading: true, error: null });
+    console.log('[UserStatus] Fetching status for userId:', userId);
 
     try {
       // Call Tauri command to fetch user status
@@ -96,12 +97,19 @@ export const useUserStatusStore = create<UserStatusState>((set) => ({
         userId,
       });
 
+      console.log('[UserStatus] Result:', {
+        found: result.found,
+        founder_os_enabled: result.products?.founder_os?.enabled,
+        sculptor_status: result.products?.founder_os?.sculptor,
+        contexts_active: result.contexts?.active,
+      });
+
       set({
         status: result,
         loading: false,
       });
     } catch (err) {
-      console.error('Failed to fetch user status:', err);
+      console.error('[UserStatus] Failed to fetch user status:', err);
       set({
         status: defaultStatus,
         loading: false,
@@ -121,7 +129,7 @@ export function getRecommendedRoute(status: UserStatus | null): string {
     return '/activate';
   }
 
-  const { products, recommended_action } = status;
+  const { products, recommended_action, contexts } = status;
 
   // Check GoodHang first
   if (products.goodhang.enabled && products.goodhang.assessment?.completed) {
@@ -133,7 +141,22 @@ export function getRecommendedRoute(status: UserStatus | null): string {
     const sculptor = products.founder_os.sculptor;
     const identity = products.founder_os.identity_profile;
 
-    if (sculptor?.completed || identity?.completed) {
+    // If sculptor completed, check tutorial status
+    if (sculptor?.completed && !identity?.completed) {
+      // Check localStorage for tutorial completion
+      const tutorialCompleted = localStorage.getItem('founder-os-tutorial-completed');
+      if (!tutorialCompleted) {
+        // Route to tutorial mode with session context
+        const sessionId = contexts?.active;
+        return sessionId
+          ? `/founder-os/tutorial?session=${sessionId}`
+          : '/founder-os/tutorial';
+      }
+      // Tutorial completed, go to onboarding for remaining steps
+      return '/founder-os/onboarding';
+    }
+
+    if (identity?.completed) {
       return '/founder-os/dashboard';
     }
 
