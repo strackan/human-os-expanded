@@ -19,6 +19,15 @@ export interface DreamConfig {
 
   /** Enable verbose logging */
   debug?: boolean;
+
+  /** Enable MCP provider sync (Phase 0) */
+  enableMCPSync?: boolean;
+
+  /** Maximum items to process per MCP provider */
+  mcpMaxItemsPerProvider?: number;
+
+  /** Skip MCP providers with recent extractions (hours) */
+  mcpSkipIfExtractedWithin?: number;
 }
 
 // =============================================================================
@@ -121,6 +130,43 @@ export interface PersonaCalibration {
   confidence: number;
 }
 
+/**
+ * PersonaFingerprint - 8-dimension personality scoring
+ *
+ * These dimensions are used to configure NPC behavior to match
+ * the user's communication style. The NPC becomes a reflection
+ * of the user's own personality.
+ */
+export interface PersonaFingerprint {
+  /** Makes fun of themselves first (0 = never, 10 = frequently) */
+  self_deprecation: number;
+  /** How blunt vs diplomatic (0 = very diplomatic, 10 = very direct) */
+  directness: number;
+  /** Emotional temperature (0 = cold/distant, 10 = very warm) */
+  warmth: number;
+  /** Leads with intelligence (0 = never, 10 = frequently) */
+  intellectual_signaling: number;
+  /** Can be genuine without awkwardness (0 = uncomfortable, 10 = very comfortable) */
+  comfort_with_sincerity: number;
+  /** Comfort with weird/playful tangents (0 = dislikes, 10 = embraces) */
+  absurdism_tolerance: number;
+  /** Are they meta about the interaction (0 = not at all, 10 = very meta) */
+  format_awareness: number;
+  /** Uses own weakness to connect (0 = never, 10 = frequently) */
+  vulnerability_as_tool: number;
+}
+
+export const DEFAULT_PERSONA_FINGERPRINT: PersonaFingerprint = {
+  self_deprecation: 5,
+  directness: 5,
+  warmth: 5,
+  intellectual_signaling: 5,
+  comfort_with_sincerity: 5,
+  absurdism_tolerance: 5,
+  format_awareness: 5,
+  vulnerability_as_tool: 5,
+};
+
 export interface ProtocolAdjustment {
   protocol: string;
   adjustment: string;
@@ -133,6 +179,9 @@ export interface ReflectorOutput {
   protocolAdjustments: ProtocolAdjustment[];
   currentStateUpdate: string;
   moodTrend: 'improving' | 'stable' | 'declining' | 'volatile';
+  /** 8-dimension persona fingerprint (scored 0-10 each) */
+  personaFingerprint?: PersonaFingerprint;
+  personaFingerprintReasoning?: Record<string, string>;
 }
 
 // =============================================================================
@@ -207,10 +256,26 @@ export interface ToughLoveOutput {
 // DREAM RESULT
 // =============================================================================
 
+/** MCP Provider sync result */
+export interface MCPProviderSyncResult {
+  providerId: string;
+  providerSlug: string;
+  itemsProcessed: number;
+  entitiesExtracted: number;
+  errors: string[];
+}
+
 export interface DreamResult {
   date: string;
   startedAt: string;
   completedAt: string;
+
+  /** Phase 0: MCP Provider sync results */
+  mcpSync?: {
+    providersProcessed: number;
+    totalItemsProcessed: number;
+    results: MCPProviderSyncResult[];
+  };
 
   parser: ParserOutput;
   reflector: ReflectorOutput;
