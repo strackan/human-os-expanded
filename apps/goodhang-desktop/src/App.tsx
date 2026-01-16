@@ -11,6 +11,7 @@ import DashboardPage from './routes/dashboard';
 import FounderOSOnboardingPage from './routes/founder-os/onboarding';
 import QuestionEPage from './routes/founder-os/question-e';
 import QuestionECompletePage from './routes/founder-os/question-e-complete';
+import RenubuChatPage from './routes/founder-os/renubu-chat';
 import { useAuthStore } from './lib/stores/auth';
 import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
 
@@ -51,11 +52,22 @@ function App() {
     }
     // If we have status info, use it for routing
     if (status?.found) {
-      return getRecommendedRoute(status);
+      const recommendedRoute = getRecommendedRoute(status);
+      // If recommended route is dashboard but we have a product from activation,
+      // use the product-specific route instead
+      if (recommendedRoute === '/dashboard' && product) {
+        console.log('[App] Overriding dashboard route with product from activation:', product);
+        if (product === 'founder_os') {
+          return '/founder-os/onboarding';
+        } else if (product === 'goodhang') {
+          return '/goodhang/results';
+        }
+      }
+      return recommendedRoute;
     }
-    // If no token but we have product from device registration, route based on product
-    if (!token && product) {
-      console.log('[App] No token but have product from device registration:', product);
+    // If we have product from device registration, route based on product
+    if (product) {
+      console.log('[App] Using product from device registration:', product);
       if (product === 'founder_os') {
         return '/founder-os/onboarding';
       } else if (product === 'goodhang') {
@@ -109,6 +121,7 @@ function App() {
           <Route path="/founder-os/dashboard" element={<FounderOSOnboardingPage />} />
           <Route path="/founder-os/question-e" element={<QuestionEPage />} />
           <Route path="/founder-os/question-e-complete" element={<QuestionECompletePage />} />
+          <Route path="/founder-os/renubu-chat" element={<RenubuChatPage />} />
         </Routes>
       </main>
     </div>

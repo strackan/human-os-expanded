@@ -1,17 +1,24 @@
 /**
  * Renubu Chat Route
  *
- * Post-Sculptor chat workflow that either:
- * - A: Covers remaining assessment questions
- * - B: Builds Founder OS context through conversation
+ * Post-Sculptor chat workflow with Setup Mode:
+ * - Collapsible sidebar with setup checklist
+ * - Chat panel for conversation
+ * - Artifact canvas for generated content
  *
  * NPC mirrors user's personality fingerprint.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/auth';
+import { SetupSidebar, type ChecklistItem } from '@/components/setup-mode/SetupSidebar';
+import {
+  ArtifactCanvas,
+  type ArtifactInstance,
+} from '@/components/artifacts';
+import { PersonaCardArtifact } from '@/components/artifacts/PersonaCardArtifact';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -79,6 +86,51 @@ export default function RenubuChatPage() {
   const [personaFingerprint, setPersonaFingerprint] = useState<PersonaFingerprint | null>(null);
   const [extractedEntities, setExtractedEntities] = useState<ExtractedEntity[]>([]);
   const [pendingEntities, setPendingEntities] = useState<ExtractedEntity[]>([]);
+
+  // Setup Mode state
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [artifactPanelCollapsed, setArtifactPanelCollapsed] = useState(true);
+  const [artifacts, setArtifacts] = useState<ArtifactInstance[]>([]);
+  const [activeArtifactId, setActiveArtifactId] = useState<string | undefined>();
+  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([
+    {
+      id: 'sculptor',
+      label: 'Sculptor Session',
+      description: 'Identity clarification',
+      required: true,
+      status: 'completed', // Already done if we're here
+    },
+    {
+      id: 'questions',
+      label: 'Assessment',
+      description: '5 key topics',
+      required: true,
+      status: 'pending',
+    },
+    {
+      id: 'persona',
+      label: 'Persona Profile',
+      description: 'Personality matrix',
+      required: false,
+      status: 'pending',
+      artifacts: ['persona-card'],
+    },
+    {
+      id: 'entities',
+      label: 'Core Entities',
+      description: 'People & projects',
+      required: false,
+      status: 'pending',
+    },
+    {
+      id: 'contexts',
+      label: 'Contexts',
+      description: 'Work domains',
+      required: false,
+      status: 'locked',
+    },
+  ]);
+  const [currentChecklistItem, setCurrentChecklistItem] = useState<string>('questions');
 
   // Get session ID from URL params
   const sessionId = searchParams.get('session');
@@ -465,10 +517,121 @@ I'll start capturing what you share and building out your context.`;
     );
   };
 
-  const handleDone = () => {
-    // Navigate to production mode or show completion
-    navigate('/founder-os/dashboard');
-  };
+  // Artifact handlers
+  const handleArtifactSelect = useCallback((id: string) => {
+    setActiveArtifactId(id);
+    setArtifactPanelCollapsed(false);
+  }, []);
+
+  const handleArtifactClose = useCallback((id: string) => {
+    setArtifacts((prev) => prev.filter((a) => a.id !== id));
+    if (activeArtifactId === id) {
+      setActiveArtifactId(artifacts.find((a) => a.id !== id)?.id);
+    }
+  }, [activeArtifactId, artifacts]);
+
+  const handleArtifactConfirm = useCallback((id: string) => {
+    setArtifacts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'confirmed' as const } : a))
+    );
+  }, []);
+
+  const renderArtifact = useCallback((artifact: ArtifactInstance) => {
+    // For now, render PersonaCard directly
+    if (artifact.type === 'persona') {
+      return (
+        <PersonaCardArtifact
+          artifact={artifact}
+          data={artifact.data as any}
+          onConfirm={() => handleArtifactConfirm(artifact.id)}
+        />
+      );
+    }
+    // Fallback for unknown types
+    return (
+      <div className="p-4 text-gray-400">
+        Unknown artifact type: {artifact.type}
+      </div>
+    );
+  }, [handleArtifactConfirm]);
+
+  // Checklist handlers
+  const handleChecklistItemClick = useCallback((itemId: string) => {
+    setCurrentChecklistItem(itemId);
+    // Show related artifacts if any
+    const item = checklistItems.find((i) => i.id === itemId);
+    if (item?.artifacts?.length) {
+      const relatedArtifact = artifacts.find((a) =>
+        item.artifacts?.includes(a.id.replace('-artifact', ''))
+      );
+      if (relatedArtifact) {
+        setActiveArtifactId(relatedArtifact.id);
+        setArtifactPanelCollapsed(false);
+      }
+    }
+  }, [checklistItems, artifacts]);
+
+  const handleUnlockProduction = useCallback(() => {
+    // Check if all required items are complete
+    const allRequiredComplete = checklistItems
+      .filter((i) => i.required)
+      .every((i) => i.status === 'completed');
+
+    if (allRequiredComplete) {
+      navigate('/founder-os/dashboard');
+    }
+  }, [checklistItems, navigate]);
+
+  const canUnlockProduction = checklistItems
+    .filter((i) => i.required)
+    .every((i) => i.status === 'completed');
+
+  // Generate persona artifact when fingerprint is available
+  useEffect(() => {
+    if (personaFingerprint && !artifacts.find((a) => a.type === 'persona')) {
+      const personaArtifact: ArtifactInstance = {
+        id: 'persona-card-artifact',
+        type: 'persona',
+        title: 'Your Persona',
+        data: {
+          name: 'You',
+          personality: personaFingerprint,
+          summary: 'Generated from your Sculptor session',
+        },
+        status: 'draft',
+        generatedAt: new Date().toISOString(),
+        source: 'awaken',
+        checklistItemId: 'persona',
+      };
+      setArtifacts((prev) => [...prev, personaArtifact]);
+      setActiveArtifactId(personaArtifact.id);
+      setArtifactPanelCollapsed(false);
+
+      // Update checklist
+      setChecklistItems((prev) =>
+        prev.map((item) =>
+          item.id === 'persona' ? { ...item, status: 'in_progress' as const } : item
+        )
+      );
+    }
+  }, [personaFingerprint, artifacts]);
+
+  // Update checklist based on mode progress
+  useEffect(() => {
+    if (mode === 'questions') {
+      setChecklistItems((prev) =>
+        prev.map((item) =>
+          item.id === 'questions' ? { ...item, status: 'in_progress' as const } : item
+        )
+      );
+    } else if (mode === 'context' || mode === 'done') {
+      setChecklistItems((prev) =>
+        prev.map((item) =>
+          item.id === 'questions' ? { ...item, status: 'completed' as const } : item
+        )
+      );
+    }
+  }, [mode]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -478,108 +641,79 @@ I'll start capturing what you share and building out your context.`;
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gh-dark-900">
-      {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gh-dark-700">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-white">Renubu</h1>
-            <p className="text-sm text-gray-400">
-              {mode === 'questions'
-                ? isConsolidatedFormat
-                  ? `Topic ${currentQuestionIndex + 1} of ${outstandingQuestions.length}`
-                  : `Question ${currentQuestionIndex + 1} of ${outstandingQuestions.length}`
-                : 'Building your world'}
-            </p>
-          </div>
-        </div>
+    <div className="flex h-screen bg-gh-dark-900">
+      {/* Setup Sidebar */}
+      <SetupSidebar
+        items={checklistItems}
+        currentItemId={currentChecklistItem}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onItemClick={handleChecklistItemClick}
+        onUnlockProduction={handleUnlockProduction}
+        canUnlock={canUnlockProduction}
+      />
 
-        <div className="flex items-center gap-2">
-          {extractedEntities.length > 0 && (
-            <span className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-sm">
-              {extractedEntities.length} entities captured
-            </span>
-          )}
-          <button
-            onClick={handleDone}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            Done
-          </button>
-        </div>
-      </div>
-
-      {/* Step Progress */}
-      <div className="px-6 py-3 border-b border-gh-dark-700 bg-gh-dark-800">
-        <div className="flex items-center gap-2">
-          {/* Step 1: Questions (only show if there were questions) */}
-          {outstandingQuestions.length > 0 && (
-            <>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                    mode === 'questions'
-                      ? 'bg-blue-600 text-white'
-                      : mode === 'context' || mode === 'done'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gh-dark-600 text-gray-400'
-                  }`}
-                >
-                  {mode === 'context' || mode === 'done' ? '✓' : '1'}
-                </div>
-                <span
-                  className={`text-sm ${
-                    mode === 'questions' ? 'text-white font-medium' : 'text-gray-400'
-                  }`}
-                >
-                  Questions
-                </span>
-              </div>
-              <div className="w-8 h-px bg-gh-dark-600" />
-            </>
-          )}
-
-          {/* Step 2: Context Building */}
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                mode === 'context'
-                  ? 'bg-blue-600 text-white'
-                  : mode === 'done'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gh-dark-600 text-gray-400'
-              }`}
-            >
-              {mode === 'done' ? '✓' : outstandingQuestions.length > 0 ? '2' : '1'}
+      {/* Main Content - Chat Panel */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gh-dark-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
             </div>
-            <span
-              className={`text-sm ${
-                mode === 'context' ? 'text-white font-medium' : 'text-gray-400'
-              }`}
-            >
-              Context
-            </span>
+            <div>
+              <h1 className="text-lg font-semibold text-white">Renubu</h1>
+              <p className="text-sm text-gray-400">
+                {mode === 'questions'
+                  ? isConsolidatedFormat
+                    ? `Topic ${currentQuestionIndex + 1} of ${outstandingQuestions.length}`
+                    : `Question ${currentQuestionIndex + 1} of ${outstandingQuestions.length}`
+                  : 'Building your world'}
+              </p>
+            </div>
           </div>
 
-          {/* Progress indicator for questions mode */}
-          {mode === 'questions' && outstandingQuestions.length > 0 && (
-            <div className="ml-auto flex items-center gap-2">
-              <div className="h-1.5 w-24 bg-gh-dark-600 rounded-full overflow-hidden">
+          <div className="flex items-center gap-2">
+            {extractedEntities.length > 0 && (
+              <span className="px-3 py-1 bg-green-600/20 text-green-400 rounded-full text-sm">
+                {extractedEntities.length} entities
+              </span>
+            )}
+            {artifacts.length > 0 && (
+              <button
+                onClick={() => setArtifactPanelCollapsed(!artifactPanelCollapsed)}
+                className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  artifactPanelCollapsed
+                    ? 'bg-purple-600/20 text-purple-400 hover:bg-purple-600/30'
+                    : 'bg-purple-600 text-white'
+                }`}
+              >
+                {artifacts.length} artifact{artifacts.length !== 1 ? 's' : ''}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Progress Bar */}
+        {mode === 'questions' && outstandingQuestions.length > 0 && (
+          <div className="px-6 py-2 border-b border-gh-dark-700 bg-gh-dark-800">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-gray-400">
+                {currentQuestionIndex + 1}/{outstandingQuestions.length}
+              </span>
+              <div className="flex-1 h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-600 rounded-full transition-all duration-300"
                   style={{
@@ -587,152 +721,161 @@ I'll start capturing what you share and building out your context.`;
                   }}
                 />
               </div>
-              <span className="text-xs text-gray-400">
-                {currentQuestionIndex + 1}/{outstandingQuestions.length}
-              </span>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        <AnimatePresence>
-          {messages.map((message, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                  message.role === 'user'
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'bg-gh-dark-700 text-white'
-                }`}
-              >
-                <div className={`whitespace-pre-wrap ${message.role === 'user' ? 'text-gray-900' : 'text-white'}`}>
-                  {message.content}
-                </div>
-
-                {/* Entity preview */}
-                {message.extractedEntities && message.extractedEntities.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-600">
-                    <div className="flex flex-wrap gap-2">
-                      {message.extractedEntities.map((entity, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-gh-dark-600 rounded text-sm text-gray-300"
-                        >
-                          {entity.type}: {entity.name}
-                        </span>
-                      ))}
-                    </div>
-                    {pendingEntities.length > 0 && (
-                      <button
-                        onClick={handleConfirmEntities}
-                        className="mt-2 px-3 py-1 bg-green-600/20 text-green-400 rounded text-sm hover:bg-green-600/30 transition-colors"
-                      >
-                        Confirm these
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex justify-start"
-          >
-            <div className="bg-gh-dark-700 rounded-2xl px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.1s' }}
-                />
-                <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                  style={{ animationDelay: '0.2s' }}
-                />
-              </div>
-            </div>
-          </motion.div>
+          </div>
         )}
 
-        <div ref={messagesEndRef} />
-      </div>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <AnimatePresence>
+            {messages.map((message, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    message.role === 'user'
+                      ? 'bg-gray-100 text-gray-900'
+                      : 'bg-gh-dark-700 text-white'
+                  }`}
+                >
+                  <div className={`whitespace-pre-wrap ${message.role === 'user' ? 'text-gray-900' : 'text-white'}`}>
+                    {message.content}
+                  </div>
 
-      {/* Initial choice buttons */}
-      {mode === 'initial' && messages.length === 1 && outstandingQuestions.length > 0 && (
-        <div className="px-6 pb-4">
+                  {/* Entity preview */}
+                  {message.extractedEntities && message.extractedEntities.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-600">
+                      <div className="flex flex-wrap gap-2">
+                        {message.extractedEntities.map((entity, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-1 bg-gh-dark-600 rounded text-sm text-gray-300"
+                          >
+                            {entity.type}: {entity.name}
+                          </span>
+                        ))}
+                      </div>
+                      {pendingEntities.length > 0 && (
+                        <button
+                          onClick={handleConfirmEntities}
+                          className="mt-2 px-3 py-1 bg-green-600/20 text-green-400 rounded text-sm hover:bg-green-600/30 transition-colors"
+                        >
+                          Confirm these
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-start"
+            >
+              <div className="bg-gh-dark-700 rounded-2xl px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.1s' }}
+                  />
+                  <div
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0.2s' }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Initial choice buttons */}
+        {mode === 'initial' && messages.length === 1 && outstandingQuestions.length > 0 && (
+          <div className="px-6 pb-4">
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: 'user', content: 'Cover them now', timestamp: new Date().toISOString() },
+                  ]);
+                  handleInitialResponse('cover now');
+                }}
+                className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
+              >
+                Cover Now
+              </button>
+              <button
+                onClick={() => {
+                  setMessages((prev) => [
+                    ...prev,
+                    { role: 'user', content: 'Get started', timestamp: new Date().toISOString() },
+                  ]);
+                  handleInitialResponse('get started');
+                }}
+                className="flex-1 px-4 py-3 bg-gh-dark-700 hover:bg-gh-dark-600 text-white rounded-xl transition-colors"
+              >
+                Get Started
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="p-4 border-t border-gh-dark-700">
           <div className="flex gap-3">
+            <textarea
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              rows={1}
+              className="flex-1 bg-gh-dark-700 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
             <button
-              onClick={() => {
-                setMessages((prev) => [
-                  ...prev,
-                  { role: 'user', content: 'Cover them now', timestamp: new Date().toISOString() },
-                ]);
-                handleInitialResponse('cover now');
-              }}
-              className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors"
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
             >
-              Cover Now
-            </button>
-            <button
-              onClick={() => {
-                setMessages((prev) => [
-                  ...prev,
-                  { role: 'user', content: 'Get started', timestamp: new Date().toISOString() },
-                ]);
-                handleInitialResponse('get started');
-              }}
-              className="flex-1 px-4 py-3 bg-gh-dark-700 hover:bg-gh-dark-600 text-white rounded-xl transition-colors"
-            >
-              Get Started
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
             </button>
           </div>
         </div>
-      )}
-
-      {/* Input */}
-      <div className="p-6 border-t border-gh-dark-700">
-        <div className="flex gap-3">
-          <textarea
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            rows={1}
-            className="flex-1 bg-gh-dark-700 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </button>
-        </div>
       </div>
+
+      {/* Artifact Canvas */}
+      <ArtifactCanvas
+        artifacts={artifacts}
+        activeArtifactId={activeArtifactId}
+        collapsed={artifactPanelCollapsed}
+        onToggleCollapse={() => setArtifactPanelCollapsed(!artifactPanelCollapsed)}
+        onArtifactSelect={handleArtifactSelect}
+        onArtifactClose={handleArtifactClose}
+        onArtifactConfirm={handleArtifactConfirm}
+        renderArtifact={renderArtifact}
+      />
     </div>
   );
 }

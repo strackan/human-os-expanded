@@ -6,7 +6,7 @@ import { useUserStatusStore, getRecommendedRoute } from '@/lib/stores/user';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { clearSession, isAuthenticated, token, userId } = useAuthStore();
+  const { clearSession, isAuthenticated, token, userId, product } = useAuthStore();
   const { status, loading, fetchStatus } = useUserStatusStore();
 
   // Fetch status if not loaded and authenticated
@@ -16,16 +16,32 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, token, status, loading, userId, fetchStatus]);
 
-  // Auto-redirect based on user's products
+  // Auto-redirect based on user's products or activation product
   useEffect(() => {
     if (!loading && status?.found) {
       const route = getRecommendedRoute(status);
       // Only auto-redirect if it's a specific product route, not back to dashboard
       if (route !== '/dashboard' && route !== '/activate') {
         navigate(route, { replace: true });
+      } else if (product) {
+        // Fallback to product from activation if status doesn't have a specific route
+        console.log('[Dashboard] Using activation product for routing:', product);
+        if (product === 'founder_os') {
+          navigate('/founder-os/onboarding', { replace: true });
+        } else if (product === 'goodhang') {
+          navigate('/goodhang/results', { replace: true });
+        }
+      }
+    } else if (!loading && !status?.found && product) {
+      // No status found but we have a product from activation
+      console.log('[Dashboard] No status but have activation product:', product);
+      if (product === 'founder_os') {
+        navigate('/founder-os/onboarding', { replace: true });
+      } else if (product === 'goodhang') {
+        navigate('/goodhang/results', { replace: true });
       }
     }
-  }, [loading, status, navigate]);
+  }, [loading, status, navigate, product]);
 
   if (loading) {
     return (
@@ -137,14 +153,8 @@ export default function DashboardPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={`bg-gh-dark-800 rounded-2xl p-6 ${
-              products.founder_os.enabled
-                ? 'border border-blue-500/30 cursor-pointer hover:border-blue-500/60'
-                : 'opacity-50'
-            }`}
-            onClick={() =>
-              products.founder_os.enabled && navigate('/founder-os/onboarding')
-            }
+            className="bg-gh-dark-800 rounded-2xl p-6 border border-blue-500/30 cursor-pointer hover:border-blue-500/60"
+            onClick={() => navigate('/founder-os/onboarding')}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">

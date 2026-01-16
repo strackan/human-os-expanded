@@ -235,43 +235,76 @@ export async function GET(request: NextRequest) {
 
           if (founderOsProduct) {
             result.products.founder_os.enabled = true;
-
-            // Get sculptor session by user_id (public schema)
-            const { data: sculptorSession, error: sculptorError } = await humanOsDb
-              .from('sculptor_sessions')
-              .select('id, status, entity_slug, metadata')
-              .eq('user_id', humanOsUserId)
-              .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
-
-            console.log('[user/status] sculptorSession lookup:', {
-              found: !!sculptorSession,
-              status: sculptorSession?.status,
-              id: sculptorSession?.id,
-              error: sculptorError?.message
-            });
-
-            if (sculptorSession) {
-              result.products.founder_os.sculptor = {
-                completed: sculptorSession.status === 'completed',
-                status: sculptorSession.status,
-                transcript_available: !!sculptorSession.metadata?.conversation_history,
-              };
-
-              // Set active context to sculptor session ID
-              result.contexts.active = sculptorSession.id;
-              result.contexts.available = [sculptorSession.entity_slug];
-            }
-
-            // Update recommended action based on Founder OS status
-            const sculptor = result.products.founder_os.sculptor;
-            if (sculptor?.completed) {
-              result.recommended_action = 'continue_context';
-            } else if (sculptor && !sculptor.completed) {
-              result.recommended_action = 'start_onboarding';
-            }
           }
+
+          // Get sculptor session by user_id (public schema)
+          const { data: sculptorSession, error: sculptorError } = await humanOsDb
+            .from('sculptor_sessions')
+            .select('id, status, entity_slug, metadata')
+            .eq('user_id', humanOsUserId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          console.log('[user/status] sculptorSession lookup by user_id:', {
+            found: !!sculptorSession,
+            status: sculptorSession?.status,
+            id: sculptorSession?.id,
+            error: sculptorError?.message
+          });
+
+          if (sculptorSession) {
+            // If we found a sculptor session, enable founder_os even if product entry is missing
+            result.products.founder_os.enabled = true;
+            result.products.founder_os.sculptor = {
+              completed: sculptorSession.status === 'completed',
+              status: sculptorSession.status,
+              transcript_available: !!sculptorSession.metadata?.conversation_history,
+            };
+
+            // Set active context to sculptor session ID
+            result.contexts.active = sculptorSession.id;
+            result.contexts.available = [sculptorSession.entity_slug];
+          }
+        }
+
+        // Fallback: If no sculptor session found yet, try searching by auth_id directly
+        // This handles cases where sculptor_sessions.user_id stores auth_id instead of human_os user id
+        if (!result.products.founder_os.sculptor && resolvedUserId) {
+          const { data: sculptorByAuthId, error: authIdError } = await humanOsDb
+            .from('sculptor_sessions')
+            .select('id, status, entity_slug, metadata')
+            .eq('user_id', resolvedUserId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+          console.log('[user/status] sculptorSession lookup by auth_id:', {
+            found: !!sculptorByAuthId,
+            status: sculptorByAuthId?.status,
+            id: sculptorByAuthId?.id,
+            error: authIdError?.message
+          });
+
+          if (sculptorByAuthId) {
+            result.products.founder_os.enabled = true;
+            result.products.founder_os.sculptor = {
+              completed: sculptorByAuthId.status === 'completed',
+              status: sculptorByAuthId.status,
+              transcript_available: !!sculptorByAuthId.metadata?.conversation_history,
+            };
+            result.contexts.active = sculptorByAuthId.id;
+            result.contexts.available = [sculptorByAuthId.entity_slug];
+            result.found = true;
+          }
+        }
+
+        // Update recommended action based on Founder OS status
+        const sculptor = result.products.founder_os.sculptor;
+        if (sculptor?.completed) {
+          result.recommended_action = 'continue_context';
+        } else if (sculptor && !sculptor.completed) {
+          result.recommended_action = 'start_onboarding';
         }
       } catch (humanOsError) {
         console.warn('Failed to fetch Human OS status:', humanOsError);
