@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/auth';
@@ -46,12 +47,21 @@ export default function FounderOSOnboardingPage() {
   const getStage = () => {
     if (identityProfile?.completed) return 'ready';
     if (questionECompleted) return 'polishing';
-    if (sculptor?.completed || sculptor?.status === 'completed') return 'question-e';
+    if (sculptor?.completed || sculptor?.status === 'completed') return 'renubu';
     if (sculptor?.status === 'active') return 'sculpting';
     return 'intro';
   };
 
   const stage = getStage();
+
+  // Auto-redirect to Renubu chat when Sculptor completes
+  useEffect(() => {
+    if (stage === 'renubu' && status?.contexts?.active) {
+      // Get the session ID from the sculptor context
+      const sessionId = status.contexts.active;
+      navigate(`/founder-os/renubu-chat?session=${sessionId}`);
+    }
+  }, [stage, status?.contexts?.active, navigate]);
 
   return (
     <div className="min-h-screen p-8">
@@ -121,7 +131,7 @@ export default function FounderOSOnboardingPage() {
           >
             {stage === 'intro' && `Welcome, ${userName}`}
             {stage === 'sculpting' && 'The Sculptor Awaits'}
-            {stage === 'question-e' && 'Personality Baseline'}
+            {stage === 'renubu' && 'Launching Renubu...'}
             {stage === 'polishing' && 'Almost Ready'}
             {stage === 'ready' && `Welcome Back, ${userName}`}
           </motion.h1>
@@ -137,8 +147,8 @@ export default function FounderOSOnboardingPage() {
               'Your personal operating system is being prepared...'}
             {stage === 'sculpting' &&
               'Continue your Sculptor interview to unlock your Founder OS'}
-            {stage === 'question-e' &&
-              'Complete Question E to calibrate your support protocols'}
+            {stage === 'renubu' &&
+              'Preparing your personalized assistant...'}
             {stage === 'polishing' &&
               'Your identity profile is being finalized'}
             {stage === 'ready' && 'Your Founder OS is ready'}
@@ -377,18 +387,6 @@ export default function FounderOSOnboardingPage() {
               >
                 Open Founder OS
               </button>
-            ) : stage === 'question-e' ? (
-              <div className="space-y-4">
-                <p className="text-gray-500 text-sm">
-                  Complete Question E to build your personality baseline. This enables effective support.
-                </p>
-                <button
-                  onClick={() => navigate('/founder-os/question-e')}
-                  className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-lg transition-colors"
-                >
-                  Start Question E Assessment
-                </button>
-              </div>
             ) : stage === 'sculpting' ? (
               <div className="space-y-4">
                 <p className="text-gray-500 text-sm">

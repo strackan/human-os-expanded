@@ -30,10 +30,6 @@ interface AuthState {
   clearSession: () => Promise<void>;
 }
 
-// In-memory token storage (cleared on app restart)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let __memoryToken: string | null = null;
-
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   userId: null,
@@ -76,7 +72,6 @@ export const useAuthStore = create<AuthState>((set) => ({
               console.log('[Auth] Session refreshed successfully');
               const newToken = refreshData.session.access_token;
               const newRefreshToken = refreshData.session.refresh_token;
-              __memoryToken = newToken;
 
               // Update stored refresh token if it changed
               if (newRefreshToken && newRefreshToken !== registration.refreshToken) {
@@ -127,7 +122,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       );
       if (session) {
         console.log('[Auth] Session found:', { userId: session.userId, hasToken: !!session.token });
-        _memoryToken = session.token;
         set({
           isAuthenticated: true,
           userId: session.userId,
@@ -148,7 +142,6 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setSession: (userId, sessionId, token) => {
     console.log('[Auth] Setting session:', { userId, hasToken: !!token });
-    _memoryToken = token;
     set({ isAuthenticated: true, userId, sessionId, token, loading: false });
   },
 
@@ -157,7 +150,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       // Clear both session and device registration
       await invoke('clear_session');
       await clearDeviceRegistration();
-      _memoryToken = null;
       set({
         isAuthenticated: false,
         userId: null,
