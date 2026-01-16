@@ -29,7 +29,6 @@ export default function QuestionECompletePage() {
     }
   }, []);
 
-  const totalQuestions = 24;
   const answeredCount = answers?.answers.filter((a) => a.answer !== '[SKIPPED]').length || 0;
   const skippedCount = answers?.answers.filter((a) => a.answer === '[SKIPPED]').length || 0;
 

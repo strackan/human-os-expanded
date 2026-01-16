@@ -8,7 +8,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '@/lib/stores/auth';
 import {
   fetchQuestions,
   saveAnswer,
@@ -39,7 +38,6 @@ interface Section {
 
 export default function QuestionEPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthStore();
 
   // Data loading state
   const [loading, setLoading] = useState(true);
