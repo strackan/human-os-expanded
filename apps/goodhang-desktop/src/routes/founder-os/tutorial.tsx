@@ -18,6 +18,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
+import { resetOnboarding } from '@/lib/dev-utils';
 import {
   ChevronRight,
   Sparkles,
@@ -30,6 +31,7 @@ import {
   Mic,
   Brain,
   Sword,
+  RefreshCw,
 } from 'lucide-react';
 
 // Tutorial steps (must match backend)
@@ -635,8 +637,15 @@ export default function TutorialModePage() {
               ) : (
                 <div className="text-center py-8">
                   <Sword className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                  <p className="text-gray-400">Your D&D character profile will be revealed after completing your GoodHang assessment.</p>
-                  <p className="text-gray-500 text-sm mt-2">This maps your personality to a unique race, class, and alignment.</p>
+                  <p className="text-gray-400 mb-2">Your D&D character profile will be generated after completing the Good Hang assessment.</p>
+                  <p className="text-gray-500 text-sm mb-4">This maps your personality to a unique race, class, and alignment.</p>
+                  <button
+                    onClick={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
+                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Take The Assessment Now
+                  </button>
+                  <p className="text-gray-600 text-xs mt-3">Optional - Required for Good Hang Social mode</p>
                 </div>
               )}
             </div>
@@ -829,6 +838,21 @@ export default function TutorialModePage() {
               className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
             />
           </div>
+        </div>
+
+        {/* Reset button */}
+        <div className="p-4 border-t border-gh-dark-700">
+          <button
+            onClick={() => {
+              resetOnboarding();
+              window.location.reload();
+            }}
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-orange-400 transition-colors"
+            title="Reset Onboarding"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Reset
+          </button>
         </div>
       </div>
 

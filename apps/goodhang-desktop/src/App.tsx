@@ -14,8 +14,13 @@ import TutorialModePage from './routes/founder-os/tutorial';
 import QuestionEPage from './routes/founder-os/question-e';
 import QuestionECompletePage from './routes/founder-os/question-e-complete';
 import RenubuChatPage from './routes/founder-os/renubu-chat';
+import VoiceTestPage from './routes/founder-os/voice-test';
+import GoodHangAssessmentPage from './routes/goodhang/assessment';
 import { useAuthStore } from './lib/stores/auth';
 import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
+
+// Dev utilities - exposes window.devUtils in development
+import './lib/dev-utils';
 
 function App() {
   const navigate = useNavigate();
@@ -117,6 +122,7 @@ function App() {
           {/* GoodHang routes */}
           <Route path="/results" element={<ResultsPage />} />
           <Route path="/goodhang/results" element={<ResultsPage />} />
+          <Route path="/goodhang/assessment" element={<GoodHangAssessmentPage />} />
 
           {/* Founder OS routes */}
           <Route path="/founder-os/tutorial" element={<TutorialModePage />} />
@@ -126,6 +132,7 @@ function App() {
           <Route path="/founder-os/question-e" element={<QuestionEPage />} />
           <Route path="/founder-os/question-e-complete" element={<QuestionECompletePage />} />
           <Route path="/founder-os/renubu-chat" element={<RenubuChatPage />} />
+          <Route path="/founder-os/voice-test" element={<VoiceTestPage />} />
         </Routes>
       </main>
     </div>
