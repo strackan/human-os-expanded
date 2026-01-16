@@ -215,7 +215,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Calculate new progress based on action
-    let newProgress = { ...tutorialContext.progress };
+    const newProgress = { ...tutorialContext.progress };
 
     switch (parsedAction) {
       case 'show_report':
