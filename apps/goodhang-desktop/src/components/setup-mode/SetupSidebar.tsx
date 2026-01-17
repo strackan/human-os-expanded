@@ -15,6 +15,7 @@ import {
   Lock,
   Unlock,
 } from 'lucide-react';
+import { TEST_IDS, testId } from '@/lib/test-utils';
 
 export interface ChecklistItem {
   id: string;
@@ -66,16 +67,18 @@ export function SetupSidebar({
 
   return (
     <motion.div
+      {...testId(TEST_IDS.setupSidebar.container)}
       initial={false}
       animate={{ width: collapsed ? 48 : 240 }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
       className="h-full bg-gh-dark-800 border-r border-gh-dark-700 flex flex-col"
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gh-dark-700">
+      <div {...testId(TEST_IDS.setupSidebar.header)} className="flex items-center justify-between p-3 border-b border-gh-dark-700">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
+              {...testId(TEST_IDS.setupSidebar.modeIndicator)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -87,6 +90,7 @@ export function SetupSidebar({
           )}
         </AnimatePresence>
         <button
+          {...testId(TEST_IDS.setupSidebar.collapseBtn)}
           onClick={onToggleCollapse}
           className="p-1 hover:bg-gh-dark-700 rounded transition-colors"
         >
@@ -99,7 +103,7 @@ export function SetupSidebar({
       </div>
 
       {/* Checklist */}
-      <div className="flex-1 overflow-y-auto p-2">
+      <div {...testId(TEST_IDS.setupSidebar.checklistContainer)} className="flex-1 overflow-y-auto p-2">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -111,6 +115,7 @@ export function SetupSidebar({
               {items.map((item) => (
                 <button
                   key={item.id}
+                  {...testId(TEST_IDS.setupSidebar.checklistItem(item.id))}
                   onClick={() => item.status !== 'locked' && onItemClick(item.id)}
                   disabled={item.status === 'locked'}
                   className={`w-full flex items-start gap-3 p-2 rounded-lg text-left transition-all ${
@@ -121,12 +126,13 @@ export function SetupSidebar({
                       : 'hover:bg-gh-dark-700'
                   }`}
                 >
-                  <div className="flex-shrink-0 mt-0.5">
+                  <div {...testId(TEST_IDS.setupSidebar.checklistIcon(item.id))} className="flex-shrink-0 mt-0.5">
                     {getStatusIcon(item.status)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1">
                       <span
+                        {...testId(TEST_IDS.setupSidebar.checklistLabel(item.id))}
                         className={`text-sm font-medium truncate ${
                           item.status === 'completed'
                             ? 'text-green-400'
@@ -174,7 +180,7 @@ export function SetupSidebar({
       </div>
 
       {/* Progress & Unlock */}
-      <div className="p-3 border-t border-gh-dark-700">
+      <div {...testId(TEST_IDS.setupSidebar.progressContainer)} className="p-3 border-t border-gh-dark-700">
         <AnimatePresence mode="wait">
           {!collapsed && (
             <motion.div
@@ -187,12 +193,13 @@ export function SetupSidebar({
               <div>
                 <div className="flex justify-between text-xs text-gray-400 mb-1">
                   <span>Progress</span>
-                  <span>
+                  <span {...testId(TEST_IDS.setupSidebar.progressText)}>
                     {completedCount}/{items.length}
                   </span>
                 </div>
                 <div className="h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
                   <motion.div
+                    {...testId(TEST_IDS.setupSidebar.progressBar)}
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.3 }}
@@ -203,6 +210,7 @@ export function SetupSidebar({
 
               {/* Unlock button */}
               <button
+                {...testId(TEST_IDS.setupSidebar.unlockBtn)}
                 onClick={onUnlockProduction}
                 disabled={!canUnlock}
                 className={`w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
@@ -229,7 +237,7 @@ export function SetupSidebar({
 
         {/* Collapsed progress indicator */}
         {collapsed && (
-          <div className="flex justify-center">
+          <div {...testId(TEST_IDS.setupSidebar.collapsedProgress)} className="flex justify-center">
             <div
               className="w-8 h-8 rounded-full border-2 border-gh-dark-600 flex items-center justify-center"
               style={{

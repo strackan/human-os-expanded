@@ -1,0 +1,140 @@
+/**
+ * Theme Tokens - CSS Variables
+ *
+ * Base design tokens that can be overridden by remote themes.
+ * These are the fallback values used when offline or before remote theme loads.
+ */
+
+:root {
+  /* ==========================================================================
+     Brand Colors
+     ========================================================================== */
+  --color-brand-purple-50: #f5f3ff;
+  --color-brand-purple-100: #ede9fe;
+  --color-brand-purple-500: #8b5cf6;
+  --color-brand-purple-600: #7c3aed;
+  --color-brand-purple-700: #6d28d9;
+
+  /* ==========================================================================
+     Dark Theme Colors
+     ========================================================================== */
+  --color-dark-600: #3d3854;
+  --color-dark-700: #2d2942;
+  --color-dark-800: #1e1b2e;
+  --color-dark-900: #0f0d1a;
+
+  /* ==========================================================================
+     Semantic Colors
+     ========================================================================== */
+  --color-success: #22c55e;
+  --color-success-muted: rgba(34, 197, 94, 0.2);
+  --color-warning: #f59e0b;
+  --color-warning-muted: rgba(245, 158, 11, 0.2);
+  --color-error: #ef4444;
+  --color-error-muted: rgba(239, 68, 68, 0.2);
+  --color-info: #3b82f6;
+  --color-info-muted: rgba(59, 130, 246, 0.2);
+
+  /* ==========================================================================
+     Progress Indicators
+     ========================================================================== */
+  --color-progress-complete: #22c55e;
+  --color-progress-partial: #3b82f6;
+  --color-progress-pending: #6b7280;
+  --color-progress-locked: #374151;
+
+  /* ==========================================================================
+     Text Colors
+     ========================================================================== */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --color-text-muted: #6b7280;
+  --color-text-disabled: #4b5563;
+
+  /* ==========================================================================
+     Border Colors
+     ========================================================================== */
+  --color-border-default: rgba(139, 92, 246, 0.3);
+  --color-border-focus: rgba(139, 92, 246, 0.5);
+  --color-border-muted: rgba(75, 85, 99, 0.3);
+
+  /* ==========================================================================
+     Gradients
+     ========================================================================== */
+  --gradient-purple-blue: linear-gradient(to right, #7c3aed, #3b82f6);
+  --gradient-green-emerald: linear-gradient(to right, #22c55e, #10b981);
+  --gradient-orange-amber: linear-gradient(to right, #f97316, #f59e0b);
+
+  /* ==========================================================================
+     Shadows
+     ========================================================================== */
+  --shadow-purple: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+  --shadow-blue: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+  --shadow-green: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+
+  /* ==========================================================================
+     Animation Timing
+     ========================================================================== */
+  --animation-fast: 150ms;
+  --animation-normal: 200ms;
+  --animation-slow: 300ms;
+  --animation-stagger: 100ms;
+
+  /* ==========================================================================
+     Spacing (for consistent rhythm)
+     ========================================================================== */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* ==========================================================================
+     Border Radius
+     ========================================================================== */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+
+  /* ==========================================================================
+     Typography
+     ========================================================================== */
+  --font-family-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* ==========================================================================
+     Z-Index Scale
+     ========================================================================== */
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+}
+
+/* ==========================================================================
+   Theme Variant: High Contrast (Accessibility)
+   ========================================================================== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-text-secondary: #d1d5db;
+    --color-text-muted: #9ca3af;
+    --color-border-default: rgba(139, 92, 246, 0.5);
+  }
+}
+
+/* ==========================================================================
+   Theme Variant: Reduced Motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animation-fast: 0ms;
+    --animation-normal: 0ms;
+    --animation-slow: 0ms;
+    --animation-stagger: 0ms;
+  }
+}

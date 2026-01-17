@@ -18,6 +18,12 @@ export default {
           800: '#1e1b2e',
           900: '#0f0d1a',
         },
+        // Progress indicator colors
+        'progress': {
+          complete: '#22c55e', // green-500
+          partial: '#3b82f6',  // blue-500
+          pending: '#6b7280',  // gray-500
+        },
       },
     },
   },
