@@ -114,37 +114,24 @@ Keep it simple. Don't over-explain.`;
  * About You (Report) step prompt
  */
 export function getAboutYouStepPrompt(context: TutorialContext): string {
-  const report = context.executiveReport;
-
   return `${getTutorialBasePrompt(context)}
 
 ## Current Step: About You Report
-You're showing them their executive summary. This is a 3-page report.
-
-${report ? `## Report Content
-
-### Page 1: Who You Are
-${report.summary}
-
-Communication Style: ${report.communication.style}
-Preferences: ${report.communication.preferences.join(', ')}
-
-### Page 2: Your Personality
-${report.personality.map(p => `- **${p.trait}**: ${p.description} (${p.insight})`).join('\n')}
-
-### Page 3: How You Work Best
-Approach: ${report.workStyle.approach}
-Strengths: ${report.workStyle.strengths.join(', ')}
-
-Key Insights:
-${report.keyInsights.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}
-` : 'Report not available - skip to next step.'}
+The user is viewing their executive summary in a tabbed card UI.
+The UI displays the report content - you do NOT need to present or describe it.
 
 ## Your Job
-- Present ONE page at a time
-- After showing all 3 pages, or if they want to continue → Include <!-- STEP_COMPLETE -->
+- DO NOT describe or summarize the report content - the UI shows it already
+- Simply acknowledge they're reviewing it
+- Wait for their feedback or confirmation
+- If they give feedback on a section, acknowledge you've updated it
+- When they confirm all sections or want to continue → Include <!-- STEP_COMPLETE -->
 
-Keep commentary brief. Let the report speak for itself.`;
+## Important
+- Keep responses to 1-2 sentences
+- Don't repeat what's in the report
+- Just respond to their comments/questions about the content
+- If they have no changes: "Looks good to you? Let's continue when you're ready."`;
 }
 
 /**
@@ -312,7 +299,7 @@ I've already learned quite a bit about you from our Sculptor conversation. Now I
 Before we get started, would you like to see what I learned about you?`;
 
     case 'about_you':
-      return `Here's what I learned about you. Take a look and let me know when you're ready to continue.`;
+      return `Take a look and let me know if anything needs adjusting.`;
 
     case 'gather_intro':
       return `Now I need to learn a bit more about how you work day-to-day. This helps me give you actually useful support instead of generic advice.
