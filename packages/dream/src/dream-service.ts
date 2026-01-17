@@ -6,12 +6,13 @@
  */
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { DreamConfig, DayTranscript, DreamResult } from './types.js';
+import type { DreamConfig, DayTranscript, DreamResult, MCPProviderSyncResult } from './types.js';
 import { ParserRouter } from './parser-router.js';
 import { ReflectorCalibrator } from './reflector-calibrator.js';
 import { PlannerCloser } from './planner-closer.js';
 import { ToughLove } from './tough-love.js';
 import { GraduationChecker } from './graduation-check.js';
+import { MCPSync } from './mcp-sync.js';
 
 // =============================================================================
 // DREAM SERVICE CLASS
@@ -24,6 +25,7 @@ export class DreamService {
   private planner: PlannerCloser;
   private toughLove: ToughLove;
   private graduationChecker: GraduationChecker;
+  private mcpSync: MCPSync;
 
   constructor(private config: DreamConfig) {
     this.supabase = createClient(config.supabaseUrl, config.supabaseKey);
@@ -32,6 +34,11 @@ export class DreamService {
     this.planner = new PlannerCloser(config);
     this.toughLove = new ToughLove(config);
     this.graduationChecker = new GraduationChecker(config);
+    this.mcpSync = new MCPSync({
+      ...config,
+      maxItemsPerProvider: config.mcpMaxItemsPerProvider,
+      skipIfExtractedWithin: config.mcpSkipIfExtractedWithin,
+    });
   }
 
   /**
@@ -104,8 +111,59 @@ export class DreamService {
     const startedAt = new Date().toISOString();
     const errors: string[] = [];
 
-    // Get transcript if not provided
-    const actualTranscript = transcript || (await this.getTodayTranscript());
+    // Phase 0: MCP Provider Sync (if enabled)
+    let mcpSyncResults: MCPProviderSyncResult[] = [];
+    let mcpTranscript: DayTranscript | null = null;
+
+    if (this.config.enableMCPSync) {
+      if (this.config.debug) {
+        console.log('[dream] Phase 0: Syncing MCP providers...');
+      }
+
+      try {
+        const syncResults = await this.mcpSync.syncAll();
+        mcpSyncResults = syncResults.map((r) => ({
+          providerId: r.providerId,
+          providerSlug: r.providerSlug,
+          itemsProcessed: r.itemsProcessed,
+          entitiesExtracted: r.entitiesExtracted,
+          errors: r.errors,
+        }));
+
+        // Get combined transcript from MCP providers
+        mcpTranscript = await this.mcpSync.getCombinedTranscript();
+
+        if (this.config.debug) {
+          const totalItems = mcpSyncResults.reduce((sum, r) => sum + r.itemsProcessed, 0);
+          console.log(`[dream] Phase 0 complete: ${totalItems} items from ${mcpSyncResults.length} providers`);
+        }
+      } catch (e) {
+        errors.push(`MCP sync error: ${e}`);
+        if (this.config.debug) {
+          console.error('[dream] MCP sync failed:', e);
+        }
+      }
+    }
+
+    // Get transcript if not provided - merge with MCP transcript if available
+    let actualTranscript = transcript || (await this.getTodayTranscript());
+
+    // Merge MCP transcript with regular transcript
+    if (mcpTranscript && mcpTranscript.messages.length > 0) {
+      if (actualTranscript) {
+        // Combine messages
+        actualTranscript = {
+          ...actualTranscript,
+          messages: [...actualTranscript.messages, ...mcpTranscript.messages],
+          sessionIds: [
+            ...(actualTranscript.sessionIds || []),
+            ...(mcpTranscript.sessionIds || []),
+          ],
+        };
+      } else {
+        actualTranscript = mcpTranscript;
+      }
+    }
 
     if (!actualTranscript) {
       return {
@@ -279,10 +337,20 @@ export class DreamService {
       errors.push(`Graduation check error: ${e}`);
     }
 
+    // Build MCP sync summary if we processed any providers
+    const mcpSyncSummary = mcpSyncResults.length > 0
+      ? {
+          providersProcessed: mcpSyncResults.length,
+          totalItemsProcessed: mcpSyncResults.reduce((sum, r) => sum + r.itemsProcessed, 0),
+          results: mcpSyncResults,
+        }
+      : undefined;
+
     return {
       date: actualTranscript.date,
       startedAt,
       completedAt: new Date().toISOString(),
+      mcpSync: mcpSyncSummary,
       parser: parserOutput,
       reflector: reflectorOutput,
       planner: plannerOutput,

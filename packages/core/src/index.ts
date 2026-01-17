@@ -18,6 +18,16 @@ export { PrivacyModel } from './privacy-model.js';
 export { UsageTracker } from './usage-tracker.js';
 export { SecurityLayer } from './security.js';
 
+// MCP Query Service
+export { MCPQueryService, createMCPQueryService } from './mcp-query-service.js';
+export type {
+  MCPQueryConfig,
+  MCPProvider,
+  MCPQuery,
+  MCPResult,
+  MCPResultItem,
+} from './mcp-query-service.js';
+
 // Supabase utilities
 export {
   getSupabaseClient,

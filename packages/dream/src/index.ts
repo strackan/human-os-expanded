@@ -38,3 +38,7 @@ export { ToughLove, createToughLove } from './tough-love.js';
 // Graduation Check
 export { GraduationChecker, createGraduationChecker } from './graduation-check.js';
 export type { GraduationCriteria } from './graduation-check.js';
+
+// MCP Sync (Phase 0)
+export { MCPSync, createMCPSync } from './mcp-sync.js';
+export type { MCPProvider, MCPContent, MCPSyncResult, MCPSyncConfig } from './mcp-sync.js';

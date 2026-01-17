@@ -1,13 +1,16 @@
+/* Import theme tokens (CSS variables) - must be first */
+@import './theme-tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family-sans, Inter, system-ui, Avenir, Helvetica, Arial, sans-serif);
   line-height: 1.5;
   font-weight: 400;
-  color: #ffffff;
-  background-color: #0f0d1a;
+  color: var(--color-text-primary, #ffffff);
+  background-color: var(--color-dark-900, #0f0d1a);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

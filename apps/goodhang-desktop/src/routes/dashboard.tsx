@@ -3,11 +3,16 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore, getRecommendedRoute } from '@/lib/stores/user';
+import { resetOnboarding } from '@/lib/dev-utils';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { clearSession, isAuthenticated, token, userId, product } = useAuthStore();
   const { status, loading, fetchStatus } = useUserStatusStore();
+  const handleResetOnboarding = () => {
+    resetOnboarding();
+    window.location.reload();
+  };
 
   // Fetch status if not loaded and authenticated
   useEffect(() => {
@@ -22,6 +27,7 @@ export default function DashboardPage() {
       const route = getRecommendedRoute(status);
       // Only auto-redirect if it's a specific product route, not back to dashboard
       if (route !== '/dashboard' && route !== '/activate') {
+        console.log('[Dashboard] Routing to:', route);
         navigate(route, { replace: true });
       } else if (product) {
         // Fallback to product from activation if status doesn't have a specific route
@@ -32,16 +38,23 @@ export default function DashboardPage() {
           navigate('/goodhang/results', { replace: true });
         }
       }
-    } else if (!loading && !status?.found && product) {
-      // No status found but we have a product from activation
-      console.log('[Dashboard] No status but have activation product:', product);
-      if (product === 'founder_os') {
+    } else if (!loading && !status?.found) {
+      // Status not found - could be API error or new user
+      if (product) {
+        // Have product from activation, route there
+        console.log('[Dashboard] No status but have activation product:', product);
+        if (product === 'founder_os') {
+          navigate('/founder-os/onboarding', { replace: true });
+        } else if (product === 'goodhang') {
+          navigate('/goodhang/results', { replace: true });
+        }
+      } else if (userId) {
+        // Have userId but no product - likely founder_os user, try onboarding
+        console.log('[Dashboard] No status/product but have userId, trying founder-os:', userId);
         navigate('/founder-os/onboarding', { replace: true });
-      } else if (product === 'goodhang') {
-        navigate('/goodhang/results', { replace: true });
       }
     }
-  }, [loading, status, navigate, product]);
+  }, [loading, status, navigate, product, userId]);
 
   if (loading) {
     return (
@@ -274,6 +287,17 @@ export default function DashboardPage() {
           </motion.div>
         )}
       </motion.div>
+
+      {/* Reset Onboarding - Bottom Left */}
+      <button
+        onClick={handleResetOnboarding}
+        className="fixed bottom-4 left-4 p-2 text-gray-600 hover:text-orange-400 transition-colors"
+        title="Reset Onboarding"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
     </div>
   );
 }
