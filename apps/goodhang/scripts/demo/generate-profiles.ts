@@ -14,7 +14,6 @@ import {
   CharacterRace,
   CharacterClass,
   CharacterAlignment,
-  MemberCharacter,
 } from '@/lib/types/database';
 import {
   ATTRIBUTE_TO_BRANCH,
@@ -298,7 +297,7 @@ class ProfileGenerator {
   }
 
   private generateSlug(name: string): string {
-    let base = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+    const base = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
     let slug = base;
     let counter = 1;
     while (this.generatedSlugs.has(slug)) {
@@ -311,7 +310,7 @@ class ProfileGenerator {
 
   private generateEmail(name: { first: string; last: string }): string {
     const domains = ['gmail.com', 'outlook.com', 'hey.com', 'proton.me', 'icloud.com'];
-    let base = `${name.first.toLowerCase()}.${name.last.toLowerCase()}`;
+    const base = `${name.first.toLowerCase()}.${name.last.toLowerCase()}`;
     let email = `${base}@${this.rng.pick(domains)}`;
     let counter = 1;
     while (this.generatedEmails.has(email)) {
@@ -503,7 +502,7 @@ class ProfileGenerator {
     };
   }
 
-  private generateSocialHeadline(alignment: CharacterAlignment, enneagram: string): string {
+  private generateSocialHeadline(alignment: CharacterAlignment, _enneagram: string): string {
     const alignmentVibes: Record<CharacterAlignment, string[]> = {
       LG: ['Team player', 'Reliable friend', 'Structured connector'],
       NG: ['Everyone\'s favorite', 'Naturally helpful', 'Genuine connector'],
@@ -518,7 +517,7 @@ class ProfileGenerator {
     return this.rng.pick(alignmentVibes[alignment] || alignmentVibes.TN);
   }
 
-  private generateSocialSummary(alignment: CharacterAlignment, race: CharacterRace, enneagram: string): string {
+  private generateSocialSummary(alignment: CharacterAlignment, race: CharacterRace, _enneagram: string): string {
     const raceTraits = RACE_DEFINITIONS[race].description;
     const alignmentDesc = ALIGNMENT_DEFINITIONS[alignment].description;
     return `${raceTraits} ${alignmentDesc}`;

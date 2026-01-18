@@ -31,7 +31,7 @@ import type {
 // =============================================================================
 
 const EMBEDDING_MODEL = 'text-embedding-3-small'; // OpenAI
-const EMBEDDING_DIMENSIONS = 1536;
+const _EMBEDDING_DIMENSIONS = 1536;
 
 // Embedding types to generate
 const EMBEDDING_TYPES = [
@@ -476,7 +476,7 @@ class EmbeddingGenerator {
 // MIGRATION HELPER
 // =============================================================================
 
-async function extendEmbeddingTypes(supabaseUrl: string, supabaseKey: string): Promise<void> {
+async function extendEmbeddingTypes(_supabaseUrl: string, _supabaseKey: string): Promise<void> {
   console.log('\n--- Extending embedding types in database ---');
   console.log('Note: Run this SQL to add support for new embedding types:');
   console.log(`

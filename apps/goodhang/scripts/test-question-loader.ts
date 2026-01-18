@@ -38,6 +38,7 @@ async function main() {
     }
 
     console.log('\n✅ Test passed!');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('\n❌ Test failed:', error.message);
     process.exit(1);

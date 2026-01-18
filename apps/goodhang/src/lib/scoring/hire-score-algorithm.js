@@ -208,7 +208,7 @@ class HireScoreCalculator {
   }
 
   // Company Size Matching
-  matchCompanySize(companySize, employeeCount) {
+  matchCompanySize(companySize, _employeeCount) {
     if (!this.prefs.target_company_sizes?.length) return 0;
 
     const targetSizes = this.prefs.target_company_sizes.map(s => s.toLowerCase());

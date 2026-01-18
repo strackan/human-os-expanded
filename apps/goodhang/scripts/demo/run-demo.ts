@@ -156,7 +156,7 @@ class DemoRunner {
     printSubheader('Searching...');
 
     try {
-      const startTime = Date.now();
+      const _startTime = Date.now();
       const results = await this.searchEngine.search({
         query: scenario.query,
         mode: scenario.mode,

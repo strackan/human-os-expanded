@@ -74,6 +74,7 @@ async function checkSession(sessionId: string) {
 
   // Check transcript length
   const transcript = data.interview_transcript || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userAnswers = transcript.filter((t: any) => t.role === 'user');
   console.log('\n📋 Transcript entries:', transcript.length);
   console.log('📋 User answers:', userAnswers.length);

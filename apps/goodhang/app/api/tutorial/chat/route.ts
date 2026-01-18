@@ -42,7 +42,7 @@ function buildRegenerateSectionPrompt(
   section: string,
   feedback: string,
   currentReport: ExecutiveReport,
-  persona: PersonaFingerprint | null
+  _persona: PersonaFingerprint | null
 ): string {
   const sectionContent = {
     status: `Summary: ${currentReport.summary}\nCommunication Style: ${currentReport.communication.style}\nPreferences: ${currentReport.communication.preferences.join(', ')}`,
