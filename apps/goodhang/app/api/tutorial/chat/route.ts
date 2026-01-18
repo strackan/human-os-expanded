@@ -191,7 +191,7 @@ function parseRegeneratedSection(
       const descMatch = block.match(/Description:\s*([\s\S]+?)(?=Insight:|$)/);
       const insightMatch = block.match(/Insight:\s*([\s\S]+?)$/);
 
-      if (nameMatch && descMatch && insightMatch) {
+      if (nameMatch?.[1] && descMatch?.[1] && insightMatch?.[1]) {
         traits.push({
           trait: nameMatch[1].trim(),
           description: descMatch[1].trim(),
