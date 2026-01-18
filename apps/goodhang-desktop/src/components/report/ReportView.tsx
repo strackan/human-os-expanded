@@ -1,0 +1,136 @@
+/**
+ * Report View Component
+ *
+ * Pure display component for executive reports.
+ * Shows report content across tabs without edit functionality.
+ * Highly reusable across dashboard, settings, profile pages.
+ */
+
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Brain, Mic, Sword, CheckCircle2 } from 'lucide-react';
+import type { ExecutiveReport, CharacterProfile } from '@/lib/types';
+import { StatusTab, PersonalityTab, VoiceTab, CharacterTab } from './ReportTabContent';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+export type ReportTab = 'status' | 'personality' | 'voice' | 'character';
+
+export interface ReportViewProps {
+  report: ExecutiveReport;
+  characterProfile?: CharacterProfile | null;
+  /** Currently active tab */
+  activeTab: ReportTab;
+  /** Callback when tab changes */
+  onTabChange: (tab: ReportTab) => void;
+  /** Optional callback when user wants to take character assessment */
+  onTakeAssessment?: () => void;
+  /** Optional: show confirmation checkmarks on tabs */
+  confirmations?: Record<ReportTab, boolean>;
+  /** Optional: custom className for the container */
+  className?: string;
+  /** Optional: max height for content area */
+  maxContentHeight?: string;
+}
+
+// =============================================================================
+// TAB CONFIGURATION
+// =============================================================================
+
+const TABS: Array<{ id: ReportTab; label: string; icon: typeof User }> = [
+  { id: 'status', label: 'Status', icon: User },
+  { id: 'personality', label: 'Personality', icon: Brain },
+  { id: 'voice', label: 'Voice', icon: Mic },
+  { id: 'character', label: 'Character', icon: Sword },
+];
+
+// =============================================================================
+// COMPONENT
+// =============================================================================
+
+export function ReportView({
+  report,
+  characterProfile = null,
+  activeTab,
+  onTabChange,
+  onTakeAssessment,
+  confirmations,
+  className = '',
+  maxContentHeight = 'max-h-80',
+}: ReportViewProps) {
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'status':
+        return <StatusTab report={report} />;
+      case 'personality':
+        return <PersonalityTab report={report} />;
+      case 'voice':
+        return <VoiceTab report={report} />;
+      case 'character':
+        return (
+          <CharacterTab
+            characterProfile={characterProfile}
+            onTakeAssessment={onTakeAssessment}
+          />
+        );
+    }
+  };
+
+  return (
+    <div
+      className={`bg-gh-dark-800 rounded-xl overflow-hidden ${className}`}
+    >
+      {/* Tabs */}
+      <div className="flex border-b border-gh-dark-700">
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          const isConfirmed = confirmations?.[tab.id];
+
+          return (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors relative ${
+                isActive
+                  ? 'text-white bg-gh-dark-700/50'
+                  : 'text-gray-400 hover:text-gray-300 hover:bg-gh-dark-700/30'
+              }`}
+            >
+              {isConfirmed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-400" />
+              ) : (
+                <Icon className="w-4 h-4" />
+              )}
+              <span>{tab.label}</span>
+              {isActive && (
+                <motion.div
+                  layoutId="reportActiveTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Content */}
+      <div className={`p-4 ${maxContentHeight} overflow-y-auto`}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.15 }}
+          >
+            {renderTabContent()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+export default ReportView;
