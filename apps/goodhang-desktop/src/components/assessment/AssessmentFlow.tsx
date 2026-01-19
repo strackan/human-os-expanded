@@ -5,7 +5,7 @@
  * Used by both GoodHang D&D assessment and Work Style assessment.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useSpeechToText } from '@/lib/hooks/useSpeechToText';
@@ -36,8 +36,8 @@ interface AssessmentFlowProps {
 // =============================================================================
 
 export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowProps) {
-  // Flatten questions for navigation
-  const allQuestions = flattenQuestions(config.sections);
+  // Flatten questions for navigation (memoized to prevent re-creation on every render)
+  const allQuestions = useMemo(() => flattenQuestions(config.sections), [config.sections]);
   const totalQuestions = allQuestions.length;
 
   // State
@@ -237,12 +237,16 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
   };
 
   const handleComplete = async () => {
+    // Prevent double-clicks - if already completing, bail out
+    if (isCompleting) return;
+
     setIsCompleting(true);
     setError(null);
 
     try {
       await onComplete(answers);
       localStorage.removeItem(config.storageKey);
+      // Note: onComplete should navigate away, so we don't need to reset isCompleting on success
     } catch (err) {
       console.error(`[${config.storageKey}] Error:`, err);
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -393,6 +397,7 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
                 onReview={() => setShowCompletion(false)}
                 onComplete={handleComplete}
                 themeColor={config.themeColor}
+                isLoading={isCompleting}
               />
             )}
           </AnimatePresence>

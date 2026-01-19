@@ -45,6 +45,8 @@ import {
   Lock,
   Mic,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 
 // =============================================================================
@@ -117,6 +119,7 @@ export default function TutorialModePage() {
   // UI state
   const [quickActions, setQuickActions] = useState<QuickAction[]>([]);
   const [isListening, setIsListening] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Report tabs (for About You step)
   const [activeReportTab, setActiveReportTab] = useState<ReportTab>('status');
@@ -229,7 +232,12 @@ export default function TutorialModePage() {
   // Initialize a step by calling the API
   const initializeStep = async (currentProgress: TutorialProgress) => {
     if (!sessionId) {
-      console.error('[tutorial] No session ID');
+      console.error('[tutorial] No session ID - showing default welcome');
+      addAssistantMessage(`Welcome! Let's get you set up. Would you like to see what I learned about you?`);
+      setQuickActions([
+        { label: 'Sure!', value: 'show_report' },
+        { label: 'Skip for now', value: 'skip_report' },
+      ]);
       return;
     }
 
@@ -386,6 +394,26 @@ export default function TutorialModePage() {
     }
   };
 
+  // Handle inline field edits (double-click to edit)
+  const handleFieldEdit = (field: string, index: number, value: string) => {
+    if (!report) return;
+
+    // Parse field path like "personality.0.trait"
+    const parts = field.split('.');
+    if (parts[0] === 'personality' && parts.length === 3) {
+      const fieldName = parts[2] as 'trait' | 'description' | 'insight';
+      const updatedPersonality = [...report.personality];
+      updatedPersonality[index] = {
+        ...updatedPersonality[index],
+        [fieldName]: value,
+      };
+      setReport({
+        ...report,
+        personality: updatedPersonality,
+      });
+    }
+  };
+
   const persistReport = async () => {
     if (!report || !sessionId) return;
 
@@ -508,79 +536,98 @@ export default function TutorialModePage() {
   // =============================================================================
 
   return (
-    <div className="flex h-screen bg-gh-dark-900">
+    <div className="flex h-screen bg-gh-dark-900 overflow-hidden">
       {/* Sidebar - Tutorial Progress */}
-      <TutorialSidebar progress={progress} getStepStatus={getStepStatus} />
+      <TutorialSidebar
+        progress={progress}
+        getStepStatus={getStepStatus}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
       {/* Main Content - Chat */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gh-dark-900">
+      <div className="flex-1 flex flex-col min-w-0 bg-gh-dark-900 overflow-hidden">
         {/* Header */}
         <TutorialHeader stepLabel={STEP_CONFIG[progress.stepIndex]?.label || 'Getting started'} />
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
-            <AnimatePresence>
-              {messages.map((message, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={message.role === 'user' ? 'flex justify-end' : ''}
-                >
-                  {message.role === 'user' ? (
-                    <div className="bg-blue-600 text-white rounded-2xl px-5 py-3 max-w-[85%]">
-                      <div className="prose prose-invert prose-sm max-w-none break-words">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+        <div className="flex-1 overflow-hidden">
+          <div className="h-full mx-auto px-6 py-4 flex flex-col">
+            {/* Chat messages - compact area */}
+            <div className="flex-shrink-0 space-y-3 mb-4">
+              <AnimatePresence>
+                {messages.slice(-3).map((message, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={message.role === 'user' ? 'flex justify-end' : ''}
+                  >
+                    {message.role === 'user' ? (
+                      <div className="bg-blue-600 text-white rounded-2xl px-4 py-2 max-w-[85%]">
+                        <div className="prose prose-invert prose-sm max-w-none break-words">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-white">
-                      <div className="prose prose-invert prose-base max-w-none break-words leading-relaxed">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    ) : (
+                      <div className="text-white">
+                        <div className="prose prose-invert prose-sm max-w-none break-words leading-relaxed">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    )}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
 
-            {/* Report Display */}
+            {/* Report Display - takes remaining space */}
             {progress.currentStep === 'about_you' && report && (
-              <ReportEditor
-                report={report}
-                characterProfile={characterProfile}
-                activeTab={activeReportTab}
-                onTabChange={setActiveReportTab}
-                confirmations={reportConfirmations}
-                feedbackValue={reportFeedback}
-                onFeedbackChange={setReportFeedback}
-                onFeedbackSubmit={handleReportFeedback}
-                onConfirmSection={confirmReportSection}
-                onContinue={() => handleQuickAction('confirm_report')}
-                originalReport={originalReport}
-                onResetEdits={resetReportEdits}
-                onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
-              />
+              <div className="flex-1 min-h-0">
+                <ReportEditor
+                  report={report}
+                  characterProfile={characterProfile}
+                  activeTab={activeReportTab}
+                  onTabChange={setActiveReportTab}
+                  confirmations={reportConfirmations}
+                  feedbackValue={reportFeedback}
+                  onFeedbackChange={setReportFeedback}
+                  onFeedbackSubmit={handleReportFeedback}
+                  onConfirmSection={confirmReportSection}
+                  onContinue={() => handleQuickAction('confirm_report')}
+                  originalReport={originalReport}
+                  onResetEdits={resetReportEdits}
+                  onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
+                  onFieldEdit={handleFieldEdit}
+                />
+              </div>
             )}
 
             {/* Loading States */}
             {isLoading && !loadingStages.isActive && !feedbackLoadingStages.isActive && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-shrink-0">
                 <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
               </motion.div>
             )}
 
             {(loadingStages.isActive || feedbackLoadingStages.isActive) && (
-              <StagedLoadingBar
-                message={loadingStages.isActive ? loadingStages.currentMessage : feedbackLoadingStages.currentMessage}
-                progress={loadingStages.isActive ? loadingStages.progress : feedbackLoadingStages.progress}
-              />
+              <div className="flex-shrink-0">
+                <StagedLoadingBar
+                  message={loadingStages.isActive ? loadingStages.currentMessage : feedbackLoadingStages.currentMessage}
+                  progress={loadingStages.isActive ? loadingStages.progress : feedbackLoadingStages.progress}
+                />
+              </div>
             )}
 
             {/* Quick Actions */}
             {quickActions.length > 0 && !isLoading && !loadingStages.isActive && (
-              <QuickActions actions={quickActions} onAction={handleQuickAction} />
+              <div className="flex-shrink-0">
+                <QuickActions
+                  actions={quickActions}
+                  onAction={handleQuickAction}
+                  disabled={isLoading || loadingStages.isActive || feedbackLoadingStages.isActive}
+                />
+              </div>
             )}
 
             <div ref={messagesEndRef} />
@@ -608,34 +655,53 @@ export default function TutorialModePage() {
 interface TutorialSidebarProps {
   progress: TutorialProgress;
   getStepStatus: (index: number) => string;
+  collapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
-function TutorialSidebar({ progress, getStepStatus }: TutorialSidebarProps) {
+function TutorialSidebar({ progress, getStepStatus, collapsed, onToggleCollapse }: TutorialSidebarProps) {
   return (
-    <div className="w-64 bg-gh-dark-800 border-r border-gh-dark-700 flex flex-col">
-      <div className="p-4 border-b border-gh-dark-700">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          <span className="text-sm font-medium text-white">Setup Mode</span>
-        </div>
+    <motion.div
+      initial={false}
+      animate={{ width: collapsed ? 56 : 256 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
+      className="bg-gh-dark-800 border-r border-gh-dark-700 flex flex-col flex-shrink-0 overflow-hidden"
+    >
+      {/* Header with collapse toggle */}
+      <div className="p-3 border-b border-gh-dark-700 flex items-center justify-between">
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-sm font-medium text-white whitespace-nowrap">Setup Mode</span>
+          </div>
+        )}
+        <button
+          onClick={onToggleCollapse}
+          className="p-1.5 text-gray-400 hover:text-white hover:bg-gh-dark-700 rounded-lg transition-colors"
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
-      <div className="flex-1 p-4 space-y-2 overflow-y-auto">
+      {/* Steps */}
+      <div className="flex-1 p-2 space-y-1 overflow-hidden">
         {STEP_CONFIG.map((step, index) => {
           const stepStatus = getStepStatus(index);
           const Icon = step.icon;
           return (
             <div
               key={step.id}
-              className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
+              className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${
                 stepStatus === 'current'
                   ? 'bg-blue-600/20 border border-blue-500/50'
                   : stepStatus === 'completed'
                   ? 'bg-green-600/10'
                   : 'opacity-50'
               }`}
+              title={collapsed ? step.label : undefined}
             >
-              <div className="flex-shrink-0 mt-0.5">
+              <div className="flex-shrink-0">
                 {stepStatus === 'completed' ? (
                   <CheckCircle2 className="w-5 h-5 text-green-400" />
                 ) : stepStatus === 'current' ? (
@@ -644,30 +710,35 @@ function TutorialSidebar({ progress, getStepStatus }: TutorialSidebarProps) {
                   <Lock className="w-5 h-5 text-gray-500" />
                 )}
               </div>
-              <div className="min-w-0">
-                <span
-                  className={`text-sm font-medium block truncate ${
-                    stepStatus === 'completed'
-                      ? 'text-green-400'
-                      : stepStatus === 'current'
-                      ? 'text-white'
-                      : 'text-gray-500'
-                  }`}
-                >
-                  {step.label}
-                </span>
-                <p className="text-xs text-gray-500 truncate">{step.description}</p>
-              </div>
+              {!collapsed && (
+                <div className="min-w-0">
+                  <span
+                    className={`text-sm font-medium block truncate ${
+                      stepStatus === 'completed'
+                        ? 'text-green-400'
+                        : stepStatus === 'current'
+                        ? 'text-white'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  <p className="text-xs text-gray-500 truncate">{step.description}</p>
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
-      <div className="p-4 border-t border-gh-dark-700">
-        <div className="flex justify-between text-xs text-gray-400 mb-2">
-          <span>Progress</span>
-          <span>{progress.stepIndex + 1} / 5</span>
-        </div>
+      {/* Progress bar */}
+      <div className="p-3 border-t border-gh-dark-700">
+        {!collapsed && (
+          <div className="flex justify-between text-xs text-gray-400 mb-2">
+            <span>Progress</span>
+            <span>{progress.stepIndex + 1} / 5</span>
+          </div>
+        )}
         <div className="h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
@@ -677,7 +748,8 @@ function TutorialSidebar({ progress, getStepStatus }: TutorialSidebarProps) {
         </div>
       </div>
 
-      <div className="p-4 border-t border-gh-dark-700">
+      {/* Reset button */}
+      <div className="p-3 border-t border-gh-dark-700">
         <button
           onClick={() => {
             resetOnboarding();
@@ -687,10 +759,10 @@ function TutorialSidebar({ progress, getStepStatus }: TutorialSidebarProps) {
           title="Reset Onboarding"
         >
           <RefreshCw className="w-3 h-3" />
-          Reset
+          {!collapsed && 'Reset'}
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -802,22 +874,57 @@ function StagedLoadingBar({ message, progress }: { message: string; progress: nu
   );
 }
 
-function QuickActions({ actions, onAction }: { actions: QuickAction[]; onAction: (value: string) => void }) {
+function QuickActions({
+  actions,
+  onAction,
+  disabled = false,
+}: {
+  actions: QuickAction[];
+  onAction: (value: string) => void;
+  disabled?: boolean;
+}) {
+  const [clickedAction, setClickedAction] = useState<string | null>(null);
+
+  // Reset clicked state when actions change (e.g., new step)
+  useEffect(() => {
+    setClickedAction(null);
+  }, [actions]);
+
+  const handleClick = (value: string) => {
+    if (disabled || clickedAction) return; // Prevent double-clicks
+    setClickedAction(value);
+    onAction(value);
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end gap-3 pt-2">
-      {actions.map((action) => (
-        <button
-          key={action.value}
-          onClick={() => onAction(action.value)}
-          className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-150 ${
-            action.value.includes('skip') || action.value.includes('pause')
-              ? 'bg-gh-dark-700 hover:bg-gh-dark-600 text-gray-300 border border-gh-dark-600'
-              : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25 hover:shadow-blue-500/40'
-          }`}
-        >
-          {action.label}
-        </button>
-      ))}
+      {actions.map((action) => {
+        const isClicked = clickedAction === action.value;
+        const isDisabled = disabled || clickedAction !== null;
+        return (
+          <button
+            key={action.value}
+            onClick={() => handleClick(action.value)}
+            disabled={isDisabled}
+            className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-150 ${
+              isDisabled
+                ? 'opacity-50 cursor-not-allowed'
+                : action.value.includes('skip') || action.value.includes('pause')
+                ? 'bg-gh-dark-700 hover:bg-gh-dark-600 text-gray-300 border border-gh-dark-600'
+                : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25 hover:shadow-blue-500/40'
+            }`}
+          >
+            {isClicked ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {action.label}
+              </span>
+            ) : (
+              action.label
+            )}
+          </button>
+        );
+      })}
     </motion.div>
   );
 }

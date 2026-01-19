@@ -5,6 +5,7 @@
  */
 
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import { TEST_IDS, testId } from '@/lib/test-utils';
 
 interface CompletionCardProps {
@@ -14,6 +15,7 @@ interface CompletionCardProps {
   onReview: () => void;
   onComplete: () => void;
   themeColor: 'purple' | 'blue';
+  isLoading?: boolean;
 }
 
 export function CompletionCard({
@@ -23,6 +25,7 @@ export function CompletionCard({
   onReview,
   onComplete,
   themeColor,
+  isLoading = false,
 }: CompletionCardProps) {
   const buttonColor = themeColor === 'purple'
     ? 'from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 hover:shadow-green-500/50'
@@ -43,16 +46,25 @@ export function CompletionCard({
         <button
           {...testId(TEST_IDS.assessment.reviewBtn)}
           onClick={onReview}
-          className="px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          disabled={isLoading}
+          className="px-6 py-3 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
         >
           Review Answers
         </button>
         <button
           {...testId(TEST_IDS.assessment.completeBtn)}
           onClick={onComplete}
-          className={`px-12 py-4 bg-gradient-to-r ${buttonColor} text-white font-bold rounded-lg transition-all duration-200 shadow-lg text-lg`}
+          disabled={isLoading}
+          className={`px-12 py-4 bg-gradient-to-r ${buttonColor} text-white font-bold rounded-lg transition-all duration-200 shadow-lg text-lg disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {submitButtonText}
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Processing...
+            </span>
+          ) : (
+            submitButtonText
+          )}
         </button>
       </div>
     </motion.div>
