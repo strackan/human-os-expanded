@@ -5,6 +5,7 @@
  */
 
 import { post } from './client';
+import { streamingFetch, type StreamingCallbacks, type StreamingRequestOptions } from './streaming';
 import type { Message, ExecutiveReport, TutorialProgress } from '../types';
 
 // =============================================================================
@@ -128,4 +129,71 @@ export async function persistReport(
     },
     token
   );
+}
+
+// =============================================================================
+// STREAMING API METHODS
+// =============================================================================
+
+export interface TutorialStreamingCallbacks extends StreamingCallbacks {
+  /** Called when streaming completes with parsed response data */
+  onResponse?: (response: TutorialChatResponse) => void;
+}
+
+/**
+ * Send a chat message in tutorial with SSE streaming
+ *
+ * @param sessionId - Session ID
+ * @param message - User message
+ * @param messages - Conversation history
+ * @param progress - Tutorial progress
+ * @param callbacks - Streaming callbacks
+ * @param options - Request options including token
+ */
+export async function sendTutorialMessageStreaming(
+  sessionId: string,
+  message: string,
+  messages: Message[],
+  progress: TutorialProgress,
+  callbacks: TutorialStreamingCallbacks,
+  options?: StreamingRequestOptions & { token?: string | null }
+): Promise<void> {
+  const result = await streamingFetch(
+    '/api/tutorial/chat/stream',
+    {
+      message,
+      conversation_history: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+      session_id: sessionId,
+      progress,
+    },
+    {
+      onToken: callbacks.onToken,
+      onError: callbacks.onError,
+      onStart: callbacks.onStart,
+      onComplete: (event) => {
+        callbacks.onComplete?.(event);
+
+        // Parse metadata into TutorialChatResponse
+        const metadata = event.metadata || {};
+        const response: TutorialChatResponse = {
+          content: event.content,
+          action: metadata.action as string | undefined,
+          progress: metadata.progress as TutorialProgress | undefined,
+          questions: metadata.questions as TutorialChatResponse['questions'],
+          report: metadata.report as ExecutiveReport | undefined,
+          currentQuestion: metadata.currentQuestion as TutorialChatResponse['currentQuestion'],
+        };
+
+        callbacks.onResponse?.(response);
+      },
+    },
+    { token: options?.token, signal: options?.signal, timeout: options?.timeout }
+  );
+
+  if (!result && !callbacks.onError) {
+    console.warn('[tutorial] Streaming completed without result');
+  }
 }

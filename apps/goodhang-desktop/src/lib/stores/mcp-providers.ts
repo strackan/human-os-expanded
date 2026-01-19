@@ -64,13 +64,18 @@ interface MCPProvidersState {
   userProvidersLoading: boolean;
   userProvidersError: string | null;
 
+  // Pending providers (awaiting OAuth connection)
+  pendingProviders: UserMCPProvider[];
+
   // Actions
   loadRegistry: () => Promise<void>;
   loadUserProviders: (userId: string) => Promise<void>;
+  loadPendingProviders: (userId: string) => Promise<void>;
   addProvider: (userId: string, providerSlug: string, config?: Record<string, unknown>) => Promise<void>;
   removeProvider: (providerId: string) => Promise<void>;
   updateProviderStatus: (providerId: string, status: ProviderStatus) => Promise<void>;
   refreshProvider: (providerId: string) => Promise<void>;
+  getProviderBySlug: (slug: string) => UserMCPProvider | undefined;
 }
 
 // =============================================================================
@@ -86,6 +91,8 @@ export const useMCPProvidersStore = create<MCPProvidersState>((set, get) => ({
   userProviders: [],
   userProvidersLoading: false,
   userProvidersError: null,
+
+  pendingProviders: [],
 
   // Load provider registry
   loadRegistry: async () => {
@@ -155,12 +162,57 @@ export const useMCPProvidersStore = create<MCPProvidersState>((set, get) => ({
       }));
 
       set({ userProviders, userProvidersLoading: false });
+
+      // Also update pending providers
+      const pendingProviders = userProviders.filter((p) => p.status === 'pending');
+      set({ pendingProviders });
     } catch (error) {
       set({
         userProvidersError: error instanceof Error ? error.message : 'Failed to load providers',
         userProvidersLoading: false,
       });
     }
+  },
+
+  // Load only pending providers (awaiting OAuth)
+  loadPendingProviders: async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .schema('human_os')
+        .from('user_mcp_providers')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const pendingProviders: UserMCPProvider[] = (data || []).map((row) => ({
+        id: row.id,
+        providerSlug: row.provider_slug,
+        category: row.category,
+        displayName: row.display_name,
+        status: row.status,
+        lastQueriedAt: row.last_queried_at,
+        lastExtractionAt: row.last_extraction_at,
+        extractionCursor: row.extraction_cursor || {},
+        errorMessage: row.error_message,
+        errorCount: row.error_count || 0,
+        metadata: row.metadata || {},
+        createdAt: row.created_at,
+      }));
+
+      set({ pendingProviders });
+    } catch (error) {
+      console.error('Failed to load pending providers:', error);
+    }
+  },
+
+  // Get provider by slug
+  getProviderBySlug: (slug: string) => {
+    const { userProviders } = get();
+    return userProviders.find((p) => p.providerSlug === slug);
   },
 
   // Add a new provider configuration

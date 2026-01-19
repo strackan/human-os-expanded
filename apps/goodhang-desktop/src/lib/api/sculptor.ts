@@ -5,7 +5,8 @@
  */
 
 import { get, post } from './client';
-import type { PersonaFingerprint, ExecutiveReport } from '../types';
+import { streamingFetch, type StreamingCallbacks, type StreamingRequestOptions, type CompleteEvent } from './streaming';
+import type { PersonaFingerprint, ExecutiveReport, Message } from '../types';
 
 // =============================================================================
 // REQUEST TYPES
@@ -144,4 +145,74 @@ export async function sendSessionMessage(
     },
     token
   );
+}
+
+// =============================================================================
+// STREAMING API METHODS
+// =============================================================================
+
+export interface SculptorStreamingResponse {
+  content: string;
+  tokensUsed: {
+    input: number;
+    output: number;
+    total: number;
+  };
+  model: string;
+  session_status?: string;
+}
+
+export interface SculptorStreamingCallbacks extends StreamingCallbacks {
+  /** Called when streaming completes with parsed response data */
+  onResponse?: (response: SculptorStreamingResponse) => void;
+}
+
+/**
+ * Send a message in a sculptor session with SSE streaming
+ *
+ * @param sessionId - Session ID
+ * @param message - User message
+ * @param conversationHistory - Conversation history
+ * @param callbacks - Streaming callbacks
+ * @param options - Request options including token
+ */
+export async function sendSessionMessageStreaming(
+  sessionId: string,
+  message: string,
+  conversationHistory: Message[],
+  callbacks: SculptorStreamingCallbacks,
+  options?: StreamingRequestOptions & { token?: string | null }
+): Promise<CompleteEvent | null> {
+  const result = await streamingFetch(
+    `/api/sculptor/sessions/${sessionId}/messages/stream`,
+    {
+      message,
+      conversation_history: conversationHistory.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    },
+    {
+      onToken: callbacks.onToken,
+      onError: callbacks.onError,
+      onStart: callbacks.onStart,
+      onComplete: (event) => {
+        callbacks.onComplete?.(event);
+
+        // Parse into sculptor response
+        const metadata = event.metadata || {};
+        const response: SculptorStreamingResponse = {
+          content: event.content,
+          tokensUsed: event.tokensUsed,
+          model: event.model,
+          session_status: metadata.session_status as string | undefined,
+        };
+
+        callbacks.onResponse?.(response);
+      },
+    },
+    { token: options?.token, signal: options?.signal, timeout: options?.timeout ?? 60000 }
+  );
+
+  return result;
 }

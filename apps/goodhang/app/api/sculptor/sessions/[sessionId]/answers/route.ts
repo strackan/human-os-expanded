@@ -8,6 +8,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 
+// CORS headers for desktop app access
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
 interface AnswerRequestBody {
   question_id: string;      // Slug or consolidated prompt id
   answer: string;           // User's answer
@@ -21,6 +28,10 @@ interface RouteParams {
   }>;
 }
 
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { sessionId } = await params;
@@ -30,7 +41,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!question_id || !answer) {
       return NextResponse.json(
         { error: 'question_id and answer are required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -46,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (sessionError || !session) {
       return NextResponse.json(
         { error: 'Session not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -80,7 +91,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.error('[answers/POST] Update error:', updateError);
       return NextResponse.json(
         { error: 'Failed to save answer' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -123,12 +134,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       success: true,
       answer_count: updatedAnswers.length,
       covers_count: covers?.length || 0,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('[answers/POST] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
@@ -149,7 +160,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     if (sessionError || !session) {
       return NextResponse.json(
         { error: 'Session not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -160,12 +171,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       session_id: sessionId,
       answers,
       answer_count: answers.length,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('[answers/GET] Error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }
