@@ -453,13 +453,14 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
         throw new Error('Task requires a title');
       }
 
+      // Note: payload.notes is stored in description since founder_os.tasks doesn't have a notes column
       const { error } = await supabase.schema(DB_SCHEMAS.FOUNDER_OS).from('tasks').insert({
         user_id: item.user_id,
         title: payload.title,
         context_tags: Array.isArray(payload.context_tags) ? payload.context_tags : [],
         priority: payload.priority || DEFAULTS.TASK_PRIORITY,
         due_date: payload.due_date || null,
-        notes: payload.notes || null,
+        description: payload.notes || payload.description || null,
         status: TASK_STATUS.TODO,
       });
 
@@ -473,10 +474,10 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
         throw new Error('Note/event requires content');
       }
 
-      const { error } = await supabase.from('interactions').insert({
+      const { error } = await supabase.schema(DB_SCHEMAS.HUMAN_OS).from('interactions').insert({
         owner_id: item.user_id,
         interaction_type: payload.interaction_type || 'note',
-        summary: payload.content,
+        content: payload.content,
         occurred_at: payload.occurred_at || new Date().toISOString(),
         sentiment: payload.sentiment || null,
       });
@@ -490,10 +491,10 @@ async function routeAndInsert(supabase: SupabaseClient, item: QueueItem): Promis
         throw new Error('Decision requires a decision field');
       }
 
-      const { error } = await supabase.from('interactions').insert({
+      const { error } = await supabase.schema(DB_SCHEMAS.HUMAN_OS).from('interactions').insert({
         owner_id: item.user_id,
         interaction_type: 'note',
-        summary: `Decision: ${payload.decision}${payload.context ? ` (Context: ${payload.context})` : ''}${payload.outcome ? ` → Outcome: ${payload.outcome}` : ''}`,
+        content: `Decision: ${payload.decision}${payload.context ? ` (Context: ${payload.context})` : ''}${payload.outcome ? ` → Outcome: ${payload.outcome}` : ''}`,
         occurred_at: new Date().toISOString(),
       });
 

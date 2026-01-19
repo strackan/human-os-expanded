@@ -6,7 +6,7 @@
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolContext } from '../lib/context.js';
-import { buildFounderLayer } from '@human-os/core';
+import { buildFounderLayer, DB_SCHEMAS } from '@human-os/core';
 
 // =============================================================================
 // CONFIGURATION
@@ -478,6 +478,7 @@ async function pingPerson(
   subject?: string
 ): Promise<SendMessageResult> {
   const { data, error } = await ctx.getClient()
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('messages')
     .insert({
       from_forest: ctx.layer,
@@ -517,6 +518,7 @@ async function grabMessages(ctx: ToolContext): Promise<{ messages: Message[]; su
   const supabase = ctx.getClient();
 
   const { data, error } = await supabase
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('messages')
     .select('*')
     .eq('to_forest', ctx.layer)
@@ -537,7 +539,7 @@ async function grabMessages(ctx: ToolContext): Promise<{ messages: Message[]; su
 
   if (messages.length > 0) {
     const messageIds = messages.map(m => m.id);
-    await supabase.from('messages').update({ status: 'delivered' }).in('id', messageIds);
+    await supabase.schema(DB_SCHEMAS.FOUNDER_OS).from('messages').update({ status: 'delivered' }).in('id', messageIds);
   }
 
   const summary =
@@ -557,6 +559,7 @@ async function quickReply(
   const supabase = ctx.getClient();
 
   const { data: recentMessages, error: fetchError } = await supabase
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('messages')
     .select('*')
     .eq('from_name', toName)
@@ -572,6 +575,7 @@ async function quickReply(
   const toForest = original?.from_forest || buildFounderLayer(toName.toLowerCase().replace(' ', '-'));
 
   const { data: reply, error: insertError } = await supabase
+    .schema(DB_SCHEMAS.FOUNDER_OS)
     .from('messages')
     .insert({
       from_forest: ctx.layer,
@@ -600,6 +604,7 @@ async function quickReply(
 
   if (original) {
     await supabase
+      .schema(DB_SCHEMAS.FOUNDER_OS)
       .from('messages')
       .update({ status: 'replied', replied_at: new Date().toISOString() })
       .eq('id', original.id);
