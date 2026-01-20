@@ -14,6 +14,8 @@ import {
   Loader2,
   Lock,
   Unlock,
+  ArrowLeft,
+  RefreshCw,
 } from 'lucide-react';
 import { TEST_IDS, testId } from '@/lib/test-utils';
 
@@ -34,6 +36,14 @@ interface SetupSidebarProps {
   onItemClick: (itemId: string) => void;
   onUnlockProduction?: () => void;
   canUnlock: boolean;
+  /** Optional callback for exit/back button - if provided, shows exit button */
+  onExit?: () => void;
+  /** Label for exit button (default: "Exit") */
+  exitLabel?: string;
+  /** Optional callback for reset button - if provided, shows reset button */
+  onReset?: () => void;
+  /** Label for reset button (default: "Reset") */
+  resetLabel?: string;
 }
 
 export function SetupSidebar({
@@ -44,6 +54,10 @@ export function SetupSidebar({
   onItemClick,
   onUnlockProduction,
   canUnlock,
+  onExit,
+  exitLabel = 'Exit',
+  onReset,
+  resetLabel = 'Reset',
 }: SetupSidebarProps) {
   const completedCount = items.filter((i) => i.status === 'completed').length;
   const totalRequired = items.filter((i) => i.required).length;
@@ -75,20 +89,31 @@ export function SetupSidebar({
     >
       {/* Header */}
       <div {...testId(TEST_IDS.setupSidebar.header)} className="flex items-center justify-between p-3 border-b border-gh-dark-700">
-        <AnimatePresence mode="wait">
-          {!collapsed && (
-            <motion.div
-              {...testId(TEST_IDS.setupSidebar.modeIndicator)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex items-center gap-2"
+        <div className="flex items-center gap-2">
+          {onExit && (
+            <button
+              onClick={onExit}
+              className="p-1 hover:bg-gh-dark-700 rounded transition-colors"
+              title={exitLabel}
             >
-              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-sm font-medium text-white">Setup Mode</span>
-            </motion.div>
+              <ArrowLeft className="w-4 h-4 text-gray-400" />
+            </button>
           )}
-        </AnimatePresence>
+          <AnimatePresence mode="wait">
+            {!collapsed && (
+              <motion.div
+                {...testId(TEST_IDS.setupSidebar.modeIndicator)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-2"
+              >
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-sm font-medium text-white">Setup Mode</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <button
           {...testId(TEST_IDS.setupSidebar.collapseBtn)}
           onClick={onToggleCollapse}
@@ -231,6 +256,17 @@ export function SetupSidebar({
                   </>
                 )}
               </button>
+
+              {/* Reset button */}
+              {onReset && (
+                <button
+                  onClick={onReset}
+                  className="w-full flex items-center justify-center gap-2 py-2 px-3 text-xs text-gray-500 hover:text-orange-400 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  {resetLabel}
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

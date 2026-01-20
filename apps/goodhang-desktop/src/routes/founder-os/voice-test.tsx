@@ -36,8 +36,9 @@ export default function VoiceTestPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const initializedRef = useRef(false);
 
-  // Session ID from URL
+  // Session ID and return path from URL
   const sessionId = searchParams.get('session') || '';
+  const returnPath = searchParams.get('return') || '/founder-os/dashboard';
 
   // State
   const [stage, setStage] = useState<VoiceTestStage>('intro');
@@ -228,6 +229,7 @@ export default function VoiceTestPage() {
       totalAttempts: allAttempts.length,
       averageRating: allAttempts.reduce((sum, a) => sum + (a.rating || 0), 0) / allAttempts.length,
     }));
+    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
     localStorage.removeItem(STORAGE_KEYS.PROGRESS);
   };
 
@@ -424,6 +426,9 @@ Helpful instruction: ${feedbackForm.helpfulInstruction}`);
 
     setAllAttempts(prev => [...prev, attempt]);
 
+    // Store the original prompt before resetting
+    const originalPrompt = currentAttempt?.userPrompt || '';
+
     // Reset feedback form
     setFeedbackForm({
       whatDidntWork: '',
@@ -431,9 +436,19 @@ Helpful instruction: ${feedbackForm.helpfulInstruction}`);
       helpfulInstruction: '',
     });
 
-    // Try again or move on
-    addAssistantMessage("Thanks for the feedback! Want to try again with this content type, or move on to the next one?");
-    setStage('complete_type');
+    // Automatically regenerate with the same prompt using the feedback
+    addAssistantMessage("Got it! Let me try again with your feedback...");
+    setStage('generating');
+
+    // Create new attempt with same prompt
+    setCurrentAttempt({
+      id: crypto.randomUUID(),
+      contentTypeId: currentContentType.id,
+      userPrompt: originalPrompt,
+      timestamp: new Date().toISOString(),
+    });
+
+    await generateContent(originalPrompt);
   };
 
   const handleTryAgain = () => {
@@ -571,8 +586,22 @@ Your commandments have been saved to your voice profile. You can view and edit t
   }, [checklistItems]);
 
   const handleUnlockProduction = useCallback(() => {
-    navigate('/founder-os/dashboard');
-  }, [navigate]);
+    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+    navigate(returnPath);
+  }, [navigate, returnPath]);
+
+  const handleExit = useCallback(() => {
+    // Navigate back to return path without marking as complete
+    navigate(returnPath);
+  }, [navigate, returnPath]);
+
+  const handleReset = useCallback(() => {
+    // Clear voice test progress and reload
+    localStorage.removeItem(STORAGE_KEYS.PROGRESS);
+    localStorage.removeItem(STORAGE_KEYS.COMPLETED);
+    localStorage.removeItem('founder-os-voice-test-completed');
+    window.location.reload();
+  }, []);
 
   const canUnlock = stage === 'complete';
 
@@ -591,6 +620,10 @@ Your commandments have been saved to your voice profile. You can view and edit t
         onItemClick={handleChecklistItemClick}
         onUnlockProduction={handleUnlockProduction}
         canUnlock={canUnlock}
+        onExit={handleExit}
+        exitLabel="Back to Tutorial"
+        onReset={handleReset}
+        resetLabel="Reset Voice Test"
       />
 
       {/* Main Content */}
@@ -824,10 +857,13 @@ Your commandments have been saved to your voice profile. You can view and edit t
               </div>
             </div>
             <button
-              onClick={() => navigate('/founder-os/dashboard')}
+              onClick={() => {
+                localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+                navigate(returnPath);
+              }}
               className="w-full mt-4 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
             >
-              Continue to Dashboard
+              Continue
             </button>
           </div>
         )}

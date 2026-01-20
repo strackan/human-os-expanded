@@ -57,6 +57,7 @@ const STEP_CONFIG = [
   { id: 'welcome', label: 'Welcome', icon: User, description: 'Getting started' },
   { id: 'about_you', label: 'About You', icon: Sparkles, description: 'What I learned' },
   { id: 'gather_intro', label: 'Gather Details', icon: ClipboardList, description: 'Work style' },
+  { id: 'voice_testing', label: 'Voice-OS', icon: Mic, description: 'Test your voice' },
   { id: 'questions', label: 'Questions', icon: MessageCircle, description: 'Quick conversation' },
   { id: 'complete', label: 'Complete', icon: CheckCircle2, description: 'Ready to go' },
 ];
@@ -199,7 +200,7 @@ export default function TutorialModePage() {
     if (workStyleComplete) {
       const completeProgress: TutorialProgress = {
         currentStep: 'complete',
-        stepIndex: 4,
+        stepIndex: 5,
         questionsAnswered: 10,
         totalQuestions: 10,
         viewedReport: true,
@@ -207,6 +208,22 @@ export default function TutorialModePage() {
       setProgress(completeProgress);
       localStorage.setItem('founder-os-tutorial-progress', JSON.stringify(completeProgress));
       initializeStep(completeProgress);
+      return;
+    }
+
+    // Check if voice test is complete but work style is not
+    const voiceTestComplete = localStorage.getItem('founder-os-voice-test-completed');
+    if (voiceTestComplete && !workStyleComplete) {
+      const voiceCompleteProgress: TutorialProgress = {
+        currentStep: 'questions',
+        stepIndex: 4,
+        questionsAnswered: 0,
+        totalQuestions: 10,
+        viewedReport: true,
+      };
+      setProgress(voiceCompleteProgress);
+      localStorage.setItem('founder-os-tutorial-progress', JSON.stringify(voiceCompleteProgress));
+      initializeStep(voiceCompleteProgress);
       return;
     }
 
@@ -277,6 +294,18 @@ export default function TutorialModePage() {
         ]);
         break;
       case 'gather_intro':
+        setQuickActions([
+          { label: "Let's do it", value: 'start_voice_testing' },
+          { label: 'Not right now', value: 'pause' },
+        ]);
+        break;
+      case 'voice_testing':
+        setQuickActions([
+          { label: "Let's test your voice", value: 'start_voice_testing' },
+          { label: 'Skip for now', value: 'skip_voice_testing' },
+        ]);
+        break;
+      case 'questions':
         setQuickActions([
           { label: "Let's do it", value: 'start_questions' },
           { label: 'Not right now', value: 'pause' },
@@ -512,6 +541,12 @@ export default function TutorialModePage() {
       case 'skip_report':
         sendMessage('Skip for now');
         break;
+      case 'start_voice_testing':
+        navigate(`/founder-os/voice-test?session=${sessionId}&return=/founder-os/tutorial`);
+        return;
+      case 'skip_voice_testing':
+        sendMessage('Skip voice testing for now');
+        break;
       case 'start_questions':
         navigate(`/founder-os/work-style-assessment?session=${sessionId}&return=/founder-os/tutorial`);
         return;
@@ -736,13 +771,13 @@ function TutorialSidebar({ progress, getStepStatus, collapsed, onToggleCollapse 
         {!collapsed && (
           <div className="flex justify-between text-xs text-gray-400 mb-2">
             <span>Progress</span>
-            <span>{progress.stepIndex + 1} / 5</span>
+            <span>{progress.stepIndex + 1} / {STEP_CONFIG.length}</span>
           </div>
         )}
         <div className="h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${((progress.stepIndex + 1) / 5) * 100}%` }}
+            animate={{ width: `${((progress.stepIndex + 1) / STEP_CONFIG.length) * 100}%` }}
             className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
           />
         </div>

@@ -144,6 +144,7 @@ export type TutorialStep =
   | 'welcome'
   | 'about_you'
   | 'gather_intro'
+  | 'voice_testing'
   | 'questions'
   | 'complete';
 
