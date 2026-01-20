@@ -59,6 +59,7 @@ export function StepHeader({
   isExpanded,
   isPinned,
   onToggle,
+  onNavigateToStep,
   onTogglePin,
   onTitleChange,
   isCurrentStep,
@@ -138,6 +139,17 @@ export function StepHeader({
     onActionSuccess?.();
   }, [onActionSuccess]);
 
+  // Handle clicking on step header
+  const handleHeaderClick = useCallback(() => {
+    // For completed steps that aren't current, navigate to them (triggers confirmation)
+    if (step.status === 'success' && !isCurrentStep && onNavigateToStep) {
+      onNavigateToStep();
+      return;
+    }
+    // Otherwise, toggle expand/collapse
+    onToggle();
+  }, [step.status, isCurrentStep, onNavigateToStep, onToggle]);
+
   // Show action buttons for steps that can be snoozed/skipped
   const canSnoozeOrSkip = step.status === 'active' || step.status === 'pending';
 
@@ -153,7 +165,7 @@ export function StepHeader({
   return (
     <div
       className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${bgClass}`}
-      onClick={onToggle}
+      onClick={handleHeaderClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       role="button"
@@ -180,9 +192,9 @@ export function StepHeader({
           />
         ) : (
           <span
-            className="text-sm font-medium text-gray-900 truncate block"
+            className="text-sm font-medium text-gray-900 truncate block cursor-text"
             onDoubleClick={handleDoubleClick}
-            title={displayTitle}
+            title={`${displayTitle}\n(Double-click to rename)`}
           >
             {displayTitle}
           </span>

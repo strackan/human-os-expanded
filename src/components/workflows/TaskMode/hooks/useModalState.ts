@@ -19,7 +19,7 @@ export function useModalState() {
   const [showPlaysDropdown, setShowPlaysDropdown] = useState(false);
   const [stepActionMenu, setStepActionMenu] = useState<number | null>(null);
   const [confirmationModal, setConfirmationModal] = useState<{
-    type: 'skip' | 'snooze' | null;
+    type: 'skip' | 'snooze' | 'reopen' | null;
     stepIndex: number | null;
   }>({ type: null, stepIndex: null });
 

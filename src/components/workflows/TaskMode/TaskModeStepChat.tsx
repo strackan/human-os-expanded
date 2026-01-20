@@ -239,6 +239,8 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
     workflowId,
     customerName,
     customerId,
+    executionId: effectiveExecutionId, // For state persistence (Bug 2 fix)
+    userId, // For state persistence (Bug 2 fix)
     onClose,
     sequenceInfo,
   });
@@ -528,6 +530,7 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
               currentStepIndex={state.currentSlideIndex}
               onExpandStep={stepChatState.expandStep}
               onCollapseStep={stepChatState.collapseStep}
+              onNavigateToStep={state.goToSlide}
               onTogglePin={stepChatState.togglePin}
               onTitleChange={stepChatState.setCustomTitle}
               onSendMessage={state.handleSendMessage}
@@ -589,6 +592,35 @@ export default function TaskModeStepChat(props: TaskModeStepChatProps) {
               customerId={customerId}
               customerName={customerName}
             />
+          )}
+
+          {/* Step Reopen Confirmation Modal */}
+          {state.pendingReopenSlide !== null && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 mx-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-3">
+                  Go back to this step?
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Going back will mark this step and all following steps as incomplete.
+                  You&apos;ll need to re-submit them when done.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={state.cancelReopenSlide}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={state.confirmReopenSlide}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Continue Editing
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* All Modals */}

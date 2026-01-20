@@ -543,5 +543,8 @@ export function useChatState({
     handleBranchNavigation,
     handleSendMessage,
     handleComponentValueChange,
+    // Expose setters for state restoration (Bug 2 fix)
+    setChatMessages,
+    setCurrentBranch,
   };
 }

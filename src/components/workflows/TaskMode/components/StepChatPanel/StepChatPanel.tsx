@@ -20,6 +20,7 @@ export function StepChatPanel({
   currentStepIndex,
   onExpandStep,
   onCollapseStep,
+  onNavigateToStep,
   onTogglePin,
   onTitleChange,
   onSendMessage,
@@ -109,6 +110,7 @@ export function StepChatPanel({
                 isCurrentStep={step.stepIndex === currentStepIndex}
                 onExpand={() => onExpandStep(step.stepIndex)}
                 onCollapse={() => onCollapseStep(step.stepIndex)}
+                onNavigateToStep={onNavigateToStep ? () => onNavigateToStep(step.stepIndex) : undefined}
                 onPin={() => onTogglePin(step.stepIndex)}
                 onUnpin={() => onTogglePin(step.stepIndex)}
                 onTitleChange={(title) => onTitleChange(step.stepIndex, title)}

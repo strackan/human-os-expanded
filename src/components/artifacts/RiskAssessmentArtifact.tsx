@@ -221,6 +221,24 @@ export default function RiskAssessmentArtifact({
 
       {/* Risk Factors List */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
+        {/* Assessment Summary (moved to top per user feedback) */}
+        <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-900">Assessment Summary</p>
+              <p className="text-sm text-gray-600 mt-1">
+                {overallRiskScore <= 30
+                  ? 'This account presents low renewal risk. Focus on expansion opportunities while maintaining strong champion relationships.'
+                  : overallRiskScore <= 50
+                  ? 'Moderate risk factors identified. Address competitive and operational concerns proactively during renewal discussions.'
+                  : 'Elevated risk requires immediate attention. Prioritize relationship building and value demonstration before renewal.'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-4">
           {riskFactors.map((risk) => {
             const levelConfig = getRiskLevelConfig(risk.level);
@@ -300,24 +318,6 @@ export default function RiskAssessmentArtifact({
               </div>
             );
           })}
-        </div>
-
-        {/* Risk Summary */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-gray-900">Assessment Summary</p>
-              <p className="text-sm text-gray-600 mt-1">
-                {overallRiskScore <= 30
-                  ? 'This account presents low renewal risk. Focus on expansion opportunities while maintaining strong champion relationships.'
-                  : overallRiskScore <= 50
-                  ? 'Moderate risk factors identified. Address competitive and operational concerns proactively during renewal discussions.'
-                  : 'Elevated risk requires immediate attention. Prioritize relationship building and value demonstration before renewal.'
-                }
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 

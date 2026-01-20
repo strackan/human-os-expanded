@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/ToastProvider';
 import { useWorkflowData } from './useWorkflowData';
 import { useChatState } from './useChatState';
 import { useArtifactState } from './useArtifactState';
 import { useModalState } from './useModalState';
+import { useWorkflowPersistence } from '@/hooks/useWorkflowPersistence';
+import { fromSerializableMessage } from '@/lib/persistence/types';
 
 /**
  * useTaskModeStateV2 - Modular version that composes smaller hooks
@@ -13,6 +15,7 @@ import { useModalState } from './useModalState';
  * - useChatState: Chat messages and conversation flow
  * - useArtifactState: Artifact panel visibility and sizing
  * - useModalState: Modal open/close state
+ * - useWorkflowPersistence: State persistence and resume (Bug 2 fix)
  *
  * Benefits:
  * - Each hook is focused and testable
@@ -24,6 +27,8 @@ interface UseTaskModeStateV2Props {
   workflowId: string;
   customerId: string;
   customerName: string;
+  executionId?: string; // For state persistence
+  userId?: string; // For state persistence
   onClose: (completed?: boolean) => void;
   sequenceInfo?: {
     sequenceId: string;
@@ -38,6 +43,8 @@ export function useTaskModeStateV2({
   workflowId,
   customerId,
   customerName,
+  executionId,
+  userId,
   onClose,
   sequenceInfo
 }: UseTaskModeStateV2Props) {
@@ -52,6 +59,25 @@ export function useTaskModeStateV2({
   const [skippedSlides, setSkippedSlides] = useState<Set<number>>(new Set());
   const [snoozedSlides, setSnoozedSlides] = useState<Set<number>>(new Set());
   const [workflowState, setWorkflowState] = useState<Record<string, any>>({});
+
+  // ============================================================
+  // STATE PERSISTENCE (Bug 2 fix)
+  // ============================================================
+
+  // Track whether we're currently restoring state (to prevent auto-save during restore)
+  const [isRestoringState, setIsRestoringState] = useState(true);
+  const hasRestoredRef = useRef(false);
+
+  // Persistence hook
+  const {
+    loadState,
+    saveState,
+    isReady: isPersistenceReady,
+  } = useWorkflowPersistence({
+    executionId,
+    userId,
+    enabled: !!executionId && !!userId,
+  });
 
   // ============================================================
   // SPECIALIZED HOOKS
@@ -115,11 +141,64 @@ export function useTaskModeStateV2({
     }
   }, [currentSlideIndex, skippedSlides, snoozedSlides]);
 
+  // State for pending reopen confirmation
+  const [pendingReopenSlide, setPendingReopenSlide] = useState<number | null>(null);
+
   const goToSlide = useCallback((index: number) => {
-    if (completedSlides.has(index)) {
+    // Allow navigation to any previous slide (not just completed)
+    if (index < 0 || index >= slides.length) return;
+
+    // If navigating to current slide, do nothing
+    if (index === currentSlideIndex) return;
+
+    // Can always navigate forward to completed slides
+    if (index > currentSlideIndex && completedSlides.has(index)) {
+      setCurrentSlideIndex(index);
+      return;
+    }
+
+    // For previous slides that are completed, show confirmation
+    if (index < currentSlideIndex && completedSlides.has(index)) {
+      setPendingReopenSlide(index);
+      return;
+    }
+
+    // For non-completed previous slides, navigate directly
+    if (index < currentSlideIndex) {
       setCurrentSlideIndex(index);
     }
-  }, [completedSlides]);
+  }, [completedSlides, currentSlideIndex, slides.length]);
+
+  // Confirm reopening a completed slide
+  const confirmReopenSlide = useCallback(() => {
+    if (pendingReopenSlide === null) return;
+
+    // Mark the target slide and all subsequent slides as incomplete
+    setCompletedSlides(prev => {
+      const newCompleted = new Set(prev);
+      for (let i = pendingReopenSlide; i < slides.length; i++) {
+        newCompleted.delete(i);
+      }
+      // Keep slides before the target as completed
+      return newCompleted;
+    });
+
+    // Navigate to the target slide
+    setCurrentSlideIndex(pendingReopenSlide);
+    setPendingReopenSlide(null);
+
+    showToast({
+      message: 'Step reopened. You can now make changes.',
+      type: 'info',
+      icon: 'none',
+      duration: 3000
+    });
+  }, [pendingReopenSlide, slides.length, showToast]);
+
+  // Cancel reopening
+  const cancelReopenSlide = useCallback(() => {
+    setPendingReopenSlide(null);
+  }, []);
 
   const handleComplete = useCallback(() => {
     const message = sequenceInfo
@@ -239,6 +318,87 @@ export function useTaskModeStateV2({
   }, [goToNextSlide, modalState, handleSkip]);
 
   // ============================================================
+  // STATE PERSISTENCE EFFECTS (Bug 2 fix)
+  // ============================================================
+
+  // Restore state on mount (when persistence is ready)
+  useEffect(() => {
+    if (!isPersistenceReady || hasRestoredRef.current) {
+      return;
+    }
+
+    const restoreState = async () => {
+      console.log('[useTaskModeStateV2] Attempting to restore saved state...');
+      const savedState = await loadState();
+
+      if (savedState) {
+        console.log('[useTaskModeStateV2] Restoring saved state:', {
+          slideIndex: savedState.currentSlideIndex,
+          completedCount: savedState.completedSlides.length,
+          messageCount: savedState.chatMessages?.length || 0,
+        });
+
+        // Restore navigation state
+        setCurrentSlideIndex(savedState.currentSlideIndex);
+        setCompletedSlides(new Set(savedState.completedSlides));
+        setSkippedSlides(new Set(savedState.skippedSlides));
+
+        // Restore workflow data
+        setWorkflowState(savedState.workflowData || {});
+
+        // Restore chat messages (convert from serializable format)
+        if (savedState.chatMessages && savedState.chatMessages.length > 0) {
+          const restoredMessages = savedState.chatMessages.map(fromSerializableMessage);
+          chatState.setChatMessages(restoredMessages);
+        }
+
+        // Restore branch state
+        chatState.setCurrentBranch(savedState.currentBranch);
+      } else {
+        console.log('[useTaskModeStateV2] No saved state found, starting fresh');
+      }
+
+      hasRestoredRef.current = true;
+      setIsRestoringState(false);
+    };
+
+    restoreState();
+  }, [isPersistenceReady, loadState, chatState]);
+
+  // Auto-save when state changes (debounced via persistence service)
+  useEffect(() => {
+    // Don't save while restoring or if persistence isn't ready
+    if (isRestoringState || !isPersistenceReady) {
+      return;
+    }
+
+    // Don't save if we haven't actually loaded yet
+    if (!hasRestoredRef.current) {
+      return;
+    }
+
+    console.log('[useTaskModeStateV2] Auto-saving state...');
+    saveState({
+      currentSlideIndex,
+      completedSlides,
+      skippedSlides,
+      workflowState,
+      chatMessages: chatState.chatMessages,
+      currentBranch: chatState.currentBranch,
+    });
+  }, [
+    currentSlideIndex,
+    completedSlides,
+    skippedSlides,
+    workflowState,
+    chatState.chatMessages,
+    chatState.currentBranch,
+    isRestoringState,
+    isPersistenceReady,
+    saveState,
+  ]);
+
+  // ============================================================
   // RETURN COMPOSED STATE & HANDLERS
   // ============================================================
 
@@ -284,5 +444,10 @@ export function useTaskModeStateV2({
     // Direct state setters for syncing with external sources
     setSnoozedSlides,
     setSkippedSlides,
+
+    // Step reopen (Bug 1 fix)
+    pendingReopenSlide,
+    confirmReopenSlide,
+    cancelReopenSlide,
   };
 }

@@ -494,11 +494,11 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline (most recent first) */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {sampleData?.timeline.map((item, index) => (
+                {sampleData?.timeline.slice().reverse().map((item, index) => (
                   <div key={index} className="flex items-start space-x-3">
                     <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
                       item.type === 'success' ? 'bg-green-400' :

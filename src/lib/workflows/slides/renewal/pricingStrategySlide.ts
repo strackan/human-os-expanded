@@ -170,6 +170,13 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
                   { level: 'low', description: 'Price sensitivity - strong relationship mitigates risk' },
                   { level: 'low', description: 'Competitive alternatives - high switching costs' },
                 ],
+                // Business Impacting Terms (moved from Contract artifact per user feedback)
+                businessTerms: context?.variables?.businessTerms || {
+                  pricingCaps: ['Maximum 15% annual increase', 'Volume discount caps at 25%'],
+                  nonStandardPricing: ['Custom pricing tier for enterprise features'],
+                  nonStandardRenewal: ['90-day notice period (standard: 30 days)'],
+                },
+                showBusinessTerms: true,
               },
             },
           },

@@ -182,6 +182,28 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
             ],
             nextBranches: {
               'schedule': 'proceed-to-schedule',
+              'download': 'download-confirm',
+            },
+          },
+          'download-confirm': {
+            response: `Click the **Download** button in the presentation panel on the right to save your deck as a PowerPoint file.\n\nOnce downloaded, you can:\n- Email it to your customer before the meeting\n- Present it during your video call\n- Print it for in-person meetings\n\nReady to schedule the renewal meeting?`,
+            buttons: [
+              {
+                label: 'Schedule Meeting',
+                value: 'schedule-from-download',
+                'label-background': 'bg-purple-600',
+                'label-text': 'text-white',
+              },
+              {
+                label: 'Back to Deck',
+                value: 'back-to-deck',
+                'label-background': 'bg-gray-500',
+                'label-text': 'text-white',
+              },
+            ],
+            nextBranches: {
+              'schedule-from-download': 'proceed-to-schedule',
+              'back-to-deck': 'deck-ready',
             },
           },
           'proceed-to-schedule': {
