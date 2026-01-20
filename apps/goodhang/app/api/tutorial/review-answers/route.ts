@@ -131,7 +131,7 @@ function parseReviewResponse(response: string): {
   const isClarify = response.includes('<!-- CLARIFY -->');
 
   // Extract message (remove markers)
-  let message = response
+  const message = response
     .replace('<!-- ACCEPT -->', '')
     .replace('<!-- CLARIFY -->', '')
     .trim();
