@@ -120,7 +120,7 @@ export class PlannerCloser {
     const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust for Sunday
     const monday = new Date(now);
     monday.setDate(now.getDate() + diff);
-    return monday.toISOString().split('T')[0];
+    return monday.toISOString().split('T')[0] ?? '';
   }
 
   /**
@@ -214,12 +214,12 @@ Return your plan as JSON:`;
     });
 
     const content = response.content[0];
-    if (content.type !== 'text') {
+    if (!content || content.type !== 'text') {
       throw new Error('Unexpected response type from Claude');
     }
 
     try {
-      return JSON.parse(content.text);
+      return JSON.parse((content as { type: 'text'; text: string }).text);
     } catch {
       return this.planWithRules(today, openTasks, weeklyPlan);
     }
@@ -333,7 +333,7 @@ Return your plan as JSON:`;
 
         followUps.push({
           description: task.title,
-          targetDate: targetDate.toISOString().split('T')[0],
+          targetDate: targetDate.toISOString().split('T')[0] ?? '',
           priority: task.priority === 'critical' || task.priority === 'high' ? 'high' : 'medium',
         });
       }
@@ -353,7 +353,7 @@ Return your plan as JSON:`;
 
           followUps.push({
             description: `Follow up with ${entity.name} re: ${relatedCommitment.statement.substring(0, 50)}`,
-            targetDate: targetDate.toISOString().split('T')[0],
+            targetDate: targetDate.toISOString().split('T')[0] ?? '',
             relatedEntity: entity.name,
             priority: relatedCommitment.isBinding ? 'high' : 'medium',
           });
@@ -380,7 +380,7 @@ Return your plan as JSON:`;
     const priorities: TomorrowPriority[] = [];
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0] ?? '';
 
     // Add due-tomorrow tasks as top priority
     const dueTomorrow = openTasks.filter((t) => t.dueDate === tomorrowStr);

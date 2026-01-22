@@ -66,7 +66,7 @@ export class DreamService {
    * Get today's transcript from stored messages
    */
   async getTodayTranscript(): Promise<DayTranscript | null> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] ?? '';
     const startOfDay = `${today}T00:00:00.000Z`;
     const endOfDay = `${today}T23:59:59.999Z`;
 
@@ -167,11 +167,11 @@ export class DreamService {
 
     if (!actualTranscript) {
       return {
-        date: new Date().toISOString().split('T')[0],
+        date: new Date().toISOString().split('T')[0] ?? '',
         startedAt,
         completedAt: new Date().toISOString(),
         parser: {
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split('T')[0] ?? '',
           entities: [],
           tasks: [],
           commitments: [],

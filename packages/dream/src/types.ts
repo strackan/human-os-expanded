@@ -376,7 +376,7 @@ export const REQUIRED_QUESTIONS: QuestionId[] = [
 ];
 
 /** Questions that map to persona calibration signals */
-export const CALIBRATION_QUESTIONS: Record<QuestionId, string> = {
+export const CALIBRATION_QUESTIONS: Partial<Record<QuestionId, string>> = {
   G11: 'communication_style',
   G12: 'helpful_input',
   G13: 'push_back_style',
@@ -390,4 +390,4 @@ export const CALIBRATION_QUESTIONS: Record<QuestionId, string> = {
   G21: 'priority_format',
   G22: 'deadline_relationship',
   G23: 'done_enough',
-} as Partial<Record<QuestionId, string>>;
+};

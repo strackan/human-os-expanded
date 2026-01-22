@@ -212,12 +212,12 @@ Return your tough love analysis as JSON:`;
     });
 
     const content = response.content[0];
-    if (content.type !== 'text') {
+    if (!content || content.type !== 'text') {
       throw new Error('Unexpected response type from Claude');
     }
 
     try {
-      return JSON.parse(content.text);
+      return JSON.parse((content as { type: 'text'; text: string }).text);
     } catch {
       return this.analyzeWithRules(today, planner, commitments, goals);
     }
@@ -285,9 +285,9 @@ Return your tough love analysis as JSON:`;
     }
 
     // Check binding commitments
-    const bindingStatus = commitments.map((c) => ({
+    const bindingStatus: Array<{ commitment: string; status: 'in_progress' | 'kept' | 'broken'; notes?: string }> = commitments.map((c) => ({
       commitment: c.statement,
-      status: c.fulfilled ? 'kept' : ('in_progress' as const),
+      status: c.fulfilled ? 'kept' as const : 'in_progress' as const,
       notes: c.fulfilled ? undefined : `Made on ${c.date} - status unknown`,
     }));
 

@@ -237,7 +237,7 @@ export class MCPSync {
     if (items.length === 0) return null;
 
     const messages: TranscriptMessage[] = [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] ?? '';
 
     for (const item of items) {
       // Convert content to transcript messages
@@ -251,8 +251,9 @@ export class MCPSync {
         for (const line of lines) {
           // Common format: "Speaker Name: content"
           const match = line.match(/^([^:]+):\s*(.+)$/);
-          if (match) {
-            const [, speaker, content] = match;
+          if (match && match[1] && match[2]) {
+            const speaker = match[1];
+            const content = match[2];
             // Determine role based on speaker
             const role: 'user' | 'assistant' = speaker.toLowerCase().includes('you') ||
               speaker.toLowerCase() === this.config.userId
@@ -394,7 +395,7 @@ export class MCPSync {
   async getCombinedTranscript(): Promise<DayTranscript | null> {
     const providers = await this.getActiveProviders();
     const allMessages: TranscriptMessage[] = [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] ?? '';
 
     for (const provider of providers) {
       try {

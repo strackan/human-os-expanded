@@ -154,12 +154,12 @@ Return your reflection as JSON:`;
     });
 
     const content = response.content[0];
-    if (content.type !== 'text') {
+    if (!content || content.type !== 'text') {
       throw new Error('Unexpected response type from Claude');
     }
 
     try {
-      return JSON.parse(content.text);
+      return JSON.parse((content as { type: 'text'; text: string }).text);
     } catch {
       return this.reflectWithRules(today, history);
     }

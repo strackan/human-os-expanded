@@ -78,12 +78,12 @@ export class ParserRouter {
 
     // Parse the response
     const content = response.content[0];
-    if (content.type !== 'text') {
+    if (!content || content.type !== 'text') {
       throw new Error('Unexpected response type from Claude');
     }
 
     try {
-      const parsed = JSON.parse(content.text);
+      const parsed = JSON.parse((content as { type: 'text'; text: string }).text);
       return {
         date,
         ...parsed,
@@ -247,7 +247,7 @@ Return the JSON extraction:`;
 
     while ((match = namePattern.exec(text)) !== null) {
       const name = match[1];
-      if (!seen.has(name) && !excludeWords.has(name) && name.length > 2) {
+      if (name && !seen.has(name) && !excludeWords.has(name as string) && name.length > 2) {
         seen.add(name);
 
         // Get context
@@ -287,8 +287,8 @@ Return the JSON extraction:`;
     for (const pattern of taskPatterns) {
       let match;
       while ((match = pattern.exec(text)) !== null) {
-        const title = match[1].trim();
-        if (title.length > 5 && title.length < 200) {
+        const title = match[1]?.trim();
+        if (title && title.length > 5 && title.length < 200) {
           const start = Math.max(0, match.index - 50);
           const end = Math.min(text.length, match.index + match[0].length + 50);
 
@@ -321,8 +321,8 @@ Return the JSON extraction:`;
     for (const pattern of strongPatterns) {
       let match;
       while ((match = pattern.exec(text)) !== null) {
-        const statement = match[1].trim();
-        if (statement.length > 5) {
+        const statement = match[1]?.trim();
+        if (statement && statement.length > 5) {
           const start = Math.max(0, match.index - 50);
           const end = Math.min(text.length, match.index + match[0].length + 50);
 
@@ -345,8 +345,8 @@ Return the JSON extraction:`;
     for (const pattern of normalPatterns) {
       let match;
       while ((match = pattern.exec(text)) !== null) {
-        const statement = match[1].trim();
-        if (statement.length > 5 && statement.length < 200) {
+        const statement = match[1]?.trim();
+        if (statement && statement.length > 5 && statement.length < 200) {
           const start = Math.max(0, match.index - 50);
           const end = Math.min(text.length, match.index + match[0].length + 50);
 
@@ -426,7 +426,7 @@ Return the JSON extraction:`;
 
     while ((match = acronymPattern.exec(text)) !== null) {
       const term = match[1];
-      if (!seen.has(term)) {
+      if (term && !seen.has(term)) {
         seen.add(term);
 
         const start = Math.max(0, match.index - 50);
@@ -451,7 +451,8 @@ Return the JSON extraction:`;
     if (sentences.length === 0) return 'No significant content to summarize.';
 
     // Return first substantive sentence as a basic summary
-    return sentences[0].trim() + '.';
+    const firstSentence = sentences[0];
+    return firstSentence ? firstSentence.trim() + '.' : 'No significant content to summarize.';
   }
 
   /**
