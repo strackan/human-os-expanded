@@ -570,7 +570,6 @@ export default function TutorialModePage() {
                   onTabChange={setActiveReportTab}
                   confirmations={reportConfirmations}
                   onConfirmSection={confirmReportSection}
-                  onContinue={() => handleQuickAction('confirm_report')}
                   originalReport={originalReport}
                   onResetEdits={resetReportEdits}
                   onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}

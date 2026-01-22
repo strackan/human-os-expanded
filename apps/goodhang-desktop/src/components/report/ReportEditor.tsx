@@ -6,7 +6,7 @@
  */
 
 import { motion } from 'framer-motion';
-import { CheckCircle2, ChevronRight, RefreshCw } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Sparkles } from 'lucide-react';
 import type { ExecutiveReport, CharacterProfile, ReportConfirmations } from '@/lib/types';
 import { ReportView, type ReportTab } from './ReportView';
 
@@ -25,8 +25,6 @@ export interface ReportEditorProps {
   confirmations: ReportConfirmations;
   /** Callback when current section is confirmed */
   onConfirmSection: () => void;
-  /** Callback when all sections confirmed and user continues */
-  onContinue: () => void;
   /** Original report for comparison (shows reset if modified) */
   originalReport?: ExecutiveReport | null;
   /** Callback to reset edits */
@@ -50,7 +48,6 @@ export function ReportEditor({
   onTabChange,
   confirmations,
   onConfirmSection,
-  onContinue,
   originalReport,
   onResetEdits,
   onTakeAssessment,
@@ -106,8 +103,8 @@ export function ReportEditor({
               </button>
             )}
           </div>
-          <div className="flex gap-2">
-            {!confirmations[activeTab] && (
+          <div className="flex gap-2 items-center">
+            {!confirmations[activeTab] && !allSectionsConfirmed && (
               <button
                 onClick={onConfirmSection}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
@@ -117,13 +114,10 @@ export function ReportEditor({
               </button>
             )}
             {allSectionsConfirmed && (
-              <button
-                onClick={onContinue}
-                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
-              >
-                Continue
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-600/20 text-green-400 text-sm rounded-lg border border-green-600/30">
+                <Sparkles className="w-4 h-4" />
+                <span>All sections confirmed</span>
+              </div>
             )}
           </div>
         </div>

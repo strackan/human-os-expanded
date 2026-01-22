@@ -23,3 +23,6 @@ export { StepActionModals } from './StepActionModals';
 
 // Footer
 export { ProgressFooter } from './ProgressFooter';
+
+// Artifact
+export { ArtifactPanel } from './ArtifactPanel';

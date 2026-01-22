@@ -19,7 +19,7 @@ import {
   persistReport as persistReportApi,
 } from '@/lib/api/tutorial';
 import { ReportEditor, type ReportTab } from '@/components/report';
-import { WorkflowModeLayout } from '@/components/workflow-mode';
+import { WorkflowModeLayout, ArtifactPanel } from '@/components/workflow-mode';
 import type {
   TutorialStep,
   TutorialProgress,
@@ -68,6 +68,8 @@ export default function TutorialWorkflowMode() {
   const { token } = useAuthStore();
   const { status } = useUserStatusStore();
   const initializedRef = useRef(false);
+  const workflowActionsRef = useRef<WorkflowModeActions | null>(null);
+  const hasShownReportCompleteRef = useRef(false);
 
   // Tutorial state
   const [progress, setProgress] = useState<TutorialProgress>({
@@ -148,6 +150,39 @@ export default function TutorialWorkflowMode() {
       if (actionValue === 'start_voice_testing') {
         navigate(`/founder-os/voice-test?session=${sessionId}&return=/founder-os/tutorial`);
         return null;
+      }
+
+      // Handle Continue from report - persist and advance to next step
+      if (actionValue === 'continue_from_report') {
+        if (report && sessionId) {
+          try {
+            await persistReportApi(sessionId, report, progress, token);
+            setOriginalReport(report);
+          } catch (error) {
+            console.error('[tutorial-workflow] Error persisting report:', error);
+          }
+        }
+        // Advance to next step (work_questions)
+        const nextStepIndex = progress.stepIndex + 1;
+        const nextStep = TUTORIAL_STEPS[nextStepIndex];
+        if (nextStep) {
+          // Mark current step completion
+          const currentStep = TUTORIAL_STEPS[progress.stepIndex];
+          if (currentStep?.completionKey) {
+            localStorage.setItem(currentStep.completionKey, new Date().toISOString());
+          }
+          // Update progress
+          setProgress((prev) => ({
+            ...prev,
+            currentStep: nextStep.id as TutorialStep,
+            stepIndex: nextStepIndex,
+            viewedReport: true,
+          }));
+        }
+        return {
+          content: "Your profile looks great! Let me ask you a few quick questions to personalize your experience even further.",
+          quickActions: getQuickActionsForStep(nextStep?.id as TutorialStep || 'work_questions'),
+        };
       }
 
       // Track when we're loading a report (show loading in artifact area)
@@ -271,11 +306,39 @@ export default function TutorialWorkflowMode() {
     localStorage.removeItem('workflow-mode-tutorial');
     localStorage.removeItem('founder-os-tutorial');
 
+    // Reset refs
+    hasShownReportCompleteRef.current = false;
+    workflowActionsRef.current = null;
+
     // Reload the page to reset all state
     window.location.reload();
   }, []);
 
+  // Effect to show Continue quick action when all report sections are confirmed
+  useEffect(() => {
+    const allConfirmed =
+      reportConfirmations.status &&
+      reportConfirmations.personality &&
+      reportConfirmations.voice &&
+      reportConfirmations.character;
+
+    if (
+      allConfirmed &&
+      !hasShownReportCompleteRef.current &&
+      workflowActionsRef.current &&
+      progress.currentStep === 'about_you'
+    ) {
+      hasShownReportCompleteRef.current = true;
+      workflowActionsRef.current.addAssistantMessage(
+        "All sections look good! Ready to continue when you are.",
+        [{ label: 'Continue', value: 'continue_from_report' }]
+      );
+    }
+  }, [reportConfirmations, progress.currentStep]);
+
   const handleInitialize = useCallback(async (actions: WorkflowModeActions) => {
+    // Store actions ref for later use
+    workflowActionsRef.current = actions;
     const defaultQuickActions = getQuickActionsForStep('welcome');
 
     if (!sessionId) {
@@ -352,17 +415,6 @@ export default function TutorialWorkflowMode() {
     [report]
   );
 
-  const persistReport = useCallback(async () => {
-    if (!report || !sessionId) return;
-
-    try {
-      await persistReportApi(sessionId, report, progress, token);
-      setOriginalReport(report);
-    } catch (error) {
-      console.error('[tutorial-workflow] Error persisting report:', error);
-    }
-  }, [report, sessionId, progress, token]);
-
   const confirmReportSection = useCallback(() => {
     setReportConfirmations((prev) => ({ ...prev, [activeReportTab]: true }));
 
@@ -420,24 +472,29 @@ export default function TutorialWorkflowMode() {
   );
 
   // Artifact content (report or loading)
-  const artifactContent = isLoadingReport ? loadingArtifact : (
+  const artifactContent = isLoadingReport ? (
+    <ArtifactPanel showStepProgress={true}>
+      {loadingArtifact}
+    </ArtifactPanel>
+  ) : (
     report && progress.currentStep === 'about_you' ? (
-      <div className="h-full flex flex-col p-4">
-        <ReportEditor
-          report={report}
-          characterProfile={characterProfile}
-          activeTab={activeReportTab}
-          onTabChange={setActiveReportTab}
-          confirmations={reportConfirmations}
-          onConfirmSection={confirmReportSection}
-          onContinue={persistReport}
-          originalReport={originalReport}
-          onResetEdits={resetReportEdits}
-          onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
-          onFieldEdit={handleFieldEdit}
-          className="flex-1 min-h-0"
-        />
-      </div>
+      <ArtifactPanel showStepProgress={true}>
+        <div className="h-full flex flex-col p-4">
+          <ReportEditor
+            report={report}
+            characterProfile={characterProfile}
+            activeTab={activeReportTab}
+            onTabChange={setActiveReportTab}
+            confirmations={reportConfirmations}
+            onConfirmSection={confirmReportSection}
+            originalReport={originalReport}
+            onResetEdits={resetReportEdits}
+            onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
+            onFieldEdit={handleFieldEdit}
+            className="flex-1 min-h-0"
+          />
+        </div>
+      </ArtifactPanel>
     ) : null
   );
 

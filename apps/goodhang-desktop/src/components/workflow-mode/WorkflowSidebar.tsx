@@ -16,7 +16,6 @@ import {
 } from '@/lib/contexts';
 import { ChatInput } from '@/components/chat';
 import { ChatPanel } from './ChatPanel';
-import { WorkflowStepProgress } from './WorkflowStepProgress';
 import { ProgressFooter } from './ProgressFooter';
 import { StepActionModals } from './StepActionModals';
 import type { WorkflowSidebarProps } from '@/lib/types/workflow';
@@ -196,15 +195,12 @@ export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSid
         {/* Expanded state */}
         {!sidebarCollapsed && (
           <>
-            {/* Header with step progress */}
-            <div className="border-b border-gh-dark-700">
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                  <span className="text-sm font-medium text-white">Setup Mode</span>
-                </div>
+            {/* Header */}
+            <div className="border-b border-gh-dark-700 p-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="text-sm font-medium text-white">Setup Mode</span>
               </div>
-              <WorkflowStepProgress />
             </div>
 
             {/* Chat panel */}
