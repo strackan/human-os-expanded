@@ -16,7 +16,6 @@ import {
   getTutorialSystemPrompt,
   parseActionFromResponse,
   getStepInitialMessage,
-  STEP_ORDER,
   getStepIndex,
   getNextStep,
 } from '@/lib/tutorial/prompts';

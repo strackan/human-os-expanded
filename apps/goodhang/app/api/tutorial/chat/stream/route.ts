@@ -17,6 +17,8 @@ import {
   type TutorialContext,
   getTutorialSystemPrompt,
   parseActionFromResponse,
+  getNextStep,
+  getStepIndex,
 } from '@/lib/tutorial/prompts';
 import { type PersonaFingerprint } from '@/lib/renubu/prompts';
 import {
@@ -163,42 +165,36 @@ export async function POST(request: NextRequest) {
       switch (parsedAction) {
         case 'show_report':
           newProgress.currentStep = 'about_you';
-          newProgress.stepIndex = 1;
+          newProgress.stepIndex = getStepIndex('about_you');
           break;
         case 'skip_report':
-          newProgress.currentStep = 'gather_intro';
-          newProgress.stepIndex = 2;
+          newProgress.currentStep = 'work_questions';
+          newProgress.stepIndex = getStepIndex('work_questions');
           break;
         case 'step_complete': {
-          const stepOrder = ['welcome', 'about_you', 'gather_intro', 'questions', 'complete'] as const;
-          const currentIndex = stepOrder.indexOf(newProgress.currentStep);
-          const nextStep = stepOrder[currentIndex + 1];
-          if (currentIndex < stepOrder.length - 1 && nextStep) {
+          const nextStep = getNextStep(newProgress.currentStep);
+          if (nextStep) {
             newProgress.currentStep = nextStep;
-            newProgress.stepIndex = currentIndex + 1;
+            newProgress.stepIndex = getStepIndex(nextStep);
           }
           break;
         }
-        case 'start_questions':
-          newProgress.currentStep = 'questions';
-          newProgress.stepIndex = 3;
-          break;
         case 'question_answered':
           newProgress.questionsAnswered += 1;
           if (newProgress.questionsAnswered >= newProgress.totalQuestions) {
             newProgress.currentStep = 'complete';
-            newProgress.stepIndex = 4;
+            newProgress.stepIndex = getStepIndex('complete');
           }
           break;
         case 'tutorial_complete':
           newProgress.currentStep = 'complete';
-          newProgress.stepIndex = 4;
+          newProgress.stepIndex = getStepIndex('complete');
           break;
       }
 
-      // Get next question if in questions step
+      // Get next question if in work_questions step
       const nextQuestion =
-        newProgress.currentStep === 'questions' &&
+        newProgress.currentStep === 'work_questions' &&
         outstandingQuestions.length > newProgress.questionsAnswered
           ? outstandingQuestions[newProgress.questionsAnswered]
           : null;

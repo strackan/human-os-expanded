@@ -4,7 +4,7 @@
  * Shared foundation for all tutorial step prompts.
  */
 
-import { type PersonaFingerprint, buildPersonaAdaptation } from '../../renubu/prompts';
+import { buildPersonaAdaptation } from '../../renubu/prompts';
 import { getFullGroundingPrompt } from '../../shared/agent-grounding';
 import type { TutorialContext } from '../types';
 
