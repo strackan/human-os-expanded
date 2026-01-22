@@ -10,11 +10,12 @@ import ResultsPage from './routes/results';
 import DashboardPage from './routes/dashboard';
 import FounderOSOnboardingPage from './routes/founder-os/onboarding';
 import WelcomeFlowPage from './routes/founder-os/welcome';
-import TutorialModePage from './routes/founder-os/tutorial';
+import TutorialModePage from './routes/founder-os/tutorial-router';
 import QuestionEPage from './routes/founder-os/question-e';
 import QuestionECompletePage from './routes/founder-os/question-e-complete';
-import RenubuChatPage from './routes/founder-os/renubu-chat';
+import RenubuChatPage from './routes/founder-os/renubu-chat-router';
 import VoiceTestPage from './routes/founder-os/voice-test';
+import WorkStyleAssessmentPage from './routes/founder-os/work-style-assessment';
 import GoodHangAssessmentPage from './routes/goodhang/assessment';
 import { useAuthStore } from './lib/stores/auth';
 import { useUserStatusStore, getRecommendedRoute } from './lib/stores/user';
@@ -133,6 +134,7 @@ function App() {
           <Route path="/founder-os/question-e-complete" element={<QuestionECompletePage />} />
           <Route path="/founder-os/renubu-chat" element={<RenubuChatPage />} />
           <Route path="/founder-os/voice-test" element={<VoiceTestPage />} />
+          <Route path="/founder-os/work-style-assessment" element={<WorkStyleAssessmentPage />} />
         </Routes>
       </main>
     </div>

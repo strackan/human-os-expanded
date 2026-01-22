@@ -21,12 +21,6 @@ importers:
         specifier: ^7.1.0
         version: 7.1.0(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)
     devDependencies:
-      '@types/pg':
-        specifier: ^8.16.0
-        version: 8.16.0
-      pg:
-        specifier: ^8.16.3
-        version: 8.16.3
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
@@ -294,6 +288,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.69.0
         version: 0.69.0(zod@4.3.4)
+      '@human-os/tutorial':
+        specifier: workspace:*
+        version: link:../../packages/tutorial
       '@supabase/ssr':
         specifier: ^0.7.0
         version: 0.7.0(@supabase/supabase-js@2.87.1)
@@ -382,6 +379,9 @@ importers:
 
   apps/goodhang-desktop:
     dependencies:
+      '@human-os/tutorial':
+        specifier: workspace:*
+        version: link:../../packages/tutorial
       '@supabase/supabase-js':
         specifier: ^2.50.0
         version: 2.87.1
@@ -955,6 +955,12 @@ importers:
       '@types/node':
         specifier: ^20.0.0
         version: 20.19.26
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
+  packages/tutorial:
+    devDependencies:
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

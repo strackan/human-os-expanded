@@ -143,9 +143,9 @@ export interface ExtractedEntity {
 export type TutorialStep =
   | 'welcome'
   | 'about_you'
-  | 'gather_intro'
+  | 'work_questions'
   | 'voice_testing'
-  | 'questions'
+  | 'tool_testing'
   | 'complete';
 
 export interface TutorialProgress {

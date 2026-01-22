@@ -4,14 +4,18 @@
  * Usage: Import and call from browser console or add to a dev menu
  */
 
+import { getAllCompletionKeys } from './tutorial/steps';
+
 /**
  * Reset all local onboarding progress for Founder OS
  * Clears localStorage items that track tutorial/onboarding state
  */
 export function resetOnboarding() {
+  // Get completion keys from config + other progress keys
   const itemsToRemove = [
-    'founder-os-tutorial-completed',
+    ...getAllCompletionKeys(),
     'founder-os-tutorial-progress',
+    'founder-os-work-style-progress',
     'question-e-answers',
     'founder-os-welcome-seen',
     'goodhang-dnd-assessment-progress',
@@ -34,8 +38,9 @@ export function resetOnboarding() {
  */
 export function showOnboardingState() {
   const items = [
-    'founder-os-tutorial-completed',
+    ...getAllCompletionKeys(),
     'founder-os-tutorial-progress',
+    'founder-os-work-style-progress',
     'question-e-answers',
     'founder-os-welcome-seen',
     'goodhang-dnd-assessment-progress',

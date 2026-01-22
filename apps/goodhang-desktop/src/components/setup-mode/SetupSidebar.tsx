@@ -3,6 +3,16 @@
  *
  * Collapsible left navigation showing setup checklist items.
  * v0-style design with progress tracking.
+ *
+ * @deprecated This component is being replaced by WorkflowSidebar as part of the
+ * v0-style chat + artifact layout redesign (2025-01-21).
+ *
+ * Migration path:
+ * - Use WorkflowModeLayout instead of manual layout with SetupSidebar
+ * - WorkflowSidebar includes chat messages, step actions (snooze/skip), and is wider (280-450px)
+ * - See COMPONENT_REGISTRY.md for full migration guide
+ *
+ * @see {@link ../workflow-mode/WorkflowSidebar.tsx} for the replacement
  */
 
 import { motion, AnimatePresence } from 'framer-motion';

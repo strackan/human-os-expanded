@@ -5,7 +5,7 @@
  * Supports multiple artifacts with tabs and full-screen mode.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -40,6 +40,16 @@ interface ArtifactCanvasProps {
   onArtifactClose: (id: string) => void;
   onArtifactConfirm?: (id: string) => void;
   renderArtifact: (artifact: ArtifactInstance) => React.ReactNode;
+  /** Enable drag-to-resize functionality */
+  resizable?: boolean;
+  /** Current width in pixels (only used when resizable=true) */
+  width?: number;
+  /** Callback when width changes via drag */
+  onWidthChange?: (width: number) => void;
+  /** Minimum width when resizable */
+  minWidth?: number;
+  /** Maximum width when resizable */
+  maxWidth?: number;
 }
 
 const ARTIFACT_ICONS: Record<string, typeof FileText> = {
@@ -60,9 +70,46 @@ export function ArtifactCanvas({
   onArtifactClose,
   onArtifactConfirm,
   renderArtifact,
+  resizable = false,
+  width = 400,
+  onWidthChange,
+  minWidth = 300,
+  maxWidth = 600,
 }: ArtifactCanvasProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const activeArtifact = artifacts.find((a) => a.id === activeArtifactId);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(width);
+
+  // Resize handler
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!resizable || !onWidthChange) return;
+      e.preventDefault();
+      isDragging.current = true;
+      startX.current = e.clientX;
+      startWidth.current = width;
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDragging.current) return;
+        // Drag left to increase width (since panel is on the right)
+        const delta = startX.current - moveEvent.clientX;
+        const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth.current + delta));
+        onWidthChange(newWidth);
+      };
+
+      const handleMouseUp = () => {
+        isDragging.current = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [resizable, onWidthChange, width, minWidth, maxWidth]
+  );
 
   const getIcon = (type: string) => {
     const Icon = ARTIFACT_ICONS[type] || ARTIFACT_ICONS.default;
@@ -106,18 +153,33 @@ export function ArtifactCanvas({
     );
   }
 
+  // Determine width based on state
+  const panelWidth = isFullscreen ? '100%' : collapsed ? 48 : (resizable ? width : 400);
+
   return (
     <motion.div
       initial={false}
       animate={{
-        width: isFullscreen ? '100%' : collapsed ? 48 : 400,
+        width: panelWidth,
         position: isFullscreen ? 'fixed' : 'relative',
         inset: isFullscreen ? 0 : 'auto',
         zIndex: isFullscreen ? 50 : 'auto',
       }}
       transition={{ duration: 0.2, ease: 'easeInOut' }}
-      className="h-full bg-gh-dark-900 border-l border-gh-dark-700 flex flex-col"
+      className="h-full bg-gh-dark-900 border-l border-gh-dark-700 flex flex-col relative"
     >
+      {/* Resize handle - only shown when resizable and not collapsed */}
+      {resizable && !collapsed && !isFullscreen && (
+        <div
+          onMouseDown={handleMouseDown}
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500/50 transition-colors group z-10"
+        >
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-8 -ml-1.5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="w-1 h-6 bg-blue-500 rounded-full" />
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between p-2 border-b border-gh-dark-700 bg-gh-dark-800">
         {!collapsed && (

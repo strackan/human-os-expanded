@@ -2,12 +2,125 @@
  * Report Tab Content Components
  *
  * Individual tab renderers for the executive report sections.
- * These are pure display components with no edit functionality.
+ * Supports inline editing via double-click.
  */
 
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ChevronRight, Sparkles, Mic, Sword } from 'lucide-react';
+import { ChevronRight, Sparkles, Mic, Sword, Check, X } from 'lucide-react';
 import type { ExecutiveReport, CharacterProfile } from '@/lib/types';
+
+// =============================================================================
+// EDITABLE FIELD COMPONENT
+// =============================================================================
+
+interface EditableFieldProps {
+  value: string;
+  onSave: (newValue: string) => void;
+  className?: string;
+  multiline?: boolean;
+  placeholder?: string;
+}
+
+function EditableField({ value, onSave, className = '', multiline = false, placeholder = 'Click to edit...' }: EditableFieldProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(value);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    setEditValue(value);
+  }, [value]);
+
+  const handleDoubleClick = () => {
+    setIsEditing(true);
+    setEditValue(value);
+  };
+
+  const handleSave = () => {
+    if (editValue.trim() !== value) {
+      onSave(editValue.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(value);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !multiline) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Enter' && multiline && e.metaKey) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="flex items-start gap-2">
+        {multiline ? (
+          <textarea
+            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            rows={3}
+            className={`flex-1 bg-gh-dark-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 resize-none ${className}`}
+            placeholder={placeholder}
+          />
+        ) : (
+          <input
+            ref={inputRef as React.RefObject<HTMLInputElement>}
+            type="text"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleSave}
+            className={`flex-1 bg-gh-dark-600 text-white rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${className}`}
+            placeholder={placeholder}
+          />
+        )}
+        <button
+          onClick={handleSave}
+          className="p-1 text-green-400 hover:text-green-300"
+          title="Save (Enter)"
+        >
+          <Check className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleCancel}
+          className="p-1 text-gray-400 hover:text-gray-300"
+          title="Cancel (Esc)"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <span
+      onDoubleClick={handleDoubleClick}
+      className={`cursor-pointer hover:bg-gh-dark-600/50 rounded px-1 -mx-1 transition-colors ${className}`}
+      title="Double-click to edit"
+    >
+      {value || <span className="text-gray-500 italic">{placeholder}</span>}
+    </span>
+  );
+}
 
 // =============================================================================
 // STATUS TAB
@@ -47,19 +160,55 @@ export function StatusTab({ report }: StatusTabProps) {
 
 interface PersonalityTabProps {
   report: ExecutiveReport;
+  onEdit?: (field: string, index: number, value: string) => void;
 }
 
-export function PersonalityTab({ report }: PersonalityTabProps) {
+export function PersonalityTab({ report, onEdit }: PersonalityTabProps) {
+  const handleEdit = (field: 'trait' | 'description' | 'insight', index: number, value: string) => {
+    onEdit?.(`personality.${index}.${field}`, index, value);
+  };
+
   return (
     <div className="space-y-4">
       {report.personality.map((p, i) => (
         <div key={i} className="bg-gh-dark-700/50 rounded-lg p-4">
-          <h4 className="font-semibold text-white mb-1">{p.trait}</h4>
-          <p className="text-gray-300 text-sm mb-2">{p.description}</p>
-          <p className="text-blue-400 text-sm flex items-start gap-1">
-            <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            {p.insight}
+          <h4 className="font-semibold text-white mb-1">
+            {onEdit ? (
+              <EditableField
+                value={p.trait}
+                onSave={(v) => handleEdit('trait', i, v)}
+                placeholder="Trait name"
+              />
+            ) : (
+              p.trait
+            )}
+          </h4>
+          <p className="text-gray-300 text-sm mb-2">
+            {onEdit ? (
+              <EditableField
+                value={p.description}
+                onSave={(v) => handleEdit('description', i, v)}
+                multiline
+                placeholder="Description"
+              />
+            ) : (
+              p.description
+            )}
           </p>
+          <div className="text-blue-400 text-sm flex items-start gap-1">
+            <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            {onEdit ? (
+              <EditableField
+                value={p.insight}
+                onSave={(v) => handleEdit('insight', i, v)}
+                multiline
+                className="text-blue-400"
+                placeholder="Insight"
+              />
+            ) : (
+              p.insight
+            )}
+          </div>
         </div>
       ))}
     </div>

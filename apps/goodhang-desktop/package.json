@@ -12,6 +12,7 @@
     "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@human-os/tutorial": "workspace:*",
     "@supabase/supabase-js": "^2.50.0",
     "@tanstack/react-query": "^5.60.0",
     "@tauri-apps/api": "^2.0.0",

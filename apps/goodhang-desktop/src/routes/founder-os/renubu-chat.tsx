@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { useAuthStore } from '@/lib/stores/auth';
 import { SetupSidebar, type ChecklistItem } from '@/components/setup-mode/SetupSidebar';
 import {
@@ -742,8 +743,8 @@ I'll start capturing what you share and building out your context.`;
                       : 'bg-gh-dark-700 text-white'
                   }`}
                 >
-                  <div className={`whitespace-pre-wrap ${message.role === 'user' ? 'text-gray-900' : 'text-white'}`}>
-                    {message.content}
+                  <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'text-gray-900 prose-gray' : 'text-white prose-invert'}`}>
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
 
                   {/* Entity preview */}
