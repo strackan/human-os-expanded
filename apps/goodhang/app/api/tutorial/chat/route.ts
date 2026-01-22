@@ -16,6 +16,9 @@ import {
   getTutorialSystemPrompt,
   parseActionFromResponse,
   getStepInitialMessage,
+  STEP_ORDER,
+  getStepIndex,
+  getNextStep,
 } from '@/lib/tutorial/prompts';
 import { type PersonaFingerprint } from '@/lib/renubu/prompts';
 
@@ -191,11 +194,15 @@ function parseRegeneratedSection(
       const descMatch = block.match(/Description:\s*([\s\S]+?)(?=Insight:|$)/);
       const insightMatch = block.match(/Insight:\s*([\s\S]+?)$/);
 
-      if (nameMatch?.[1] && descMatch?.[1] && insightMatch?.[1]) {
+      const traitName = nameMatch?.[1]?.trim();
+      const traitDesc = descMatch?.[1]?.trim();
+      const traitInsight = insightMatch?.[1]?.trim();
+
+      if (traitName && traitDesc && traitInsight) {
         traits.push({
-          trait: nameMatch[1].trim(),
-          description: descMatch[1].trim(),
-          insight: insightMatch[1].trim(),
+          trait: traitName,
+          description: traitDesc,
+          insight: traitInsight,
         });
       }
     }
@@ -252,6 +259,70 @@ interface OutstandingQuestion {
   category: string;
   covers?: string[];
 }
+
+// Default work-style questions if none exist in session
+const DEFAULT_WORK_QUESTIONS: OutstandingQuestion[] = [
+  {
+    id: 'work-1',
+    title: 'Your Work Environment',
+    prompt: 'What does your ideal work environment look like? Do you prefer working alone, with others, at home, in an office?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-2',
+    title: 'Peak Productivity',
+    prompt: 'When are you most productive during the day? Are you an early bird, night owl, or somewhere in between?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-3',
+    title: 'Decision Making',
+    prompt: 'How do you typically make important decisions? Do you rely more on data and analysis, or intuition and gut feeling?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-4',
+    title: 'Handling Stress',
+    prompt: 'What does stress look like for you, and what helps you manage it when work gets overwhelming?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-5',
+    title: 'Communication Style',
+    prompt: 'How do you prefer to communicate with your team? Quick messages, scheduled calls, async updates?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-6',
+    title: 'Learning Approach',
+    prompt: 'When you need to learn something new, how do you approach it? Reading, videos, hands-on experimentation?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-7',
+    title: 'Focus Time',
+    prompt: 'How do you protect your focus time? Do you have strategies for avoiding distractions?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-8',
+    title: 'Feedback Preferences',
+    prompt: 'How do you prefer to receive feedback? Direct and immediate, or more measured and scheduled?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-9',
+    title: 'Energy Management',
+    prompt: 'What tasks energize you vs. drain you? How do you balance both in your work?',
+    category: 'Work Style',
+  },
+  {
+    id: 'work-10',
+    title: 'Work-Life Boundaries',
+    prompt: 'How do you think about boundaries between work and personal life? What works for you?',
+    category: 'Work Style',
+  },
+];
 
 interface TutorialChatRequest {
   message: string;
@@ -327,12 +398,20 @@ export async function POST(request: NextRequest) {
 
     // Extract data from session
     const personaFingerprint: PersonaFingerprint | null = session.metadata?.persona_fingerprint || null;
-    const outstandingQuestions: OutstandingQuestion[] = session.metadata?.outstanding_questions || [];
+    const sessionQuestions: OutstandingQuestion[] = session.metadata?.outstanding_questions || [];
+    // Use default work questions if session has none
+    const outstandingQuestions: OutstandingQuestion[] = sessionQuestions.length > 0 ? sessionQuestions : DEFAULT_WORK_QUESTIONS;
     const executiveReport = session.metadata?.executive_report || null;
     const firstName = session.entity_name?.split(' ')[0] || 'there';
 
+    console.log('[tutorial/chat] Questions loaded:', {
+      fromSession: sessionQuestions.length,
+      using: outstandingQuestions.length,
+      step: progress.currentStep,
+    });
+
     // Calculate current question based on progress
-    const currentQuestion = progress.currentStep === 'questions' && outstandingQuestions.length > progress.questionsAnswered
+    const currentQuestion = progress.currentStep === 'work_questions' && outstandingQuestions.length > progress.questionsAnswered
       ? outstandingQuestions[progress.questionsAnswered]
       : null;
 
@@ -478,49 +557,55 @@ Be warm and conversational. Don't be sycophantic. Keep it to 3-4 sentences total
     // Calculate new progress based on action
     const newProgress = { ...tutorialContext.progress };
 
+    // Use centralized step config from steps.ts
     switch (parsedAction) {
       case 'show_report':
         newProgress.currentStep = 'about_you';
-        newProgress.stepIndex = 1;
+        newProgress.stepIndex = getStepIndex('about_you');
         break;
       case 'skip_report':
-        newProgress.currentStep = 'gather_intro';
-        newProgress.stepIndex = 2;
+        newProgress.currentStep = 'work_questions';
+        newProgress.stepIndex = getStepIndex('work_questions');
         break;
       case 'step_complete': {
-        // Move to next step
-        const stepOrder: TutorialStep[] = ['welcome', 'about_you', 'gather_intro', 'questions', 'complete'];
-        const currentIndex = stepOrder.indexOf(newProgress.currentStep);
-        const nextStep = stepOrder[currentIndex + 1];
-        if (currentIndex < stepOrder.length - 1 && nextStep) {
-          newProgress.currentStep = nextStep;
-          newProgress.stepIndex = currentIndex + 1;
+        // Move to next step using centralized config
+        const nextStep = getNextStep(newProgress.currentStep);
+        if (nextStep) {
+          newProgress.currentStep = nextStep as TutorialStep;
+          newProgress.stepIndex = getStepIndex(nextStep);
         }
         break;
       }
-      case 'start_questions':
-        newProgress.currentStep = 'questions';
-        newProgress.stepIndex = 3;
+      case 'start_voice_testing':
+        newProgress.currentStep = 'voice_testing';
+        newProgress.stepIndex = getStepIndex('voice_testing');
+        break;
+      case 'skip_voice_testing':
+        newProgress.currentStep = 'tool_testing';
+        newProgress.stepIndex = getStepIndex('tool_testing');
         break;
       case 'question_answered':
         newProgress.questionsAnswered += 1;
-        // Check if all questions answered
+        // Check if all questions answered - move to next step (voice_testing)
         if (newProgress.questionsAnswered >= newProgress.totalQuestions) {
-          newProgress.currentStep = 'complete';
-          newProgress.stepIndex = 4;
+          const nextStep = getNextStep('work_questions');
+          if (nextStep) {
+            newProgress.currentStep = nextStep as TutorialStep;
+            newProgress.stepIndex = getStepIndex(nextStep);
+          }
         }
         break;
       case 'tutorial_complete':
         newProgress.currentStep = 'complete';
-        newProgress.stepIndex = 4;
+        newProgress.stepIndex = getStepIndex('complete');
         break;
       case 'pause_tutorial':
         // Keep current progress, user can resume later
         break;
     }
 
-    // Get next question if we're in questions step
-    const nextQuestion = newProgress.currentStep === 'questions' && outstandingQuestions.length > newProgress.questionsAnswered
+    // Get next question if we're in work_questions step
+    const nextQuestion = newProgress.currentStep === 'work_questions' && outstandingQuestions.length > newProgress.questionsAnswered
       ? outstandingQuestions[newProgress.questionsAnswered]
       : null;
 
