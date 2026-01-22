@@ -7,6 +7,8 @@
  * - Build out their Founder OS context through dialogue
  */
 
+import { getLightweightGrounding } from '../shared/agent-grounding';
+
 export interface PersonaFingerprint {
   self_deprecation: number;
   directness: number;
@@ -77,16 +79,24 @@ export function buildPersonaAdaptation(fingerprint: PersonaFingerprint | null): 
  */
 export function getQuestionsSystemPrompt(
   personaFingerprint: PersonaFingerprint | null,
-  currentQuestion: { title?: string; prompt?: string; text?: string }
+  currentQuestion: { title?: string; prompt?: string; text?: string },
+  userName?: string
 ): string {
   const personaAdaptation = buildPersonaAdaptation(personaFingerprint);
   const questionText = currentQuestion.prompt || currentQuestion.text || '';
   const questionTitle = currentQuestion.title || '';
+  const grounding = getLightweightGrounding({
+    userName: userName || 'the user',
+    agentRole: 'Assessment Guide (Renubu)',
+    currentTask: 'the assessment',
+  });
 
   return `You are Renubu, a conversational AI helping a user complete their Founder OS assessment.
 
 ## Your Role
 You're having a natural conversation to understand the user better. You're working through assessment questions, but it should feel like a dialogue, not an interrogation.
+
+${grounding}
 
 ## Current Question
 ${questionTitle ? `**Topic: ${questionTitle}**\n` : ''}${questionText}
@@ -122,14 +132,22 @@ Example: "Got it, that makes sense. You prefer async communication and hate bein
  * For free-form conversation to build user's world
  */
 export function getContextSystemPrompt(
-  personaFingerprint: PersonaFingerprint | null
+  personaFingerprint: PersonaFingerprint | null,
+  userName?: string
 ): string {
   const personaAdaptation = buildPersonaAdaptation(personaFingerprint);
+  const grounding = getLightweightGrounding({
+    userName: userName || 'the user',
+    agentRole: 'Context Builder (Renubu)',
+    currentTask: 'building your context',
+  });
 
   return `You are Renubu, a conversational AI helping a user build out their Founder OS context.
 
 ## Your Role
 You're having a natural conversation to understand the user's world - their work, projects, people, goals, and daily life. Your job is to draw out information through genuine dialogue.
+
+${grounding}
 
 ## Communication Style
 ${personaAdaptation}

@@ -37,34 +37,34 @@ describe('Category Scoring Utilities', () => {
       const result = calculateCategoryScores(sampleDimensions);
 
       // (85 + 90 + 75 + 70) / 4 = 80
-      expect(result.technical.overall).toBe(80);
-      expect(result.technical.subscores.technical).toBe(85);
-      expect(result.technical.subscores.ai_readiness).toBe(90);
-      expect(result.technical.subscores.organization).toBe(75);
-      expect(result.technical.subscores.iq).toBe(70);
+      expect(result.technical!.overall).toBe(80);
+      expect(result.technical!.subscores!.technical).toBe(85);
+      expect(result.technical!.subscores!.ai_readiness).toBe(90);
+      expect(result.technical!.subscores!.organization).toBe(75);
+      expect(result.technical!.subscores!.iq).toBe(70);
     });
 
     it('should calculate emotional category correctly', () => {
       const result = calculateCategoryScores(sampleDimensions);
 
       // (75 + 80 + 65 + 60 + 70) / 5 = 70
-      expect(result.emotional.overall).toBe(70);
-      expect(result.emotional.subscores.eq).toBe(75);
-      expect(result.emotional.subscores.empathy).toBe(80);
-      expect(result.emotional.subscores.self_awareness).toBe(65);
-      expect(result.emotional.subscores.executive_leadership).toBe(60);
-      expect(result.emotional.subscores.gtm).toBe(70);
+      expect(result.emotional!.overall).toBe(70);
+      expect(result.emotional!.subscores!.eq).toBe(75);
+      expect(result.emotional!.subscores!.empathy).toBe(80);
+      expect(result.emotional!.subscores!.self_awareness).toBe(65);
+      expect(result.emotional!.subscores!.executive_leadership).toBe(60);
+      expect(result.emotional!.subscores!.gtm).toBe(70);
     });
 
     it('should calculate creative category correctly', () => {
       const result = calculateCategoryScores(sampleDimensions);
 
       // (90 + 85 + 80 + 85) / 4 = 85
-      expect(result.creative.overall).toBe(85);
-      expect(result.creative.subscores.passions).toBe(90);
-      expect(result.creative.subscores.culture_fit).toBe(85);
-      expect(result.creative.subscores.personality).toBe(80);
-      expect(result.creative.subscores.motivation).toBe(85);
+      expect(result.creative!.overall).toBe(85);
+      expect(result.creative!.subscores!.passions).toBe(90);
+      expect(result.creative!.subscores!.culture_fit).toBe(85);
+      expect(result.creative!.subscores!.personality).toBe(80);
+      expect(result.creative!.subscores!.motivation).toBe(85);
     });
 
     it('should round scores correctly', () => {
@@ -78,7 +78,7 @@ describe('Category Scoring Utilities', () => {
 
       const result = calculateCategoryScores(oddDimensions);
       // (83 + 84 + 85 + 86) / 4 = 84.5 -> 85 (rounded)
-      expect(result.technical.overall).toBe(85);
+      expect(result.technical!.overall).toBe(85);
     });
   });
 
@@ -229,9 +229,9 @@ describe('Category Scoring Utilities', () => {
       };
 
       const categoryScores = calculateCategoryScores(zeroDimensions);
-      expect(categoryScores.technical.overall).toBe(0);
-      expect(categoryScores.emotional.overall).toBe(0);
-      expect(categoryScores.creative.overall).toBe(0);
+      expect(categoryScores.technical!.overall).toBe(0);
+      expect(categoryScores.emotional!.overall).toBe(0);
+      expect(categoryScores.creative!.overall).toBe(0);
 
       const overall = calculateOverallScore(categoryScores);
       expect(overall).toBe(0);
@@ -246,9 +246,9 @@ describe('Category Scoring Utilities', () => {
       };
 
       const categoryScores = calculateCategoryScores(perfectDimensions);
-      expect(categoryScores.technical.overall).toBe(100);
-      expect(categoryScores.emotional.overall).toBe(100);
-      expect(categoryScores.creative.overall).toBe(100);
+      expect(categoryScores.technical!.overall).toBe(100);
+      expect(categoryScores.emotional!.overall).toBe(100);
+      expect(categoryScores.creative!.overall).toBe(100);
 
       const overall = calculateOverallScore(categoryScores);
       expect(overall).toBe(100);

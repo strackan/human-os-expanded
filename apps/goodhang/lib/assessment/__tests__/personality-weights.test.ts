@@ -71,7 +71,7 @@ describe('Personality Weights Utilities', () => {
       const weighted = applyPersonalityWeights(baseDimensions, 'INTJ');
 
       // INTJ has technical: 1.1, so 70 * 1.1 = 77
-      expect(weighted.technical).toBeGreaterThan(baseDimensions.technical);
+      expect(weighted.technical).toBeGreaterThan(baseDimensions.technical!);
       expect(weighted.technical).toBe(77);
     });
 
@@ -79,7 +79,7 @@ describe('Personality Weights Utilities', () => {
       const weighted = applyPersonalityWeights(baseDimensions, 'INTJ');
 
       // INTJ has empathy: 0.95, so 70 * 0.95 = 66.5 -> 67
-      expect(weighted.empathy).toBeLessThan(baseDimensions.empathy);
+      expect(weighted.empathy).toBeLessThan(baseDimensions.empathy!);
       expect(weighted.empathy).toBe(67);
     });
 
