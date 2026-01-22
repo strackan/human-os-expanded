@@ -30,8 +30,8 @@ export interface ReportViewProps {
   confirmations?: Record<ReportTab, boolean>;
   /** Optional: custom className for the container */
   className?: string;
-  /** Optional: max height for content area */
-  maxContentHeight?: string;
+  /** Optional: callback for inline edits (enables double-click editing) */
+  onEdit?: (field: string, index: number, value: string) => void;
 }
 
 // =============================================================================
@@ -57,14 +57,14 @@ export function ReportView({
   onTakeAssessment,
   confirmations,
   className = '',
-  maxContentHeight = 'max-h-80',
+  onEdit,
 }: ReportViewProps) {
   const renderTabContent = () => {
     switch (activeTab) {
       case 'status':
         return <StatusTab report={report} />;
       case 'personality':
-        return <PersonalityTab report={report} />;
+        return <PersonalityTab report={report} onEdit={onEdit} />;
       case 'voice':
         return <VoiceTab report={report} />;
       case 'character':
@@ -79,10 +79,10 @@ export function ReportView({
 
   return (
     <div
-      className={`bg-gh-dark-800 rounded-xl overflow-hidden ${className}`}
+      className={`bg-gh-dark-800 rounded-xl overflow-hidden flex flex-col ${className}`}
     >
       {/* Tabs */}
-      <div className="flex border-b border-gh-dark-700">
+      <div className="flex border-b border-gh-dark-700 flex-shrink-0">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -116,7 +116,7 @@ export function ReportView({
       </div>
 
       {/* Content */}
-      <div className={`p-4 ${maxContentHeight} overflow-y-auto`}>
+      <div className="p-4 flex-1 min-h-0 overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

@@ -10,6 +10,9 @@ export * from './shared';
 // Assessment types
 export * from './assessment';
 
+// Workflow mode types
+export * from './workflow';
+
 // Voice test types - exclude PersonaFingerprint (already in shared.ts)
 export {
   type VoiceTestStage,

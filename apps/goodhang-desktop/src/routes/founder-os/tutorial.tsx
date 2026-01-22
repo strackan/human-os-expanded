@@ -37,30 +37,15 @@ import type {
 } from '@/lib/types';
 import {
   Sparkles,
-  User,
-  ClipboardList,
-  MessageCircle,
-  CheckCircle2,
   Loader2,
   Lock,
   Mic,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from 'lucide-react';
-
-// =============================================================================
-// CONSTANTS
-// =============================================================================
-
-const STEP_CONFIG = [
-  { id: 'welcome', label: 'Welcome', icon: User, description: 'Getting started' },
-  { id: 'about_you', label: 'About You', icon: Sparkles, description: 'What I learned' },
-  { id: 'gather_intro', label: 'Gather Details', icon: ClipboardList, description: 'Work style' },
-  { id: 'voice_testing', label: 'Voice-OS', icon: Mic, description: 'Test your voice' },
-  { id: 'questions', label: 'Questions', icon: MessageCircle, description: 'Quick conversation' },
-  { id: 'complete', label: 'Complete', icon: CheckCircle2, description: 'Ready to go' },
-];
+import { TUTORIAL_STEPS, getStepIndex, getResumeStep } from '@/lib/tutorial/steps';
 
 const DEFAULT_LOADING_STAGES = [
   { message: 'Thinking...', duration: 800 },
@@ -95,7 +80,6 @@ export default function TutorialModePage() {
     setIsLoading,
     addUserMessage,
     addAssistantMessage,
-    setMessages,
   } = useChatState();
 
   // Use shared loading stages hook
@@ -105,7 +89,7 @@ export default function TutorialModePage() {
   // Tutorial state
   const [progress, setProgress] = useState<TutorialProgress>({
     currentStep: 'welcome',
-    stepIndex: 0,
+    stepIndex: getStepIndex('welcome'),
     questionsAnswered: 0,
     totalQuestions: 5,
     viewedReport: false,
@@ -124,7 +108,6 @@ export default function TutorialModePage() {
 
   // Report tabs (for About You step)
   const [activeReportTab, setActiveReportTab] = useState<ReportTab>('status');
-  const [reportFeedback, setReportFeedback] = useState('');
   const [reportConfirmations, setReportConfirmations] = useState<ReportConfirmations>({
     status: false,
     personality: false,
@@ -190,40 +173,27 @@ export default function TutorialModePage() {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
+    // Check completion markers and resume at the right step
     const tutorialComplete = localStorage.getItem('founder-os-tutorial-completed');
     if (tutorialComplete) {
       navigate('/founder-os/dashboard');
       return;
     }
 
-    const workStyleComplete = localStorage.getItem('founder-os-work-style-completed');
-    if (workStyleComplete) {
-      const completeProgress: TutorialProgress = {
-        currentStep: 'complete',
-        stepIndex: 5,
-        questionsAnswered: 10,
+    // Use config-driven resume logic instead of hardcoded step checks
+    const { stepId, stepIndex } = getResumeStep();
+    if (stepIndex > 0) {
+      // Resume from furthest completed step
+      const resumeProgress: TutorialProgress = {
+        currentStep: stepId as TutorialStep,
+        stepIndex,
+        questionsAnswered: stepId === 'complete' ? 10 : 0,
         totalQuestions: 10,
-        viewedReport: true,
+        viewedReport: stepIndex > 1,
       };
-      setProgress(completeProgress);
-      localStorage.setItem('founder-os-tutorial-progress', JSON.stringify(completeProgress));
-      initializeStep(completeProgress);
-      return;
-    }
-
-    // Check if voice test is complete but work style is not
-    const voiceTestComplete = localStorage.getItem('founder-os-voice-test-completed');
-    if (voiceTestComplete && !workStyleComplete) {
-      const voiceCompleteProgress: TutorialProgress = {
-        currentStep: 'questions',
-        stepIndex: 4,
-        questionsAnswered: 0,
-        totalQuestions: 10,
-        viewedReport: true,
-      };
-      setProgress(voiceCompleteProgress);
-      localStorage.setItem('founder-os-tutorial-progress', JSON.stringify(voiceCompleteProgress));
-      initializeStep(voiceCompleteProgress);
+      setProgress(resumeProgress);
+      localStorage.setItem('founder-os-tutorial-progress', JSON.stringify(resumeProgress));
+      initializeStep(resumeProgress);
       return;
     }
 
@@ -293,11 +263,9 @@ export default function TutorialModePage() {
           { label: 'Skip for now', value: 'skip_report' },
         ]);
         break;
-      case 'gather_intro':
-        setQuickActions([
-          { label: "Let's do it", value: 'start_voice_testing' },
-          { label: 'Not right now', value: 'pause' },
-        ]);
+      case 'work_questions':
+        // No quick actions for Q&A - user types responses
+        setQuickActions([]);
         break;
       case 'voice_testing':
         setQuickActions([
@@ -305,10 +273,9 @@ export default function TutorialModePage() {
           { label: 'Skip for now', value: 'skip_voice_testing' },
         ]);
         break;
-      case 'questions':
+      case 'tool_testing':
         setQuickActions([
-          { label: "Let's do it", value: 'start_questions' },
-          { label: 'Not right now', value: 'pause' },
+          { label: "Continue", value: 'continue_to_complete' },
         ]);
         break;
       case 'complete':
@@ -329,11 +296,23 @@ export default function TutorialModePage() {
 
     try {
       const data = await sendTutorialMessage(sessionId, userMessage, messages, progress, token);
+      console.log('[tutorial] API response:', {
+        action: data.action,
+        currentStep: data.progress?.currentStep,
+        hasQuestion: !!data.currentQuestion,
+        questionTitle: data.currentQuestion?.title,
+      });
       addAssistantMessage(data.content);
 
       if (data.progress) {
+        const stepChanged = data.progress.currentStep !== progress.currentStep;
+        console.log('[tutorial] Step transition:', {
+          from: progress.currentStep,
+          to: data.progress.currentStep,
+          changed: stepChanged,
+        });
         setProgress(data.progress);
-        if (data.progress.currentStep !== progress.currentStep) {
+        if (stepChanged) {
           handleStepTransition(data.progress.currentStep, data);
         }
       }
@@ -351,6 +330,11 @@ export default function TutorialModePage() {
   // Handle step transitions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleStepTransition = (newStep: TutorialStep, data: any) => {
+    console.log('[tutorial] handleStepTransition:', {
+      newStep,
+      hasQuestion: !!data.currentQuestion,
+      question: data.currentQuestion,
+    });
     updateQuickActions(newStep);
 
     if (newStep === 'about_you' && data.report) {
@@ -360,58 +344,18 @@ export default function TutorialModePage() {
       setReportConfirmations({ status: false, personality: false, voice: false, character: false });
       if (data.character) setCharacterProfile(data.character);
     }
-  };
 
-  // Handle report feedback submission
-  const handleReportFeedback = async () => {
-    if (!reportFeedback.trim()) return;
-
-    const feedbackText = reportFeedback.trim();
-    setReportFeedback('');
-
-    addUserMessage(feedbackText);
-    addAssistantMessage("Got it, updating your profile...");
-
-    const feedbackMessage = `Feedback on "${activeReportTab}" section: ${feedbackText}`;
-    const [apiResult] = await Promise.all([
-      sendTutorialMessage(sessionId!, feedbackMessage, messages, progress, token).catch((err) => {
-        console.error('[tutorial] Error updating report:', err);
-        return null;
-      }),
-      feedbackLoadingStages.startLoading(),
-    ]);
-
-    if (apiResult) {
-      if (apiResult.report) setReport(apiResult.report);
-      setMessages((prev) => {
-        const updated = [...prev];
-        for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i]?.role === 'assistant') {
-            updated[i] = {
-              ...updated[i]!,
-              content: apiResult.content || "I've updated your profile.",
-              timestamp: new Date().toISOString(),
-            };
-            break;
-          }
-        }
-        return updated;
-      });
-    } else {
-      setMessages((prev) => {
-        const updated = [...prev];
-        for (let i = updated.length - 1; i >= 0; i--) {
-          if (updated[i]?.role === 'assistant') {
-            updated[i] = {
-              ...updated[i]!,
-              content: "Something went wrong updating your profile. Try again?",
-              timestamp: new Date().toISOString(),
-            };
-            break;
-          }
-        }
-        return updated;
-      });
+    // When entering work_questions, show the first question
+    if (newStep === 'work_questions') {
+      console.log('[tutorial] Entering work_questions step, question:', data.currentQuestion);
+      if (data.currentQuestion) {
+        setCurrentQuestion(data.currentQuestion);
+        setTimeout(() => {
+          addAssistantMessage(`**${data.currentQuestion.title}**\n\n${data.currentQuestion.prompt}`);
+        }, 500);
+      } else {
+        console.warn('[tutorial] No currentQuestion available for work_questions step!');
+      }
     }
   };
 
@@ -547,9 +491,9 @@ export default function TutorialModePage() {
       case 'skip_voice_testing':
         sendMessage('Skip voice testing for now');
         break;
-      case 'start_questions':
-        navigate(`/founder-os/work-style-assessment?session=${sessionId}&return=/founder-os/tutorial`);
-        return;
+      case 'continue_to_complete':
+        sendMessage("Let's continue");
+        break;
       case 'pause':
         sendMessage('Not right now');
         break;
@@ -583,7 +527,7 @@ export default function TutorialModePage() {
       {/* Main Content - Chat */}
       <div className="flex-1 flex flex-col min-w-0 bg-gh-dark-900 overflow-hidden">
         {/* Header */}
-        <TutorialHeader stepLabel={STEP_CONFIG[progress.stepIndex]?.label || 'Getting started'} />
+        <TutorialHeader stepLabel={TUTORIAL_STEPS[progress.stepIndex]?.label || 'Getting started'} />
 
         {/* Messages */}
         <div className="flex-1 overflow-hidden">
@@ -625,9 +569,6 @@ export default function TutorialModePage() {
                   activeTab={activeReportTab}
                   onTabChange={setActiveReportTab}
                   confirmations={reportConfirmations}
-                  feedbackValue={reportFeedback}
-                  onFeedbackChange={setReportFeedback}
-                  onFeedbackSubmit={handleReportFeedback}
                   onConfirmSection={confirmReportSection}
                   onContinue={() => handleQuickAction('confirm_report')}
                   originalReport={originalReport}
@@ -721,7 +662,7 @@ function TutorialSidebar({ progress, getStepStatus, collapsed, onToggleCollapse 
 
       {/* Steps */}
       <div className="flex-1 p-2 space-y-1 overflow-hidden">
-        {STEP_CONFIG.map((step, index) => {
+        {TUTORIAL_STEPS.map((step, index) => {
           const stepStatus = getStepStatus(index);
           const Icon = step.icon;
           return (
@@ -771,13 +712,13 @@ function TutorialSidebar({ progress, getStepStatus, collapsed, onToggleCollapse 
         {!collapsed && (
           <div className="flex justify-between text-xs text-gray-400 mb-2">
             <span>Progress</span>
-            <span>{progress.stepIndex + 1} / {STEP_CONFIG.length}</span>
+            <span>{progress.stepIndex + 1} / {TUTORIAL_STEPS.length}</span>
           </div>
         )}
         <div className="h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${((progress.stepIndex + 1) / STEP_CONFIG.length) * 100}%` }}
+            animate={{ width: `${((progress.stepIndex + 1) / TUTORIAL_STEPS.length) * 100}%` }}
             className="h-full bg-gradient-to-r from-blue-500 to-green-500 rounded-full"
           />
         </div>

@@ -2,7 +2,7 @@
  * Report Editor Component
  *
  * Tutorial-specific wrapper for ReportView with edit functionality.
- * Adds feedback input, confirmation buttons, and reset capability.
+ * Adds confirmation buttons and reset capability.
  */
 
 import { motion } from 'framer-motion';
@@ -23,12 +23,6 @@ export interface ReportEditorProps {
   onTabChange: (tab: ReportTab) => void;
   /** Track which sections are confirmed */
   confirmations: ReportConfirmations;
-  /** Current feedback input value */
-  feedbackValue: string;
-  /** Callback when feedback input changes */
-  onFeedbackChange: (value: string) => void;
-  /** Callback when feedback is submitted */
-  onFeedbackSubmit: () => void;
   /** Callback when current section is confirmed */
   onConfirmSection: () => void;
   /** Callback when all sections confirmed and user continues */
@@ -39,6 +33,8 @@ export interface ReportEditorProps {
   onResetEdits?: () => void;
   /** Callback when user wants to take character assessment */
   onTakeAssessment?: () => void;
+  /** Callback for inline field edits (double-click to edit) */
+  onFieldEdit?: (field: string, index: number, value: string) => void;
   /** Optional: custom className for the container */
   className?: string;
 }
@@ -53,14 +49,12 @@ export function ReportEditor({
   activeTab,
   onTabChange,
   confirmations,
-  feedbackValue,
-  onFeedbackChange,
-  onFeedbackSubmit,
   onConfirmSection,
   onContinue,
   originalReport,
   onResetEdits,
   onTakeAssessment,
+  onFieldEdit,
   className = '',
 }: ReportEditorProps) {
   const allSectionsConfirmed =
@@ -76,17 +70,11 @@ export function ReportEditor({
     report &&
     JSON.stringify(report) !== JSON.stringify(originalReport);
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      onFeedbackSubmit();
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`w-full max-w-2xl ${className}`}
+      className={`w-full h-full flex flex-col ${className}`}
     >
       {/* Report View */}
       <ReportView
@@ -96,31 +84,12 @@ export function ReportEditor({
         onTabChange={onTabChange}
         onTakeAssessment={onTakeAssessment}
         confirmations={confirmations}
-        className="rounded-b-none"
+        className="rounded-b-none flex-1 min-h-0"
+        onEdit={onFieldEdit}
       />
 
       {/* Editor Controls */}
-      <div className="bg-gh-dark-800 rounded-b-xl border-t border-gh-dark-700 p-4 space-y-3">
-        {/* Feedback Input */}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={feedbackValue}
-            onChange={(e) => onFeedbackChange(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Suggest any changes or corrections..."
-            className="flex-1 bg-gh-dark-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          />
-          {feedbackValue && (
-            <button
-              onClick={onFeedbackSubmit}
-              className="px-3 py-2 bg-gh-dark-600 hover:bg-gh-dark-500 text-gray-300 text-sm rounded-lg transition-colors"
-            >
-              Send
-            </button>
-          )}
-        </div>
-
+      <div className="bg-gh-dark-800 rounded-b-xl border-t border-gh-dark-700 p-3">
         {/* Action Buttons */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3">
