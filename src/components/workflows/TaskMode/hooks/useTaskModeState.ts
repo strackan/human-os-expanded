@@ -1006,6 +1006,49 @@ export function useTaskModeState({
     console.log('[useTaskModeState] isSnoozeModalOpen changed to:', isSnoozeModalOpen);
   }, [isSnoozeModalOpen]);
 
+  // Track if we've already shown the "all reviewed" message to prevent duplicates
+  const allReviewedMessageShownRef = useRef<string | null>(null);
+
+  // Show "Continue" button in chat when all tabs are reviewed (for TabbedContainerArtifact)
+  useEffect(() => {
+    // Only react when allTabsReviewed becomes true
+    if (!workflowState.allTabsReviewed) {
+      return;
+    }
+
+    // Only show for account-review-tabbed slide
+    if (currentSlide?.id !== 'account-review-tabbed') {
+      return;
+    }
+
+    // Prevent duplicate messages for the same slide
+    const messageKey = `${currentSlideIndex}-allReviewed`;
+    if (allReviewedMessageShownRef.current === messageKey) {
+      return;
+    }
+
+    console.log('[useTaskModeState] All tabs reviewed - showing Continue button in chat');
+    allReviewedMessageShownRef.current = messageKey;
+
+    // Add a message with the Continue button
+    const reviewCompleteMessage: ChatMessage = {
+      id: `ai-review-complete-${currentSlideIndex}-${Date.now()}`,
+      text: "Great job reviewing all the sections! When you're ready, let's move on to pricing strategy.",
+      sender: 'ai',
+      timestamp: new Date(),
+      buttons: [
+        {
+          label: "Continue to Pricing Strategy",
+          value: 'reviewed',
+          'label-background': 'bg-blue-600',
+          'label-text': 'text-white',
+        },
+      ],
+    };
+
+    setChatMessages(prev => [...prev, reviewCompleteMessage]);
+  }, [workflowState.allTabsReviewed, currentSlide?.id, currentSlideIndex]);
+
   // ============================================================
   // RETURN STATE & HANDLERS
   // ============================================================

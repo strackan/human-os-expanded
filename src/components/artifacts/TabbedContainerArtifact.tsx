@@ -19,7 +19,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   BarChart3,
   FileText,
@@ -83,10 +83,12 @@ export interface TabbedContainerArtifactProps {
   phaseApprovals?: PhaseApproval[];
   onTabApprove?: (tabId: string, comments?: string) => void;
   onTabStatusChange?: (tabId: string, status: TabStatus) => void;
+  // Workflow state communication - triggers chat buttons when all tabs reviewed
+  onUpdateState?: (key: string, value: any) => void;
 }
 
 export function TabbedContainerArtifact({
-  artifactId = 'tabbed-container',
+  artifactId: _artifactId = 'tabbed-container',
   title = 'Account Review',
   subtitle,
   customerName,
@@ -98,9 +100,13 @@ export function TabbedContainerArtifact({
   sharedProps = {},
   showApprovalWorkflow = false,
   phaseApprovals = [],
-  onTabApprove,
+  onTabApprove: _onTabApprove,
   onTabStatusChange,
+  onUpdateState,
 }: TabbedContainerArtifactProps) {
+  // Suppress unused variable warnings for optional props
+  void _artifactId;
+  void _onTabApprove;
   // Filter tabs based on 'show' property (default to true if not specified)
   const visibleTabs = tabs.filter(tab => tab.show !== false);
 
@@ -132,6 +138,23 @@ export function TabbedContainerArtifact({
   const isTabReviewed = useCallback((tabId: string): boolean => {
     return reviewedTabs.has(tabId);
   }, [reviewedTabs]);
+
+  // Detect when all tabs are reviewed and notify workflow
+  useEffect(() => {
+    const allReviewed = visibleTabs.length > 0 && visibleTabs.every(tab => reviewedTabs.has(tab.id));
+
+    if (onUpdateState) {
+      onUpdateState('allTabsReviewed', allReviewed);
+
+      // Log for debugging
+      console.log('[TabbedContainerArtifact] All tabs reviewed:', allReviewed, {
+        total: visibleTabs.length,
+        reviewed: reviewedTabs.size,
+        tabs: visibleTabs.map(t => t.id),
+        reviewedTabs: Array.from(reviewedTabs),
+      });
+    }
+  }, [reviewedTabs, visibleTabs, onUpdateState]);
 
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
 
@@ -244,7 +267,7 @@ export function TabbedContainerArtifact({
             if (!ArtifactComponent) {
               return (
                 <div className="p-6 text-center text-gray-500">
-                  <p>Component "{activeTab.artifact}" not found in registry</p>
+                  <p>Component &quot;{activeTab.artifact}&quot; not found in registry</p>
                   <p className="text-xs mt-1">Check componentImports.ts</p>
                 </div>
               );
