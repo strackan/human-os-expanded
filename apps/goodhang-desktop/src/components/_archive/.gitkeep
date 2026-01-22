@@ -1,0 +1,6 @@
+# Archive folder for deprecated components
+
+This folder contains archived components that have been replaced.
+Components here are kept for reference only and should not be imported.
+
+See COMPONENT_REGISTRY.md for migration paths.
