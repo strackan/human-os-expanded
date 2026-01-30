@@ -86,17 +86,17 @@ function StepListHeader({ steps, currentStepIndex }: StepListHeaderProps) {
   const completedSteps = steps.slice(0, currentStepIndex);
 
   return (
-    <div className="border-b border-gh-dark-700 p-3">
+    <div className="border-b border-gh-dark-700 p-4">
       {/* Completed steps - compact horizontal chips */}
       {completedSteps.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1 mb-2">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
           {completedSteps.map((step) => (
             <div
               key={step.id}
-              className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 rounded text-xs text-green-400"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 rounded-lg text-[13px] text-green-400 border border-green-500/20"
               title={step.label}
             >
-              <Check className="w-3 h-3" />
+              <Check className="w-3.5 h-3.5" />
               <span>{step.label}</span>
             </div>
           ))}
@@ -105,20 +105,28 @@ function StepListHeader({ steps, currentStepIndex }: StepListHeaderProps) {
 
       {/* Active step - expanded with description */}
       {activeStep && (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-sm font-medium text-white">
+        <div className="flex items-center gap-4 px-4 py-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+          {/* Step number indicator - larger */}
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-base font-semibold text-white shadow-lg shadow-blue-500/20">
             {currentStepIndex + 1}
           </div>
+          {/* Step content */}
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-white">{activeStep.label}</div>
+            <div className="text-[15px] font-semibold text-white leading-tight">
+              {activeStep.label}
+            </div>
             {activeStep.description && (
-              <div className="text-xs text-gray-400">{activeStep.description}</div>
+              <div className="text-[13px] text-gray-400 mt-1">
+                {activeStep.description}
+              </div>
             )}
           </div>
-          {/* Step counter */}
-          <span className="text-xs text-gray-500">
-            {currentStepIndex + 1} of {steps.length}
-          </span>
+          {/* Step counter badge */}
+          <div className="flex-shrink-0 px-2.5 py-1 bg-gh-dark-700 rounded-full">
+            <span className="text-[11px] text-gray-400 font-medium">
+              {currentStepIndex + 1} of {steps.length}
+            </span>
+          </div>
         </div>
       )}
     </div>
@@ -140,18 +148,28 @@ function UpcomingStepsFooter({ steps, currentStepIndex }: UpcomingStepsFooterPro
   if (upcomingSteps.length === 0) return null;
 
   return (
-    <div className="border-t border-gh-dark-700 p-3">
-      <div className="text-xs text-gray-500 mb-2">Up next</div>
+    <div className="border-t border-gh-dark-700 p-4">
+      {/* Section header */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-px flex-1 bg-gh-dark-600" />
+        <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">
+          Up next
+        </span>
+        <div className="h-px flex-1 bg-gh-dark-600" />
+      </div>
+      {/* Step list */}
       <div className="space-y-1">
         {upcomingSteps.map((step, index) => (
           <div
             key={step.id}
-            className="flex items-center gap-2 px-2 py-1 text-gray-500"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gh-dark-700/50 transition-colors cursor-default"
           >
-            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gh-dark-600 flex items-center justify-center text-xs">
+            {/* Step number */}
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gh-dark-600 flex items-center justify-center text-[11px] font-medium text-gray-400">
               {currentStepIndex + 2 + index}
             </div>
-            <span className="text-sm">{step.label}</span>
+            {/* Step label */}
+            <span className="text-[13px] text-gray-400">{step.label}</span>
           </div>
         ))}
       </div>
