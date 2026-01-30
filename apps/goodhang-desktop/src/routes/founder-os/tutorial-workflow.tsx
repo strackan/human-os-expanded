@@ -66,7 +66,7 @@ export default function TutorialWorkflowMode() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { token } = useAuthStore();
-  const { status } = useUserStatusStore();
+  const { status, loading: statusLoading } = useUserStatusStore();
   const initializedRef = useRef(false);
   const workflowActionsRef = useRef<WorkflowModeActions | null>(null);
   const hasShownReportCompleteRef = useRef(false);
@@ -112,10 +112,12 @@ export default function TutorialWorkflowMode() {
   // Get quick actions based on current step
   const getQuickActionsForStep = useCallback((step: TutorialStep) => {
     switch (step) {
-      case 'welcome':
+      case 'about_you':
+        return [{ label: 'Looks good!', value: 'continue_from_report' }];
+      case 'work_questions':
         return [
-          { label: 'Sure!', value: 'show_report' },
-          { label: 'Skip for now', value: 'skip_report' },
+          { label: 'Start Work Style Questions', value: 'start_work_questions' },
+          { label: 'Skip for now', value: 'skip_work_questions' },
         ];
       case 'voice_testing':
         return [
@@ -150,6 +152,25 @@ export default function TutorialWorkflowMode() {
       if (actionValue === 'start_voice_testing') {
         navigate(`/founder-os/voice-test?session=${sessionId}&return=/founder-os/tutorial`);
         return null;
+      }
+
+      if (actionValue === 'start_work_questions') {
+        navigate(`/founder-os/work-style-assessment?session=${sessionId}&return=/founder-os/tutorial`);
+        return null;
+      }
+
+      if (actionValue === 'skip_work_questions') {
+        // Skip to voice testing step
+        const voiceStepIndex = getStepIndex('voice_testing');
+        setProgress(prev => ({
+          ...prev,
+          currentStep: 'voice_testing',
+          stepIndex: voiceStepIndex,
+        }));
+        return {
+          content: "No problem! We can always do the work style questions later. Let's move on to voice testing.",
+          quickActions: getQuickActionsForStep('voice_testing'),
+        };
       }
 
       // Handle Continue from report - persist and advance to next step
@@ -339,49 +360,71 @@ export default function TutorialWorkflowMode() {
   const handleInitialize = useCallback(async (actions: WorkflowModeActions) => {
     // Store actions ref for later use
     workflowActionsRef.current = actions;
-    const defaultQuickActions = getQuickActionsForStep('welcome');
 
-    if (!sessionId) {
-      // No session - show default welcome with quick actions
+    // Get session ID - check URL first, then status
+    const currentSessionId = searchParams.get('session') || status?.contexts?.active;
+
+    console.log('[tutorial-workflow] Initialize with sessionId:', currentSessionId, 'status:', status?.contexts);
+
+    if (!currentSessionId) {
+      // No session - can't load profile
       actions.addAssistantMessage(
-        "Welcome! Let's get you set up. Would you like to see what I learned about you?",
-        defaultQuickActions
+        "Welcome! I couldn't find your session. Please try signing in again."
       );
       return;
     }
 
+    // Immediately show loading state and welcome message
+    setIsLoadingReport(true);
+    actions.addAssistantMessage(
+      "Hello! Let's start by taking a look at what I already know about you."
+    );
+
     try {
-      const data = await initializeTutorial(sessionId, progress, token);
+      const data = await initializeTutorial(currentSessionId, progress, token);
 
       // Update state from API response
       if (data.questions) setQuestions(data.questions);
       if (data.report) {
         setOriginalReport(data.report);
         setReport(data.report);
+        // Move to about_you step to show the report
+        setProgress(prev => ({
+          ...prev,
+          currentStep: 'about_you',
+          stepIndex: getStepIndex('about_you'),
+          viewedReport: true,
+        }));
+        setIsLoadingReport(false);
+
+        // Add follow-up message once report is loaded
+        setTimeout(() => {
+          actions.addAssistantMessage(
+            "Here's your profile based on our conversation. Take a look and let me know if anything needs adjusting.",
+            [{ label: 'Looks good!', value: 'continue_from_report' }]
+          );
+        }, 500);
+      } else {
+        // No report available
+        setIsLoadingReport(false);
+        actions.addAssistantMessage(
+          "I don't have your profile yet. Let's continue with setup.",
+          [{ label: 'Continue', value: 'skip_report' }]
+        );
       }
-      if (data.progress) {
-        setProgress(data.progress);
-      }
+
       if (data.currentQuestion) {
         setCurrentQuestion(data.currentQuestion);
       }
-
-      // Determine which step we're on and get appropriate quick actions
-      const currentStep = data.progress?.currentStep || progress.currentStep;
-      const quickActions = getQuickActionsForStep(currentStep);
-
-      // Add the welcome message with quick actions
-      if (data.content) {
-        actions.addAssistantMessage(data.content, quickActions);
-      }
     } catch (error) {
       console.error('[tutorial-workflow] Error initializing:', error);
+      setIsLoadingReport(false);
       actions.addAssistantMessage(
-        "Welcome! Let's get you set up. Would you like to see what I learned about you?",
-        defaultQuickActions
+        "Something went wrong loading your profile. Let's try continuing.",
+        [{ label: 'Continue', value: 'skip_report' }]
       );
     }
-  }, [sessionId, progress, token, getQuickActionsForStep]);
+  }, [searchParams, status, progress, token]);
 
   // =============================================================================
   // REPORT HANDLERS
@@ -471,32 +514,78 @@ export default function TutorialWorkflowMode() {
     </div>
   );
 
+  // Debug: log artifact state
+  console.log('[tutorial-workflow] Artifact state:', {
+    isLoadingReport,
+    hasReport: !!report,
+    currentStep: progress.currentStep,
+    shouldShowArtifact: isLoadingReport || (report && (progress.currentStep === 'about_you' || progress.currentStep === 'welcome')),
+  });
+
   // Artifact content (report or loading)
+  // Show artifact when loading, or when we have a report (on welcome or about_you step)
+  // Note: showStepProgress=false for tutorial - step progress is shown in sidebar
   const artifactContent = isLoadingReport ? (
-    <ArtifactPanel showStepProgress={true}>
+    <ArtifactPanel showStepProgress={false}>
       {loadingArtifact}
     </ArtifactPanel>
   ) : (
-    report && progress.currentStep === 'about_you' ? (
-      <ArtifactPanel showStepProgress={true}>
-        <div className="h-full flex flex-col p-4">
-          <ReportEditor
-            report={report}
-            characterProfile={characterProfile}
-            activeTab={activeReportTab}
-            onTabChange={setActiveReportTab}
-            confirmations={reportConfirmations}
-            onConfirmSection={confirmReportSection}
-            originalReport={originalReport}
-            onResetEdits={resetReportEdits}
-            onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
-            onFieldEdit={handleFieldEdit}
-            className="flex-1 min-h-0"
-          />
-        </div>
+    report && (progress.currentStep === 'about_you' || progress.currentStep === 'welcome') ? (
+      <ArtifactPanel showStepProgress={false}>
+        <ReportEditor
+          report={report}
+          characterProfile={characterProfile}
+          activeTab={activeReportTab}
+          onTabChange={setActiveReportTab}
+          confirmations={reportConfirmations}
+          onConfirmSection={confirmReportSection}
+          originalReport={originalReport}
+          onResetEdits={resetReportEdits}
+          onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
+          onFieldEdit={handleFieldEdit}
+          className="h-full"
+        />
       </ArtifactPanel>
     ) : null
   );
+
+  // Wait for session ID to be available
+  const effectiveSessionId = searchParams.get('session') || status?.contexts?.active;
+
+  console.log('[tutorial-workflow] Session check:', {
+    effectiveSessionId,
+    statusLoading,
+    contextsActive: status?.contexts?.active,
+    urlSession: searchParams.get('session')
+  });
+
+  // Don't render until we have a session ID (or status finished loading with no session)
+  if (!effectiveSessionId) {
+    if (statusLoading) {
+      return (
+        <div className="h-screen-titlebar flex items-center justify-center bg-gh-dark-900">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+            <p className="text-gray-400">Loading your session...</p>
+          </div>
+        </div>
+      );
+    }
+    // Status loaded but no session - show error
+    return (
+      <div className="h-screen-titlebar flex items-center justify-center bg-gh-dark-900">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Could not find your session.</p>
+          <button
+            onClick={() => navigate('/activate')}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+          >
+            Sign In Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <WorkflowModeLayout
@@ -514,7 +603,7 @@ export default function TutorialWorkflowMode() {
         autoSave: true,
       }}
       artifactContent={artifactContent}
-      className="h-screen"
+      className="h-screen-titlebar"
     />
   );
 }

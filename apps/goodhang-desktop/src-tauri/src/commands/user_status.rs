@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 fn get_api_base_url() -> String {
     std::env::var("GOODHANG_API_URL")
-        .unwrap_or_else(|_| "http://localhost:3200".to_string())
+        .unwrap_or_else(|_| "https://goodhang-staging.vercel.app".to_string())
 }
 
 // Assessment status

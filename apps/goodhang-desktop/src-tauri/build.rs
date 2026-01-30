@@ -1,10 +1,12 @@
 fn main() {
-    // Set production API URL for release builds
-    // This env var is read by activation.rs::get_api_base_url()
+    // Set API URL based on build profile
+    // This env var is read by commands/activation.rs and commands/user_status.rs
     let profile = std::env::var("PROFILE").unwrap_or_default();
     if profile == "release" {
-        println!("cargo:rustc-env=GOODHANG_API_URL=https://goodhang-staging.vercel.app");
+        // Production URL for release builds
+        println!("cargo:rustc-env=GOODHANG_API_URL=https://api.goodhang.com");
     }
+    // Debug builds fall back to staging URL in the Rust code
 
     tauri_build::build()
 }

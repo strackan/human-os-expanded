@@ -22,15 +22,16 @@ import type {
   StepActionType,
 } from '@/lib/types/workflow';
 import type { QuickAction, LoadingStage } from '@/lib/types/shared';
+import { LAYOUT_CONFIG } from '@/lib/config';
 
 // =============================================================================
 // CONSTANTS
 // =============================================================================
 
-const DEFAULT_SIDEBAR_WIDTH = 340;
-const MIN_SIDEBAR_WIDTH = 280;
-const MAX_SIDEBAR_WIDTH = 450;
-const DEFAULT_ARTIFACT_WIDTH = 400;
+const DEFAULT_SIDEBAR_WIDTH: number = LAYOUT_CONFIG.sidebar.defaultWidth;
+const MIN_SIDEBAR_WIDTH: number = LAYOUT_CONFIG.sidebar.minWidth;
+const MAX_SIDEBAR_WIDTH: number = LAYOUT_CONFIG.sidebar.maxWidth;
+const DEFAULT_ARTIFACT_WIDTH: number = LAYOUT_CONFIG.artifactPanel.defaultWidth;
 const DEFAULT_LOADING_STAGES: LoadingStage[] = [
   { message: 'Processing...', duration: 800 },
   { message: 'Almost there...', duration: 600 },
@@ -68,7 +69,7 @@ export function useWorkflowModeState(
   const hasRestoredRef = useRef(false);
   const hasCalledInitializeRef = useRef(false);
   const wasStateRestoredRef = useRef(false);  // Track if state was loaded from localStorage
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // =============================================================================
   // STATE - Steps

@@ -7,7 +7,7 @@
 
 import { useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import {
   useWorkflowMode,
   useWorkflowUI,
@@ -18,7 +18,8 @@ import { ChatInput } from '@/components/chat';
 import { ChatPanel } from './ChatPanel';
 import { ProgressFooter } from './ProgressFooter';
 import { StepActionModals } from './StepActionModals';
-import type { WorkflowSidebarProps } from '@/lib/types/workflow';
+import { LAYOUT_CONFIG } from '@/lib/config';
+import type { WorkflowSidebarProps, WorkflowStep } from '@/lib/types/workflow';
 
 // =============================================================================
 // RESIZE HANDLE
@@ -66,6 +67,93 @@ function ResizeHandle({ onResize, onResizeEnd }: ResizeHandleProps) {
     >
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-8 -mr-1.5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="w-1 h-6 bg-blue-500 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// STEP LIST HEADER
+// =============================================================================
+
+interface StepListHeaderProps {
+  steps: WorkflowStep[];
+  currentStepIndex: number;
+}
+
+function StepListHeader({ steps, currentStepIndex }: StepListHeaderProps) {
+  const activeStep = steps[currentStepIndex];
+  const completedSteps = steps.slice(0, currentStepIndex);
+
+  return (
+    <div className="border-b border-gh-dark-700 p-3">
+      {/* Completed steps - compact horizontal chips */}
+      {completedSteps.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1 mb-2">
+          {completedSteps.map((step) => (
+            <div
+              key={step.id}
+              className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 rounded text-xs text-green-400"
+              title={step.label}
+            >
+              <Check className="w-3 h-3" />
+              <span>{step.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Active step - expanded with description */}
+      {activeStep && (
+        <div className="flex items-center gap-2 px-3 py-2.5 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-sm font-medium text-white">
+            {currentStepIndex + 1}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-white">{activeStep.label}</div>
+            {activeStep.description && (
+              <div className="text-xs text-gray-400">{activeStep.description}</div>
+            )}
+          </div>
+          {/* Step counter */}
+          <span className="text-xs text-gray-500">
+            {currentStepIndex + 1} of {steps.length}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// UPCOMING STEPS FOOTER
+// =============================================================================
+
+interface UpcomingStepsFooterProps {
+  steps: WorkflowStep[];
+  currentStepIndex: number;
+}
+
+function UpcomingStepsFooter({ steps, currentStepIndex }: UpcomingStepsFooterProps) {
+  const upcomingSteps = steps.slice(currentStepIndex + 1);
+
+  if (upcomingSteps.length === 0) return null;
+
+  return (
+    <div className="border-t border-gh-dark-700 p-3">
+      <div className="text-xs text-gray-500 mb-2">Up next</div>
+      <div className="space-y-1">
+        {upcomingSteps.map((step, index) => (
+          <div
+            key={step.id}
+            className="flex items-center gap-2 px-2 py-1 text-gray-500"
+          >
+            <div className="flex-shrink-0 w-5 h-5 rounded-full bg-gh-dark-600 flex items-center justify-center text-xs">
+              {currentStepIndex + 2 + index}
+            </div>
+            <span className="text-sm">{step.label}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -141,9 +229,12 @@ export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSid
     [stepActionMenu.stepId, skipStep]
   );
 
+  // Get current step index for the header
+  const currentStepIndex = steps.findIndex(s => s.status === 'in_progress');
+
   // Determine width: expand to fill, collapsed, or fixed width
   const getWidth = () => {
-    if (sidebarCollapsed) return 48;
+    if (sidebarCollapsed) return LAYOUT_CONFIG.sidebar.collapsedWidth;
     if (expandToFill) return '100%';
     return sidebarWidth;
   };
@@ -157,7 +248,7 @@ export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSid
           width: getWidth(),
         }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
-        className={`relative h-full bg-gh-dark-800 border-r border-gh-dark-700 flex flex-col ${className ?? ''}`}
+        className={`relative h-full bg-gh-dark-800 border-r border-gh-dark-700 flex flex-col overflow-hidden ${className ?? ''}`}
       >
         {/* Collapse toggle */}
         <button
@@ -195,33 +286,45 @@ export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSid
         {/* Expanded state */}
         {!sidebarCollapsed && (
           <>
-            {/* Header */}
-            <div className="border-b border-gh-dark-700 p-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                <span className="text-sm font-medium text-white">Setup Mode</span>
-              </div>
+            {/* Header with step list */}
+            <div className="flex-shrink-0">
+              <StepListHeader
+                steps={steps}
+                currentStepIndex={currentStepIndex >= 0 ? currentStepIndex : 0}
+              />
             </div>
 
-            {/* Chat panel */}
-            <ChatPanel className="flex-1 min-h-0" />
+            {/* Chat panel - this is the ONLY scrollable area */}
+            <ChatPanel className="flex-1 min-h-0 overflow-y-auto" />
 
-            {/* Chat input */}
-            <ChatInput
-              value={inputValue}
-              onChange={setInputValue}
-              onSend={handleSend}
-              disabled={isLoading}
-              placeholder="Type your message..."
-              sendButtonColor="blue"
-            />
+            {/* Chat input - fixed at bottom */}
+            <div className="flex-shrink-0 border-t border-gh-dark-700">
+              <ChatInput
+                value={inputValue}
+                onChange={setInputValue}
+                onSend={handleSend}
+                disabled={isLoading}
+                placeholder="Type your message..."
+                sendButtonColor="blue"
+              />
+            </div>
 
-            {/* Progress footer */}
-            <ProgressFooter
-              progress={progress}
-              canUnlock={canUnlock}
-              onReset={onReset}
-            />
+            {/* Upcoming steps - shows what's next */}
+            <div className="flex-shrink-0">
+              <UpcomingStepsFooter
+                steps={steps}
+                currentStepIndex={currentStepIndex >= 0 ? currentStepIndex : 0}
+              />
+            </div>
+
+            {/* Progress footer - fixed at bottom */}
+            <div className="flex-shrink-0">
+              <ProgressFooter
+                progress={progress}
+                canUnlock={canUnlock}
+                onReset={onReset}
+              />
+            </div>
 
             {/* Resize handle */}
             <ResizeHandle

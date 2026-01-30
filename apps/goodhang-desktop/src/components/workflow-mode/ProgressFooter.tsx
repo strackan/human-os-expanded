@@ -83,13 +83,13 @@ export function ProgressFooter({
         </motion.p>
       )}
 
-      {/* Reset button */}
+      {/* Reset button - always visible for easy access */}
       {onReset && (
         <button
           onClick={onReset}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 mt-3 text-xs text-gray-500 hover:text-orange-400 transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 mt-3 text-sm text-orange-400/70 hover:text-orange-400 hover:bg-orange-500/10 rounded-lg transition-colors"
         >
-          <RefreshCw className="w-3 h-3" />
+          <RefreshCw className="w-4 h-4" />
           {resetLabel}
         </button>
       )}

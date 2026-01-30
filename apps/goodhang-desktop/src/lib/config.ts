@@ -58,21 +58,23 @@ export const FEATURES = {
 export const LAYOUT_CONFIG = {
   /**
    * Sidebar width constraints for WorkflowSidebar
+   * Modern desktop apps (Claude, Notion, Slack) use wider panels
    */
   sidebar: {
-    minWidth: 280,
-    maxWidth: 450,
-    defaultWidth: 340,
-    collapsedWidth: 48,
+    minWidth: 400,
+    maxWidth: 700,
+    defaultWidth: 500,
+    collapsedWidth: 64,
   },
 
   /**
    * Artifact panel width constraints
+   * When showing report/content, needs enough room to be readable
    */
   artifactPanel: {
-    minWidth: 300,
-    maxWidth: 600,
-    defaultWidth: 400,
+    minWidth: 400,
+    maxWidth: 800,
+    defaultWidth: 500,
     collapsedWidth: 0,
   },
 

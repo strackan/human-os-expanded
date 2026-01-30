@@ -156,7 +156,7 @@ export function ChatPanel({ className, useMarkdown = true }: ChatPanelProps) {
   const loadingState = useWorkflowLoading();
 
   return (
-    <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${className ?? ''}`}>
+    <div className={`flex-1 overflow-y-auto scrollbar-minimal p-4 space-y-4 ${className ?? ''}`}>
       {/* Messages */}
       <AnimatePresence mode="popLayout">
         {messages.map((message, index) => (

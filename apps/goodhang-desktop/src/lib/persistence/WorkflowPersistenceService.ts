@@ -28,8 +28,8 @@ const DEFAULT_OPTIONS: WorkflowPersistenceOptions = {
 export class WorkflowPersistenceService {
   private options: WorkflowPersistenceOptions;
   private pendingSave: WorkflowState | null = null;
-  private saveTimeout: NodeJS.Timeout | null = null;
-  private syncInterval: NodeJS.Timeout | null = null;
+  private saveTimeout: ReturnType<typeof setTimeout> | null = null;
+  private syncInterval: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: Partial<WorkflowPersistenceOptions> = {}) {
     this.options = { ...DEFAULT_OPTIONS, ...options };

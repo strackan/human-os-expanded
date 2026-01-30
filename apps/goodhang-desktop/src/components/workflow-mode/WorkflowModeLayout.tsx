@@ -50,9 +50,9 @@ function WorkflowModeLayoutInner({
 
   return (
     <WorkflowModeProvider value={state}>
-      <div className={`flex h-full bg-gh-dark-900 ${className ?? ''}`}>
+      <div className={`flex h-full bg-gh-dark-900 overflow-hidden ${className ?? ''}`}>
         {/* Left sidebar with chat - grows to fill when no artifact */}
-        <div className={hasArtifact ? 'flex-shrink-0' : 'flex-1'}>
+        <div className={`h-full overflow-hidden ${hasArtifact ? 'flex-shrink-0' : 'flex-1'}`}>
           {sidebarContent ?? <WorkflowSidebar expandToFill={!hasArtifact} />}
         </div>
 

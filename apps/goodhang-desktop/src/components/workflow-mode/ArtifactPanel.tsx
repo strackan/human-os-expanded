@@ -35,8 +35,8 @@ export function ArtifactPanel({
         </motion.div>
       )}
 
-      {/* Artifact content */}
-      <div className="flex-1 min-h-0 overflow-auto">
+      {/* Artifact content - no scroll here, children handle their own overflow */}
+      <div className="flex-1 min-h-0 overflow-hidden">
         {children}
       </div>
     </div>

@@ -116,7 +116,7 @@ export function ReportView({
       </div>
 
       {/* Content */}
-      <div className="p-4 flex-1 min-h-0 overflow-y-auto">
+      <div className="p-4 flex-1 min-h-0 overflow-y-auto scrollbar-minimal">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}

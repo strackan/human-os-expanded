@@ -9,21 +9,6 @@ export default function FounderOSOnboardingPage() {
   const { clearSession } = useAuthStore();
   const { status, loading } = useUserStatusStore();
 
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center"
-        >
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p className="text-gray-400">Preparing your Founder OS...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
   const founderOS = status?.products.founder_os;
   const sculptor = founderOS?.sculptor;
   const identityProfile = founderOS?.identity_profile;
@@ -54,14 +39,30 @@ export default function FounderOSOnboardingPage() {
 
   const stage = getStage();
 
-  // Auto-redirect to Renubu chat when Sculptor completes
+  // Auto-redirect to tutorial when Sculptor completes
   useEffect(() => {
     if (stage === 'renubu' && status?.contexts?.active) {
       // Get the session ID from the sculptor context
       const sessionId = status.contexts.active;
-      navigate(`/founder-os/renubu-chat?session=${sessionId}`);
+      navigate(`/founder-os/tutorial?session=${sessionId}`);
     }
   }, [stage, status?.contexts?.active, navigate]);
+
+  // Show loading state after all hooks
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+          <p className="text-gray-400">Preparing your Founder OS...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-8">
