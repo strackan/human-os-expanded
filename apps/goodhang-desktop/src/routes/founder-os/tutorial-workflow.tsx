@@ -497,6 +497,50 @@ export default function TutorialWorkflowMode() {
   }, [navigate]);
 
   // =============================================================================
+  // LOAD REPORT ON MOUNT (independent of workflow initialization)
+  // =============================================================================
+  // This effect ensures the report is loaded even when workflow state is restored
+  // from localStorage (where onInitialize is skipped).
+
+  const hasLoadedReportRef = useRef(false);
+
+  useEffect(() => {
+    // Skip if already loaded, loading, or another path is loading
+    if (hasLoadedReportRef.current || report || isLoadingReport) return;
+
+    // Need a session ID to load the report
+    const currentSessionId = searchParams.get('session') || status?.contexts?.active;
+    if (!currentSessionId || statusLoading) return;
+
+    // Mark as loading to prevent duplicate requests
+    hasLoadedReportRef.current = true;
+
+    const loadReport = async () => {
+      console.log('[tutorial-workflow] Loading report for restored session:', currentSessionId);
+      setIsLoadingReport(true);
+
+      try {
+        const data = await initializeTutorial(currentSessionId, progress, token);
+
+        if (data.report) {
+          console.log('[tutorial-workflow] Report loaded via fallback:', data.report);
+          setOriginalReport(data.report);
+          setReport(data.report);
+        }
+        if (data.questions) {
+          setQuestions(data.questions);
+        }
+      } catch (error) {
+        console.error('[tutorial-workflow] Error loading report:', error);
+      } finally {
+        setIsLoadingReport(false);
+      }
+    };
+
+    loadReport();
+  }, [searchParams, status, statusLoading, report, isLoadingReport, progress, token]);
+
+  // =============================================================================
   // RENDER
   // =============================================================================
 
