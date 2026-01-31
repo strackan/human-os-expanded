@@ -10,11 +10,24 @@
 // =============================================================================
 
 const DEFAULT_BASE_URL = 'https://goodhang-staging.vercel.app';
+const DEV_BASE_URL = 'http://localhost:3200';
+
+/**
+ * Check if dev mode is enabled via env var or ?dev query param
+ */
+export function isDevMode(): boolean {
+  return import.meta.env.VITE_DEV_MODE === 'true' ||
+    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('dev'));
+}
 
 /**
  * Get the API base URL from environment or default
+ * In dev mode, always uses localhost:3200 (ignores VITE_API_BASE_URL)
  */
 export function getBaseUrl(): string {
+  if (isDevMode()) {
+    return DEV_BASE_URL;  // Always use localhost in dev mode
+  }
   return import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL;
 }
 
@@ -170,9 +183,10 @@ export function get<T>(endpoint: string, token?: string | null): Promise<T> {
 export function post<T>(
   endpoint: string,
   body: unknown,
-  token?: string | null
+  token?: string | null,
+  options?: { timeout?: number }
 ): Promise<T> {
-  return apiRequest<T>(endpoint, { method: 'POST', body, token });
+  return apiRequest<T>(endpoint, { method: 'POST', body, token, ...options });
 }
 
 /**

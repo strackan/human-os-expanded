@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RotateCcw, Zap } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
 import {
@@ -18,7 +18,7 @@ import {
   sendTutorialMessage,
   persistReport as persistReportApi,
 } from '@/lib/api/tutorial';
-import { post } from '@/lib/api';
+import { post, isDevMode } from '@/lib/api';
 import { ReportEditor, type ReportTab } from '@/components/report';
 import { WorkflowModeLayout, ArtifactPanel } from '@/components/workflow-mode';
 import { AssessmentFlow } from '@/components/assessment';
@@ -28,6 +28,8 @@ import type {
   ExecutiveReport,
   CharacterProfile,
   CharacterAttributes,
+  AssessmentSignals,
+  MatchingProfile,
   ReportConfirmations,
   OutstandingQuestion,
   WorkflowStep,
@@ -221,7 +223,9 @@ export default function TutorialWorkflowMode() {
   const getQuickActionsForStep = useCallback((step: TutorialStep) => {
     switch (step) {
       case 'about_you':
-        return [{ label: 'Looks good!', value: 'continue_from_report' }];
+        // No quick actions - user confirms each tab via the report editor buttons
+        // "Continue" is added by the effect when all tabs are confirmed
+        return [];
       case 'work_questions':
         return [
           { label: 'Start Work Style Questions', value: 'start_work_questions' },
@@ -421,7 +425,7 @@ export default function TutorialWorkflowMode() {
     navigate('/founder-os/dashboard');
   }, [navigate]);
 
-  const handleReset = useCallback(() => {
+  const handleReset = useCallback(async () => {
     // Clear all tutorial completion keys
     const completionKeys = getAllCompletionKeys();
     completionKeys.forEach(key => localStorage.removeItem(key));
@@ -435,13 +439,34 @@ export default function TutorialWorkflowMode() {
     localStorage.removeItem('workflow-mode-tutorial');
     localStorage.removeItem('founder-os-tutorial');
 
+    // Clear assessment progress localStorage
+    localStorage.removeItem(ASSESSMENT_STORAGE_KEY);
+
+    // Reset assessment completion in backend and wait for it
+    if (userId) {
+      try {
+        await post('/api/assessment/reset', { user_id: userId }, token);
+        console.log('[tutorial-workflow] Assessment status reset in backend');
+      } catch (error) {
+        console.error('[tutorial-workflow] Error resetting assessment:', error);
+      }
+    }
+
+    // Clear the user status store so it doesn't show stale data
+    useUserStatusStore.getState().clearStatus();
+
+    // Reset local state
+    setCharacterProfile(null);
+    setReportConfirmations({ status: false, personality: false, voice: false, character: false });
+    setShowInlineAssessment(false);
+
     // Reset refs
     hasShownReportCompleteRef.current = false;
     workflowActionsRef.current = null;
 
     // Reload the page to reset all state
     window.location.reload();
-  }, []);
+  }, [userId, token]);
 
   // Effect to show Continue quick action when all report sections are confirmed
   useEffect(() => {
@@ -505,11 +530,11 @@ export default function TutorialWorkflowMode() {
         }));
         setIsLoadingReport(false);
 
-        // Add follow-up message once report is loaded
+        // Add follow-up message once report is loaded - no quick action yet
+        // User needs to review all tabs first, then the effect will show "Continue"
         setTimeout(() => {
           actions.addAssistantMessage(
-            "Here's your profile based on our conversation. Take a look and let me know if anything needs adjusting.",
-            [{ label: 'Looks good!', value: 'continue_from_report' }]
+            "Here's your profile based on our conversation. Review each tab (Status, Personality, Voice, Character) and confirm them by clicking 'Looks Good' on each one."
           );
         }, 500);
       } else {
@@ -663,21 +688,29 @@ export default function TutorialWorkflowMode() {
       success: boolean;
       profile: CharacterProfile;
       attributes: CharacterAttributes;
+      signals: AssessmentSignals;
+      matching: MatchingProfile;
+      overall_score: number;
+      summary?: string;
     }>('/api/assessment/score', {
       user_id: userId,
       transcript,
       source: 'desktop_app',
-    }, token);
+    }, token, { timeout: 120000 }); // 2 minute timeout for AI scoring
 
     console.log('[tutorial-workflow] Assessment scored successfully', response);
 
-    // Set the character profile from API response
+    // Set the character profile from API response with all data
     if (response.profile) {
       setCharacterProfile({
         ...response.profile,
         characterClass: response.profile.class || response.profile.characterClass,
         title: response.profile.tagline || response.profile.title,
         attributes: response.attributes,
+        signals: response.signals,
+        matching: response.matching,
+        overall_score: response.overall_score,
+        summary: response.summary,
       });
     }
 
@@ -686,15 +719,13 @@ export default function TutorialWorkflowMode() {
       await fetchStatus(token, userId ?? undefined);
     }
 
-    // Hide the assessment and auto-confirm the character section
+    // Hide the assessment (but don't auto-confirm - let user review and click "Looks Good")
     setShowInlineAssessment(false);
-    setReportConfirmations((prev) => ({ ...prev, character: true }));
 
-    // Add success message in chat
+    // Add success message in chat - prompt user to review and confirm the Character tab
     if (workflowActionsRef.current) {
       workflowActionsRef.current.addAssistantMessage(
-        "Your D&D character profile has been generated! Check out the Character tab to see your results.",
-        [{ label: 'Continue', value: 'continue_from_report' }]
+        "Your D&D character profile has been generated! Check out the Character tab to see your results, then click 'Looks Good' to confirm."
       );
     }
   }, [userId, token, fetchStatus]);
@@ -908,23 +939,50 @@ export default function TutorialWorkflowMode() {
   const shouldHideChatInput = progress.currentStep === 'welcome' || progress.currentStep === 'about_you';
 
   return (
-    <WorkflowModeLayout
-      options={{
-        workflowId: 'tutorial',
-        steps: workflowSteps,
-        initialStepIndex: progress.stepIndex,
-        onStepComplete: handleStepComplete,
-        onStepChange: handleStepChange,
-        onWorkflowComplete: handleWorkflowComplete,
-        onMessage: handleMessage,
-        onReset: handleReset,
-        onInitialize: handleInitialize,
-        persistenceKey: 'founder-os-tutorial',
-        autoSave: true,
-      }}
-      artifactContent={artifactContent}
-      hideChatInput={shouldHideChatInput}
-      className="h-screen-titlebar"
-    />
+    <>
+      <WorkflowModeLayout
+        options={{
+          workflowId: 'tutorial',
+          steps: workflowSteps,
+          initialStepIndex: progress.stepIndex,
+          onStepComplete: handleStepComplete,
+          onStepChange: handleStepChange,
+          onWorkflowComplete: handleWorkflowComplete,
+          onMessage: handleMessage,
+          onReset: handleReset,
+          onInitialize: handleInitialize,
+          persistenceKey: 'founder-os-tutorial',
+          autoSave: true,
+        }}
+        artifactContent={artifactContent}
+        hideChatInput={shouldHideChatInput}
+        className="h-screen-titlebar"
+      />
+
+      {/* Dev Mode Toolbar - positioned top-right to avoid blocking UI */}
+      {isDevMode() && (
+        <div className="fixed top-12 right-4 z-50 flex gap-2">
+          <button
+            onClick={handleStartAssessment}
+            className="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-medium rounded shadow-lg flex items-center gap-1 border border-purple-500"
+            title="Start assessment (Dev Mode)"
+          >
+            <Zap className="w-3 h-3" />
+            Assessment
+          </button>
+          <button
+            onClick={handleReset}
+            className="px-2 py-1 bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-medium rounded shadow-lg flex items-center gap-1 border border-yellow-500"
+            title="Reset all progress (Dev Mode)"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Reset
+          </button>
+          <div className="px-2 py-1 bg-gray-800 text-yellow-400 text-xs font-mono rounded shadow-lg border border-yellow-500/50">
+            DEV
+          </div>
+        </div>
+      )}
+    </>
   );
 }
