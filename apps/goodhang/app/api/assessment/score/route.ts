@@ -57,14 +57,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a new assessment session for this scoring
-    // Note: Using 'answers' field to store transcript as JSONB (compatible with enhanced schema)
+    const now = new Date().toISOString();
     const { data: session, error: sessionError } = await supabase
       .from('cs_assessment_sessions')
       .insert({
         user_id,
         status: 'in_progress',
-        answers: { transcript, source: source || 'desktop_app' },
-        started_at: new Date().toISOString(),
+        interview_transcript: transcript,
+        current_section_index: 0,
+        current_question_index: 0,
+        started_at: now,
+        last_activity_at: now,
       })
       .select()
       .single();
@@ -90,7 +93,6 @@ export async function POST(request: NextRequest) {
     console.log(`Scoring complete for session ${session.id}`);
 
     // Update session with results
-    // Store extended data in dimensions JSONB field (compatible with schema)
     const { error: updateError } = await supabase
       .from('cs_assessment_sessions')
       .update({
@@ -98,16 +100,13 @@ export async function POST(request: NextRequest) {
         completed_at: new Date().toISOString(),
         analyzed_at: scoringResults.analyzed_at,
         overall_score: scoringResults.overall_score,
+        character_profile: scoringResults.profile,
+        attributes: scoringResults.attributes,
+        signals: scoringResults.signals,
+        matching: scoringResults.matching,
+        question_scores: scoringResults.question_scores,
         archetype: scoringResults.profile.class,
         tier: scoringResults.overall_score >= 70 ? 'top_1' : scoringResults.overall_score >= 50 ? 'benched' : 'passed',
-        // Store extended scoring data in dimensions JSONB
-        dimensions: {
-          attributes: scoringResults.attributes,
-          profile: scoringResults.profile,
-          signals: scoringResults.signals,
-          matching: scoringResults.matching,
-          question_scores: scoringResults.question_scores,
-        },
       })
       .eq('id', session.id);
 
