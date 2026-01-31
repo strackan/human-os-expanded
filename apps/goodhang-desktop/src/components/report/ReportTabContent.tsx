@@ -356,7 +356,58 @@ interface CharacterTabProps {
   characterProfile: CharacterProfile | null;
 }
 
+// Helper to format social energy for display
+function formatSocialEnergy(energy: string): string {
+  const map: Record<string, string> = {
+    'introvert': 'Introvert',
+    'extrovert': 'Extrovert',
+    'ambivert': 'Ambivert',
+    'selective_extrovert': 'Selective Extrovert',
+  };
+  return map[energy] || energy;
+}
+
+// Helper to format relationship style for display
+function formatRelationshipStyle(style: string): string {
+  const map: Record<string, string> = {
+    'depth_seeking': 'Depth Seeker',
+    'breadth_seeking': 'Breadth Seeker',
+    'balanced': 'Balanced',
+    'experience_based': 'Experience Based',
+  };
+  return map[style] || style;
+}
+
+// Helper to format connection style for display
+function formatConnectionStyle(style: string): string {
+  const map: Record<string, string> = {
+    'conversation_based': 'Conversation Based',
+    'experience_based': 'Experience Based',
+    'activity_based': 'Activity Based',
+    'intellectual': 'Intellectual',
+  };
+  return map[style] || style;
+}
+
+// Helper to format energy pattern for display
+function formatEnergyPattern(pattern: string): string {
+  const map: Record<string, string> = {
+    'spontaneous': 'Spontaneous',
+    'planned': 'Planned',
+    'flexible': 'Flexible',
+    'routine_oriented': 'Routine Oriented',
+  };
+  return map[pattern] || pattern;
+}
+
 export function CharacterTab({ characterProfile }: CharacterTabProps) {
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
+
+  // Debug logging
+  console.log('[CharacterTab] characterProfile:', characterProfile);
+  console.log('[CharacterTab] signals:', characterProfile?.signals);
+  console.log('[CharacterTab] matching:', characterProfile?.matching);
+
   if (!characterProfile) {
     return (
       <div className="text-center py-8">
@@ -372,29 +423,164 @@ export function CharacterTab({ characterProfile }: CharacterTabProps) {
     );
   }
 
+  const race = characterProfile.race || 'Unknown';
+  const charClass = characterProfile.characterClass || characterProfile.class || 'Adventurer';
+  const tagline = characterProfile.title || characterProfile.tagline;
+  const { signals, matching, summary } = characterProfile;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header: Race + Class + Alignment */}
       <div className="text-center py-4">
         <div className="text-4xl mb-2">⚔️</div>
         <h3 className="text-xl font-bold text-white mb-1">
-          {characterProfile.title || characterProfile.tagline ||
-            `${characterProfile.race} ${characterProfile.characterClass || characterProfile.class}`}
+          {race} {charClass}
         </h3>
-        <p className="text-gray-400">{characterProfile.alignment}</p>
+        <p className="text-purple-400 font-medium">{characterProfile.alignment}</p>
+        {tagline && (
+          <p className="text-gray-400 text-sm mt-2 italic">"{tagline}"</p>
+        )}
       </div>
+
+      {/* Personality Summary */}
+      {summary && (() => {
+        const paragraphs = summary.split('\n\n').filter(p => p.trim());
+        const firstParagraph = paragraphs[0] || '';
+        const hasMore = paragraphs.length > 1;
+
+        return (
+          <div className="bg-gh-dark-700/30 rounded-lg p-4 border border-gh-dark-600">
+            <h4 className="text-xs font-medium text-gray-500 uppercase mb-3">About You</h4>
+            <div className="text-gray-300 text-sm leading-relaxed">
+              <p>{firstParagraph}</p>
+              {hasMore && !summaryExpanded && (
+                <button
+                  onClick={() => setSummaryExpanded(true)}
+                  className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-flex items-center gap-1"
+                >
+                  See More...
+                </button>
+              )}
+              {hasMore && summaryExpanded && (
+                <>
+                  {paragraphs.slice(1).map((p, i) => (
+                    <p key={i} className="mt-3">{p}</p>
+                  ))}
+                  <button
+                    onClick={() => setSummaryExpanded(false)}
+                    className="text-purple-400 hover:text-purple-300 text-sm mt-2 inline-flex items-center gap-1"
+                  >
+                    See Less
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Attributes Grid */}
       {characterProfile.attributes && (
-        <div className="grid grid-cols-3 gap-3">
-          {Object.entries(characterProfile.attributes).map(([attr, value]) => (
-            <div
-              key={attr}
-              className="bg-gh-dark-700/50 rounded-lg p-3 text-center"
-            >
-              <div className="text-lg font-bold text-white">{value}</div>
-              <div className="text-xs text-gray-400 uppercase">
-                {attr.substring(0, 3)}
+        <div>
+          <h4 className="text-xs font-medium text-gray-500 uppercase mb-2">Attributes</h4>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(characterProfile.attributes).map(([attr, value]) => (
+              <div
+                key={attr}
+                className="bg-gh-dark-700/50 rounded-lg p-2 text-center"
+              >
+                <div className="text-lg font-bold text-white">{value}</div>
+                <div className="text-xs text-gray-400 uppercase">
+                  {attr.substring(0, 3)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Signals Section */}
+      {signals && (
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-gray-500 uppercase">Personality Signals</h4>
+
+          <div className="grid grid-cols-2 gap-3">
+            {signals.enneagram_hint && (
+              <div className="bg-gh-dark-700/50 rounded-lg p-3">
+                <div className="text-xs text-gray-500 mb-1">Enneagram</div>
+                <div className="text-white font-medium">{signals.enneagram_hint}</div>
+              </div>
+            )}
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Social Energy</div>
+              <div className="text-white font-medium">{formatSocialEnergy(signals.social_energy)}</div>
+            </div>
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Relationship Style</div>
+              <div className="text-white font-medium">{formatRelationshipStyle(signals.relationship_style)}</div>
+            </div>
+          </div>
+
+          {signals.interest_vectors && signals.interest_vectors.length > 0 && (
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-2">Interests</div>
+              <div className="flex flex-wrap gap-1">
+                {signals.interest_vectors.map((interest, i) => (
+                  <span key={i} className="px-2 py-1 bg-purple-600/30 text-purple-300 text-xs rounded-full">
+                    {interest}
+                  </span>
+                ))}
               </div>
             </div>
-          ))}
+          )}
+        </div>
+      )}
+
+      {/* Matching Section */}
+      {matching && (
+        <div className="space-y-3">
+          <h4 className="text-xs font-medium text-gray-500 uppercase">Social Matching</h4>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Ideal Group Size</div>
+              <div className="text-white font-medium">{matching.ideal_group_size}</div>
+            </div>
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Connection Style</div>
+              <div className="text-white font-medium">{formatConnectionStyle(matching.connection_style)}</div>
+            </div>
+            <div className="bg-gh-dark-700/50 rounded-lg p-3">
+              <div className="text-xs text-gray-500 mb-1">Energy Pattern</div>
+              <div className="text-white font-medium">{formatEnergyPattern(matching.energy_pattern)}</div>
+            </div>
+          </div>
+
+          {matching.good_match_with && matching.good_match_with.length > 0 && (
+            <div className="bg-green-900/20 border border-green-700/30 rounded-lg p-3">
+              <div className="text-xs text-green-400 mb-2">Good Match With</div>
+              <div className="flex flex-wrap gap-1">
+                {matching.good_match_with.map((match, i) => (
+                  <span key={i} className="px-2 py-1 bg-green-600/30 text-green-300 text-xs rounded-full">
+                    {match}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {matching.avoid_match_with && matching.avoid_match_with.length > 0 && (
+            <div className="bg-red-900/20 border border-red-700/30 rounded-lg p-3">
+              <div className="text-xs text-red-400 mb-2">May Clash With</div>
+              <div className="flex flex-wrap gap-1">
+                {matching.avoid_match_with.map((match, i) => (
+                  <span key={i} className="px-2 py-1 bg-red-600/30 text-red-300 text-xs rounded-full">
+                    {match}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

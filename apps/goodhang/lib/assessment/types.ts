@@ -182,6 +182,7 @@ export interface PersonalityAssessmentResults {
   matching: MatchingProfile;
   question_scores: Record<string, QuestionScore>;
   overall_score: number;
+  summary?: string;  // 300-500 word personality summary
   analyzed_at: string;
   badges?: Badge[];
 }

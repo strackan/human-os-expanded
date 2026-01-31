@@ -166,7 +166,12 @@ export async function POST(request: NextRequest) {
         characterClass: scoringResults.profile.class,  // Add for desktop compat
       },
       attributes: scoringResults.attributes,
+      signals: scoringResults.signals,
+      matching: scoringResults.matching,
+      question_scores: scoringResults.question_scores,
       overall_score: scoringResults.overall_score,
+      summary: scoringResults.summary,
+      analyzed_at: scoringResults.analyzed_at,
     }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in /api/assessment/score:', error);

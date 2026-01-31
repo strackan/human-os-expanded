@@ -64,7 +64,7 @@ export interface ExecutiveReport {
 }
 
 // =============================================================================
-// D&D CHARACTER
+// D&D CHARACTER & ASSESSMENT RESULTS
 // =============================================================================
 
 export interface CharacterAttributes {
@@ -76,6 +76,36 @@ export interface CharacterAttributes {
   charisma: number;
 }
 
+// Also support API format with uppercase keys
+export interface ApiAttributes {
+  STR: number;
+  DEX: number;
+  CON: number;
+  INT: number;
+  WIS: number;
+  CHA: number;
+}
+
+export type SocialEnergy = 'introvert' | 'extrovert' | 'ambivert' | 'selective_extrovert';
+export type RelationshipStyle = 'depth_seeking' | 'breadth_seeking' | 'balanced' | 'experience_based';
+export type ConnectionStyle = 'conversation_based' | 'experience_based' | 'activity_based' | 'intellectual';
+export type EnergyPattern = 'spontaneous' | 'planned' | 'flexible' | 'routine_oriented';
+
+export interface AssessmentSignals {
+  enneagram_hint?: string;  // e.g., "7w8"
+  interest_vectors: string[];  // e.g., ["counterculture", "travel", "philosophy"]
+  social_energy: SocialEnergy;
+  relationship_style: RelationshipStyle;
+}
+
+export interface MatchingProfile {
+  ideal_group_size: string;  // e.g., "2-4 or 20+"
+  connection_style: ConnectionStyle;
+  energy_pattern: EnergyPattern;
+  good_match_with: string[];  // e.g., ["creatives", "rule-breakers"]
+  avoid_match_with: string[];  // e.g., ["rigid planners", "small-talk lovers"]
+}
+
 export interface CharacterProfile {
   race: string;
   characterClass?: string;  // Desktop format
@@ -83,7 +113,12 @@ export interface CharacterProfile {
   alignment: string;
   title?: string;
   tagline?: string;         // API format (same as title)
-  attributes?: CharacterAttributes;
+  attributes?: CharacterAttributes | ApiAttributes;
+  // Extended assessment data
+  signals?: AssessmentSignals;
+  matching?: MatchingProfile;
+  overall_score?: number;
+  summary?: string;         // 300-500 word personality summary
 }
 
 // =============================================================================

@@ -152,7 +152,16 @@ export class AssessmentScoringService {
       ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 10) // Scale to 0-100
       : 0;
 
-    // 12. Assemble final results
+    // 12. Generate personality summary
+    const summary = await this.generatePersonalitySummary({
+      profile,
+      attributes: finalAttributes,
+      signals,
+      matching,
+      transcript: input.transcript,
+    });
+
+    // 13. Assemble final results
     const results: PersonalityAssessmentResults = {
       session_id: input.session_id,
       user_id: input.user_id,
@@ -162,6 +171,7 @@ export class AssessmentScoringService {
       matching,
       question_scores: questionScores,
       overall_score: overallScore,
+      summary,
       analyzed_at: new Date().toISOString(),
     };
 
@@ -263,5 +273,78 @@ export class AssessmentScoringService {
       'routine_oriented': 'routine_oriented',
     };
     return map[value.toLowerCase()] || 'flexible';
+  }
+
+  /**
+   * Generates a personality summary (300-500 words) based on assessment results
+   */
+  private static async generatePersonalitySummary(input: {
+    profile: CharacterProfile;
+    attributes: Attributes;
+    signals: AssessmentSignals;
+    matching: MatchingProfile;
+    transcript: TranscriptEntry[];
+  }): Promise<string> {
+    const { profile, attributes, signals, matching, transcript } = input;
+
+    // Build a prompt for Claude to generate the summary
+    const prompt = `Based on the following personality assessment results, write a warm, insightful personality summary (300-500 words) in the style of an Enneagram or Myers-Briggs report. The summary should feel personal and validating while offering genuine insight into the person's character.
+
+## D&D Character Profile
+- Race: ${profile.race}
+- Class: ${profile.class}
+- Alignment: ${profile.alignment}
+- Tagline: ${profile.tagline}
+
+## Attributes (scale 1-10)
+- Intelligence (INT): ${attributes.INT}
+- Wisdom (WIS): ${attributes.WIS}
+- Charisma (CHA): ${attributes.CHA}
+- Constitution (CON): ${attributes.CON}
+- Strength (STR): ${attributes.STR}
+- Dexterity (DEX): ${attributes.DEX}
+
+## Personality Signals
+- Enneagram Hint: ${signals.enneagram_hint || 'Not determined'}
+- Social Energy: ${signals.social_energy}
+- Relationship Style: ${signals.relationship_style}
+- Interest Areas: ${signals.interest_vectors.join(', ')}
+
+## Social Matching Profile
+- Ideal Group Size: ${matching.ideal_group_size}
+- Connection Style: ${matching.connection_style}
+- Energy Pattern: ${matching.energy_pattern}
+- Best Matches: ${matching.good_match_with.join(', ')}
+- Challenging Matches: ${matching.avoid_match_with.join(', ')}
+
+## Sample Responses from Assessment
+${transcript.filter(t => t.role === 'user').slice(0, 3).map(t => `"${t.content.substring(0, 200)}${t.content.length > 200 ? '...' : ''}"`).join('\n')}
+
+Write the summary in second person ("You are..."). Focus on:
+1. Core personality traits and what drives them
+2. How they relate to others and form connections
+3. Their strengths and natural gifts
+4. Areas for growth (framed positively)
+5. What environments and relationships help them thrive
+
+Keep the tone warm, validating, and insightful - like a trusted friend who truly sees them. Do NOT use headers or bullet points - write flowing paragraphs. Do NOT mention D&D, the game mechanics, or that this is based on an assessment.
+
+IMPORTANT: Never use em-dashes (—). Instead, use " -- " (space, dash, dash, space). For example: "you carry a beautiful paradox -- the ability to..."`;
+
+
+    try {
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1024,
+        temperature: 0.7,
+        messages: [{ role: 'user', content: prompt }],
+      });
+
+      const firstContent = message.content[0];
+      return firstContent?.type === 'text' ? firstContent.text : '';
+    } catch (error) {
+      console.error('Error generating personality summary:', error);
+      return '';
+    }
   }
 }

@@ -7,9 +7,11 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Zap } from 'lucide-react';
 import { useSpeechToText } from '@/lib/hooks/useSpeechToText';
 import { TEST_IDS, testId } from '@/lib/test-utils';
+import { isDevMode } from '@/lib/api/client';
+import { MOCK_ASSESSMENT_ANSWERS } from '@/lib/dev/constants';
 import {
   flattenQuestions,
   isSectionCompleted,
@@ -262,13 +264,27 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
     [config.sections, answers]
   );
 
+  // Dev mode: fill all answers with mock data
+  const handleFillMockAnswers = useCallback(() => {
+    const mockAnswers: Record<string, string> = {};
+    allQuestions.forEach((q) => {
+      if (MOCK_ASSESSMENT_ANSWERS[q.id]) {
+        mockAnswers[q.id] = MOCK_ASSESSMENT_ANSWERS[q.id];
+      }
+    });
+    setAnswers(mockAnswers);
+    setCurrentIndex(totalQuestions - 1);
+    setShowCompletion(true);
+    console.log('[dev] Filled mock answers:', Object.keys(mockAnswers).length);
+  }, [allQuestions, totalQuestions]);
+
   // =============================================================================
   // LOADING SCREEN
   // =============================================================================
 
   if (isCompleting) {
     return (
-      <div {...testId(TEST_IDS.assessment.loadingScreen)} className="flex flex-col h-screen bg-black">
+      <div {...testId(TEST_IDS.assessment.loadingScreen)} className="flex flex-col h-screen-titlebar bg-black">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center max-w-md">
             <div
@@ -299,7 +315,7 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
 
   if (!currentQuestion) {
     return (
-      <div className="flex flex-col h-screen bg-black items-center justify-center">
+      <div className="flex flex-col h-screen-titlebar bg-black items-center justify-center">
         <p className="text-gray-400">Loading questions...</p>
       </div>
     );
@@ -317,7 +333,7 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
       : 'from-blue-600 to-purple-600';
 
   return (
-    <div {...testId(TEST_IDS.assessment.container)} className="flex flex-col h-screen bg-black text-white">
+    <div {...testId(TEST_IDS.assessment.container)} className="flex flex-col h-screen-titlebar bg-black text-white">
       {/* Header with Progress */}
       <div className={`border-b ${borderColor} bg-gray-900/95 relative`}>
         {/* Exit button */}
@@ -329,6 +345,18 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
         >
           <X className="w-5 h-5" />
         </button>
+
+        {/* Dev mode: Fill Mock Answers button */}
+        {isDevMode() && (
+          <button
+            onClick={handleFillMockAnswers}
+            className="absolute top-4 right-16 z-10 px-3 py-2 rounded-full bg-yellow-600/80 hover:bg-yellow-500 text-white text-xs font-medium transition-all duration-200 border border-yellow-500 flex items-center gap-1"
+            title="Fill with mock answers (Dev Mode)"
+          >
+            <Zap className="w-4 h-4" />
+            Mock Fill
+          </button>
+        )}
 
         {/* Section Timeline */}
         <SectionTimeline

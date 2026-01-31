@@ -5,10 +5,13 @@
  * Adds confirmation buttons and reset capability.
  */
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, RefreshCw, Sparkles } from 'lucide-react';
+import { CheckCircle2, RefreshCw, Sparkles, Play } from 'lucide-react';
 import type { ExecutiveReport, CharacterProfile, ReportConfirmations } from '@/lib/types';
 import { ReportView, type ReportTab } from './ReportView';
+
+const ASSESSMENT_STORAGE_KEY = 'goodhang-dnd-assessment-progress';
 
 // =============================================================================
 // TYPES
@@ -63,6 +66,29 @@ export function ReportEditor({
     confirmations.voice &&
     confirmations.character;
 
+  // Character assessment is complete ONLY if we have actual character data to display
+  // Backend status alone is not enough - we need the data to show "Looks Good"
+  const hasCharacterData = !!(characterProfile?.race && characterProfile?.alignment);
+  // For Character tab: require actual data, not just backend status
+  // For other purposes (like showing checkmark): backend status is fine
+  const assessmentCompleteWithData = hasCharacterData;
+
+  // Check if there's saved assessment progress (for "Resume Assessment" button)
+  const [hasAssessmentProgress, setHasAssessmentProgress] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(ASSESSMENT_STORAGE_KEY);
+      if (saved) {
+        const { answers } = JSON.parse(saved);
+        setHasAssessmentProgress(answers && Object.keys(answers).length > 0);
+      } else {
+        setHasAssessmentProgress(false);
+      }
+    } catch {
+      setHasAssessmentProgress(false);
+    }
+  }, [activeTab]); // Re-check when tab changes
+
   const confirmedCount = Object.values(confirmations).filter(Boolean).length;
 
   const isModified =
@@ -106,19 +132,30 @@ export function ReportEditor({
             )}
           </div>
           <div className="flex gap-2 items-center">
-            {/* Character tab: show Take Assessment if not completed */}
-            {activeTab === 'character' && !hasCompletedAssessment && !confirmations.character && onTakeAssessment && (
+            {/* Character tab: show Take/Resume Assessment if no character data */}
+            {activeTab === 'character' && !assessmentCompleteWithData && !confirmations.character && onTakeAssessment && (
               <button
                 onClick={onTakeAssessment}
                 className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
               >
-                <Sparkles className="w-4 h-4" />
-                Take Assessment
+                {hasAssessmentProgress ? (
+                  <>
+                    <Play className="w-4 h-4" />
+                    Resume Assessment
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Take Assessment
+                  </>
+                )}
               </button>
             )}
-            {/* Per-tab "Looks Good" button (not for character tab without assessment) */}
+            {/* Per-tab "Looks Good" button */}
+            {/* For non-character tabs: always available (data from Sculptor) */}
+            {/* For character tab: only when we have actual character data to display */}
             {!confirmations[activeTab] && !allSectionsConfirmed &&
-             !(activeTab === 'character' && !hasCompletedAssessment) && (
+             (activeTab !== 'character' || assessmentCompleteWithData) && (
               <button
                 onClick={onConfirmSection}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
