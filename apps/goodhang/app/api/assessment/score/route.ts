@@ -6,6 +6,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { AssessmentScoringService } from '@/lib/services/AssessmentScoringService';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -14,14 +24,14 @@ export async function POST(request: NextRequest) {
     if (!user_id || !transcript) {
       return NextResponse.json(
         { error: 'user_id and transcript are required' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
     if (!Array.isArray(transcript) || transcript.length === 0) {
       return NextResponse.json(
         { error: 'transcript must be a non-empty array' },
-        { status: 400 }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -42,7 +52,7 @@ export async function POST(request: NextRequest) {
       console.error('User not found:', profileError);
       return NextResponse.json(
         { error: 'User not found' },
-        { status: 404 }
+        { status: 404, headers: corsHeaders }
       );
     }
 
@@ -62,7 +72,7 @@ export async function POST(request: NextRequest) {
       console.error('Failed to create session:', sessionError);
       return NextResponse.json(
         { error: 'Failed to create assessment session' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -100,7 +110,7 @@ export async function POST(request: NextRequest) {
       console.error('Error saving scoring results:', updateError);
       return NextResponse.json(
         { error: 'Failed to save scoring results' },
-        { status: 500 }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -149,12 +159,12 @@ export async function POST(request: NextRequest) {
       session_id: session.id,
       profile: scoringResults.profile,
       overall_score: scoringResults.overall_score,
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in /api/assessment/score:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 }
+      { status: 500, headers: corsHeaders }
     );
   }
 }

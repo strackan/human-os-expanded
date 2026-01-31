@@ -24,8 +24,6 @@ export interface ReportViewProps {
   activeTab: ReportTab;
   /** Callback when tab changes */
   onTabChange: (tab: ReportTab) => void;
-  /** Optional callback when user wants to take character assessment */
-  onTakeAssessment?: () => void;
   /** Optional: show confirmation checkmarks on tabs */
   confirmations?: Record<ReportTab, boolean>;
   /** Optional: custom className for the container */
@@ -54,7 +52,6 @@ export function ReportView({
   characterProfile = null,
   activeTab,
   onTabChange,
-  onTakeAssessment,
   confirmations,
   className = '',
   onEdit,
@@ -62,18 +59,13 @@ export function ReportView({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'status':
-        return <StatusTab report={report} />;
+        return <StatusTab report={report} onEdit={onEdit} />;
       case 'personality':
         return <PersonalityTab report={report} onEdit={onEdit} />;
       case 'voice':
-        return <VoiceTab report={report} />;
+        return <VoiceTab report={report} onEdit={onEdit} />;
       case 'character':
-        return (
-          <CharacterTab
-            characterProfile={characterProfile}
-            onTakeAssessment={onTakeAssessment}
-          />
-        );
+        return <CharacterTab characterProfile={characterProfile} />;
     }
   };
 

@@ -29,6 +29,7 @@ function WorkflowModeLayoutInner({
   artifactContent,
   className,
   options,
+  hideChatInput,
 }: WorkflowModeLayoutInnerProps) {
   const state = useWorkflowModeState(options);
   const prevHadArtifactRef = useRef(false);
@@ -53,7 +54,7 @@ function WorkflowModeLayoutInner({
       <div className={`flex h-full bg-gh-dark-900 overflow-hidden ${className ?? ''}`}>
         {/* Left sidebar with chat - grows to fill when no artifact */}
         <div className={`h-full overflow-hidden ${hasArtifact ? 'flex-shrink-0' : 'flex-1'}`}>
-          {sidebarContent ?? <WorkflowSidebar expandToFill={!hasArtifact} />}
+          {sidebarContent ?? <WorkflowSidebar expandToFill={!hasArtifact} hideChatInput={hideChatInput} />}
         </div>
 
         {/* Right panel for artifacts - expands to fill available space */}
@@ -97,6 +98,7 @@ export function WorkflowModeLayout({
   artifactContent,
   className,
   options,
+  hideChatInput,
 }: WorkflowModeLayoutWithOptionsProps) {
   return (
     <WorkflowModeLayoutInner
@@ -104,6 +106,7 @@ export function WorkflowModeLayout({
       sidebarContent={sidebarContent}
       artifactContent={artifactContent}
       className={className}
+      hideChatInput={hideChatInput}
     >
       {children}
     </WorkflowModeLayoutInner>

@@ -18,8 +18,10 @@ import {
   sendTutorialMessage,
   persistReport as persistReportApi,
 } from '@/lib/api/tutorial';
+import { post } from '@/lib/api';
 import { ReportEditor, type ReportTab } from '@/components/report';
 import { WorkflowModeLayout, ArtifactPanel } from '@/components/workflow-mode';
+import { AssessmentFlow } from '@/components/assessment';
 import type {
   TutorialStep,
   TutorialProgress,
@@ -31,8 +33,110 @@ import type {
   WorkflowMessage,
   WorkflowModeActions,
   MessageResponse,
+  AssessmentConfig,
+  AssessmentSection,
 } from '@/lib/types';
 import { TUTORIAL_STEPS, getStepIndex, getResumeStep, getAllCompletionKeys } from '@/lib/tutorial/steps';
+
+// =============================================================================
+// GOODHANG ASSESSMENT CONFIGURATION (for inline display)
+// =============================================================================
+
+const ASSESSMENT_STORAGE_KEY = 'goodhang-dnd-assessment-progress';
+
+const ASSESSMENT_SECTIONS: AssessmentSection[] = [
+  {
+    id: 'your-story',
+    title: 'Your Story',
+    transitionMessage: "Let's start with some moments that have shaped who you are.",
+    questions: [
+      {
+        id: 'a1-turning-point',
+        text: 'Describe a moment or experience that fundamentally changed who you are or how you see the world.',
+        followUp: 'Be specific about what happened and how it changed you.',
+      },
+      {
+        id: 'a2-happiest-memory',
+        text: 'Tell me about your single happiest memory.',
+        followUp: 'What made this moment so special?',
+      },
+      {
+        id: 'a3-difficult-time',
+        text: 'Tell me about a difficult time in your life and how you got through it.',
+        followUp: 'What did you learn about yourself?',
+      },
+      {
+        id: 'a4-redemption',
+        text: 'Tell me about something bad that happened to you that ultimately led to something good.',
+        followUp: 'How did the transformation happen?',
+      },
+    ],
+  },
+  {
+    id: 'who-you-are',
+    title: 'Who You Are',
+    transitionMessage: "Now let's explore your core identity and values.",
+    questions: [
+      {
+        id: 'b1-failed-someone',
+        text: 'Tell me about a time you failed someone you care about.',
+        followUp: 'How did it affect your relationship?',
+      },
+      {
+        id: 'b2-core-identity',
+        text: "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?",
+        followUp: 'What defines you beyond external factors?',
+      },
+      {
+        id: 'b3-simple-thing',
+        text: "What's a simple thing that matters a lot to you?",
+        followUp: 'Why does this resonate so deeply?',
+      },
+    ],
+  },
+  {
+    id: 'how-you-connect',
+    title: 'How You Connect',
+    transitionMessage: "Finally, let's understand how you relate to others.",
+    questions: [
+      {
+        id: 'c1-relationship-need',
+        text: 'What do you need from close relationships that you rarely ask for directly?',
+        followUp: "What makes it hard to ask?",
+      },
+      {
+        id: 'c2-intellectual-gap',
+        text: "What's something you believe in intellectually but can't fully commit to in practice?",
+        followUp: 'What holds you back?',
+      },
+      {
+        id: 'c3-happiness-barrier',
+        text: "What's really keeping you from being happy?",
+        followUp: 'Be honest with yourself.',
+      },
+    ],
+  },
+];
+
+const ASSESSMENT_LOADING_MESSAGES = [
+  "Analyzing your responses...",
+  "Calculating your archetype...",
+  "Mapping personality dimensions...",
+  "Generating your D&D profile...",
+];
+
+const ASSESSMENT_CONFIG: AssessmentConfig = {
+  storageKey: ASSESSMENT_STORAGE_KEY,
+  sections: ASSESSMENT_SECTIONS,
+  loadingMessages: ASSESSMENT_LOADING_MESSAGES,
+  themeColor: 'purple',
+  title: 'Good Hang Assessment',
+  subtitle: 'D&D Character Profile',
+  completionTitle: "You've completed all questions!",
+  completionDescription:
+    "Click below to submit your assessment and generate your D&D character profile. Our AI will analyze your responses and map your personality to a unique race, class, and alignment.",
+  submitButtonText: 'Submit & Generate Profile',
+};
 
 // =============================================================================
 // CONVERT TUTORIAL STEPS TO WORKFLOW STEPS
@@ -65,8 +169,8 @@ function convertToWorkflowSteps(
 export default function TutorialWorkflowMode() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { token } = useAuthStore();
-  const { status, loading: statusLoading } = useUserStatusStore();
+  const { token, userId } = useAuthStore();
+  const { status, loading: statusLoading, fetchStatus } = useUserStatusStore();
   const initializedRef = useRef(false);
   const workflowActionsRef = useRef<WorkflowModeActions | null>(null);
   const hasShownReportCompleteRef = useRef(false);
@@ -98,6 +202,9 @@ export default function TutorialWorkflowMode() {
 
   // Loading state for artifact
   const [isLoadingReport, setIsLoadingReport] = useState(false);
+
+  // Inline assessment state
+  const [showInlineAssessment, setShowInlineAssessment] = useState(false);
 
   // Session context
   const sessionId = searchParams.get('session') || status?.contexts?.active;
@@ -351,7 +458,7 @@ export default function TutorialWorkflowMode() {
     ) {
       hasShownReportCompleteRef.current = true;
       workflowActionsRef.current.addAssistantMessage(
-        "All sections look good! Ready to continue when you are.",
+        "Great, all set? Let's continue.",
         [{ label: 'Continue', value: 'continue_from_report' }]
       );
     }
@@ -442,6 +549,32 @@ export default function TutorialWorkflowMode() {
       if (!report) return;
 
       const parts = field.split('.');
+
+      // StatusTab fields
+      if (field === 'summary') {
+        setReport({ ...report, summary: value });
+        return;
+      }
+
+      if (field === 'communication.style') {
+        setReport({
+          ...report,
+          communication: { ...report.communication, style: value },
+        });
+        return;
+      }
+
+      if (field === 'communication.preferences') {
+        const updatedPreferences = [...report.communication.preferences];
+        updatedPreferences[index] = value;
+        setReport({
+          ...report,
+          communication: { ...report.communication, preferences: updatedPreferences },
+        });
+        return;
+      }
+
+      // PersonalityTab fields
       if (parts[0] === 'personality' && parts.length === 3) {
         const fieldName = parts[2] as 'trait' | 'description' | 'insight';
         const updatedPersonality = [...report.personality];
@@ -453,12 +586,51 @@ export default function TutorialWorkflowMode() {
           ...report,
           personality: updatedPersonality,
         });
+        return;
+      }
+
+      // VoiceTab fields
+      if (field === 'voice.tone' && report.voice) {
+        setReport({
+          ...report,
+          voice: { ...report.voice, tone: value },
+        });
+        return;
+      }
+
+      if (field === 'voice.style' && report.voice) {
+        setReport({
+          ...report,
+          voice: { ...report.voice, style: value },
+        });
+        return;
+      }
+
+      if (field === 'voice.characteristics' && report.voice) {
+        const updatedCharacteristics = [...report.voice.characteristics];
+        updatedCharacteristics[index] = value;
+        setReport({
+          ...report,
+          voice: { ...report.voice, characteristics: updatedCharacteristics },
+        });
+        return;
+      }
+
+      if (field === 'voice.examples' && report.voice?.examples) {
+        const updatedExamples = [...report.voice.examples];
+        updatedExamples[index] = value;
+        setReport({
+          ...report,
+          voice: { ...report.voice, examples: updatedExamples },
+        });
+        return;
       }
     },
     [report]
   );
 
   const confirmReportSection = useCallback(() => {
+    // Confirm the current tab and advance to the next unconfirmed tab
     setReportConfirmations((prev) => ({ ...prev, [activeReportTab]: true }));
 
     if (activeReportTab === 'status' && !reportConfirmations.personality) {
@@ -469,6 +641,53 @@ export default function TutorialWorkflowMode() {
       setActiveReportTab('character');
     }
   }, [activeReportTab, reportConfirmations]);
+
+  // =============================================================================
+  // INLINE ASSESSMENT HANDLERS
+  // =============================================================================
+
+  const handleStartAssessment = useCallback(() => {
+    setShowInlineAssessment(true);
+  }, []);
+
+  const handleAssessmentComplete = useCallback(async (answers: Record<string, string>) => {
+    // Build transcript in the format the scoring API expects
+    const allQuestions = ASSESSMENT_SECTIONS.flatMap((s) => s.questions);
+    const transcript = allQuestions.flatMap((q) => [
+      { role: 'assistant', content: q.text },
+      { role: 'user', content: answers[q.id] || '' },
+    ]);
+
+    await post('/api/assessment/score', {
+      user_id: userId,
+      transcript,
+      source: 'desktop_app',
+    }, token);
+
+    console.log('[tutorial-workflow] Assessment scored successfully');
+
+    // Refresh user status to get updated assessment completion status
+    if (token) {
+      await fetchStatus(token, userId ?? undefined);
+    }
+
+    // Hide the assessment and auto-confirm the character section
+    setShowInlineAssessment(false);
+    setReportConfirmations((prev) => ({ ...prev, character: true }));
+
+    // Add success message in chat
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Your D&D character profile has been generated! Check out the Character tab to see your results.",
+        [{ label: 'Continue', value: 'continue_from_report' }]
+      );
+    }
+  }, [userId, token, fetchStatus]);
+
+  const handleAssessmentExit = useCallback((_answers: Record<string, string>, _currentIndex: number) => {
+    // User exited assessment without completing - just hide it
+    setShowInlineAssessment(false);
+  }, []);
 
   // =============================================================================
   // INITIALIZATION
@@ -541,6 +760,30 @@ export default function TutorialWorkflowMode() {
   }, [searchParams, status, statusLoading, report, isLoadingReport, progress, token]);
 
   // =============================================================================
+  // AUTO-SAVE EDITS
+  // =============================================================================
+  // Debounced save effect (1 second delay) when report is modified via inline editing
+
+  useEffect(() => {
+    // Skip if no report, no session, or report hasn't changed
+    if (!report || !sessionId) return;
+    if (JSON.stringify(report) === JSON.stringify(originalReport)) return;
+
+    const timeout = setTimeout(async () => {
+      try {
+        console.log('[tutorial-workflow] Auto-saving report edits...');
+        await persistReportApi(sessionId, report, progress, token);
+        setOriginalReport(report);
+        console.log('[tutorial-workflow] Report auto-saved successfully');
+      } catch (error) {
+        console.error('[tutorial-workflow] Error auto-saving report:', error);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, [report, originalReport, sessionId, progress, token]);
+
+  // =============================================================================
   // RENDER
   // =============================================================================
 
@@ -567,11 +810,25 @@ export default function TutorialWorkflowMode() {
   });
 
   // Artifact content (report or loading)
+  // Check if user has completed the GoodHang assessment
+  const hasCompletedAssessment = status?.products?.goodhang?.assessment?.completed ?? false;
+
   // Show artifact when loading, or when we have a report (on welcome or about_you step)
   // Note: showStepProgress=false for tutorial - step progress is shown in sidebar
   const artifactContent = isLoadingReport ? (
     <ArtifactPanel showStepProgress={false}>
       {loadingArtifact}
+    </ArtifactPanel>
+  ) : showInlineAssessment ? (
+    // Show inline assessment when user clicks "Take Assessment"
+    <ArtifactPanel showStepProgress={false}>
+      <div className="h-full overflow-y-auto">
+        <AssessmentFlow
+          config={ASSESSMENT_CONFIG}
+          onComplete={handleAssessmentComplete}
+          onExit={handleAssessmentExit}
+        />
+      </div>
     </ArtifactPanel>
   ) : (
     report && (progress.currentStep === 'about_you' || progress.currentStep === 'welcome') ? (
@@ -585,8 +842,9 @@ export default function TutorialWorkflowMode() {
           onConfirmSection={confirmReportSection}
           originalReport={originalReport}
           onResetEdits={resetReportEdits}
-          onTakeAssessment={() => navigate('/goodhang/assessment?return=/founder-os/tutorial')}
+          onTakeAssessment={handleStartAssessment}
           onFieldEdit={handleFieldEdit}
+          hasCompletedAssessment={hasCompletedAssessment}
           className="h-full"
         />
       </ArtifactPanel>
@@ -631,6 +889,9 @@ export default function TutorialWorkflowMode() {
     );
   }
 
+  // Hide chat input during report review steps (inline editing is used instead)
+  const shouldHideChatInput = progress.currentStep === 'welcome' || progress.currentStep === 'about_you';
+
   return (
     <WorkflowModeLayout
       options={{
@@ -647,6 +908,7 @@ export default function TutorialWorkflowMode() {
         autoSave: true,
       }}
       artifactContent={artifactContent}
+      hideChatInput={shouldHideChatInput}
       className="h-screen-titlebar"
     />
   );

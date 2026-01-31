@@ -181,7 +181,7 @@ function UpcomingStepsFooter({ steps, currentStepIndex }: UpcomingStepsFooterPro
 // MAIN COMPONENT
 // =============================================================================
 
-export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSidebarProps) {
+export function WorkflowSidebar({ className, expandToFill = false, hideChatInput = false }: WorkflowSidebarProps) {
   const { workflowState, onReset } = useWorkflowMode();
   const {
     sidebarWidth,
@@ -315,17 +315,19 @@ export function WorkflowSidebar({ className, expandToFill = false }: WorkflowSid
             {/* Chat panel - this is the ONLY scrollable area */}
             <ChatPanel className="flex-1 min-h-0 overflow-y-auto" />
 
-            {/* Chat input - fixed at bottom */}
-            <div className="flex-shrink-0 border-t border-gh-dark-700">
-              <ChatInput
-                value={inputValue}
-                onChange={setInputValue}
-                onSend={handleSend}
-                disabled={isLoading}
-                placeholder="Type your message..."
-                sendButtonColor="blue"
-              />
-            </div>
+            {/* Chat input - fixed at bottom (hidden when inline editing is active) */}
+            {!hideChatInput && (
+              <div className="flex-shrink-0 border-t border-gh-dark-700">
+                <ChatInput
+                  value={inputValue}
+                  onChange={setInputValue}
+                  onSend={handleSend}
+                  disabled={isLoading}
+                  placeholder="Type your message..."
+                  sendButtonColor="blue"
+                />
+              </div>
+            )}
 
             {/* Upcoming steps - shows what's next */}
             <div className="flex-shrink-0">

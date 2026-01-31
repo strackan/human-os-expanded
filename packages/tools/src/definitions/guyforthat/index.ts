@@ -9,6 +9,7 @@
  * - companies: Company context and profile management
  * - storage: Expert corpus management in Supabase Storage
  * - engagement: Post engagement tracking and analytics
+ * - crm: Opportunities, pipelines, and deal tracking
  */
 
 // Contact tools
@@ -45,3 +46,46 @@ export {
   getPostEngagementStats,
   listTrackedPosts,
 } from './engagement.js';
+
+// CRM tools
+export {
+  // Pipeline
+  getPipelineStages,
+  initializePipeline,
+  getPipelineSummary,
+  // Opportunities
+  createOpportunity,
+  updateOpportunity,
+  getOpportunity,
+  searchOpportunities,
+  getContactOpportunities,
+  // Activities
+  addOpportunityActivity,
+  // Products
+  createProduct,
+  searchProducts,
+  // Line items
+  addLineItem,
+  // Account context
+  upsertAccountContext,
+  getAccountContext,
+} from './crm-tools.js';
+
+// Campaign tools
+export {
+  // Campaigns
+  createCampaign,
+  updateCampaign,
+  getCampaign,
+  searchCampaigns,
+  // Members
+  addCampaignMembers,
+  updateMemberStatus,
+  getCampaignMembers,
+  getMembersToContact,
+  removeCampaignMember,
+  // Activities
+  logCampaignActivity,
+  // Conversion
+  convertMemberToOpportunity,
+} from './campaign-tools.js';

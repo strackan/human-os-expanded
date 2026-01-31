@@ -357,6 +357,8 @@ export interface WorkflowModeLayoutProps {
   sidebarContent?: React.ReactNode;
   artifactContent?: React.ReactNode;
   className?: string;
+  /** When true, hides the chat input field in the sidebar */
+  hideChatInput?: boolean;
 }
 
 /**
@@ -366,6 +368,8 @@ export interface WorkflowSidebarProps {
   className?: string;
   /** When true, sidebar expands to fill available space (no fixed width) */
   expandToFill?: boolean;
+  /** When true, hides the chat input field (for steps with inline editing) */
+  hideChatInput?: boolean;
 }
 
 /**

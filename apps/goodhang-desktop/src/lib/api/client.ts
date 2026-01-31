@@ -9,7 +9,7 @@
 // CONFIGURATION
 // =============================================================================
 
-const DEFAULT_BASE_URL = 'https://goodhang.com';
+const DEFAULT_BASE_URL = 'https://goodhang-staging.vercel.app';
 
 /**
  * Get the API base URL from environment or default

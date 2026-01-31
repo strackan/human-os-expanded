@@ -14,9 +14,9 @@
       {
         "title": "Good Hang",
         "width": 1200,
-        "height": 800,
+        "height": 910,
         "minWidth": 800,
-        "minHeight": 600,
+        "minHeight": 700,
         "resizable": true,
         "center": true,
         "decorations": true

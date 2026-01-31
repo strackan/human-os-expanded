@@ -23,7 +23,7 @@ export interface ReportEditorProps {
   onTabChange: (tab: ReportTab) => void;
   /** Track which sections are confirmed */
   confirmations: ReportConfirmations;
-  /** Callback when current section is confirmed */
+  /** Callback when all sections are confirmed (Looks Good clicked) */
   onConfirmSection: () => void;
   /** Original report for comparison (shows reset if modified) */
   originalReport?: ExecutiveReport | null;
@@ -33,6 +33,8 @@ export interface ReportEditorProps {
   onTakeAssessment?: () => void;
   /** Callback for inline field edits (double-click to edit) */
   onFieldEdit?: (field: string, index: number, value: string) => void;
+  /** Whether the user has completed the GoodHang assessment */
+  hasCompletedAssessment?: boolean;
   /** Optional: custom className for the container */
   className?: string;
 }
@@ -52,6 +54,7 @@ export function ReportEditor({
   onResetEdits,
   onTakeAssessment,
   onFieldEdit,
+  hasCompletedAssessment = false,
   className = '',
 }: ReportEditorProps) {
   const allSectionsConfirmed =
@@ -79,7 +82,6 @@ export function ReportEditor({
         characterProfile={characterProfile}
         activeTab={activeTab}
         onTabChange={onTabChange}
-        onTakeAssessment={onTakeAssessment}
         confirmations={confirmations}
         className="rounded-b-none flex-1 min-h-0"
         onEdit={onFieldEdit}
@@ -104,7 +106,19 @@ export function ReportEditor({
             )}
           </div>
           <div className="flex gap-2 items-center">
-            {!confirmations[activeTab] && !allSectionsConfirmed && (
+            {/* Character tab: show Take Assessment if not completed */}
+            {activeTab === 'character' && !hasCompletedAssessment && !confirmations.character && onTakeAssessment && (
+              <button
+                onClick={onTakeAssessment}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+              >
+                <Sparkles className="w-4 h-4" />
+                Take Assessment
+              </button>
+            )}
+            {/* Per-tab "Looks Good" button (not for character tab without assessment) */}
+            {!confirmations[activeTab] && !allSectionsConfirmed &&
+             !(activeTab === 'character' && !hasCompletedAssessment) && (
               <button
                 onClick={onConfirmSection}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors flex items-center gap-1"

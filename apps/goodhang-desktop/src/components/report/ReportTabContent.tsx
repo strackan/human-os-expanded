@@ -128,24 +128,52 @@ function EditableField({ value, onSave, className = '', multiline = false, place
 
 interface StatusTabProps {
   report: ExecutiveReport;
+  onEdit?: (field: string, index: number, value: string) => void;
 }
 
-export function StatusTab({ report }: StatusTabProps) {
+export function StatusTab({ report, onEdit }: StatusTabProps) {
   return (
     <div className="space-y-4">
       <div className="prose prose-invert prose-sm max-w-none">
-        <ReactMarkdown>{report.summary}</ReactMarkdown>
+        {onEdit ? (
+          <EditableField
+            value={report.summary}
+            onSave={(v) => onEdit('summary', 0, v)}
+            multiline
+            placeholder="Summary"
+          />
+        ) : (
+          <ReactMarkdown>{report.summary}</ReactMarkdown>
+        )}
       </div>
       <div className="pt-4 border-t border-gh-dark-600">
         <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
           Communication Style
         </h4>
-        <p className="text-white mb-2">{report.communication.style}</p>
+        <p className="text-white mb-2">
+          {onEdit ? (
+            <EditableField
+              value={report.communication.style}
+              onSave={(v) => onEdit('communication.style', 0, v)}
+              placeholder="Communication style"
+            />
+          ) : (
+            report.communication.style
+          )}
+        </p>
         <ul className="space-y-1">
           {report.communication.preferences.map((pref, i) => (
             <li key={i} className="text-gray-400 text-sm flex items-start gap-2">
               <ChevronRight className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-              {pref}
+              {onEdit ? (
+                <EditableField
+                  value={pref}
+                  onSave={(v) => onEdit('communication.preferences', i, v)}
+                  placeholder="Preference"
+                />
+              ) : (
+                pref
+              )}
             </li>
           ))}
         </ul>
@@ -221,9 +249,10 @@ export function PersonalityTab({ report, onEdit }: PersonalityTabProps) {
 
 interface VoiceTabProps {
   report: ExecutiveReport;
+  onEdit?: (field: string, index: number, value: string) => void;
 }
 
-export function VoiceTab({ report }: VoiceTabProps) {
+export function VoiceTab({ report, onEdit }: VoiceTabProps) {
   if (!report.voice) {
     return (
       <div className="text-center py-8">
@@ -241,13 +270,33 @@ export function VoiceTab({ report }: VoiceTabProps) {
         <h4 className="text-sm font-medium text-gray-400 uppercase mb-2">
           Your Tone
         </h4>
-        <p className="text-white">{report.voice.tone}</p>
+        <p className="text-white">
+          {onEdit ? (
+            <EditableField
+              value={report.voice.tone}
+              onSave={(v) => onEdit('voice.tone', 0, v)}
+              placeholder="Tone"
+            />
+          ) : (
+            report.voice.tone
+          )}
+        </p>
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-400 uppercase mb-2">
           Writing Style
         </h4>
-        <p className="text-gray-300">{report.voice.style}</p>
+        <p className="text-gray-300">
+          {onEdit ? (
+            <EditableField
+              value={report.voice.style}
+              onSave={(v) => onEdit('voice.style', 0, v)}
+              placeholder="Style"
+            />
+          ) : (
+            report.voice.style
+          )}
+        </p>
       </div>
       <div>
         <h4 className="text-sm font-medium text-gray-400 uppercase mb-2">
@@ -257,7 +306,15 @@ export function VoiceTab({ report }: VoiceTabProps) {
           {report.voice.characteristics.map((char, i) => (
             <li key={i} className="text-gray-300 flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0" />
-              {char}
+              {onEdit ? (
+                <EditableField
+                  value={char}
+                  onSave={(v) => onEdit('voice.characteristics', i, v)}
+                  placeholder="Characteristic"
+                />
+              ) : (
+                char
+              )}
             </li>
           ))}
         </ul>
@@ -273,7 +330,15 @@ export function VoiceTab({ report }: VoiceTabProps) {
                 key={i}
                 className="border-l-2 border-purple-500 pl-3 text-gray-300 italic text-sm"
               >
-                "{example}"
+                {onEdit ? (
+                  <EditableField
+                    value={example}
+                    onSave={(v) => onEdit('voice.examples', i, v)}
+                    placeholder="Example phrase"
+                  />
+                ) : (
+                  `"${example}"`
+                )}
               </blockquote>
             ))}
           </div>
@@ -289,11 +354,9 @@ export function VoiceTab({ report }: VoiceTabProps) {
 
 interface CharacterTabProps {
   characterProfile: CharacterProfile | null;
-  /** Optional callback when user wants to take the assessment */
-  onTakeAssessment?: () => void;
 }
 
-export function CharacterTab({ characterProfile, onTakeAssessment }: CharacterTabProps) {
+export function CharacterTab({ characterProfile }: CharacterTabProps) {
   if (!characterProfile) {
     return (
       <div className="text-center py-8">
@@ -302,22 +365,9 @@ export function CharacterTab({ characterProfile, onTakeAssessment }: CharacterTa
           Your D&D character profile will be generated after completing the Good
           Hang assessment.
         </p>
-        <p className="text-gray-500 text-sm mb-4">
+        <p className="text-gray-500 text-sm">
           This maps your personality to a unique race, class, and alignment.
         </p>
-        {onTakeAssessment && (
-          <>
-            <button
-              onClick={onTakeAssessment}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
-            >
-              Take The Assessment Now
-            </button>
-            <p className="text-gray-600 text-xs mt-3">
-              Optional - Required for Good Hang Social mode
-            </p>
-          </>
-        )}
       </div>
     );
   }
