@@ -50,6 +50,7 @@ import { moodTools, handleMoodTools } from './tools/moods.js';
 import { relationshipTools, handleRelationshipTools } from './tools/relationships.js';
 import { conductorTools, handleConductorTools } from './tools/conductor.js';
 import { codeTools, handleCodeTools } from './tools/code.js';
+import { crmTools, handleCrmTools } from './tools/crm/index.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -124,6 +125,7 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
   { tools: relationshipTools, handler: handleRelationshipTools },
   { tools: conductorTools, handler: handleConductorTools },
   { tools: codeTools, handler: handleCodeTools },
+  { tools: crmTools, handler: handleCrmTools },
 ];
 
 /** Flat list of all tools for MCP registration, with mode property added */
