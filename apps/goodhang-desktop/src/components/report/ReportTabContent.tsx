@@ -377,8 +377,8 @@ export function CharacterTab({ characterProfile }: CharacterTabProps) {
       <div className="text-center py-4">
         <div className="text-4xl mb-2">⚔️</div>
         <h3 className="text-xl font-bold text-white mb-1">
-          {characterProfile.title ||
-            `${characterProfile.race} ${characterProfile.characterClass}`}
+          {characterProfile.title || characterProfile.tagline ||
+            `${characterProfile.race} ${characterProfile.characterClass || characterProfile.class}`}
         </h3>
         <p className="text-gray-400">{characterProfile.alignment}</p>
       </div>

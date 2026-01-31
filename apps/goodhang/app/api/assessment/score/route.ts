@@ -157,7 +157,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       session_id: session.id,
-      profile: scoringResults.profile,
+      profile: {
+        ...scoringResults.profile,
+        characterClass: scoringResults.profile.class,  // Add for desktop compat
+      },
+      attributes: scoringResults.attributes,
       overall_score: scoringResults.overall_score,
     }, { headers: corsHeaders });
   } catch (error) {

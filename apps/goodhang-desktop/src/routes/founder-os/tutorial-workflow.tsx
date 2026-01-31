@@ -27,6 +27,7 @@ import type {
   TutorialProgress,
   ExecutiveReport,
   CharacterProfile,
+  CharacterAttributes,
   ReportConfirmations,
   OutstandingQuestion,
   WorkflowStep,
@@ -198,7 +199,7 @@ export default function TutorialWorkflowMode() {
     voice: false,
     character: false,
   });
-  const [characterProfile] = useState<CharacterProfile | null>(null);
+  const [characterProfile, setCharacterProfile] = useState<CharacterProfile | null>(null);
 
   // Loading state for artifact
   const [isLoadingReport, setIsLoadingReport] = useState(false);
@@ -658,13 +659,27 @@ export default function TutorialWorkflowMode() {
       { role: 'user', content: answers[q.id] || '' },
     ]);
 
-    await post('/api/assessment/score', {
+    const response = await post<{
+      success: boolean;
+      profile: CharacterProfile;
+      attributes: CharacterAttributes;
+    }>('/api/assessment/score', {
       user_id: userId,
       transcript,
       source: 'desktop_app',
     }, token);
 
-    console.log('[tutorial-workflow] Assessment scored successfully');
+    console.log('[tutorial-workflow] Assessment scored successfully', response);
+
+    // Set the character profile from API response
+    if (response.profile) {
+      setCharacterProfile({
+        ...response.profile,
+        characterClass: response.profile.class || response.profile.characterClass,
+        title: response.profile.tagline || response.profile.title,
+        attributes: response.attributes,
+      });
+    }
 
     // Refresh user status to get updated assessment completion status
     if (token) {

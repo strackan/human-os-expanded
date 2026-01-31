@@ -78,9 +78,11 @@ export interface CharacterAttributes {
 
 export interface CharacterProfile {
   race: string;
-  characterClass: string;
+  characterClass?: string;  // Desktop format
+  class?: string;           // API format
   alignment: string;
   title?: string;
+  tagline?: string;         // API format (same as title)
   attributes?: CharacterAttributes;
 }
 
