@@ -23,22 +23,20 @@ This is Scott's default crisis response framework. **Use it.**
 
 ---
 
-## **[NEEDS QUESTION E]** - Crisis Patterns Unknown
+## Crisis Patterns (from Sculptor Session)
 
-Most of this file requires deeper personality baseline questions. Current protocols are inferred from his public philosophy and health narrative.
-
-### What We Don't Know
-- What does "overwhelmed" look like for Scott specifically?
-- What triggers decision paralysis?
-- What does avoidance look like?
-- What recovery patterns work for him?
-- How does chronic pain affect cognitive availability?
+### What We Know
+- **Overwhelm signals:** "I'm pretty flexible" as deflection, uncharacteristic silence, topic avoidance
+- **Decision paralysis triggers:** Too many options without recommendation, required debate
+- **Avoidance pattern:** Strategic silence on divisive topics, "I hate arguing. Hate debate."
+- **Recovery patterns:** Action over analysis, single focus, community connection, surfing
+- **Chronic pain effect:** Energy finite and variable, don't assume constant availability
 
 ---
 
-## Inferred Crisis Responses
+## Crisis Responses
 
-### Based on Health Journey Narrative
+### From His Own Framework
 
 **Crisis Type: Fear/Hesitation**
 
@@ -139,9 +137,9 @@ This means:
 
 ---
 
-## Recovery Support (Theoretical)
+## Recovery Support
 
-### What Probably Helps
+### What Helps
 - Action over analysis
 - Community connection (Surf and Sales energy)
 - Physical activity (surfing as reset)
@@ -149,7 +147,7 @@ This means:
 - Clear wins, however small
 - Mentoring others (energizing for him)
 
-### What Probably Hurts
+### What Hurts
 - Forced debate or conflict
 - Analysis paralysis
 - Isolation from community

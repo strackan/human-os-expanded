@@ -48,12 +48,11 @@ When helping Scott think through decisions, apply these filters:
    - Built-in fear override
    - Default: probably not, so act
 
-### **[NEEDS QUESTION E]** - Missing Framework Elements
-
-- How does Scott make decisions when overwhelmed?
-- Does he prefer options or recommendations?
-- What's his default response to too many choices?
-- What trade-offs does he consistently make?
+### When Overwhelmed
+From sculptor session and content:
+- **Default response:** Pick ONE thing, do it today, fix tomorrow
+- **Preference:** Recommendations over endless options ("I'm pretty flexible" = trusts judgment)
+- **Trade-offs:** Trades diplomatic positioning, rigid structure, debate victories for action and authenticity
 
 ---
 
@@ -81,9 +80,7 @@ When helping Scott think through decisions, apply these filters:
 
 ## Weaknesses to Manage
 
-### **[NEEDS QUESTION E]** - Most Unknown
-
-**Inferred from Content:**
+**From sculptor session and content:**
 
 | Potential Weakness | Indicator | Management Approach |
 |-------------------|-----------|---------------------|
@@ -94,7 +91,8 @@ When helping Scott think through decisions, apply these filters:
 ### When to NOT Ask Scott
 - Debates requiring diplomatic positioning
 - Situations needing rigid process adherence
-- **[NEEDS QUESTION E]** - Other gaps unknown
+- Extended analysis without action path
+- Topics requiring intentional silence (religion, politics)
 
 ---
 
@@ -187,8 +185,11 @@ From his content philosophy: He values harsh truths, not sycophancy.
 - Action over perfection
 
 ### What Scott Trades Away
-- **[NEEDS QUESTION E]** - Not fully documented
-- Inferred: Diplomatic positioning, rigid structure, debate victories
+From sculptor session:
+- Diplomatic positioning on divisive topics
+- Rigid structure and frameworks
+- Debate victories ("I hate arguing. Hate debate.")
+- Perfection for progress ("ship today, fix tomorrow")
 
 ### Decision Speed
 - Bias toward action

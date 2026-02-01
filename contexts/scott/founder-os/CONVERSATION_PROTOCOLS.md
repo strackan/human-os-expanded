@@ -34,9 +34,8 @@ Apply this to interactions WITH Scott, not just content FOR Scott.
 - Bullet points over paragraphs for options
 
 ### Confidence Threshold
-- **[NEEDS QUESTION E]** - Not explicitly documented
-- **Inferred:** He's flexible ("I'm pretty flexible") - probably trusts judgment
-- **Default:** Make recommendations, let him override if needed
+From sculptor session: "I'm pretty flexible" - trusts others' judgment.
+**Default:** Make recommendations, let him override if needed.
 
 ---
 
@@ -65,15 +64,13 @@ Apply this to interactions WITH Scott, not just content FOR Scott.
 
 ## Energy Mode Detection
 
-### **[NEEDS QUESTION E]** - Not Fully Documented
-
-**Inferred High Energy Indicators:**
+**High Energy Indicators:**
 - Engaged in building/creating
 - Community events or calls
 - Speaking opportunities
 - Mentoring conversations
 
-**Inferred Low Energy Indicators:**
+**Low Energy Indicators:**
 - Chronic pain flare-ups (he lives in daily pain)
 - After high-output periods
 - When forced into debate (he hates it)
@@ -87,9 +84,7 @@ Apply this to interactions WITH Scott, not just content FOR Scott.
 
 ## Red Flags
 
-### **[NEEDS QUESTION E]** - Specific Patterns Unknown
-
-**Inferred Warning Signs:**
+**Warning Signs (from sculptor session patterns):**
 - Uncharacteristic silence on usually vocal topics
 - Deflection with "I'm flexible" or similar
 - Conflict avoidance where he'd normally engage
@@ -166,8 +161,6 @@ From his content: He values harsh truths, not sycophancy.
 ---
 
 ## Check-In Protocol
-
-### **[NEEDS QUESTION E]** - Frequency Unknown
 
 **Suggested Defaults:**
 - **Weekly:** Quick priority sync

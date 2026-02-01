@@ -40,21 +40,29 @@ This document standardizes naming conventions for all question sets, assessments
 
 ### Questionnaire 3: Founder-OS Baseline (Executive Support)
 **Purpose**: Establish workstyle, crisis patterns, cognitive profile for AI Chief of Staff
-**Output**: Protocols, crisis playbooks, decision frameworks
+**Output**: Ten Commandments (protocols, crisis playbooks, decision frameworks)
 
 | Module | ID | Questions | Focus |
 |--------|-----|-----------|-------|
-| **Set G** | Gap Analysis / Personality Baseline | 24 | Decision-making, energy patterns, communication, crisis, work style |
+| **Question E** | Personality Baseline | 31 | Decision-making, energy patterns, communication, crisis, work style, motivation |
+| **FOS Interview** | Consolidated Interview | 12 | Story, identity, work/AI preferences |
 
-**File**: `contexts/scott/GAP_ANALYSIS.md` (template)
-**Total**: 24 questions, ~45 minutes
+**Question E Sections** (E01-E31):
+- E01-E04: Decision-Making Under Stress → DECISION_MAKING.md
+- E05-E09: Energy & Cognitive Patterns → ENERGY_PATTERNS.md
+- E10: Structure Preferences → CONVERSATION_PROTOCOLS.md
+- E11-E14: Communication Preferences → SUPPORT_CALIBRATION.md
+- E15-E19: Crisis & Recovery → AVOIDANCE_PATTERNS.md, RECOVERY_PROTOCOLS.md
+- E20-E24: Work Style & Support → WORK_STYLE.md
+- E25-E28: Rapport & AI Preferences → SUPPORT_CALIBRATION.md
+- E29-E31: Motivation Drivers → ENERGY_PATTERNS.md, WORK_STYLE.md, SUPPORT_CALIBRATION.md
 
-**Sections**:
-- G1-G4: Decision-Making Under Stress
-- G5-G10: Energy & Cognitive Patterns
-- G11-G14: Communication Preferences
-- G15-G19: Crisis & Recovery
-- G20-G24: Work Style & Support
+**FOS Consolidated Interview Sections** (fos-interview-a1 to c5):
+- Section A (a1-a4): Your Story → profile
+- Section B (b1-b3): Who You Are → profile
+- Section C (c1-c5): Work & AI → fingerprint, guardrails, voice
+
+**Total**: 31 Question E + 12 FOS Interview = 43 questions, ~60 minutes
 
 ---
 
@@ -84,7 +92,7 @@ This document standardizes naming conventions for all question sets, assessments
 | **Stage 3** | Sculptor | Clarification interview | Patterns + Person → Corrected/validated patterns |
 | **Stage 4** | Polisher | Final synthesis | Validated patterns → Ten Commandments |
 
-**Output Files** (Ten Commandments):
+**Output Files** (Voice-OS Ten Commandments):
 ```
 contexts/{entity}/voice/
 ├── VOICE.md          # Always/never rules, signature phrases
@@ -98,6 +106,44 @@ contexts/{entity}/voice/
 ├── BLENDS.md         # Content recipes
 └── EXAMPLES.md       # Reference outputs
 ```
+
+---
+
+## FOUNDER-OS TEN COMMANDMENTS (Support Documentation)
+
+**Purpose**: Create personalized support protocols for AI Chief of Staff
+**Input**: Question E (E01-E31) + FOS Consolidated Interview + Sculptor Session
+**Output**: Ten Commandments (structured support documentation)
+
+| # | File | Purpose | Primary Questions |
+|---|------|---------|-------------------|
+| 1 | CONVERSATION_PROTOCOLS.md | How to interact, energy modes, red flags | E10-E14, fos-interview-c3 |
+| 2 | CRISIS_PROTOCOLS.md | Acute overwhelm patterns, emergency response | E08, E15, E17, E19 |
+| 3 | CURRENT_STATE.md | Living doc of priorities, energy, context | E05, E18 |
+| 4 | STRATEGIC_THOUGHT_PARTNER.md | Decision frameworks, strengths/weaknesses | E01-E04 |
+| 5 | DECISION_MAKING.md | How they make decisions under stress | E01-E04, fos-interview-c1 |
+| 6 | ENERGY_PATTERNS.md | Cognitive/physical energy, optimal conditions | E05-E09, E29, fos-interview-c1 |
+| 7 | WORK_STYLE.md | How to support effectively, priorities | E20-E24, E30, fos-interview-c1 |
+| 8 | AVOIDANCE_PATTERNS.md | What "stuck" looks like, interventions | E07, E15-E16, fos-interview-c2 |
+| 9 | RECOVERY_PROTOCOLS.md | Reset/restoration beyond crisis | E16-E19, fos-interview-c2 |
+| 10 | SUPPORT_CALIBRATION.md | Meta: state detection + mode switching | E11-E14, E31, fos-interview-c3-c5 |
+
+**Output Files** (Founder-OS Ten Commandments):
+```
+contexts/{entity}/founder-os/
+├── CONVERSATION_PROTOCOLS.md  # How to interact
+├── CRISIS_PROTOCOLS.md        # Emergency response
+├── CURRENT_STATE.md           # Live context
+├── STRATEGIC_THOUGHT_PARTNER.md # Decision frameworks
+├── DECISION_MAKING.md         # Decision patterns
+├── ENERGY_PATTERNS.md         # Energy management
+├── WORK_STYLE.md              # Support preferences
+├── AVOIDANCE_PATTERNS.md      # Stuck patterns
+├── RECOVERY_PROTOCOLS.md      # Reset protocols
+└── SUPPORT_CALIBRATION.md     # Meta-calibration
+```
+
+**Templates**: `contexts/_base/templates/`
 
 ---
 
@@ -121,12 +167,25 @@ contexts/{entity}/voice/
 **Purpose**: Personalized AI Chief of Staff configuration
 **Location**: `contexts/{entity}/founder-os/`
 
-| Protocol | Purpose | Template |
-|----------|---------|----------|
-| CONVERSATION_PROTOCOLS.md | How to interact, energy modes, red flags | `_base/templates/` |
-| CRISIS_PROTOCOLS.md | Overwhelm patterns, recovery support | `_base/templates/` |
-| CURRENT_STATE.md | Living doc of priorities, energy, filters | `_base/templates/` |
-| STRATEGIC_THOUGHT_PARTNER.md | Decision frameworks, strengths/weaknesses | `_base/templates/` |
+See **FOUNDER-OS TEN COMMANDMENTS** section above for full file list.
+
+**Core Files** (Original 4):
+| Protocol | Purpose |
+|----------|---------|
+| CONVERSATION_PROTOCOLS.md | How to interact, energy modes, red flags |
+| CRISIS_PROTOCOLS.md | Overwhelm patterns, recovery support |
+| CURRENT_STATE.md | Living doc of priorities, energy, filters |
+| STRATEGIC_THOUGHT_PARTNER.md | Decision frameworks, strengths/weaknesses |
+
+**Extended Files** (Added for Ten Commandments parity):
+| Protocol | Purpose |
+|----------|---------|
+| DECISION_MAKING.md | Decision patterns under stress/overwhelm |
+| ENERGY_PATTERNS.md | Cognitive/physical energy, optimal conditions |
+| WORK_STYLE.md | How to support effectively, priority presentation |
+| AVOIDANCE_PATTERNS.md | What "stuck" looks like, intervention methods |
+| RECOVERY_PROTOCOLS.md | Reset/restoration beyond crisis |
+| SUPPORT_CALIBRATION.md | Meta: state detection + mode switching |
 
 **Identity Files** (`contexts/{entity}/identity/`):
 - `core.md` - North star, unfair advantage, two-context model
@@ -155,7 +214,7 @@ contexts/{entity}/voice/
 | D | Core CS Assessment | 12+ | Renubu |
 | E | AI Readiness | 7 | Renubu |
 | F | GTM Specialty | 4 | Renubu |
-| G | Gap Analysis / Baseline | 24 | Founder-OS |
+| G/E | Personality Baseline + FOS Interview | 31+12 | Founder-OS |
 
 ### Supplementary
 
@@ -163,7 +222,8 @@ contexts/{entity}/voice/
 |------|------|------|
 | LR | Lightning Round | Challenge |
 | AF | Absurdist Finale | Challenge |
-| TC | Ten Commandments | Voice Pipeline |
+| TC-V | Voice-OS Ten Commandments | Voice Pipeline |
+| TC-F | Founder-OS Ten Commandments | Support Pipeline |
 | CD | Conductor | Interview Engine |
 
 ---
@@ -177,10 +237,28 @@ apps/goodhang/lib/assessment/
 ├── lightning-round-questions.json  # LR
 └── absurdist-questions.json        # AF
 
+contexts/_base/templates/
+├── DECISION_MAKING.md       # Founder-OS template
+├── ENERGY_PATTERNS.md       # Founder-OS template
+├── WORK_STYLE.md            # Founder-OS template
+├── AVOIDANCE_PATTERNS.md    # Founder-OS template
+├── RECOVERY_PROTOCOLS.md    # Founder-OS template
+└── SUPPORT_CALIBRATION.md   # Founder-OS template
+
 contexts/{entity}/
-├── GAP_ANALYSIS.md          # Q3: Set G (template in scott/)
-├── voice/                   # Ten Commandments output
-├── founder-os/              # Protocols
+├── voice/                   # Voice-OS Ten Commandments
+│   ├── VOICE.md ... EXAMPLES.md (10 files)
+├── founder-os/              # Founder-OS Ten Commandments
+│   ├── CONVERSATION_PROTOCOLS.md
+│   ├── CRISIS_PROTOCOLS.md
+│   ├── CURRENT_STATE.md
+│   ├── STRATEGIC_THOUGHT_PARTNER.md
+│   ├── DECISION_MAKING.md
+│   ├── ENERGY_PATTERNS.md
+│   ├── WORK_STYLE.md
+│   ├── AVOIDANCE_PATTERNS.md
+│   ├── RECOVERY_PROTOCOLS.md
+│   └── SUPPORT_CALIBRATION.md
 └── identity/                # Baseline profiles
 
 packages/analysis/src/
@@ -203,8 +281,8 @@ packages/analysis/src/
 - **Archetype**: Technical Builder, GTM Operator, Creative Strategist, Execution Machine, Generalist Orchestrator, Domain Expert
 
 ### Questionnaire 3 (Founder-OS)
-- **Output**: Protocol files, not scores
-- **Updates**: CONVERSATION_PROTOCOLS, CRISIS_PROTOCOLS, CURRENT_STATE, identity files
+- **Output**: Ten Commandments protocol files, not scores
+- **Updates**: All 10 Founder-OS files + identity files
 
 ---
 
@@ -213,3 +291,4 @@ packages/analysis/src/
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-01-08 | 1.0 | Initial standardization |
+| 2026-02-01 | 1.1 | Added Founder-OS Ten Commandments (6 new files), E29-E31 motivation questions, FOS Consolidated Interview reference |

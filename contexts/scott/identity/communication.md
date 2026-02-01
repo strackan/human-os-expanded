@@ -82,9 +82,9 @@ This is Scott's communication north star - applies to his content AND how he pre
 - Expand only when depth requested
 - Bullet points > paragraphs for options
 
-### **[NEEDS QUESTION E]** - Confidence Threshold
-- Not documented: At what confidence level does Scott want decisions made vs. questions asked?
-- Inferred: He's flexible ("I'm pretty flexible") so probably trusts judgment
+### Confidence Threshold
+From sculptor session: "I'm pretty flexible" - trusts others' judgment.
+**Default:** Make recommendations, let him override.
 
 ---
 
@@ -153,14 +153,13 @@ Show options with conditions, make a recommendation, let him decide.
 
 ## Red Flags to Watch For
 
-### **[NEEDS QUESTION E]** - Not Documented
-- What does Scott look like when he's:
-  - Decision fatigued?
-  - Overwhelmed?
-  - Avoiding something?
-  - In hyperfocus?
+**Warning Signs (from sculptor session):**
+- "I'm pretty flexible" as deflection
+- Uncharacteristic silence
+- Topic-specific avoidance
+- Physical pain references
 
-### Inferred Patterns
+### Patterns
 - Silence on certain topics = intentional avoidance, not oversight
 - "I'm pretty flexible" = not rigidly principled, adaptable
 - Conflict avoidance on debate-prone topics

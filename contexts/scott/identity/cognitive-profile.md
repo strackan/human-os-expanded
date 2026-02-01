@@ -11,7 +11,7 @@ source: CONTEXT.md + THEMES.md + Sculptor Session
 
 ## Overview
 
-**[NEEDS QUESTION E]** - Most of this file requires deeper personality baseline questions. Current content is inferred from corpus and Sculptor session.
+This profile is derived from the sculptor session, health journey narrative, and content analysis.
 
 ---
 
@@ -39,10 +39,12 @@ From THEMES.md habits:
 - Community events (Surf and Sales)
 - Challenging conventional wisdom
 
-### Energy Drains (Inferred)
+### Energy Drains
 - Debate and arguing ("I hate arguing. Hate debate.")
 - Operating in chronic pain
-- **[NEEDS QUESTION E]** - Specific drains not documented
+- Forced diplomatic positioning
+- Analysis without action path
+- Corporate-speak interactions
 
 ---
 
@@ -95,35 +97,37 @@ This suggests:
 
 ---
 
-## **[NEEDS QUESTION E]** - Missing Information
+## Decision-Making Patterns (from Sculptor Session)
 
-### Decision-Making Under Stress
-- How does Scott make decisions when overwhelmed?
-- What's his default response to too many options?
-- Does he prefer someone to make the call or present options?
-- What does "stuck" look like for him?
+- **When overwhelmed:** Pick ONE thing, do it today, fix tomorrow, ship anyway
+- **Response to options:** Prefers recommendation with override ("I'm pretty flexible")
+- **Preference:** Make the call, let him change it
+- **Stuck looks like:** "I'm pretty flexible" as deflection, silence, topic avoidance
 
-### Energy Patterns
-- When is Scott at his best? (time of day, conditions)
-- What drains him faster than expected?
-- How does he know when he's avoiding something?
-- What does his "overwhelm spiral" look like?
+## Energy Patterns (from Sculptor Session)
 
-### Cognitive Quirks
-- Does he have ADHD, PDA, or other neurodivergent patterns?
-- What kind of structure helps vs. constrains?
-- How should priorities be presented to him?
+- **Peak conditions:** Building, creating, community, mentoring
+- **Unexpected drains:** Debate/argument ("I hate arguing")
+- **Avoidance signals:** Strategic silence on divisive topics
+- **Overwhelm resolution:** Action over analysis, single focus
 
-### Recovery Patterns
-- What helps Scott get unstuck?
-- What makes things worse when he's struggling?
-- How does chronic pain affect his cognitive availability?
+## Cognitive Style
+
+- **Processing:** Intuitive, pattern-recognition, flow-based
+- **Structure:** Flexible ("I'm pretty flexible"), may resist rigid frameworks
+- **Neurodivergent:** Not explicitly documented, but intuitive style suggests possible patterns
+
+## Recovery (from Sculptor Session)
+
+- **What helps:** Action, surfing, music, community, single focus
+- **What hurts:** Piling on decisions, debate, theory without receipts, corporate-speak
+- **Pain impact:** Energy finite and variable, don't assume constant availability
 
 ---
 
-## Current Hypotheses (Unconfirmed)
+## Summary Patterns
 
-Based on corpus analysis:
+From sculptor session and content:
 
 1. **High Agency** - Bias toward action, "shrink the delta between idea and action"
 2. **Intuitive Processor** - Writes intuitively, may resist over-structure
@@ -135,19 +139,22 @@ Based on corpus analysis:
 
 ---
 
-## Patterns to Watch (Theoretical)
+## Patterns to Watch
 
-### Potential Overwhelm Indicators
-- **[NEEDS QUESTION E]** - Not documented
+### Overwhelm Indicators
+- "I'm pretty flexible" as non-engagement
+- Uncharacteristic silence
+- Physical pain references
+- Deflection instead of direct response
 
-### Potential Avoidance Indicators
+### Avoidance Indicators
 - Silence on usually vocal topics?
 - Deflection with humor?
 - "I'm pretty flexible" as non-answer?
 
-### Potential Energy States
+### Energy States
 - **High energy**: Building, speaking, mentoring, community events
-- **Low energy**: **[NEEDS QUESTION E]**
+- **Low energy**: Deflection, silence, pain signals, "I'm flexible"
 
 ---
 
@@ -159,4 +166,4 @@ This profile should inform:
 - What kind of check-ins actually help
 - Crisis protocols if overwhelm is detected
 
-**Current limitation:** Without Question E answers, much of this is inferential and should be validated or updated when deeper personality baseline is captured.
+**Note:** Patterns identified from sculptor session and content analysis. Refinement over time through interaction.

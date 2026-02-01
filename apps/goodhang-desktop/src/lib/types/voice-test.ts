@@ -50,19 +50,17 @@ export interface ContentTypeConfig {
 }
 
 /**
- * All content types to test during voice calibration
+ * Essential content types to test during voice calibration
+ *
+ * These 3 tests provide maximum signal with minimum burden:
+ * 1. Thought Leadership - tests expertise voice (THEMES, OPENINGS, MIDDLES, ENDINGS)
+ * 2. Personal Story - tests vulnerability and emotional range (STORIES, ANECDOTES)
+ * 3. Connection Request - tests interpersonal warmth and brevity
+ *
+ * Other content types (salesy, email, meeting notes) can be inferred from these 3.
  */
 export const CONTENT_TYPES: ContentTypeConfig[] = [
-  // LinkedIn Posts (3 styles)
-  {
-    id: 'linkedin_salesy',
-    type: 'linkedin_post',
-    style: 'salesy',
-    label: 'LinkedIn: Promotional',
-    description: 'A post promoting something you offer',
-    promptHint: 'What product, service, or offering would you like to promote?',
-    icon: 'megaphone',
-  },
+  // Test 1: Expertise/Opinion voice
   {
     id: 'linkedin_thought',
     type: 'linkedin_post',
@@ -72,6 +70,7 @@ export const CONTENT_TYPES: ContentTypeConfig[] = [
     promptHint: 'What insight or opinion would you like to share?',
     icon: 'lightbulb',
   },
+  // Test 2: Personal/Vulnerable voice
   {
     id: 'linkedin_personal',
     type: 'linkedin_post',
@@ -81,26 +80,7 @@ export const CONTENT_TYPES: ContentTypeConfig[] = [
     promptHint: 'What personal experience or reflection would you like to share?',
     icon: 'heart',
   },
-  // Emails (2 styles)
-  {
-    id: 'email_professional',
-    type: 'email',
-    style: 'professional',
-    label: 'Email: Professional',
-    description: 'A business or professional email',
-    promptHint: 'Who are you emailing and what\'s the main purpose?',
-    icon: 'mail',
-  },
-  {
-    id: 'email_followup',
-    type: 'email',
-    style: 'casual',
-    label: 'Email: Follow-up',
-    description: 'A casual follow-up or check-in email',
-    promptHint: 'Who are you following up with and about what?',
-    icon: 'reply',
-  },
-  // Other (2 types)
+  // Test 3: Interpersonal warmth/brevity
   {
     id: 'connection_request',
     type: 'connection_request',
@@ -109,15 +89,6 @@ export const CONTENT_TYPES: ContentTypeConfig[] = [
     description: 'A LinkedIn connection request message',
     promptHint: 'Who do you want to connect with and why?',
     icon: 'user-plus',
-  },
-  {
-    id: 'meeting_notes',
-    type: 'note',
-    style: 'meeting_prep',
-    label: 'Meeting Prep Notes',
-    description: 'Notes or prep for an upcoming meeting',
-    promptHint: 'What meeting are you preparing for?',
-    icon: 'clipboard',
   },
 ];
 

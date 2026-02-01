@@ -46,11 +46,9 @@ function ContentTypeTimeline({
   completedTypes,
   onTypeClick,
 }: ContentTypeTimelineProps) {
-  // Group content types by category for compact display
+  // With 3 essential tests, show all in a single row
   const categories = [
-    { label: 'LinkedIn', types: contentTypes.slice(0, 3) },
-    { label: 'Email', types: contentTypes.slice(3, 5) },
-    { label: 'Other', types: contentTypes.slice(5) },
+    { label: 'Voice Tests', types: contentTypes },
   ];
 
   return (
@@ -103,15 +101,11 @@ function ContentTypeTimeline({
 
 const MOCK_VOICE_TEST_DATA = {
   prompts: {
-    linkedin_salesy: 'Promote my new AI coaching service for founders',
     linkedin_thought: 'Share a contrarian take on productivity culture',
     linkedin_personal: 'Reflect on a failure that taught me something',
-    email_professional: 'Reach out to a potential investor',
-    email_followup: 'Follow up with someone I met at a conference',
     connection_request: 'Connect with a VP of Engineering at a Series B startup',
-    meeting_notes: 'Prepare for a board meeting next week',
   },
-  ratings: [8, 9, 7, 9, 8, 9, 9], // Predetermined ratings
+  ratings: [9, 8, 9], // Predetermined ratings for 3 tests
   feedback: {
     whatDidntWork: 'The tone was a bit too formal for my style',
     whatTenLooksLike: 'More casual, punchy, with a touch of humor',

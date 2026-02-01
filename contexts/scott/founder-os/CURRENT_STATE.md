@@ -69,10 +69,18 @@ From Sculptor Session (January 2026):
 ## Patterns to Watch
 
 ### Positive Indicators
-- **[NEEDS DOCUMENTATION]** - What does Scott look like when things are good?
+- Engaged in building/creating
+- Riffing and expanding on topics
+- Community engagement high
+- Mentoring energy present
+- Proactive content creation
 
 ### Warning Signs
-- **[NEEDS DOCUMENTATION]** - What does Scott look like when struggling?
+- "I'm pretty flexible" as deflection
+- Uncharacteristic silence
+- Topic-specific avoidance
+- Physical pain references
+- Short responses where he'd normally expand
 
 ### Known Triggers
 - Debate/arguing (hates it)

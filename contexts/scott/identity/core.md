@@ -76,15 +76,16 @@ From DIGEST.md:
 
 ## Weaknesses (Delegate/Systematize)
 
-### What Scott Has Indicated
-- **[NEEDS QUESTION E]** - From Sculptor: "I'm pretty flexible" when asked about non-negotiables
+### What Scott Has Indicated (from Sculptor Session)
+- "I'm pretty flexible" when asked about non-negotiables - adaptive, not dogmatic
 - No rigid structure to his writing process ("just write whatever comes to mind")
-- Potentially conflict-avoidant on certain topics (religious studies degree but silent on spirituality because "hates arguing")
+- Conflict-avoidant on certain topics ("I hate arguing. Hate debate.")
+- Strategic silence on religion/politics despite religious studies degree
 
 ### Inferred from Content
 - May need external accountability for operational details
 - Could benefit from structure when energy is scattered
-- **[NEEDS QUESTION E]** - Specific cognitive/energy patterns not documented
+- Prefers recommendations with override option
 
 ---
 
@@ -96,10 +97,10 @@ From DIGEST.md:
 3. **Can I add value from experience?** (Battle scars required)
 4. **Is it authentic?** (No fake guru positioning)
 
-### **[NEEDS QUESTION E]** - Missing Filters
-- How does Scott make decisions when overwhelmed?
-- What's his default response to too many options?
-- Does he prefer someone to make the call or present options?
+### Overwhelm Response (from Sculptor Session)
+- Pick ONE thing, do it today, fix tomorrow
+- Prefers recommendation with override ("I'm pretty flexible")
+- Action over analysis
 
 ---
 
@@ -114,8 +115,10 @@ From DIGEST.md:
 - Speaking to large audiences
 
 ### Where Scott May STRUGGLE
-- **[NEEDS QUESTION E]** - Not documented
-- Inferred: Operations mode, repetitive tasks, situations requiring diplomatic silence
+- Debates requiring diplomatic positioning
+- Situations needing rigid process adherence
+- Topics requiring extended analysis without action
+- Forced silence on things he has opinions about
 
 ---
 
