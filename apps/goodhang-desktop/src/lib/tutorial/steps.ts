@@ -5,8 +5,6 @@
  */
 
 import {
-  User,
-  Sparkles,
   ClipboardList,
   Mic,
   Wrench,
@@ -41,8 +39,6 @@ export {
  * Icon name to component mapping
  */
 const ICON_MAP: Record<string, LucideIcon> = {
-  User,
-  Sparkles,
   ClipboardList,
   Mic,
   Wrench,

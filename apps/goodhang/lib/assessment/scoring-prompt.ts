@@ -43,18 +43,29 @@ For each response, score 0-10 based on:
 
 ## Question-to-Attribute Mapping
 
+### Section 1: Your Story (Identity & Growth)
 | Question ID | Primary | Secondary | What It Reveals |
 |-------------|---------|-----------|-----------------|
 | a1-turning-point | WIS | INT | Growth capacity, meaning-making, insight depth |
 | a2-happiest-memory | CHA | WIS | Values (achievement vs connection vs freedom), emotional access |
 | a3-difficult-time | CON | STR | Resilience style, coping mechanisms, honesty about struggle |
 | a4-redemption | WIS | DEX | Optimism/pessimism lens, meaning-making, adaptability |
-| b1-failed-someone | WIS | CHA | Accountability, guilt capacity, moral seriousness |
-| b2-core-identity | CON | STR | Self-knowledge depth, what they hold onto |
-| b3-simple-thing | WIS | CON | Values through specifics, what they notice/cherish |
-| c1-relationship-need | CHA | CON | Attachment style, emotional honesty, vulnerability |
-| c2-intellectual-gap | WIS | CON | Honesty about hypocrisy, where willpower fails |
-| c3-happiness-barrier | WIS | STR | Self-knowledge, relationship to happiness, agency |
+
+### Section 2: Who You Are (Core Identity)
+| Question ID | Primary | Secondary | What It Reveals |
+|-------------|---------|-----------|-----------------|
+| b1-core-identity | CON | STR | Self-knowledge depth, what they hold onto |
+| b2-simple-thing | WIS | CON | Values through specifics, what they notice/cherish |
+| b3-relationship-need | CHA | CON | Attachment style, emotional honesty, vulnerability |
+
+### Section 3: Work & AI (Performance & Preferences)
+| Question ID | Primary | Secondary | What It Reveals |
+|-------------|---------|-----------|-----------------|
+| c1-peak-performance | CON | DEX | Work patterns, self-awareness about energy/productivity |
+| c2-struggle-recovery | CON | WIS | Coping mechanisms, support preferences, vulnerability |
+| c3-feedback-challenge | STR | CHA | Conflict style, receptivity to growth, communication preferences |
+| c4-social-rapport | CHA | WIS | Social compatibility, relationship building style |
+| c5-ideal-ai | INT | WIS | Self-awareness about needs, ability to articulate preferences |
 
 ## Alignment Detection (from narrative patterns)
 
@@ -213,18 +224,23 @@ export function formatTranscriptForScoring(
   let currentQuestion = '';
   let questionId = '';
 
-  // Map question text to IDs (V3 questions)
+  // Map question text to IDs (consolidated assessment questions)
   const questionIdMap: Record<string, string> = {
+    // Section 1: Your Story
     "Describe a moment or experience that fundamentally changed who you are or how you see the world.": 'a1-turning-point',
     "Tell me about your single happiest memory.": 'a2-happiest-memory',
     "Tell me about a difficult time in your life and how you got through it.": 'a3-difficult-time',
     "Tell me about something bad that happened to you that ultimately led to something good.": 'a4-redemption',
-    "Tell me about a time you failed someone you care about.": 'b1-failed-someone',
-    "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?": 'b2-core-identity',
-    "What's a simple thing that matters a lot to you?": 'b3-simple-thing',
-    "What do you need from close relationships that you rarely ask for directly?": 'c1-relationship-need',
-    "What's something you believe in intellectually but can't fully commit to in practice?": 'c2-intellectual-gap',
-    "What's really keeping you from being happy?": 'c3-happiness-barrier',
+    // Section 2: Who You Are
+    "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?": 'b1-core-identity',
+    "What's a simple thing that matters a lot to you?": 'b2-simple-thing',
+    "What do you need from close relationships that you rarely ask for directly?": 'b3-relationship-need',
+    // Section 3: Work & AI
+    "Tell me about when you're at your best vs your worst.": 'c1-peak-performance',
+    "When things get hard, what actually helps you recover?": 'c2-struggle-recovery',
+    "How do you prefer to receive feedback and to be challenged?": 'c3-feedback-challenge',
+    "What makes you want to hang out with someone socially vs just working with them?": 'c4-social-rapport',
+    "If you could build an ideal AI assistant, what would be the 3-4 most important considerations?": 'c5-ideal-ai',
   };
 
   for (const msg of messages) {

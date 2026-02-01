@@ -8,3 +8,4 @@ export { useLoadingStages } from './useLoadingStages';
 export { useAssessmentProgress } from './useAssessmentProgress';
 export { useWorkflowModeState } from './useWorkflowModeState';
 export { useWorkflowPersistence } from './useWorkflowPersistence';
+export { useQuestionSet } from './useQuestionSet';

@@ -88,10 +88,10 @@ export default function TutorialModePage() {
 
   // Tutorial state
   const [progress, setProgress] = useState<TutorialProgress>({
-    currentStep: 'welcome',
-    stepIndex: getStepIndex('welcome'),
+    currentStep: 'interview',
+    stepIndex: getStepIndex('interview'),
     questionsAnswered: 0,
-    totalQuestions: 5,
+    totalQuestions: 12,
     viewedReport: false,
   });
 
@@ -257,14 +257,8 @@ export default function TutorialModePage() {
   // Update quick actions based on current step
   const updateQuickActions = (step: TutorialStep) => {
     switch (step) {
-      case 'welcome':
-        setQuickActions([
-          { label: 'Sure!', value: 'show_report' },
-          { label: 'Skip for now', value: 'skip_report' },
-        ]);
-        break;
-      case 'work_questions':
-        // No quick actions for Q&A - user types responses
+      case 'interview':
+        // No quick actions during interview - user completes assessment
         setQuickActions([]);
         break;
       case 'voice_testing':
@@ -337,25 +331,12 @@ export default function TutorialModePage() {
     });
     updateQuickActions(newStep);
 
-    if (newStep === 'about_you' && data.report) {
+    if (newStep === 'interview' && data.report) {
       setOriginalReport(data.report);
       setReport(data.report);
       setActiveReportTab('status');
       setReportConfirmations({ status: false, personality: false, voice: false, character: false });
       if (data.character) setCharacterProfile(data.character);
-    }
-
-    // When entering work_questions, show the first question
-    if (newStep === 'work_questions') {
-      console.log('[tutorial] Entering work_questions step, question:', data.currentQuestion);
-      if (data.currentQuestion) {
-        setCurrentQuestion(data.currentQuestion);
-        setTimeout(() => {
-          addAssistantMessage(`**${data.currentQuestion.title}**\n\n${data.currentQuestion.prompt}`);
-        }, 500);
-      } else {
-        console.warn('[tutorial] No currentQuestion available for work_questions step!');
-      }
     }
   };
 
@@ -464,7 +445,7 @@ export default function TutorialModePage() {
       if (apiResult.progress) setProgress(apiResult.progress);
       if (apiResult.content) addAssistantMessage(apiResult.content);
 
-      if (apiResult.progress?.currentStep === 'about_you') {
+      if (apiResult.progress?.currentStep === 'interview') {
         setActiveReportTab('status');
         setReportConfirmations({ status: false, personality: false, voice: false, character: false });
       }
@@ -561,7 +542,7 @@ export default function TutorialModePage() {
             </div>
 
             {/* Report Display - takes remaining space */}
-            {progress.currentStep === 'about_you' && report && (
+            {progress.currentStep === 'interview' && report && (
               <div className="flex-1 min-h-0">
                 <ReportEditor
                   report={report}

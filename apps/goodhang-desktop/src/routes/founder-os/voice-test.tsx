@@ -5,14 +5,17 @@
  * their AI-generated voice through content generation across multiple types.
  * Uses a rating-based feedback loop to capture preferences and generates
  * a final "10 Commandments" document.
+ *
+ * Layout matches AssessmentFlow: top timeline + centered content area.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+import { X, Zap, Check } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth';
-import { SetupSidebar, type ChecklistItem } from '@/components/setup-mode/SetupSidebar';
+import { isDevMode } from '@/lib/api/client';
 import {
   type VoiceTestStage,
   type VoiceTestProgress,
@@ -25,6 +28,96 @@ import {
   CONTENT_TYPES,
   STORAGE_KEYS,
 } from '@/lib/types/voice-test';
+
+// =============================================================================
+// CONTENT TYPE TIMELINE COMPONENT
+// =============================================================================
+
+interface ContentTypeTimelineProps {
+  contentTypes: ContentTypeConfig[];
+  currentIndex: number;
+  completedTypes: string[];
+  onTypeClick: (index: number) => void;
+}
+
+function ContentTypeTimeline({
+  contentTypes,
+  currentIndex,
+  completedTypes,
+  onTypeClick,
+}: ContentTypeTimelineProps) {
+  // Group content types by category for compact display
+  const categories = [
+    { label: 'LinkedIn', types: contentTypes.slice(0, 3) },
+    { label: 'Email', types: contentTypes.slice(3, 5) },
+    { label: 'Other', types: contentTypes.slice(5) },
+  ];
+
+  return (
+    <div className="flex items-center justify-center gap-1 py-3 px-4">
+      {categories.map((category, catIndex) => (
+        <div key={category.label} className="flex items-center">
+          {catIndex > 0 && <div className="w-4 h-px bg-gray-700 mx-1" />}
+          <div className="flex items-center gap-1">
+            {category.types.map((ct) => {
+              const globalIndex = contentTypes.findIndex(c => c.id === ct.id);
+              const isCompleted = completedTypes.includes(ct.id);
+              const isCurrent = globalIndex === currentIndex;
+              const isPast = globalIndex < currentIndex || isCompleted;
+
+              return (
+                <button
+                  key={ct.id}
+                  onClick={() => onTypeClick(globalIndex)}
+                  disabled={!isPast && !isCurrent}
+                  title={ct.label}
+                  className={`
+                    flex items-center justify-center w-8 h-8 rounded-full transition-all
+                    ${isCurrent ? 'bg-purple-600 text-white ring-2 ring-purple-400 ring-offset-2 ring-offset-black' : ''}
+                    ${isCompleted && !isCurrent ? 'bg-green-600/20 text-green-400' : ''}
+                    ${!isCurrent && !isCompleted ? 'bg-gray-800 text-gray-500' : ''}
+                    ${isPast && !isCurrent ? 'hover:bg-gray-700 cursor-pointer' : ''}
+                    ${!isPast && !isCurrent ? 'cursor-not-allowed' : ''}
+                  `}
+                >
+                  {isCompleted ? (
+                    <Check className="w-4 h-4" />
+                  ) : isCurrent ? (
+                    <span className="text-xs font-bold">{globalIndex + 1}</span>
+                  ) : (
+                    <span className="text-xs">{globalIndex + 1}</span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// =============================================================================
+// MOCK DATA FOR DEV MODE
+// =============================================================================
+
+const MOCK_VOICE_TEST_DATA = {
+  prompts: {
+    linkedin_salesy: 'Promote my new AI coaching service for founders',
+    linkedin_thought: 'Share a contrarian take on productivity culture',
+    linkedin_personal: 'Reflect on a failure that taught me something',
+    email_professional: 'Reach out to a potential investor',
+    email_followup: 'Follow up with someone I met at a conference',
+    connection_request: 'Connect with a VP of Engineering at a Series B startup',
+    meeting_notes: 'Prepare for a board meeting next week',
+  },
+  ratings: [8, 9, 7, 9, 8, 9, 9], // Predetermined ratings
+  feedback: {
+    whatDidntWork: 'The tone was a bit too formal for my style',
+    whatTenLooksLike: 'More casual, punchy, with a touch of humor',
+    helpfulInstruction: 'Use shorter sentences and more personality',
+  },
+};
 
 // =============================================================================
 // MAIN COMPONENT
@@ -70,20 +163,9 @@ export default function VoiceTestPage() {
   const [_sculptorVoice, setSculptorVoice] = useState<SculptorVoiceData | null>(null);
   const [_personaFingerprint, setPersonaFingerprint] = useState<PersonaFingerprint | null>(null);
 
-  // Sidebar state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(() =>
-    CONTENT_TYPES.map((ct, index) => ({
-      id: ct.id,
-      label: ct.label,
-      description: ct.description,
-      required: index < 3, // First 3 are required (LinkedIn posts)
-      status: 'pending' as const,
-    }))
-  );
-
   // Current content type
   const currentContentType = CONTENT_TYPES[currentContentTypeIndex];
+  const progress = ((completedContentTypes.length) / CONTENT_TYPES.length) * 100;
 
   // =============================================================================
   // INITIALIZATION
@@ -205,18 +287,6 @@ export default function VoiceTestPage() {
     setAllAttempts(progress.allAttempts);
     setCurrentAttempt(progress.currentAttempt);
 
-    // Update checklist
-    setChecklistItems(prev =>
-      prev.map(item => ({
-        ...item,
-        status: progress.completedContentTypes.includes(item.id)
-          ? 'completed'
-          : item.id === CONTENT_TYPES[progress.currentContentTypeIndex]?.id
-          ? 'in_progress'
-          : 'pending',
-      }))
-    );
-
     // Add resume message
     addAssistantMessage(getResumeMessage(progress));
   };
@@ -267,8 +337,6 @@ Here's how it works:
 3. For anything under 9, you'll tell me what to fix
 4. After testing all content types, I'll create your "10 Commandments" - the definitive guide to writing in your voice
 
-This usually takes 15-20 minutes, but you can pause and resume anytime.
-
 Ready to get started?`;
   };
 
@@ -293,20 +361,60 @@ ${ct.promptHint}`;
   };
 
   // =============================================================================
+  // DEV MODE: MOCK FILL
+  // =============================================================================
+
+  const handleMockFill = useCallback(async () => {
+    if (!isDevMode()) return;
+
+    setIsLoading(true);
+    addAssistantMessage("🚀 Dev mode: Running mock voice test...");
+
+    // Simulate going through all content types
+    for (let i = 0; i < CONTENT_TYPES.length; i++) {
+      const ct = CONTENT_TYPES[i];
+      const mockPrompt = MOCK_VOICE_TEST_DATA.prompts[ct.id as keyof typeof MOCK_VOICE_TEST_DATA.prompts] || 'Test content';
+      const mockRating = MOCK_VOICE_TEST_DATA.ratings[i] || 9;
+
+      const attempt: GenerationAttempt = {
+        id: crypto.randomUUID(),
+        contentTypeId: ct.id,
+        userPrompt: mockPrompt,
+        generatedContent: `[Mock generated ${ct.label} content for: ${mockPrompt}]`,
+        rating: mockRating,
+        feedback: mockRating < 9 ? MOCK_VOICE_TEST_DATA.feedback : null,
+        timestamp: new Date().toISOString(),
+      };
+
+      setAllAttempts(prev => [...prev, attempt]);
+      setCompletedContentTypes(prev => [...prev, ct.id]);
+    }
+
+    setCurrentContentTypeIndex(CONTENT_TYPES.length - 1);
+
+    // Generate mock commandments
+    const mockCommandments: VoiceCommandment[] = [
+      { number: 1, title: 'Be Direct', description: 'Get to the point quickly', examples: ['Lead with the key insight'], contentTypes: ['linkedin_post'] },
+      { number: 2, title: 'Use Short Sentences', description: 'Punchy is better', examples: ['Break up long thoughts'], contentTypes: ['email'] },
+      { number: 3, title: 'Show Personality', description: 'Let your voice shine through', examples: ['Add humor when appropriate'], contentTypes: ['linkedin_post', 'email'] },
+    ];
+
+    setCommandments(mockCommandments);
+    setCommandmentsSummary('Your voice is direct, punchy, and personable. You prefer short sentences and getting to the point quickly.');
+    setStage('complete');
+    markCompleted();
+
+    addAssistantMessage(`✅ Mock voice test complete! Generated ${CONTENT_TYPES.length} content pieces with an average rating of 8.4.`);
+    setIsLoading(false);
+  }, []);
+
+  // =============================================================================
   // STAGE HANDLERS
   // =============================================================================
 
   const handleChoiceStart = () => {
     addUserMessage("Let's do it");
     setStage('content_prompt');
-
-    // Update checklist
-    setChecklistItems(prev =>
-      prev.map((item, index) =>
-        index === 0 ? { ...item, status: 'in_progress' as const } : item
-      )
-    );
-
     addAssistantMessage(getContentTypeIntroMessage(currentContentType));
   };
 
@@ -467,15 +575,6 @@ Helpful instruction: ${feedbackForm.helpfulInstruction}`);
     // Mark current type as completed
     setCompletedContentTypes(prev => [...prev, currentContentType.id]);
 
-    // Update checklist
-    setChecklistItems(prev =>
-      prev.map(item =>
-        item.id === currentContentType.id
-          ? { ...item, status: 'completed' as const }
-          : item
-      )
-    );
-
     // Check if we're done with all content types
     const nextIndex = currentContentTypeIndex + 1;
     if (nextIndex >= CONTENT_TYPES.length) {
@@ -488,13 +587,6 @@ Helpful instruction: ${feedbackForm.helpfulInstruction}`);
       setCurrentContentTypeIndex(nextIndex);
       setCurrentAttempt(null);
       setGeneratedContent('');
-
-      // Update checklist for next item
-      setChecklistItems(prev =>
-        prev.map((item, index) =>
-          index === nextIndex ? { ...item, status: 'in_progress' as const } : item
-        )
-      );
 
       const nextContentType = CONTENT_TYPES[nextIndex];
       setStage('content_prompt');
@@ -571,114 +663,104 @@ Your commandments have been saved to your voice profile. You can view and edit t
   };
 
   // =============================================================================
-  // CHECKLIST HANDLERS
+  // NAVIGATION
   // =============================================================================
 
-  const handleChecklistItemClick = useCallback((itemId: string) => {
-    // Find the index of the clicked item
-    const index = CONTENT_TYPES.findIndex(ct => ct.id === itemId);
-    if (index === -1) return;
-
-    // Only allow jumping to completed items or the current item
-    const item = checklistItems.find(i => i.id === itemId);
-    if (item?.status === 'completed' || item?.status === 'in_progress') {
-      // For now, just highlight - could implement jumping
+  const handleTypeClick = useCallback((index: number) => {
+    // Only allow navigating to completed types or current
+    if (index <= currentContentTypeIndex || completedContentTypes.includes(CONTENT_TYPES[index].id)) {
+      // Could implement jumping - for now just highlight
     }
-  }, [checklistItems]);
-
-  const handleUnlockProduction = useCallback(() => {
-    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
-    navigate(returnPath);
-  }, [navigate, returnPath]);
+  }, [currentContentTypeIndex, completedContentTypes]);
 
   const handleExit = useCallback(() => {
-    // Navigate back to return path without marking as complete
     navigate(returnPath);
   }, [navigate, returnPath]);
 
   const handleReset = useCallback(() => {
-    // Clear voice test progress and reload
     localStorage.removeItem(STORAGE_KEYS.PROGRESS);
     localStorage.removeItem(STORAGE_KEYS.COMPLETED);
     localStorage.removeItem('founder-os-voice-test-completed');
     window.location.reload();
   }, []);
 
-  const canUnlock = stage === 'complete';
-
   // =============================================================================
   // RENDER
   // =============================================================================
 
   return (
-    <div className="flex h-screen bg-gh-dark-900">
-      {/* Setup Sidebar */}
-      <SetupSidebar
-        items={checklistItems}
-        currentItemId={currentContentType?.id}
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onItemClick={handleChecklistItemClick}
-        onUnlockProduction={handleUnlockProduction}
-        canUnlock={canUnlock}
-        onExit={handleExit}
-        exitLabel="Back to Tutorial"
-        onReset={handleReset}
-        resetLabel="Reset Voice Test"
-      />
+    <div className="flex flex-col h-full bg-black text-white">
+      {/* Header with Progress - matches AssessmentFlow layout */}
+      <div className="border-b border-purple-500/30 bg-gray-900/95 relative flex-shrink-0">
+        {/* Exit button */}
+        <button
+          onClick={handleExit}
+          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-gray-800/80 hover:bg-gray-700 text-gray-400 hover:text-white transition-all duration-200 border border-gray-700 hover:border-gray-600"
+          title="Save & Exit"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gh-dark-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-purple-400 flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Voice Test</h1>
-              <p className="text-sm text-gray-400">
-                {stage === 'intro' && 'Voice Calibration'}
-                {stage === 'choice' && 'Ready to Start'}
-                {stage === 'content_prompt' && currentContentType?.label}
-                {stage === 'generating' && 'Generating...'}
-                {stage === 'rating' && 'Rate This Content'}
-                {stage === 'feedback' && 'Provide Feedback'}
-                {stage === 'complete_type' && 'Continue?'}
-                {stage === 'generating_commandments' && 'Creating Commandments...'}
-                {stage === 'complete' && 'Complete!'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 bg-purple-600/20 text-purple-400 rounded-full text-sm">
-              {completedContentTypes.length}/{CONTENT_TYPES.length} types
-            </span>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        {stage !== 'intro' && stage !== 'choice' && stage !== 'complete' && (
-          <div className="px-6 py-2 border-b border-gh-dark-700 bg-gh-dark-800">
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-gray-400">
-                {currentContentTypeIndex + 1}/{CONTENT_TYPES.length}
-              </span>
-              <div className="flex-1 h-1.5 bg-gh-dark-600 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-purple-600 rounded-full transition-all duration-300"
-                  style={{ width: `${((completedContentTypes.length) / CONTENT_TYPES.length) * 100}%` }}
-                />
-              </div>
-            </div>
+        {/* Dev mode buttons */}
+        {isDevMode() && (
+          <div className="absolute top-4 right-16 z-10 flex gap-2">
+            <button
+              onClick={handleMockFill}
+              className="px-3 py-2 rounded-full bg-yellow-600/80 hover:bg-yellow-500 text-white text-xs font-medium transition-all duration-200 border border-yellow-500 flex items-center gap-1"
+              title="Fill with mock data (Dev Mode)"
+            >
+              <Zap className="w-4 h-4" />
+              Mock Fill
+            </button>
+            <button
+              onClick={handleReset}
+              className="px-3 py-2 rounded-full bg-orange-600/80 hover:bg-orange-500 text-white text-xs font-medium transition-all duration-200 border border-orange-500"
+              title="Reset voice test (Dev Mode)"
+            >
+              Reset
+            </button>
           </div>
         )}
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        {/* Content Type Timeline - matches SectionTimeline style */}
+        <ContentTypeTimeline
+          contentTypes={CONTENT_TYPES}
+          currentIndex={currentContentTypeIndex}
+          completedTypes={completedContentTypes}
+          onTypeClick={handleTypeClick}
+        />
+
+        {/* Progress Bar - matches AssessmentFlow */}
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-400">
+                {stage === 'intro' ? 'Voice Calibration' : currentContentType?.label}
+              </span>
+              <button
+                onClick={handleExit}
+                className="text-xs text-purple-400 hover:opacity-80 transition-colors"
+              >
+                Save & Exit
+              </button>
+            </div>
+            <span className="text-sm text-purple-400">
+              {Math.round(progress)}% Complete
+            </span>
+          </div>
+          <div className="w-full bg-gray-800 rounded-full h-2 overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 transition-all duration-300"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content - matches AssessmentFlow layout */}
+      <div className="flex-1 overflow-y-auto pt-8 pb-12 px-4 min-h-0">
+        <div className="max-w-3xl mx-auto space-y-4">
           <AnimatePresence>
             {messages.map((message, index) => (
               <motion.div
@@ -690,11 +772,11 @@ Your commandments have been saved to your voice profile. You can view and edit t
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.role === 'user'
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'bg-gh-dark-700 text-white'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-800 text-white border border-gray-700'
                   }`}
                 >
-                  <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'text-gray-900 prose-gray' : 'text-white prose-invert'}`}>
+                  <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'text-white prose-invert' : 'text-white prose-invert'}`}>
                     <ReactMarkdown>{message.content}</ReactMarkdown>
                   </div>
                 </div>
@@ -705,173 +787,169 @@ Your commandments have been saved to your voice profile. You can view and edit t
           {/* Loading indicator */}
           {isLoading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
-              <div className="bg-gh-dark-700 rounded-2xl px-4 py-3">
+              <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
                 <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                 </div>
               </div>
             </motion.div>
           )}
 
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Quick Action Buttons */}
-        {stage === 'intro' && messages.length === 1 && (
-          <div className="px-6 pb-4">
+          {/* Action Area - inline with content */}
+          <div className="mt-8">
+          {/* Intro: Start/Later buttons */}
+          {stage === 'intro' && messages.length === 1 && (
             <div className="flex gap-3">
               <button
                 onClick={handleChoiceStart}
-                className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
+                className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors font-medium"
               >
                 Let's Do It
               </button>
               <button
                 onClick={handleChoiceLater}
-                className="flex-1 px-4 py-3 bg-gh-dark-700 hover:bg-gh-dark-600 text-white rounded-xl transition-colors"
+                className="flex-1 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors border border-gray-700"
               >
                 Later
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Rating UI */}
-        {stage === 'rating' && (
-          <div className="px-6 pb-4 space-y-4">
-            <div className="bg-gh-dark-800 rounded-xl p-4">
-              <label className="text-sm text-gray-400 block mb-2">Rate this content (1-10)</label>
-              <div className="flex items-center gap-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={currentRating}
-                  onChange={(e) => setCurrentRating(parseInt(e.target.value))}
-                  className="flex-1 h-2 bg-gh-dark-600 rounded-lg appearance-none cursor-pointer accent-purple-600"
-                />
-                <span className={`text-2xl font-bold ${currentRating >= 9 ? 'text-green-400' : currentRating >= 7 ? 'text-yellow-400' : 'text-red-400'}`}>
-                  {currentRating}
-                </span>
+          {/* Rating UI */}
+          {stage === 'rating' && (
+            <div className="space-y-4">
+              <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+                <label className="text-sm text-gray-400 block mb-3">Rate this content (1-10)</label>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={currentRating}
+                    onChange={(e) => setCurrentRating(parseInt(e.target.value))}
+                    className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                  />
+                  <span className={`text-3xl font-bold min-w-[3rem] text-center ${
+                    currentRating >= 9 ? 'text-green-400' : currentRating >= 7 ? 'text-yellow-400' : 'text-red-400'
+                  }`}>
+                    {currentRating}
+                  </span>
+                </div>
               </div>
+              <button
+                onClick={handleRatingSubmit}
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors font-medium"
+              >
+                Submit Rating
+              </button>
             </div>
-            <button
-              onClick={handleRatingSubmit}
-              className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
-            >
-              Submit Rating
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Feedback Form */}
-        {stage === 'feedback' && (
-          <div className="px-6 pb-4 space-y-4">
-            <div className="bg-gh-dark-800 rounded-xl p-4 space-y-4">
-              <div>
-                <label className="text-sm text-gray-400 block mb-2">What specifically didn't work?</label>
-                <textarea
-                  value={feedbackForm.whatDidntWork}
-                  onChange={(e) => setFeedbackForm(prev => ({ ...prev, whatDidntWork: e.target.value }))}
-                  placeholder="The tone was too formal, the opening felt weak..."
-                  rows={2}
-                  className="w-full bg-gh-dark-700 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
+          {/* Feedback Form */}
+          {stage === 'feedback' && (
+            <div className="space-y-4">
+              <div className="bg-gray-800 rounded-xl p-4 space-y-4 border border-gray-700">
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">What specifically didn't work?</label>
+                  <textarea
+                    value={feedbackForm.whatDidntWork}
+                    onChange={(e) => setFeedbackForm(prev => ({ ...prev, whatDidntWork: e.target.value }))}
+                    placeholder="The tone was too formal, the opening felt weak..."
+                    rows={2}
+                    className="w-full bg-gray-900 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">What would a 10/10 version look like?</label>
+                  <textarea
+                    value={feedbackForm.whatTenLooksLike}
+                    onChange={(e) => setFeedbackForm(prev => ({ ...prev, whatTenLooksLike: e.target.value }))}
+                    placeholder="It would start with a bold statement, use more casual language..."
+                    rows={2}
+                    className="w-full bg-gray-900 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-700"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 block mb-2">What question or instruction would have helped me get it right?</label>
+                  <textarea
+                    value={feedbackForm.helpfulInstruction}
+                    onChange={(e) => setFeedbackForm(prev => ({ ...prev, helpfulInstruction: e.target.value }))}
+                    placeholder="Ask me about my target audience, remind me to be provocative..."
+                    rows={2}
+                    className="w-full bg-gray-900 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-700"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-sm text-gray-400 block mb-2">What would a 10/10 version look like?</label>
-                <textarea
-                  value={feedbackForm.whatTenLooksLike}
-                  onChange={(e) => setFeedbackForm(prev => ({ ...prev, whatTenLooksLike: e.target.value }))}
-                  placeholder="It would start with a bold statement, use more casual language..."
-                  rows={2}
-                  className="w-full bg-gh-dark-700 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
-              <div>
-                <label className="text-sm text-gray-400 block mb-2">What question or instruction would have helped me get it right?</label>
-                <textarea
-                  value={feedbackForm.helpfulInstruction}
-                  onChange={(e) => setFeedbackForm(prev => ({ ...prev, helpfulInstruction: e.target.value }))}
-                  placeholder="Ask me about my target audience, remind me to be provocative..."
-                  rows={2}
-                  className="w-full bg-gh-dark-700 text-white rounded-lg px-4 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-              </div>
+              <button
+                onClick={handleFeedbackSubmit}
+                disabled={!feedbackForm.whatDidntWork.trim()}
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl transition-colors font-medium"
+              >
+                Submit Feedback
+              </button>
             </div>
-            <button
-              onClick={handleFeedbackSubmit}
-              disabled={!feedbackForm.whatDidntWork.trim()}
-              className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
-            >
-              Submit Feedback
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Try Again / Move On */}
-        {stage === 'complete_type' && (
-          <div className="px-6 pb-4">
+          {/* Try Again / Move On */}
+          {stage === 'complete_type' && (
             <div className="flex gap-3">
               <button
                 onClick={handleTryAgain}
-                className="flex-1 px-4 py-3 bg-gh-dark-700 hover:bg-gh-dark-600 text-white rounded-xl transition-colors"
+                className="flex-1 px-4 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors border border-gray-700"
               >
                 Try Again
               </button>
               <button
                 onClick={handleMoveOn}
-                className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
+                className="flex-1 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors font-medium"
               >
                 Move On
               </button>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Commandments Display */}
-        {stage === 'complete' && commandments.length > 0 && (
-          <div className="px-6 pb-4">
-            <div className="bg-gh-dark-800 rounded-xl p-6 max-h-96 overflow-y-auto">
-              <h3 className="text-lg font-semibold text-white mb-4">Your 10 Commandments</h3>
-              <div className="space-y-4">
-                {commandments.map((cmd, index) => (
-                  <div key={index} className="border-l-2 border-purple-500 pl-4">
-                    <h4 className="font-medium text-white">
-                      {cmd.number}. {cmd.title}
-                    </h4>
-                    <p className="text-sm text-gray-400 mt-1">{cmd.description}</p>
-                    {cmd.examples.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs text-gray-500">Examples:</p>
-                        <ul className="text-xs text-gray-400 list-disc list-inside">
-                          {cmd.examples.map((ex, i) => (
-                            <li key={i}>{ex}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
+          {/* Commandments Display */}
+          {stage === 'complete' && commandments.length > 0 && (
+            <div className="space-y-4">
+              <div className="bg-gray-800 rounded-xl p-6 max-h-80 overflow-y-auto border border-gray-700">
+                <h3 className="text-lg font-semibold text-white mb-4">Your 10 Commandments</h3>
+                <div className="space-y-4">
+                  {commandments.map((cmd, index) => (
+                    <div key={index} className="border-l-2 border-purple-500 pl-4">
+                      <h4 className="font-medium text-white">
+                        {cmd.number}. {cmd.title}
+                      </h4>
+                      <p className="text-sm text-gray-400 mt-1">{cmd.description}</p>
+                      {cmd.examples.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-xs text-gray-500">Examples:</p>
+                          <ul className="text-xs text-gray-400 list-disc list-inside">
+                            {cmd.examples.map((ex, i) => (
+                              <li key={i}>{ex}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
+              <button
+                onClick={() => {
+                  localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+                  navigate(returnPath);
+                }}
+                className="w-full px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors font-medium"
+              >
+                Continue
+              </button>
             </div>
-            <button
-              onClick={() => {
-                localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
-                navigate(returnPath);
-              }}
-              className="w-full mt-4 px-4 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl transition-colors"
-            >
-              Continue
-            </button>
-          </div>
-        )}
+          )}
 
-        {/* Input - shown for content_prompt stage */}
-        {stage === 'content_prompt' && (
-          <div className="p-4 border-t border-gh-dark-700">
+          {/* Text Input - shown for content_prompt stage */}
+          {stage === 'content_prompt' && (
             <div className="flex gap-3">
               <textarea
                 value={inputValue}
@@ -879,20 +957,24 @@ Your commandments have been saved to your voice profile. You can view and edit t
                 onKeyPress={handleKeyPress}
                 placeholder={currentContentType?.promptHint || "Type your message..."}
                 rows={1}
-                className="flex-1 bg-gh-dark-700 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="flex-1 bg-gray-800 text-white rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500 border border-gray-700"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!inputValue.trim() || isLoading}
-                className="px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
+                className="px-4 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
               </button>
             </div>
+          )}
           </div>
-        )}
+          {/* End Action Area */}
+
+          <div ref={messagesEndRef} />
+        </div>
       </div>
     </div>
   );

@@ -32,7 +32,8 @@
       "Bash(git -C:*)",
       "Bash(cargo:*)",
       "Bash(rustc:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(grep:*)"
     ]
   }
 }

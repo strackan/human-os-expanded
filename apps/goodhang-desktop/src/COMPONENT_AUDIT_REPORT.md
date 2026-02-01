@@ -97,7 +97,7 @@ All route files follow **kebab-case** naming convention:
 | renubu-chat, renubu-chat-router, renubu-chat-workflow | kebab-case |
 | results, signin, signup | kebab-case |
 | tutorial, tutorial-router, tutorial-workflow | kebab-case |
-| voice-test, welcome, work-style-assessment | kebab-case |
+| voice-test, welcome | kebab-case |
 
 **Result:** 100% compliance with kebab-case convention.
 

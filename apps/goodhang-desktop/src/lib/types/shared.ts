@@ -178,9 +178,7 @@ export interface ExtractedEntity {
 // =============================================================================
 
 export type TutorialStep =
-  | 'welcome'
-  | 'about_you'
-  | 'work_questions'
+  | 'interview'
   | 'voice_testing'
   | 'tool_testing'
   | 'complete';

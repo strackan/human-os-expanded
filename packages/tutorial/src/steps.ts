@@ -27,9 +27,7 @@ export interface TutorialStepConfig {
  * To add a completion marker: set completionKey to the localStorage key.
  */
 export const TUTORIAL_STEPS: TutorialStepConfig[] = [
-  { id: 'welcome', label: 'Welcome', description: 'Getting started', iconName: 'User' },
-  { id: 'about_you', label: 'About You', description: 'What I learned', iconName: 'Sparkles' },
-  { id: 'work_questions', label: 'Work Style', description: '10 quick questions', iconName: 'ClipboardList', completionKey: 'founder-os-work-style-completed' },
+  { id: 'interview', label: 'Interview', description: '12 questions', iconName: 'ClipboardList', completionKey: 'founder-os-interview-completed' },
   { id: 'voice_testing', label: 'Voice-OS', description: 'Test your voice', iconName: 'Mic', completionKey: 'founder-os-voice-test-completed' },
   { id: 'tool_testing', label: 'Tools', description: 'Test your tools', iconName: 'Wrench', completionKey: 'founder-os-tool-testing-completed' },
   { id: 'complete', label: 'Complete', description: 'Ready to go', iconName: 'CheckCircle2', completionKey: 'founder-os-tutorial-completed' },

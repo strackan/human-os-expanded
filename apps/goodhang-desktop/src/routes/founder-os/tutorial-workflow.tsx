@@ -7,12 +7,16 @@
  * This component is used when FEATURES.USE_WORKFLOW_MODE_LAYOUT is enabled.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, RotateCcw, Zap } from 'lucide-react';
+
+// Lazy load VoiceTestPage for embedding in artifact panel
+const VoiceTestPage = lazy(() => import('./voice-test'));
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
+import { useQuestionSet } from '@/lib/hooks';
 import {
   initializeTutorial,
   sendTutorialMessage,
@@ -37,109 +41,22 @@ import type {
   WorkflowModeActions,
   MessageResponse,
   AssessmentConfig,
-  AssessmentSection,
 } from '@/lib/types';
 import { TUTORIAL_STEPS, getStepIndex, getResumeStep, getAllCompletionKeys } from '@/lib/tutorial/steps';
 
 // =============================================================================
-// GOODHANG ASSESSMENT CONFIGURATION (for inline display)
+// ASSESSMENT CONFIGURATION CONSTANTS
 // =============================================================================
 
-const ASSESSMENT_STORAGE_KEY = 'goodhang-dnd-assessment-progress';
-
-const ASSESSMENT_SECTIONS: AssessmentSection[] = [
-  {
-    id: 'your-story',
-    title: 'Your Story',
-    transitionMessage: "Let's start with some moments that have shaped who you are.",
-    questions: [
-      {
-        id: 'a1-turning-point',
-        text: 'Describe a moment or experience that fundamentally changed who you are or how you see the world.',
-        followUp: 'Be specific about what happened and how it changed you.',
-      },
-      {
-        id: 'a2-happiest-memory',
-        text: 'Tell me about your single happiest memory.',
-        followUp: 'What made this moment so special?',
-      },
-      {
-        id: 'a3-difficult-time',
-        text: 'Tell me about a difficult time in your life and how you got through it.',
-        followUp: 'What did you learn about yourself?',
-      },
-      {
-        id: 'a4-redemption',
-        text: 'Tell me about something bad that happened to you that ultimately led to something good.',
-        followUp: 'How did the transformation happen?',
-      },
-    ],
-  },
-  {
-    id: 'who-you-are',
-    title: 'Who You Are',
-    transitionMessage: "Now let's explore your core identity and values.",
-    questions: [
-      {
-        id: 'b1-failed-someone',
-        text: 'Tell me about a time you failed someone you care about.',
-        followUp: 'How did it affect your relationship?',
-      },
-      {
-        id: 'b2-core-identity',
-        text: "If you stripped away your job, relationships, and achievements - what would remain? What's the core 'you'?",
-        followUp: 'What defines you beyond external factors?',
-      },
-      {
-        id: 'b3-simple-thing',
-        text: "What's a simple thing that matters a lot to you?",
-        followUp: 'Why does this resonate so deeply?',
-      },
-    ],
-  },
-  {
-    id: 'how-you-connect',
-    title: 'How You Connect',
-    transitionMessage: "Finally, let's understand how you relate to others.",
-    questions: [
-      {
-        id: 'c1-relationship-need',
-        text: 'What do you need from close relationships that you rarely ask for directly?',
-        followUp: "What makes it hard to ask?",
-      },
-      {
-        id: 'c2-intellectual-gap',
-        text: "What's something you believe in intellectually but can't fully commit to in practice?",
-        followUp: 'What holds you back?',
-      },
-      {
-        id: 'c3-happiness-barrier',
-        text: "What's really keeping you from being happy?",
-        followUp: 'Be honest with yourself.',
-      },
-    ],
-  },
-];
+const ASSESSMENT_STORAGE_KEY = 'fos-consolidated-interview-progress';
+const QUESTION_SET_SLUG = 'fos-consolidated-interview';
 
 const ASSESSMENT_LOADING_MESSAGES = [
   "Analyzing your responses...",
-  "Calculating your archetype...",
-  "Mapping personality dimensions...",
-  "Generating your D&D profile...",
+  "Building your personality profile...",
+  "Mapping your work style...",
+  "Generating your comprehensive report...",
 ];
-
-const ASSESSMENT_CONFIG: AssessmentConfig = {
-  storageKey: ASSESSMENT_STORAGE_KEY,
-  sections: ASSESSMENT_SECTIONS,
-  loadingMessages: ASSESSMENT_LOADING_MESSAGES,
-  themeColor: 'purple',
-  title: 'Good Hang Assessment',
-  subtitle: 'D&D Character Profile',
-  completionTitle: "You've completed all questions!",
-  completionDescription:
-    "Click below to submit your assessment and generate your D&D character profile. Our AI will analyze your responses and map your personality to a unique race, class, and alignment.",
-  submitButtonText: 'Submit & Generate Profile',
-};
 
 // =============================================================================
 // CONVERT TUTORIAL STEPS TO WORKFLOW STEPS
@@ -180,10 +97,10 @@ export default function TutorialWorkflowMode() {
 
   // Tutorial state
   const [progress, setProgress] = useState<TutorialProgress>({
-    currentStep: 'welcome',
-    stepIndex: getStepIndex('welcome'),
+    currentStep: 'interview',
+    stepIndex: getStepIndex('interview'),
     questionsAnswered: 0,
-    totalQuestions: 5,
+    totalQuestions: 12,
     viewedReport: false,
   });
 
@@ -206,11 +123,37 @@ export default function TutorialWorkflowMode() {
   // Loading state for artifact
   const [isLoadingReport, setIsLoadingReport] = useState(false);
 
-  // Inline assessment state
+  // Artifact phase state: tracks interview → generating → report transitions
+  type ArtifactPhase = 'interview' | 'generating' | 'report';
+  const [artifactPhase, setArtifactPhase] = useState<ArtifactPhase>('report');
+
+  // Legacy state (for backwards compatibility)
   const [showInlineAssessment, setShowInlineAssessment] = useState(false);
 
   // Session context
   const sessionId = searchParams.get('session') || status?.contexts?.active;
+
+  // Fetch questions from database API
+  const { sections: questionSections, isLoading: isLoadingQuestions, error: questionsError } = useQuestionSet(QUESTION_SET_SLUG, token);
+
+  // Build assessment config dynamically from fetched questions
+  const assessmentConfig: AssessmentConfig | null = useMemo(() => {
+    if (isLoadingQuestions || questionsError || questionSections.length === 0) {
+      return null;
+    }
+    return {
+      storageKey: ASSESSMENT_STORAGE_KEY,
+      sections: questionSections,
+      loadingMessages: ASSESSMENT_LOADING_MESSAGES,
+      themeColor: 'purple',
+      title: 'Profile Interview',
+      subtitle: 'Getting to Know You',
+      completionTitle: "You've completed the interview!",
+      completionDescription:
+        "Click below to generate your comprehensive profile. Our AI will analyze your responses and create a personalized report covering your personality, work style, and AI assistant preferences.",
+      submitButtonText: 'Generate My Profile',
+    };
+  }, [questionSections, isLoadingQuestions, questionsError]);
 
   // Convert tutorial steps to workflow steps
   const workflowSteps = convertToWorkflowSteps(TUTORIAL_STEPS, progress.stepIndex);
@@ -222,19 +165,14 @@ export default function TutorialWorkflowMode() {
   // Get quick actions based on current step
   const getQuickActionsForStep = useCallback((step: TutorialStep) => {
     switch (step) {
-      case 'about_you':
-        // No quick actions - user confirms each tab via the report editor buttons
-        // "Continue" is added by the effect when all tabs are confirmed
+      case 'interview':
+        // No quick actions during interview - user completes assessment then confirms report tabs
         return [];
-      case 'work_questions':
-        return [
-          { label: 'Start Work Style Questions', value: 'start_work_questions' },
-          { label: 'Skip for now', value: 'skip_work_questions' },
-        ];
       case 'voice_testing':
+        // Voice test is shown automatically in the artifact panel - no quick actions needed
+        // Only show skip option if user wants to bypass
         return [
-          { label: "Let's test your voice", value: 'start_voice_testing' },
-          { label: 'Skip for now', value: 'skip_voice_testing' },
+          { label: 'Skip voice testing', value: 'skip_voice_testing' },
         ];
       case 'tool_testing':
         return [{ label: 'Continue', value: 'continue_to_complete' }];
@@ -266,26 +204,8 @@ export default function TutorialWorkflowMode() {
         return null;
       }
 
-      if (actionValue === 'start_work_questions') {
-        navigate(`/founder-os/work-style-assessment?session=${sessionId}&return=/founder-os/tutorial`);
-        return null;
-      }
 
-      if (actionValue === 'skip_work_questions') {
-        // Skip to voice testing step
-        const voiceStepIndex = getStepIndex('voice_testing');
-        setProgress(prev => ({
-          ...prev,
-          currentStep: 'voice_testing',
-          stepIndex: voiceStepIndex,
-        }));
-        return {
-          content: "No problem! We can always do the work style questions later. Let's move on to voice testing.",
-          quickActions: getQuickActionsForStep('voice_testing'),
-        };
-      }
-
-      // Handle Continue from report - persist and advance to next step
+      // Handle Continue from report - persist and advance to next step (voice_testing)
       if (actionValue === 'continue_from_report') {
         if (report && sessionId) {
           try {
@@ -295,26 +215,21 @@ export default function TutorialWorkflowMode() {
             console.error('[tutorial-workflow] Error persisting report:', error);
           }
         }
-        // Advance to next step (work_questions)
-        const nextStepIndex = progress.stepIndex + 1;
-        const nextStep = TUTORIAL_STEPS[nextStepIndex];
-        if (nextStep) {
-          // Mark current step completion
-          const currentStep = TUTORIAL_STEPS[progress.stepIndex];
-          if (currentStep?.completionKey) {
-            localStorage.setItem(currentStep.completionKey, new Date().toISOString());
-          }
-          // Update progress
-          setProgress((prev) => ({
-            ...prev,
-            currentStep: nextStep.id as TutorialStep,
-            stepIndex: nextStepIndex,
-            viewedReport: true,
-          }));
-        }
+        // Mark interview step as complete
+        localStorage.setItem('founder-os-interview-completed', new Date().toISOString());
+
+        // Advance to voice_testing step
+        const voiceStepIndex = getStepIndex('voice_testing');
+        setProgress((prev) => ({
+          ...prev,
+          currentStep: 'voice_testing' as TutorialStep,
+          stepIndex: voiceStepIndex,
+          viewedReport: true,
+        }));
+
         return {
-          content: "Your profile looks great! Let me ask you a few quick questions to personalize your experience even further.",
-          quickActions: getQuickActionsForStep(nextStep?.id as TutorialStep || 'work_questions'),
+          content: "Your profile is saved! Now let's calibrate your AI voice. This helps me write content that sounds like you.",
+          quickActions: getQuickActionsForStep('voice_testing' as TutorialStep),
         };
       }
 
@@ -327,7 +242,7 @@ export default function TutorialWorkflowMode() {
         setIsLoadingReport(false);
         return {
           content: "I'm having trouble connecting. Please try again.",
-          quickActions: getQuickActionsForStep('welcome'),
+          quickActions: getQuickActionsForStep('interview'),
         };
       }
 
@@ -438,6 +353,8 @@ export default function TutorialWorkflowMode() {
     // Also clear any legacy keys that might exist
     localStorage.removeItem('workflow-mode-tutorial');
     localStorage.removeItem('founder-os-tutorial');
+    localStorage.removeItem('founder-os-work-style-completed');
+    localStorage.removeItem('goodhang-dnd-assessment-progress');
 
     // Clear assessment progress localStorage
     localStorage.removeItem(ASSESSMENT_STORAGE_KEY);
@@ -459,6 +376,7 @@ export default function TutorialWorkflowMode() {
     setCharacterProfile(null);
     setReportConfirmations({ status: false, personality: false, voice: false, character: false });
     setShowInlineAssessment(false);
+    setArtifactPhase('interview');
 
     // Reset refs
     hasShownReportCompleteRef.current = false;
@@ -480,7 +398,7 @@ export default function TutorialWorkflowMode() {
       allConfirmed &&
       !hasShownReportCompleteRef.current &&
       workflowActionsRef.current &&
-      progress.currentStep === 'about_you'
+      progress.currentStep === 'interview'
     ) {
       hasShownReportCompleteRef.current = true;
       workflowActionsRef.current.addAssistantMessage(
@@ -507,10 +425,10 @@ export default function TutorialWorkflowMode() {
       return;
     }
 
-    // Immediately show loading state and welcome message
+    // Immediately show loading state
     setIsLoadingReport(true);
     actions.addAssistantMessage(
-      "Hello! Let's start by taking a look at what I already know about you."
+      "Hello! Let me check your profile status..."
     );
 
     try {
@@ -518,32 +436,35 @@ export default function TutorialWorkflowMode() {
 
       // Update state from API response
       if (data.questions) setQuestions(data.questions);
-      if (data.report) {
+
+      // Check if user has already completed the assessment
+      const hasCompletedAssessment = status?.products?.goodhang?.assessment?.completed ?? false;
+
+      if (hasCompletedAssessment && data.report) {
+        // User has completed assessment - show report for review
         setOriginalReport(data.report);
         setReport(data.report);
-        // Move to about_you step to show the report
-        setProgress(prev => ({
-          ...prev,
-          currentStep: 'about_you',
-          stepIndex: getStepIndex('about_you'),
-          viewedReport: true,
-        }));
+        setArtifactPhase('report');
         setIsLoadingReport(false);
 
-        // Add follow-up message once report is loaded - no quick action yet
-        // User needs to review all tabs first, then the effect will show "Continue"
+        // Add follow-up message once report is loaded
         setTimeout(() => {
           actions.addAssistantMessage(
             "Here's your profile based on our conversation. Review each tab (Status, Personality, Voice, Character) and confirm them by clicking 'Looks Good' on each one."
           );
         }, 500);
       } else {
-        // No report available
+        // User hasn't completed assessment - start interview
         setIsLoadingReport(false);
-        actions.addAssistantMessage(
-          "I don't have your profile yet. Let's continue with setup.",
-          [{ label: 'Continue', value: 'skip_report' }]
-        );
+        setArtifactPhase('interview');
+        setShowInlineAssessment(true);
+
+        // Add welcome message
+        setTimeout(() => {
+          actions.addAssistantMessage(
+            "Welcome! Let's get to know you better through a brief interview. Your answers will help create a personalized profile."
+          );
+        }, 500);
       }
 
       if (data.currentQuestion) {
@@ -552,9 +473,12 @@ export default function TutorialWorkflowMode() {
     } catch (error) {
       console.error('[tutorial-workflow] Error initializing:', error);
       setIsLoadingReport(false);
+
+      // On error, start the interview anyway
+      setArtifactPhase('interview');
+      setShowInlineAssessment(true);
       actions.addAssistantMessage(
-        "Something went wrong loading your profile. Let's try continuing.",
-        [{ label: 'Continue', value: 'skip_report' }]
+        "Let's get started with your interview."
       );
     }
   }, [searchParams, status, progress, token]);
@@ -674,65 +598,83 @@ export default function TutorialWorkflowMode() {
 
   const handleStartAssessment = useCallback(() => {
     setShowInlineAssessment(true);
+    setArtifactPhase('interview');
   }, []);
 
   const handleAssessmentComplete = useCallback(async (answers: Record<string, string>) => {
+    // Transition to generating phase (stay in artifact panel)
+    setArtifactPhase('generating');
+    setShowInlineAssessment(false);
+
     // Build transcript in the format the scoring API expects
-    const allQuestions = ASSESSMENT_SECTIONS.flatMap((s) => s.questions);
+    // Use the fetched questions from the database
+    const allQuestions = questionSections.flatMap((s) => s.questions);
     const transcript = allQuestions.flatMap((q) => [
       { role: 'assistant', content: q.text },
       { role: 'user', content: answers[q.id] || '' },
     ]);
 
-    const response = await post<{
-      success: boolean;
-      profile: CharacterProfile;
-      attributes: CharacterAttributes;
-      signals: AssessmentSignals;
-      matching: MatchingProfile;
-      overall_score: number;
-      summary?: string;
-    }>('/api/assessment/score', {
-      user_id: userId,
-      transcript,
-      source: 'desktop_app',
-    }, token, { timeout: 120000 }); // 2 minute timeout for AI scoring
+    try {
+      const response = await post<{
+        success: boolean;
+        profile: CharacterProfile;
+        attributes: CharacterAttributes;
+        signals: AssessmentSignals;
+        matching: MatchingProfile;
+        overall_score: number;
+        summary?: string;
+      }>('/api/assessment/score', {
+        user_id: userId,
+        transcript,
+        source: 'desktop_app',
+      }, token, { timeout: 120000 }); // 2 minute timeout for AI scoring
 
-    console.log('[tutorial-workflow] Assessment scored successfully', response);
+      console.log('[tutorial-workflow] Assessment scored successfully', response);
 
-    // Set the character profile from API response with all data
-    if (response.profile) {
-      setCharacterProfile({
-        ...response.profile,
-        characterClass: response.profile.class || response.profile.characterClass,
-        title: response.profile.tagline || response.profile.title,
-        attributes: response.attributes,
-        signals: response.signals,
-        matching: response.matching,
-        overall_score: response.overall_score,
-        summary: response.summary,
-      });
+      // Set the character profile from API response with all data
+      if (response.profile) {
+        setCharacterProfile({
+          ...response.profile,
+          characterClass: response.profile.class || response.profile.characterClass,
+          title: response.profile.tagline || response.profile.title,
+          attributes: response.attributes,
+          signals: response.signals,
+          matching: response.matching,
+          overall_score: response.overall_score,
+          summary: response.summary,
+        });
+      }
+
+      // Refresh user status to get updated assessment completion status
+      if (token) {
+        await fetchStatus(token, userId ?? undefined);
+      }
+
+      // Transition to report phase (stay in artifact panel)
+      setArtifactPhase('report');
+
+      // Add success message in chat - prompt user to review and confirm the Character tab
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          "Your profile has been generated! Review each tab and click 'Looks Good' on each one to confirm."
+        );
+      }
+    } catch (error) {
+      console.error('[tutorial-workflow] Assessment scoring failed:', error);
+      // On error, go back to report phase
+      setArtifactPhase('report');
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          "Something went wrong generating your profile. Please try again."
+        );
+      }
     }
-
-    // Refresh user status to get updated assessment completion status
-    if (token) {
-      await fetchStatus(token, userId ?? undefined);
-    }
-
-    // Hide the assessment (but don't auto-confirm - let user review and click "Looks Good")
-    setShowInlineAssessment(false);
-
-    // Add success message in chat - prompt user to review and confirm the Character tab
-    if (workflowActionsRef.current) {
-      workflowActionsRef.current.addAssistantMessage(
-        "Your D&D character profile has been generated! Check out the Character tab to see your results, then click 'Looks Good' to confirm."
-      );
-    }
-  }, [userId, token, fetchStatus]);
+  }, [userId, token, fetchStatus, questionSections]);
 
   const handleAssessmentExit = useCallback((_answers: Record<string, string>, _currentIndex: number) => {
-    // User exited assessment without completing - just hide it
+    // User exited assessment without completing - go back to report phase
     setShowInlineAssessment(false);
+    setArtifactPhase('report');
   }, []);
 
   // =============================================================================
@@ -754,12 +696,51 @@ export default function TutorialWorkflowMode() {
       setProgress({
         currentStep: stepId as TutorialStep,
         stepIndex,
-        questionsAnswered: stepId === 'complete' ? 10 : 0,
-        totalQuestions: 10,
-        viewedReport: stepIndex > 1,
+        questionsAnswered: stepId === 'complete' ? 12 : 0,
+        totalQuestions: 12,
+        viewedReport: stepIndex > 0,
       });
     }
   }, [navigate]);
+
+  // =============================================================================
+  // VOICE TEST COMPLETION DETECTION
+  // =============================================================================
+  // Watch for embedded VoiceTestPage completion and advance to next step
+
+  useEffect(() => {
+    if (progress.currentStep !== 'voice_testing') return;
+
+    // Check if voice test was just completed
+    const checkVoiceTestComplete = () => {
+      const voiceTestComplete = localStorage.getItem('founder-os-voice-test-completed');
+      if (voiceTestComplete) {
+        // Advance to next step (tool_testing)
+        const nextStepIndex = getStepIndex('tool_testing');
+        setProgress((prev) => ({
+          ...prev,
+          currentStep: 'tool_testing' as TutorialStep,
+          stepIndex: nextStepIndex,
+        }));
+
+        // Add completion message
+        if (workflowActionsRef.current) {
+          workflowActionsRef.current.addAssistantMessage(
+            "Voice calibration complete! Your AI voice profile has been saved. Let's continue with the final setup.",
+            [{ label: 'Continue', value: 'continue_to_complete' }]
+          );
+        }
+      }
+    };
+
+    // Check immediately in case it was completed before we started watching
+    checkVoiceTestComplete();
+
+    // Set up interval to check periodically (VoiceTestPage updates localStorage on completion)
+    const interval = setInterval(checkVoiceTestComplete, 1000);
+
+    return () => clearInterval(interval);
+  }, [progress.currentStep]);
 
   // =============================================================================
   // LOAD REPORT ON MOUNT (independent of workflow initialization)
@@ -852,50 +833,125 @@ export default function TutorialWorkflowMode() {
     isLoadingReport,
     hasReport: !!report,
     currentStep: progress.currentStep,
-    shouldShowArtifact: isLoadingReport || (report && (progress.currentStep === 'about_you' || progress.currentStep === 'welcome')),
+    artifactPhase,
+    showInlineAssessment,
   });
 
   // Artifact content (report or loading)
   // Check if user has completed the GoodHang assessment
   const hasCompletedAssessment = status?.products?.goodhang?.assessment?.completed ?? false;
 
-  // Show artifact when loading, or when we have a report (on welcome or about_you step)
-  // Note: showStepProgress=false for tutorial - step progress is shown in sidebar
-  const artifactContent = isLoadingReport ? (
-    <ArtifactPanel showStepProgress={false}>
-      {loadingArtifact}
-    </ArtifactPanel>
-  ) : showInlineAssessment ? (
-    // Show inline assessment when user clicks "Take Assessment"
-    <ArtifactPanel showStepProgress={false}>
-      <div className="h-full overflow-y-auto">
-        <AssessmentFlow
-          config={ASSESSMENT_CONFIG}
-          onComplete={handleAssessmentComplete}
-          onExit={handleAssessmentExit}
-        />
-      </div>
-    </ArtifactPanel>
-  ) : (
-    report && (progress.currentStep === 'about_you' || progress.currentStep === 'welcome') ? (
-      <ArtifactPanel showStepProgress={false}>
-        <ReportEditor
-          report={report}
-          characterProfile={characterProfile}
-          activeTab={activeReportTab}
-          onTabChange={setActiveReportTab}
-          confirmations={reportConfirmations}
-          onConfirmSection={confirmReportSection}
-          originalReport={originalReport}
-          onResetEdits={resetReportEdits}
-          onTakeAssessment={handleStartAssessment}
-          onFieldEdit={handleFieldEdit}
-          hasCompletedAssessment={hasCompletedAssessment}
-          className="h-full"
-        />
-      </ArtifactPanel>
-    ) : null
-  );
+  // Determine artifact content based on phase for seamless transitions
+  // The artifact panel stays open throughout: interview → generating → report
+  const getArtifactContent = () => {
+    // Show loading when initial report is loading
+    if (isLoadingReport) {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          {loadingArtifact}
+        </ArtifactPanel>
+      );
+    }
+
+    // Phase-based rendering for seamless transitions
+    if (artifactPhase === 'interview' || showInlineAssessment) {
+      // Show loading while questions are being fetched
+      if (isLoadingQuestions || !assessmentConfig) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <div className="h-full flex flex-col items-center justify-center p-4">
+              <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+              <p className="text-gray-400 text-sm">Loading questions...</p>
+            </div>
+          </ArtifactPanel>
+        );
+      }
+
+      // Show error if questions failed to load
+      if (questionsError) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <div className="h-full flex flex-col items-center justify-center p-4">
+              <p className="text-red-400 mb-2">Failed to load questions</p>
+              <p className="text-gray-500 text-sm">{questionsError}</p>
+            </div>
+          </ArtifactPanel>
+        );
+      }
+
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <div className="h-full overflow-y-auto">
+            <AssessmentFlow
+              config={assessmentConfig}
+              onComplete={handleAssessmentComplete}
+              onExit={handleAssessmentExit}
+            />
+          </div>
+        </ArtifactPanel>
+      );
+    }
+
+    if (artifactPhase === 'generating') {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <div className="h-full flex flex-col items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+            >
+              <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+              <p className="text-gray-300 text-lg font-medium mb-2">Analyzing your responses...</p>
+              <p className="text-gray-500 text-sm">Generating your comprehensive profile</p>
+            </motion.div>
+          </div>
+        </ArtifactPanel>
+      );
+    }
+
+    // Default: report phase - show report editor if we have a report and are on interview step
+    if (report && progress.currentStep === 'interview') {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <ReportEditor
+            report={report}
+            characterProfile={characterProfile}
+            activeTab={activeReportTab}
+            onTabChange={setActiveReportTab}
+            confirmations={reportConfirmations}
+            onConfirmSection={confirmReportSection}
+            originalReport={originalReport}
+            onResetEdits={resetReportEdits}
+            onTakeAssessment={handleStartAssessment}
+            onFieldEdit={handleFieldEdit}
+            hasCompletedAssessment={hasCompletedAssessment}
+            className="h-full"
+          />
+        </ArtifactPanel>
+      );
+    }
+
+    // Voice testing step - show embedded VoiceTestPage in artifact panel
+    if (progress.currentStep === 'voice_testing') {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <Suspense fallback={
+            <div className="h-full flex flex-col items-center justify-center p-4">
+              <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+              <p className="text-gray-400 text-sm">Loading voice test...</p>
+            </div>
+          }>
+            <VoiceTestPage />
+          </Suspense>
+        </ArtifactPanel>
+      );
+    }
+
+    return null;
+  };
+
+  const artifactContent = getArtifactContent();
 
   // Wait for session ID to be available
   const effectiveSessionId = searchParams.get('session') || status?.contexts?.active;
@@ -935,8 +991,8 @@ export default function TutorialWorkflowMode() {
     );
   }
 
-  // Hide chat input during report review steps (inline editing is used instead)
-  const shouldHideChatInput = progress.currentStep === 'welcome' || progress.currentStep === 'about_you';
+  // Hide chat input during interview and voice testing steps (they have their own inputs)
+  const shouldHideChatInput = progress.currentStep === 'interview' || progress.currentStep === 'voice_testing';
 
   return (
     <>

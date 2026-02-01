@@ -4,6 +4,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ questionSetSlug: string }> }
@@ -24,7 +34,7 @@ export async function GET(
 
       if (error) {
         console.error('Error calling get_unanswered_questions:', error);
-        return NextResponse.json({ error: 'Failed to get unanswered questions' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to get unanswered questions' }, { status: 500, headers: corsHeaders });
       }
 
       return NextResponse.json({
@@ -35,7 +45,7 @@ export async function GET(
           unanswered_only: true,
           total_questions: data?.length || 0,
         },
-      });
+      }, { headers: corsHeaders });
     }
 
     // Otherwise, get all questions for the set
@@ -46,7 +56,7 @@ export async function GET(
       .single();
 
     if (setError || !questionSet) {
-      return NextResponse.json({ error: 'Question set not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Question set not found' }, { status: 404, headers: corsHeaders });
     }
 
     // Get questions linked to this set
@@ -73,7 +83,7 @@ export async function GET(
 
     if (questionsError) {
       console.error('Error fetching questions:', questionsError);
-      return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch questions' }, { status: 500, headers: corsHeaders });
     }
 
     // Transform the nested data - use 'any' to handle Supabase's dynamic join types
@@ -111,9 +121,9 @@ export async function GET(
         entity_slug: entitySlug || null,
         total_questions: formattedQuestions.length,
       },
-    });
+    }, { headers: corsHeaders });
   } catch (error) {
     console.error('Error in /api/questions/[questionSetSlug]:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers: corsHeaders });
   }
 }
