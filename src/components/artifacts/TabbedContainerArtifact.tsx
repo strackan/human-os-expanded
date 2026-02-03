@@ -157,6 +157,7 @@ export function TabbedContainerArtifact({
   }, [reviewedTabs, visibleTabs, onUpdateState]);
 
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
+  const allTabsReviewed = visibleTabs.length > 0 && visibleTabs.every(tab => reviewedTabs.has(tab.id));
 
   // Get tab status from reviewed state, phaseApprovals, or tab definition
   const getTabStatus = useCallback((tabId: string): TabStatus => {
@@ -307,6 +308,17 @@ export function TabbedContainerArtifact({
                 }
               </span>
             </label>
+
+            {/* Continue button - appears right-justified when all tabs reviewed */}
+            {allTabsReviewed && onContinue && (
+              <button
+                onClick={onContinue}
+                className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>

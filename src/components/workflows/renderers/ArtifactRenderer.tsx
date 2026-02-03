@@ -219,8 +219,8 @@ export default function ArtifactRenderer({
         return null;
       }
       const props = section.data?.props || {};
-      // Pass onUpdateState to interactive components for workflow state communication
-      return <Component {...props} onUpdateState={onUpdateState} />;
+      // Pass onUpdateState and onContinue to interactive components for workflow state communication
+      return <Component {...props} onUpdateState={onUpdateState} onContinue={onNext} />;
     }
 
     case 'inline':
