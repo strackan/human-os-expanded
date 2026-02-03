@@ -25,17 +25,12 @@ interface PlanningArtifactRendererProps {
     currentIndex: number;
     totalCount: number;
   };
+  onNext?: () => void;
   onComplete: () => void;
 }
 
-export default function PlanningArtifactRenderer({
-  slide,
-  section,
-  customerName,
-  customer,
-  sequenceInfo,
-  onComplete
-}: PlanningArtifactRendererProps) {
+export default function PlanningArtifactRenderer(props: PlanningArtifactRendererProps) {
+  const { section, customerName, customer, onNext } = props;
   const type = section.type;
   const componentType = section.data?.componentType;
 
@@ -143,6 +138,7 @@ export default function PlanningArtifactRenderer({
         title={section.data?.props?.title || section.title?.replace(/\{\{customerName\}\}/g, customerName) || "Let's review what we need to accomplish:"}
         items={section.data?.props?.items || section.data?.items || []}
         showActions={section.data?.props?.showActions ?? section.data?.showActions ?? true}
+        onContinue={onNext}
       />
     );
   }

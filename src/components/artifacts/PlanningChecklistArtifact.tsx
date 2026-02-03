@@ -17,16 +17,17 @@ export interface PlanningChecklistProps {
   onNotYet?: () => void;
   onLetsDoIt?: () => void;
   onGoBack?: () => void;
+  onContinue?: () => void;
   showActions?: boolean;
 }
 
 const PlanningChecklistArtifact: React.FC<PlanningChecklistProps> = ({
   title = "Let's review what we need to accomplish:",
   items = [],
-  onItemToggle,
   onNotYet,
   onLetsDoIt,
   onGoBack,
+  onContinue,
   showActions = true
 }) => {
   // Static display - no interactive state management
@@ -69,13 +70,24 @@ const PlanningChecklistArtifact: React.FC<PlanningChecklistProps> = ({
         </ul>
       </div>
 
+      {onContinue && (
+        <div className="px-8 py-6 border-t border-gray-100">
+          <button
+            onClick={onContinue}
+            className="w-full bg-blue-600 text-white text-sm font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      )}
+
       {showActions && (
         <div className="px-8 py-6 border-t border-gray-100 flex gap-3">
           <button
             onClick={onLetsDoIt}
             className="flex-1 bg-blue-600 text-white text-sm font-medium py-3 px-4 rounded-lg hover:bg-blue-700"
           >
-            Let's Do It!
+            Let&apos;s Do It!
           </button>
           <button
             onClick={onNotYet}

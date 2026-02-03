@@ -173,6 +173,7 @@ export default function ArtifactRenderer({
           customerName={customerName}
           customer={customer}
           sequenceInfo={sequenceInfo}
+          onNext={onNext}
           onComplete={onComplete}
         />
       );
