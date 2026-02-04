@@ -48,5 +48,12 @@ supabase/.temp/
 .vercel
 jazzroom/
 .claude/settings.local.json
+
+# Claude Code temp folders
+tmpclaude-*/
+
+# npm lock file (this project uses pnpm)
+package-lock.json
+
 # Git worktrees (code orchestrator isolation)
 .worktrees/
