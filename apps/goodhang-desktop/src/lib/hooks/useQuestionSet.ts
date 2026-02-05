@@ -5,7 +5,7 @@
  * them into the AssessmentSection[] format expected by AssessmentFlow.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { get } from '@/lib/api';
 import type { AssessmentSection, AssessmentQuestion } from '@/lib/types';
 
@@ -118,15 +118,27 @@ export function useQuestionSet(questionSetSlug: string, token?: string | null): 
   const [sections, setSections] = useState<AssessmentSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const fetchStatusRef = useRef<'idle' | 'fetching' | 'done'>('idle');
 
-  const fetchQuestions = useCallback(async () => {
+  // Store latest values in refs to avoid recreating callbacks
+  const slugRef = useRef(questionSetSlug);
+  const tokenRef = useRef(token);
+  slugRef.current = questionSetSlug;
+  tokenRef.current = token;
+
+  // Manual refetch function (stable reference, uses refs for values)
+  const refetch = useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchStatusRef.current === 'fetching') return;
+
+    fetchStatusRef.current = 'fetching';
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await get<ApiResponse>(
-        `/api/questions/${questionSetSlug}`,
-        token
+        `/api/questions/${slugRef.current}`,
+        tokenRef.current
       );
 
       // Group questions by section
@@ -164,23 +176,28 @@ export function useQuestionSet(questionSetSlug: string, token?: string | null): 
         }));
 
       setSections(sortedSections);
+      fetchStatusRef.current = 'done';
     } catch (err) {
       console.error('[useQuestionSet] Error fetching questions:', err);
       setError(err instanceof Error ? err.message : 'Failed to load questions');
+      fetchStatusRef.current = 'idle'; // Allow retry on error
     } finally {
       setIsLoading(false);
     }
-  }, [questionSetSlug, token]);
+  }, []); // Empty deps - uses refs for latest values
 
+  // Fetch once on mount (only if not already fetched or fetching)
   useEffect(() => {
-    fetchQuestions();
-  }, [fetchQuestions]);
+    if (fetchStatusRef.current === 'idle') {
+      refetch();
+    }
+  }, [refetch]);
 
   return {
     sections,
     isLoading,
     error,
-    refetch: fetchQuestions,
+    refetch,
   };
 }
 
