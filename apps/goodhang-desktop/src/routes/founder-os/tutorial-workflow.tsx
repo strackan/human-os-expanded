@@ -7,13 +7,15 @@
  * This component is used when FEATURES.USE_WORKFLOW_MODE_LAYOUT is enabled.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, RotateCcw, Zap } from 'lucide-react';
 
-// Lazy load VoiceTestPage for embedding in artifact panel
-const VoiceTestPage = lazy(() => import('./voice-test'));
+// Import VoiceCalibration for embedding in artifact panel (shows 3 pre-generated samples)
+import VoiceCalibration from '@/components/voice/VoiceCalibration';
+import { QuestionEAssessment } from '@/components/tutorial/QuestionEAssessment';
+import { type GapFinalData } from '@/lib/question-e-data';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
 import { useQuestionSet } from '@/lib/hooks';
@@ -125,10 +127,15 @@ export default function TutorialWorkflowMode() {
 
   // Artifact phase state: tracks interview → generating → report transitions
   type ArtifactPhase = 'interview' | 'generating' | 'report';
-  const [artifactPhase, setArtifactPhase] = useState<ArtifactPhase>('report');
+  const [artifactPhase, setArtifactPhase] = useState<ArtifactPhase>('interview');
 
   // Legacy state (for backwards compatibility)
   const [showInlineAssessment, setShowInlineAssessment] = useState(false);
+
+  // Question E state
+  const [gapFinalData, setGapFinalData] = useState<GapFinalData | null>(null);
+  const [questionEAnswers, setQuestionEAnswers] = useState<Record<string, string>>({});
+  const [isLoadingGapFinal, setIsLoadingGapFinal] = useState(false);
 
   // Session context
   const sessionId = searchParams.get('session') || status?.contexts?.active;
@@ -148,10 +155,10 @@ export default function TutorialWorkflowMode() {
       themeColor: 'purple',
       title: 'Profile Interview',
       subtitle: 'Getting to Know You',
-      completionTitle: "You've completed the interview!",
+      completionTitle: "Interview complete!",
       completionDescription:
-        "Click below to generate your comprehensive profile. Our AI will analyze your responses and create a personalized report covering your personality, work style, and AI assistant preferences.",
-      submitButtonText: 'Generate My Profile',
+        "Great job! Next we'll calibrate your AI voice so it can write content that sounds like you.",
+      submitButtonText: 'Continue to Voice Calibration',
     };
   }, [questionSections, isLoadingQuestions, questionsError]);
 
@@ -173,6 +180,11 @@ export default function TutorialWorkflowMode() {
         // Only show skip option if user wants to bypass
         return [
           { label: 'Skip voice testing', value: 'skip_voice_testing' },
+        ];
+      case 'question_e':
+        // Question E is shown in artifact panel - only show skip option
+        return [
+          { label: 'Skip Question E', value: 'skip_question_e' },
         ];
       case 'tool_testing':
         return [{ label: 'Continue', value: 'continue_to_complete' }];
@@ -202,6 +214,22 @@ export default function TutorialWorkflowMode() {
       if (actionValue === 'start_voice_testing') {
         navigate(`/founder-os/voice-test?session=${sessionId}&return=/founder-os/tutorial`);
         return null;
+      }
+
+      // Handle skip Question E
+      if (actionValue === 'skip_question_e') {
+        // Mark step as skipped/complete and advance to tool_testing
+        localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+        const toolStepIndex = getStepIndex('tool_testing');
+        setProgress((prev) => ({
+          ...prev,
+          currentStep: 'tool_testing' as TutorialStep,
+          stepIndex: toolStepIndex,
+        }));
+        return {
+          content: "No problem! You can always answer these questions later. Let's move on to testing your tools.",
+          quickActions: getQuickActionsForStep('tool_testing' as TutorialStep),
+        };
       }
 
 
@@ -313,7 +341,7 @@ export default function TutorialWorkflowMode() {
         };
       }
     },
-    [sessionId, progress, token, navigate, getQuickActionsForStep]
+    [sessionId, progress, token, navigate, getQuickActionsForStep, report]
   );
 
   // =============================================================================
@@ -377,6 +405,8 @@ export default function TutorialWorkflowMode() {
     setReportConfirmations({ status: false, personality: false, voice: false, character: false });
     setShowInlineAssessment(false);
     setArtifactPhase('interview');
+    setGapFinalData(null);
+    setQuestionEAnswers({});
 
     // Reset refs
     hasShownReportCompleteRef.current = false;
@@ -602,80 +632,192 @@ export default function TutorialWorkflowMode() {
   }, []);
 
   const handleAssessmentComplete = useCallback(async (answers: Record<string, string>) => {
-    // Transition to generating phase (stay in artifact panel)
-    setArtifactPhase('generating');
+    // Save interview answers to localStorage for later use in final synthesis
+    localStorage.setItem('fos-interview-answers', JSON.stringify(answers));
+    console.log('[tutorial-workflow] Interview complete, saved answers:', Object.keys(answers).length);
+
+    // Mark interview step as complete
+    localStorage.setItem('founder-os-interview-completed', new Date().toISOString());
+
+    // Clear interview artifact phase so voice test can render
     setShowInlineAssessment(false);
+    setArtifactPhase('report'); // Not 'interview' so getArtifactContent shows voice test
 
-    // Build transcript in the format the scoring API expects
-    // Use the fetched questions from the database
-    const allQuestions = questionSections.flatMap((s) => s.questions);
-    const transcript = allQuestions.flatMap((q) => [
-      { role: 'assistant', content: q.text },
-      { role: 'user', content: answers[q.id] || '' },
-    ]);
+    // Advance directly to voice_testing step (no report generation yet)
+    const voiceStepIndex = getStepIndex('voice_testing');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'voice_testing' as TutorialStep,
+      stepIndex: voiceStepIndex,
+    }));
 
-    try {
-      const response = await post<{
-        success: boolean;
-        profile: CharacterProfile;
-        attributes: CharacterAttributes;
-        signals: AssessmentSignals;
-        matching: MatchingProfile;
-        overall_score: number;
-        summary?: string;
-      }>('/api/assessment/score', {
-        user_id: userId,
-        transcript,
-        source: 'desktop_app',
-      }, token, { timeout: 120000 }); // 2 minute timeout for AI scoring
-
-      console.log('[tutorial-workflow] Assessment scored successfully', response);
-
-      // Set the character profile from API response with all data
-      if (response.profile) {
-        setCharacterProfile({
-          ...response.profile,
-          characterClass: response.profile.class || response.profile.characterClass,
-          title: response.profile.tagline || response.profile.title,
-          attributes: response.attributes,
-          signals: response.signals,
-          matching: response.matching,
-          overall_score: response.overall_score,
-          summary: response.summary,
-        });
-      }
-
-      // Refresh user status to get updated assessment completion status
-      if (token) {
-        await fetchStatus(token, userId ?? undefined);
-      }
-
-      // Transition to report phase (stay in artifact panel)
-      setArtifactPhase('report');
-
-      // Add success message in chat - prompt user to review and confirm the Character tab
-      if (workflowActionsRef.current) {
-        workflowActionsRef.current.addAssistantMessage(
-          "Your profile has been generated! Review each tab and click 'Looks Good' on each one to confirm."
-        );
-      }
-    } catch (error) {
-      console.error('[tutorial-workflow] Assessment scoring failed:', error);
-      // On error, go back to report phase
-      setArtifactPhase('report');
-      if (workflowActionsRef.current) {
-        workflowActionsRef.current.addAssistantMessage(
-          "Something went wrong generating your profile. Please try again."
-        );
-      }
+    // Add message to chat
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Interview complete! Now let's calibrate your AI voice. This helps me write content that sounds like you.",
+        getQuickActionsForStep('voice_testing' as TutorialStep)
+      );
     }
-  }, [userId, token, fetchStatus, questionSections]);
+  }, [getQuickActionsForStep]);
 
   const handleAssessmentExit = useCallback((_answers: Record<string, string>, _currentIndex: number) => {
     // User exited assessment without completing - go back to report phase
     setShowInlineAssessment(false);
     setArtifactPhase('report');
   }, []);
+
+  // =============================================================================
+  // GAP FINAL DATA FETCHING
+  // =============================================================================
+
+  const fetchGapFinalData = useCallback(async () => {
+    if (!sessionId) {
+      console.log('[tutorial-workflow] No sessionId for gap-final fetch');
+      setGapFinalData(null);
+      setIsLoadingGapFinal(false);
+      return;
+    }
+
+    setIsLoadingGapFinal(true);
+    console.log('[tutorial-workflow] Fetching gap-final data for session:', sessionId);
+
+    try {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/tutorial/gap-final?session_id=${sessionId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gap-final API returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[tutorial-workflow] Gap-final response:', data);
+
+      // Transform API response to GapFinalData format expected by QuestionEAssessment
+      const gapData: GapFinalData = {
+        status: data.has_gap_final ? 'complete' : 'partial',
+        entity_slug: '',
+        session_id: sessionId,
+        outstanding_questions: data.outstanding_questions.map((q: { id: string }) => q.id),
+        questions_answered: data.questions_answered,
+        questions_total: data.questions_total,
+      };
+
+      setGapFinalData(gapData);
+    } catch (error) {
+      console.error('[tutorial-workflow] Error fetching gap-final:', error);
+      // On error, continue with all questions (null gapFinalData)
+      setGapFinalData(null);
+    } finally {
+      setIsLoadingGapFinal(false);
+    }
+  }, [sessionId, token]);
+
+  // =============================================================================
+  // VOICE CALIBRATION HANDLERS
+  // =============================================================================
+
+  const handleVoiceCalibrationComplete = useCallback((feedback: Record<string, unknown>) => {
+    console.log('[tutorial-workflow] Voice calibration complete:', Object.keys(feedback).length, 'samples reviewed');
+
+    // Save feedback to localStorage for final synthesis
+    localStorage.setItem('fos-voice-calibration-feedback', JSON.stringify(feedback));
+
+    // Mark voice testing step as complete
+    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+
+    // Advance to question_e step
+    const questionEStepIndex = getStepIndex('question_e');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'question_e' as TutorialStep,
+      stepIndex: questionEStepIndex,
+    }));
+
+    // Fetch gap-final data for Question E
+    fetchGapFinalData();
+
+    // Add completion message
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Voice calibration complete! Now let's capture your personality baseline.",
+        getQuickActionsForStep('question_e' as TutorialStep)
+      );
+    }
+  }, [getQuickActionsForStep, fetchGapFinalData]);
+
+  const handleVoiceCalibrationSkip = useCallback(() => {
+    // Mark step as skipped and advance
+    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+
+    const questionEStepIndex = getStepIndex('question_e');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'question_e' as TutorialStep,
+      stepIndex: questionEStepIndex,
+    }));
+
+    // Fetch gap-final data for Question E
+    fetchGapFinalData();
+
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "No problem! You can calibrate your voice later. Let's continue with the personality baseline.",
+        getQuickActionsForStep('question_e' as TutorialStep)
+      );
+    }
+  }, [getQuickActionsForStep, fetchGapFinalData]);
+
+  // =============================================================================
+  // QUESTION E HANDLERS
+  // =============================================================================
+
+  const handleQuestionEComplete = useCallback(async (answers: Record<string, string>) => {
+    console.log('[tutorial-workflow] Question E complete with answers:', Object.keys(answers).length);
+    setQuestionEAnswers(answers);
+
+    // Mark step as complete
+    localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+
+    // TODO: Persist answers to backend if needed
+    // For now, just store locally and advance
+
+    // Advance to tool_testing step
+    const toolStepIndex = getStepIndex('tool_testing');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'tool_testing' as TutorialStep,
+      stepIndex: toolStepIndex,
+    }));
+
+    // Add completion message
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Personality baseline captured! Now let's make sure your tools are set up correctly.",
+        getQuickActionsForStep('tool_testing' as TutorialStep)
+      );
+    }
+  }, [getQuickActionsForStep]);
+
+  const handleQuestionESkip = useCallback(() => {
+    // Mark step as skipped and advance
+    localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+
+    const toolStepIndex = getStepIndex('tool_testing');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'tool_testing' as TutorialStep,
+      stepIndex: toolStepIndex,
+    }));
+
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "No problem! You can complete the personality baseline later. Let's test your tools.",
+        getQuickActionsForStep('tool_testing' as TutorialStep)
+      );
+    }
+  }, [getQuickActionsForStep]);
 
   // =============================================================================
   // INITIALIZATION
@@ -704,43 +846,15 @@ export default function TutorialWorkflowMode() {
   }, [navigate]);
 
   // =============================================================================
-  // VOICE TEST COMPLETION DETECTION
+  // QUESTION E DATA LOADING (for resume case)
   // =============================================================================
-  // Watch for embedded VoiceTestPage completion and advance to next step
+  // If user resumes at question_e step, fetch gap-final data
 
   useEffect(() => {
-    if (progress.currentStep !== 'voice_testing') return;
-
-    // Check if voice test was just completed
-    const checkVoiceTestComplete = () => {
-      const voiceTestComplete = localStorage.getItem('founder-os-voice-test-completed');
-      if (voiceTestComplete) {
-        // Advance to next step (tool_testing)
-        const nextStepIndex = getStepIndex('tool_testing');
-        setProgress((prev) => ({
-          ...prev,
-          currentStep: 'tool_testing' as TutorialStep,
-          stepIndex: nextStepIndex,
-        }));
-
-        // Add completion message
-        if (workflowActionsRef.current) {
-          workflowActionsRef.current.addAssistantMessage(
-            "Voice calibration complete! Your AI voice profile has been saved. Let's continue with the final setup.",
-            [{ label: 'Continue', value: 'continue_to_complete' }]
-          );
-        }
-      }
-    };
-
-    // Check immediately in case it was completed before we started watching
-    checkVoiceTestComplete();
-
-    // Set up interval to check periodically (VoiceTestPage updates localStorage on completion)
-    const interval = setInterval(checkVoiceTestComplete, 1000);
-
-    return () => clearInterval(interval);
-  }, [progress.currentStep]);
+    if (progress.currentStep === 'question_e' && !gapFinalData && !isLoadingGapFinal) {
+      fetchGapFinalData();
+    }
+  }, [progress.currentStep, gapFinalData, isLoadingGapFinal, fetchGapFinalData]);
 
   // =============================================================================
   // LOAD REPORT ON MOUNT (independent of workflow initialization)
@@ -886,6 +1000,7 @@ export default function TutorialWorkflowMode() {
               config={assessmentConfig}
               onComplete={handleAssessmentComplete}
               onExit={handleAssessmentExit}
+              autoSubmit
             />
           </div>
         </ArtifactPanel>
@@ -932,18 +1047,31 @@ export default function TutorialWorkflowMode() {
       );
     }
 
-    // Voice testing step - show embedded VoiceTestPage in artifact panel
+    // Voice testing step - show VoiceCalibration (3 pre-generated samples)
     if (progress.currentStep === 'voice_testing') {
       return (
         <ArtifactPanel showStepProgress={false}>
-          <Suspense fallback={
-            <div className="h-full flex flex-col items-center justify-center p-4">
-              <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
-              <p className="text-gray-400 text-sm">Loading voice test...</p>
-            </div>
-          }>
-            <VoiceTestPage />
-          </Suspense>
+          <VoiceCalibration
+            sessionId={sessionId || ''}
+            token={token}
+            onComplete={handleVoiceCalibrationComplete}
+            onSkip={handleVoiceCalibrationSkip}
+          />
+        </ArtifactPanel>
+      );
+    }
+
+    // Question E step - show QuestionEAssessment in artifact panel
+    if (progress.currentStep === 'question_e') {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <QuestionEAssessment
+            gapFinalData={gapFinalData}
+            onComplete={handleQuestionEComplete}
+            onSkip={handleQuestionESkip}
+            initialAnswers={questionEAnswers}
+            isLoading={isLoadingGapFinal}
+          />
         </ArtifactPanel>
       );
     }
@@ -991,8 +1119,8 @@ export default function TutorialWorkflowMode() {
     );
   }
 
-  // Hide chat input during interview and voice testing steps (they have their own inputs)
-  const shouldHideChatInput = progress.currentStep === 'interview' || progress.currentStep === 'voice_testing';
+  // Hide chat input during interview, voice testing, and question_e steps (they have their own inputs)
+  const shouldHideChatInput = progress.currentStep === 'interview' || progress.currentStep === 'voice_testing' || progress.currentStep === 'question_e';
 
   return (
     <>

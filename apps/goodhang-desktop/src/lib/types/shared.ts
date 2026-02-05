@@ -180,6 +180,7 @@ export interface ExtractedEntity {
 export type TutorialStep =
   | 'interview'
   | 'voice_testing'
+  | 'question_e'
   | 'tool_testing'
   | 'complete';
 
