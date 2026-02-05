@@ -136,6 +136,7 @@ export default function TutorialWorkflowMode() {
   const [gapFinalData, setGapFinalData] = useState<GapFinalData | null>(null);
   const [questionEAnswers, setQuestionEAnswers] = useState<Record<string, string>>({});
   const [isLoadingGapFinal, setIsLoadingGapFinal] = useState(false);
+  const hasAttemptedGapFinalRef = useRef(false);
 
   // Session context
   const sessionId = searchParams.get('session') || status?.contexts?.active;
@@ -410,6 +411,7 @@ export default function TutorialWorkflowMode() {
 
     // Reset refs
     hasShownReportCompleteRef.current = false;
+    hasAttemptedGapFinalRef.current = false;
     workflowActionsRef.current = null;
 
     // Reload the page to reset all state
@@ -671,6 +673,12 @@ export default function TutorialWorkflowMode() {
   // =============================================================================
 
   const fetchGapFinalData = useCallback(async () => {
+    // Prevent duplicate fetches
+    if (hasAttemptedGapFinalRef.current) {
+      console.log('[tutorial-workflow] Already attempted gap-final fetch, skipping');
+      return;
+    }
+
     if (!sessionId) {
       console.log('[tutorial-workflow] No sessionId for gap-final fetch');
       setGapFinalData(null);
@@ -678,6 +686,7 @@ export default function TutorialWorkflowMode() {
       return;
     }
 
+    hasAttemptedGapFinalRef.current = true;
     setIsLoadingGapFinal(true);
     console.log('[tutorial-workflow] Fetching gap-final data for session:', sessionId);
 
@@ -696,7 +705,7 @@ export default function TutorialWorkflowMode() {
 
       // Transform API response to GapFinalData format expected by QuestionEAssessment
       const gapData: GapFinalData = {
-        status: data.has_gap_final ? 'complete' : 'partial',
+        status: data.has_file ? 'complete' : 'partial',
         entity_slug: '',
         session_id: sessionId,
         outstanding_questions: data.outstanding_questions.map((q: { id: string }) => q.id),
@@ -851,10 +860,10 @@ export default function TutorialWorkflowMode() {
   // If user resumes at question_e step, fetch gap-final data
 
   useEffect(() => {
-    if (progress.currentStep === 'question_e' && !gapFinalData && !isLoadingGapFinal) {
+    if (progress.currentStep === 'question_e' && !hasAttemptedGapFinalRef.current) {
       fetchGapFinalData();
     }
-  }, [progress.currentStep, gapFinalData, isLoadingGapFinal, fetchGapFinalData]);
+  }, [progress.currentStep, fetchGapFinalData]);
 
   // =============================================================================
   // LOAD REPORT ON MOUNT (independent of workflow initialization)

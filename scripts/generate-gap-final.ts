@@ -31,32 +31,29 @@ const anthropic = new Anthropic();
 
 const BUCKET = 'human-os';
 
-// Question E definitions (E01-E24)
+// Question E definitions (E01-E12) - Consolidated set
 const QUESTION_E = [
-  { id: 'E01', section: 'decision-making', text: "When you're facing a big decision and feeling overwhelmed, what does that look like for you?" },
-  { id: 'E02', section: 'decision-making', text: "When you have too many options, what's your default response?" },
-  { id: 'E03', section: 'decision-making', text: 'Do you prefer someone to present options, make recommendations, or just make the call?' },
-  { id: 'E04', section: 'decision-making', text: 'What kinds of decisions drain you the most? What kinds energize you?' },
-  { id: 'E05', section: 'energy-cognitive', text: "When are you at your best? Time of day, conditions, context?" },
-  { id: 'E06', section: 'energy-cognitive', text: 'What drains you faster than people might expect?' },
-  { id: 'E07', section: 'energy-cognitive', text: "How do you know when you're avoiding something? What does that look like?" },
-  { id: 'E08', section: 'energy-cognitive', text: 'What does your "overwhelm spiral" look like?' },
-  { id: 'E09', section: 'energy-cognitive', text: 'Do you have any neurodivergent patterns that affect how you work?' },
-  { id: 'E10', section: 'energy-cognitive', text: 'What kind of structure helps you? What kind feels constraining?' },
-  { id: 'E11', section: 'communication', text: 'When working with someone, do you prefer direct recommendations, facilitated thinking, or minimal check-ins?' },
-  { id: 'E12', section: 'communication', text: 'What kind of input feels helpful vs. annoying?' },
-  { id: 'E13', section: 'communication', text: "How should someone push back on you if they think you're wrong?" },
-  { id: 'E14', section: 'communication', text: "When you're not feeling great, how should that change how people interact with you?" },
-  { id: 'E15', section: 'crisis-recovery', text: 'What does "stuck" look like for you? How do you know when you\'re there?' },
-  { id: 'E16', section: 'crisis-recovery', text: "What helps you get unstuck? What's worked in the past?" },
-  { id: 'E17', section: 'crisis-recovery', text: "What makes things worse when you're struggling? What should people NOT do?" },
-  { id: 'E18', section: 'crisis-recovery', text: 'How does chronic pain (or health issues) affect your availability and focus?' },
-  { id: 'E19', section: 'crisis-recovery', text: "When you're in crisis mode, do you want space, help carrying the load, or distraction?" },
-  { id: 'E20', section: 'work-style', text: 'How do you like to be helped? What does good support look like?' },
-  { id: 'E21', section: 'work-style', text: 'How should priorities be presented to you?' },
-  { id: 'E22', section: 'work-style', text: "What's your relationship with time? Are deadlines helpful pressure or unhelpful stress?" },
-  { id: 'E23', section: 'work-style', text: 'What does "done enough" look like for you?' },
-  { id: 'E24', section: 'work-style', text: 'Is there anything else about how you work that would be helpful to know?' },
+  // Decision-Making (E01-E03)
+  { id: 'E01', section: 'decision-making', text: 'When you have too many options, what do you usually do? (narrow down, seek input, delay, avoid)' },
+  { id: 'E02', section: 'decision-making', text: 'When helping you decide: present options, make recommendations, or just make the call?' },
+  { id: 'E03', section: 'decision-making', text: 'What does decision overwhelm look like for you? How does it start and what helps?' },
+
+  // Energy & Focus (E04-E05)
+  { id: 'E04', section: 'energy-cognitive', text: 'When are you typically at your best? (time of day, conditions)' },
+  { id: 'E05', section: 'energy-cognitive', text: 'What drains your energy faster than people might expect? What decisions or tasks wear you out?' },
+
+  // Communication (E06-E07)
+  { id: 'E06', section: 'communication', text: 'When working together: direct recommendations, facilitated thinking, or minimal check-ins?' },
+  { id: 'E07', section: 'communication', text: 'What kind of feedback helps vs. frustrates you? How should someone push back if they disagree?' },
+
+  // Crisis & Recovery (E08-E10)
+  { id: 'E08', section: 'crisis-recovery', text: "How do you know when you're stuck or avoiding something? What are the signs?" },
+  { id: 'E09', section: 'crisis-recovery', text: 'What helps you get unstuck? (talk it through, break, smaller pieces, switch tasks, deadline pressure)' },
+  { id: 'E10', section: 'crisis-recovery', text: "When you're struggling: give space, help carry the load, provide distraction, or ask what you need?" },
+
+  // Work Style (E11-E12)
+  { id: 'E11', section: 'work-style', text: 'How should priorities be presented to you? (ranked list, top 1-2, visual overview, discover organically)' },
+  { id: 'E12', section: 'work-style', text: "What's your relationship with deadlines? Helpful pressure or stressful?" },
 ];
 
 interface QuestionAnalysis {

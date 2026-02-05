@@ -46,6 +46,19 @@ interface AnswerState {
   [questionId: string]: string;
 }
 
+// Check if the "Other" option is selected (answer starts with "Other: " or is exactly "Other")
+const isOtherSelected = (answer: string): boolean => {
+  return answer === 'Other' || answer.startsWith('Other: ');
+};
+
+// Extract the custom text from an "Other" answer
+const getOtherText = (answer: string): string => {
+  if (answer.startsWith('Other: ')) {
+    return answer.substring(7); // Remove "Other: " prefix
+  }
+  return '';
+};
+
 // =============================================================================
 // COMPONENT
 // =============================================================================
@@ -129,11 +142,21 @@ export function QuestionEAssessment({
   const handleOptionSelect = useCallback(
     (option: string) => {
       if (!currentQuestion) return;
+
+      // If selecting "Other", just mark it selected (don't auto-advance)
+      if (option === 'Other') {
+        setAnswers((prev) => ({
+          ...prev,
+          [currentQuestion.id]: 'Other',
+        }));
+        return;
+      }
+
       setAnswers((prev) => ({
         ...prev,
         [currentQuestion.id]: option,
       }));
-      // Auto-advance after option selection
+      // Auto-advance after option selection (except for "Other")
       setTimeout(() => {
         if (currentIndex < totalQuestions - 1) {
           goToNext();
@@ -141,6 +164,18 @@ export function QuestionEAssessment({
       }, 300);
     },
     [currentQuestion, currentIndex, totalQuestions]
+  );
+
+  // Handle custom "Other" text input
+  const handleOtherTextChange = useCallback(
+    (text: string) => {
+      if (!currentQuestion) return;
+      setAnswers((prev) => ({
+        ...prev,
+        [currentQuestion.id]: text ? `Other: ${text}` : 'Other',
+      }));
+    },
+    [currentQuestion]
   );
 
   const goToNext = useCallback(() => {
@@ -309,32 +344,64 @@ export function QuestionEAssessment({
               {currentQuestion.options ? (
                 // Multiple choice
                 <div className="space-y-3">
-                  {currentQuestion.options.map((option, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleOptionSelect(option)}
-                      className={`w-full text-left p-4 rounded-lg border transition-all ${
-                        currentAnswer === option
-                          ? 'border-purple-500 bg-purple-500/20 text-white'
-                          : 'border-gh-dark-600 bg-gh-dark-800 text-gray-300 hover:border-purple-400 hover:bg-gh-dark-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            currentAnswer === option
-                              ? 'border-purple-500 bg-purple-500'
-                              : 'border-gray-500'
+                  {currentQuestion.options.map((option, idx) => {
+                    const isSelected = option === 'Other'
+                      ? isOtherSelected(currentAnswer)
+                      : currentAnswer === option;
+
+                    return (
+                      <div key={idx}>
+                        <button
+                          onClick={() => handleOptionSelect(option)}
+                          className={`w-full text-left p-4 rounded-lg border transition-all ${
+                            isSelected
+                              ? 'border-purple-500 bg-purple-500/20 text-white'
+                              : 'border-gh-dark-600 bg-gh-dark-800 text-gray-300 hover:border-purple-400 hover:bg-gh-dark-700'
                           }`}
                         >
-                          {currentAnswer === option && (
-                            <Check className="w-4 h-4 text-white" />
-                          )}
-                        </div>
-                        <span>{option}</span>
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                isSelected
+                                  ? 'border-purple-500 bg-purple-500'
+                                  : 'border-gray-500'
+                              }`}
+                            >
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <span>{option}</span>
+                          </div>
+                        </button>
+
+                        {/* Show text input when "Other" is selected */}
+                        {option === 'Other' && isOtherSelected(currentAnswer) && (
+                          <div className="mt-2 ml-9">
+                            <input
+                              type="text"
+                              value={getOtherText(currentAnswer)}
+                              onChange={(e) => handleOtherTextChange(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && getOtherText(currentAnswer).trim()) {
+                                  e.preventDefault();
+                                  if (currentIndex < totalQuestions - 1) {
+                                    goToNext();
+                                  }
+                                }
+                              }}
+                              placeholder="Please specify..."
+                              className="w-full p-3 bg-gh-dark-800 border border-purple-500/50 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                              autoFocus
+                            />
+                            <div className="text-xs text-gray-500 mt-1 text-right">
+                              Press Enter to continue
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 // Open-ended text area with mic
