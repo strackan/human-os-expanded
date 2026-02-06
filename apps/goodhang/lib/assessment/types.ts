@@ -463,3 +463,181 @@ export interface SubmitLightningRoundResponse {
   questions_answered: number;
   time_bonus: number;
 }
+
+// =============================================================================
+// FOUNDER OS / VOICE OS TYPES
+// =============================================================================
+
+export interface FounderOsCommandments {
+  CURRENT_STATE: string;
+  STRATEGIC_THOUGHT_PARTNER: string;
+  DECISION_MAKING: string;
+  ENERGY_PATTERNS: string;
+  AVOIDANCE_PATTERNS: string;
+  RECOVERY_PROTOCOLS: string;
+  ACCOUNTABILITY_FRAMEWORK: string;
+  EMOTIONAL_SUPPORT: string;
+  WORK_STYLE: string;
+  CONVERSATION_PROTOCOLS: string;
+}
+
+export interface FounderOsSummary {
+  personality_type: string;
+  key_patterns: string[];
+  primary_challenges: string[];
+  recommended_approach: string;
+}
+
+export interface FounderOsExtractionResult {
+  commandments: FounderOsCommandments;
+  summary: FounderOsSummary;
+}
+
+export interface VoiceOsCommandments {
+  VOICE: string;
+  THEMES: string;
+  GUARDRAILS: string;
+  AUDIENCE: string;
+  AUTHORITY: string;
+  HUMOR: string;
+  CONTROVERSY: string;
+  PERSONAL: string;
+  FORMAT: string;
+  QUALITY_CONTROL: string;
+}
+
+export interface VoiceOsSummary {
+  voice_type: string;
+  key_characteristics: string[];
+  content_focus: string[];
+  recommended_platforms: string[];
+}
+
+export interface VoiceOsExtractionResult {
+  commandments: VoiceOsCommandments;
+  summary: VoiceOsSummary;
+}
+
+// =============================================================================
+// EXECUTIVE REPORT TYPES (for synthesis-prompt.ts)
+// =============================================================================
+
+export interface PersonalityTrait {
+  trait: string;
+  description: string;
+  insight: string;
+}
+
+export interface CommunicationStyle {
+  style: string;
+  preferences: string[];
+}
+
+export interface WorkStyle {
+  approach: string;
+  strengths: string[];
+}
+
+export interface VoiceProfile {
+  tone: string;
+  style: string;
+  characteristics: string[];
+  examples?: string[];
+}
+
+export interface ExecutiveReport {
+  summary: string;
+  personality: PersonalityTrait[];
+  communication: CommunicationStyle;
+  workStyle: WorkStyle;
+  keyInsights: string[];
+  voice?: VoiceProfile;
+}
+
+// =============================================================================
+// COMMANDMENT & REGISTRY TYPES (for extraction-prompt.ts)
+// =============================================================================
+
+export interface CommandmentDef {
+  name: string;
+  description: string;
+  category: 'founder' | 'voice';
+  mustInclude: string[];
+  mayInclude: string[];
+  mustNotInclude: string[];
+  populatedBy: string[];
+}
+
+export interface QuestionDef {
+  id: string;
+  text: string;
+  source: 'question-e' | 'fos-interview' | 'voice-test';
+  fills_gaps?: string[];
+  priority?: 'high' | 'medium' | 'low';
+}
+
+export interface RegistrySchema {
+  stories: RegistryStorySchema;
+  anecdotes: RegistryAnecdoteSchema;
+  events: RegistryEventSchema;
+  people: RegistryPersonSchema;
+  corrections: RegistryCorrectionSchema;
+  parking_lot: RegistryParkingLotSchema;
+}
+
+export interface RegistryStorySchema {
+  id: string;
+  title: string;
+  summary: string;
+  core_quote: string;
+  emotional_tone: string;
+  tags: string[];
+  used_in: string[];
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface RegistryAnecdoteSchema {
+  id: string;
+  summary: string;
+  quote?: string;
+  illustrates: string;
+  tags: string[];
+  used_in: string[];
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface RegistryEventSchema {
+  id: string;
+  date_range: string;
+  summary: string;
+  impact: string;
+  tags: string[];
+  used_in: string[];
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface RegistryPersonSchema {
+  id: string;
+  name: string;
+  relationship: string;
+  context: string;
+  can_reference: boolean;
+  reference_rules?: string;
+  tags: string[];
+}
+
+export interface RegistryCorrectionSchema {
+  id: string;
+  original: string;
+  corrected_to: string;
+  quote?: string;
+  affects: string[];
+}
+
+export interface RegistryParkingLotSchema {
+  id: string;
+  topic: string;
+  priority: 'high' | 'medium' | 'low';
+  context: string;
+  follow_up_questions?: string[];
+}

@@ -478,7 +478,7 @@ function convertEscapesOutsideStrings(jsonStr: string): string {
   let i = 0;
 
   while (i < jsonStr.length) {
-    const char = jsonStr[i];
+    const char = jsonStr[i]!;
 
     if (char === '"' && (i === 0 || jsonStr[i - 1] !== '\\')) {
       // Toggle string state on unescaped quotes
@@ -487,7 +487,7 @@ function convertEscapesOutsideStrings(jsonStr: string): string {
       i++;
     } else if (!inString && char === '\\' && i + 1 < jsonStr.length) {
       // Outside strings: convert \n and \t to actual whitespace
-      const nextChar = jsonStr[i + 1];
+      const nextChar = jsonStr[i + 1]!;
       if (nextChar === 'n') {
         result.push('\n');
         i += 2;
@@ -525,7 +525,7 @@ export function parseSynthesisResponse(response: string): SynthesisOutput {
     try {
       const parsed = JSON.parse(jsonStr);
       return validateAndReturn(parsed);
-    } catch (firstError) {
+    } catch (_firstError) {
       console.log('[parseSynthesisResponse] First parse failed, attempting repair...');
 
       // Second attempt: repair common issues
@@ -537,7 +537,7 @@ export function parseSynthesisResponse(response: string): SynthesisOutput {
       } catch (secondError) {
         // Log the problematic area
         const errorMatch = (secondError as Error).message.match(/position (\d+)/);
-        if (errorMatch) {
+        if (errorMatch && errorMatch[1]) {
           const pos = parseInt(errorMatch[1]);
           console.error('[parseSynthesisResponse] Error near:', jsonStr.substring(Math.max(0, pos - 100), pos + 100));
         }
@@ -567,5 +567,5 @@ function validateAndReturn(parsed: unknown): SynthesisOutput {
     throw new Error('Missing voice_os in response');
   }
 
-  return obj as SynthesisOutput;
+  return obj as unknown as SynthesisOutput;
 }

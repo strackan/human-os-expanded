@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { createClient as createServiceClient, SupabaseClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import {
   buildSynthesisPrompt,
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     // Gather all sources
     const sources = await gatherSources(supabase, session_id, entity_slug);
 
-    // Build synthesis input
+    // Build synthesis input (only include optional fields when defined)
     const synthesisInput: SynthesisInput = {
       session_id,
       user_id,
@@ -100,11 +100,11 @@ export async function POST(request: NextRequest) {
       fos_interview_answers,
       question_e_answers,
       voice_calibration_feedback,
-      sculptor_transcript: sources.sculptor_transcript,
-      corpus_summary: sources.corpus_summary,
-      gap_analysis: sources.gap_analysis,
-      gap_analysis_final: sources.gap_analysis_final,
-      persona_fingerprint: sources.persona_fingerprint,
+      ...(sources.sculptor_transcript && { sculptor_transcript: sources.sculptor_transcript }),
+      ...(sources.corpus_summary && { corpus_summary: sources.corpus_summary }),
+      ...(sources.gap_analysis && { gap_analysis: sources.gap_analysis }),
+      ...(sources.gap_analysis_final && { gap_analysis_final: sources.gap_analysis_final }),
+      ...(sources.persona_fingerprint && { persona_fingerprint: sources.persona_fingerprint }),
     };
 
     // Build the full prompt
@@ -183,8 +183,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const firstContent = response.content[0];
     const responseText =
-      response.content[0].type === 'text' ? response.content[0].text : '';
+      firstContent?.type === 'text' ? firstContent.text : '';
 
     console.log(
       `[synthesize] Claude response received, length: ${responseText.length} chars`
@@ -260,9 +261,8 @@ interface GatheredSources {
 /**
  * Gather all available sources from database and storage
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function gatherSources(
-  supabase: any,
+  supabase: SupabaseClient,
   sessionId: string,
   entitySlug?: string
 ): Promise<GatheredSources> {
@@ -346,7 +346,7 @@ async function gatherSources(
  * Load a file from Supabase storage
  */
 async function loadStorageFile(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: SupabaseClient,
   filePath: string
 ): Promise<string | null> {
   try {
@@ -382,7 +382,7 @@ function formatConversationHistory(
  * Store synthesis results to database
  */
 async function storeResults(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: SupabaseClient,
   sessionId: string,
   userId: string,
   output: SynthesisOutput
