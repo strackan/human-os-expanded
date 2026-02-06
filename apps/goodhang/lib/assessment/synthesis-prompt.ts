@@ -99,10 +99,15 @@ Your task is to generate:
 \`\`\`typescript
 {
   summary: string; // 2-3 paragraph executive summary
+  workStyle: {
+    approach: string; // e.g., "Sprint-based intensity with recovery cycles"
+    strengths: string[]; // 3-5 core work strengths
+  };
   communication: {
     style: string; // e.g., "Direct and energetic"
     preferences: string[]; // 3-5 key preferences
   };
+  keyInsights: string[]; // 4-6 key insights about this person
   personality: Array<{
     trait: string;
     description: string;
@@ -167,10 +172,15 @@ Return a single JSON object with all sections. Use the exact structure below:
 {
   "executive_report": {
     "summary": "2-3 paragraph executive summary...",
+    "workStyle": {
+      "approach": "...",
+      "strengths": ["...", "..."]
+    },
     "communication": {
       "style": "...",
       "preferences": ["...", "..."]
     },
+    "keyInsights": ["...", "...", "..."],
     "personality": [
       { "trait": "...", "description": "...", "insight": "..." }
     ],

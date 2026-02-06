@@ -634,6 +634,26 @@ export function useWorkflowModeState(
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
+  // Sync steps from parent when they change (e.g., progress updates)
+  useEffect(() => {
+    if (!isInitialized || isRestoringState) return;
+
+    // Check if the status of any step has changed
+    const hasStatusChanges = initialSteps.some((newStep, i) => {
+      const currentStep = steps[i];
+      return currentStep && newStep.status !== currentStep.status;
+    });
+
+    if (hasStatusChanges) {
+      setSteps(initialSteps);
+      // Also update currentStepIndex to match the in_progress step
+      const newCurrentIndex = initialSteps.findIndex(s => s.status === 'in_progress');
+      if (newCurrentIndex !== -1 && newCurrentIndex !== currentStepIndex) {
+        setCurrentStepIndex(newCurrentIndex);
+      }
+    }
+  }, [initialSteps, isInitialized, isRestoringState, steps, currentStepIndex]);
+
   // =============================================================================
   // ACTIONS OBJECT
   // =============================================================================

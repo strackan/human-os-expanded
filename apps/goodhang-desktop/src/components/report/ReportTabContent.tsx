@@ -134,6 +134,7 @@ interface StatusTabProps {
 export function StatusTab({ report, onEdit }: StatusTabProps) {
   return (
     <div className="space-y-4">
+      {/* Summary */}
       <div className="prose prose-invert prose-sm max-w-none">
         {onEdit ? (
           <EditableField
@@ -146,6 +147,46 @@ export function StatusTab({ report, onEdit }: StatusTabProps) {
           <ReactMarkdown>{report.summary}</ReactMarkdown>
         )}
       </div>
+
+      {/* Work Style */}
+      {report.workStyle && (
+        <div className="pt-4 border-t border-gh-dark-600">
+          <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
+            Work Style
+          </h4>
+          <p className="text-white mb-2">
+            {onEdit ? (
+              <EditableField
+                value={report.workStyle.approach}
+                onSave={(v) => onEdit('workStyle.approach', 0, v)}
+                placeholder="Work approach"
+              />
+            ) : (
+              report.workStyle.approach
+            )}
+          </p>
+          {report.workStyle.strengths && report.workStyle.strengths.length > 0 && (
+            <ul className="space-y-1">
+              {report.workStyle.strengths.map((strength, i) => (
+                <li key={i} className="text-gray-400 text-sm flex items-start gap-2">
+                  <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                  {onEdit ? (
+                    <EditableField
+                      value={strength}
+                      onSave={(v) => onEdit('workStyle.strengths', i, v)}
+                      placeholder="Strength"
+                    />
+                  ) : (
+                    strength
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {/* Communication Style */}
       <div className="pt-4 border-t border-gh-dark-600">
         <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
           Communication Style
@@ -178,6 +219,31 @@ export function StatusTab({ report, onEdit }: StatusTabProps) {
           ))}
         </ul>
       </div>
+
+      {/* Key Insights */}
+      {report.keyInsights && report.keyInsights.length > 0 && (
+        <div className="pt-4 border-t border-gh-dark-600">
+          <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
+            Key Insights
+          </h4>
+          <ul className="space-y-2">
+            {report.keyInsights.map((insight, i) => (
+              <li key={i} className="text-gray-300 text-sm flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                {onEdit ? (
+                  <EditableField
+                    value={insight}
+                    onSave={(v) => onEdit('keyInsights', i, v)}
+                    placeholder="Insight"
+                  />
+                ) : (
+                  insight
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

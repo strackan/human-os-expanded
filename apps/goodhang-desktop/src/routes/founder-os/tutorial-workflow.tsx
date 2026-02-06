@@ -906,8 +906,24 @@ export default function TutorialWorkflowMode() {
         setReport(result.executive_report);
         setOriginalReport(result.executive_report);
       }
+      // Merge character_profile with top-level attributes, signals, matching, summary
+      // The API returns these separately but the CharacterProfile type expects them nested
       if (result.character_profile) {
-        setCharacterProfile(result.character_profile);
+        const mergedCharacterProfile: CharacterProfile = {
+          ...result.character_profile,
+          // Merge in top-level fields that belong to the character profile
+          attributes: result.attributes || result.character_profile.attributes,
+          signals: result.signals || result.character_profile.signals,
+          matching: result.matching || result.character_profile.matching,
+          summary: result.summary || result.character_profile.summary,
+        };
+        console.log('[tutorial-workflow] Merged character profile:', {
+          hasAttributes: !!mergedCharacterProfile.attributes,
+          hasSignals: !!mergedCharacterProfile.signals,
+          hasMatching: !!mergedCharacterProfile.matching,
+          hasSummary: !!mergedCharacterProfile.summary,
+        });
+        setCharacterProfile(mergedCharacterProfile);
       }
 
       setIsSynthesizing(false);

@@ -10,6 +10,7 @@ import {
   Wrench,
   CheckCircle2,
   HelpCircle,
+  Brain,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -43,6 +44,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Mic,
   Wrench,
   CheckCircle2,
+  Brain,
 };
 
 /**
