@@ -179,14 +179,13 @@ export async function POST(request: NextRequest) {
             .select('id')
             .eq('user_id', user_id)
             .ilike('name', person.name)
-            .single();
+            .maybeSingle();
 
           let relationshipId: string;
 
           if (existingRel) {
-            // Relationship exists - we'll add context to it
+            // Relationship exists - we'll just add context to it
             relationshipId = existingRel.id;
-            results.relationships_created++;
           } else {
             // Create new relationship
             // Map relationship_type to valid values
@@ -252,58 +251,87 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Insert Projects into founder_os.projects
+    // 3. Insert Projects into founder_os.projects + add context
     if (entities.projects && entities.projects.length > 0) {
-      console.log(`[tools-testing/populate] Adding ${entities.projects.length} projects`);
+      console.log(`[tools-testing/populate] === PROJECTS V2 === Adding ${entities.projects.length} projects`);
 
-      for (const project of entities.projects) {
-        const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      // Build slugs for all projects
+      const projectsWithSlugs = entities.projects.map((p) => ({
+        ...p,
+        slug: p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+      }));
+      const slugs = projectsWithSlugs.map((p) => p.slug);
+      console.log(`[tools-testing/populate] Slugs to check: ${JSON.stringify(slugs)}`);
 
-        // Check if project already exists by slug
-        const { data: existingProject } = await supabase
-          .schema('founder_os')
-          .from('projects')
-          .select('id')
-          .eq('user_id', user_id)
-          .eq('slug', slug)
-          .single();
+      // Query existing projects by slug
+      const { data: existingProjects, error: queryError } = await supabase
+        .schema('founder_os')
+        .from('projects')
+        .select('id, slug')
+        .eq('user_id', user_id)
+        .in('slug', slugs);
 
-        if (existingProject) {
-          // Already exists, count it as success
-          results.projects_added++;
-          results.entity_ids.push(existingProject.id);
-          continue;
+      console.log(`[tools-testing/populate] Query result: ${JSON.stringify(existingProjects)} error: ${queryError?.message || 'none'}`);
+
+      const existingBySlug = new Map((existingProjects || []).map((p) => [p.slug, p.id]));
+      console.log(`[tools-testing/populate] Found ${existingBySlug.size} existing projects out of ${slugs.length}`);
+
+      for (const project of projectsWithSlugs) {
+        let projectId: string | null = existingBySlug.get(project.slug) || null;
+
+        if (!projectId) {
+          // New project - insert it
+          const statusMap: Record<string, string> = {
+            active: 'active',
+            planning: 'planning',
+            on_hold: 'on_hold',
+            completed: 'completed',
+          };
+          const status = statusMap[project.status] || 'active';
+
+          const { data, error } = await supabase
+            .schema('founder_os')
+            .from('projects')
+            .insert({
+              user_id,
+              name: project.name,
+              slug: project.slug,
+              description: project.description,
+              status,
+              metadata: { source: 'tutorial_brain_dump' },
+            })
+            .select('id')
+            .single();
+
+          if (!error && data) {
+            projectId = data.id;
+            results.projects_added++;
+            results.entity_ids.push(data.id);
+          } else if (error) {
+            console.error(`[tools-testing/populate] Project insert error:`, error);
+            errors.push(`Project "${project.name}": ${error.message}`);
+            continue;
+          }
         }
 
-        // Map status to valid enum
-        const statusMap: Record<string, string> = {
-          active: 'active',
-          planning: 'planning',
-          on_hold: 'on_hold',
-          completed: 'completed',
-        };
-        const status = statusMap[project.status] || 'active';
+        // Add context to project_contexts (for both new and existing)
+        if (projectId && project.description) {
+          const { error: contextError } = await supabase
+            .schema('founder_os')
+            .from('project_contexts')
+            .insert({
+              project_id: projectId,
+              context_type: 'general',
+              context_details: project.description,
+              source: 'brain_dump',
+              transcript_id: transcriptId,
+            });
 
-        const { data, error } = await supabase
-          .schema('founder_os')
-          .from('projects')
-          .insert({
-            user_id,
-            name: project.name,
-            slug,
-            description: project.description,
-            status,
-            metadata: { source: 'tutorial_brain_dump' },
-          })
-          .select('id')
-          .single();
-
-        if (!error && data) {
-          results.projects_added++;
-          results.entity_ids.push(data.id);
-        } else if (error) {
-          console.error(`[tools-testing/populate] Project insert error:`, error);
-          errors.push(`Project "${project.name}": ${error.message}`);
+          if (!contextError) {
+            results.contexts_added++;
+          } else {
+            console.warn(`[tools-testing/populate] Project context insert warning:`, contextError);
+          }
         }
       }
     }

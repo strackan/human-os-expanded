@@ -8,7 +8,7 @@
  * 4. Using the Claude persona (from synthesized commandments) to conduct the exercise
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
