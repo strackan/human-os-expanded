@@ -197,3 +197,146 @@ export async function sendTutorialMessageStreaming(
     console.warn('[tutorial] Streaming completed without result');
   }
 }
+
+// =============================================================================
+// TOOLS TESTING API METHODS
+// =============================================================================
+
+export interface ExtractedPerson {
+  name: string;
+  relationship_type?: string;
+  context: string;
+  confidence: number;
+}
+
+export interface ExtractedTask {
+  title: string;
+  description?: string;
+  due_date?: string;
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  context_tags: string[];
+}
+
+export interface ExtractedProject {
+  name: string;
+  description: string;
+  status: string;
+}
+
+export interface ExtractedGoal {
+  title: string;
+  timeframe?: string;
+}
+
+export interface ExtractedParkingLot {
+  raw_input: string;
+  cleaned_text: string;
+  capture_mode: 'project' | 'brainstorm' | 'expand' | 'passive';
+}
+
+export interface ExtractBrainDumpResponse {
+  people: ExtractedPerson[];
+  tasks: ExtractedTask[];
+  projects: ExtractedProject[];
+  goals: ExtractedGoal[];
+  parking_lot: ExtractedParkingLot[];
+  summary: string;
+}
+
+export interface PopulateEntitiesResponse {
+  tasks_created: number;
+  relationships_created: number;
+  projects_added: number;
+  goals_added: number;
+  parking_lot_items: number;
+  entity_ids: string[];
+}
+
+export interface VerifyToolsSetupResponse {
+  tasks: { count: number; urgent: unknown[]; preview: unknown[] };
+  relationships: { count: number; names: string[] };
+  parking_lot: { count: number; items: string[] };
+  work_context: { projects: string[]; goals: string[] };
+}
+
+/**
+ * Extract entities from a brain dump text
+ */
+export async function extractBrainDump(
+  brainDump: string,
+  sessionId: string,
+  userId: string,
+  commandments?: Record<string, string>
+): Promise<ExtractBrainDumpResponse> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/tutorial/tools-testing/extract`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      brain_dump: brainDump,
+      session_id: sessionId,
+      user_id: userId,
+      commandments,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `Extraction failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Populate database with confirmed entities
+ */
+export async function populateEntities(
+  entities: {
+    people: ExtractedPerson[];
+    tasks: ExtractedTask[];
+    projects: ExtractedProject[];
+    goals: ExtractedGoal[];
+    parking_lot: ExtractedParkingLot[];
+  },
+  sessionId: string,
+  userId: string
+): Promise<PopulateEntitiesResponse> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/tutorial/tools-testing/populate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      entities,
+      session_id: sessionId,
+      user_id: userId,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `Population failed: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Verify tools setup and get dashboard data
+ */
+export async function verifyToolsSetup(
+  sessionId: string,
+  userId: string
+): Promise<VerifyToolsSetupResponse> {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(
+    `${baseUrl}/api/tutorial/tools-testing/verify?session_id=${sessionId}&user_id=${userId}`
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || `Verification failed: ${response.status}`);
+  }
+
+  return response.json();
+}

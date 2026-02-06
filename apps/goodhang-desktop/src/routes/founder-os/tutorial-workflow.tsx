@@ -17,6 +17,7 @@ import VoiceCalibration from '@/components/voice/VoiceCalibration';
 import { QuestionEAssessment } from '@/components/tutorial/QuestionEAssessment';
 import { SynthesisProgressArtifact } from '@/components/tutorial/SynthesisProgressArtifact';
 import { CommandmentsReview } from '@/components/tutorial/CommandmentsReview';
+import { ToolsTestingArtifact } from '@/components/tutorial/ToolsTestingArtifact';
 import { type GapFinalData } from '@/lib/question-e-data';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
@@ -205,7 +206,8 @@ export default function TutorialWorkflowMode() {
         // Assessment review is shown in artifact panel - no quick actions needed
         return [];
       case 'tool_testing':
-        return [{ label: 'Continue', value: 'continue_to_complete' }];
+        // Tool testing is shown in artifact panel - no quick actions needed
+        return [];
       case 'complete':
         return [{ label: 'Show me my Founder OS!', value: 'go_to_dashboard' }];
       default:
@@ -977,6 +979,33 @@ export default function TutorialWorkflowMode() {
   }, [getQuickActionsForStep]);
 
   // =============================================================================
+  // TOOLS TESTING HANDLERS
+  // =============================================================================
+
+  // Called when user completes the tools testing step
+  const handleToolsTestingComplete = useCallback(() => {
+    console.log('[tutorial-workflow] Tools testing complete');
+
+    // Mark tool_testing step as complete
+    localStorage.setItem('founder-os-tool-testing-completed', new Date().toISOString());
+
+    // Advance to complete step
+    const completeStepIndex = getStepIndex('complete');
+    setProgress((prev) => ({
+      ...prev,
+      currentStep: 'complete' as TutorialStep,
+      stepIndex: completeStepIndex,
+    }));
+
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Your tools are set up! You're ready to use Founder OS.",
+        getQuickActionsForStep('complete' as TutorialStep)
+      );
+    }
+  }, [getQuickActionsForStep]);
+
+  // =============================================================================
   // INITIALIZATION
   // =============================================================================
 
@@ -1304,6 +1333,21 @@ export default function TutorialWorkflowMode() {
             <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
             <p className="text-gray-400 text-sm">Loading your assessment...</p>
           </div>
+        </ArtifactPanel>
+      );
+    }
+
+    // Tools Testing step - show ToolsTestingArtifact
+    if (progress.currentStep === 'tool_testing') {
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <ToolsTestingArtifact
+            sessionId={sessionId || ''}
+            userId={userId || ''}
+            founderOs={synthesisResult?.founder_os}
+            voiceOs={synthesisResult?.voice_os}
+            onComplete={handleToolsTestingComplete}
+          />
         </ArtifactPanel>
       );
     }
