@@ -201,6 +201,24 @@ export async function POST(request: NextRequest) {
       console.log(`[tools-testing/populate] Adding ${entities.projects.length} projects`);
 
       for (const project of entities.projects) {
+        const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+        // Check if project already exists by slug
+        const { data: existingProject } = await supabase
+          .schema('founder_os')
+          .from('projects')
+          .select('id')
+          .eq('user_id', user_id)
+          .eq('slug', slug)
+          .single();
+
+        if (existingProject) {
+          // Already exists, count it as success
+          results.projects_added++;
+          results.entity_ids.push(existingProject.id);
+          continue;
+        }
+
         // Map status to valid enum
         const statusMap: Record<string, string> = {
           active: 'active',
@@ -216,7 +234,7 @@ export async function POST(request: NextRequest) {
           .insert({
             user_id,
             name: project.name,
-            slug: project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            slug,
             description: project.description,
             status,
             metadata: { source: 'tutorial_brain_dump' },

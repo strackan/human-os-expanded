@@ -24,7 +24,10 @@ import {
   AlertCircle,
   Edit3,
   X,
+  Mic,
+  MicOff,
 } from 'lucide-react';
+import { useSpeechToText } from '@/lib/hooks/useSpeechToText';
 import type {
   FounderOsExtractionResult,
   VoiceOsExtractionResult,
@@ -133,12 +136,44 @@ export function ToolsTestingArtifact({
   const [brainDump, setBrainDump] = useState('');
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionError, setExtractionError] = useState<string | null>(null);
+
+  // Speech-to-text for brain dump
+  const {
+    isListening,
+    isSupported: isSpeechSupported,
+    transcript,
+    interimTranscript,
+    startListening,
+    stopListening,
+    resetTranscript,
+  } = useSpeechToText({ continuous: true, interimResults: true });
   const [entities, setEntities] = useState<ExtractedEntities | null>(null);
   const [_isPopulating, setIsPopulating] = useState(false);
   const [populateResult, setPopulateResult] = useState<PopulateResult | null>(null);
   const [populateError, setPopulateError] = useState<string | null>(null);
   const [verificationData, setVerificationData] = useState<VerificationData | null>(null);
   const [populationProgress, setPopulationProgress] = useState<string[]>([]);
+
+  // Sync speech transcript to brain dump
+  useEffect(() => {
+    if (transcript) {
+      setBrainDump((prev) => {
+        // Append transcript, adding space if needed
+        const separator = prev && !prev.endsWith(' ') && !prev.endsWith('\n') ? ' ' : '';
+        return prev + separator + transcript;
+      });
+      resetTranscript();
+    }
+  }, [transcript, resetTranscript]);
+
+  // Handle mic toggle
+  const handleMicToggle = useCallback(() => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isListening, startListening, stopListening]);
 
   // Build personalized greeting from commandments
   const buildPersonaGreeting = (): string => {
@@ -408,7 +443,7 @@ export function ToolsTestingArtifact({
       <div className="mb-4">
         <h2 className="text-xl font-bold text-white mb-2">Brain Dump</h2>
         <p className="text-gray-400 text-sm">
-          Write freely about what's on your mind. Don't worry about structure.
+          Write or speak freely about what's on your mind. Don't worry about structure.
         </p>
       </div>
 
@@ -425,18 +460,45 @@ export function ToolsTestingArtifact({
         ))}
       </div>
 
-      {/* Text area */}
+      {/* Text area with mic button */}
       <div className="flex-1 relative">
         <textarea
-          value={brainDump}
+          value={brainDump + (interimTranscript ? ` ${interimTranscript}` : '')}
           onChange={(e) => setBrainDump(e.target.value)}
-          placeholder="Start typing... What projects are you working on? Who are the key people? What deadlines are coming up? What ideas are you sitting on?"
-          className="w-full h-full bg-gh-dark-800 border border-gh-dark-600 rounded-lg p-4 text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Start typing or click the mic to speak... What projects are you working on? Who are the key people? What deadlines are coming up? What ideas are you sitting on?"
+          className={`w-full h-full bg-gh-dark-800 border rounded-lg p-4 pr-16 text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:border-transparent ${
+            isListening ? 'border-red-500 focus:ring-red-500' : 'border-gh-dark-600 focus:ring-blue-500'
+          }`}
         />
-        <div className="absolute bottom-4 right-4 text-xs text-gray-500">
-          {brainDump.length} characters
+        <div className="absolute bottom-4 right-4 flex items-center gap-3">
+          <span className="text-xs text-gray-500">
+            {brainDump.length} chars
+          </span>
+          <button
+            type="button"
+            onClick={handleMicToggle}
+            className={`p-2 rounded-lg transition-all duration-200 border ${
+              isListening
+                ? 'bg-red-500/20 border-red-500 text-red-400 animate-pulse'
+                : isSpeechSupported
+                ? 'bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20'
+                : 'bg-gray-700/30 border-gray-600/30 text-gray-500 cursor-not-allowed'
+            }`}
+            disabled={!isSpeechSupported}
+            title={isListening ? 'Stop recording' : 'Start dictation'}
+          >
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Listening indicator */}
+      {isListening && (
+        <div className="mt-2 px-3 py-2 bg-red-900/30 border border-red-500/30 rounded-lg flex items-center gap-2">
+          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-sm text-red-300">Listening... speak freely</span>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-between items-center mt-4">
