@@ -57,7 +57,7 @@ export function ReportEditor({
   onResetEdits,
   onTakeAssessment,
   onFieldEdit,
-  hasCompletedAssessment = false,
+  hasCompletedAssessment: _hasCompletedAssessment = false,
   className = '',
 }: ReportEditorProps) {
   const allSectionsConfirmed =

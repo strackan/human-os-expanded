@@ -15,6 +15,7 @@ import { Loader2, RotateCcw, Zap } from 'lucide-react';
 // Import VoiceCalibration for embedding in artifact panel (shows 3 pre-generated samples)
 import VoiceCalibration from '@/components/voice/VoiceCalibration';
 import { QuestionEAssessment } from '@/components/tutorial/QuestionEAssessment';
+import { SynthesisProgressArtifact } from '@/components/tutorial/SynthesisProgressArtifact';
 import { type GapFinalData } from '@/lib/question-e-data';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
@@ -33,9 +34,6 @@ import type {
   TutorialProgress,
   ExecutiveReport,
   CharacterProfile,
-  CharacterAttributes,
-  AssessmentSignals,
-  MatchingProfile,
   ReportConfirmations,
   OutstandingQuestion,
   WorkflowStep,
@@ -92,10 +90,11 @@ export default function TutorialWorkflowMode() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { token, userId } = useAuthStore();
-  const { status, loading: statusLoading, fetchStatus } = useUserStatusStore();
+  const { status, loading: statusLoading } = useUserStatusStore();
   const initializedRef = useRef(false);
   const workflowActionsRef = useRef<WorkflowModeActions | null>(null);
   const hasShownReportCompleteRef = useRef(false);
+  const synthesizeHandlerRef = useRef<((answers: Record<string, string>) => void) | null>(null);
 
   // Tutorial state
   const [progress, setProgress] = useState<TutorialProgress>({
@@ -137,6 +136,20 @@ export default function TutorialWorkflowMode() {
   const [questionEAnswers, setQuestionEAnswers] = useState<Record<string, string>>({});
   const [isLoadingGapFinal, setIsLoadingGapFinal] = useState(false);
   const hasAttemptedGapFinalRef = useRef(false);
+
+  // Synthesis state
+  const [isSynthesizing, setIsSynthesizing] = useState(false);
+  const [synthesisError, setSynthesisError] = useState<string | null>(null);
+  const [synthesisResult, setSynthesisResult] = useState<{
+    executive_report: ExecutiveReport;
+    character_profile: CharacterProfile;
+    founder_os: unknown;
+    voice_os: unknown;
+  } | null>(null);
+
+  // Voice calibration feedback (collected from VoiceCalibration component)
+  // Note: State is kept for potential future use; currently reading from localStorage in synthesis
+  const [_voiceCalibrationFeedback, setVoiceCalibrationFeedback] = useState<Record<string, unknown>>({});
 
   // Session context
   const sessionId = searchParams.get('session') || status?.contexts?.active;
@@ -229,6 +242,47 @@ export default function TutorialWorkflowMode() {
         }));
         return {
           content: "No problem! You can always answer these questions later. Let's move on to testing your tools.",
+          quickActions: getQuickActionsForStep('tool_testing' as TutorialStep),
+        };
+      }
+
+      // Handle retry synthesis
+      if (actionValue === 'retry_synthesis') {
+        // Re-trigger synthesis with stored answers
+        const storedAnswers = JSON.parse(localStorage.getItem('fos-question-e-answers') || '{}');
+        if (synthesizeHandlerRef.current) {
+          synthesizeHandlerRef.current(storedAnswers);
+        }
+        return null; // handleQuestionEComplete manages messaging
+      }
+
+      // Handle approve synthesis and advance to tool_testing
+      if (actionValue === 'approve_synthesis') {
+        // Clear synthesis state and advance to tool_testing
+        const toolStepIndex = getStepIndex('tool_testing');
+        setProgress((prev) => ({
+          ...prev,
+          currentStep: 'tool_testing' as TutorialStep,
+          stepIndex: toolStepIndex,
+        }));
+        return {
+          content: "Your Human OS profile is saved. Now let's make sure your tools are set up correctly.",
+          quickActions: getQuickActionsForStep('tool_testing' as TutorialStep),
+        };
+      }
+
+      // Handle skip synthesis and advance to tool_testing
+      if (actionValue === 'skip_synthesis') {
+        setSynthesisError(null);
+        setIsSynthesizing(false);
+        const toolStepIndex = getStepIndex('tool_testing');
+        setProgress((prev) => ({
+          ...prev,
+          currentStep: 'tool_testing' as TutorialStep,
+          stepIndex: toolStepIndex,
+        }));
+        return {
+          content: "No problem! Your answers are saved and you can generate the profile later. Let's test your tools.",
           quickActions: getQuickActionsForStep('tool_testing' as TutorialStep),
         };
       }
@@ -730,7 +784,8 @@ export default function TutorialWorkflowMode() {
   const handleVoiceCalibrationComplete = useCallback((feedback: Record<string, unknown>) => {
     console.log('[tutorial-workflow] Voice calibration complete:', Object.keys(feedback).length, 'samples reviewed');
 
-    // Save feedback to localStorage for final synthesis
+    // Save feedback to state and localStorage for final synthesis
+    setVoiceCalibrationFeedback(feedback);
     localStorage.setItem('fos-voice-calibration-feedback', JSON.stringify(feedback));
 
     // Mark voice testing step as complete
@@ -788,26 +843,101 @@ export default function TutorialWorkflowMode() {
 
     // Mark step as complete
     localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+    localStorage.setItem('fos-question-e-answers', JSON.stringify(answers));
 
-    // TODO: Persist answers to backend if needed
-    // For now, just store locally and advance
+    // Start synthesis
+    setIsSynthesizing(true);
+    setSynthesisError(null);
 
-    // Advance to tool_testing step
-    const toolStepIndex = getStepIndex('tool_testing');
-    setProgress((prev) => ({
-      ...prev,
-      currentStep: 'tool_testing' as TutorialStep,
-      stepIndex: toolStepIndex,
-    }));
-
-    // Add completion message
     if (workflowActionsRef.current) {
       workflowActionsRef.current.addAssistantMessage(
-        "Personality baseline captured! Now let's make sure your tools are set up correctly.",
-        getQuickActionsForStep('tool_testing' as TutorialStep)
+        "Building your complete Human OS profile. This synthesizes everything we've learned about you..."
       );
     }
-  }, [getQuickActionsForStep]);
+
+    try {
+      // Gather all inputs for synthesis
+      const fosInterviewAnswers = JSON.parse(
+        localStorage.getItem('fos-interview-answers') || '{}'
+      );
+      const voiceFeedback = JSON.parse(
+        localStorage.getItem('fos-voice-calibration-feedback') || '{}'
+      );
+
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const response = await fetch(`${baseUrl}/api/tutorial/synthesize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          user_id: userId,
+          fos_interview_answers: fosInterviewAnswers,
+          question_e_answers: answers,
+          voice_calibration_feedback: voiceFeedback,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Synthesis failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log('[tutorial-workflow] Synthesis complete:', {
+        hasExecutiveReport: !!result.executive_report,
+        hasCharacterProfile: !!result.character_profile,
+        hasFounderOs: !!result.founder_os,
+        duration: result.duration_ms,
+      });
+
+      // Store synthesis result
+      setSynthesisResult({
+        executive_report: result.executive_report,
+        character_profile: result.character_profile,
+        founder_os: result.founder_os,
+        voice_os: result.voice_os,
+      });
+
+      // Also update the report state for ReportEditor display
+      if (result.executive_report) {
+        setReport(result.executive_report);
+        setOriginalReport(result.executive_report);
+      }
+      if (result.character_profile) {
+        setCharacterProfile(result.character_profile);
+      }
+
+      setIsSynthesizing(false);
+
+      // Show synthesis results for user review
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          "Your Human OS profile is ready! Review the executive summary and confirm each section. This captures everything we've learned about how you work, communicate, and make decisions.",
+          [{ label: 'Approve & Continue', value: 'approve_synthesis' }]
+        );
+      }
+    } catch (error) {
+      console.error('[tutorial-workflow] Synthesis error:', error);
+      setIsSynthesizing(false);
+      setSynthesisError(error instanceof Error ? error.message : 'Unknown error occurred');
+
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          "There was an issue generating your profile. You can retry or skip for now.",
+          [
+            { label: 'Retry Synthesis', value: 'retry_synthesis' },
+            { label: 'Skip for Now', value: 'skip_synthesis' },
+          ]
+        );
+      }
+    }
+  }, [token, sessionId, userId]);
+
+  // Store handler in ref for access from handleMessage
+  synthesizeHandlerRef.current = handleQuestionEComplete;
 
   const handleQuestionESkip = useCallback(() => {
     // Mark step as skipped and advance
@@ -1070,8 +1200,58 @@ export default function TutorialWorkflowMode() {
       );
     }
 
-    // Question E step - show QuestionEAssessment in artifact panel
+    // Question E step - show QuestionEAssessment or synthesis progress
     if (progress.currentStep === 'question_e') {
+      // If synthesizing, show progress
+      if (isSynthesizing) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <SynthesisProgressArtifact
+              isRunning={true}
+              error={null}
+            />
+          </ArtifactPanel>
+        );
+      }
+
+      // If synthesis failed, show error with retry
+      if (synthesisError) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <SynthesisProgressArtifact
+              isRunning={false}
+              error={synthesisError}
+              onRetry={() => {
+                const storedAnswers = JSON.parse(localStorage.getItem('fos-question-e-answers') || '{}');
+                handleQuestionEComplete(storedAnswers);
+              }}
+            />
+          </ArtifactPanel>
+        );
+      }
+
+      // If synthesis complete, show results for review
+      if (synthesisResult && report) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <ReportEditor
+              report={report}
+              characterProfile={characterProfile}
+              activeTab={activeReportTab}
+              onTabChange={setActiveReportTab}
+              confirmations={reportConfirmations}
+              onConfirmSection={confirmReportSection}
+              originalReport={originalReport}
+              onResetEdits={resetReportEdits}
+              onFieldEdit={handleFieldEdit}
+              hasCompletedAssessment={true}
+              className="h-full"
+            />
+          </ArtifactPanel>
+        );
+      }
+
+      // Default: show Question E assessment
       return (
         <ArtifactPanel showStepProgress={false}>
           <QuestionEAssessment
