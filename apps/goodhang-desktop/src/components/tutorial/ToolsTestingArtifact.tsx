@@ -89,6 +89,7 @@ export interface PopulateResult {
   goals_added: number;
   parking_lot_items: number;
   entity_ids: string[];
+  errors: string[];
 }
 
 export interface VerificationData {
@@ -250,6 +251,19 @@ export function ToolsTestingArtifact({
     };
 
     try {
+      console.log('[ToolsTestingArtifact] Populating with:', {
+        sessionId,
+        userId,
+        isUuidFormat: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId),
+        entities: {
+          people: selectedEntities.people.length,
+          tasks: selectedEntities.tasks.length,
+          projects: selectedEntities.projects.length,
+          goals: selectedEntities.goals.length,
+          parking_lot: selectedEntities.parking_lot.length,
+        },
+      });
+
       if (selectedEntities.tasks.length > 0) {
         addProgress(`Adding ${selectedEntities.tasks.length} task(s)...`);
       }
@@ -283,8 +297,15 @@ export function ToolsTestingArtifact({
       }
 
       const result: PopulateResult = await response.json();
+      console.log('[ToolsTestingArtifact] Populate result:', result);
       setPopulateResult(result);
-      addProgress('All items added successfully!');
+
+      if (result.errors && result.errors.length > 0) {
+        console.warn('[ToolsTestingArtifact] Populate had errors:', result.errors);
+        addProgress(`Added items with ${result.errors.length} warning(s)`);
+      } else {
+        addProgress('All items added successfully!');
+      }
 
       // Fetch verification data
       addProgress('Verifying data...');
@@ -735,6 +756,21 @@ export function ToolsTestingArtifact({
               color="orange"
             />
           )}
+        </div>
+      )}
+
+      {/* Show errors if any */}
+      {populateResult && populateResult.errors && populateResult.errors.length > 0 && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle className="w-5 h-5 text-red-400" />
+            <h4 className="text-red-400 font-medium">Some items could not be added:</h4>
+          </div>
+          <ul className="space-y-1 text-sm text-red-300">
+            {populateResult.errors.map((err, i) => (
+              <li key={i}>{err}</li>
+            ))}
+          </ul>
         </div>
       )}
 
