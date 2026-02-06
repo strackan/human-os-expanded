@@ -3,6 +3,12 @@
  *
  * Tools for session initialization and mode loading.
  * These are called at the start of each session to load context.
+ *
+ * Storage path pattern: contexts/{entity_slug}/
+ * - START_HERE.md - Entry point with identity and quick reference
+ * - founder-os/ - Founder OS commandments (10 files)
+ * - voice/ - Voice OS commandments and content files
+ * - state/ - Current state files
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -19,20 +25,51 @@ import { performBidirectionalSync, type SyncResult } from '../lib/context-sync.j
 export const sessionTools: Tool[] = [
   {
     name: 'get_session_context',
-    description: 'Load identity, current state, and available modes at session start. Optionally syncs local files with Supabase (bi-directional, newer wins). Call this at the beginning of every conversation.',
+    description: `Load identity, current state, and available modes at session start.
+Loads from contexts/{slug}/ in storage. Optionally syncs local files with Supabase.
+Call this at the beginning of every conversation.`,
     inputSchema: {
       type: 'object',
       properties: {
-        localPath: {
-          type: 'string',
-          description: 'Optional local directory path for bi-directional sync with Supabase. If provided, syncs files in both directions based on which is newer.',
-        },
         slug: {
           type: 'string',
-          description: 'Entity slug in Supabase (e.g., "justin"). Defaults to "justin" if not provided.',
+          description: 'Entity slug (e.g., "scott", "justin"). Required.',
+        },
+        localPath: {
+          type: 'string',
+          description: 'Optional local directory path for bi-directional sync with Supabase.',
         },
       },
-      required: [],
+      required: ['slug'],
+    },
+  },
+  {
+    name: 'load_commandments',
+    description: `Load the Ten Commandments for Founder OS and/or Voice OS.
+These are the core instructions that define how the AI should support this person.
+
+Founder OS Commandments (10):
+- CURRENT_STATE, STRATEGIC_THOUGHT_PARTNER, DECISION_MAKING
+- ENERGY_PATTERNS, AVOIDANCE_PATTERNS, RECOVERY_PROTOCOLS
+- ACCOUNTABILITY_FRAMEWORK, EMOTIONAL_SUPPORT, WORK_STYLE, CONVERSATION_PROTOCOLS
+
+Voice OS Commandments (10):
+- VOICE, THEMES, GUARDRAILS, AUDIENCE, AUTHORITY
+- HUMOR, CONTROVERSY, PERSONAL, FORMAT, QUALITY_CONTROL`,
+    inputSchema: {
+      type: 'object',
+      properties: {
+        slug: {
+          type: 'string',
+          description: 'Entity slug (e.g., "scott", "justin")',
+        },
+        type: {
+          type: 'string',
+          enum: ['founder_os', 'voice_os', 'both'],
+          description: 'Which commandments to load. Default: both',
+        },
+      },
+      required: ['slug'],
     },
   },
   {
@@ -41,13 +78,17 @@ export const sessionTools: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
+        slug: {
+          type: 'string',
+          description: 'Entity slug (e.g., "scott", "justin")',
+        },
         mode: {
           type: 'string',
-          description: 'Mode to load: crisis, voice, decision, conversation, identity',
-          enum: ['crisis', 'voice', 'decision', 'conversation', 'identity'],
+          description: 'Mode to load: crisis, voice, decision, conversation, identity, founder_os',
+          enum: ['crisis', 'voice', 'decision', 'conversation', 'identity', 'founder_os'],
         },
       },
-      required: ['mode'],
+      required: ['slug', 'mode'],
     },
   },
 ];
@@ -67,15 +108,25 @@ export async function handleSessionTools(
 ): Promise<unknown | null> {
   switch (name) {
     case 'get_session_context': {
+      const slug = (args as { slug: string }).slug;
       const localPath = (args as { localPath?: string })?.localPath;
-      const slug = (args as { slug?: string })?.slug || 'justin';
-      return getSessionContext(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, localPath, slug);
+      if (!slug) throw new Error('slug parameter is required');
+      return getSessionContext(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, slug, localPath);
+    }
+
+    case 'load_commandments': {
+      const slug = (args as { slug: string }).slug;
+      const type = (args as { type?: string })?.type || 'both';
+      if (!slug) throw new Error('slug parameter is required');
+      return loadCommandments(ctx.supabaseUrl, ctx.supabaseKey, slug, type);
     }
 
     case 'load_mode': {
+      const slug = (args as { slug: string }).slug;
       const mode = (args as { mode: string })?.mode;
+      if (!slug) throw new Error('slug parameter is required');
       if (!mode) throw new Error('mode parameter is required');
-      return loadMode(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, mode);
+      return loadMode(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, slug, mode);
     }
 
     default:
@@ -91,6 +142,7 @@ export async function handleSessionTools(
 export type { SyncResult } from '../lib/context-sync.js';
 
 export interface SessionContext {
+  slug: string;
   identity: {
     name: string;
     northStar: string;
@@ -105,6 +157,10 @@ export interface SessionContext {
     avoid: string[];
   };
   availableModes: ModeDefinition[];
+  availableCommandments: {
+    founder_os: string[];
+    voice_os: string[];
+  };
   startHereContent: string;
   glossary: {
     terms: {
@@ -136,24 +192,63 @@ export interface LoadedFile {
   content: string;
 }
 
+export interface CommandmentsResult {
+  slug: string;
+  founder_os?: Record<string, string>;
+  voice_os?: Record<string, string>;
+  loaded_count: number;
+  total_content_length: number;
+}
+
 // =============================================================================
-// TOOL IMPLEMENTATIONS
+// CONSTANTS
 // =============================================================================
 
 const BUCKET_NAME = STORAGE_BUCKETS.CONTEXTS;
 
+const FOUNDER_OS_COMMANDMENTS = [
+  'CURRENT_STATE',
+  'STRATEGIC_THOUGHT_PARTNER',
+  'DECISION_MAKING',
+  'ENERGY_PATTERNS',
+  'AVOIDANCE_PATTERNS',
+  'RECOVERY_PROTOCOLS',
+  'ACCOUNTABILITY_FRAMEWORK',
+  'EMOTIONAL_SUPPORT',
+  'WORK_STYLE',
+  'CONVERSATION_PROTOCOLS',
+];
+
+const VOICE_OS_COMMANDMENTS = [
+  'VOICE',
+  'THEMES',
+  'GUARDRAILS',
+  'AUDIENCE',
+  'AUTHORITY',
+  'HUMOR',
+  'CONTROVERSY',
+  'PERSONAL',
+  'FORMAT',
+  'QUALITY_CONTROL',
+];
+
+// =============================================================================
+// TOOL IMPLEMENTATIONS
+// =============================================================================
+
 /**
  * Get session context - called at the start of every session
- * Optionally performs bi-directional sync with local files
+ * Loads from contexts/{slug}/ path pattern
  */
 export async function getSessionContext(
   supabaseUrl: string,
   supabaseKey: string,
   userId: string,
-  localPath?: string,
-  slug: string = 'justin'
+  slug: string,
+  localPath?: string
 ): Promise<SessionContext> {
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const basePath = `contexts/${slug}`;
 
   // Perform bi-directional sync if localPath is provided
   let syncResult: SyncResult | undefined;
@@ -161,20 +256,22 @@ export async function getSessionContext(
     syncResult = await performBidirectionalSync(supabase, localPath, slug);
   }
 
-  // Load START_HERE.md
-  const startHerePath = `justin/START_HERE.md`;
+  // Load START_HERE.md (required)
+  const startHerePath = `${basePath}/START_HERE.md`;
   const { data: startHereData, error: startHereError } = await supabase.storage
     .from(BUCKET_NAME)
     .download(startHerePath);
 
+  let startHereContent = '';
   if (startHereError) {
-    throw new Error(`Failed to load START_HERE.md: ${startHereError.message}`);
+    console.warn(`No START_HERE.md found for ${slug}: ${startHereError.message}`);
+    startHereContent = `# ${slug}\n\nNo START_HERE.md found. Use load_commandments to access the Ten Commandments.`;
+  } else {
+    startHereContent = await startHereData.text();
   }
 
-  const startHereContent = await startHereData.text();
-
-  // Load current state
-  const statePath = `justin/state/current.md`;
+  // Load current state (optional)
+  const statePath = `${basePath}/state/current.md`;
   const { data: stateData, error: stateError } = await supabase.storage
     .from(BUCKET_NAME)
     .download(statePath);
@@ -184,37 +281,46 @@ export async function getSessionContext(
     currentStateContent = await stateData.text();
   }
 
+  // Check which commandments are available
+  const availableCommandments = await checkAvailableCommandments(supabase, basePath);
+
   // Parse identity from START_HERE
-  const identity = parseIdentityFromStartHere(startHereContent);
+  const identity = parseIdentityFromStartHere(startHereContent, slug);
 
   // Parse current state
   const currentState = parseCurrentState(currentStateContent);
 
-  // Define available modes with their triggers
+  // Define available modes with their triggers (using entity-specific paths)
   const availableModes: ModeDefinition[] = [
     {
-      mode: 'crisis',
-      triggers: ['overwhelmed', 'stuck', 'too much', 'drowning', 'cant think'],
-      description: 'Crisis support protocols',
-      files: ['protocols/crisis.md'],
+      mode: 'founder_os',
+      triggers: ['support', 'help', 'stuck', 'decision', 'energy', 'accountability'],
+      description: 'Load Founder OS commandments for personalized AI support',
+      files: FOUNDER_OS_COMMANDMENTS.map(c => `founder-os/${c}.md`),
     },
     {
       mode: 'voice',
-      triggers: ['write', 'draft', 'post', 'linkedin', 'compose', 'edit'],
-      description: 'Writing engine and voice system',
-      files: ['voice/01_WRITING_ENGINE.md', 'voice/02_TEMPLATE_COMPONENTS.md', 'voice/04_BLEND_RECIPES.md'],
+      triggers: ['write', 'draft', 'post', 'linkedin', 'compose', 'edit', 'content'],
+      description: 'Load Voice OS for content generation in your voice',
+      files: VOICE_OS_COMMANDMENTS.map(c => `voice/${c}.md`),
+    },
+    {
+      mode: 'crisis',
+      triggers: ['overwhelmed', 'stuck', 'too much', 'drowning', 'cant think'],
+      description: 'Crisis support - loads RECOVERY_PROTOCOLS and EMOTIONAL_SUPPORT',
+      files: ['founder-os/RECOVERY_PROTOCOLS.md', 'founder-os/EMOTIONAL_SUPPORT.md'],
     },
     {
       mode: 'decision',
       triggers: ['should I', 'decide', 'what do you think', 'choice', 'options'],
-      description: 'Strategic decision framework',
-      files: ['protocols/decision.md'],
+      description: 'Decision support - loads DECISION_MAKING and STRATEGIC_THOUGHT_PARTNER',
+      files: ['founder-os/DECISION_MAKING.md', 'founder-os/STRATEGIC_THOUGHT_PARTNER.md'],
     },
     {
       mode: 'conversation',
-      triggers: ['*'], // Always available as default
-      description: 'Conversation protocols',
-      files: ['protocols/conversation.md'],
+      triggers: ['*'],
+      description: 'Default conversation mode - loads CONVERSATION_PROTOCOLS',
+      files: ['founder-os/CONVERSATION_PROTOCOLS.md'],
     },
   ];
 
@@ -236,13 +342,79 @@ export async function getSessionContext(
   };
 
   return {
+    slug,
     identity,
     currentState,
     availableModes,
+    availableCommandments,
     startHereContent,
     glossary,
     ...(syncResult && { syncResult }),
   };
+}
+
+/**
+ * Load the Ten Commandments - the core instructions for AI support
+ */
+export async function loadCommandments(
+  supabaseUrl: string,
+  supabaseKey: string,
+  slug: string,
+  type: string = 'both'
+): Promise<CommandmentsResult> {
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const basePath = `contexts/${slug}`;
+
+  const result: CommandmentsResult = {
+    slug,
+    loaded_count: 0,
+    total_content_length: 0,
+  };
+
+  // Load Founder OS commandments
+  if (type === 'founder_os' || type === 'both') {
+    result.founder_os = {};
+    for (const commandment of FOUNDER_OS_COMMANDMENTS) {
+      const filePath = `${basePath}/founder-os/${commandment}.md`;
+      const { data, error } = await supabase.storage.from(BUCKET_NAME).download(filePath);
+
+      if (!error && data) {
+        const content = await data.text();
+        // Extract content after YAML frontmatter if present
+        const match = content.match(/^---[\s\S]*?---\s*([\s\S]*)$/);
+        result.founder_os[commandment] = match?.[1]?.trim() ?? content.trim();
+        result.loaded_count++;
+        result.total_content_length += result.founder_os[commandment].length;
+      }
+    }
+  }
+
+  // Load Voice OS commandments
+  if (type === 'voice_os' || type === 'both') {
+    result.voice_os = {};
+    for (const commandment of VOICE_OS_COMMANDMENTS) {
+      // Voice files might be in different naming conventions
+      const possiblePaths = [
+        `${basePath}/voice/${commandment}.md`,
+        `${basePath}/voice/${commandment}_SUMMARY.md`,
+      ];
+
+      for (const filePath of possiblePaths) {
+        const { data, error } = await supabase.storage.from(BUCKET_NAME).download(filePath);
+
+        if (!error && data) {
+          const content = await data.text();
+          const match = content.match(/^---[\s\S]*?---\s*([\s\S]*)$/);
+          result.voice_os[commandment] = match?.[1]?.trim() ?? content.trim();
+          result.loaded_count++;
+          result.total_content_length += result.voice_os[commandment].length;
+          break; // Found the file, no need to check other paths
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -252,23 +424,33 @@ export async function loadMode(
   supabaseUrl: string,
   supabaseKey: string,
   userId: string,
+  slug: string,
   mode: string
 ): Promise<ModeContent> {
   const supabase = createClient(supabaseUrl, supabaseKey);
+  const basePath = `contexts/${slug}`;
 
+  // Define mode file mappings
   const modeFilePaths: Record<string, string[]> = {
-    crisis: ['justin/protocols/crisis.md'],
-    voice: [
-      'justin/voice/01_WRITING_ENGINE.md',
-      'justin/voice/02_TEMPLATE_COMPONENTS.md',
-      'justin/voice/04_BLEND_RECIPES.md',
+    founder_os: FOUNDER_OS_COMMANDMENTS.map(c => `${basePath}/founder-os/${c}.md`),
+    voice: VOICE_OS_COMMANDMENTS.map(c => `${basePath}/voice/${c}.md`),
+    crisis: [
+      `${basePath}/founder-os/RECOVERY_PROTOCOLS.md`,
+      `${basePath}/founder-os/EMOTIONAL_SUPPORT.md`,
+      `${basePath}/founder-os/AVOIDANCE_PATTERNS.md`,
     ],
-    decision: ['justin/protocols/decision.md'],
-    conversation: ['justin/protocols/conversation.md'],
+    decision: [
+      `${basePath}/founder-os/DECISION_MAKING.md`,
+      `${basePath}/founder-os/STRATEGIC_THOUGHT_PARTNER.md`,
+    ],
+    conversation: [
+      `${basePath}/founder-os/CONVERSATION_PROTOCOLS.md`,
+      `${basePath}/founder-os/WORK_STYLE.md`,
+    ],
     identity: [
-      'justin/identity/core.md',
-      'justin/identity/adhd-patterns.md',
-      'justin/identity/communication.md',
+      `${basePath}/founder-os/CURRENT_STATE.md`,
+      `${basePath}/founder-os/ENERGY_PATTERNS.md`,
+      `${basePath}/founder-os/AVOIDANCE_PATTERNS.md`,
     ],
   };
 
@@ -284,13 +466,16 @@ export async function loadMode(
     const { data, error } = await supabase.storage.from(BUCKET_NAME).download(filePath);
 
     if (error) {
-      console.error(`Failed to load ${filePath}: ${error.message}`);
+      console.warn(`Failed to load ${filePath}: ${error.message}`);
       continue;
     }
 
     const content = await data.text();
     loadedFiles.push({ path: filePath, content });
-    contentParts.push(`\n\n--- ${filePath} ---\n\n${content}`);
+
+    // Extract filename for header
+    const filename = filePath.split('/').pop() || filePath;
+    contentParts.push(`\n\n--- ${filename} ---\n\n${content}`);
   }
 
   return {
@@ -305,16 +490,67 @@ export async function loadMode(
 // =============================================================================
 
 /**
+ * Check which commandments are available in storage
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function checkAvailableCommandments(
+  supabase: ReturnType<typeof createClient<any>>,
+  basePath: string
+): Promise<{ founder_os: string[]; voice_os: string[] }> {
+  const result = {
+    founder_os: [] as string[],
+    voice_os: [] as string[],
+  };
+
+  // Check founder-os folder
+  const { data: founderFiles } = await supabase.storage
+    .from(BUCKET_NAME)
+    .list(`${basePath}/founder-os`);
+
+  if (founderFiles) {
+    for (const file of founderFiles) {
+      const name = file.name.replace('.md', '');
+      if (FOUNDER_OS_COMMANDMENTS.includes(name)) {
+        result.founder_os.push(name);
+      }
+    }
+  }
+
+  // Check voice folder
+  const { data: voiceFiles } = await supabase.storage
+    .from(BUCKET_NAME)
+    .list(`${basePath}/voice`);
+
+  if (voiceFiles) {
+    for (const file of voiceFiles) {
+      const name = file.name.replace('.md', '').replace('_SUMMARY', '');
+      if (VOICE_OS_COMMANDMENTS.includes(name) && !result.voice_os.includes(name)) {
+        result.voice_os.push(name);
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Parse identity from START_HERE content
  */
-function parseIdentityFromStartHere(content: string): SessionContext['identity'] {
+function parseIdentityFromStartHere(content: string, slug: string): SessionContext['identity'] {
+  // Default identity based on slug
   const identity = {
-    name: 'Justin Strackany',
-    northStar: 'Make Work Joyful',
-    adhd_pda: true,
+    name: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+    northStar: 'Not specified',
+    adhd_pda: false,
     decisionThreshold: 70,
-    responseStyle: 'Direct, no fluff, authentic',
+    responseStyle: 'Direct, authentic',
   };
+
+  // Try to parse from content
+  const nameMatch = content.match(/name:\s*["']?([^"'\n]+)["']?/i);
+  if (nameMatch?.[1]) {
+    identity.name = nameMatch[1].trim();
+  }
 
   const northStarMatch = content.match(/North Star:\*?\*?\s*["']?([^"\n]+)["']?/i);
   if (northStarMatch?.[1]) {
@@ -329,6 +565,11 @@ function parseIdentityFromStartHere(content: string): SessionContext['identity']
   const styleMatch = content.match(/Response style:\s*([^\n]+)/i);
   if (styleMatch?.[1]) {
     identity.responseStyle = styleMatch[1].trim();
+  }
+
+  const adhdMatch = content.match(/adhd|pda/i);
+  if (adhdMatch) {
+    identity.adhd_pda = true;
   }
 
   return identity;
@@ -401,4 +642,3 @@ async function getFrequentTerms(
     terms: data || [],
   };
 }
-
