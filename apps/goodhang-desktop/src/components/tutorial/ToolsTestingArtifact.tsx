@@ -771,13 +771,13 @@ export function ToolsTestingArtifact({
   // =============================================================================
 
   return (
-    <div className="h-full bg-gradient-to-br from-gh-dark-900 to-gh-dark-800 overflow-hidden">
+    <div className="h-full bg-gradient-to-br from-gh-dark-900 to-gh-dark-800 overflow-auto">
       <AnimatePresence mode="wait">
-        {phase === 'welcome' && <div key="welcome">{renderWelcome()}</div>}
-        {phase === 'brain_dump' && <div key="brain_dump">{renderBrainDump()}</div>}
-        {phase === 'extraction_review' && <div key="extraction_review">{renderExtractionReview()}</div>}
-        {phase === 'populating' && <div key="populating">{renderPopulating()}</div>}
-        {phase === 'verification' && <div key="verification">{renderVerification()}</div>}
+        {phase === 'welcome' && <div key="welcome" className="h-full">{renderWelcome()}</div>}
+        {phase === 'brain_dump' && <div key="brain_dump" className="h-full">{renderBrainDump()}</div>}
+        {phase === 'extraction_review' && <div key="extraction_review" className="h-full">{renderExtractionReview()}</div>}
+        {phase === 'populating' && <div key="populating" className="h-full">{renderPopulating()}</div>}
+        {phase === 'verification' && <div key="verification" className="h-full">{renderVerification()}</div>}
       </AnimatePresence>
     </div>
   );
