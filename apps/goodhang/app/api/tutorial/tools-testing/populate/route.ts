@@ -350,8 +350,28 @@ export async function POST(request: NextRequest) {
               errors.push(`Project "${project.name}": ${error.message}`);
             }
           } else {
-            // User has projects but no match - skip this one
-            console.log(`[tools-testing/populate] No match for "${project.name}", skipping (user has existing projects)`);
+            // User has projects but no match - capture as a task with potential_project tag
+            console.log(`[tools-testing/populate] No match for "${project.name}", creating task`);
+            const { data: taskData, error: taskError } = await supabase
+              .schema('founder_os')
+              .from('tasks')
+              .insert({
+                user_id,
+                title: `Project idea: ${project.name}`,
+                description: project.description || null,
+                priority: 'medium',
+                context_tags: ['potential_project'],
+                status: 'todo',
+              })
+              .select('id')
+              .single();
+
+            if (!taskError && taskData) {
+              results.tasks_created++;
+              results.entity_ids.push(taskData.id);
+            } else if (taskError) {
+              console.warn(`[tools-testing/populate] Failed to create task for unmatched project:`, taskError);
+            }
           }
         }
       }
