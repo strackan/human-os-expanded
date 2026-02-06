@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "pnpm install --no-frozen-lockfile",
-  "buildCommand": "pnpm turbo build --filter=goodhang"
+  "buildCommand": "pnpm turbo build --filter=@human-os/goodhang"
 }
