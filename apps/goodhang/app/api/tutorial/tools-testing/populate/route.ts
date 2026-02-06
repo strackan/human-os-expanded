@@ -3,7 +3,7 @@
  *
  * Insert confirmed entities into the database:
  * - Tasks -> founder_os.tasks
- * - People -> entities (person type)
+ * - People -> founder_os.relationships
  * - Projects -> founder_os.projects
  * - Goals -> founder_os.tasks (with context_tag 'goal')
  * - Parking Lot -> founder_os.tasks (with context_tag 'parking_lot' and status 'todo')
@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as isValidUuid } from 'uuid';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -135,57 +135,63 @@ export async function POST(request: NextRequest) {
     if (entities.people && entities.people.length > 0) {
       console.log(`[tools-testing/populate] Adding ${entities.people.length} people to relationships`);
 
-      for (const person of entities.people) {
-        // Check if relationship already exists by name
-        const { data: existingRel } = await supabase
-          .schema('founder_os')
-          .from('relationships')
-          .select('id')
-          .eq('user_id', user_id)
-          .ilike('name', person.name)
-          .single();
+      // Validate user_id is a valid UUID (required for founder_os.relationships)
+      if (!isValidUuid(user_id)) {
+        console.error(`[tools-testing/populate] user_id "${user_id}" is not a valid UUID, skipping relationships`);
+        errors.push(`People: user_id must be a valid UUID (got "${user_id}")`);
+      } else {
+        for (const person of entities.people) {
+          // Check if relationship already exists by name
+          const { data: existingRel } = await supabase
+            .schema('founder_os')
+            .from('relationships')
+            .select('id')
+            .eq('user_id', user_id)
+            .ilike('name', person.name)
+            .single();
 
-        if (existingRel) {
-          // Already exists, count it
-          results.relationships_created++;
-          continue;
-        }
+          if (existingRel) {
+            // Already exists, count it
+            results.relationships_created++;
+            continue;
+          }
 
-        // Map relationship_type to valid values
-        const relationshipMap: Record<string, string> = {
-          colleague: 'colleague',
-          friend: 'friend',
-          family: 'family',
-          mentor: 'mentor',
-          client: 'client',
-          partner: 'partner',
-          report: 'report',
-          vendor: 'vendor',
-          investor: 'investor_prospect',
-          other: 'other',
-        };
-        const relationship = relationshipMap[person.relationship_type || 'other'] || 'other';
+          // Map relationship_type to valid values
+          const relationshipMap: Record<string, string> = {
+            colleague: 'colleague',
+            friend: 'friend',
+            family: 'family',
+            mentor: 'mentor',
+            client: 'client',
+            partner: 'partner',
+            report: 'report',
+            vendor: 'vendor',
+            investor: 'investor_prospect',
+            other: 'other',
+          };
+          const relationship = relationshipMap[person.relationship_type || 'other'] || 'other';
 
-        const { data, error } = await supabase
-          .schema('founder_os')
-          .from('relationships')
-          .insert({
-            user_id,
-            name: person.name,
-            relationship,
-            relationship_type: person.relationship_type || 'other',
-            notes: person.context,
-            sentiment: person.confidence >= 0.8 ? 'positive' : 'neutral',
-          })
-          .select('id')
-          .single();
+          const { data, error } = await supabase
+            .schema('founder_os')
+            .from('relationships')
+            .insert({
+              user_id,
+              name: person.name,
+              relationship,
+              relationship_type: person.relationship_type || 'other',
+              notes: person.context,
+              sentiment: person.confidence >= 0.8 ? 'positive' : 'neutral',
+            })
+            .select('id')
+            .single();
 
-        if (!error && data) {
-          results.relationships_created++;
-          results.entity_ids.push(data.id);
-        } else if (error) {
-          console.error(`[tools-testing/populate] Relationship insert error:`, error);
-          errors.push(`Person "${person.name}": ${error.message}`);
+          if (!error && data) {
+            results.relationships_created++;
+            results.entity_ids.push(data.id);
+          } else if (error) {
+            console.error(`[tools-testing/populate] Relationship insert error:`, error);
+            errors.push(`Person "${person.name}": ${error.message}`);
+          }
         }
       }
     }
