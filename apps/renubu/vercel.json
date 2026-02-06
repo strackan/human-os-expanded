@@ -2,5 +2,5 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "installCommand": "cd ../.. && DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm next build"
+  "buildCommand": "cd ../.. && pnpm turbo build --filter=@human-os/renubu"
 }
