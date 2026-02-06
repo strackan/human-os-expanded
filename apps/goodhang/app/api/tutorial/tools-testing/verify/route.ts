@@ -2,7 +2,10 @@
  * GET /api/tutorial/tools-testing/verify
  *
  * Verify that entities were inserted correctly and return dashboard data.
- * Returns counts and previews of tasks, relationships, work context, and parking lot items.
+ * Uses actual database schema:
+ * - founder_os.tasks (including goals with 'goal' tag and parking_lot items with 'parking_lot' tag)
+ * - founder_os.projects
+ * - public.entities (for people)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -41,16 +44,17 @@ export async function GET(request: NextRequest) {
     );
 
     // Gather verification data in parallel
-    const [tasksResult, relationshipsResult, workContextResult, parkingLotResult] = await Promise.all([
-      // 1. Tasks - get count, urgent, and preview
+    const [tasksResult, peopleResult, projectsResult, goalsResult, parkingLotResult] = await Promise.all([
+      // 1. Tasks (excluding goals and parking lot)
       (async () => {
-        // Get all active tasks
         const { data: allTasks, count } = await supabase
           .schema('founder_os')
           .from('tasks')
-          .select('id, title, due_date, priority, status', { count: 'exact' })
+          .select('id, title, due_date, priority, status, context_tags', { count: 'exact' })
           .eq('user_id', userId)
           .in('status', ['todo', 'in_progress'])
+          .not('context_tags', 'cs', '{"goal"}')
+          .not('context_tags', 'cs', '{"parking_lot"}')
           .order('due_date', { ascending: true, nullsFirst: false })
           .limit(10);
 
@@ -71,90 +75,87 @@ export async function GET(request: NextRequest) {
         };
       })(),
 
-      // 2. Relationships - get count and names
+      // 2. People (entities of type 'person')
       (async () => {
-        const { data: relationships, count } = await supabase
-          .schema('human_os')
-          .from('relationships')
-          .select('entity_id', { count: 'exact' })
-          .eq('user_id', userId)
-          .eq('status', 'active');
-
-        // Get entity names for the relationships
-        const entityIds = (relationships || []).map((r) => r.entity_id);
-        let names: string[] = [];
-
-        if (entityIds.length > 0) {
-          const { data: entities } = await supabase
-            .from('entities')
-            .select('name')
-            .in('id', entityIds);
-
-          names = (entities || []).map((e) => e.name);
-        }
+        const { data: people, count } = await supabase
+          .from('entities')
+          .select('id, name', { count: 'exact' })
+          .eq('owner_id', userId)
+          .eq('entity_type', 'person')
+          .limit(10);
 
         return {
           count: count || 0,
-          names,
+          names: (people || []).map((p) => p.name),
         };
       })(),
 
-      // 3. Work Context - get projects and goals
+      // 3. Projects from founder_os.projects
       (async () => {
-        const { data: contexts } = await supabase
-          .from('user_work_context')
-          .select('context_type, data')
+        const { data: projects, count } = await supabase
+          .schema('founder_os')
+          .from('projects')
+          .select('id, name, status', { count: 'exact' })
           .eq('user_id', userId)
-          .in('context_type', ['active_projects', 'goals']);
+          .in('status', ['active', 'planning'])
+          .limit(10);
 
-        const projects: string[] = [];
-        const goals: string[] = [];
-
-        for (const ctx of contexts || []) {
-          if (ctx.context_type === 'active_projects' && ctx.data?.projects) {
-            for (const p of ctx.data.projects) {
-              projects.push(p.name);
-            }
-          }
-          if (ctx.context_type === 'goals' && ctx.data?.goals) {
-            for (const g of ctx.data.goals) {
-              goals.push(g.title);
-            }
-          }
-        }
-
-        return { projects, goals };
+        return {
+          count: count || 0,
+          items: (projects || []).map((p) => p.name),
+        };
       })(),
 
-      // 4. Parking Lot - get count and items
+      // 4. Goals (tasks with 'goal' tag)
+      (async () => {
+        const { data: goals, count } = await supabase
+          .schema('founder_os')
+          .from('tasks')
+          .select('id, title, context_tags', { count: 'exact' })
+          .eq('user_id', userId)
+          .contains('context_tags', ['goal'])
+          .in('status', ['todo', 'in_progress'])
+          .limit(10);
+
+        return {
+          count: count || 0,
+          items: (goals || []).map((g) => g.title),
+        };
+      })(),
+
+      // 5. Parking Lot (tasks with 'parking_lot' tag)
       (async () => {
         const { data: items, count } = await supabase
-          .from('parking_lot_items')
-          .select('cleaned_text', { count: 'exact' })
+          .schema('founder_os')
+          .from('tasks')
+          .select('id, title, context_tags', { count: 'exact' })
           .eq('user_id', userId)
-          .eq('status', 'captured')
+          .contains('context_tags', ['parking_lot'])
           .order('created_at', { ascending: false })
           .limit(10);
 
         return {
           count: count || 0,
-          items: (items || []).map((i) => i.cleaned_text),
+          items: (items || []).map((i) => i.title),
         };
       })(),
     ]);
 
     const result = {
       tasks: tasksResult,
-      relationships: relationshipsResult,
-      work_context: workContextResult,
+      relationships: peopleResult, // Keep name for backward compat
+      work_context: {
+        projects: projectsResult.items,
+        goals: goalsResult.items,
+      },
       parking_lot: parkingLotResult,
     };
 
     console.log(`[tools-testing/verify] Verification complete:`, {
       tasks: result.tasks.count,
-      relationships: result.relationships.count,
-      projects: result.work_context.projects.length,
-      goals: result.work_context.goals.length,
+      people: result.relationships.count,
+      projects: projectsResult.count,
+      goals: goalsResult.count,
       parking_lot: result.parking_lot.count,
     });
 

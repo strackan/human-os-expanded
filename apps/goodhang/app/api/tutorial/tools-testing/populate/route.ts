@@ -3,10 +3,10 @@
  *
  * Insert confirmed entities into the database:
  * - Tasks -> founder_os.tasks
- * - People -> entities + human_os.relationships
- * - Projects -> user_work_context (context_type: 'active_projects')
- * - Goals -> user_work_context (context_type: 'goals')
- * - Parking Lot -> parking_lot_items
+ * - People -> entities (person type)
+ * - Projects -> founder_os.projects
+ * - Goals -> founder_os.tasks (with context_tag 'goal')
+ * - Parking Lot -> founder_os.tasks (with context_tag 'parking_lot' and status 'todo')
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -68,6 +68,8 @@ interface PopulateRequest {
 }
 
 export async function POST(request: NextRequest) {
+  const errors: string[] = [];
+
   try {
     const body: PopulateRequest = await request.json();
     const { entities, session_id, user_id } = body;
@@ -95,6 +97,7 @@ export async function POST(request: NextRequest) {
       goals_added: 0,
       parking_lot_items: 0,
       entity_ids: [] as string[],
+      errors: [] as string[],
     };
 
     // 1. Insert Tasks into founder_os.tasks
@@ -113,7 +116,6 @@ export async function POST(request: NextRequest) {
             priority: task.priority || 'medium',
             context_tags: task.context_tags || [],
             status: 'todo',
-            source: 'tutorial_brain_dump',
           })
           .select('id')
           .single();
@@ -123,11 +125,12 @@ export async function POST(request: NextRequest) {
           results.entity_ids.push(data.id);
         } else if (error) {
           console.error(`[tools-testing/populate] Task insert error:`, error);
+          errors.push(`Task "${task.title}": ${error.message}`);
         }
       }
     }
 
-    // 2. Insert People into entities + create relationships
+    // 2. Insert People into entities table
     if (entities.people && entities.people.length > 0) {
       console.log(`[tools-testing/populate] Adding ${entities.people.length} people`);
 
@@ -155,6 +158,7 @@ export async function POST(request: NextRequest) {
                 relationship_type: person.relationship_type,
                 context: person.context,
                 confidence: person.confidence,
+                source: 'tutorial_brain_dump',
               },
               source_system: 'tutorial_brain_dump',
               owner_id: user_id,
@@ -166,154 +170,129 @@ export async function POST(request: NextRequest) {
           if (!entityError && newEntity) {
             entityId = newEntity.id;
             results.entity_ids.push(entityId);
+            results.relationships_created++;
           } else if (entityError) {
             console.error(`[tools-testing/populate] Entity insert error:`, entityError);
-            continue;
+            errors.push(`Person "${person.name}": ${entityError.message}`);
           }
-        }
-
-        // Create relationship in human_os.relationships
-        if (entityId) {
-          const { error: relError } = await supabase
-            .schema('human_os')
-            .from('relationships')
-            .insert({
-              id: uuidv4(),
-              user_id,
-              entity_id: entityId,
-              relationship_type: person.relationship_type || 'other',
-              context: person.context,
-              strength: Math.round(person.confidence * 10), // Convert 0-1 to 0-10
-              status: 'active',
-              source: 'tutorial_brain_dump',
-            });
-
-          if (!relError) {
-            results.relationships_created++;
-          } else {
-            console.error(`[tools-testing/populate] Relationship insert error:`, relError);
-          }
+        } else {
+          // Entity already exists, count as relationship
+          results.relationships_created++;
         }
       }
     }
 
-    // 3. Insert Projects into user_work_context
+    // 3. Insert Projects into founder_os.projects
     if (entities.projects && entities.projects.length > 0) {
       console.log(`[tools-testing/populate] Adding ${entities.projects.length} projects`);
 
-      // Get existing work context or create new
-      const { data: existingContext } = await supabase
-        .from('user_work_context')
-        .select('id, data')
-        .eq('user_id', user_id)
-        .eq('context_type', 'active_projects')
-        .single();
+      for (const project of entities.projects) {
+        // Map status to valid enum
+        const statusMap: Record<string, string> = {
+          active: 'active',
+          planning: 'planning',
+          on_hold: 'on_hold',
+          completed: 'completed',
+        };
+        const status = statusMap[project.status] || 'active';
 
-      const existingProjects = existingContext?.data?.projects || [];
-      const newProjects = entities.projects.map((p) => ({
-        name: p.name,
-        description: p.description,
-        status: p.status,
-        added_at: new Date().toISOString(),
-        source: 'tutorial_brain_dump',
-      }));
-
-      const mergedProjects = [...existingProjects, ...newProjects];
-
-      if (existingContext) {
-        await supabase
-          .from('user_work_context')
-          .update({
-            data: { projects: mergedProjects },
-            updated_at: new Date().toISOString(),
+        const { data, error } = await supabase
+          .schema('founder_os')
+          .from('projects')
+          .insert({
+            user_id,
+            name: project.name,
+            slug: project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+            description: project.description,
+            status,
+            metadata: { source: 'tutorial_brain_dump' },
           })
-          .eq('id', existingContext.id);
-      } else {
-        await supabase
-          .from('user_work_context')
-          .insert({
-            user_id,
-            context_type: 'active_projects',
-            data: { projects: mergedProjects },
-          });
-      }
+          .select('id')
+          .single();
 
-      results.projects_added = entities.projects.length;
-    }
-
-    // 4. Insert Goals into user_work_context
-    if (entities.goals && entities.goals.length > 0) {
-      console.log(`[tools-testing/populate] Adding ${entities.goals.length} goals`);
-
-      const { data: existingContext } = await supabase
-        .from('user_work_context')
-        .select('id, data')
-        .eq('user_id', user_id)
-        .eq('context_type', 'goals')
-        .single();
-
-      const existingGoals = existingContext?.data?.goals || [];
-      const newGoals = entities.goals.map((g) => ({
-        title: g.title,
-        timeframe: g.timeframe || null,
-        added_at: new Date().toISOString(),
-        source: 'tutorial_brain_dump',
-      }));
-
-      const mergedGoals = [...existingGoals, ...newGoals];
-
-      if (existingContext) {
-        await supabase
-          .from('user_work_context')
-          .update({
-            data: { goals: mergedGoals },
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existingContext.id);
-      } else {
-        await supabase
-          .from('user_work_context')
-          .insert({
-            user_id,
-            context_type: 'goals',
-            data: { goals: mergedGoals },
-          });
-      }
-
-      results.goals_added = entities.goals.length;
-    }
-
-    // 5. Insert Parking Lot items
-    if (entities.parking_lot && entities.parking_lot.length > 0) {
-      console.log(`[tools-testing/populate] Adding ${entities.parking_lot.length} parking lot items`);
-
-      for (const item of entities.parking_lot) {
-        const { error } = await supabase
-          .from('parking_lot_items')
-          .insert({
-            user_id,
-            raw_input: item.raw_input,
-            cleaned_text: item.cleaned_text,
-            capture_mode: item.capture_mode,
-            status: 'captured',
-            source: 'tutorial_brain_dump',
-          });
-
-        if (!error) {
-          results.parking_lot_items++;
-        } else {
-          console.error(`[tools-testing/populate] Parking lot insert error:`, error);
+        if (!error && data) {
+          results.projects_added++;
+          results.entity_ids.push(data.id);
+        } else if (error) {
+          console.error(`[tools-testing/populate] Project insert error:`, error);
+          errors.push(`Project "${project.name}": ${error.message}`);
         }
       }
     }
 
+    // 4. Insert Goals as tasks with 'goal' context_tag
+    if (entities.goals && entities.goals.length > 0) {
+      console.log(`[tools-testing/populate] Adding ${entities.goals.length} goals as tasks`);
+
+      for (const goal of entities.goals) {
+        const tags = ['goal'];
+        if (goal.timeframe) {
+          tags.push(goal.timeframe.replace(/\s+/g, '_'));
+        }
+
+        const { data, error } = await supabase
+          .schema('founder_os')
+          .from('tasks')
+          .insert({
+            user_id,
+            title: goal.title,
+            description: goal.timeframe ? `Timeframe: ${goal.timeframe}` : null,
+            priority: 'medium',
+            context_tags: tags,
+            status: 'todo',
+          })
+          .select('id')
+          .single();
+
+        if (!error && data) {
+          results.goals_added++;
+          results.entity_ids.push(data.id);
+        } else if (error) {
+          console.error(`[tools-testing/populate] Goal insert error:`, error);
+          errors.push(`Goal "${goal.title}": ${error.message}`);
+        }
+      }
+    }
+
+    // 5. Insert Parking Lot items as tasks with 'parking_lot' tag
+    if (entities.parking_lot && entities.parking_lot.length > 0) {
+      console.log(`[tools-testing/populate] Adding ${entities.parking_lot.length} parking lot items as tasks`);
+
+      for (const item of entities.parking_lot) {
+        const tags = ['parking_lot', item.capture_mode];
+
+        const { data, error } = await supabase
+          .schema('founder_os')
+          .from('tasks')
+          .insert({
+            user_id,
+            title: item.cleaned_text.substring(0, 200), // Title has max length
+            description: item.raw_input !== item.cleaned_text ? `Original: ${item.raw_input}` : null,
+            priority: 'low',
+            context_tags: tags,
+            status: 'todo',
+          })
+          .select('id')
+          .single();
+
+        if (!error && data) {
+          results.parking_lot_items++;
+          results.entity_ids.push(data.id);
+        } else if (error) {
+          console.error(`[tools-testing/populate] Parking lot insert error:`, error);
+          errors.push(`Parking lot: ${error.message}`);
+        }
+      }
+    }
+
+    results.errors = errors;
     console.log(`[tools-testing/populate] Complete:`, results);
 
     return NextResponse.json(results, { headers: corsHeaders });
   } catch (error) {
     console.error('[tools-testing/populate] Error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500, headers: corsHeaders }
     );
   }
