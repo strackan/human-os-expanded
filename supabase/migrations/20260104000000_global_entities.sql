@@ -11,7 +11,7 @@ CREATE SCHEMA IF NOT EXISTS global;
 -- Canonical cross-tenant entity registry
 -- LinkedIn URL is primary identity anchor
 -- ============================================
-CREATE TABLE global.entities (
+CREATE TABLE IF NOT EXISTS global.entities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Identity anchors (at least one required)
@@ -35,17 +35,17 @@ CREATE TABLE global.entities (
 );
 
 -- Indexes
-CREATE INDEX idx_global_entities_linkedin ON global.entities(linkedin_url);
-CREATE INDEX idx_global_entities_email ON global.entities(email);
-CREATE INDEX idx_global_entities_name ON global.entities(name);
-CREATE INDEX idx_global_entities_company ON global.entities(current_company);
+CREATE INDEX IF NOT EXISTS idx_global_entities_linkedin ON global.entities(linkedin_url);
+CREATE INDEX IF NOT EXISTS idx_global_entities_email ON global.entities(email);
+CREATE INDEX IF NOT EXISTS idx_global_entities_name ON global.entities(name);
+CREATE INDEX IF NOT EXISTS idx_global_entities_company ON global.entities(current_company);
 
 -- ============================================
 -- GLOBAL ENTITY SIGNALS
 -- Anonymized signals from contributors
 -- No individual attribution - aggregate only
 -- ============================================
-CREATE TABLE global.entity_signals (
+CREATE TABLE IF NOT EXISTS global.entity_signals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_id UUID NOT NULL REFERENCES global.entities(id) ON DELETE CASCADE,
 
@@ -78,15 +78,15 @@ CREATE TABLE global.entity_signals (
 );
 
 -- Indexes for efficient aggregation
-CREATE INDEX idx_entity_signals_entity ON global.entity_signals(entity_id);
-CREATE INDEX idx_entity_signals_type ON global.entity_signals(signal_type);
-CREATE INDEX idx_entity_signals_observed ON global.entity_signals(observed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_entity_signals_entity ON global.entity_signals(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_signals_type ON global.entity_signals(signal_type);
+CREATE INDEX IF NOT EXISTS idx_entity_signals_observed ON global.entity_signals(observed_at DESC);
 
 -- ============================================
 -- GLOBAL ENTITY EMBEDDINGS
 -- pgvector for semantic search
 -- ============================================
-CREATE TABLE global.entity_embeddings (
+CREATE TABLE IF NOT EXISTS global.entity_embeddings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_id UUID NOT NULL REFERENCES global.entities(id) ON DELETE CASCADE,
 
@@ -113,16 +113,17 @@ CREATE TABLE global.entity_embeddings (
 
 -- Index for vector similarity search (HNSW is fastest)
 -- Note: Only create after accumulating data for better index quality
--- CREATE INDEX idx_entity_embeddings_vector ON global.entity_embeddings
+-- CREATE INDEX IF NOT EXISTS idx_entity_embeddings_vector ON global.entity_embeddings
 --   USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
-CREATE INDEX idx_entity_embeddings_entity ON global.entity_embeddings(entity_id);
-CREATE INDEX idx_entity_embeddings_type ON global.entity_embeddings(embedding_type);
+CREATE INDEX IF NOT EXISTS idx_entity_embeddings_entity ON global.entity_embeddings(entity_id);
+CREATE INDEX IF NOT EXISTS idx_entity_embeddings_type ON global.entity_embeddings(embedding_type);
 
 -- ============================================
 -- ENTITY INTELLIGENCE (Materialized View)
 -- Pre-aggregated metrics for fast queries
 -- ============================================
+DROP MATERIALIZED VIEW IF EXISTS global.entity_intelligence;
 CREATE MATERIALIZED VIEW global.entity_intelligence AS
 SELECT
   e.id,
@@ -164,9 +165,9 @@ LEFT JOIN global.entity_signals es ON es.entity_id = e.id
 GROUP BY e.id, e.name, e.linkedin_url, e.current_company, e.current_title, e.location, e.updated_at;
 
 -- Index on materialized view
-CREATE UNIQUE INDEX idx_entity_intelligence_id ON global.entity_intelligence(id);
-CREATE INDEX idx_entity_intelligence_company ON global.entity_intelligence(current_company);
-CREATE INDEX idx_entity_intelligence_network ON global.entity_intelligence(network_breadth DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_entity_intelligence_id ON global.entity_intelligence(id);
+CREATE INDEX IF NOT EXISTS idx_entity_intelligence_company ON global.entity_intelligence(current_company);
+CREATE INDEX IF NOT EXISTS idx_entity_intelligence_network ON global.entity_intelligence(network_breadth DESC);
 
 -- ============================================
 -- ENTITY RESOLUTION FUNCTION
@@ -392,12 +393,14 @@ ALTER TABLE global.entity_signals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE global.entity_embeddings ENABLE ROW LEVEL SECURITY;
 
 -- Entities are readable by all authenticated users
+DROP POLICY IF EXISTS "Authenticated users can read entities" ON global.entities;
 CREATE POLICY "Authenticated users can read entities"
   ON global.entities FOR SELECT
   TO authenticated
   USING (true);
 
 -- Service role can manage all
+DROP POLICY IF EXISTS "Service can manage entities" ON global.entities;
 CREATE POLICY "Service can manage entities"
   ON global.entities FOR ALL
   TO service_role
@@ -405,12 +408,14 @@ CREATE POLICY "Service can manage entities"
   WITH CHECK (true);
 
 -- Signals are readable by all authenticated users (anonymized)
+DROP POLICY IF EXISTS "Authenticated users can read signals" ON global.entity_signals;
 CREATE POLICY "Authenticated users can read signals"
   ON global.entity_signals FOR SELECT
   TO authenticated
   USING (true);
 
 -- Service role can insert signals
+DROP POLICY IF EXISTS "Service can manage signals" ON global.entity_signals;
 CREATE POLICY "Service can manage signals"
   ON global.entity_signals FOR ALL
   TO service_role
@@ -418,11 +423,13 @@ CREATE POLICY "Service can manage signals"
   WITH CHECK (true);
 
 -- Embeddings are readable by all authenticated users
+DROP POLICY IF EXISTS "Authenticated users can read embeddings" ON global.entity_embeddings;
 CREATE POLICY "Authenticated users can read embeddings"
   ON global.entity_embeddings FOR SELECT
   TO authenticated
   USING (true);
 
+DROP POLICY IF EXISTS "Service can manage embeddings" ON global.entity_embeddings;
 CREATE POLICY "Service can manage embeddings"
   ON global.entity_embeddings FOR ALL
   TO service_role
@@ -438,8 +445,8 @@ NOTIFY pgrst, 'reload config';
 -- ============================================
 -- TRIGGERS
 -- ============================================
-CREATE TRIGGER update_global_entities_updated_at
-  BEFORE UPDATE ON global.entities
+DROP TRIGGER IF EXISTS update_global_entities_updated_at ON global.entities;
+CREATE TRIGGER update_global_entities_updated_at BEFORE UPDATE ON global.entities
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================

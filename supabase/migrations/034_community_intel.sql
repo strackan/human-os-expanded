@@ -16,16 +16,14 @@ ADD COLUMN IF NOT EXISTS sanitized_by TEXT;
 
 -- Add check constraints (separate statements for IF NOT EXISTS behavior)
 DO $$ BEGIN
-  ALTER TABLE relationship_context
-    ADD CONSTRAINT relationship_context_visibility_check
+ALTER TABLE relationship_context ADD CONSTRAINT relationship_context_visibility_check
     CHECK (visibility IN ('private', 'community', 'public'));
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE relationship_context
-    ADD CONSTRAINT relationship_context_sanitized_by_check
+ALTER TABLE relationship_context ADD CONSTRAINT relationship_context_sanitized_by_check
     CHECK (sanitized_by IS NULL OR sanitized_by IN ('ai', 'manual'));
 EXCEPTION
   WHEN duplicate_object THEN NULL;
@@ -86,16 +84,14 @@ CREATE TABLE IF NOT EXISTS intel_requests (
 
 -- Add check constraints
 DO $$ BEGIN
-  ALTER TABLE intel_requests
-    ADD CONSTRAINT intel_requests_urgency_check
+ALTER TABLE intel_requests ADD CONSTRAINT intel_requests_urgency_check
     CHECK (urgency IN ('low', 'normal', 'high'));
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
 
 DO $$ BEGIN
-  ALTER TABLE intel_requests
-    ADD CONSTRAINT intel_requests_status_check
+ALTER TABLE intel_requests ADD CONSTRAINT intel_requests_status_check
     CHECK (status IN ('pending', 'fulfilled', 'declined', 'expired'));
 EXCEPTION
   WHEN duplicate_object THEN NULL;
@@ -119,22 +115,27 @@ CREATE INDEX IF NOT EXISTS idx_intel_requests_pending
 ALTER TABLE intel_requests ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "intel_requests_service_all" ON intel_requests;
 CREATE POLICY "intel_requests_service_all" ON intel_requests
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Target user can see requests sent to them
+DROP POLICY IF EXISTS "intel_requests_target_select" ON intel_requests;
 CREATE POLICY "intel_requests_target_select" ON intel_requests
   FOR SELECT USING (target_user_id = auth.uid());
 
 -- Requester can see their own requests
+DROP POLICY IF EXISTS "intel_requests_requester_select" ON intel_requests;
 CREATE POLICY "intel_requests_requester_select" ON intel_requests
   FOR SELECT USING (requester_id = auth.uid());
 
 -- Requester can insert new requests
+DROP POLICY IF EXISTS "intel_requests_requester_insert" ON intel_requests;
 CREATE POLICY "intel_requests_requester_insert" ON intel_requests
   FOR INSERT WITH CHECK (requester_id = auth.uid());
 
 -- Target can update (fulfill/decline) requests sent to them
+DROP POLICY IF EXISTS "intel_requests_target_update" ON intel_requests;
 CREATE POLICY "intel_requests_target_update" ON intel_requests
   FOR UPDATE USING (target_user_id = auth.uid());
 

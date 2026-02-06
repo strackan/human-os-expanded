@@ -2,7 +2,7 @@
 -- Billing infrastructure
 
 -- Subscription/billing
-CREATE TABLE human_os.subscriptions (
+CREATE TABLE IF NOT EXISTS human_os.subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES human_os.users(id) ON DELETE CASCADE,
   plan TEXT NOT NULL DEFAULT 'free',    -- 'free', 'pro', 'business'
@@ -18,7 +18,7 @@ CREATE TABLE human_os.subscriptions (
 );
 
 -- API key management (for third-party apps)
-CREATE TABLE human_os.api_keys (
+CREATE TABLE IF NOT EXISTS human_os.api_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES human_os.users(id) ON DELETE CASCADE,
   key_hash TEXT NOT NULL,               -- Hashed, never store plaintext
@@ -29,7 +29,7 @@ CREATE TABLE human_os.api_keys (
 );
 
 -- Payment history
-CREATE TABLE human_os.payment_history (
+CREATE TABLE IF NOT EXISTS human_os.payment_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   customer_id TEXT NOT NULL,
   invoice_id TEXT,
@@ -40,8 +40,8 @@ CREATE TABLE human_os.payment_history (
 );
 
 -- Indexes
-CREATE INDEX idx_subscriptions_user ON human_os.subscriptions(user_id);
-CREATE INDEX idx_subscriptions_stripe ON human_os.subscriptions(stripe_customer_id);
-CREATE INDEX idx_api_keys_user ON human_os.api_keys(user_id);
-CREATE INDEX idx_api_keys_hash ON human_os.api_keys(key_hash);
-CREATE INDEX idx_payment_history_customer ON human_os.payment_history(customer_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON human_os.subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_stripe ON human_os.subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_user ON human_os.api_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_hash ON human_os.api_keys(key_hash);
+CREATE INDEX IF NOT EXISTS idx_payment_history_customer ON human_os.payment_history(customer_id);

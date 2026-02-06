@@ -2,7 +2,7 @@
 -- Create transcripts table for call transcript ingestion and search
 
 -- Create the table in founder_os schema
-create table founder_os.transcripts (
+CREATE TABLE IF NOT EXISTS founder_os.transcripts (
   id uuid primary key default gen_random_uuid(),
 
   -- Core metadata
@@ -42,19 +42,19 @@ create table founder_os.transcripts (
 );
 
 -- Indexes for search
-create index transcripts_call_date_idx on founder_os.transcripts(call_date desc);
-create index transcripts_call_type_idx on founder_os.transcripts(call_type);
-create index transcripts_topics_idx on founder_os.transcripts using gin(key_topics);
-create index transcripts_tags_idx on founder_os.transcripts using gin(context_tags);
-create index transcripts_entity_ids_idx on founder_os.transcripts using gin(entity_ids);
+CREATE INDEX IF NOT EXISTS transcripts_call_date_idx on founder_os.transcripts(call_date desc);
+CREATE INDEX IF NOT EXISTS transcripts_call_type_idx on founder_os.transcripts(call_type);
+CREATE INDEX IF NOT EXISTS transcripts_topics_idx on founder_os.transcripts using gin(key_topics);
+CREATE INDEX IF NOT EXISTS transcripts_tags_idx on founder_os.transcripts using gin(context_tags);
+CREATE INDEX IF NOT EXISTS transcripts_entity_ids_idx on founder_os.transcripts using gin(entity_ids);
 
 -- Full-text search on raw content and summary
-create index transcripts_content_fts_idx on founder_os.transcripts
+CREATE INDEX IF NOT EXISTS transcripts_content_fts_idx on founder_os.transcripts
   using gin(to_tsvector('english', coalesce(raw_content, '') || ' ' || coalesce(summary, '')));
 
 -- Updated_at trigger (reuse existing function from public schema)
-create trigger transcripts_updated_at
-  before update on founder_os.transcripts
+DROP TRIGGER IF EXISTS transcripts_updated_at ON founder_os.transcripts;
+CREATE TRIGGER transcripts_updated_at before update ON founder_os.transcripts
   for each row
   execute function update_updated_at_column();
 

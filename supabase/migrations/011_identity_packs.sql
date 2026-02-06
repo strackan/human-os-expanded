@@ -50,13 +50,14 @@ CREATE TABLE IF NOT EXISTS identity_packs (
 );
 
 -- Indexes for pack queries
-CREATE INDEX idx_identity_packs_entity ON identity_packs(entity_id);
-CREATE INDEX idx_identity_packs_type ON identity_packs(pack_type);
-CREATE INDEX idx_identity_packs_visibility ON identity_packs(visibility);
-CREATE INDEX idx_identity_packs_tags ON identity_packs USING GIN (tags);
-CREATE INDEX idx_identity_packs_metadata ON identity_packs USING GIN (metadata);
+CREATE INDEX IF NOT EXISTS idx_identity_packs_entity ON identity_packs(entity_id);
+CREATE INDEX IF NOT EXISTS idx_identity_packs_type ON identity_packs(pack_type);
+CREATE INDEX IF NOT EXISTS idx_identity_packs_visibility ON identity_packs(visibility);
+CREATE INDEX IF NOT EXISTS idx_identity_packs_tags ON identity_packs USING GIN (tags);
+CREATE INDEX IF NOT EXISTS idx_identity_packs_metadata ON identity_packs USING GIN (metadata);
 
 -- Auto-update updated_at
+DROP TRIGGER IF EXISTS update_identity_packs_updated_at ON identity_packs;
 CREATE TRIGGER update_identity_packs_updated_at
   BEFORE UPDATE ON identity_packs
   FOR EACH ROW
@@ -89,10 +90,11 @@ CREATE TABLE IF NOT EXISTS user_preferences (
 );
 
 -- Indexes
-CREATE INDEX idx_user_preferences_user ON user_preferences(user_id);
-CREATE INDEX idx_user_preferences_key ON user_preferences(key);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(key);
 
 -- Auto-update updated_at
+DROP TRIGGER IF EXISTS update_user_preferences_updated_at ON user_preferences;
 CREATE TRIGGER update_user_preferences_updated_at
   BEFORE UPDATE ON user_preferences
   FOR EACH ROW
@@ -105,11 +107,13 @@ ALTER TABLE identity_packs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- Identity packs: public packs are readable by anyone
+DROP POLICY IF EXISTS "identity_packs_public_read" ON identity_packs;
 CREATE POLICY "identity_packs_public_read" ON identity_packs
   FOR SELECT
   USING (visibility = 'public');
 
 -- Identity packs: owners can do anything
+DROP POLICY IF EXISTS "identity_packs_owner_all" ON identity_packs;
 CREATE POLICY "identity_packs_owner_all" ON identity_packs
   FOR ALL
   USING (
@@ -119,6 +123,7 @@ CREATE POLICY "identity_packs_owner_all" ON identity_packs
   );
 
 -- User preferences: users can only access their own
+DROP POLICY IF EXISTS "user_preferences_owner_all" ON user_preferences;
 CREATE POLICY "user_preferences_owner_all" ON user_preferences
   FOR ALL
   USING (user_id = auth.uid());

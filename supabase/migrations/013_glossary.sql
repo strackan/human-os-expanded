@@ -50,19 +50,20 @@ CREATE TABLE IF NOT EXISTS glossary (
 );
 
 -- Indexes
-CREATE INDEX idx_glossary_term ON glossary(term_normalized);
-CREATE INDEX idx_glossary_layer ON glossary(layer);
-CREATE INDEX idx_glossary_type ON glossary(term_type);
-CREATE INDEX idx_glossary_entity ON glossary(entity_id);
-CREATE INDEX idx_glossary_usage ON glossary(usage_count DESC);
-CREATE INDEX idx_glossary_tags ON glossary USING GIN (context_tags);
+CREATE INDEX IF NOT EXISTS idx_glossary_term ON glossary(term_normalized);
+CREATE INDEX IF NOT EXISTS idx_glossary_layer ON glossary(layer);
+CREATE INDEX IF NOT EXISTS idx_glossary_type ON glossary(term_type);
+CREATE INDEX IF NOT EXISTS idx_glossary_entity ON glossary(entity_id);
+CREATE INDEX IF NOT EXISTS idx_glossary_usage ON glossary(usage_count DESC);
+CREATE INDEX IF NOT EXISTS idx_glossary_tags ON glossary USING GIN (context_tags);
 
 -- Full-text search on term and definition
-CREATE INDEX idx_glossary_search ON glossary USING GIN (
+CREATE INDEX IF NOT EXISTS idx_glossary_search ON glossary USING GIN (
   to_tsvector('english', term || ' ' || definition)
 );
 
 -- Auto-update updated_at
+DROP TRIGGER IF EXISTS update_glossary_updated_at ON glossary;
 CREATE TRIGGER update_glossary_updated_at
   BEFORE UPDATE ON glossary
   FOR EACH ROW
@@ -207,11 +208,13 @@ $$ LANGUAGE plpgsql STABLE;
 ALTER TABLE glossary ENABLE ROW LEVEL SECURITY;
 
 -- Owners can do anything with their glossary
+DROP POLICY IF EXISTS "glossary_owner_all" ON glossary;
 CREATE POLICY "glossary_owner_all" ON glossary
   FOR ALL
   USING (owner_id = auth.uid());
 
 -- Users can read glossary in their layer
+DROP POLICY IF EXISTS "glossary_layer_read" ON glossary;
 CREATE POLICY "glossary_layer_read" ON glossary
   FOR SELECT
   USING (

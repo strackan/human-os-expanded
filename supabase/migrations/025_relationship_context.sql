@@ -60,24 +60,24 @@ CREATE TABLE IF NOT EXISTS relationship_context (
 -- =============================================================================
 -- INDEXES
 -- =============================================================================
-CREATE INDEX idx_relationship_context_owner ON relationship_context(owner_id);
-CREATE INDEX idx_relationship_context_contact ON relationship_context(contact_entity_id);
-CREATE INDEX idx_relationship_context_gft ON relationship_context(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
-CREATE INDEX idx_relationship_context_layer ON relationship_context(layer);
-CREATE INDEX idx_relationship_context_type ON relationship_context(opinion_type);
-CREATE INDEX idx_relationship_context_sentiment ON relationship_context(sentiment) WHERE sentiment IS NOT NULL;
-CREATE INDEX idx_relationship_context_source ON relationship_context(source_system);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_owner ON relationship_context(owner_id);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_contact ON relationship_context(contact_entity_id);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_gft ON relationship_context(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_relationship_context_layer ON relationship_context(layer);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_type ON relationship_context(opinion_type);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_sentiment ON relationship_context(sentiment) WHERE sentiment IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_relationship_context_source ON relationship_context(source_system);
 
 -- Full-text search on content
 ALTER TABLE relationship_context ADD COLUMN IF NOT EXISTS content_tsv TSVECTOR
   GENERATED ALWAYS AS (to_tsvector('english', content)) STORED;
-CREATE INDEX idx_relationship_context_search ON relationship_context USING GIN(content_tsv);
+CREATE INDEX IF NOT EXISTS idx_relationship_context_search ON relationship_context USING GIN(content_tsv);
 
 -- =============================================================================
 -- TRIGGERS
 -- =============================================================================
-CREATE TRIGGER update_relationship_context_updated_at
-  BEFORE UPDATE ON relationship_context
+DROP TRIGGER IF EXISTS update_relationship_context_updated_at ON relationship_context;
+CREATE TRIGGER update_relationship_context_updated_at BEFORE UPDATE ON relationship_context
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================================================
@@ -86,21 +86,25 @@ CREATE TRIGGER update_relationship_context_updated_at
 ALTER TABLE relationship_context ENABLE ROW LEVEL SECURITY;
 
 -- Service role can do everything
+DROP POLICY IF EXISTS "relationship_context_service_all" ON relationship_context;
 CREATE POLICY "relationship_context_service_all" ON relationship_context
   FOR ALL TO service_role USING (true);
 
 -- Users can see opinions in their own layer (founder:{userId})
+DROP POLICY IF EXISTS "relationship_context_user_read" ON relationship_context;
 CREATE POLICY "relationship_context_user_read" ON relationship_context
   FOR SELECT USING (
     layer = 'founder:' || auth.uid()::text
   );
 
 -- Users can create/update opinions in their own layer
+DROP POLICY IF EXISTS "relationship_context_user_write" ON relationship_context;
 CREATE POLICY "relationship_context_user_write" ON relationship_context
   FOR INSERT WITH CHECK (
     layer = 'founder:' || auth.uid()::text
   );
 
+DROP POLICY IF EXISTS "relationship_context_user_update" ON relationship_context;
 CREATE POLICY "relationship_context_user_update" ON relationship_context
   FOR UPDATE USING (
     layer = 'founder:' || auth.uid()::text
@@ -108,6 +112,7 @@ CREATE POLICY "relationship_context_user_update" ON relationship_context
 
 -- Tenant-scoped access (for Renubu)
 -- Note: Requires tenant_id claim in JWT or separate tenant lookup
+DROP POLICY IF EXISTS "relationship_context_tenant_read" ON relationship_context;
 CREATE POLICY "relationship_context_tenant_read" ON relationship_context
   FOR SELECT USING (
     layer LIKE 'renubu:tenant-%'

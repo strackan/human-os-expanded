@@ -15,7 +15,11 @@ GRANT USAGE ON SCHEMA x_goodhang TO authenticated, anon, service_role;
 GRANT USAGE ON SCHEMA x_renubu TO authenticated, anon, service_role;
 
 -- Products enum for tracking which product something belongs to
-CREATE TYPE x_human.product_type AS ENUM ('goodhang', 'renubu');
+DO $$ BEGIN
+  CREATE TYPE x_human.product_type AS ENUM ('goodhang', 'renubu');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ============================================================================
 -- ACTIVATION KEYS (Shared Infrastructure)
@@ -23,7 +27,7 @@ CREATE TYPE x_human.product_type AS ENUM ('goodhang', 'renubu');
 -- Activation keys can unlock either product. A user takes an assessment,
 -- gets a key, and that key grants access to the specified product.
 
-CREATE TABLE x_human.activation_keys (
+CREATE TABLE IF NOT EXISTS x_human.activation_keys (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- The activation code (format: GH-XXXX-XXXX or RN-XXXX-XXXX)
@@ -57,25 +61,28 @@ CREATE TABLE x_human.activation_keys (
 );
 
 -- Indexes
-CREATE INDEX idx_x_activation_keys_code ON x_human.activation_keys(code);
-CREATE INDEX idx_x_activation_keys_product ON x_human.activation_keys(product);
-CREATE INDEX idx_x_activation_keys_user_id ON x_human.activation_keys(user_id);
-CREATE INDEX idx_x_activation_keys_status ON x_human.activation_keys(status);
-CREATE INDEX idx_x_activation_keys_expires ON x_human.activation_keys(expires_at)
+CREATE INDEX IF NOT EXISTS idx_x_activation_keys_code ON x_human.activation_keys(code);
+CREATE INDEX IF NOT EXISTS idx_x_activation_keys_product ON x_human.activation_keys(product);
+CREATE INDEX IF NOT EXISTS idx_x_activation_keys_user_id ON x_human.activation_keys(user_id);
+CREATE INDEX IF NOT EXISTS idx_x_activation_keys_status ON x_human.activation_keys(status);
+CREATE INDEX IF NOT EXISTS idx_x_activation_keys_expires ON x_human.activation_keys(expires_at)
   WHERE status = 'pending';
 
 -- Enable RLS
 ALTER TABLE x_human.activation_keys ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "Service role full access" ON x_human.activation_keys;
 CREATE POLICY "Service role full access"
   ON x_human.activation_keys FOR ALL TO service_role
   USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can read own claimed keys" ON x_human.activation_keys;
 CREATE POLICY "Users can read own claimed keys"
   ON x_human.activation_keys FOR SELECT TO authenticated
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Public can validate pending keys" ON x_human.activation_keys;
 CREATE POLICY "Public can validate pending keys"
   ON x_human.activation_keys FOR SELECT TO anon
   USING (status = 'pending' AND expires_at > NOW());
@@ -89,8 +96,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_activation_keys_updated_at
-  BEFORE UPDATE ON x_human.activation_keys
+DROP TRIGGER IF EXISTS trigger_activation_keys_updated_at ON x_human.activation_keys;
+CREATE TRIGGER trigger_activation_keys_updated_at BEFORE UPDATE ON x_human.activation_keys
   FOR EACH ROW EXECUTE FUNCTION x_human.update_updated_at();
 
 -- ============================================================================
@@ -268,7 +275,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- USER PRODUCTS (Track which products a user has access to)
 -- ============================================================================
 
-CREATE TABLE x_human.user_products (
+CREATE TABLE IF NOT EXISTS x_human.user_products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   product x_human.product_type NOT NULL,
@@ -281,15 +288,17 @@ CREATE TABLE x_human.user_products (
   UNIQUE(user_id, product)
 );
 
-CREATE INDEX idx_user_products_user ON x_human.user_products(user_id);
-CREATE INDEX idx_user_products_product ON x_human.user_products(product);
+CREATE INDEX IF NOT EXISTS idx_user_products_user ON x_human.user_products(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_products_product ON x_human.user_products(product);
 
 ALTER TABLE x_human.user_products ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can read own products" ON x_human.user_products;
 CREATE POLICY "Users can read own products"
   ON x_human.user_products FOR SELECT TO authenticated
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "Service role full access" ON x_human.user_products;
 CREATE POLICY "Service role full access"
   ON x_human.user_products FOR ALL TO service_role
   USING (true) WITH CHECK (true);
@@ -309,8 +318,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE TRIGGER trigger_grant_product_access
-  AFTER UPDATE ON x_human.activation_keys
+DROP TRIGGER IF EXISTS trigger_grant_product_access ON x_human.activation_keys;
+CREATE TRIGGER trigger_grant_product_access AFTER UPDATE ON x_human.activation_keys
   FOR EACH ROW EXECUTE FUNCTION x_human.grant_product_access();
 
 -- Comments

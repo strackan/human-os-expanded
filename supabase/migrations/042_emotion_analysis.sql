@@ -98,8 +98,8 @@ create index if not exists emotion_analyses_valence_idx
 -- =============================================================================
 
 -- Auto-update updated_at
-create trigger emotion_analyses_updated_at
-  before update on founder_os.emotion_analyses
+DROP TRIGGER IF EXISTS emotion_analyses_updated_at ON founder_os.emotion_analyses;
+CREATE TRIGGER emotion_analyses_updated_at before update ON founder_os.emotion_analyses
   for each row
   execute function public.update_updated_at_column();
 
@@ -110,6 +110,7 @@ create trigger emotion_analyses_updated_at
 alter table founder_os.emotion_analyses enable row level security;
 
 -- Allow all operations for now (founder_os is single-user)
+DROP POLICY IF EXISTS "Allow all emotion analysis operations" ON founder_os.emotion_analyses;
 create policy "Allow all emotion analysis operations"
   on founder_os.emotion_analyses for all
   using (true) with check (true);

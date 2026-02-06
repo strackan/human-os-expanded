@@ -49,8 +49,8 @@ CREATE INDEX IF NOT EXISTS idx_identity_profiles_theme_year ON human_os.identity
 -- TRIGGERS
 -- =============================================================================
 
-CREATE TRIGGER identity_profiles_updated_at
-  BEFORE UPDATE ON human_os.identity_profiles
+DROP TRIGGER IF EXISTS identity_profiles_updated_at ON human_os.identity_profiles;
+CREATE TRIGGER identity_profiles_updated_at BEFORE UPDATE ON human_os.identity_profiles
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -59,13 +59,16 @@ CREATE TRIGGER identity_profiles_updated_at
 
 ALTER TABLE human_os.identity_profiles ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "identity_profiles_service_all" ON human_os.identity_profiles;
 CREATE POLICY "identity_profiles_service_all" ON human_os.identity_profiles
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "identity_profiles_owner_select" ON human_os.identity_profiles;
 CREATE POLICY "identity_profiles_owner_select" ON human_os.identity_profiles
   FOR SELECT TO authenticated
   USING (user_id = auth.uid() OR layer = 'public');
 
+DROP POLICY IF EXISTS "identity_profiles_owner_update" ON human_os.identity_profiles;
 CREATE POLICY "identity_profiles_owner_update" ON human_os.identity_profiles
   FOR UPDATE TO authenticated
   USING (user_id = auth.uid());

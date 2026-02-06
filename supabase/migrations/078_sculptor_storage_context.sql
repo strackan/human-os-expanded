@@ -34,23 +34,18 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================================================
 
 -- Public read access for context files
+DROP POLICY IF EXISTS "contexts_public_read" ON storage.objects;
 CREATE POLICY "contexts_public_read" ON storage.objects
 FOR SELECT
 USING (bucket_id = 'contexts');
 
--- Admin write access for context files
+-- Service role write access for context files
+DROP POLICY IF EXISTS "contexts_admin_write" ON storage.objects;
 CREATE POLICY "contexts_admin_write" ON storage.objects
 FOR ALL
 USING (
   bucket_id = 'contexts'
-  AND (
-    EXISTS (
-      SELECT 1 FROM public.profiles
-      WHERE profiles.id = auth.uid()
-      AND profiles.is_admin = true
-    )
-    OR auth.role() = 'service_role'
-  )
+  AND auth.role() = 'service_role'
 );
 
 -- ============================================================================

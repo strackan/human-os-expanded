@@ -1,7 +1,7 @@
 -- Code Orchestrator: Track Claude Code executions in isolated worktrees
 -- This table tracks code tasks with their associated worktree and GitHub issue
 
-CREATE TABLE human_os.code_executions (
+CREATE TABLE IF NOT EXISTS human_os.code_executions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id),
 
@@ -30,25 +30,29 @@ CREATE TABLE human_os.code_executions (
 );
 
 -- Indexes
-CREATE INDEX idx_code_executions_user ON human_os.code_executions(user_id);
-CREATE INDEX idx_code_executions_status ON human_os.code_executions(status);
-CREATE INDEX idx_code_executions_issue ON human_os.code_executions(github_issue_number);
-CREATE INDEX idx_code_executions_running ON human_os.code_executions(user_id, status)
+CREATE INDEX IF NOT EXISTS idx_code_executions_user ON human_os.code_executions(user_id);
+CREATE INDEX IF NOT EXISTS idx_code_executions_status ON human_os.code_executions(status);
+CREATE INDEX IF NOT EXISTS idx_code_executions_issue ON human_os.code_executions(github_issue_number);
+CREATE INDEX IF NOT EXISTS idx_code_executions_running ON human_os.code_executions(user_id, status)
   WHERE status = 'running';
 
 -- RLS policies
 ALTER TABLE human_os.code_executions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own executions" ON human_os.code_executions;
 CREATE POLICY "Users can view own executions" ON human_os.code_executions
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own executions" ON human_os.code_executions;
 CREATE POLICY "Users can insert own executions" ON human_os.code_executions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own executions" ON human_os.code_executions;
 CREATE POLICY "Users can update own executions" ON human_os.code_executions
   FOR UPDATE USING (auth.uid() = user_id);
 
 -- Service role bypass for MCP server
+DROP POLICY IF EXISTS "Service role full access" ON human_os.code_executions;
 CREATE POLICY "Service role full access" ON human_os.code_executions
   FOR ALL USING (auth.jwt() ->> 'role' = 'service_role');
 
@@ -78,4 +82,5 @@ VALUES
   ('code discard {issueNumber}', 'Discard a code task worktree without merging', 'founder:justin',
    ARRAY['code_discard'],
    '[{"tool": "code_discard", "params": {"issueNumber": "{issueNumber}"}}]'::jsonb,
-   40, true);
+   40, true)
+ON CONFLICT (pattern, layer) DO NOTHING;

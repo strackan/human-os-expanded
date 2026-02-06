@@ -147,34 +147,43 @@ ALTER TABLE entity_answers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE entity_dimensions ENABLE ROW LEVEL SECURITY;
 
 -- Questions: Public read
+DROP POLICY IF EXISTS "questions_public_read" ON questions;
 CREATE POLICY "questions_public_read" ON questions
   FOR SELECT USING (true);
 
 -- Question Sets: Public read
+DROP POLICY IF EXISTS "question_sets_public_read" ON question_sets;
 CREATE POLICY "question_sets_public_read" ON question_sets
   FOR SELECT USING (true);
 
 -- Question Set Questions: Public read
+DROP POLICY IF EXISTS "question_set_questions_public_read" ON question_set_questions;
 CREATE POLICY "question_set_questions_public_read" ON question_set_questions
   FOR SELECT USING (true);
 
 -- Entity Answers: Public read (for now - can restrict later)
+DROP POLICY IF EXISTS "entity_answers_public_read" ON entity_answers;
 CREATE POLICY "entity_answers_public_read" ON entity_answers
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "entity_answers_public_insert" ON entity_answers;
 CREATE POLICY "entity_answers_public_insert" ON entity_answers
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "entity_answers_public_update" ON entity_answers;
 CREATE POLICY "entity_answers_public_update" ON entity_answers
   FOR UPDATE USING (true);
 
 -- Entity Dimensions: Public read
+DROP POLICY IF EXISTS "entity_dimensions_public_read" ON entity_dimensions;
 CREATE POLICY "entity_dimensions_public_read" ON entity_dimensions
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "entity_dimensions_public_insert" ON entity_dimensions;
 CREATE POLICY "entity_dimensions_public_insert" ON entity_dimensions
   FOR INSERT WITH CHECK (true);
 
+DROP POLICY IF EXISTS "entity_dimensions_public_update" ON entity_dimensions;
 CREATE POLICY "entity_dimensions_public_update" ON entity_dimensions
   FOR UPDATE USING (true);
 

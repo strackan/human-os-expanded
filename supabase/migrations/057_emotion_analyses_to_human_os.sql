@@ -3,7 +3,7 @@
 -- This table stores automated emotion analysis for all source types (transcripts, journal, social, text)
 
 -- =============================================================================
--- STEP 1: Create table in human_os schema
+-- STEP 1: CREATE TABLE IF NOT EXISTS in human_os schema
 -- =============================================================================
 
 CREATE TABLE IF NOT EXISTS human_os.emotion_analyses (
@@ -73,8 +73,8 @@ CREATE INDEX IF NOT EXISTS idx_emotion_analyses_layer ON human_os.emotion_analys
 -- STEP 3: Triggers
 -- =============================================================================
 
-CREATE TRIGGER emotion_analyses_updated_at
-  BEFORE UPDATE ON human_os.emotion_analyses
+DROP TRIGGER IF EXISTS emotion_analyses_updated_at ON human_os.emotion_analyses;
+CREATE TRIGGER emotion_analyses_updated_at BEFORE UPDATE ON human_os.emotion_analyses
   FOR EACH ROW
   EXECUTE FUNCTION public.update_updated_at_column();
 
@@ -84,13 +84,16 @@ CREATE TRIGGER emotion_analyses_updated_at
 
 ALTER TABLE human_os.emotion_analyses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "emotion_analyses_service_all" ON human_os.emotion_analyses;
 CREATE POLICY "emotion_analyses_service_all" ON human_os.emotion_analyses
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "emotion_analyses_read_policy" ON human_os.emotion_analyses;
 CREATE POLICY "emotion_analyses_read_policy" ON human_os.emotion_analyses
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%');
 
+DROP POLICY IF EXISTS "emotion_analyses_write_policy" ON human_os.emotion_analyses;
 CREATE POLICY "emotion_analyses_write_policy" ON human_os.emotion_analyses
   FOR INSERT TO authenticated
   WITH CHECK (layer = 'public' OR layer LIKE 'founder:%');

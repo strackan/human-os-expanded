@@ -59,8 +59,8 @@ CREATE TABLE IF NOT EXISTS founder_os.onboarding_state (
 );
 
 -- Indexes
-CREATE INDEX idx_onboarding_state_user_id ON founder_os.onboarding_state(user_id);
-CREATE INDEX idx_onboarding_state_mode ON founder_os.onboarding_state(mode);
+CREATE INDEX IF NOT EXISTS idx_onboarding_state_user_id ON founder_os.onboarding_state(user_id);
+CREATE INDEX IF NOT EXISTS idx_onboarding_state_mode ON founder_os.onboarding_state(mode);
 
 -- Function to update questions_answered_count and category completion
 CREATE OR REPLACE FUNCTION founder_os.update_onboarding_question_stats()
@@ -106,8 +106,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_update_onboarding_question_stats
-  BEFORE INSERT OR UPDATE OF questions_answered ON founder_os.onboarding_state
+DROP TRIGGER IF EXISTS trg_update_onboarding_question_stats ON founder_os.onboarding_state;
+CREATE TRIGGER trg_update_onboarding_question_stats BEFORE INSERT OR UPDATE OF questions_answered ON founder_os.onboarding_state
   FOR EACH ROW
   EXECUTE FUNCTION founder_os.update_onboarding_question_stats();
 
@@ -128,8 +128,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_update_onboarding_milestone_stats
-  BEFORE INSERT OR UPDATE OF milestones_completed ON founder_os.onboarding_state
+DROP TRIGGER IF EXISTS trg_update_onboarding_milestone_stats ON founder_os.onboarding_state;
+CREATE TRIGGER trg_update_onboarding_milestone_stats BEFORE INSERT OR UPDATE OF milestones_completed ON founder_os.onboarding_state
   FOR EACH ROW
   EXECUTE FUNCTION founder_os.update_onboarding_milestone_stats();
 
@@ -336,14 +336,17 @@ GRANT EXECUTE ON FUNCTION founder_os.record_interaction TO authenticated;
 -- RLS
 ALTER TABLE founder_os.onboarding_state ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own onboarding state" ON founder_os.onboarding_state;
 CREATE POLICY "Users can view own onboarding state"
   ON founder_os.onboarding_state FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own onboarding state" ON founder_os.onboarding_state;
 CREATE POLICY "Users can update own onboarding state"
   ON founder_os.onboarding_state FOR UPDATE
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own onboarding state" ON founder_os.onboarding_state;
 CREATE POLICY "Users can insert own onboarding state"
   ON founder_os.onboarding_state FOR INSERT
   WITH CHECK (auth.uid() = user_id);

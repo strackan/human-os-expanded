@@ -39,12 +39,12 @@ create table if not exists founder_os.messages (
 );
 
 -- Indexes for common queries
-create index idx_messages_to_forest on founder_os.messages(to_forest);
-create index idx_messages_from_forest on founder_os.messages(from_forest);
-create index idx_messages_status on founder_os.messages(status);
-create index idx_messages_pending on founder_os.messages(to_forest, status)
+CREATE INDEX IF NOT EXISTS idx_messages_to_forest on founder_os.messages(to_forest);
+CREATE INDEX IF NOT EXISTS idx_messages_from_forest on founder_os.messages(from_forest);
+CREATE INDEX IF NOT EXISTS idx_messages_status on founder_os.messages(status);
+CREATE INDEX IF NOT EXISTS idx_messages_pending on founder_os.messages(to_forest, status)
   where status = 'pending';
-create index idx_messages_thread on founder_os.messages(reply_to_id)
+CREATE INDEX IF NOT EXISTS idx_messages_thread on founder_os.messages(reply_to_id)
   where reply_to_id is not null;
 
 -- Comments

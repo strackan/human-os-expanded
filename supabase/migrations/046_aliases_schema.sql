@@ -160,8 +160,8 @@ CREATE INDEX IF NOT EXISTS idx_execution_logs_embedding ON human_os.execution_lo
 -- =============================================================================
 
 -- Update updated_at on aliases
-CREATE TRIGGER update_aliases_updated_at
-  BEFORE UPDATE ON human_os.aliases
+DROP TRIGGER IF EXISTS update_aliases_updated_at ON human_os.aliases;
+CREATE TRIGGER update_aliases_updated_at BEFORE UPDATE ON human_os.aliases
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Update usage stats when alias is used
@@ -178,8 +178,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER record_alias_usage_trigger
-  AFTER INSERT ON human_os.execution_logs
+DROP TRIGGER IF EXISTS record_alias_usage_trigger ON human_os.execution_logs;
+CREATE TRIGGER record_alias_usage_trigger AFTER INSERT ON human_os.execution_logs
   FOR EACH ROW EXECUTE FUNCTION human_os.record_alias_usage();
 
 -- =============================================================================
@@ -360,18 +360,22 @@ ALTER TABLE human_os.aliases ENABLE ROW LEVEL SECURITY;
 ALTER TABLE human_os.execution_logs ENABLE ROW LEVEL SECURITY;
 
 -- Service role full access
+DROP POLICY IF EXISTS "aliases_service_all" ON human_os.aliases;
 CREATE POLICY "aliases_service_all" ON human_os.aliases
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "execution_logs_service_all" ON human_os.execution_logs;
 CREATE POLICY "execution_logs_service_all" ON human_os.execution_logs
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Authenticated users can read public and their own layer aliases
+DROP POLICY IF EXISTS "aliases_read_policy" ON human_os.aliases;
 CREATE POLICY "aliases_read_policy" ON human_os.aliases
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'renubu:%');
 
 -- Authenticated users can read their own execution logs
+DROP POLICY IF EXISTS "execution_logs_read_policy" ON human_os.execution_logs;
 CREATE POLICY "execution_logs_read_policy" ON human_os.execution_logs
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'renubu:%');

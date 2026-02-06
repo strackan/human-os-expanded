@@ -67,18 +67,19 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 -- Indexes
-CREATE INDEX idx_tasks_owner ON tasks(owner_id);
-CREATE INDEX idx_tasks_assignee ON tasks(assignee_id);
-CREATE INDEX idx_tasks_due_date ON tasks(due_date);
-CREATE INDEX idx_tasks_urgency ON tasks(urgency);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_tasks_layer ON tasks(layer);
+CREATE INDEX IF NOT EXISTS idx_tasks_owner ON tasks(owner_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_assignee ON tasks(assignee_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_urgency ON tasks(urgency);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_layer ON tasks(layer);
 
 -- Composite index for common query: pending tasks by urgency
-CREATE INDEX idx_tasks_pending_urgency ON tasks(status, urgency, due_date)
+CREATE INDEX IF NOT EXISTS idx_tasks_pending_urgency ON tasks(status, urgency, due_date)
   WHERE status IN ('pending', 'in_progress', 'blocked');
 
 -- Auto-update updated_at
+DROP TRIGGER IF EXISTS update_tasks_updated_at ON tasks;
 CREATE TRIGGER update_tasks_updated_at
   BEFORE UPDATE ON tasks
   FOR EACH ROW
@@ -128,6 +129,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trigger_update_task_urgency ON tasks;
 CREATE TRIGGER trigger_update_task_urgency
   BEFORE INSERT OR UPDATE OF due_date, status ON tasks
   FOR EACH ROW
@@ -228,11 +230,13 @@ $$ LANGUAGE plpgsql;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 
 -- Owners can do anything with their tasks
+DROP POLICY IF EXISTS "tasks_owner_all" ON tasks;
 CREATE POLICY "tasks_owner_all" ON tasks
   FOR ALL
   USING (owner_id = auth.uid());
 
 -- Users can see tasks assigned to them
+DROP POLICY IF EXISTS "tasks_assignee_read" ON tasks;
 CREATE POLICY "tasks_assignee_read" ON tasks
   FOR SELECT
   USING (assignee_id = auth.uid());

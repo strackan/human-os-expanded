@@ -2,7 +2,7 @@
 -- Usage events and onboarding progress
 
 -- Usage events (for retention metric discovery)
-CREATE TABLE human_os.usage_events (
+CREATE TABLE IF NOT EXISTS human_os.usage_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES human_os.users(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL,             -- 'context_save', 'context_read', 'entity_create', 'link_query', 'search', 'audit'
@@ -12,12 +12,12 @@ CREATE TABLE human_os.usage_events (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_usage_user_time ON human_os.usage_events(user_id, created_at DESC);
-CREATE INDEX idx_usage_type ON human_os.usage_events(event_type, created_at DESC);
-CREATE INDEX idx_usage_entity ON human_os.usage_events(entity_slug);
+CREATE INDEX IF NOT EXISTS idx_usage_user_time ON human_os.usage_events(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_type ON human_os.usage_events(event_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_usage_entity ON human_os.usage_events(entity_slug);
 
 -- Onboarding progress (for high-touch follow-up)
-CREATE TABLE human_os.onboarding_progress (
+CREATE TABLE IF NOT EXISTS human_os.onboarding_progress (
   user_id UUID PRIMARY KEY REFERENCES human_os.users(id) ON DELETE CASCADE,
   steps_completed TEXT[] DEFAULT '{}',
   current_step TEXT,
@@ -33,7 +33,7 @@ CREATE TABLE human_os.onboarding_progress (
 );
 
 -- API usage tracking (for rate limiting and billing)
-CREATE TABLE human_os.api_usage (
+CREATE TABLE IF NOT EXISTS human_os.api_usage (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES human_os.users(id) ON DELETE CASCADE,
   endpoint TEXT NOT NULL,
@@ -41,4 +41,4 @@ CREATE TABLE human_os.api_usage (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_api_usage_user ON human_os.api_usage(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_api_usage_user ON human_os.api_usage(user_id, created_at DESC);

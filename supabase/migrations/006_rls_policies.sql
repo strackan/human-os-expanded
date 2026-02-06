@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS user_tenants (
   PRIMARY KEY (user_id, tenant_id)
 );
 
-CREATE INDEX idx_user_tenants_user ON user_tenants(user_id);
-CREATE INDEX idx_user_tenants_tenant ON user_tenants(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_user_tenants_user ON user_tenants(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_tenants_tenant ON user_tenants(tenant_id);
 
 -- =============================================================================
 -- ENABLE RLS ON ALL TABLES
@@ -32,17 +32,20 @@ ALTER TABLE api_key_usage ENABLE ROW LEVEL SECURITY;
 -- =============================================================================
 
 -- Public entities are readable by anyone
+DROP POLICY IF EXISTS "entities_public_read" ON entities;
 CREATE POLICY "entities_public_read" ON entities
   FOR SELECT
   USING (privacy_scope = 'public');
 
 -- Users can read their own entities
+DROP POLICY IF EXISTS "entities_owner_read" ON entities;
 CREATE POLICY "entities_owner_read" ON entities
   FOR SELECT
   USING (owner_id = auth.uid());
 
 -- Users can read tenant entities if they belong to the tenant
 -- Note: This requires a user_tenants junction table or tenant_id in auth.users
+DROP POLICY IF EXISTS "entities_tenant_read" ON entities;
 CREATE POLICY "entities_tenant_read" ON entities
   FOR SELECT
   USING (
@@ -53,16 +56,19 @@ CREATE POLICY "entities_tenant_read" ON entities
   );
 
 -- Users can insert their own entities
+DROP POLICY IF EXISTS "entities_owner_insert" ON entities;
 CREATE POLICY "entities_owner_insert" ON entities
   FOR INSERT
   WITH CHECK (owner_id = auth.uid() OR owner_id IS NULL);
 
 -- Users can update their own entities
+DROP POLICY IF EXISTS "entities_owner_update" ON entities;
 CREATE POLICY "entities_owner_update" ON entities
   FOR UPDATE
   USING (owner_id = auth.uid());
 
 -- Users can delete their own entities
+DROP POLICY IF EXISTS "entities_owner_delete" ON entities;
 CREATE POLICY "entities_owner_delete" ON entities
   FOR DELETE
   USING (owner_id = auth.uid());
@@ -72,17 +78,20 @@ CREATE POLICY "entities_owner_delete" ON entities
 -- =============================================================================
 
 -- Public layer is readable by anyone
+DROP POLICY IF EXISTS "context_files_public_read" ON context_files;
 CREATE POLICY "context_files_public_read" ON context_files
   FOR SELECT
   USING (layer = 'public');
 
 -- PowerPak published layer (would need subscription check)
+DROP POLICY IF EXISTS "context_files_powerpak_read" ON context_files;
 CREATE POLICY "context_files_powerpak_read" ON context_files
   FOR SELECT
   USING (layer = 'powerpak-published');
   -- TODO: Add subscription check when PowerPak is integrated
 
 -- Tenant-scoped files
+DROP POLICY IF EXISTS "context_files_tenant_read" ON context_files;
 CREATE POLICY "context_files_tenant_read" ON context_files
   FOR SELECT
   USING (
@@ -93,6 +102,7 @@ CREATE POLICY "context_files_tenant_read" ON context_files
   );
 
 -- User-scoped files (founder-os)
+DROP POLICY IF EXISTS "context_files_user_read" ON context_files;
 CREATE POLICY "context_files_user_read" ON context_files
   FOR SELECT
   USING (
@@ -106,11 +116,13 @@ CREATE POLICY "context_files_user_read" ON context_files
 -- =============================================================================
 
 -- Public links
+DROP POLICY IF EXISTS "entity_links_public_read" ON entity_links;
 CREATE POLICY "entity_links_public_read" ON entity_links
   FOR SELECT
   USING (layer = 'public');
 
 -- Tenant links
+DROP POLICY IF EXISTS "entity_links_tenant_read" ON entity_links;
 CREATE POLICY "entity_links_tenant_read" ON entity_links
   FOR SELECT
   USING (
@@ -121,6 +133,7 @@ CREATE POLICY "entity_links_tenant_read" ON entity_links
   );
 
 -- User links
+DROP POLICY IF EXISTS "entity_links_user_read" ON entity_links;
 CREATE POLICY "entity_links_user_read" ON entity_links
   FOR SELECT
   USING (
@@ -133,11 +146,13 @@ CREATE POLICY "entity_links_user_read" ON entity_links
 -- =============================================================================
 
 -- Public interactions
+DROP POLICY IF EXISTS "interactions_public_read" ON interactions;
 CREATE POLICY "interactions_public_read" ON interactions
   FOR SELECT
   USING (layer = 'public');
 
 -- Tenant interactions
+DROP POLICY IF EXISTS "interactions_tenant_read" ON interactions;
 CREATE POLICY "interactions_tenant_read" ON interactions
   FOR SELECT
   USING (
@@ -148,6 +163,7 @@ CREATE POLICY "interactions_tenant_read" ON interactions
   );
 
 -- User interactions
+DROP POLICY IF EXISTS "interactions_user_read" ON interactions;
 CREATE POLICY "interactions_user_read" ON interactions
   FOR SELECT
   USING (
@@ -156,6 +172,7 @@ CREATE POLICY "interactions_user_read" ON interactions
   );
 
 -- Owner can do anything with their interactions
+DROP POLICY IF EXISTS "interactions_owner_all" ON interactions;
 CREATE POLICY "interactions_owner_all" ON interactions
   FOR ALL
   USING (owner_id = auth.uid());
@@ -165,6 +182,7 @@ CREATE POLICY "interactions_owner_all" ON interactions
 -- Only owners can see their API keys
 -- =============================================================================
 
+DROP POLICY IF EXISTS "api_keys_owner_all" ON api_keys;
 CREATE POLICY "api_keys_owner_all" ON api_keys
   FOR ALL
   USING (owner_id = auth.uid());
@@ -174,6 +192,7 @@ CREATE POLICY "api_keys_owner_all" ON api_keys
 -- Only owners can see their usage
 -- =============================================================================
 
+DROP POLICY IF EXISTS "api_key_usage_owner_read" ON api_key_usage;
 CREATE POLICY "api_key_usage_owner_read" ON api_key_usage
   FOR SELECT
   USING (
@@ -193,6 +212,7 @@ CREATE POLICY "api_key_usage_owner_read" ON api_key_usage
 -- RLS for user_tenants
 ALTER TABLE user_tenants ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "user_tenants_read" ON user_tenants;
 CREATE POLICY "user_tenants_read" ON user_tenants
   FOR SELECT
   USING (user_id = auth.uid());

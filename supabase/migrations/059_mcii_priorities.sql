@@ -54,8 +54,8 @@ CREATE INDEX IF NOT EXISTS idx_priorities_active ON founder_os.priorities(user_i
 -- TRIGGERS
 -- =============================================================================
 
-CREATE TRIGGER priorities_updated_at
-  BEFORE UPDATE ON founder_os.priorities
+DROP TRIGGER IF EXISTS priorities_updated_at ON founder_os.priorities;
+CREATE TRIGGER priorities_updated_at BEFORE UPDATE ON founder_os.priorities
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -64,6 +64,7 @@ CREATE TRIGGER priorities_updated_at
 
 ALTER TABLE founder_os.priorities ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.priorities;
 CREATE POLICY "Service role full access" ON founder_os.priorities FOR ALL USING (true);
 
 -- =============================================================================
@@ -91,13 +92,19 @@ COMMENT ON COLUMN founder_os.tasks.priority_id IS
   'Direct link to priority for tasks not tied to a project';
 
 -- =============================================================================
--- RENAME GOALS TABLE TO OKR_GOALS
+-- RENAME GOALS TABLE TO OKR_GOALS (idempotent)
 -- =============================================================================
 
--- Rename the table
-ALTER TABLE IF EXISTS founder_os.goals RENAME TO okr_goals;
+-- Rename the table only if source exists and target doesn't
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'founder_os' AND table_name = 'goals')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'founder_os' AND table_name = 'okr_goals') THEN
+    ALTER TABLE founder_os.goals RENAME TO okr_goals;
+  END IF;
+END $$;
 
--- Rename indexes
+-- Rename indexes (IF EXISTS handles idempotency)
 ALTER INDEX IF EXISTS idx_founder_os_goals_user_id RENAME TO idx_founder_os_okr_goals_user_id;
 ALTER INDEX IF EXISTS idx_founder_os_goals_timeframe RENAME TO idx_founder_os_okr_goals_timeframe;
 ALTER INDEX IF EXISTS idx_founder_os_goals_parent_id RENAME TO idx_founder_os_okr_goals_parent_id;
@@ -106,18 +113,28 @@ ALTER INDEX IF EXISTS idx_founder_os_goals_project_id RENAME TO idx_founder_os_o
 -- Rename trigger (wrapped in DO block since ALTER TRIGGER doesn't support IF EXISTS)
 DO $$
 BEGIN
+  -- Only rename if trigger exists on okr_goals table and hasn't been renamed yet
   IF EXISTS (
-    SELECT 1 FROM pg_trigger
-    WHERE tgname = 'update_founder_os_goals_updated_at'
+    SELECT 1 FROM pg_trigger t
+    JOIN pg_class c ON t.tgrelid = c.oid
+    JOIN pg_namespace n ON c.relnamespace = n.oid
+    WHERE t.tgname = 'update_founder_os_goals_updated_at'
+      AND n.nspname = 'founder_os'
+      AND c.relname = 'okr_goals'
   ) THEN
     ALTER TRIGGER update_founder_os_goals_updated_at ON founder_os.okr_goals
       RENAME TO update_founder_os_okr_goals_updated_at;
   END IF;
 END $$;
 
--- Update task_goal_links table reference
-ALTER TABLE IF EXISTS founder_os.task_goal_links
-  RENAME TO task_okr_goal_links;
+-- Update task_goal_links table reference (idempotent)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'founder_os' AND table_name = 'task_goal_links')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'founder_os' AND table_name = 'task_okr_goal_links') THEN
+    ALTER TABLE founder_os.task_goal_links RENAME TO task_okr_goal_links;
+  END IF;
+END $$;
 
 -- Update project_links to clarify it's for OKR goals
 COMMENT ON TABLE founder_os.project_links IS

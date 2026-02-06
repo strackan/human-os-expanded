@@ -39,29 +39,29 @@ CREATE TABLE IF NOT EXISTS human_os.context (
 -- =============================================================================
 
 -- Find all objects in a context
-CREATE INDEX idx_context_slug ON human_os.context(context_slug);
+CREATE INDEX IF NOT EXISTS idx_context_slug ON human_os.context(context_slug);
 
 -- Find all context for an object
-CREATE INDEX idx_context_object ON human_os.context(object_uuid);
+CREATE INDEX IF NOT EXISTS idx_context_object ON human_os.context(object_uuid);
 
 -- Filter by type
-CREATE INDEX idx_context_type ON human_os.context(object_type);
+CREATE INDEX IF NOT EXISTS idx_context_type ON human_os.context(object_type);
 
 -- Active context only
-CREATE INDEX idx_context_active ON human_os.context(active) WHERE active = true;
+CREATE INDEX IF NOT EXISTS idx_context_active ON human_os.context(active) WHERE active = true;
 
 -- Layer scoping
-CREATE INDEX idx_context_layer ON human_os.context(layer);
+CREATE INDEX IF NOT EXISTS idx_context_layer ON human_os.context(layer);
 
 -- Composite for common queries
-CREATE INDEX idx_context_slug_active ON human_os.context(context_slug, active);
+CREATE INDEX IF NOT EXISTS idx_context_slug_active ON human_os.context(context_slug, active);
 
 -- =============================================================================
 -- TRIGGERS
 -- =============================================================================
 
-CREATE TRIGGER context_updated_at
-  BEFORE UPDATE ON human_os.context
+DROP TRIGGER IF EXISTS context_updated_at ON human_os.context;
+CREATE TRIGGER context_updated_at BEFORE UPDATE ON human_os.context
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -70,17 +70,21 @@ CREATE TRIGGER context_updated_at
 
 ALTER TABLE human_os.context ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "context_service_all" ON human_os.context;
 CREATE POLICY "context_service_all" ON human_os.context
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "context_read_policy" ON human_os.context;
 CREATE POLICY "context_read_policy" ON human_os.context
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%');
 
+DROP POLICY IF EXISTS "context_write_policy" ON human_os.context;
 CREATE POLICY "context_write_policy" ON human_os.context
   FOR INSERT TO authenticated
   WITH CHECK (layer = 'public' OR layer LIKE 'founder:%');
 
+DROP POLICY IF EXISTS "context_update_policy" ON human_os.context;
 CREATE POLICY "context_update_policy" ON human_os.context
   FOR UPDATE TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%');
@@ -202,11 +206,11 @@ $$;
 GRANT SELECT, INSERT, UPDATE, DELETE ON human_os.context TO authenticated;
 GRANT ALL ON human_os.context TO service_role;
 
-GRANT EXECUTE ON FUNCTION human_os.get_object_context TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION human_os.get_context_members TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION human_os.list_context_slugs TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION human_os.set_context TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION human_os.deactivate_context TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION human_os.get_object_context(UUID, TEXT, BOOLEAN) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION human_os.get_context_members(TEXT, TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION human_os.list_context_slugs(TEXT, BOOLEAN) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION human_os.set_context(UUID, TEXT, TEXT, TEXT, TEXT, BOOLEAN) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION human_os.deactivate_context(UUID, TEXT, TEXT) TO authenticated, service_role;
 
 -- =============================================================================
 -- COMMENTS
@@ -221,8 +225,8 @@ COMMENT ON COLUMN human_os.context.object_uuid IS
 COMMENT ON COLUMN human_os.context.context_slug IS
   'Slug grouping related entities (e.g., marriage, renubu, good-hang)';
 
-COMMENT ON FUNCTION human_os.get_object_context IS
+COMMENT ON FUNCTION human_os.get_object_context(UUID, TEXT, BOOLEAN) IS
   'Get all context entries for a specific object UUID';
 
-COMMENT ON FUNCTION human_os.get_context_members IS
+COMMENT ON FUNCTION human_os.get_context_members(TEXT, TEXT, TEXT, BOOLEAN) IS
   'Get all objects that share a context_slug';

@@ -96,10 +96,10 @@ CREATE TABLE IF NOT EXISTS skills_programs (
 -- INDEXES FOR TOOLS AND PROGRAMS
 -- =============================================================================
 
-CREATE INDEX idx_skills_tools_file ON skills_tools(context_file_id);
-CREATE INDEX idx_skills_tools_name ON skills_tools(name);
-CREATE INDEX idx_skills_programs_file ON skills_programs(context_file_id);
-CREATE INDEX idx_skills_programs_name ON skills_programs(name);
+CREATE INDEX IF NOT EXISTS idx_skills_tools_file ON skills_tools(context_file_id);
+CREATE INDEX IF NOT EXISTS idx_skills_tools_name ON skills_tools(name);
+CREATE INDEX IF NOT EXISTS idx_skills_programs_file ON skills_programs(context_file_id);
+CREATE INDEX IF NOT EXISTS idx_skills_programs_name ON skills_programs(name);
 
 -- =============================================================================
 -- TRIGGERS
@@ -130,17 +130,17 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_tools_count_trigger
-  AFTER INSERT OR DELETE ON skills_tools
+DROP TRIGGER IF EXISTS update_tools_count_trigger ON skills_tools;
+CREATE TRIGGER update_tools_count_trigger AFTER INSERT OR DELETE ON skills_tools
   FOR EACH ROW EXECUTE FUNCTION update_skills_counts();
 
-CREATE TRIGGER update_programs_count_trigger
-  AFTER INSERT OR DELETE ON skills_programs
+DROP TRIGGER IF EXISTS update_programs_count_trigger ON skills_programs;
+CREATE TRIGGER update_programs_count_trigger AFTER INSERT OR DELETE ON skills_programs
   FOR EACH ROW EXECUTE FUNCTION update_programs_counts();
 
 -- Update context_files.updated_at
-CREATE TRIGGER update_context_files_updated_at
-  BEFORE UPDATE ON context_files
+DROP TRIGGER IF EXISTS update_context_files_updated_at ON context_files;
+CREATE TRIGGER update_context_files_updated_at BEFORE UPDATE ON context_files
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================================================
@@ -320,9 +320,11 @@ ALTER TABLE skills_tools ENABLE ROW LEVEL SECURITY;
 ALTER TABLE skills_programs ENABLE ROW LEVEL SECURITY;
 
 -- Service role can do everything
+DROP POLICY IF EXISTS "skills_tools_service_all" ON skills_tools;
 CREATE POLICY "skills_tools_service_all" ON skills_tools
   FOR ALL TO service_role USING (true);
 
+DROP POLICY IF EXISTS "skills_programs_service_all" ON skills_programs;
 CREATE POLICY "skills_programs_service_all" ON skills_programs
   FOR ALL TO service_role USING (true);
 

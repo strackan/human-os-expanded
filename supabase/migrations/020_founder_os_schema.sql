@@ -11,7 +11,7 @@ CREATE SCHEMA IF NOT EXISTS founder_os;
 -- CONTEXTS TABLE
 -- Project/area tags for organizing tasks and goals (e.g., Renubu, Good Hang, Family)
 -- =============================================================================
-CREATE TABLE founder_os.contexts (
+CREATE TABLE IF NOT EXISTS founder_os.contexts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   name TEXT NOT NULL,
@@ -22,13 +22,13 @@ CREATE TABLE founder_os.contexts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_founder_os_contexts_user_id ON founder_os.contexts(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_contexts_user_id ON founder_os.contexts(user_id);
 
 -- =============================================================================
 -- GOALS TABLE
 -- Hierarchical OKRs (yearly -> quarterly -> monthly -> weekly)
 -- =============================================================================
-CREATE TABLE founder_os.goals (
+CREATE TABLE IF NOT EXISTS founder_os.goals (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   title TEXT NOT NULL,
@@ -45,15 +45,15 @@ CREATE TABLE founder_os.goals (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_founder_os_goals_user_id ON founder_os.goals(user_id);
-CREATE INDEX idx_founder_os_goals_timeframe ON founder_os.goals(timeframe);
-CREATE INDEX idx_founder_os_goals_parent_id ON founder_os.goals(parent_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_goals_user_id ON founder_os.goals(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_goals_timeframe ON founder_os.goals(timeframe);
+CREATE INDEX IF NOT EXISTS idx_founder_os_goals_parent_id ON founder_os.goals(parent_id);
 
 -- =============================================================================
 -- TASKS TABLE
 -- GTD-style task management with priority, status, context tags, energy levels
 -- =============================================================================
-CREATE TABLE founder_os.tasks (
+CREATE TABLE IF NOT EXISTS founder_os.tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   title TEXT NOT NULL,
@@ -70,31 +70,31 @@ CREATE TABLE founder_os.tasks (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_founder_os_tasks_user_id ON founder_os.tasks(user_id);
-CREATE INDEX idx_founder_os_tasks_status ON founder_os.tasks(status);
-CREATE INDEX idx_founder_os_tasks_priority ON founder_os.tasks(priority);
-CREATE INDEX idx_founder_os_tasks_due_date ON founder_os.tasks(due_date);
-CREATE INDEX idx_founder_os_tasks_context_tags ON founder_os.tasks USING GIN(context_tags);
+CREATE INDEX IF NOT EXISTS idx_founder_os_tasks_user_id ON founder_os.tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_tasks_status ON founder_os.tasks(status);
+CREATE INDEX IF NOT EXISTS idx_founder_os_tasks_priority ON founder_os.tasks(priority);
+CREATE INDEX IF NOT EXISTS idx_founder_os_tasks_due_date ON founder_os.tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_founder_os_tasks_context_tags ON founder_os.tasks USING GIN(context_tags);
 
 -- =============================================================================
 -- TASK-GOAL LINKS (Junction Table)
 -- Links tasks to goals for tracking progress toward objectives
 -- =============================================================================
-CREATE TABLE founder_os.task_goal_links (
+CREATE TABLE IF NOT EXISTS founder_os.task_goal_links (
   task_id UUID NOT NULL REFERENCES founder_os.tasks(id) ON DELETE CASCADE,
   goal_id UUID NOT NULL REFERENCES founder_os.goals(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (task_id, goal_id)
 );
 
-CREATE INDEX idx_founder_os_task_goal_links_task_id ON founder_os.task_goal_links(task_id);
-CREATE INDEX idx_founder_os_task_goal_links_goal_id ON founder_os.task_goal_links(goal_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_task_goal_links_task_id ON founder_os.task_goal_links(task_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_task_goal_links_goal_id ON founder_os.task_goal_links(goal_id);
 
 -- =============================================================================
 -- DAILY PLANS TABLE
 -- Morning intentions and evening reflections for each day
 -- =============================================================================
-CREATE TABLE founder_os.daily_plans (
+CREATE TABLE IF NOT EXISTS founder_os.daily_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   plan_date DATE NOT NULL,
@@ -108,14 +108,14 @@ CREATE TABLE founder_os.daily_plans (
   UNIQUE(user_id, plan_date)
 );
 
-CREATE INDEX idx_founder_os_daily_plans_user_id ON founder_os.daily_plans(user_id);
-CREATE INDEX idx_founder_os_daily_plans_plan_date ON founder_os.daily_plans(plan_date);
+CREATE INDEX IF NOT EXISTS idx_founder_os_daily_plans_user_id ON founder_os.daily_plans(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_daily_plans_plan_date ON founder_os.daily_plans(plan_date);
 
 -- =============================================================================
 -- RELATIONSHIPS TABLE
 -- Track key relationships (investors, team, family) and communication cadence
 -- =============================================================================
-CREATE TABLE founder_os.relationships (
+CREATE TABLE IF NOT EXISTS founder_os.relationships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   name TEXT NOT NULL,
@@ -128,14 +128,14 @@ CREATE TABLE founder_os.relationships (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_founder_os_relationships_user_id ON founder_os.relationships(user_id);
-CREATE INDEX idx_founder_os_relationships_last_contact ON founder_os.relationships(last_contact);
+CREATE INDEX IF NOT EXISTS idx_founder_os_relationships_user_id ON founder_os.relationships(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_relationships_last_contact ON founder_os.relationships(last_contact);
 
 -- =============================================================================
 -- CHECK-INS TABLE
 -- Qualitative mood/energy/gratitude tracking for self-awareness
 -- =============================================================================
-CREATE TABLE founder_os.check_ins (
+CREATE TABLE IF NOT EXISTS founder_os.check_ins (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
   check_in_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -148,28 +148,33 @@ CREATE TABLE founder_os.check_ins (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_founder_os_check_ins_user_id ON founder_os.check_ins(user_id);
-CREATE INDEX idx_founder_os_check_ins_date ON founder_os.check_ins(check_in_date);
+CREATE INDEX IF NOT EXISTS idx_founder_os_check_ins_user_id ON founder_os.check_ins(user_id);
+CREATE INDEX IF NOT EXISTS idx_founder_os_check_ins_date ON founder_os.check_ins(check_in_date);
 
 -- =============================================================================
 -- AUTO-UPDATE TRIGGERS
 -- =============================================================================
+DROP TRIGGER IF EXISTS update_founder_os_contexts_updated_at ON founder_os.contexts;
 CREATE TRIGGER update_founder_os_contexts_updated_at
   BEFORE UPDATE ON founder_os.contexts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_founder_os_goals_updated_at ON founder_os.goals;
 CREATE TRIGGER update_founder_os_goals_updated_at
   BEFORE UPDATE ON founder_os.goals
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_founder_os_tasks_updated_at ON founder_os.tasks;
 CREATE TRIGGER update_founder_os_tasks_updated_at
   BEFORE UPDATE ON founder_os.tasks
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_founder_os_daily_plans_updated_at ON founder_os.daily_plans;
 CREATE TRIGGER update_founder_os_daily_plans_updated_at
   BEFORE UPDATE ON founder_os.daily_plans
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_founder_os_relationships_updated_at ON founder_os.relationships;
 CREATE TRIGGER update_founder_os_relationships_updated_at
   BEFORE UPDATE ON founder_os.relationships
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -186,12 +191,19 @@ ALTER TABLE founder_os.relationships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE founder_os.check_ins ENABLE ROW LEVEL SECURITY;
 
 -- Service role can do everything
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.contexts;
 CREATE POLICY "Service role full access" ON founder_os.contexts FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.goals;
 CREATE POLICY "Service role full access" ON founder_os.goals FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.tasks;
 CREATE POLICY "Service role full access" ON founder_os.tasks FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.task_goal_links;
 CREATE POLICY "Service role full access" ON founder_os.task_goal_links FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.daily_plans;
 CREATE POLICY "Service role full access" ON founder_os.daily_plans FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.relationships;
 CREATE POLICY "Service role full access" ON founder_os.relationships FOR ALL USING (true);
+DROP POLICY IF EXISTS "Service role full access" ON founder_os.check_ins;
 CREATE POLICY "Service role full access" ON founder_os.check_ins FOR ALL USING (true);
 
 -- =============================================================================

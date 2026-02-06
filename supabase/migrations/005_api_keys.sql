@@ -29,11 +29,11 @@ CREATE TABLE IF NOT EXISTS api_keys (
 );
 
 -- Indexes
-CREATE INDEX idx_api_keys_owner ON api_keys(owner_id);
-CREATE INDEX idx_api_keys_active ON api_keys(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_api_keys_owner ON api_keys(owner_id);
+CREATE INDEX IF NOT EXISTS idx_api_keys_active ON api_keys(is_active) WHERE is_active = true;
 
 -- GIN index for scope queries
-CREATE INDEX idx_api_keys_scopes ON api_keys USING GIN (scopes);
+CREATE INDEX IF NOT EXISTS idx_api_keys_scopes ON api_keys USING GIN (scopes);
 
 -- =============================================================================
 -- API KEY USAGE LOG
@@ -50,10 +50,10 @@ CREATE TABLE IF NOT EXISTS api_key_usage (
 );
 
 -- Index for rate limiting queries (last minute)
-CREATE INDEX idx_api_key_usage_recent ON api_key_usage(api_key_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_api_key_usage_recent ON api_key_usage(api_key_id, created_at DESC);
 
 -- Partition by time for better performance (optional, for high-volume)
--- CREATE INDEX idx_api_key_usage_time ON api_key_usage(created_at);
+-- CREATE INDEX IF NOT EXISTS idx_api_key_usage_time ON api_key_usage(created_at);
 
 -- =============================================================================
 -- HELPER FUNCTIONS

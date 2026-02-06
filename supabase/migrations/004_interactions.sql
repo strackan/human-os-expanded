@@ -53,15 +53,15 @@ CREATE TABLE IF NOT EXISTS interactions (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_interactions_entity ON interactions(entity_id);
-CREATE INDEX idx_interactions_layer ON interactions(layer);
-CREATE INDEX idx_interactions_type ON interactions(interaction_type);
-CREATE INDEX idx_interactions_owner ON interactions(owner_id);
-CREATE INDEX idx_interactions_occurred ON interactions(occurred_at DESC);
-CREATE INDEX idx_interactions_source ON interactions(source_system, source_id);
+CREATE INDEX IF NOT EXISTS idx_interactions_entity ON interactions(entity_id);
+CREATE INDEX IF NOT EXISTS idx_interactions_layer ON interactions(layer);
+CREATE INDEX IF NOT EXISTS idx_interactions_type ON interactions(interaction_type);
+CREATE INDEX IF NOT EXISTS idx_interactions_owner ON interactions(owner_id);
+CREATE INDEX IF NOT EXISTS idx_interactions_occurred ON interactions(occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interactions_source ON interactions(source_system, source_id);
 
 -- GIN index for metadata queries
-CREATE INDEX idx_interactions_metadata ON interactions USING GIN (metadata);
+CREATE INDEX IF NOT EXISTS idx_interactions_metadata ON interactions USING GIN (metadata);
 
 -- =============================================================================
 -- HELPER FUNCTIONS

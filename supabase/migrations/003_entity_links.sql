@@ -41,14 +41,14 @@ CREATE TABLE IF NOT EXISTS entity_links (
 );
 
 -- Indexes for graph traversal
-CREATE INDEX idx_entity_links_layer ON entity_links(layer);
-CREATE INDEX idx_entity_links_source ON entity_links(source_slug);
-CREATE INDEX idx_entity_links_target ON entity_links(target_slug);
-CREATE INDEX idx_entity_links_type ON entity_links(link_type);
+CREATE INDEX IF NOT EXISTS idx_entity_links_layer ON entity_links(layer);
+CREATE INDEX IF NOT EXISTS idx_entity_links_source ON entity_links(source_slug);
+CREATE INDEX IF NOT EXISTS idx_entity_links_target ON entity_links(target_slug);
+CREATE INDEX IF NOT EXISTS idx_entity_links_type ON entity_links(link_type);
 
 -- Composite indexes for common queries
-CREATE INDEX idx_entity_links_layer_source ON entity_links(layer, source_slug);
-CREATE INDEX idx_entity_links_layer_target ON entity_links(layer, target_slug);
+CREATE INDEX IF NOT EXISTS idx_entity_links_layer_source ON entity_links(layer, source_slug);
+CREATE INDEX IF NOT EXISTS idx_entity_links_layer_target ON entity_links(layer, target_slug);
 
 -- =============================================================================
 -- HELPER FUNCTIONS FOR GRAPH QUERIES

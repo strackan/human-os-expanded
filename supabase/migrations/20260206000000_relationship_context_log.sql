@@ -74,8 +74,8 @@ CREATE INDEX IF NOT EXISTS idx_fos_transcripts_source ON founder_os.transcripts(
 CREATE INDEX IF NOT EXISTS idx_fos_transcripts_status ON founder_os.transcripts(status);
 
 -- Updated at trigger
-CREATE TRIGGER update_fos_transcripts_updated_at
-  BEFORE UPDATE ON founder_os.transcripts
+DROP TRIGGER IF EXISTS update_fos_transcripts_updated_at ON founder_os.transcripts;
+CREATE TRIGGER update_fos_transcripts_updated_at BEFORE UPDATE ON founder_os.transcripts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================

@@ -27,7 +27,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'region_id'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN region_id UUID REFERENCES gft.regions(id) ON DELETE SET NULL;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS region_id UUID REFERENCES gft.regions(id) ON DELETE SET NULL;
   END IF;
 END $$;
 
@@ -39,7 +39,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'location_raw'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN location_raw TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS location_raw TEXT;
   END IF;
 
   -- About/bio
@@ -47,7 +47,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'about'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN about TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS about TEXT;
   END IF;
 
   -- LinkedIn avatar
@@ -55,7 +55,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'li_avatar_url'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN li_avatar_url TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS li_avatar_url TEXT;
   END IF;
 
   -- LinkedIn member ID
@@ -63,7 +63,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'li_member_id'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN li_member_id TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS li_member_id TEXT;
   END IF;
 
   -- Birthday
@@ -71,7 +71,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'birthday'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN birthday DATE;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS birthday DATE;
   END IF;
 
   -- LinkedIn connection date
@@ -79,7 +79,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'li_date_connected'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN li_date_connected DATE;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS li_date_connected DATE;
   END IF;
 
   -- LLM notes (AI-generated notes)
@@ -87,7 +87,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'llm_notes'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN llm_notes TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS llm_notes TEXT;
   END IF;
 
   -- Status (active, inactive, etc.)
@@ -95,7 +95,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'status'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN status TEXT DEFAULT 'active';
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
   END IF;
 END $$;
 

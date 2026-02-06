@@ -23,7 +23,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'tier'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN tier gft.contact_tier DEFAULT 'outer';
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS tier gft.contact_tier DEFAULT 'outer';
   END IF;
 END $$;
 
@@ -34,7 +34,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'custom_labels'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN custom_labels TEXT[] DEFAULT '{}';
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS custom_labels TEXT[] DEFAULT '{}';
   END IF;
 END $$;
 
@@ -45,7 +45,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'private_notes'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN private_notes TEXT;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS private_notes TEXT;
   END IF;
 END $$;
 
@@ -56,7 +56,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'last_interaction_at'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN last_interaction_at TIMESTAMPTZ;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS last_interaction_at TIMESTAMPTZ;
   END IF;
 END $$;
 
@@ -67,7 +67,7 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'next_followup_at'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN next_followup_at TIMESTAMPTZ;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS next_followup_at TIMESTAMPTZ;
   END IF;
 END $$;
 

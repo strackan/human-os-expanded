@@ -8,14 +8,16 @@
 
 do $$
 begin
-  -- Move mood_categories
-  if exists (select 1 from information_schema.tables where table_schema = 'founder_os' and table_name = 'mood_categories') then
+  -- Move mood_categories (only if in founder_os AND not already in human_os)
+  if exists (select 1 from information_schema.tables where table_schema = 'founder_os' and table_name = 'mood_categories')
+     and not exists (select 1 from information_schema.tables where table_schema = 'human_os' and table_name = 'mood_categories') then
     alter table founder_os.mood_categories set schema human_os;
     raise notice 'Moved mood_categories to human_os schema';
   end if;
 
-  -- Move mood_category_mappings
-  if exists (select 1 from information_schema.tables where table_schema = 'founder_os' and table_name = 'mood_category_mappings') then
+  -- Move mood_category_mappings (only if in founder_os AND not already in human_os)
+  if exists (select 1 from information_schema.tables where table_schema = 'founder_os' and table_name = 'mood_category_mappings')
+     and not exists (select 1 from information_schema.tables where table_schema = 'human_os' and table_name = 'mood_category_mappings') then
     alter table founder_os.mood_category_mappings set schema human_os;
     raise notice 'Moved mood_category_mappings to human_os schema';
   end if;

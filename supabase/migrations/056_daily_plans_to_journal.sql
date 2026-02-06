@@ -22,8 +22,11 @@ CREATE INDEX IF NOT EXISTS idx_journal_entries_stress ON human_os.journal_entrie
 
 -- Drop and recreate constraint with new type
 ALTER TABLE human_os.journal_entries DROP CONSTRAINT IF EXISTS journal_entries_entry_type_check;
-ALTER TABLE human_os.journal_entries ADD CONSTRAINT journal_entries_entry_type_check
-  CHECK (entry_type IN ('freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'));
+DO $$ BEGIN
+  ALTER TABLE human_os.journal_entries ADD CONSTRAINT journal_entries_entry_type_check
+    CHECK (entry_type IN ('freeform', 'gratitude', 'mood_check', 'mindfulness', 'reflection', 'daily_review', 'daily_plan'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- =============================================================================
 -- STEP 3: Add legacy reference column

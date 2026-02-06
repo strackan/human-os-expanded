@@ -254,8 +254,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_user_mcp_providers_updated_at
-  BEFORE UPDATE ON human_os.user_mcp_providers
+DROP TRIGGER IF EXISTS update_user_mcp_providers_updated_at ON human_os.user_mcp_providers;
+CREATE TRIGGER update_user_mcp_providers_updated_at BEFORE UPDATE ON human_os.user_mcp_providers
   FOR EACH ROW
   EXECUTE FUNCTION human_os.update_mcp_provider_updated_at();
 

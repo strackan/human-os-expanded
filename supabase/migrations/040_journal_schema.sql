@@ -66,14 +66,14 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 );
 
 -- Indexes for journal_entries
-CREATE INDEX idx_journal_entries_owner ON journal_entries(owner_id);
-CREATE INDEX idx_journal_entries_tenant ON journal_entries(tenant_id);
-CREATE INDEX idx_journal_entries_layer ON journal_entries(layer);
-CREATE INDEX idx_journal_entries_entry_date ON journal_entries(entry_date DESC);
-CREATE INDEX idx_journal_entries_entry_type ON journal_entries(entry_type);
-CREATE INDEX idx_journal_entries_mode ON journal_entries(mode);
-CREATE INDEX idx_journal_entries_status ON journal_entries(status);
-CREATE INDEX idx_journal_entries_primary_mood ON journal_entries(primary_mood_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_owner ON journal_entries(owner_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_tenant ON journal_entries(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_layer ON journal_entries(layer);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_date ON journal_entries(entry_date DESC);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_type ON journal_entries(entry_type);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_mode ON journal_entries(mode);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON journal_entries(status);
+CREATE INDEX IF NOT EXISTS idx_journal_entries_primary_mood ON journal_entries(primary_mood_id);
 
 -- =============================================================================
 -- JOURNAL ENTRY MOODS (M:N relationship with mood_definitions)
@@ -89,8 +89,8 @@ CREATE TABLE IF NOT EXISTS journal_entry_moods (
   UNIQUE(entry_id, mood_id)
 );
 
-CREATE INDEX idx_journal_entry_moods_entry ON journal_entry_moods(entry_id);
-CREATE INDEX idx_journal_entry_moods_mood ON journal_entry_moods(mood_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entry_moods_entry ON journal_entry_moods(entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entry_moods_mood ON journal_entry_moods(mood_id);
 
 -- =============================================================================
 -- JOURNAL ENTITY MENTIONS
@@ -109,8 +109,8 @@ CREATE TABLE IF NOT EXISTS journal_entity_mentions (
   UNIQUE(entry_id, entity_id)
 );
 
-CREATE INDEX idx_journal_entity_mentions_entry ON journal_entity_mentions(entry_id);
-CREATE INDEX idx_journal_entity_mentions_entity ON journal_entity_mentions(entity_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entity_mentions_entry ON journal_entity_mentions(entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_entity_mentions_entity ON journal_entity_mentions(entity_id);
 
 -- =============================================================================
 -- JOURNAL LEADS (Unresolved entity mentions)
@@ -135,19 +135,19 @@ CREATE TABLE IF NOT EXISTS journal_leads (
   resolved_at TIMESTAMPTZ
 );
 
-CREATE INDEX idx_journal_leads_owner ON journal_leads(owner_id);
-CREATE INDEX idx_journal_leads_status ON journal_leads(status);
-CREATE INDEX idx_journal_leads_entry ON journal_leads(entry_id);
+CREATE INDEX IF NOT EXISTS idx_journal_leads_owner ON journal_leads(owner_id);
+CREATE INDEX IF NOT EXISTS idx_journal_leads_status ON journal_leads(status);
+CREATE INDEX IF NOT EXISTS idx_journal_leads_entry ON journal_leads(entry_id);
 
 -- =============================================================================
 -- TRIGGERS
 -- =============================================================================
-CREATE TRIGGER update_journal_entries_updated_at
-  BEFORE UPDATE ON journal_entries
+DROP TRIGGER IF EXISTS update_journal_entries_updated_at ON journal_entries;
+CREATE TRIGGER update_journal_entries_updated_at BEFORE UPDATE ON journal_entries
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE TRIGGER update_mood_definitions_updated_at
-  BEFORE UPDATE ON mood_definitions
+DROP TRIGGER IF EXISTS update_mood_definitions_updated_at ON mood_definitions;
+CREATE TRIGGER update_mood_definitions_updated_at BEFORE UPDATE ON mood_definitions
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -160,18 +160,24 @@ ALTER TABLE journal_leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mood_definitions ENABLE ROW LEVEL SECURITY;
 
 -- Service role has full access
+DROP POLICY IF EXISTS "Service role full access journal_entries" ON journal_entries;
 CREATE POLICY "Service role full access journal_entries" ON journal_entries
   FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access journal_entry_moods" ON journal_entry_moods;
 CREATE POLICY "Service role full access journal_entry_moods" ON journal_entry_moods
   FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access journal_entity_mentions" ON journal_entity_mentions;
 CREATE POLICY "Service role full access journal_entity_mentions" ON journal_entity_mentions
   FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access journal_leads" ON journal_leads;
 CREATE POLICY "Service role full access journal_leads" ON journal_leads
   FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access mood_definitions" ON mood_definitions;
 CREATE POLICY "Service role full access mood_definitions" ON mood_definitions
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Mood definitions are readable by all authenticated users
+DROP POLICY IF EXISTS "Authenticated read mood definitions" ON mood_definitions;
 CREATE POLICY "Authenticated read mood definitions" ON mood_definitions
   FOR SELECT TO authenticated USING (true);
 

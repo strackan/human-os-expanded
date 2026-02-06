@@ -205,8 +205,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_user_frameworks_word_count
-  BEFORE INSERT OR UPDATE OF content ON human_os.user_frameworks
+DROP TRIGGER IF EXISTS update_user_frameworks_word_count ON human_os.user_frameworks;
+CREATE TRIGGER update_user_frameworks_word_count BEFORE INSERT OR UPDATE OF content ON human_os.user_frameworks
   FOR EACH ROW
   EXECUTE FUNCTION human_os.update_framework_word_count();
 

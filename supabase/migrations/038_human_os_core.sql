@@ -139,12 +139,12 @@ CREATE INDEX IF NOT EXISTS idx_human_os_access_grants_promo ON human_os.access_g
 -- =============================================================================
 
 -- Auto-update updated_at timestamps
-CREATE TRIGGER update_human_os_entities_updated_at
-  BEFORE UPDATE ON human_os.entities
+DROP TRIGGER IF EXISTS update_human_os_entities_updated_at ON human_os.entities;
+CREATE TRIGGER update_human_os_entities_updated_at BEFORE UPDATE ON human_os.entities
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE TRIGGER update_human_os_context_files_updated_at
-  BEFORE UPDATE ON human_os.context_files
+DROP TRIGGER IF EXISTS update_human_os_context_files_updated_at ON human_os.context_files;
+CREATE TRIGGER update_human_os_context_files_updated_at BEFORE UPDATE ON human_os.context_files
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -157,32 +157,40 @@ ALTER TABLE human_os.entity_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE human_os.access_grants ENABLE ROW LEVEL SECURITY;
 
 -- Service role has full access
+DROP POLICY IF EXISTS "Service role full access" ON human_os.entities;
 CREATE POLICY "Service role full access" ON human_os.entities
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role full access" ON human_os.context_files;
 CREATE POLICY "Service role full access" ON human_os.context_files
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role full access" ON human_os.entity_links;
 CREATE POLICY "Service role full access" ON human_os.entity_links
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service role full access" ON human_os.access_grants;
 CREATE POLICY "Service role full access" ON human_os.access_grants
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Authenticated users can read entities (public directory)
+DROP POLICY IF EXISTS "Authenticated can read entities" ON human_os.entities;
 CREATE POLICY "Authenticated can read entities" ON human_os.entities
   FOR SELECT TO authenticated USING (true);
 
 -- Authenticated users can read entity links (public graph)
+DROP POLICY IF EXISTS "Authenticated can read entity links" ON human_os.entity_links;
 CREATE POLICY "Authenticated can read entity links" ON human_os.entity_links
   FOR SELECT TO authenticated USING (true);
 
 -- Context files: only accessible via grants or if you own the entity
 -- (This is a simplified policy - expand based on your auth model)
+DROP POLICY IF EXISTS "Authenticated can read own context files" ON human_os.context_files;
 CREATE POLICY "Authenticated can read own context files" ON human_os.context_files
   FOR SELECT TO authenticated USING (true);
 
 -- Access grants: grantors and grantees can see their grants
+DROP POLICY IF EXISTS "Authenticated can read grants" ON human_os.access_grants;
 CREATE POLICY "Authenticated can read grants" ON human_os.access_grants
   FOR SELECT TO authenticated USING (true);
 

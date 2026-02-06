@@ -32,9 +32,9 @@ CREATE TABLE IF NOT EXISTS context_files (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_context_files_layer ON context_files(layer);
-CREATE INDEX idx_context_files_entity ON context_files(entity_id);
-CREATE INDEX idx_context_files_path ON context_files(file_path);
+CREATE INDEX IF NOT EXISTS idx_context_files_layer ON context_files(layer);
+CREATE INDEX IF NOT EXISTS idx_context_files_entity ON context_files(entity_id);
+CREATE INDEX IF NOT EXISTS idx_context_files_path ON context_files(file_path);
 
 -- =============================================================================
 -- FULL-TEXT SEARCH SUPPORT
@@ -49,7 +49,7 @@ CREATE INDEX idx_context_files_path ON context_files(file_path);
 
 ALTER TABLE context_files ADD COLUMN IF NOT EXISTS content_tsv TSVECTOR;
 
-CREATE INDEX idx_context_files_search ON context_files USING GIN(content_tsv);
+CREATE INDEX IF NOT EXISTS idx_context_files_search ON context_files USING GIN(content_tsv);
 
 -- =============================================================================
 -- COMMENTS

@@ -20,7 +20,7 @@ ALTER TABLE human_os.users
   ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW(),
   ADD COLUMN IF NOT EXISTS product_active BOOLEAN DEFAULT true;
 
--- Create index on linkedin_id for fast lookups during auth
+-- CREATE INDEX IF NOT EXISTS on linkedin_id for fast lookups during auth
 CREATE INDEX IF NOT EXISTS idx_human_os_users_linkedin_id
   ON human_os.users(linkedin_id) WHERE linkedin_id IS NOT NULL;
 
@@ -75,9 +75,11 @@ CREATE INDEX IF NOT EXISTS idx_human_os_user_products_product
 -- RLS for user_products
 ALTER TABLE human_os.user_products ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access" ON human_os.user_products;
 CREATE POLICY "Service role full access" ON human_os.user_products
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can read own products" ON human_os.user_products;
 CREATE POLICY "Users can read own products" ON human_os.user_products
   FOR SELECT TO authenticated USING (true);
 

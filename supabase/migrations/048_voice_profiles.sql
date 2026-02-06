@@ -137,18 +137,18 @@ CREATE INDEX IF NOT EXISTS idx_voice_input_sources_tier ON human_os.voice_input_
 -- =============================================================================
 
 -- Update updated_at on voice_profiles
-CREATE TRIGGER update_voice_profiles_updated_at
-  BEFORE UPDATE ON human_os.voice_profiles
+DROP TRIGGER IF EXISTS update_voice_profiles_updated_at ON human_os.voice_profiles;
+CREATE TRIGGER update_voice_profiles_updated_at BEFORE UPDATE ON human_os.voice_profiles
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Update updated_at on voice_commandments
-CREATE TRIGGER update_voice_commandments_updated_at
-  BEFORE UPDATE ON human_os.voice_commandments
+DROP TRIGGER IF EXISTS update_voice_commandments_updated_at ON human_os.voice_commandments;
+CREATE TRIGGER update_voice_commandments_updated_at BEFORE UPDATE ON human_os.voice_commandments
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Update updated_at on voice_input_sources
-CREATE TRIGGER update_voice_input_sources_updated_at
-  BEFORE UPDATE ON human_os.voice_input_sources
+DROP TRIGGER IF EXISTS update_voice_input_sources_updated_at ON human_os.voice_input_sources;
+CREATE TRIGGER update_voice_input_sources_updated_at BEFORE UPDATE ON human_os.voice_input_sources
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -234,20 +234,25 @@ ALTER TABLE human_os.voice_commandments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE human_os.voice_input_sources ENABLE ROW LEVEL SECURITY;
 
 -- Service role full access
+DROP POLICY IF EXISTS "voice_profiles_service_all" ON human_os.voice_profiles;
 CREATE POLICY "voice_profiles_service_all" ON human_os.voice_profiles
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "voice_commandments_service_all" ON human_os.voice_commandments;
 CREATE POLICY "voice_commandments_service_all" ON human_os.voice_commandments
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "voice_input_sources_service_all" ON human_os.voice_input_sources;
 CREATE POLICY "voice_input_sources_service_all" ON human_os.voice_input_sources
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Authenticated users can read public and their layer's profiles
+DROP POLICY IF EXISTS "voice_profiles_read_policy" ON human_os.voice_profiles;
 CREATE POLICY "voice_profiles_read_policy" ON human_os.voice_profiles
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'powerpak:%');
 
+DROP POLICY IF EXISTS "voice_commandments_read_policy" ON human_os.voice_commandments;
 CREATE POLICY "voice_commandments_read_policy" ON human_os.voice_commandments
   FOR SELECT TO authenticated
   USING (
@@ -258,6 +263,7 @@ CREATE POLICY "voice_commandments_read_policy" ON human_os.voice_commandments
     )
   );
 
+DROP POLICY IF EXISTS "voice_input_sources_read_policy" ON human_os.voice_input_sources;
 CREATE POLICY "voice_input_sources_read_policy" ON human_os.voice_input_sources
   FOR SELECT TO authenticated
   USING (

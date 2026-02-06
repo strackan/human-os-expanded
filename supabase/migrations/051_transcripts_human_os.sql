@@ -56,31 +56,31 @@ CREATE TABLE IF NOT EXISTS human_os.transcripts (
 -- =============================================================================
 
 -- Core lookups
-CREATE INDEX idx_transcripts_layer ON human_os.transcripts(layer);
-CREATE INDEX idx_transcripts_user ON human_os.transcripts(user_id);
-CREATE INDEX idx_transcripts_date ON human_os.transcripts(call_date DESC);
-CREATE INDEX idx_transcripts_type ON human_os.transcripts(call_type);
+CREATE INDEX IF NOT EXISTS idx_transcripts_layer ON human_os.transcripts(layer);
+CREATE INDEX IF NOT EXISTS idx_transcripts_user ON human_os.transcripts(user_id);
+CREATE INDEX IF NOT EXISTS idx_transcripts_date ON human_os.transcripts(call_date DESC);
+CREATE INDEX IF NOT EXISTS idx_transcripts_type ON human_os.transcripts(call_type);
 
 -- Array/JSONB indexes
-CREATE INDEX idx_transcripts_topics ON human_os.transcripts USING GIN(key_topics);
-CREATE INDEX idx_transcripts_tags ON human_os.transcripts USING GIN(context_tags);
-CREATE INDEX idx_transcripts_entities ON human_os.transcripts USING GIN(entity_ids);
-CREATE INDEX idx_transcripts_labels ON human_os.transcripts USING GIN(labels);
+CREATE INDEX IF NOT EXISTS idx_transcripts_topics ON human_os.transcripts USING GIN(key_topics);
+CREATE INDEX IF NOT EXISTS idx_transcripts_tags ON human_os.transcripts USING GIN(context_tags);
+CREATE INDEX IF NOT EXISTS idx_transcripts_entities ON human_os.transcripts USING GIN(entity_ids);
+CREATE INDEX IF NOT EXISTS idx_transcripts_labels ON human_os.transcripts USING GIN(labels);
 
 -- Linking indexes
-CREATE INDEX idx_transcripts_project ON human_os.transcripts(project_id) WHERE project_id IS NOT NULL;
-CREATE INDEX idx_transcripts_opportunity ON human_os.transcripts(opportunity_id) WHERE opportunity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_transcripts_project ON human_os.transcripts(project_id) WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_transcripts_opportunity ON human_os.transcripts(opportunity_id) WHERE opportunity_id IS NOT NULL;
 
 -- Full-text search on summary and title
-CREATE INDEX idx_transcripts_fts ON human_os.transcripts
+CREATE INDEX IF NOT EXISTS idx_transcripts_fts ON human_os.transcripts
   USING GIN(to_tsvector('english', coalesce(summary, '') || ' ' || coalesce(title, '')));
 
 -- =============================================================================
 -- TRIGGERS
 -- =============================================================================
 
-CREATE TRIGGER transcripts_updated_at
-  BEFORE UPDATE ON human_os.transcripts
+DROP TRIGGER IF EXISTS transcripts_updated_at ON human_os.transcripts;
+CREATE TRIGGER transcripts_updated_at BEFORE UPDATE ON human_os.transcripts
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- =============================================================================
@@ -90,18 +90,22 @@ CREATE TRIGGER transcripts_updated_at
 ALTER TABLE human_os.transcripts ENABLE ROW LEVEL SECURITY;
 
 -- Service role full access (for MCP server)
+DROP POLICY IF EXISTS "transcripts_service_all" ON human_os.transcripts;
 CREATE POLICY "transcripts_service_all" ON human_os.transcripts
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Authenticated users can access public layer and their own layer
+DROP POLICY IF EXISTS "transcripts_read_policy" ON human_os.transcripts;
 CREATE POLICY "transcripts_read_policy" ON human_os.transcripts
   FOR SELECT TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'renubu:%');
 
+DROP POLICY IF EXISTS "transcripts_write_policy" ON human_os.transcripts;
 CREATE POLICY "transcripts_write_policy" ON human_os.transcripts
   FOR INSERT TO authenticated
   WITH CHECK (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'renubu:%');
 
+DROP POLICY IF EXISTS "transcripts_update_policy" ON human_os.transcripts;
 CREATE POLICY "transcripts_update_policy" ON human_os.transcripts
   FOR UPDATE TO authenticated
   USING (layer = 'public' OR layer LIKE 'founder:%' OR layer LIKE 'renubu:%');

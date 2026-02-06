@@ -9,7 +9,7 @@
 -- Container for outbound efforts targeting groups of contacts
 -- =============================================================================
 
-CREATE TABLE crm.campaigns (
+CREATE TABLE IF NOT EXISTS crm.campaigns (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Dual-key scoping
@@ -57,27 +57,27 @@ CREATE TABLE crm.campaigns (
   )
 );
 
-CREATE TRIGGER check_campaigns_scope
-  BEFORE INSERT OR UPDATE ON crm.campaigns
+DROP TRIGGER IF EXISTS check_campaigns_scope ON crm.campaigns;
+CREATE TRIGGER check_campaigns_scope BEFORE INSERT OR UPDATE ON crm.campaigns
   FOR EACH ROW EXECUTE FUNCTION crm.check_scope();
 
-CREATE TRIGGER update_campaigns_updated_at
-  BEFORE UPDATE ON crm.campaigns
+DROP TRIGGER IF EXISTS update_campaigns_updated_at ON crm.campaigns;
+CREATE TRIGGER update_campaigns_updated_at BEFORE UPDATE ON crm.campaigns
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Indexes
-CREATE INDEX idx_campaigns_owner ON crm.campaigns(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_campaigns_tenant ON crm.campaigns(tenant_id) WHERE tenant_id IS NOT NULL;
-CREATE INDEX idx_campaigns_status ON crm.campaigns(status);
-CREATE INDEX idx_campaigns_type ON crm.campaigns(campaign_type);
-CREATE INDEX idx_campaigns_active ON crm.campaigns(owner_id, status) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_campaigns_owner ON crm.campaigns(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_campaigns_tenant ON crm.campaigns(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_campaigns_status ON crm.campaigns(status);
+CREATE INDEX IF NOT EXISTS idx_campaigns_type ON crm.campaigns(campaign_type);
+CREATE INDEX IF NOT EXISTS idx_campaigns_active ON crm.campaigns(owner_id, status) WHERE status = 'active';
 
 -- =============================================================================
 -- 2. CAMPAIGN MEMBERS
 -- Contacts enrolled in a campaign with status tracking
 -- =============================================================================
 
-CREATE TABLE crm.campaign_members (
+CREATE TABLE IF NOT EXISTS crm.campaign_members (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id UUID NOT NULL REFERENCES crm.campaigns(id) ON DELETE CASCADE,
 
@@ -119,24 +119,24 @@ CREATE TABLE crm.campaign_members (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TRIGGER update_campaign_members_updated_at
-  BEFORE UPDATE ON crm.campaign_members
+DROP TRIGGER IF EXISTS update_campaign_members_updated_at ON crm.campaign_members;
+CREATE TRIGGER update_campaign_members_updated_at BEFORE UPDATE ON crm.campaign_members
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Indexes
-CREATE INDEX idx_campaign_members_campaign ON crm.campaign_members(campaign_id);
-CREATE INDEX idx_campaign_members_entity ON crm.campaign_members(entity_id) WHERE entity_id IS NOT NULL;
-CREATE INDEX idx_campaign_members_contact ON crm.campaign_members(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
-CREATE INDEX idx_campaign_members_status ON crm.campaign_members(campaign_id, status);
-CREATE INDEX idx_campaign_members_pending ON crm.campaign_members(campaign_id) WHERE status = 'pending';
-CREATE INDEX idx_campaign_members_converted ON crm.campaign_members(converted_to_opportunity_id) WHERE converted_to_opportunity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_campaign_members_campaign ON crm.campaign_members(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_members_entity ON crm.campaign_members(entity_id) WHERE entity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_campaign_members_contact ON crm.campaign_members(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_campaign_members_status ON crm.campaign_members(campaign_id, status);
+CREATE INDEX IF NOT EXISTS idx_campaign_members_pending ON crm.campaign_members(campaign_id) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_campaign_members_converted ON crm.campaign_members(converted_to_opportunity_id) WHERE converted_to_opportunity_id IS NOT NULL;
 
 -- =============================================================================
 -- 3. CAMPAIGN ACTIVITIES
 -- Log of outreach activities for campaign members
 -- =============================================================================
 
-CREATE TABLE crm.campaign_activities (
+CREATE TABLE IF NOT EXISTS crm.campaign_activities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id UUID NOT NULL REFERENCES crm.campaigns(id) ON DELETE CASCADE,
   member_id UUID NOT NULL REFERENCES crm.campaign_members(id) ON DELETE CASCADE,
@@ -177,10 +177,10 @@ CREATE TABLE crm.campaign_activities (
 );
 
 -- Indexes
-CREATE INDEX idx_campaign_activities_campaign ON crm.campaign_activities(campaign_id);
-CREATE INDEX idx_campaign_activities_member ON crm.campaign_activities(member_id);
-CREATE INDEX idx_campaign_activities_type ON crm.campaign_activities(activity_type);
-CREATE INDEX idx_campaign_activities_performed ON crm.campaign_activities(performed_at DESC);
+CREATE INDEX IF NOT EXISTS idx_campaign_activities_campaign ON crm.campaign_activities(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_activities_member ON crm.campaign_activities(member_id);
+CREATE INDEX IF NOT EXISTS idx_campaign_activities_type ON crm.campaign_activities(activity_type);
+CREATE INDEX IF NOT EXISTS idx_campaign_activities_performed ON crm.campaign_activities(performed_at DESC);
 
 -- =============================================================================
 -- RLS POLICIES
@@ -191,21 +191,27 @@ ALTER TABLE crm.campaign_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crm.campaign_activities ENABLE ROW LEVEL SECURITY;
 
 -- Service role
+DROP POLICY IF EXISTS "service_all" ON crm.campaigns;
 CREATE POLICY "service_all" ON crm.campaigns FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.campaign_members;
 CREATE POLICY "service_all" ON crm.campaign_members FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.campaign_activities;
 CREATE POLICY "service_all" ON crm.campaign_activities FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- CAMPAIGNS: Owner access
+DROP POLICY IF EXISTS "campaigns_owner_read" ON crm.campaigns;
 CREATE POLICY "campaigns_owner_read" ON crm.campaigns
   FOR SELECT TO authenticated
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "campaigns_owner_write" ON crm.campaigns;
 CREATE POLICY "campaigns_owner_write" ON crm.campaigns
   FOR ALL TO authenticated
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid() AND tenant_id IS NULL);
 
 -- CAMPAIGNS: Tenant access
+DROP POLICY IF EXISTS "campaigns_tenant_read" ON crm.campaigns;
 CREATE POLICY "campaigns_tenant_read" ON crm.campaigns
   FOR SELECT TO authenticated
   USING (
@@ -213,12 +219,14 @@ CREATE POLICY "campaigns_tenant_read" ON crm.campaigns
     AND tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
   );
 
+DROP POLICY IF EXISTS "campaigns_tenant_write" ON crm.campaigns;
 CREATE POLICY "campaigns_tenant_write" ON crm.campaigns
   FOR ALL TO authenticated
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
   WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid AND owner_id IS NULL);
 
 -- CAMPAIGN MEMBERS: Access via campaign
+DROP POLICY IF EXISTS "members_read" ON crm.campaign_members;
 CREATE POLICY "members_read" ON crm.campaign_members
   FOR SELECT TO authenticated
   USING (
@@ -229,6 +237,7 @@ CREATE POLICY "members_read" ON crm.campaign_members
     )
   );
 
+DROP POLICY IF EXISTS "members_write" ON crm.campaign_members;
 CREATE POLICY "members_write" ON crm.campaign_members
   FOR ALL TO authenticated
   USING (
@@ -247,6 +256,7 @@ CREATE POLICY "members_write" ON crm.campaign_members
   );
 
 -- CAMPAIGN ACTIVITIES: Access via campaign
+DROP POLICY IF EXISTS "activities_read" ON crm.campaign_activities;
 CREATE POLICY "activities_read" ON crm.campaign_activities
   FOR SELECT TO authenticated
   USING (
@@ -257,6 +267,7 @@ CREATE POLICY "activities_read" ON crm.campaign_activities
     )
   );
 
+DROP POLICY IF EXISTS "activities_write" ON crm.campaign_activities;
 CREATE POLICY "activities_write" ON crm.campaign_activities
   FOR ALL TO authenticated
   USING (

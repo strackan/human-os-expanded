@@ -30,7 +30,7 @@ $$ LANGUAGE plpgsql;
 -- Customizable deal stages per owner/tenant
 -- =============================================================================
 
-CREATE TABLE crm.pipeline_stages (
+CREATE TABLE IF NOT EXISTS crm.pipeline_stages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Dual-key scoping (one must be set, except for template rows)
@@ -69,21 +69,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER check_pipeline_stages_scope
-  BEFORE INSERT OR UPDATE ON crm.pipeline_stages
+DROP TRIGGER IF EXISTS check_pipeline_stages_scope ON crm.pipeline_stages;
+CREATE TRIGGER check_pipeline_stages_scope BEFORE INSERT OR UPDATE ON crm.pipeline_stages
   FOR EACH ROW EXECUTE FUNCTION crm.check_pipeline_stage_scope();
 
 -- Indexes
-CREATE INDEX idx_pipeline_stages_owner ON crm.pipeline_stages(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_pipeline_stages_tenant ON crm.pipeline_stages(tenant_id) WHERE tenant_id IS NOT NULL;
-CREATE INDEX idx_pipeline_stages_position ON crm.pipeline_stages(position);
+CREATE INDEX IF NOT EXISTS idx_pipeline_stages_owner ON crm.pipeline_stages(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_pipeline_stages_tenant ON crm.pipeline_stages(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_pipeline_stages_position ON crm.pipeline_stages(position);
 
 -- =============================================================================
 -- 2. PRODUCTS/SERVICES
 -- What you sell
 -- =============================================================================
 
-CREATE TABLE crm.products (
+CREATE TABLE IF NOT EXISTS crm.products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Dual-key scoping
@@ -114,22 +114,22 @@ CREATE TABLE crm.products (
   UNIQUE NULLS NOT DISTINCT (owner_id, tenant_id, sku)
 );
 
-CREATE TRIGGER check_products_scope
-  BEFORE INSERT OR UPDATE ON crm.products
+DROP TRIGGER IF EXISTS check_products_scope ON crm.products;
+CREATE TRIGGER check_products_scope BEFORE INSERT OR UPDATE ON crm.products
   FOR EACH ROW EXECUTE FUNCTION crm.check_scope();
 
 -- Indexes
-CREATE INDEX idx_products_owner ON crm.products(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_products_tenant ON crm.products(tenant_id) WHERE tenant_id IS NOT NULL;
-CREATE INDEX idx_products_category ON crm.products(category);
-CREATE INDEX idx_products_active ON crm.products(is_active) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_products_owner ON crm.products(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_products_tenant ON crm.products(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_products_category ON crm.products(category);
+CREATE INDEX IF NOT EXISTS idx_products_active ON crm.products(is_active) WHERE is_active = true;
 
 -- =============================================================================
 -- 3. OPPORTUNITIES (Deals)
 -- Core CRM entity for tracking deals
 -- =============================================================================
 
-CREATE TABLE crm.opportunities (
+CREATE TABLE IF NOT EXISTS crm.opportunities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Dual-key scoping
@@ -174,28 +174,28 @@ CREATE TABLE crm.opportunities (
   )
 );
 
-CREATE TRIGGER check_opportunities_scope
-  BEFORE INSERT OR UPDATE ON crm.opportunities
+DROP TRIGGER IF EXISTS check_opportunities_scope ON crm.opportunities;
+CREATE TRIGGER check_opportunities_scope BEFORE INSERT OR UPDATE ON crm.opportunities
   FOR EACH ROW EXECUTE FUNCTION crm.check_scope();
 
 -- Indexes
-CREATE INDEX idx_opportunities_owner ON crm.opportunities(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_opportunities_tenant ON crm.opportunities(tenant_id) WHERE tenant_id IS NOT NULL;
-CREATE INDEX idx_opportunities_entity ON crm.opportunities(entity_id) WHERE entity_id IS NOT NULL;
-CREATE INDEX idx_opportunities_gft_contact ON crm.opportunities(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
-CREATE INDEX idx_opportunities_company ON crm.opportunities(company_entity_id) WHERE company_entity_id IS NOT NULL;
-CREATE INDEX idx_opportunities_stage ON crm.opportunities(stage_id);
-CREATE INDEX idx_opportunities_expected_close ON crm.opportunities(expected_close_date) WHERE expected_close_date IS NOT NULL;
-CREATE INDEX idx_opportunities_created ON crm.opportunities(created_at DESC);
-CREATE INDEX idx_opportunities_open ON crm.opportunities(owner_id, stage_id) WHERE closed_at IS NULL;
-CREATE INDEX idx_opportunities_assigned ON crm.opportunities(assigned_to) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_owner ON crm.opportunities(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_tenant ON crm.opportunities(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_entity ON crm.opportunities(entity_id) WHERE entity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_gft_contact ON crm.opportunities(gft_contact_id) WHERE gft_contact_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_company ON crm.opportunities(company_entity_id) WHERE company_entity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_stage ON crm.opportunities(stage_id);
+CREATE INDEX IF NOT EXISTS idx_opportunities_expected_close ON crm.opportunities(expected_close_date) WHERE expected_close_date IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_created ON crm.opportunities(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunities_open ON crm.opportunities(owner_id, stage_id) WHERE closed_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_opportunities_assigned ON crm.opportunities(assigned_to) WHERE assigned_to IS NOT NULL;
 
 -- =============================================================================
 -- 4. OPPORTUNITY ACTIVITIES
 -- Activities linked to specific deals
 -- =============================================================================
 
-CREATE TABLE crm.opportunity_activities (
+CREATE TABLE IF NOT EXISTS crm.opportunity_activities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id UUID NOT NULL REFERENCES crm.opportunities(id) ON DELETE CASCADE,
 
@@ -217,16 +217,16 @@ CREATE TABLE crm.opportunity_activities (
 );
 
 -- Indexes
-CREATE INDEX idx_opportunity_activities_opportunity ON crm.opportunity_activities(opportunity_id);
-CREATE INDEX idx_opportunity_activities_type ON crm.opportunity_activities(activity_type);
-CREATE INDEX idx_opportunity_activities_occurred ON crm.opportunity_activities(occurred_at DESC);
+CREATE INDEX IF NOT EXISTS idx_opportunity_activities_opportunity ON crm.opportunity_activities(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_opportunity_activities_type ON crm.opportunity_activities(activity_type);
+CREATE INDEX IF NOT EXISTS idx_opportunity_activities_occurred ON crm.opportunity_activities(occurred_at DESC);
 
 -- =============================================================================
 -- 5. OPPORTUNITY LINE ITEMS
 -- Products/services in each deal
 -- =============================================================================
 
-CREATE TABLE crm.opportunity_line_items (
+CREATE TABLE IF NOT EXISTS crm.opportunity_line_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   opportunity_id UUID NOT NULL REFERENCES crm.opportunities(id) ON DELETE CASCADE,
   product_id UUID REFERENCES crm.products(id) ON DELETE SET NULL,
@@ -247,15 +247,15 @@ CREATE TABLE crm.opportunity_line_items (
 );
 
 -- Indexes
-CREATE INDEX idx_line_items_opportunity ON crm.opportunity_line_items(opportunity_id);
-CREATE INDEX idx_line_items_product ON crm.opportunity_line_items(product_id) WHERE product_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_line_items_opportunity ON crm.opportunity_line_items(opportunity_id);
+CREATE INDEX IF NOT EXISTS idx_line_items_product ON crm.opportunity_line_items(product_id) WHERE product_id IS NOT NULL;
 
 -- =============================================================================
 -- 6. ACCOUNT CONTEXT
 -- Tenant-specific company intelligence
 -- =============================================================================
 
-CREATE TABLE crm.account_context (
+CREATE TABLE IF NOT EXISTS crm.account_context (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
   -- Dual-key scoping
@@ -299,36 +299,36 @@ CREATE TABLE crm.account_context (
   UNIQUE NULLS NOT DISTINCT (owner_id, tenant_id, gft_company_id)
 );
 
-CREATE TRIGGER check_account_context_scope
-  BEFORE INSERT OR UPDATE ON crm.account_context
+DROP TRIGGER IF EXISTS check_account_context_scope ON crm.account_context;
+CREATE TRIGGER check_account_context_scope BEFORE INSERT OR UPDATE ON crm.account_context
   FOR EACH ROW EXECUTE FUNCTION crm.check_scope();
 
 -- Indexes
-CREATE INDEX idx_account_context_owner ON crm.account_context(owner_id) WHERE owner_id IS NOT NULL;
-CREATE INDEX idx_account_context_tenant ON crm.account_context(tenant_id) WHERE tenant_id IS NOT NULL;
-CREATE INDEX idx_account_context_company ON crm.account_context(company_entity_id) WHERE company_entity_id IS NOT NULL;
-CREATE INDEX idx_account_context_gft_company ON crm.account_context(gft_company_id) WHERE gft_company_id IS NOT NULL;
-CREATE INDEX idx_account_context_type ON crm.account_context(account_type);
-CREATE INDEX idx_account_context_tier ON crm.account_context(tier);
+CREATE INDEX IF NOT EXISTS idx_account_context_owner ON crm.account_context(owner_id) WHERE owner_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_account_context_tenant ON crm.account_context(tenant_id) WHERE tenant_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_account_context_company ON crm.account_context(company_entity_id) WHERE company_entity_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_account_context_gft_company ON crm.account_context(gft_company_id) WHERE gft_company_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_account_context_type ON crm.account_context(account_type);
+CREATE INDEX IF NOT EXISTS idx_account_context_tier ON crm.account_context(tier);
 
 -- =============================================================================
 -- TRIGGERS - Updated At
 -- =============================================================================
 
-CREATE TRIGGER update_pipeline_stages_updated_at
-  BEFORE UPDATE ON crm.pipeline_stages
+DROP TRIGGER IF EXISTS update_pipeline_stages_updated_at ON crm.pipeline_stages;
+CREATE TRIGGER update_pipeline_stages_updated_at BEFORE UPDATE ON crm.pipeline_stages
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_products_updated_at
-  BEFORE UPDATE ON crm.products
+DROP TRIGGER IF EXISTS update_products_updated_at ON crm.products;
+CREATE TRIGGER update_products_updated_at BEFORE UPDATE ON crm.products
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_opportunities_updated_at
-  BEFORE UPDATE ON crm.opportunities
+DROP TRIGGER IF EXISTS update_opportunities_updated_at ON crm.opportunities;
+CREATE TRIGGER update_opportunities_updated_at BEFORE UPDATE ON crm.opportunities
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_account_context_updated_at
-  BEFORE UPDATE ON crm.account_context
+DROP TRIGGER IF EXISTS update_account_context_updated_at ON crm.account_context;
+CREATE TRIGGER update_account_context_updated_at BEFORE UPDATE ON crm.account_context
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================================================
@@ -343,14 +343,21 @@ ALTER TABLE crm.opportunity_line_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE crm.account_context ENABLE ROW LEVEL SECURITY;
 
 -- Service role can do everything
+DROP POLICY IF EXISTS "service_all" ON crm.pipeline_stages;
 CREATE POLICY "service_all" ON crm.pipeline_stages FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.products;
 CREATE POLICY "service_all" ON crm.products FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.opportunities;
 CREATE POLICY "service_all" ON crm.opportunities FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.opportunity_activities;
 CREATE POLICY "service_all" ON crm.opportunity_activities FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.opportunity_line_items;
 CREATE POLICY "service_all" ON crm.opportunity_line_items FOR ALL TO service_role USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "service_all" ON crm.account_context;
 CREATE POLICY "service_all" ON crm.account_context FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- PIPELINE STAGES: Owner or tenant access, plus template rows
+DROP POLICY IF EXISTS "stages_owner_read" ON crm.pipeline_stages;
 CREATE POLICY "stages_owner_read" ON crm.pipeline_stages
   FOR SELECT TO authenticated
   USING (
@@ -358,11 +365,13 @@ CREATE POLICY "stages_owner_read" ON crm.pipeline_stages
     OR (owner_id IS NULL AND tenant_id IS NULL)  -- Template rows
   );
 
+DROP POLICY IF EXISTS "stages_owner_write" ON crm.pipeline_stages;
 CREATE POLICY "stages_owner_write" ON crm.pipeline_stages
   FOR ALL TO authenticated
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid() AND tenant_id IS NULL);
 
+DROP POLICY IF EXISTS "stages_tenant_read" ON crm.pipeline_stages;
 CREATE POLICY "stages_tenant_read" ON crm.pipeline_stages
   FOR SELECT TO authenticated
   USING (
@@ -370,21 +379,25 @@ CREATE POLICY "stages_tenant_read" ON crm.pipeline_stages
     AND tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
   );
 
+DROP POLICY IF EXISTS "stages_tenant_write" ON crm.pipeline_stages;
 CREATE POLICY "stages_tenant_write" ON crm.pipeline_stages
   FOR ALL TO authenticated
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
   WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid AND owner_id IS NULL);
 
 -- PRODUCTS: Owner or tenant access
+DROP POLICY IF EXISTS "products_owner_read" ON crm.products;
 CREATE POLICY "products_owner_read" ON crm.products
   FOR SELECT TO authenticated
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "products_owner_write" ON crm.products;
 CREATE POLICY "products_owner_write" ON crm.products
   FOR ALL TO authenticated
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid() AND tenant_id IS NULL);
 
+DROP POLICY IF EXISTS "products_tenant_read" ON crm.products;
 CREATE POLICY "products_tenant_read" ON crm.products
   FOR SELECT TO authenticated
   USING (
@@ -392,21 +405,25 @@ CREATE POLICY "products_tenant_read" ON crm.products
     AND tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
   );
 
+DROP POLICY IF EXISTS "products_tenant_write" ON crm.products;
 CREATE POLICY "products_tenant_write" ON crm.products
   FOR ALL TO authenticated
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
   WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid AND owner_id IS NULL);
 
 -- OPPORTUNITIES: Owner or tenant access
+DROP POLICY IF EXISTS "opportunities_owner_read" ON crm.opportunities;
 CREATE POLICY "opportunities_owner_read" ON crm.opportunities
   FOR SELECT TO authenticated
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "opportunities_owner_write" ON crm.opportunities;
 CREATE POLICY "opportunities_owner_write" ON crm.opportunities
   FOR ALL TO authenticated
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid() AND tenant_id IS NULL);
 
+DROP POLICY IF EXISTS "opportunities_tenant_read" ON crm.opportunities;
 CREATE POLICY "opportunities_tenant_read" ON crm.opportunities
   FOR SELECT TO authenticated
   USING (
@@ -414,12 +431,14 @@ CREATE POLICY "opportunities_tenant_read" ON crm.opportunities
     AND tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
   );
 
+DROP POLICY IF EXISTS "opportunities_tenant_write" ON crm.opportunities;
 CREATE POLICY "opportunities_tenant_write" ON crm.opportunities
   FOR ALL TO authenticated
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
   WITH CHECK (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid AND owner_id IS NULL);
 
 -- OPPORTUNITY ACTIVITIES: Access via opportunity
+DROP POLICY IF EXISTS "activities_read" ON crm.opportunity_activities;
 CREATE POLICY "activities_read" ON crm.opportunity_activities
   FOR SELECT TO authenticated
   USING (
@@ -433,6 +452,7 @@ CREATE POLICY "activities_read" ON crm.opportunity_activities
     )
   );
 
+DROP POLICY IF EXISTS "activities_write" ON crm.opportunity_activities;
 CREATE POLICY "activities_write" ON crm.opportunity_activities
   FOR ALL TO authenticated
   USING (
@@ -457,6 +477,7 @@ CREATE POLICY "activities_write" ON crm.opportunity_activities
   );
 
 -- LINE ITEMS: Access via opportunity
+DROP POLICY IF EXISTS "line_items_read" ON crm.opportunity_line_items;
 CREATE POLICY "line_items_read" ON crm.opportunity_line_items
   FOR SELECT TO authenticated
   USING (
@@ -470,6 +491,7 @@ CREATE POLICY "line_items_read" ON crm.opportunity_line_items
     )
   );
 
+DROP POLICY IF EXISTS "line_items_write" ON crm.opportunity_line_items;
 CREATE POLICY "line_items_write" ON crm.opportunity_line_items
   FOR ALL TO authenticated
   USING (
@@ -494,15 +516,18 @@ CREATE POLICY "line_items_write" ON crm.opportunity_line_items
   );
 
 -- ACCOUNT CONTEXT: Owner or tenant access
+DROP POLICY IF EXISTS "account_context_owner_read" ON crm.account_context;
 CREATE POLICY "account_context_owner_read" ON crm.account_context
   FOR SELECT TO authenticated
   USING (owner_id = auth.uid());
 
+DROP POLICY IF EXISTS "account_context_owner_write" ON crm.account_context;
 CREATE POLICY "account_context_owner_write" ON crm.account_context
   FOR ALL TO authenticated
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid() AND tenant_id IS NULL);
 
+DROP POLICY IF EXISTS "account_context_tenant_read" ON crm.account_context;
 CREATE POLICY "account_context_tenant_read" ON crm.account_context
   FOR SELECT TO authenticated
   USING (
@@ -510,6 +535,7 @@ CREATE POLICY "account_context_tenant_read" ON crm.account_context
     AND tenant_id = (auth.jwt() ->> 'tenant_id')::uuid
   );
 
+DROP POLICY IF EXISTS "account_context_tenant_write" ON crm.account_context;
 CREATE POLICY "account_context_tenant_write" ON crm.account_context
   FOR ALL TO authenticated
   USING (tenant_id = (auth.jwt() ->> 'tenant_id')::uuid)
@@ -595,7 +621,7 @@ CREATE OR REPLACE FUNCTION crm.get_pipeline_summary(
 RETURNS TABLE (
   stage_id UUID,
   stage_name TEXT,
-  position INTEGER,
+  "position" INTEGER,
   opportunity_count BIGINT,
   total_value DECIMAL(12,2),
   weighted_value DECIMAL(12,2)
@@ -608,7 +634,7 @@ BEGIN
   SELECT
     s.id AS stage_id,
     s.name AS stage_name,
-    s.position,
+    s."position",
     COUNT(o.id) AS opportunity_count,
     COALESCE(SUM(o.expected_value), 0) AS total_value,
     COALESCE(SUM(o.expected_value * COALESCE(o.probability, s.probability) / 100.0), 0) AS weighted_value
@@ -625,8 +651,8 @@ BEGIN
       OR (p_tenant_id IS NOT NULL AND s.tenant_id = p_tenant_id)
     )
     AND s.is_lost = false  -- Exclude lost stage from pipeline view
-  GROUP BY s.id, s.name, s.position
-  ORDER BY s.position;
+  GROUP BY s.id, s.name, s."position"
+  ORDER BY s."position";
 END;
 $$;
 

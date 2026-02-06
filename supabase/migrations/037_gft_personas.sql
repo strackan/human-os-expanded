@@ -37,14 +37,14 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'persona_id'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN persona_id UUID REFERENCES gft.personas(id) ON DELETE SET NULL;
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS persona_id UUID REFERENCES gft.personas(id) ON DELETE SET NULL;
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'gft' AND table_name = 'contacts' AND column_name = 'persona_match_confidence'
   ) THEN
-    ALTER TABLE gft.contacts ADD COLUMN persona_match_confidence DECIMAL(3,2);
+    ALTER TABLE gft.contacts ADD COLUMN IF NOT EXISTS persona_match_confidence DECIMAL(3,2);
   END IF;
 END $$;
 

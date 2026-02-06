@@ -25,8 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_user_properties_key_value
   WHERE value IS NOT NULL;
 
 -- Updated_at trigger
-CREATE TRIGGER update_user_properties_updated_at
-  BEFORE UPDATE ON human_os.user_properties
+DROP TRIGGER IF EXISTS update_user_properties_updated_at ON human_os.user_properties;
+CREATE TRIGGER update_user_properties_updated_at BEFORE UPDATE ON human_os.user_properties
   FOR EACH ROW EXECUTE FUNCTION human_os.update_users_updated_at();
 
 -- =============================================================================
@@ -35,9 +35,11 @@ CREATE TRIGGER update_user_properties_updated_at
 
 ALTER TABLE human_os.user_properties ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Service role full access" ON human_os.user_properties;
 CREATE POLICY "Service role full access" ON human_os.user_properties
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Users can read all properties" ON human_os.user_properties;
 CREATE POLICY "Users can read all properties" ON human_os.user_properties
   FOR SELECT TO authenticated USING (true);
 

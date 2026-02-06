@@ -41,15 +41,15 @@ CREATE TABLE IF NOT EXISTS entities (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_entities_slug ON entities(slug);
-CREATE INDEX idx_entities_type ON entities(entity_type);
-CREATE INDEX idx_entities_owner ON entities(owner_id);
-CREATE INDEX idx_entities_tenant ON entities(tenant_id);
-CREATE INDEX idx_entities_privacy ON entities(privacy_scope);
-CREATE INDEX idx_entities_source ON entities(source_system, source_id);
+CREATE INDEX IF NOT EXISTS idx_entities_slug ON entities(slug);
+CREATE INDEX IF NOT EXISTS idx_entities_type ON entities(entity_type);
+CREATE INDEX IF NOT EXISTS idx_entities_owner ON entities(owner_id);
+CREATE INDEX IF NOT EXISTS idx_entities_tenant ON entities(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_entities_privacy ON entities(privacy_scope);
+CREATE INDEX IF NOT EXISTS idx_entities_source ON entities(source_system, source_id);
 
 -- GIN index for JSONB metadata queries
-CREATE INDEX idx_entities_metadata ON entities USING GIN (metadata);
+CREATE INDEX IF NOT EXISTS idx_entities_metadata ON entities USING GIN (metadata);
 
 -- =============================================================================
 -- HELPER FUNCTIONS
@@ -65,8 +65,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger for entities
-CREATE TRIGGER update_entities_updated_at
-  BEFORE UPDATE ON entities
+DROP TRIGGER IF EXISTS update_entities_updated_at ON entities;
+CREATE TRIGGER update_entities_updated_at BEFORE UPDATE ON entities
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 

@@ -70,7 +70,7 @@ CREATE INDEX IF NOT EXISTS idx_conversation_turns_content_fts
 
 -- Semantic search index (create after data is populated for better performance)
 -- Run manually after accumulating data:
--- CREATE INDEX idx_conversation_turns_embedding ON conversation_turns
+-- CREATE INDEX IF NOT EXISTS idx_conversation_turns_embedding ON conversation_turns
 --   USING hnsw(embedding vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 
 -- Capture queue for async processing
@@ -93,10 +93,12 @@ ALTER TABLE conversation_turns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE claude_capture_queue ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own conversations
+DROP POLICY IF EXISTS "Users can view own conversations" ON claude_conversations;
 CREATE POLICY "Users can view own conversations"
   ON claude_conversations FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view own conversation turns" ON conversation_turns;
 CREATE POLICY "Users can view own conversation turns"
   ON conversation_turns FOR SELECT
   USING (
@@ -106,14 +108,17 @@ CREATE POLICY "Users can view own conversation turns"
   );
 
 -- Service role can insert (proxy uses service key)
+DROP POLICY IF EXISTS "Service can insert conversations" ON claude_conversations;
 CREATE POLICY "Service can insert conversations"
   ON claude_conversations FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service can insert turns" ON conversation_turns;
 CREATE POLICY "Service can insert turns"
   ON conversation_turns FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Service can manage queue" ON claude_capture_queue;
 CREATE POLICY "Service can manage queue"
   ON claude_capture_queue FOR ALL
   WITH CHECK (true);
