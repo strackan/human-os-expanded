@@ -10,7 +10,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, RotateCcw, Zap } from 'lucide-react';
+import { Loader2, RotateCcw, Zap, FastForward } from 'lucide-react';
 
 // Import VoiceCalibration for embedding in artifact panel (shows 3 pre-generated samples)
 import VoiceCalibration from '@/components/voice/VoiceCalibration';
@@ -28,6 +28,7 @@ import {
   persistReport as persistReportApi,
 } from '@/lib/api/tutorial';
 import { post, isDevMode } from '@/lib/api';
+import { loadScottDataForToolTesting } from '@/lib/dev-utils';
 import { ReportEditor, type ReportTab } from '@/components/report';
 import { WorkflowModeLayout, ArtifactPanel } from '@/components/workflow-mode';
 import { AssessmentFlow } from '@/components/assessment';
@@ -1005,6 +1006,53 @@ export default function TutorialWorkflowMode() {
     }
   }, [getQuickActionsForStep]);
 
+  // Called when dev user clicks "Skip to Tooling" - loads Scott's data and jumps to tool_testing
+  const handleSkipToTooling = useCallback(async () => {
+    console.log('[tutorial-workflow] DEV: Skipping to tool_testing with Scott data');
+
+    try {
+      const scottData = await loadScottDataForToolTesting();
+
+      // Set synthesis result with Scott's data
+      setSynthesisResult({
+        executive_report: scottData.executive_report,
+        character_profile: scottData.character_profile,
+        founder_os: scottData.founder_os,
+        voice_os: scottData.voice_os,
+      });
+
+      // Advance to tool_testing step
+      const toolStepIndex = getStepIndex('tool_testing');
+      setProgress((prev) => ({
+        ...prev,
+        currentStep: 'tool_testing' as TutorialStep,
+        stepIndex: toolStepIndex,
+      }));
+
+      // Clear any intermediate states
+      setShowInlineAssessment(false);
+      setShowReportReview(false);
+      setShowCommandmentsReview(false);
+      setIsSynthesizing(false);
+      setSynthesisError(null);
+
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          "[DEV] Loaded Scott's profile. Ready to test brain dump tools.",
+          []
+        );
+      }
+    } catch (error) {
+      console.error('[tutorial-workflow] Error loading Scott data:', error);
+      if (workflowActionsRef.current) {
+        workflowActionsRef.current.addAssistantMessage(
+          `[DEV] Error loading Scott data: ${error}`,
+          []
+        );
+      }
+    }
+  }, []);
+
   // =============================================================================
   // INITIALIZATION
   // =============================================================================
@@ -1429,6 +1477,14 @@ export default function TutorialWorkflowMode() {
           >
             <Zap className="w-3 h-3" />
             Assessment
+          </button>
+          <button
+            onClick={handleSkipToTooling}
+            className="px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded shadow-lg flex items-center gap-1 border border-blue-500"
+            title="Skip to Tool Testing with Scott's data (Dev Mode)"
+          >
+            <FastForward className="w-3 h-3" />
+            Skip to Tooling
           </button>
           <button
             onClick={handleReset}
