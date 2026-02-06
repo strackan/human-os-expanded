@@ -88,9 +88,11 @@ export interface ExtractedEntities {
 export interface PopulateResult {
   tasks_created: number;
   relationships_created: number;
+  contexts_added: number;
   projects_added: number;
   goals_added: number;
   parking_lot_items: number;
+  transcript_id: string | null;
   entity_ids: string[];
   errors: string[];
 }
@@ -323,6 +325,7 @@ export function ToolsTestingArtifact({
           entities: selectedEntities,
           session_id: sessionId,
           user_id: userId,
+          brain_dump_text: brainDump, // Include raw text for transcript storage
         }),
       });
 
@@ -791,6 +794,14 @@ export function ToolsTestingArtifact({
               icon={<Users className="w-5 h-5" />}
               label="Relationships"
               value={populateResult.relationships_created}
+              color="purple"
+            />
+          )}
+          {populateResult.contexts_added > 0 && (
+            <StatCard
+              icon={<Brain className="w-5 h-5" />}
+              label="Context Entries"
+              value={populateResult.contexts_added}
               color="purple"
             />
           )}

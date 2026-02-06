@@ -65,6 +65,7 @@ interface PopulateRequest {
   };
   session_id: string;
   user_id: string;
+  brain_dump_text?: string; // Raw brain dump for transcript storage
 }
 
 export async function POST(request: NextRequest) {
@@ -93,12 +94,42 @@ export async function POST(request: NextRequest) {
     const results = {
       tasks_created: 0,
       relationships_created: 0,
+      contexts_added: 0,
       projects_added: 0,
       goals_added: 0,
       parking_lot_items: 0,
+      transcript_id: null as string | null,
       entity_ids: [] as string[],
       errors: [] as string[],
     };
+
+    // 0. Create transcript record for the brain dump (if provided)
+    let transcriptId: string | null = null;
+    if (body.brain_dump_text && isValidUuid(user_id)) {
+      const { data: transcript, error: transcriptError } = await supabase
+        .schema('founder_os')
+        .from('transcripts')
+        .insert({
+          user_id,
+          source: 'brain_dump',
+          status: 'completed',
+          word_count: body.brain_dump_text.split(/\s+/).length,
+          session_id: session_id,
+          storage_path: `${user_id}/transcripts/${new Date().toISOString().split('T')[0]}/${session_id}.json`,
+          processed_at: new Date().toISOString(),
+        })
+        .select('id')
+        .single();
+
+      if (transcript && !transcriptError) {
+        transcriptId = transcript.id;
+        results.transcript_id = transcriptId;
+        console.log(`[tools-testing/populate] Created transcript ${transcriptId}`);
+      } else if (transcriptError) {
+        console.warn(`[tools-testing/populate] Failed to create transcript:`, transcriptError);
+        // Non-fatal, continue without transcript link
+      }
+    }
 
     // 1. Insert Tasks into founder_os.tasks
     if (entities.tasks && entities.tasks.length > 0) {
@@ -130,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Insert People into founder_os.relationships
+    // 2. Insert People into founder_os.relationships + add context
     // Note: dream() can later check entities table to map to opportunities and merge contexts
     if (entities.people && entities.people.length > 0) {
       console.log(`[tools-testing/populate] Adding ${entities.people.length} people to relationships`);
@@ -150,47 +181,72 @@ export async function POST(request: NextRequest) {
             .ilike('name', person.name)
             .single();
 
+          let relationshipId: string;
+
           if (existingRel) {
-            // Already exists, count it
+            // Relationship exists - we'll add context to it
+            relationshipId = existingRel.id;
             results.relationships_created++;
-            continue;
+          } else {
+            // Create new relationship
+            // Map relationship_type to valid values
+            const relationshipMap: Record<string, string> = {
+              colleague: 'colleague',
+              friend: 'friend',
+              family: 'family',
+              mentor: 'mentor',
+              client: 'client',
+              partner: 'partner',
+              report: 'report',
+              vendor: 'vendor',
+              investor: 'investor_prospect',
+              other: 'other',
+            };
+            const relationship = relationshipMap[person.relationship_type || 'other'] || 'other';
+
+            const { data, error } = await supabase
+              .schema('founder_os')
+              .from('relationships')
+              .insert({
+                user_id,
+                name: person.name,
+                relationship,
+                notes: person.context,
+                sentiment: person.confidence >= 0.8 ? 'positive' : 'neutral',
+              })
+              .select('id')
+              .single();
+
+            if (!error && data) {
+              relationshipId = data.id;
+              results.relationships_created++;
+              results.entity_ids.push(data.id);
+            } else {
+              console.error(`[tools-testing/populate] Relationship insert error:`, error);
+              errors.push(`Person "${person.name}": ${error?.message}`);
+              continue; // Skip context if relationship creation failed
+            }
           }
 
-          // Map relationship_type to valid values
-          const relationshipMap: Record<string, string> = {
-            colleague: 'colleague',
-            friend: 'friend',
-            family: 'family',
-            mentor: 'mentor',
-            client: 'client',
-            partner: 'partner',
-            report: 'report',
-            vendor: 'vendor',
-            investor: 'investor_prospect',
-            other: 'other',
-          };
-          const relationship = relationshipMap[person.relationship_type || 'other'] || 'other';
+          // Add context to the relationship_contexts log
+          if (person.context) {
+            const { error: contextError } = await supabase
+              .schema('founder_os')
+              .from('relationship_contexts')
+              .insert({
+                relationship_id: relationshipId,
+                context_type: 'general',
+                context_details: person.context,
+                source: 'brain_dump',
+                transcript_id: transcriptId,
+              });
 
-          const { data, error } = await supabase
-            .schema('founder_os')
-            .from('relationships')
-            .insert({
-              user_id,
-              name: person.name,
-              relationship,
-              relationship_type: person.relationship_type || 'other',
-              notes: person.context,
-              sentiment: person.confidence >= 0.8 ? 'positive' : 'neutral',
-            })
-            .select('id')
-            .single();
-
-          if (!error && data) {
-            results.relationships_created++;
-            results.entity_ids.push(data.id);
-          } else if (error) {
-            console.error(`[tools-testing/populate] Relationship insert error:`, error);
-            errors.push(`Person "${person.name}": ${error.message}`);
+            if (!contextError) {
+              results.contexts_added++;
+            } else {
+              console.warn(`[tools-testing/populate] Context insert warning:`, contextError);
+              // Non-fatal - relationship was still created
+            }
           }
         }
       }
