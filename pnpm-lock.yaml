@@ -461,6 +461,9 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.3)
+      '@human-os/indexer':
+        specifier: workspace:*
+        version: link:../../packages/indexer
       '@human-os/proxy':
         specifier: workspace:*
         version: link:../../packages/proxy

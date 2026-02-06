@@ -15,6 +15,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
     "@heroicons/react": "^2.2.0",
+    "@human-os/indexer": "workspace:*",
     "@human-os/proxy": "workspace:*",
     "@radix-ui/react-popover": "^1.1.13",
     "@supabase/ssr": "^0.6.1",
