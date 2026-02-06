@@ -131,12 +131,7 @@ export function getRecommendedRoute(status: UserStatus | null): string {
 
   const { products, recommended_action, contexts } = status;
 
-  // Check GoodHang first
-  if (products.goodhang.enabled && products.goodhang.assessment?.completed) {
-    return '/goodhang/results';
-  }
-
-  // Check Founder OS
+  // Check Founder OS first (prioritize over GoodHang)
   if (products.founder_os.enabled) {
     const sculptor = products.founder_os.sculptor;
     const identity = products.founder_os.identity_profile;
@@ -161,6 +156,11 @@ export function getRecommendedRoute(status: UserStatus | null): string {
     }
 
     return '/founder-os/onboarding';
+  }
+
+  // Check GoodHang second
+  if (products.goodhang.enabled && products.goodhang.assessment?.completed) {
+    return '/goodhang/results';
   }
 
   // Default based on recommended action
