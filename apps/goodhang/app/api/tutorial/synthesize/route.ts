@@ -260,8 +260,9 @@ interface GatheredSources {
 /**
  * Gather all available sources from database and storage
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function gatherSources(
-  supabase: ReturnType<typeof createServiceClient>,
+  supabase: any,
   sessionId: string,
   entitySlug?: string
 ): Promise<GatheredSources> {
