@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4, validate as isValidUuid } from 'uuid';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -134,36 +134,54 @@ export async function POST(request: NextRequest) {
     if (entities.people && entities.people.length > 0) {
       console.log(`[tools-testing/populate] Adding ${entities.people.length} people`);
 
+      // Validate user_id is a valid UUID for the entities table
+      const ownerIdForEntities = isValidUuid(user_id) ? user_id : null;
+      if (!ownerIdForEntities) {
+        console.log(`[tools-testing/populate] user_id "${user_id}" is not a valid UUID, using null for owner_id`);
+      }
+
       for (const person of entities.people) {
-        // First, find or create the entity
-        const { data: existingEntity } = await supabase
+        // First, find or create the entity by name
+        const query = supabase
           .from('entities')
           .select('id')
-          .eq('owner_id', user_id)
           .eq('entity_type', 'person')
-          .ilike('name', person.name)
-          .single();
+          .ilike('name', person.name);
+
+        // Only filter by owner if we have a valid UUID
+        if (ownerIdForEntities) {
+          query.eq('owner_id', ownerIdForEntities);
+        }
+
+        const { data: existingEntity } = await query.single();
 
         let entityId = existingEntity?.id;
 
         if (!entityId) {
           // Create new entity
+          const insertData: Record<string, unknown> = {
+            id: uuidv4(),
+            entity_type: 'person',
+            name: person.name,
+            metadata: {
+              relationship_type: person.relationship_type,
+              context: person.context,
+              confidence: person.confidence,
+              source: 'tutorial_brain_dump',
+              original_user_id: user_id, // Store original for reference
+            },
+            source_system: 'tutorial_brain_dump',
+            privacy_scope: 'private',
+          };
+
+          // Only add owner_id if it's a valid UUID
+          if (ownerIdForEntities) {
+            insertData.owner_id = ownerIdForEntities;
+          }
+
           const { data: newEntity, error: entityError } = await supabase
             .from('entities')
-            .insert({
-              id: uuidv4(),
-              entity_type: 'person',
-              name: person.name,
-              metadata: {
-                relationship_type: person.relationship_type,
-                context: person.context,
-                confidence: person.confidence,
-                source: 'tutorial_brain_dump',
-              },
-              source_system: 'tutorial_brain_dump',
-              owner_id: user_id,
-              privacy_scope: 'private',
-            })
+            .insert(insertData)
             .select('id')
             .single();
 
