@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { v4 as uuidv4, validate as isValidUuid } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -130,72 +130,62 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Insert People into entities table
+    // 2. Insert People into founder_os.relationships
+    // Note: dream() can later check entities table to map to opportunities and merge contexts
     if (entities.people && entities.people.length > 0) {
-      console.log(`[tools-testing/populate] Adding ${entities.people.length} people`);
-
-      // Validate user_id is a valid UUID for the entities table
-      const ownerIdForEntities = isValidUuid(user_id) ? user_id : null;
-      if (!ownerIdForEntities) {
-        console.log(`[tools-testing/populate] user_id "${user_id}" is not a valid UUID, using null for owner_id`);
-      }
+      console.log(`[tools-testing/populate] Adding ${entities.people.length} people to relationships`);
 
       for (const person of entities.people) {
-        // First, find or create the entity by name
-        const query = supabase
-          .from('entities')
+        // Check if relationship already exists by name
+        const { data: existingRel } = await supabase
+          .schema('founder_os')
+          .from('relationships')
           .select('id')
-          .eq('entity_type', 'person')
-          .ilike('name', person.name);
+          .eq('user_id', user_id)
+          .ilike('name', person.name)
+          .single();
 
-        // Only filter by owner if we have a valid UUID
-        if (ownerIdForEntities) {
-          query.eq('owner_id', ownerIdForEntities);
+        if (existingRel) {
+          // Already exists, count it
+          results.relationships_created++;
+          continue;
         }
 
-        const { data: existingEntity } = await query.single();
+        // Map relationship_type to valid values
+        const relationshipMap: Record<string, string> = {
+          colleague: 'colleague',
+          friend: 'friend',
+          family: 'family',
+          mentor: 'mentor',
+          client: 'client',
+          partner: 'partner',
+          report: 'report',
+          vendor: 'vendor',
+          investor: 'investor_prospect',
+          other: 'other',
+        };
+        const relationship = relationshipMap[person.relationship_type || 'other'] || 'other';
 
-        let entityId = existingEntity?.id;
-
-        if (!entityId) {
-          // Create new entity
-          const insertData: Record<string, unknown> = {
-            id: uuidv4(),
-            entity_type: 'person',
+        const { data, error } = await supabase
+          .schema('founder_os')
+          .from('relationships')
+          .insert({
+            user_id,
             name: person.name,
-            metadata: {
-              relationship_type: person.relationship_type,
-              context: person.context,
-              confidence: person.confidence,
-              source: 'tutorial_brain_dump',
-              original_user_id: user_id, // Store original for reference
-            },
-            source_system: 'tutorial_brain_dump',
-            privacy_scope: 'private',
-          };
+            relationship,
+            relationship_type: person.relationship_type || 'other',
+            notes: person.context,
+            sentiment: person.confidence >= 0.8 ? 'positive' : 'neutral',
+          })
+          .select('id')
+          .single();
 
-          // Only add owner_id if it's a valid UUID
-          if (ownerIdForEntities) {
-            insertData.owner_id = ownerIdForEntities;
-          }
-
-          const { data: newEntity, error: entityError } = await supabase
-            .from('entities')
-            .insert(insertData)
-            .select('id')
-            .single();
-
-          if (!entityError && newEntity) {
-            entityId = newEntity.id;
-            results.entity_ids.push(entityId);
-            results.relationships_created++;
-          } else if (entityError) {
-            console.error(`[tools-testing/populate] Entity insert error:`, entityError);
-            errors.push(`Person "${person.name}": ${entityError.message}`);
-          }
-        } else {
-          // Entity already exists, count as relationship
+        if (!error && data) {
           results.relationships_created++;
+          results.entity_ids.push(data.id);
+        } else if (error) {
+          console.error(`[tools-testing/populate] Relationship insert error:`, error);
+          errors.push(`Person "${person.name}": ${error.message}`);
         }
       }
     }

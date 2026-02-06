@@ -75,18 +75,18 @@ export async function GET(request: NextRequest) {
         };
       })(),
 
-      // 2. People (entities of type 'person')
+      // 2. Relationships (from founder_os.relationships)
       (async () => {
-        const { data: people, count } = await supabase
-          .from('entities')
-          .select('id, name', { count: 'exact' })
-          .eq('owner_id', userId)
-          .eq('entity_type', 'person')
+        const { data: relationships, count } = await supabase
+          .schema('founder_os')
+          .from('relationships')
+          .select('id, name, relationship_type', { count: 'exact' })
+          .eq('user_id', userId)
           .limit(10);
 
         return {
           count: count || 0,
-          names: (people || []).map((p) => p.name),
+          names: (relationships || []).map((r) => r.name),
         };
       })(),
 
