@@ -34,6 +34,7 @@ export default function AuthCallbackPage() {
         const activationCode = sessionStorage.getItem('activationCode');
         const sessionId = sessionStorage.getItem('sessionId');
         const existingUserId = sessionStorage.getItem('existingUserId');
+        const humanOsUserId = sessionStorage.getItem('humanOsUserId');
         const alreadyRedeemed = sessionStorage.getItem('alreadyRedeemed') === 'true';
 
         if (!activationCode) {
@@ -65,6 +66,11 @@ export default function AuthCallbackPage() {
 
         // Get product before clearing storage
         const product = sessionStorage.getItem('product') as ProductType | null;
+
+        // Use human_os_user_id for founder_os data operations, fallback to auth user id
+        const effectiveUserId = humanOsUserId || session.user.id;
+        console.log('[AuthCallback] User IDs:', { authUserId: session.user.id, humanOsUserId, effectiveUserId });
+
         console.log('[AuthCallback] Retrieved from sessionStorage:', {
           activationCode,
           product,
@@ -79,7 +85,7 @@ export default function AuthCallbackPage() {
           try {
             await storeDeviceRegistration(
               activationCode,
-              session.user.id,
+              effectiveUserId,
               product,
               session.refresh_token
             );
@@ -97,16 +103,17 @@ export default function AuthCallbackPage() {
         // Store session securely (includes token for API calls)
         const token = session.access_token || '';
         const effectiveSessionId = sessionId || 'no-session';
-        await storeSession(session.user.id, effectiveSessionId, token);
+        await storeSession(effectiveUserId, effectiveSessionId, token);
 
         // Update auth store
-        setSession(session.user.id, effectiveSessionId, token);
+        setSession(effectiveUserId, effectiveSessionId, token);
 
         // Clear temp storage
         sessionStorage.removeItem('activationCode');
         sessionStorage.removeItem('sessionId');
         sessionStorage.removeItem('preview');
         sessionStorage.removeItem('existingUserId');
+        sessionStorage.removeItem('humanOsUserId');
         sessionStorage.removeItem('product');
         sessionStorage.removeItem('alreadyRedeemed');
 

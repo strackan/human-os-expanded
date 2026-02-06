@@ -84,11 +84,15 @@ export default function SignupPage() {
       const product = sessionStorage.getItem('product') as ProductType | null;
       const refreshToken = authData.session?.refresh_token;
 
+      // Use human_os_user_id for founder_os data operations, fallback to auth user id
+      const effectiveUserId = claimResult.humanOsUserId || authData.user.id;
+      console.log('[Signup] User IDs:', { authUserId: authData.user.id, humanOsUserId: claimResult.humanOsUserId, effectiveUserId });
+
       // Store device registration permanently (survives app restarts)
       if (product && refreshToken) {
-        console.log('[Signup] Storing device registration...', { userId: authData.user.id, product });
+        console.log('[Signup] Storing device registration...', { userId: effectiveUserId, product });
         try {
-          await storeDeviceRegistration(activationCode, authData.user.id, product, refreshToken);
+          await storeDeviceRegistration(activationCode, effectiveUserId, product, refreshToken);
           console.log('[Signup] Device registration stored successfully!');
         } catch (err) {
           console.error('[Signup] Failed to store device registration:', err);
@@ -100,10 +104,10 @@ export default function SignupPage() {
       // Store session securely (use sessionId if available, otherwise use a placeholder)
       const token = authData.session?.access_token || '';
       const effectiveSessionId = sessionId || 'no-session';
-      await storeSession(authData.user.id, effectiveSessionId, token);
+      await storeSession(effectiveUserId, effectiveSessionId, token);
 
       // Update auth store with token
-      setSession(authData.user.id, effectiveSessionId, token);
+      setSession(effectiveUserId, effectiveSessionId, token);
 
       // Clear temp storage
       sessionStorage.removeItem('activationCode');

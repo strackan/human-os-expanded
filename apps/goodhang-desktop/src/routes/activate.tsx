@@ -59,6 +59,10 @@ export default function ActivatePage() {
         if (result.hasExistingUser && result.userId) {
           sessionStorage.setItem('existingUserId', result.userId);
         }
+        // Store human_os_user_id for founder_os data operations
+        if (result.humanOsUserId) {
+          sessionStorage.setItem('humanOsUserId', result.humanOsUserId);
+        }
         // Mark if already redeemed (for claim endpoint to know not to re-claim)
         if (result.alreadyRedeemed) {
           sessionStorage.setItem('alreadyRedeemed', 'true');

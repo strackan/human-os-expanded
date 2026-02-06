@@ -132,6 +132,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       userId,
+      humanOsUserId, // Return human_os.users.id for founder_os data operations
       product: keyData.product,
     });
   } catch (error) {

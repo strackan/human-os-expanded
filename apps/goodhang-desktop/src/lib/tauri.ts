@@ -12,7 +12,8 @@ export interface ValidationResult {
   product?: ProductType;
   sessionId?: string;
   hasExistingUser?: boolean;
-  userId?: string;
+  userId?: string; // auth.users.id for Supabase auth
+  humanOsUserId?: string; // human_os.users.id for founder_os data operations
   preview?: AssessmentPreview;
   error?: string;
   alreadyRedeemed?: boolean; // True if code was already used but user can re-authenticate
@@ -27,7 +28,8 @@ export interface AssessmentPreview {
 export interface ClaimResult {
   success: boolean;
   product?: ProductType;
-  userId?: string;
+  userId?: string; // auth.users.id
+  humanOsUserId?: string; // human_os.users.id for founder_os data operations
   error?: string;
 }
 
@@ -171,7 +173,7 @@ export async function clearSession(): Promise<void> {
 // Device Registration - permanent storage for activation code and refresh token
 export interface DeviceRegistration {
   activationCode: string;
-  userId: string;
+  userId: string; // human_os.users.id - used for founder_os data operations
   product: ProductType;
   refreshToken: string;
 }

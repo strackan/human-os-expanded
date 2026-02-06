@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
     if (keyData.redeemed_at) {
       // Get the auth_id of the user who redeemed this key
       let redeemedByAuthId: string | null = keyData.user_id; // Legacy auth.users reference
+      const redeemedHumanOsUserId: string | null = keyData.human_os_user_id || null;
+
       if (keyData.human_os_user_id) {
         const { data: humanOsUser } = await getSupabase()
           .schema('human_os')
@@ -74,6 +76,7 @@ export async function POST(request: NextRequest) {
         sessionId: keyData.session_id,
         hasExistingUser: true,
         userId: redeemedByAuthId,
+        humanOsUserId: redeemedHumanOsUserId,
         preview: {
           tier: (keyData.metadata as Record<string, string>)?.tier || 'unknown',
           archetypeHint: (keyData.metadata as Record<string, string>)?.archetype_hint || 'Your character awaits...',
@@ -94,8 +97,10 @@ export async function POST(request: NextRequest) {
     const metadata = keyData.metadata || {};
 
     // Check if there's an existing user linked to this key
-    // Need to return auth_id (auth.users.id) for desktop client comparison
+    // Need to return both auth_id (for Supabase auth) and human_os_user_id (for founder_os data)
     let authUserId: string | null = null;
+    let humanOsUserId: string | null = keyData.human_os_user_id || null;
+
     if (keyData.human_os_user_id) {
       // Look up the human_os.users record to get auth_id
       const { data: humanOsUser } = await getSupabase()
@@ -118,7 +123,8 @@ export async function POST(request: NextRequest) {
       product: keyData.product,
       sessionId: keyData.session_id,
       hasExistingUser,
-      userId: authUserId, // Return auth.users.id for client comparison
+      userId: authUserId, // Return auth.users.id for Supabase auth comparison
+      humanOsUserId, // Return human_os.users.id for founder_os data operations
       preview: {
         tier: metadata.tier || 'unknown',
         archetypeHint: metadata.archetype_hint || metadata.character_class || 'Your character awaits...',

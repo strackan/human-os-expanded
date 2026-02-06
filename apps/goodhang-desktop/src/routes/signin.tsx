@@ -35,6 +35,7 @@ export default function SigninPage() {
   const activationCode = sessionStorage.getItem('activationCode');
   const sessionId = sessionStorage.getItem('sessionId');
   const existingUserId = sessionStorage.getItem('existingUserId');
+  const humanOsUserId = sessionStorage.getItem('humanOsUserId');
 
   useEffect(() => {
     if (!activationCode) {
@@ -98,11 +99,15 @@ export default function SigninPage() {
       const product = sessionStorage.getItem('product') as ProductType | null;
       const refreshToken = authData.session?.refresh_token;
 
+      // Use human_os_user_id for founder_os data operations, fallback to auth user id
+      const effectiveUserId = humanOsUserId || authData.user.id;
+      console.log('[Signin] User IDs:', { authUserId: authData.user.id, humanOsUserId, effectiveUserId });
+
       // Store device registration permanently (survives app restarts)
       if (product && refreshToken) {
-        console.log('[Signin] Storing device registration...', { userId: authData.user.id, product });
+        console.log('[Signin] Storing device registration...', { userId: effectiveUserId, product });
         try {
-          await storeDeviceRegistration(activationCode, authData.user.id, product, refreshToken);
+          await storeDeviceRegistration(activationCode, effectiveUserId, product, refreshToken);
           console.log('[Signin] Device registration stored successfully!');
         } catch (err) {
           console.error('[Signin] Failed to store device registration:', err);
@@ -114,16 +119,17 @@ export default function SigninPage() {
       // Store session securely
       const token = authData.session?.access_token || '';
       const effectiveSessionId = sessionId || 'no-session';
-      await storeSession(authData.user.id, effectiveSessionId, token);
+      await storeSession(effectiveUserId, effectiveSessionId, token);
 
       // Update auth store with token
-      setSession(authData.user.id, effectiveSessionId, token);
+      setSession(effectiveUserId, effectiveSessionId, token);
 
       // Clear temp storage
       sessionStorage.removeItem('activationCode');
       sessionStorage.removeItem('sessionId');
       sessionStorage.removeItem('preview');
       sessionStorage.removeItem('existingUserId');
+      sessionStorage.removeItem('humanOsUserId');
       sessionStorage.removeItem('product');
       sessionStorage.removeItem('alreadyRedeemed');
 
