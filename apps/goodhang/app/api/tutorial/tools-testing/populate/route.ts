@@ -251,86 +251,107 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Insert Projects into founder_os.projects + add context
+    // 3. Projects - match existing or insert if user has none
     if (entities.projects && entities.projects.length > 0) {
-      console.log(`[tools-testing/populate] === PROJECTS V2 === Adding ${entities.projects.length} projects`);
+      console.log(`[tools-testing/populate] Processing ${entities.projects.length} projects`);
 
-      // Build slugs for all projects
-      const projectsWithSlugs = entities.projects.map((p) => ({
-        ...p,
-        slug: p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
-      }));
-      const slugs = projectsWithSlugs.map((p) => p.slug);
-      console.log(`[tools-testing/populate] Slugs to check: ${JSON.stringify(slugs)}`);
-
-      // Query existing projects by slug
-      const { data: existingProjects, error: queryError } = await supabase
+      // Get ALL existing projects for this user
+      const { data: allUserProjects, error: projQueryError } = await supabase
         .schema('founder_os')
         .from('projects')
-        .select('id, slug')
-        .eq('user_id', user_id)
-        .in('slug', slugs);
+        .select('id, name, slug')
+        .eq('user_id', user_id);
 
-      console.log(`[tools-testing/populate] Query result: ${JSON.stringify(existingProjects)} error: ${queryError?.message || 'none'}`);
+      if (projQueryError) {
+        console.error(`[tools-testing/populate] Failed to query projects:`, projQueryError);
+        errors.push(`Projects query failed: ${projQueryError.message}`);
+      } else {
+        const existingProjects = allUserProjects || [];
+        console.log(`[tools-testing/populate] User has ${existingProjects.length} existing projects`);
 
-      const existingBySlug = new Map((existingProjects || []).map((p) => [p.slug, p.id]));
-      console.log(`[tools-testing/populate] Found ${existingBySlug.size} existing projects out of ${slugs.length}`);
+        // Build lookup maps for matching
+        const bySlug = new Map(existingProjects.map((p) => [p.slug, p]));
+        const byNameLower = new Map(existingProjects.map((p) => [p.name.toLowerCase(), p]));
 
-      for (const project of projectsWithSlugs) {
-        let projectId: string | null = existingBySlug.get(project.slug) || null;
+        for (const project of entities.projects) {
+          const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          const nameLower = project.name.toLowerCase();
 
-        if (!projectId) {
-          // New project - insert it
-          const statusMap: Record<string, string> = {
-            active: 'active',
-            planning: 'planning',
-            on_hold: 'on_hold',
-            completed: 'completed',
-          };
-          const status = statusMap[project.status] || 'active';
+          // Try to match existing project by slug or name
+          let matchedProject = bySlug.get(slug) || byNameLower.get(nameLower);
 
-          const { data, error } = await supabase
-            .schema('founder_os')
-            .from('projects')
-            .insert({
-              user_id,
-              name: project.name,
-              slug: project.slug,
-              description: project.description,
-              status,
-              metadata: { source: 'tutorial_brain_dump' },
-            })
-            .select('id')
-            .single();
-
-          if (!error && data) {
-            projectId = data.id;
-            results.projects_added++;
-            results.entity_ids.push(data.id);
-          } else if (error) {
-            console.error(`[tools-testing/populate] Project insert error:`, error);
-            errors.push(`Project "${project.name}": ${error.message}`);
-            continue;
+          // Also try partial match if no exact match
+          if (!matchedProject) {
+            for (const existing of existingProjects) {
+              if (
+                existing.name.toLowerCase().includes(nameLower) ||
+                nameLower.includes(existing.name.toLowerCase())
+              ) {
+                matchedProject = existing;
+                break;
+              }
+            }
           }
-        }
 
-        // Add context to project_contexts (for both new and existing)
-        if (projectId && project.description) {
-          const { error: contextError } = await supabase
-            .schema('founder_os')
-            .from('project_contexts')
-            .insert({
-              project_id: projectId,
-              context_type: 'general',
-              context_details: project.description,
-              source: 'brain_dump',
-              transcript_id: transcriptId,
-            });
+          if (matchedProject) {
+            // Existing project - add context only
+            console.log(`[tools-testing/populate] Matched "${project.name}" to existing "${matchedProject.name}"`);
+            if (project.description) {
+              const { error: contextError } = await supabase
+                .schema('founder_os')
+                .from('project_contexts')
+                .insert({
+                  project_id: matchedProject.id,
+                  context_type: 'general',
+                  context_details: project.description,
+                  source: 'brain_dump',
+                  transcript_id: transcriptId,
+                });
 
-          if (!contextError) {
-            results.contexts_added++;
+              if (!contextError) {
+                results.contexts_added++;
+              } else {
+                console.warn(`[tools-testing/populate] Project context warning:`, contextError);
+              }
+            }
+          } else if (existingProjects.length === 0) {
+            // Only insert new projects if user has ZERO projects
+            const statusMap: Record<string, string> = {
+              active: 'active',
+              planning: 'planning',
+              on_hold: 'on_hold',
+              completed: 'completed',
+            };
+            const status = statusMap[project.status] || 'active';
+
+            const { data, error } = await supabase
+              .schema('founder_os')
+              .from('projects')
+              .insert({
+                user_id,
+                name: project.name,
+                slug,
+                description: project.description,
+                status,
+                metadata: { source: 'tutorial_brain_dump' },
+              })
+              .select('id')
+              .single();
+
+            if (!error && data) {
+              results.projects_added++;
+              results.entity_ids.push(data.id);
+              // Add to lookup so subsequent projects in same batch can match
+              existingProjects.push({ id: data.id, name: project.name, slug });
+              bySlug.set(slug, { id: data.id, name: project.name, slug });
+              byNameLower.set(nameLower, { id: data.id, name: project.name, slug });
+            } else if (error) {
+              console.error(`[tools-testing/populate] Project insert error:`, error);
+              errors.push(`Project "${project.name}": ${error.message}`);
+            }
           } else {
-            console.warn(`[tools-testing/populate] Project context insert warning:`, contextError);
+            // User has projects but no match - skip this one
+            console.log(`[tools-testing/populate] No match for "${project.name}", skipping (user has existing projects)`);
           }
         }
       }
