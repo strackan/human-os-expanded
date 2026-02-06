@@ -30,6 +30,7 @@ export const TUTORIAL_STEPS: TutorialStepConfig[] = [
   { id: 'interview', label: 'Interview', description: '12 questions', iconName: 'ClipboardList', completionKey: 'founder-os-interview-completed' },
   { id: 'voice_testing', label: 'Voice-OS', description: '3 voice tests', iconName: 'Mic', completionKey: 'founder-os-voice-test-completed' },
   { id: 'question_e', label: 'Work Style', description: 'Personality baseline', iconName: 'Brain', completionKey: 'founder-os-question-e-completed' },
+  { id: 'assessment_review', label: 'Assessment', description: 'Review & approve', iconName: 'FileCheck', completionKey: 'founder-os-assessment-review-completed' },
   { id: 'tool_testing', label: 'Tools', description: 'Test your tools', iconName: 'Wrench', completionKey: 'founder-os-tool-testing-completed' },
   { id: 'complete', label: 'Complete', description: 'Ready to go', iconName: 'CheckCircle2', completionKey: 'founder-os-tutorial-completed' },
 ];

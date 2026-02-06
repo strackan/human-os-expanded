@@ -21,6 +21,7 @@ import {
 } from '@/lib/assessment/fos-interview-extraction-prompt';
 import { mergeRegistries, generateMergedRegistryMarkdown } from '@/lib/assessment/registry-merge';
 import { loadExistingRegistries, uploadRegistries } from '@/lib/assessment/registry-storage';
+import type { FounderOsExtractionResult, VoiceOsExtractionResult } from '@/lib/assessment/types';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -206,6 +207,12 @@ export async function POST(request: NextRequest) {
 
     // Store results
     await storeResults(supabase, session_id, user_id, synthesisOutput);
+
+    // Upload commandments to storage (fire-and-forget)
+    if (effectiveEntitySlug !== 'unknown') {
+      uploadCommandments(supabase, effectiveEntitySlug, synthesisOutput.founder_os, synthesisOutput.voice_os)
+        .catch((err) => console.error('[synthesize] Commandments upload error:', err));
+    }
 
     const duration = Date.now() - startTime;
     console.log(`[synthesize] Complete in ${duration}ms`);
@@ -466,4 +473,150 @@ function calculateOverallScore(attributes: {
   const values = Object.values(attributes);
   const average = values.reduce((a, b) => a + b, 0) / values.length;
   return Math.round(average * 10); // Scale 0-10 to 0-100
+}
+
+// =============================================================================
+// COMMANDMENTS STORAGE
+// =============================================================================
+
+const STORAGE_BUCKET = 'human-os';
+
+/**
+ * Upload all 20 commandments as individual .md files to Supabase storage.
+ * Path patterns:
+ *   - contexts/{entity_slug}/founder-os/{COMMANDMENT_NAME}.md
+ *   - contexts/{entity_slug}/voice/{COMMANDMENT_NAME}.md
+ */
+async function uploadCommandments(
+  supabase: SupabaseClient,
+  entitySlug: string,
+  founderOs: FounderOsExtractionResult,
+  voiceOs: VoiceOsExtractionResult
+): Promise<void> {
+  const now = new Date().toISOString();
+  const files: Array<{ path: string; content: string }> = [];
+
+  // Generate Founder OS commandment files (10)
+  const founderOsKeys = [
+    'CURRENT_STATE',
+    'STRATEGIC_THOUGHT_PARTNER',
+    'DECISION_MAKING',
+    'ENERGY_PATTERNS',
+    'AVOIDANCE_PATTERNS',
+    'RECOVERY_PROTOCOLS',
+    'ACCOUNTABILITY_FRAMEWORK',
+    'EMOTIONAL_SUPPORT',
+    'WORK_STYLE',
+    'CONVERSATION_PROTOCOLS',
+  ] as const;
+
+  for (const key of founderOsKeys) {
+    const content = founderOs.commandments[key];
+    if (content) {
+      files.push({
+        path: `contexts/${entitySlug}/founder-os/${key}.md`,
+        content: generateCommandmentMarkdown(key, 'founder-os', content, entitySlug, now),
+      });
+    }
+  }
+
+  // Generate Voice OS commandment files (10)
+  const voiceOsKeys = [
+    'VOICE',
+    'THEMES',
+    'GUARDRAILS',
+    'AUDIENCE',
+    'AUTHORITY',
+    'HUMOR',
+    'CONTROVERSY',
+    'PERSONAL',
+    'FORMAT',
+    'QUALITY_CONTROL',
+  ] as const;
+
+  for (const key of voiceOsKeys) {
+    const content = voiceOs.commandments[key];
+    if (content) {
+      files.push({
+        path: `contexts/${entitySlug}/voice/${key}.md`,
+        content: generateCommandmentMarkdown(key, 'voice', content, entitySlug, now),
+      });
+    }
+  }
+
+  console.log(`[uploadCommandments] Uploading ${files.length} commandment files for ${entitySlug}`);
+
+  // Upload all files in parallel
+  const uploads = files.map(async (file) => {
+    try {
+      const { error } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(
+          file.path,
+          new Blob([file.content], { type: 'text/markdown' }),
+          { contentType: 'text/markdown', upsert: true }
+        );
+
+      if (error) {
+        console.error(`[uploadCommandments] Failed to upload ${file.path}:`, error);
+      }
+    } catch (err) {
+      console.error(`[uploadCommandments] Error uploading ${file.path}:`, err);
+    }
+  });
+
+  await Promise.all(uploads);
+  console.log(`[uploadCommandments] Upload complete for ${entitySlug}`);
+}
+
+/**
+ * Generate markdown content for a commandment with YAML frontmatter
+ */
+function generateCommandmentMarkdown(
+  name: string,
+  category: 'founder-os' | 'voice',
+  content: string,
+  entitySlug: string,
+  generatedAt: string
+): string {
+  const friendlyNames: Record<string, string> = {
+    // Founder OS
+    CURRENT_STATE: 'Current State',
+    STRATEGIC_THOUGHT_PARTNER: 'Strategic Thought Partner',
+    DECISION_MAKING: 'Decision Making',
+    ENERGY_PATTERNS: 'Energy Patterns',
+    AVOIDANCE_PATTERNS: 'Avoidance Patterns',
+    RECOVERY_PROTOCOLS: 'Recovery Protocols',
+    ACCOUNTABILITY_FRAMEWORK: 'Accountability Framework',
+    EMOTIONAL_SUPPORT: 'Emotional Support',
+    WORK_STYLE: 'Work Style',
+    CONVERSATION_PROTOCOLS: 'Conversation Protocols',
+    // Voice OS
+    VOICE: 'Voice',
+    THEMES: 'Themes',
+    GUARDRAILS: 'Guardrails',
+    AUDIENCE: 'Audience',
+    AUTHORITY: 'Authority',
+    HUMOR: 'Humor',
+    CONTROVERSY: 'Controversy',
+    PERSONAL: 'Personal',
+    FORMAT: 'Format',
+    QUALITY_CONTROL: 'Quality Control',
+  };
+
+  const title = friendlyNames[name] || name;
+  const categoryLabel = category === 'founder-os' ? 'Founder OS' : 'Voice OS';
+
+  return `---
+title: "${title}"
+category: "${categoryLabel}"
+entity: "${entitySlug}"
+generated_at: "${generatedAt}"
+version: "1.0"
+---
+
+# ${title}
+
+${content}
+`;
 }

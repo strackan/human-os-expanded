@@ -354,7 +354,7 @@ export default function TutorialModePage() {
 
     // Parse field path like "personality.0.trait"
     const parts = field.split('.');
-    if (parts[0] === 'personality' && parts.length === 3) {
+    if (parts[0] === 'personality' && parts.length === 3 && report.personality) {
       const fieldName = parts[2] as 'trait' | 'description' | 'insight';
       const updatedPersonality = [...report.personality];
       updatedPersonality[index] = {

@@ -469,16 +469,16 @@ export interface SubmitLightningRoundResponse {
 // =============================================================================
 
 export interface FounderOsCommandments {
-  CURRENT_STATE: string;
-  STRATEGIC_THOUGHT_PARTNER: string;
-  DECISION_MAKING: string;
-  ENERGY_PATTERNS: string;
-  AVOIDANCE_PATTERNS: string;
-  RECOVERY_PROTOCOLS: string;
-  ACCOUNTABILITY_FRAMEWORK: string;
-  EMOTIONAL_SUPPORT: string;
-  WORK_STYLE: string;
-  CONVERSATION_PROTOCOLS: string;
+  CURRENT_STATE: string;           // Who they are at their core
+  STRATEGIC_THOUGHT_PARTNER: string; // How to help them think through decisions
+  DECISION_MAKING: string;         // Decision style under pressure
+  ENERGY_PATTERNS: string;         // What energizes vs drains them
+  AVOIDANCE_PATTERNS: string;      // What "stuck" looks like
+  RECOVERY_PROTOCOLS: string;      // How they reset and restore
+  ACCOUNTABILITY_FRAMEWORK: string; // How they prefer accountability
+  EMOTIONAL_SUPPORT: string;       // Emotional needs and boundaries
+  WORK_STYLE: string;              // How to support their work
+  CONVERSATION_PROTOCOLS: string;  // How to communicate with them
 }
 
 export interface FounderOsSummary {
@@ -494,16 +494,16 @@ export interface FounderOsExtractionResult {
 }
 
 export interface VoiceOsCommandments {
-  VOICE: string;
-  THEMES: string;
-  GUARDRAILS: string;
-  AUDIENCE: string;
-  AUTHORITY: string;
-  HUMOR: string;
-  CONTROVERSY: string;
-  PERSONAL: string;
-  FORMAT: string;
-  QUALITY_CONTROL: string;
+  VOICE: string;           // Mechanics of their communication
+  THEMES: string;          // What they believe and care about
+  GUARDRAILS: string;      // Content boundaries
+  AUDIENCE: string;        // Who they write for
+  AUTHORITY: string;       // How they establish credibility
+  HUMOR: string;           // Their style of wit
+  CONTROVERSY: string;     // How they handle hot takes
+  PERSONAL: string;        // What they share publicly
+  FORMAT: string;          // Structure preferences
+  QUALITY_CONTROL: string; // Content standards
 }
 
 export interface VoiceOsSummary {
@@ -528,6 +528,17 @@ export interface PersonalityTrait {
   insight: string;
 }
 
+export interface Strength {
+  strength: string;
+  description: string;
+}
+
+export interface Challenge {
+  challenge: string;
+  description: string;
+  coping: string; // How they overcome/manage this challenge
+}
+
 export interface CommunicationStyle {
   style: string;
   preferences: string[];
@@ -535,7 +546,8 @@ export interface CommunicationStyle {
 
 export interface WorkStyle {
   approach: string;
-  strengths: string[];
+  optimalConditions?: string[];
+  strengths?: string[]; // Legacy field for backwards compatibility
 }
 
 export interface VoiceProfile {
@@ -546,12 +558,29 @@ export interface VoiceProfile {
 }
 
 export interface ExecutiveReport {
+  // Identity
+  name?: string;
+  tagline?: string;
+
+  // Core summary
   summary: string;
-  personality: PersonalityTrait[];
-  communication: CommunicationStyle;
+
+  // Strengths and challenges
+  strengths?: Strength[];
+  challenges?: Challenge[];
+
+  // Work and communication
   workStyle: WorkStyle;
+  communication: CommunicationStyle;
+
+  // Insights
   keyInsights: string[];
+
+  // Voice profile
   voice?: VoiceProfile;
+
+  // Legacy field for backwards compatibility
+  personality?: PersonalityTrait[];
 }
 
 // =============================================================================

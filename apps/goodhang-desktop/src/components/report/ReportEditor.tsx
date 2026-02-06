@@ -38,6 +38,8 @@ export interface ReportEditorProps {
   onFieldEdit?: (field: string, index: number, value: string) => void;
   /** Whether the user has completed the GoodHang assessment */
   hasCompletedAssessment?: boolean;
+  /** Optional: callback when user clicks Continue (after all confirmed) */
+  onContinue?: () => void;
   /** Optional: custom className for the container */
   className?: string;
 }
@@ -58,6 +60,7 @@ export function ReportEditor({
   onTakeAssessment,
   onFieldEdit,
   hasCompletedAssessment: _hasCompletedAssessment = false,
+  onContinue,
   className = '',
 }: ReportEditorProps) {
   const allSectionsConfirmed =
@@ -164,7 +167,16 @@ export function ReportEditor({
                 Looks Good
               </button>
             )}
-            {allSectionsConfirmed && (
+            {allSectionsConfirmed && onContinue && (
+              <button
+                onClick={onContinue}
+                className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm rounded-lg transition-colors flex items-center gap-1"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Continue
+              </button>
+            )}
+            {allSectionsConfirmed && !onContinue && (
               <div className="flex items-center gap-2 px-4 py-2 bg-green-600/20 text-green-400 text-sm rounded-lg border border-green-600/30">
                 <Sparkles className="w-4 h-4" />
                 <span>All sections confirmed</span>

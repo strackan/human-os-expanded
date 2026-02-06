@@ -31,13 +31,15 @@ interface AssessmentFlowProps {
   config: AssessmentConfig;
   onComplete: (answers: Record<string, string>) => Promise<void>;
   onExit: (answers: Record<string, string>, currentIndex: number) => void;
+  /** Skip completion screen and auto-submit when last question is answered */
+  autoSubmit?: boolean;
 }
 
 // =============================================================================
 // COMPONENT
 // =============================================================================
 
-export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowProps) {
+export function AssessmentFlow({ config, onComplete, onExit, autoSubmit = false }: AssessmentFlowProps) {
   // Flatten questions for navigation (memoized to prevent re-creation on every render)
   const allQuestions = useMemo(() => flattenQuestions(config.sections), [config.sections]);
   const totalQuestions = allQuestions.length;
@@ -209,10 +211,19 @@ export function AssessmentFlow({ config, onComplete, onExit }: AssessmentFlowPro
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     if (isLastQuestion) {
-      setAnswers((prev) => ({
-        ...prev,
+      const finalAnswers = {
+        ...answers,
         [currentQuestion.id]: currentAnswer.trim(),
-      }));
+      };
+      setAnswers(finalAnswers);
+
+      // If autoSubmit, skip completion screen and call onComplete directly
+      if (autoSubmit) {
+        setIsSubmitting(false);
+        await onComplete(finalAnswers);
+        return;
+      }
+
       setShowCompletion(true);
     } else {
       setCurrentIndex((prev) => prev + 1);

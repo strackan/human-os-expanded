@@ -16,6 +16,7 @@ import { Loader2, RotateCcw, Zap } from 'lucide-react';
 import VoiceCalibration from '@/components/voice/VoiceCalibration';
 import { QuestionEAssessment } from '@/components/tutorial/QuestionEAssessment';
 import { SynthesisProgressArtifact } from '@/components/tutorial/SynthesisProgressArtifact';
+import { CommandmentsReview } from '@/components/tutorial/CommandmentsReview';
 import { type GapFinalData } from '@/lib/question-e-data';
 import { useAuthStore } from '@/lib/stores/auth';
 import { useUserStatusStore } from '@/lib/stores/user';
@@ -41,6 +42,8 @@ import type {
   WorkflowModeActions,
   MessageResponse,
   AssessmentConfig,
+  FounderOsExtractionResult,
+  VoiceOsExtractionResult,
 } from '@/lib/types';
 import { TUTORIAL_STEPS, getStepIndex, getResumeStep, getAllCompletionKeys } from '@/lib/tutorial/steps';
 
@@ -143,9 +146,12 @@ export default function TutorialWorkflowMode() {
   const [synthesisResult, setSynthesisResult] = useState<{
     executive_report: ExecutiveReport;
     character_profile: CharacterProfile;
-    founder_os: unknown;
-    voice_os: unknown;
+    founder_os: FounderOsExtractionResult;
+    voice_os: VoiceOsExtractionResult;
   } | null>(null);
+  // Two-phase review: first report, then commandments
+  const [showReportReview, setShowReportReview] = useState(false);
+  const [showCommandmentsReview, setShowCommandmentsReview] = useState(false);
 
   // Voice calibration feedback (collected from VoiceCalibration component)
   // Note: State is kept for potential future use; currently reading from localStorage in synthesis
@@ -191,15 +197,13 @@ export default function TutorialWorkflowMode() {
         return [];
       case 'voice_testing':
         // Voice test is shown automatically in the artifact panel - no quick actions needed
-        // Only show skip option if user wants to bypass
-        return [
-          { label: 'Skip voice testing', value: 'skip_voice_testing' },
-        ];
+        return [];
       case 'question_e':
-        // Question E is shown in artifact panel - only show skip option
-        return [
-          { label: 'Skip Question E', value: 'skip_question_e' },
-        ];
+        // Question E is shown in artifact panel - no quick actions needed
+        return [];
+      case 'assessment_review':
+        // Assessment review is shown in artifact panel - no quick actions needed
+        return [];
       case 'tool_testing':
         return [{ label: 'Continue', value: 'continue_to_complete' }];
       case 'complete':
@@ -230,22 +234,6 @@ export default function TutorialWorkflowMode() {
         return null;
       }
 
-      // Handle skip Question E
-      if (actionValue === 'skip_question_e') {
-        // Mark step as skipped/complete and advance to tool_testing
-        localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
-        const toolStepIndex = getStepIndex('tool_testing');
-        setProgress((prev) => ({
-          ...prev,
-          currentStep: 'tool_testing' as TutorialStep,
-          stepIndex: toolStepIndex,
-        }));
-        return {
-          content: "No problem! You can always answer these questions later. Let's move on to testing your tools.",
-          quickActions: getQuickActionsForStep('tool_testing' as TutorialStep),
-        };
-      }
-
       // Handle retry synthesis
       if (actionValue === 'retry_synthesis') {
         // Re-trigger synthesis with stored answers
@@ -257,8 +245,9 @@ export default function TutorialWorkflowMode() {
       }
 
       // Handle approve synthesis and advance to tool_testing
+      // (Note: This is now handled by handleCommandmentsConfirm, but keeping for backwards compat)
       if (actionValue === 'approve_synthesis') {
-        // Clear synthesis state and advance to tool_testing
+        setShowCommandmentsReview(false);
         const toolStepIndex = getStepIndex('tool_testing');
         setProgress((prev) => ({
           ...prev,
@@ -275,6 +264,7 @@ export default function TutorialWorkflowMode() {
       if (actionValue === 'skip_synthesis') {
         setSynthesisError(null);
         setIsSynthesizing(false);
+        setShowCommandmentsReview(false);
         const toolStepIndex = getStepIndex('tool_testing');
         setProgress((prev) => ({
           ...prev,
@@ -336,8 +326,6 @@ export default function TutorialWorkflowMode() {
           apiMessage = 'Sure, show me!';
         } else if (actionValue === 'skip_report') {
           apiMessage = 'Skip for now';
-        } else if (actionValue === 'skip_voice_testing') {
-          apiMessage = 'Skip voice testing for now';
         } else if (actionValue === 'continue_to_complete') {
           apiMessage = "Let's continue";
         }
@@ -462,6 +450,11 @@ export default function TutorialWorkflowMode() {
     setArtifactPhase('interview');
     setGapFinalData(null);
     setQuestionEAnswers({});
+    setSynthesisResult(null);
+    setShowReportReview(false);
+    setShowCommandmentsReview(false);
+    setIsSynthesizing(false);
+    setSynthesisError(null);
 
     // Reset refs
     hasShownReportCompleteRef.current = false;
@@ -611,7 +604,7 @@ export default function TutorialWorkflowMode() {
       }
 
       // PersonalityTab fields
-      if (parts[0] === 'personality' && parts.length === 3) {
+      if (parts[0] === 'personality' && parts.length === 3 && report.personality) {
         const fieldName = parts[2] as 'trait' | 'description' | 'insight';
         const updatedPersonality = [...report.personality];
         updatedPersonality[index] = {
@@ -811,28 +804,6 @@ export default function TutorialWorkflowMode() {
     }
   }, [getQuickActionsForStep, fetchGapFinalData]);
 
-  const handleVoiceCalibrationSkip = useCallback(() => {
-    // Mark step as skipped and advance
-    localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
-
-    const questionEStepIndex = getStepIndex('question_e');
-    setProgress((prev) => ({
-      ...prev,
-      currentStep: 'question_e' as TutorialStep,
-      stepIndex: questionEStepIndex,
-    }));
-
-    // Fetch gap-final data for Question E
-    fetchGapFinalData();
-
-    if (workflowActionsRef.current) {
-      workflowActionsRef.current.addAssistantMessage(
-        "No problem! You can calibrate your voice later. Let's continue with the personality baseline.",
-        getQuickActionsForStep('question_e' as TutorialStep)
-      );
-    }
-  }, [getQuickActionsForStep, fetchGapFinalData]);
-
   // =============================================================================
   // QUESTION E HANDLERS
   // =============================================================================
@@ -927,12 +898,21 @@ export default function TutorialWorkflowMode() {
       }
 
       setIsSynthesizing(false);
+      setShowReportReview(true);
 
-      // Show synthesis results for user review
+      // Mark question_e step as complete and advance to assessment_review
+      localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+      const assessmentReviewStepIndex = getStepIndex('assessment_review');
+      setProgress((prev) => ({
+        ...prev,
+        currentStep: 'assessment_review' as TutorialStep,
+        stepIndex: assessmentReviewStepIndex,
+      }));
+
+      // Show synthesis results for user review - start with Personal Assessment
       if (workflowActionsRef.current) {
         workflowActionsRef.current.addAssistantMessage(
-          "Your Human OS profile is ready! Review the executive summary and confirm each section. This captures everything we've learned about how you work, communicate, and make decisions.",
-          [{ label: 'Approve & Continue', value: 'approve_synthesis' }]
+          "Your Personal Assessment is ready! Review each section and confirm. This captures your personality, work style, and communication preferences."
         );
       }
     } catch (error) {
@@ -955,10 +935,32 @@ export default function TutorialWorkflowMode() {
   // Store handler in ref for access from handleMessage
   synthesizeHandlerRef.current = handleQuestionEComplete;
 
-  const handleQuestionESkip = useCallback(() => {
-    // Mark step as skipped and advance
-    localStorage.setItem('founder-os-question-e-completed', new Date().toISOString());
+  // =============================================================================
+  // REPORT & COMMANDMENTS REVIEW HANDLERS
+  // =============================================================================
 
+  // Called when user confirms the Personal Assessment (executive report)
+  const handleReportReviewConfirm = useCallback(() => {
+    console.log('[tutorial-workflow] Report review confirmed, advancing to commandments');
+    setShowReportReview(false);
+    setShowCommandmentsReview(true);
+
+    if (workflowActionsRef.current) {
+      workflowActionsRef.current.addAssistantMessage(
+        "Now review your Ten Commandments. These define how AI will support you (Founder OS) and write for you (Voice OS). Confirm each tab when you're satisfied."
+      );
+    }
+  }, []);
+
+  // Called when user confirms the Ten Commandments
+  const handleCommandmentsConfirm = useCallback(() => {
+    console.log('[tutorial-workflow] Commandments review confirmed');
+    setShowCommandmentsReview(false);
+
+    // Mark assessment_review step as complete
+    localStorage.setItem('founder-os-assessment-review-completed', new Date().toISOString());
+
+    // Advance to tool_testing step
     const toolStepIndex = getStepIndex('tool_testing');
     setProgress((prev) => ({
       ...prev,
@@ -968,7 +970,7 @@ export default function TutorialWorkflowMode() {
 
     if (workflowActionsRef.current) {
       workflowActionsRef.current.addAssistantMessage(
-        "No problem! You can complete the personality baseline later. Let's test your tools.",
+        "Your Human OS profile is saved. Now let's make sure your tools are set up correctly.",
         getQuickActionsForStep('tool_testing' as TutorialStep)
       );
     }
@@ -1210,7 +1212,6 @@ export default function TutorialWorkflowMode() {
             sessionId={sessionId || ''}
             token={token}
             onComplete={handleVoiceCalibrationComplete}
-            onSkip={handleVoiceCalibrationSkip}
           />
         </ArtifactPanel>
       );
@@ -1246,8 +1247,23 @@ export default function TutorialWorkflowMode() {
         );
       }
 
-      // If synthesis complete, show results for review
-      if (synthesisResult && report) {
+      // Default: show Question E assessment
+      return (
+        <ArtifactPanel showStepProgress={false}>
+          <QuestionEAssessment
+            gapFinalData={gapFinalData}
+            onComplete={handleQuestionEComplete}
+            initialAnswers={questionEAnswers}
+            isLoading={isLoadingGapFinal}
+          />
+        </ArtifactPanel>
+      );
+    }
+
+    // Assessment Review step - show Personal Assessment then Ten Commandments
+    if (progress.currentStep === 'assessment_review') {
+      // Phase 1: Show Personal Assessment (executive report) for review
+      if (showReportReview && report) {
         return (
           <ArtifactPanel showStepProgress={false}>
             <ReportEditor
@@ -1261,22 +1277,33 @@ export default function TutorialWorkflowMode() {
               onResetEdits={resetReportEdits}
               onFieldEdit={handleFieldEdit}
               hasCompletedAssessment={true}
+              onContinue={handleReportReviewConfirm}
               className="h-full"
             />
           </ArtifactPanel>
         );
       }
 
-      // Default: show Question E assessment
+      // Phase 2: Show Ten Commandments review
+      if (showCommandmentsReview && synthesisResult) {
+        return (
+          <ArtifactPanel showStepProgress={false}>
+            <CommandmentsReview
+              founderOs={synthesisResult.founder_os}
+              voiceOs={synthesisResult.voice_os}
+              onConfirm={handleCommandmentsConfirm}
+            />
+          </ArtifactPanel>
+        );
+      }
+
+      // Fallback: if no synthesis result yet, show loading
       return (
         <ArtifactPanel showStepProgress={false}>
-          <QuestionEAssessment
-            gapFinalData={gapFinalData}
-            onComplete={handleQuestionEComplete}
-            onSkip={handleQuestionESkip}
-            initialAnswers={questionEAnswers}
-            isLoading={isLoadingGapFinal}
-          />
+          <div className="h-full flex flex-col items-center justify-center p-4">
+            <Loader2 className="w-12 h-12 text-purple-500 animate-spin mx-auto mb-4" />
+            <p className="text-gray-400 text-sm">Loading your assessment...</p>
+          </div>
         </ArtifactPanel>
       );
     }
@@ -1324,8 +1351,8 @@ export default function TutorialWorkflowMode() {
     );
   }
 
-  // Hide chat input during interview, voice testing, and question_e steps (they have their own inputs)
-  const shouldHideChatInput = progress.currentStep === 'interview' || progress.currentStep === 'voice_testing' || progress.currentStep === 'question_e';
+  // Hide chat input during interview, voice testing, question_e, and assessment_review steps (they have their own inputs)
+  const shouldHideChatInput = progress.currentStep === 'interview' || progress.currentStep === 'voice_testing' || progress.currentStep === 'question_e' || progress.currentStep === 'assessment_review';
 
   return (
     <>

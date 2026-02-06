@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   HelpCircle,
   Brain,
+  FileCheck,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -45,6 +46,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Wrench,
   CheckCircle2,
   Brain,
+  FileCheck,
 };
 
 /**

@@ -25,13 +25,24 @@ export interface MessageWithMetadata extends Message {
 }
 
 // =============================================================================
-// EXECUTIVE REPORT
+// EXECUTIVE REPORT (Personal Assessment)
 // =============================================================================
 
 export interface PersonalityTrait {
   trait: string;
   description: string;
   insight: string;
+}
+
+export interface Strength {
+  strength: string;
+  description: string;
+}
+
+export interface Challenge {
+  challenge: string;
+  description: string;
+  coping: string; // How they overcome/manage this challenge
 }
 
 export interface CommunicationStyle {
@@ -41,7 +52,8 @@ export interface CommunicationStyle {
 
 export interface WorkStyle {
   approach: string;
-  strengths: string[];
+  optimalConditions?: string[];
+  strengths?: string[]; // Legacy field for backwards compatibility
 }
 
 export interface VoiceProfile {
@@ -52,15 +64,32 @@ export interface VoiceProfile {
 }
 
 /**
- * Executive report generated from Sculptor session
+ * Executive report / Personal Assessment generated from synthesis
  */
 export interface ExecutiveReport {
+  // Identity
+  name?: string;
+  tagline?: string;
+
+  // Core summary
   summary: string;
-  personality: PersonalityTrait[];
-  communication: CommunicationStyle;
+
+  // Strengths and challenges
+  strengths?: Strength[];
+  challenges?: Challenge[];
+
+  // Work and communication
   workStyle: WorkStyle;
+  communication: CommunicationStyle;
+
+  // Insights
   keyInsights: string[];
+
+  // Voice profile
   voice?: VoiceProfile;
+
+  // Legacy field for backwards compatibility
+  personality?: PersonalityTrait[];
 }
 
 // =============================================================================
@@ -181,6 +210,7 @@ export type TutorialStep =
   | 'interview'
   | 'voice_testing'
   | 'question_e'
+  | 'assessment_review'
   | 'tool_testing'
   | 'complete';
 
@@ -219,4 +249,58 @@ export interface ChecklistItem {
   required: boolean;
   status: ChecklistStatus;
   artifacts?: string[];
+}
+
+// =============================================================================
+// FOUNDER OS & VOICE OS COMMANDMENTS
+// =============================================================================
+
+export interface FounderOsCommandments {
+  CURRENT_STATE: string;           // Who they are at their core
+  STRATEGIC_THOUGHT_PARTNER: string; // How to help them think through decisions
+  DECISION_MAKING: string;         // Decision style under pressure
+  ENERGY_PATTERNS: string;         // What energizes vs drains them
+  AVOIDANCE_PATTERNS: string;      // What "stuck" looks like
+  RECOVERY_PROTOCOLS: string;      // How they reset and restore
+  ACCOUNTABILITY_FRAMEWORK: string; // How they prefer accountability
+  EMOTIONAL_SUPPORT: string;       // Emotional needs and boundaries
+  WORK_STYLE: string;              // How to support their work
+  CONVERSATION_PROTOCOLS: string;  // How to communicate with them
+}
+
+export interface FounderOsSummary {
+  personality_type: string;
+  key_patterns: string[];
+  primary_challenges: string[];
+  recommended_approach: string;
+}
+
+export interface FounderOsExtractionResult {
+  commandments: FounderOsCommandments;
+  summary: FounderOsSummary;
+}
+
+export interface VoiceOsCommandments {
+  VOICE: string;           // Mechanics of their communication
+  THEMES: string;          // What they believe and care about
+  GUARDRAILS: string;      // Content boundaries
+  AUDIENCE: string;        // Who they write for
+  AUTHORITY: string;       // How they establish credibility
+  HUMOR: string;           // Their style of wit
+  CONTROVERSY: string;     // How they handle hot takes
+  PERSONAL: string;        // What they share publicly
+  FORMAT: string;          // Structure preferences
+  QUALITY_CONTROL: string; // Content standards
+}
+
+export interface VoiceOsSummary {
+  voice_type: string;
+  key_characteristics: string[];
+  content_focus: string[];
+  recommended_platforms: string[];
+}
+
+export interface VoiceOsExtractionResult {
+  commandments: VoiceOsCommandments;
+  summary: VoiceOsSummary;
 }

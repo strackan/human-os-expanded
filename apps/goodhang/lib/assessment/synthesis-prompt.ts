@@ -95,29 +95,51 @@ Your task is to generate:
 
 ## Output Sections
 
-### Executive Report
+### Executive Report (Personal Assessment)
+This is the foundational document that introduces who this person is. It should read like a briefing document for anyone who needs to understand and work with them effectively.
+
 \`\`\`typescript
 {
-  summary: string; // 2-3 paragraph executive summary
+  // Basic identity
+  name: string; // Their name (from entity_slug or inferred from content)
+  tagline: string; // 1-liner that captures their essence, e.g., "Resilient builder who turns setbacks into fuel"
+
+  // Overall personality (2-3 paragraphs)
+  summary: string; // Comprehensive personality overview - who they are, what drives them, how they show up
+
+  // Strengths (what they're great at)
+  strengths: Array<{
+    strength: string; // e.g., "Resilience under pressure"
+    description: string; // How this shows up, with examples from their answers
+  }>; // 4-6 core strengths
+
+  // Challenges (areas that can be difficult)
+  challenges: Array<{
+    challenge: string; // e.g., "Decision paralysis when overwhelmed"
+    description: string; // How this manifests, what triggers it
+    coping: string; // How they overcome or manage this challenge
+  }>; // 3-5 key challenges with coping strategies
+
+  // Work style
   workStyle: {
     approach: string; // e.g., "Sprint-based intensity with recovery cycles"
-    strengths: string[]; // 3-5 core work strengths
+    optimalConditions: string[]; // 3-4 conditions when they do their best work
   };
+
+  // Communication style
   communication: {
-    style: string; // e.g., "Direct and energetic"
-    preferences: string[]; // 3-5 key preferences
+    style: string; // e.g., "Direct, warm, and no-BS"
+    preferences: string[]; // 3-5 key preferences for how to interact with them
   };
-  keyInsights: string[]; // 4-6 key insights about this person
-  personality: Array<{
-    trait: string;
-    description: string;
-    insight: string;
-  }>; // 4-6 traits with explanations
+
+  // Key insights (the most important things to know)
+  keyInsights: string[]; // 4-6 crucial insights about this person
+
+  // Voice profile (how they communicate)
   voice: {
-    tone: string;
-    style: string;
-    characteristics: string[];
-    examples?: string[];
+    tone: string; // Overall tone
+    style: string; // Writing/speaking style
+    characteristics: string[]; // 3-5 distinctive characteristics
   };
 }
 \`\`\`
@@ -141,28 +163,50 @@ Your task is to generate:
 - DEX: Adaptability, spontaneity, flexibility
 
 ### Founder OS 10 Commandments
-1. CONVERSATION_PROTOCOLS - Communication style, energy modes, red flags
-2. CRISIS_PROTOCOLS - Overwhelm response, historical resilience, what NOT to do
-3. CURRENT_STATE - Core identity, energy indicators, priorities
-4. STRATEGIC_THOUGHT_PARTNER - Decision frameworks, strengths, blind spots
-5. DECISION_MAKING - Style under load, paralysis triggers, support preferences
-6. ENERGY_PATTERNS - Energizers, drains, optimal conditions
-7. WORK_STYLE - Support methods, priority presentation, autonomy level
-8. AVOIDANCE_PATTERNS - Stuck indicators, avoidance behaviors, interventions
-9. RECOVERY_PROTOCOLS - Reset methods, timeline, support needs
-10. SUPPORT_CALIBRATION - State signals, mode triggers, rapport style
+Each commandment should be **100-200 words** - a full paragraph with specific, actionable guidance. Include concrete examples from their answers when possible. Write in second person ("You prefer...", "When you're overwhelmed...").
+
+1. **CURRENT_STATE** - Who they are at their core right now. Core identity markers, what's most important to them, current priorities and energy state. What defines them when everything else is stripped away.
+
+2. **STRATEGIC_THOUGHT_PARTNER** - How to help them think through decisions. Their decision-making frameworks, how they've navigated pivotal moments, strengths revealed through transitions, blind spots that need support.
+
+3. **DECISION_MAKING** - Their decision style under pressure. What triggers paralysis, how they prefer to be supported during decisions, high-stakes vs low-stakes approach differences.
+
+4. **ENERGY_PATTERNS** - What energizes vs drains them. Optimal conditions for focus, energy recovery patterns, warning signs of depletion, physical/health factors that affect energy.
+
+5. **AVOIDANCE_PATTERNS** - What "stuck" looks like for them. Common avoidance behaviors, procrastination triggers, how to recognize when they're avoiding something important.
+
+6. **RECOVERY_PROTOCOLS** - How they reset and restore. What actually helps (not performative wellness), recovery timeline patterns, whether they need support or space.
+
+7. **ACCOUNTABILITY_FRAMEWORK** - How they prefer to be held accountable. What kind of check-ins work, how to push back without triggering defensiveness, deadline relationship.
+
+8. **EMOTIONAL_SUPPORT** - What they need emotionally but rarely ask for. Boundaries around emotional topics, how to provide support without being patronizing.
+
+9. **WORK_STYLE** - How to support their work effectively. Priority presentation preferences, autonomy vs guidance balance, collaboration preferences, optimal meeting/communication cadence.
+
+10. **CONVERSATION_PROTOCOLS** - How to communicate with them. Preferred tone and length, what energy modes look like (high/low), red flags that shut down communication, topics to navigate carefully.
 
 ### Voice OS 10 Commandments
-1. VOICE - Always/never patterns, vocabulary fingerprint, rhythm
-2. THEMES - Core beliefs, current focus, values
-3. GUARDRAILS - Topics/tones to avoid, sacred cows, hard NOs
-4. STORIES - Key narratives, story themes, vulnerability level
-5. ANECDOTES - Brief examples, proof points, personal references
-6. OPENINGS - Hook styles, greeting patterns, tone openers
-7. MIDDLES - Argument structures, evidence patterns, transitions
-8. ENDINGS - Closing patterns, CTA style, mic-drop lines
-9. BLENDS - Content types, format preferences, mixing patterns
-10. EXAMPLES - Sample thought leadership, story, connection message
+Each commandment should be **100-200 words** - a full paragraph with specific patterns and examples. Quote their actual language when possible. Write as guidance for an AI generating content in their voice.
+
+1. **VOICE** - The mechanics of their communication. Always patterns (sentence structures they use), never patterns (tones that feel wrong), vocabulary fingerprint (distinctive words/phrases), rhythm (short vs long sentences, how they build to points).
+
+2. **THEMES** - What they believe and care about. Core philosophical positions they'd defend, current focus areas, values they stand for, beliefs that show up repeatedly.
+
+3. **GUARDRAILS** - Boundaries for content generation. Topics to never discuss publicly, tones to avoid, sacred cows they'd never contradict, hard NOs (things they'd never say).
+
+4. **AUDIENCE** - Who they're writing for. How they think about their readers, level of assumed knowledge, how they address different audiences.
+
+5. **AUTHORITY** - How they establish credibility. What expertise they draw on, how they balance confidence with humility, proof points they use.
+
+6. **HUMOR** - Their style of wit. What makes them laugh, how they use humor in content, sarcasm level, self-deprecation comfort.
+
+7. **CONTROVERSY** - How they handle hot takes. Willingness to be provocative, how they frame disagreement, positions they're willing to defend publicly.
+
+8. **PERSONAL** - What they share and what stays private. Vulnerability level in public content, personal stories they reference, family/relationship boundaries.
+
+9. **FORMAT** - Structure preferences. Long-form vs short-form preferences, storytelling vs tactical content, list vs prose, how they structure arguments.
+
+10. **QUALITY_CONTROL** - Standards for content. What "done" looks like, polish expectations, when good enough is good enough vs when perfection matters.
 
 ## Output Format
 
@@ -171,24 +215,29 @@ Return a single JSON object with all sections. Use the exact structure below:
 \`\`\`json
 {
   "executive_report": {
-    "summary": "2-3 paragraph executive summary...",
+    "name": "Their name",
+    "tagline": "1-liner that captures their essence",
+    "summary": "2-3 paragraph comprehensive personality overview...",
+    "strengths": [
+      { "strength": "Resilience", "description": "How this shows up with examples..." },
+      { "strength": "Direct communication", "description": "..." }
+    ],
+    "challenges": [
+      { "challenge": "Decision paralysis", "description": "How it manifests...", "coping": "How they overcome it..." }
+    ],
     "workStyle": {
-      "approach": "...",
-      "strengths": ["...", "..."]
+      "approach": "Sprint-based intensity with recovery cycles",
+      "optimalConditions": ["condition 1", "condition 2"]
     },
     "communication": {
-      "style": "...",
-      "preferences": ["...", "..."]
+      "style": "Direct, warm, and no-BS",
+      "preferences": ["preference 1", "preference 2"]
     },
-    "keyInsights": ["...", "...", "..."],
-    "personality": [
-      { "trait": "...", "description": "...", "insight": "..." }
-    ],
+    "keyInsights": ["insight 1", "insight 2", "insight 3"],
     "voice": {
       "tone": "...",
       "style": "...",
-      "characteristics": ["..."],
-      "examples": ["..."]
+      "characteristics": ["..."]
     }
   },
   "character_profile": {
@@ -214,11 +263,33 @@ Return a single JSON object with all sections. Use the exact structure below:
     "avoid_match_with": ["..."]
   },
   "founder_os": {
-    "commandments": { /* 10 commandments */ },
+    "commandments": {
+      "CURRENT_STATE": "100-200 word paragraph about who they are at their core...",
+      "STRATEGIC_THOUGHT_PARTNER": "100-200 word paragraph about how to help them think through decisions...",
+      "DECISION_MAKING": "100-200 word paragraph about their decision style under pressure...",
+      "ENERGY_PATTERNS": "100-200 word paragraph about what energizes vs drains them...",
+      "AVOIDANCE_PATTERNS": "100-200 word paragraph about what stuck looks like for them...",
+      "RECOVERY_PROTOCOLS": "100-200 word paragraph about how they reset and restore...",
+      "ACCOUNTABILITY_FRAMEWORK": "100-200 word paragraph about how they prefer accountability...",
+      "EMOTIONAL_SUPPORT": "100-200 word paragraph about emotional needs and boundaries...",
+      "WORK_STYLE": "100-200 word paragraph about how to support their work...",
+      "CONVERSATION_PROTOCOLS": "100-200 word paragraph about how to communicate with them..."
+    },
     "summary": { "core_identity": "...", "support_philosophy": "...", "key_insight": "..." }
   },
   "voice_os": {
-    "commandments": { /* 10 commandments */ },
+    "commandments": {
+      "VOICE": "100-200 word paragraph about the mechanics of their communication...",
+      "THEMES": "100-200 word paragraph about what they believe and care about...",
+      "GUARDRAILS": "100-200 word paragraph about content boundaries...",
+      "AUDIENCE": "100-200 word paragraph about who they write for...",
+      "AUTHORITY": "100-200 word paragraph about how they establish credibility...",
+      "HUMOR": "100-200 word paragraph about their style of wit...",
+      "CONTROVERSY": "100-200 word paragraph about how they handle hot takes...",
+      "PERSONAL": "100-200 word paragraph about what they share publicly...",
+      "FORMAT": "100-200 word paragraph about structure preferences...",
+      "QUALITY_CONTROL": "100-200 word paragraph about content standards..."
+    },
     "summary": { "voice_essence": "...", "signature_moves": ["..."], "generation_guidance": "..." }
   },
   "summary": "300-500 word personality summary..."
@@ -233,7 +304,9 @@ Return a single JSON object with all sections. Use the exact structure below:
 4. **Corpus is background** - Use corpus for context only. It's public-facing, often sanitized. Private interview answers reveal the real person.
 5. **Sculptor corrections matter** - If Sculptor transcript corrects corpus assumptions, use corrections
 6. **Voice feedback is gold** - Their edits and "what didn't work" comments are direct calibration signals
-7. **Stay actionable** - Commandments should be specific enough to guide AI behavior, not generic platitudes`;
+7. **COMMANDMENTS MUST BE SUBSTANTIAL** - Each commandment should be 100-200 words, a full paragraph with specific guidance. Not bullet points or brief phrases - write complete, actionable paragraphs that an AI could follow.
+8. **Quote their language** - Use their actual words and phrases when possible. If they said "I need people to just listen, not fix", quote that.
+9. **Write in second person** - Address the person directly: "You prefer...", "When you're overwhelmed...", "Your communication style is..."`;
 
 /**
  * Build the full synthesis prompt with all sources

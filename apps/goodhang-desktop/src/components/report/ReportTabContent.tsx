@@ -134,6 +134,18 @@ interface StatusTabProps {
 export function StatusTab({ report, onEdit }: StatusTabProps) {
   return (
     <div className="space-y-4">
+      {/* Header: Name and Tagline */}
+      {(report.name || report.tagline) && (
+        <div className="text-center pb-4 border-b border-gh-dark-600">
+          {report.name && (
+            <h2 className="text-2xl font-bold text-white mb-1">{report.name}</h2>
+          )}
+          {report.tagline && (
+            <p className="text-purple-400 italic">"{report.tagline}"</p>
+          )}
+        </div>
+      )}
+
       {/* Summary */}
       <div className="prose prose-invert prose-sm max-w-none">
         {onEdit ? (
@@ -147,6 +159,44 @@ export function StatusTab({ report, onEdit }: StatusTabProps) {
           <ReactMarkdown>{report.summary}</ReactMarkdown>
         )}
       </div>
+
+      {/* Strengths */}
+      {report.strengths && report.strengths.length > 0 && (
+        <div className="pt-4 border-t border-gh-dark-600">
+          <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
+            Strengths
+          </h4>
+          <div className="space-y-3">
+            {report.strengths.map((s, i) => (
+              <div key={i} className="bg-green-900/20 border border-green-700/30 rounded-lg p-3">
+                <h5 className="text-green-400 font-medium text-sm mb-1">{s.strength}</h5>
+                <p className="text-gray-300 text-sm">{s.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Challenges */}
+      {report.challenges && report.challenges.length > 0 && (
+        <div className="pt-4 border-t border-gh-dark-600">
+          <h4 className="text-sm font-medium text-gray-400 uppercase mb-3">
+            Challenges & Coping
+          </h4>
+          <div className="space-y-3">
+            {report.challenges.map((c, i) => (
+              <div key={i} className="bg-amber-900/20 border border-amber-700/30 rounded-lg p-3">
+                <h5 className="text-amber-400 font-medium text-sm mb-1">{c.challenge}</h5>
+                <p className="text-gray-300 text-sm mb-2">{c.description}</p>
+                <div className="text-sm">
+                  <span className="text-green-400 font-medium">How they cope: </span>
+                  <span className="text-gray-300">{c.coping}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Work Style */}
       {report.workStyle && (
@@ -165,8 +215,22 @@ export function StatusTab({ report, onEdit }: StatusTabProps) {
               report.workStyle.approach
             )}
           </p>
+          {report.workStyle.optimalConditions && report.workStyle.optimalConditions.length > 0 && (
+            <div className="mt-2">
+              <span className="text-xs text-gray-500 uppercase">Optimal Conditions</span>
+              <ul className="space-y-1 mt-1">
+                {report.workStyle.optimalConditions.map((condition, i) => (
+                  <li key={i} className="text-gray-400 text-sm flex items-start gap-2">
+                    <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    {condition}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {/* Legacy strengths field */}
           {report.workStyle.strengths && report.workStyle.strengths.length > 0 && (
-            <ul className="space-y-1">
+            <ul className="space-y-1 mt-2">
               {report.workStyle.strengths.map((strength, i) => (
                 <li key={i} className="text-gray-400 text-sm flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
@@ -261,6 +325,16 @@ export function PersonalityTab({ report, onEdit }: PersonalityTabProps) {
   const handleEdit = (field: 'trait' | 'description' | 'insight', index: number, value: string) => {
     onEdit?.(`personality.${index}.${field}`, index, value);
   };
+
+  if (!report.personality || report.personality.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-400">
+          Personality traits will be generated from your assessment.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
