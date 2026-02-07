@@ -152,7 +152,7 @@ export function getRecommendedRoute(status: UserStatus | null): string {
     }
 
     if (identity?.completed) {
-      return '/founder-os/dashboard';
+      return '/founder-os/production';
     }
 
     return '/founder-os/onboarding';

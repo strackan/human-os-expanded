@@ -12,7 +12,7 @@ import type { Message } from '../types';
 // TYPES
 // =============================================================================
 
-export type ChatType = 'tutorial' | 'renubu' | 'sculptor';
+export type ChatType = 'tutorial' | 'renubu' | 'sculptor' | 'production';
 
 export interface StreamingChatConfig {
   /** Base endpoint path (e.g., '/api/tutorial/chat/stream') */
@@ -57,6 +57,10 @@ const CHAT_CONFIGS: Record<ChatType, StreamingChatConfig> = {
   sculptor: {
     endpoint: '/api/sculptor/sessions/{sessionId}/messages/stream',
     timeout: 60000,
+  },
+  production: {
+    endpoint: '/api/production/chat/stream',
+    timeout: 120000,
   },
 };
 

@@ -288,6 +288,12 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.69.0
         version: 0.69.0(zod@4.3.4)
+      '@human-os/aliases':
+        specifier: workspace:*
+        version: link:../../packages/aliases
+      '@human-os/entity-resolution':
+        specifier: workspace:*
+        version: link:../../packages/entity-resolution
       '@human-os/tutorial':
         specifier: workspace:*
         version: link:../../packages/tutorial

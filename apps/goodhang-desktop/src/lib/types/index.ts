@@ -13,6 +13,9 @@ export * from './assessment';
 // Workflow mode types
 export * from './workflow';
 
+// Production mode types
+export * from './production';
+
 // Voice test types - exclude PersonaFingerprint (already in shared.ts)
 export {
   type VoiceTestStage,

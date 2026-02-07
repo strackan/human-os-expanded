@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
+    "@human-os/aliases": "workspace:*",
+    "@human-os/entity-resolution": "workspace:*",
     "@human-os/tutorial": "workspace:*",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.76.1",
