@@ -113,6 +113,20 @@ export async function POST(request: NextRequest) {
 
     // Create user_product entry in human_os schema (only if we have a human_os user)
     if (humanOsUserId) {
+      // Link auth_id on human_os.users so status endpoint can find this user
+      const { error: authLinkError } = await supabase
+        .schema('human_os')
+        .from('users')
+        .update({ auth_id: userId })
+        .eq('id', humanOsUserId);
+
+      if (authLinkError) {
+        console.error('Auth link error:', authLinkError);
+        // Non-fatal - continue with claim
+      } else {
+        console.log(`Linked human_os.users ${humanOsUserId} to auth.users ${userId}`);
+      }
+
       const { error: productError } = await supabase
         .schema('human_os')
         .from('user_products')

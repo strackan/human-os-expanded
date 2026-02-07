@@ -26,9 +26,9 @@ export async function POST(request: NextRequest) {
     const { sessionId, product = 'goodhang', expiresInDays = 7, metadata = {} } = body;
 
     // Validate product
-    if (!['goodhang', 'renubu'].includes(product)) {
+    if (!['goodhang', 'renubu', 'founder_os'].includes(product)) {
       return NextResponse.json(
-        { success: false, error: 'Invalid product. Must be "goodhang" or "renubu"' },
+        { success: false, error: 'Invalid product. Must be "goodhang", "renubu", or "founder_os"' },
         { status: 400 }
       );
     }
