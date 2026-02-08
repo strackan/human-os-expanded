@@ -262,8 +262,8 @@ export async function GET(request: NextRequest) {
               transcript_available: !!sculptorSession.metadata?.conversation_history,
             };
 
-            // Set active context to sculptor session ID
-            result.contexts.active = sculptorSession.id;
+            // Set active context to sculptor entity slug
+            result.contexts.active = sculptorSession.entity_slug;
             result.contexts.available = [sculptorSession.entity_slug];
           }
         }
@@ -293,7 +293,7 @@ export async function GET(request: NextRequest) {
               status: sculptorByAuthId.status,
               transcript_available: !!sculptorByAuthId.metadata?.conversation_history,
             };
-            result.contexts.active = sculptorByAuthId.id;
+            result.contexts.active = sculptorByAuthId.entity_slug;
             result.contexts.available = [sculptorByAuthId.entity_slug];
             result.found = true;
           }
