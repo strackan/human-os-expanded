@@ -5,11 +5,15 @@
  * Takes the original content plus whatDidntWork / whatWouldHelp
  * and returns a rewritten version that applies the feedback.
  *
- * Uses Claude Haiku for fast, cheap single-sample rewrites.
+ * Now includes corpus-derived voice context (DIGEST.md, WRITING_ENGINE,
+ * persona fingerprint) to ensure regenerated content stays in voice
+ * rather than drifting toward generic.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -45,21 +49,134 @@ interface RegenerateSampleResponse {
   changes_made: string[];
 }
 
-const SYSTEM_PROMPT = `You are rewriting a piece of LinkedIn content based on the user's specific feedback. Your job is to apply their instructions precisely while keeping the same topic, format, and approximate length.
+interface PersonaFingerprint {
+  self_deprecation: number;
+  directness: number;
+  warmth: number;
+  intellectual_signaling: number;
+  comfort_with_sincerity: number;
+  absurdism_tolerance: number;
+  format_awareness: number;
+  vulnerability_as_tool: number;
+}
 
-RULES:
+// =============================================================================
+// STORAGE HELPERS
+// =============================================================================
+
+async function loadStorageFile(
+  supabase: SupabaseClient,
+  filePath: string,
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('human-os')
+      .download(filePath);
+
+    if (error || !data) {
+      return null;
+    }
+
+    return await data.text();
+  } catch {
+    return null;
+  }
+}
+
+// =============================================================================
+// PROMPT CONSTRUCTION
+// =============================================================================
+
+function buildSystemPrompt(voiceContext: {
+  digest: string | null;
+  writingEngine: string | null;
+  openings: string | null;
+  middles: string | null;
+  endings: string | null;
+  guardrails: string | null;
+  personaFingerprint: PersonaFingerprint | null;
+}): string {
+  const { digest, writingEngine, openings, middles, endings, guardrails, personaFingerprint } = voiceContext;
+  const hasCorpus = digest || writingEngine;
+
+  let prompt = `You are rewriting a piece of LinkedIn content based on the user's specific feedback. Your job is to apply their instructions precisely while keeping the same topic, format, and approximate length.
+
+`;
+
+  // Include corpus voice context when available
+  if (digest) {
+    prompt += `## VOICE FINGERPRINT (write in this person's voice)
+
+${digest}
+
+`;
+  }
+
+  if (writingEngine) {
+    prompt += `## WRITING RULES
+
+${writingEngine}
+
+`;
+  }
+
+  // Include structural patterns for reference
+  if (openings || middles || endings) {
+    if (openings) {
+      prompt += `## OPENING PATTERNS\n${openings}\n\n`;
+    }
+    if (middles) {
+      prompt += `## MIDDLE PATTERNS\n${middles}\n\n`;
+    }
+    if (endings) {
+      prompt += `## ENDING PATTERNS\n${endings}\n\n`;
+    }
+  }
+
+  if (guardrails) {
+    prompt += `## GUARDRAILS\n${guardrails}\n\n`;
+  }
+
+  if (personaFingerprint) {
+    prompt += `## PERSONALITY DIMENSIONS (calibrate tone to these scores)
+
+- Self-Deprecation: ${personaFingerprint.self_deprecation}/10
+- Directness: ${personaFingerprint.directness}/10
+- Warmth: ${personaFingerprint.warmth}/10
+- Absurdism Tolerance: ${personaFingerprint.absurdism_tolerance}/10
+- Vulnerability as Tool: ${personaFingerprint.vulnerability_as_tool}/10
+
+`;
+  }
+
+  prompt += `## REWRITE RULES
+
 - Apply the feedback instructions literally and precisely
 - Keep the same topic and general structure
-- Maintain approximately the same length (within 20%)
-- Do NOT add generic corporate language
+- Maintain approximately the same length (within 20%)`;
+
+  if (hasCorpus) {
+    prompt += `
+- Stay in voice: apply ALWAYS patterns (parenthetical asides, double hyphens, self-deprecation, vocabulary whiplash)
+- Avoid NEVER patterns (corporate jargon, em dashes, thought leader voice)
+- The rewrite must still feel like content this person actually wrote`;
+  } else {
+    prompt += `
+- Do NOT add generic corporate language`;
+  }
+
+  prompt += `
 - Do NOT ignore any part of the feedback
-- If the user provided a manual rewrite as a reference, use it as a guide for the tone and style they want — but still produce a fresh version that incorporates ALL their feedback instructions
+- If the user provided a manual rewrite as a reference, use it as a guide for the tone and style they want -- but still produce a fresh version that incorporates ALL their feedback instructions
 
 OUTPUT FORMAT (JSON):
 {
   "regenerated_content": "The rewritten content...",
   "changes_made": ["Brief description of change 1", "Brief description of change 2"]
 }`;
+
+  return prompt;
+}
 
 function buildUserPrompt(request: RegenerateSampleRequest): string {
   const { sample, feedback, attempt_number } = request;
@@ -93,6 +210,10 @@ ${feedback.editedContent}`;
   return prompt;
 }
 
+// =============================================================================
+// ROUTE HANDLER
+// =============================================================================
+
 export async function POST(request: NextRequest) {
   try {
     const body: RegenerateSampleRequest = await request.json();
@@ -119,20 +240,69 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const supabase = getHumanOSAdminClient();
+
+    // Fetch session to get entity_slug and persona_fingerprint
+    const { data: session } = await supabase
+      .from('sculptor_sessions')
+      .select('entity_slug, persona_fingerprint, metadata')
+      .eq('id', session_id)
+      .single();
+
+    // Load voice context in parallel (graceful — works without it)
+    let digest: string | null = null;
+    let writingEngine: string | null = null;
+    let openings: string | null = null;
+    let middles: string | null = null;
+    let endings: string | null = null;
+    let guardrails: string | null = null;
+    let personaFingerprint: PersonaFingerprint | null = null;
+
+    if (session?.entity_slug) {
+      [digest, writingEngine, openings, middles, endings, guardrails] = await Promise.all([
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/DIGEST.md`),
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/01_WRITING_ENGINE.md`),
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/06_OPENINGS.md`),
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/07_MIDDLES.md`),
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/08_ENDINGS.md`),
+        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/03_GUARDRAILS.md`),
+      ]);
+    }
+
+    if (session) {
+      personaFingerprint =
+        session.persona_fingerprint || session.metadata?.persona_fingerprint || null;
+    }
+
+    const hasVoiceContext = !!(digest || writingEngine || personaFingerprint);
+
     console.log('[voice/regenerate-sample] Regenerating sample:', {
       session_id,
       sample_id: sample.id,
       sample_type: sample.type,
       attempt_number: attempt_number || 1,
       hasEditedContent: !!feedback.editedContent,
+      hasVoiceContext,
+      hasStructuralTemplates: !!(openings || middles || endings),
+      hasGuardrails: !!guardrails,
     });
 
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
+    const systemPrompt = buildSystemPrompt({
+      digest,
+      writingEngine,
+      openings,
+      middles,
+      endings,
+      guardrails,
+      personaFingerprint,
+    });
+
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-20250414',
       max_tokens: 2000,
-      system: SYSTEM_PROMPT,
+      system: systemPrompt,
       messages: [
         { role: 'user', content: buildUserPrompt(body) },
       ],

@@ -16,7 +16,7 @@ import { createServiceClient } from "../_shared/supabase.ts";
 import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared/cors.ts";
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
-const CONTEXTS_BUCKET = "contexts";
+const STORAGE_BUCKET = "human-os";
 
 interface GapFinalRequest {
   session_id: string;
@@ -243,6 +243,229 @@ Score the USER on the 8 dimensions. Return JSON (no markdown, just raw JSON):`;
 }
 
 // =============================================================================
+// Tier 2 Voice File Generation (DEV)
+// =============================================================================
+
+interface Tier2VoiceFiles {
+  themes: string;
+  guardrails: string;
+  stories: string;
+  anecdotes: string;
+  context: string;
+}
+
+async function loadStorageFile(
+  supabase: ReturnType<typeof createServiceClient>,
+  path: string
+): Promise<string | null> {
+  try {
+    const { data, error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .download(path);
+
+    if (error || !data) return null;
+    return await data.text();
+  } catch {
+    return null;
+  }
+}
+
+async function loadTier1Files(
+  supabase: ReturnType<typeof createServiceClient>,
+  entitySlug: string
+): Promise<Record<string, string | null>> {
+  const [digest, writingEngine, openings, middles, endings, examples] = await Promise.all([
+    loadStorageFile(supabase, `contexts/${entitySlug}/DIGEST.md`),
+    loadStorageFile(supabase, `contexts/${entitySlug}/voice/01_WRITING_ENGINE.md`),
+    loadStorageFile(supabase, `contexts/${entitySlug}/voice/06_OPENINGS.md`),
+    loadStorageFile(supabase, `contexts/${entitySlug}/voice/07_MIDDLES.md`),
+    loadStorageFile(supabase, `contexts/${entitySlug}/voice/08_ENDINGS.md`),
+    loadStorageFile(supabase, `contexts/${entitySlug}/voice/10_EXAMPLES.md`),
+  ]);
+
+  return { digest, writingEngine, openings, middles, endings, examples };
+}
+
+const TIER2_SYSTEM = `You are a voice architect. Given a sculptor interview transcript, corpus data, Tier 1 voice files, and persona fingerprint scores, generate 5 voice files that capture the person's themes, guardrails, stories, anecdotes, and daily context.
+
+These are DEV versions — they will be refined after voice calibration feedback.
+
+Output a JSON object with these keys: themes, guardrails, stories, anecdotes, context.
+Each value should be a complete markdown document.`;
+
+function buildTier2Prompt(
+  entityName: string,
+  conversation: string,
+  personaFingerprint: PersonaFingerprint,
+  tier1Files: Record<string, string | null>
+): string {
+  let prompt = `Generate 5 Tier 2 DEV voice files for ${entityName}.
+
+## SCULPTOR INTERVIEW TRANSCRIPT:
+${conversation}
+
+## PERSONA FINGERPRINT:
+${JSON.stringify(personaFingerprint, null, 2)}
+
+`;
+
+  if (tier1Files.digest) {
+    prompt += `## TIER 1: DIGEST\n${tier1Files.digest}\n\n`;
+  }
+  if (tier1Files.writingEngine) {
+    prompt += `## TIER 1: WRITING ENGINE\n${tier1Files.writingEngine}\n\n`;
+  }
+  if (tier1Files.openings) {
+    prompt += `## TIER 1: OPENINGS\n${tier1Files.openings}\n\n`;
+  }
+
+  prompt += `---
+
+Generate a JSON object with these 5 files:
+
+1. "themes" — 02_THEMES.md:
+---
+status: "dev"
+---
+<!-- DEV: Generated from sculptor session. Subject to revision after voice calibration. -->
+# THEMES: ${entityName}
+
+Sections:
+- Core Beliefs: Ranked by conviction strength, with evidence from sculptor + corpus
+- Recurring Themes: Topics they return to — with frequency and emotional charge
+- Values Hierarchy: What they prioritize when values conflict
+- Internal Tensions: Contradictions they hold (e.g., values authenticity but curates image)
+- Hot Buttons: Topics that trigger strong reactions (positive or negative)
+
+2. "guardrails" — 03_GUARDRAILS.md:
+---
+status: "dev"
+---
+<!-- DEV: Generated from sculptor session. Subject to revision after voice calibration. -->
+# GUARDRAILS: ${entityName}
+
+Sections:
+- Topics to Avoid: Subjects they explicitly don't want to discuss publicly
+- Tones to Avoid: Vocal registers that don't fit (e.g., preachy, corporate, whiny)
+- Sacred Cows: Things they hold so dear that misrepresenting them is a dealbreaker
+- Hard NOs: Absolute lines that must never be crossed
+- Corrections from Sculptor: Any time they corrected the interviewer or pushed back — these are the HIGHEST priority signals
+- Sensitivity Notes: Areas requiring extra care
+
+3. "stories" — 04_STORIES.md:
+---
+status: "dev"
+---
+<!-- DEV: Generated from sculptor session. Subject to revision after voice calibration. -->
+# STORIES: ${entityName}
+
+Extended narratives extracted from sculptor + corpus. For each story:
+- Title
+- Summary (2-3 sentences)
+- Core Quote (best line from their telling)
+- Emotional Tone (what emotions drive this story)
+- Tags (themes, values, contexts where this story fits)
+- Full narrative (as told by them, preserving their voice)
+
+Include 5-10 stories.
+
+4. "anecdotes" — 05_ANECDOTES.md:
+---
+status: "dev"
+---
+<!-- DEV: Generated from sculptor session. Subject to revision after voice calibration. -->
+# ANECDOTES: ${entityName}
+
+Brief examples, proof points, one-liners. For each:
+- Summary (1 sentence)
+- Quote (their exact words or close paraphrase)
+- Illustrates (what theme/value/point this supports)
+- Context (when to use this)
+
+Include 10-20 anecdotes.
+
+5. "context" — CONTEXT.md:
+---
+status: "dev"
+---
+<!-- DEV: Generated from sculptor session. Subject to revision after voice calibration. -->
+# CONTEXT: ${entityName}
+
+Condensed day-to-day reference — smaller than DIGEST. Sections:
+- Key Identity: Who they are in 2-3 sentences
+- Current Priorities: What they're focused on right now
+- Communication Style: Quick reference for tone, vocabulary, rhythm
+- Decision Framework: How they make decisions (gut vs data, fast vs deliberate)
+- Relationship Approach: How they connect with people
+- Content Strategy: What they want to be known for
+
+Return valid JSON with these 5 keys. Each value is a complete markdown string.`;
+
+  return prompt;
+}
+
+async function generateTier2VoiceFiles(
+  entityName: string,
+  conversation: string,
+  personaFingerprint: PersonaFingerprint,
+  tier1Files: Record<string, string | null>
+): Promise<Tier2VoiceFiles> {
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY not configured");
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 16384,
+      system: TIER2_SYSTEM,
+      messages: [{ role: "user", content: buildTier2Prompt(entityName, conversation, personaFingerprint, tier1Files) }],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error (tier2): ${error}`);
+  }
+
+  const data = await response.json();
+  const text = data.content[0].text;
+
+  const cleaned = extractJson(text);
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    themes: parsed.themes,
+    guardrails: parsed.guardrails,
+    stories: parsed.stories,
+    anecdotes: parsed.anecdotes,
+    context: parsed.context,
+  };
+}
+
+async function uploadTier2Files(
+  supabase: ReturnType<typeof createServiceClient>,
+  entitySlug: string,
+  tier2: Tier2VoiceFiles
+): Promise<boolean> {
+  const uploads = await Promise.all([
+    uploadToStorage(supabase, `contexts/${entitySlug}/voice/02_THEMES.md`, tier2.themes),
+    uploadToStorage(supabase, `contexts/${entitySlug}/voice/03_GUARDRAILS.md`, tier2.guardrails),
+    uploadToStorage(supabase, `contexts/${entitySlug}/voice/04_STORIES.md`, tier2.stories),
+    uploadToStorage(supabase, `contexts/${entitySlug}/voice/05_ANECDOTES.md`, tier2.anecdotes),
+    uploadToStorage(supabase, `contexts/${entitySlug}/voice/CONTEXT.md`, tier2.context),
+  ]);
+
+  return uploads.every((u) => u);
+}
+
+// =============================================================================
 // Document Generation
 // =============================================================================
 
@@ -364,12 +587,13 @@ Post-Sculptor extraction targets. Only questions NOT answered during the Sculpto
 async function uploadToStorage(
   supabase: ReturnType<typeof createServiceClient>,
   path: string,
-  content: string
+  content: string,
+  contentType = "text/markdown"
 ): Promise<boolean> {
-  const blob = new Blob([content], { type: "text/markdown" });
+  const blob = new Blob([content], { type: contentType });
 
-  const { error } = await supabase.storage.from(CONTEXTS_BUCKET).upload(path, blob, {
-    contentType: "text/markdown",
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, blob, {
+    contentType,
     upsert: true,
   });
 
@@ -379,6 +603,33 @@ async function uploadToStorage(
   }
 
   return true;
+}
+
+// =============================================================================
+// Transcript Generation
+// =============================================================================
+
+function generateTranscriptMarkdown(
+  entityName: string,
+  entitySlug: string,
+  conversationHistory: Array<{ role: string; content: string }>
+): string {
+  let md = `# Sculptor Transcript: ${entityName}
+
+**Entity:** ${entitySlug}
+**Generated:** ${new Date().toISOString()}
+**Messages:** ${conversationHistory.length}
+
+---
+
+`;
+
+  for (const msg of conversationHistory) {
+    const label = msg.role === "user" ? entityName.toUpperCase() : "SCULPTOR";
+    md += `## ${label}\n\n${msg.content}\n\n---\n\n`;
+  }
+
+  return md;
 }
 
 // =============================================================================
@@ -429,6 +680,16 @@ Deno.serve(async (req: Request) => {
       .map((msg: { role: string; content: string }) => `${msg.role.toUpperCase()}: ${msg.content}`)
       .join("\n\n");
 
+    // Step 1b: Generate and upload SCULPTOR_TRANSCRIPT.md
+    console.log("[sculptor-gap-final] Generating SCULPTOR_TRANSCRIPT.md...");
+    const transcriptMd = generateTranscriptMarkdown(entityName, entitySlug, conversationHistory);
+    const transcriptUploaded = await uploadToStorage(
+      supabase,
+      `contexts/${entitySlug}/SCULPTOR_TRANSCRIPT.md`,
+      transcriptMd
+    );
+    console.log(`[sculptor-gap-final] Transcript upload: ${transcriptUploaded ? "OK" : "FAILED"}`);
+
     // Step 2: Fetch all relevant questions (FOS + CORE domains)
     console.log("[sculptor-gap-final] Fetching all FOS and CORE questions...");
     const { data: questions, error: questionsError } = await supabase
@@ -446,9 +707,34 @@ Deno.serve(async (req: Request) => {
     console.log(`[sculptor-gap-final] Analyzing ${questions.length} questions against conversation...`);
     const gapAnalysis = await analyzeGapQuestions(conversation, questions);
 
-    // Step 4: Score persona dimensions
-    console.log("[sculptor-gap-final] Scoring persona dimensions...");
-    const personaResult = await scorePersona(conversation);
+    // Step 4: Score persona dimensions + load Tier 1 files in parallel
+    console.log("[sculptor-gap-final] Scoring persona + loading Tier 1 files...");
+    const [personaResult, tier1Files] = await Promise.all([
+      scorePersona(conversation),
+      loadTier1Files(supabase, entitySlug),
+    ]);
+
+    // Step 4b: Generate Tier 2 DEV voice files (uses persona + tier1 + conversation)
+    console.log("[sculptor-gap-final] Generating Tier 2 DEV voice files...");
+    let tier2Files: Tier2VoiceFiles | null = null;
+    try {
+      tier2Files = await generateTier2VoiceFiles(
+        entityName,
+        conversation,
+        personaResult.fingerprint,
+        tier1Files
+      );
+    } catch (err) {
+      console.error("[sculptor-gap-final] Tier 2 generation failed (non-fatal):", err);
+    }
+
+    // Step 4c: Upload Tier 2 files if generated
+    let tier2Uploaded = false;
+    if (tier2Files) {
+      console.log("[sculptor-gap-final] Uploading Tier 2 voice files...");
+      tier2Uploaded = await uploadTier2Files(supabase, entitySlug, tier2Files);
+      console.log(`[sculptor-gap-final] Tier 2 upload: ${tier2Uploaded ? "OK" : "FAILED"}`);
+    }
 
     // Step 5: Generate GAP_ANALYSIS_FINAL.md
     console.log("[sculptor-gap-final] Generating GAP_ANALYSIS_FINAL.md...");
@@ -458,7 +744,7 @@ Deno.serve(async (req: Request) => {
     console.log("[sculptor-gap-final] Uploading to storage...");
     const uploadSuccess = await uploadToStorage(
       supabase,
-      `${entitySlug}/GAP_ANALYSIS_FINAL.md`,
+      `contexts/${entitySlug}/GAP_ANALYSIS_FINAL.md`,
       gapAnalysisFinalMd
     );
 
@@ -466,7 +752,37 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Failed to upload GAP_ANALYSIS_FINAL.md to storage");
     }
 
-    // Step 7: Update session metadata with persona scores
+    // Step 6b: Generate and upload E_QUESTIONS_OUTSTANDING.json
+    // This is what the tutorial's /api/tutorial/gap-final endpoint reads
+    const outstandingQuestions = gapAnalysis
+      .filter((a) => !a.answered)
+      .map((a) => {
+        const q = questions.find((q) => q.slug === a.slug);
+        return {
+          id: a.slug,
+          section: q?.subcategory || q?.category || "unknown",
+          text: q?.text || "",
+        };
+      });
+
+    const eQuestionsJson = {
+      entity: entitySlug,
+      generated: new Date().toISOString(),
+      total_questions: questions.length,
+      questions_answered: gapAnalysis.filter((a) => a.answered).length,
+      questions_outstanding: outstandingQuestions.length,
+      outstanding: outstandingQuestions,
+    };
+
+    const jsonUploaded = await uploadToStorage(
+      supabase,
+      `contexts/${entitySlug}/E_QUESTIONS_OUTSTANDING.json`,
+      JSON.stringify(eQuestionsJson, null, 2),
+      "application/json"
+    );
+    console.log(`[sculptor-gap-final] E_QUESTIONS_OUTSTANDING.json upload: ${jsonUploaded ? "OK" : "FAILED"}`);
+
+    // Step 7: Update session metadata with persona scores + tier2 status
     const { error: updateError } = await supabase
       .from("sculptor_sessions")
       .update({
@@ -475,6 +791,7 @@ Deno.serve(async (req: Request) => {
           persona_fingerprint: personaResult.fingerprint,
           persona_reasoning: personaResult.reasoning,
           gap_analysis_generated: new Date().toISOString(),
+          tier2_voice_files_generated: tier2Uploaded ? new Date().toISOString() : null,
         },
       })
       .eq("id", session_id);
@@ -484,17 +801,6 @@ Deno.serve(async (req: Request) => {
     }
 
     // Step 8: Return results
-    const outstandingQuestions = gapAnalysis
-      .filter((a) => !a.answered)
-      .map((a) => {
-        const q = questions.find((q) => q.slug === a.slug);
-        return {
-          slug: a.slug,
-          text: q?.text || "",
-          category: q?.subcategory || "",
-        };
-      });
-
     return jsonResponse({
       status: "complete",
       entity_slug: entitySlug,
@@ -503,7 +809,17 @@ Deno.serve(async (req: Request) => {
       questions_answered: gapAnalysis.filter((a) => a.answered).length,
       questions_total: questions.length,
       persona_fingerprint: personaResult.fingerprint,
-      gap_analysis_path: `${entitySlug}/GAP_ANALYSIS_FINAL.md`,
+      gap_analysis_path: `contexts/${entitySlug}/GAP_ANALYSIS_FINAL.md`,
+      transcript_path: `contexts/${entitySlug}/SCULPTOR_TRANSCRIPT.md`,
+      e_questions_path: `contexts/${entitySlug}/E_QUESTIONS_OUTSTANDING.json`,
+      tier2_generated: tier2Uploaded,
+      tier2_files: tier2Uploaded ? [
+        `contexts/${entitySlug}/voice/02_THEMES.md`,
+        `contexts/${entitySlug}/voice/03_GUARDRAILS.md`,
+        `contexts/${entitySlug}/voice/04_STORIES.md`,
+        `contexts/${entitySlug}/voice/05_ANECDOTES.md`,
+        `contexts/${entitySlug}/voice/CONTEXT.md`,
+      ] : [],
     });
   } catch (error) {
     console.error("[sculptor-gap-final] Error:", error);

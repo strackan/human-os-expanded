@@ -777,7 +777,7 @@ export default function TutorialWorkflowMode() {
   // VOICE CALIBRATION HANDLERS
   // =============================================================================
 
-  const handleVoiceCalibrationComplete = useCallback((feedback: Record<string, unknown>) => {
+  const handleVoiceCalibrationComplete = useCallback(async (feedback: Record<string, unknown>) => {
     console.log('[tutorial-workflow] Voice calibration complete:', Object.keys(feedback).length, 'samples reviewed');
 
     // Save feedback to state and localStorage for final synthesis
@@ -786,6 +786,31 @@ export default function TutorialWorkflowMode() {
 
     // Mark voice testing step as complete
     localStorage.setItem('founder-os-voice-test-completed', new Date().toISOString());
+
+    // Call Tier 3 finalize endpoint (fire-and-forget — don't block progression)
+    if (sessionId) {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      fetch(`${baseUrl}/api/voice/finalize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          voice_calibration_feedback: feedback,
+        }),
+      }).then(async (res) => {
+        if (res.ok) {
+          const result = await res.json();
+          console.log('[tutorial-workflow] Voice finalize complete:', result);
+        } else {
+          console.warn('[tutorial-workflow] Voice finalize failed:', res.status);
+        }
+      }).catch((err) => {
+        console.warn('[tutorial-workflow] Voice finalize error (non-fatal):', err);
+      });
+    }
 
     // Advance to question_e step
     const questionEStepIndex = getStepIndex('question_e');
@@ -805,7 +830,7 @@ export default function TutorialWorkflowMode() {
         getQuickActionsForStep('question_e' as TutorialStep)
       );
     }
-  }, [getQuickActionsForStep, fetchGapFinalData]);
+  }, [getQuickActionsForStep, fetchGapFinalData, sessionId, token]);
 
   // =============================================================================
   // QUESTION E HANDLERS
@@ -1283,11 +1308,16 @@ export default function TutorialWorkflowMode() {
 
     // Voice testing step - show VoiceCalibration (3 pre-generated samples)
     if (progress.currentStep === 'voice_testing') {
+      // Read interview answers from localStorage (saved after interview step)
+      const savedAnswers = localStorage.getItem('fos-interview-answers');
+      const parsedAnswers = savedAnswers ? JSON.parse(savedAnswers) : undefined;
+
       return (
         <ArtifactPanel showStepProgress={false}>
           <VoiceCalibration
             sessionId={sessionId || ''}
             token={token}
+            interviewAnswers={parsedAnswers}
             onComplete={handleVoiceCalibrationComplete}
           />
         </ArtifactPanel>

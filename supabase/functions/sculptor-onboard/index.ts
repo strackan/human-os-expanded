@@ -19,6 +19,7 @@ import { corsHeaders, handleCors, jsonResponse, errorResponse } from "../_shared
 
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
 const CONTEXTS_BUCKET = "contexts";
+const VOICE_BUCKET = "human-os";
 
 interface OnboardRequest {
   entity_slug: string;
@@ -174,6 +175,212 @@ ${CORPUS_SUMMARY_TEMPLATE.replace("{NAME}", entityName)}
 Fill in all sections based on what you find in the raw data. Leave sections empty with "Not in corpus" if no data available.`;
 
   return await callClaude(CORPUS_SUMMARY_SYSTEM, prompt);
+}
+
+// =============================================================================
+// Tier 1 Voice File Generation
+// =============================================================================
+
+interface Tier1VoiceFiles {
+  digest: string;
+  writingEngine: string;
+  openings: string;
+  middles: string;
+  endings: string;
+  examples: string;
+}
+
+const TIER1_SYSTEM = `You are a voice pattern analyst. Given raw corpus data (LinkedIn posts, writing samples, etc.), extract detailed voice patterns, writing mechanics, and structural templates.
+
+You will generate 6 separate voice files. Output them as a JSON object with these keys:
+- digest
+- writing_engine
+- openings
+- middles
+- endings
+- examples
+
+Each value should be a complete markdown document. Be thorough and specific — cite actual patterns, phrases, and examples from the corpus.`;
+
+function buildTier1Prompt(entityName: string, corpusRaw: string): string {
+  return `Analyze this corpus for ${entityName} and generate 6 voice files:
+
+CORPUS:
+${corpusRaw}
+
+---
+
+Generate a JSON object with these 6 files:
+
+1. "digest" — DIGEST.md (~3000-5000 words):
+---
+status: "tier1"
+---
+# DIGEST: ${entityName}
+
+Sections:
+- Identity Statement: Who they are in one paragraph
+- Core Beliefs: 5-10 beliefs with evidence quotes from corpus
+- Voice Patterns: Sentence rhythm (short vs long), signature moves (parenthetical asides, rhetorical questions, etc.), vocabulary tendencies
+- Personality Dimensions: Warmth, directness, humor style, vulnerability level — with evidence
+- Key Stories: Major narratives they return to
+- Recurring Themes: Topics they circle back to repeatedly
+
+2. "writing_engine" — 01_WRITING_ENGINE.md:
+---
+status: "tier1"
+---
+# WRITING ENGINE: ${entityName}
+
+Sections:
+- Decision Tree by Content Type: How they approach thought leadership vs personal story vs outreach
+- ALWAYS Rules: Patterns they consistently use (with corpus evidence)
+- NEVER Rules: Patterns they consistently avoid
+- Vulnerability Boundary: How they handle personal disclosure (refer to the mess vs write from inside it)
+- Sentence Mechanics: Average sentence length, punctuation habits, paragraph structure
+- Vocabulary Profile: Formal vs casual ratio, industry jargon usage, signature phrases
+
+3. "openings" — 06_OPENINGS.md:
+---
+status: "tier1"
+---
+# OPENINGS: ${entityName}
+
+Categorize opening patterns found in corpus posts. For each pattern:
+- Label (O1, O2, etc.)
+- Name (e.g., "Vulnerability Hook", "Pattern Recognition", "Provocative Question")
+- Description of the pattern
+- 1-2 actual examples from corpus
+- Energy match (high/medium/low)
+- Best used for (thought leadership, personal story, etc.)
+
+Find at least 4-6 distinct opening patterns.
+
+4. "middles" — 07_MIDDLES.md:
+---
+status: "tier1"
+---
+# MIDDLES: ${entityName}
+
+Same structure as openings but for middle/body patterns (M1, M2, etc.):
+- Story Arc, Philosophical Escalation, List-That-Isn't-A-List, Analogy Bridge, Dialogue-Driven, etc.
+- Actual examples from corpus
+- Find at least 4-7 patterns.
+
+5. "endings" — 08_ENDINGS.md:
+---
+status: "tier1"
+---
+# ENDINGS: ${entityName}
+
+Same structure for ending patterns (E1, E2, etc.):
+- Open Question, Callback, Practical Application, Philosophical Button, etc.
+- Actual examples from corpus
+- Find at least 4-6 patterns.
+
+6. "examples" — 10_EXAMPLES.md:
+---
+status: "tier1"
+---
+# EXAMPLES: ${entityName}
+
+3-5 actual representative samples from corpus. For each:
+- Title
+- The full text (or substantial excerpt)
+- Annotation: Which O/M/E patterns it uses
+- Why it's representative of their voice
+- Energy level and tone
+
+Return valid JSON with these 6 keys. Each value is a complete markdown string.`;
+}
+
+async function generateTier1VoiceFiles(entityName: string, corpusRaw: string): Promise<Tier1VoiceFiles> {
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error("ANTHROPIC_API_KEY not configured");
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 16384,
+      system: TIER1_SYSTEM,
+      messages: [{ role: "user", content: buildTier1Prompt(entityName, corpusRaw) }],
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Claude API error (tier1): ${error}`);
+  }
+
+  const data = await response.json();
+  const text = data.content[0].text;
+
+  // Extract JSON from response
+  let cleaned = text.trim();
+  const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (jsonBlockMatch) {
+    cleaned = jsonBlockMatch[1].trim();
+  }
+  const startIdx = cleaned.indexOf('{');
+  const endIdx = cleaned.lastIndexOf('}');
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    cleaned = cleaned.substring(startIdx, endIdx + 1);
+  }
+
+  const parsed = JSON.parse(cleaned);
+
+  return {
+    digest: parsed.digest,
+    writingEngine: parsed.writing_engine,
+    openings: parsed.openings,
+    middles: parsed.middles,
+    endings: parsed.endings,
+    examples: parsed.examples,
+  };
+}
+
+async function uploadToVoiceStorage(
+  supabase: ReturnType<typeof createServiceClient>,
+  path: string,
+  content: string
+): Promise<boolean> {
+  const blob = new Blob([content], { type: "text/markdown" });
+
+  const { error } = await supabase.storage.from(VOICE_BUCKET).upload(path, blob, {
+    contentType: "text/markdown",
+    upsert: true,
+  });
+
+  if (error) {
+    console.error(`Error uploading voice file ${path}:`, error);
+    return false;
+  }
+
+  return true;
+}
+
+async function uploadTier1Files(
+  supabase: ReturnType<typeof createServiceClient>,
+  entitySlug: string,
+  tier1: Tier1VoiceFiles
+): Promise<boolean> {
+  const uploads = await Promise.all([
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/DIGEST.md`, tier1.digest),
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/voice/01_WRITING_ENGINE.md`, tier1.writingEngine),
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/voice/06_OPENINGS.md`, tier1.openings),
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/voice/07_MIDDLES.md`, tier1.middles),
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/voice/08_ENDINGS.md`, tier1.endings),
+    uploadToVoiceStorage(supabase, `contexts/${entitySlug}/voice/10_EXAMPLES.md`, tier1.examples),
+  ]);
+
+  return uploads.every((u) => u);
 }
 
 // =============================================================================
@@ -367,9 +574,16 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createServiceClient();
 
-    // Step 1: Generate CORPUS_SUMMARY.md
-    console.log(`[sculptor-onboard] Generating corpus summary for ${entity_name}...`);
-    const corpusSummary = await generateCorpusSummary(entity_name, corpus_raw);
+    // Step 1: Generate CORPUS_SUMMARY.md + Tier 1 voice files in parallel
+    // Both only need corpus_raw so they can run concurrently
+    console.log(`[sculptor-onboard] Generating corpus summary + Tier 1 voice files for ${entity_name}...`);
+    const [corpusSummary, tier1Files] = await Promise.all([
+      generateCorpusSummary(entity_name, corpus_raw),
+      generateTier1VoiceFiles(entity_name, corpus_raw).catch((err) => {
+        console.error("[sculptor-onboard] Tier 1 generation failed (non-fatal):", err);
+        return null;
+      }),
+    ]);
 
     // Step 2: Fetch question bank
     console.log("[sculptor-onboard] Fetching question bank...");
@@ -382,16 +596,29 @@ Deno.serve(async (req: Request) => {
     console.log(`[sculptor-onboard] Generating gap analysis (${questions.length} questions)...`);
     const gapAnalysis = await generateGapAnalysis(entity_name, corpusSummary, questions);
 
-    // Step 4: Upload files to storage
+    // Step 4: Upload files to storage (corpus files + Tier 1 voice files)
     console.log("[sculptor-onboard] Uploading to storage...");
-    const uploads = await Promise.all([
+    const uploadPromises: Promise<boolean>[] = [
       uploadToStorage(supabase, `${entity_slug}/corpus_raw.md`, corpus_raw),
       uploadToStorage(supabase, `${entity_slug}/CORPUS_SUMMARY.md`, corpusSummary),
       uploadToStorage(supabase, `${entity_slug}/GAP_ANALYSIS.md`, gapAnalysis),
-    ]);
+    ];
 
-    if (uploads.some((u) => !u)) {
+    // Upload Tier 1 voice files if generation succeeded
+    if (tier1Files) {
+      uploadPromises.push(uploadTier1Files(supabase, entity_slug, tier1Files));
+    }
+
+    const uploads = await Promise.all(uploadPromises);
+
+    // Only fail on corpus file upload failures (first 3)
+    if (uploads.slice(0, 3).some((u) => !u)) {
       return errorResponse("Failed to upload some files to storage");
+    }
+
+    const tier1Uploaded = tier1Files && uploads[3];
+    if (tier1Files && !tier1Uploaded) {
+      console.warn("[sculptor-onboard] Tier 1 voice files upload failed (non-fatal)");
     }
 
     // Step 5: Check if CHARACTER.md exists (required for session to work)
@@ -410,6 +637,7 @@ Deno.serve(async (req: Request) => {
             `${entity_slug}/CORPUS_SUMMARY.md`,
             `${entity_slug}/GAP_ANALYSIS.md`,
           ],
+          tier1_generated: !!tier1Uploaded,
         });
       }
     }
@@ -422,16 +650,30 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Failed to create sculptor session");
     }
 
+    const filesUploaded = [
+      `${entity_slug}/corpus_raw.md`,
+      `${entity_slug}/CORPUS_SUMMARY.md`,
+      `${entity_slug}/GAP_ANALYSIS.md`,
+    ];
+
+    if (tier1Uploaded) {
+      filesUploaded.push(
+        `contexts/${entity_slug}/DIGEST.md`,
+        `contexts/${entity_slug}/voice/01_WRITING_ENGINE.md`,
+        `contexts/${entity_slug}/voice/06_OPENINGS.md`,
+        `contexts/${entity_slug}/voice/07_MIDDLES.md`,
+        `contexts/${entity_slug}/voice/08_ENDINGS.md`,
+        `contexts/${entity_slug}/voice/10_EXAMPLES.md`,
+      );
+    }
+
     return jsonResponse({
       status: "complete",
       access_code: session.access_code,
       session_id: session.id,
       entity_slug,
-      files_uploaded: [
-        `${entity_slug}/corpus_raw.md`,
-        `${entity_slug}/CORPUS_SUMMARY.md`,
-        `${entity_slug}/GAP_ANALYSIS.md`,
-      ],
+      files_uploaded: filesUploaded,
+      tier1_generated: !!tier1Uploaded,
       url: `https://goodhang-staging.vercel.app/sculptor/${session.access_code}`,
     });
   } catch (error) {
