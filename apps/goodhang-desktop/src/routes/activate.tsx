@@ -86,8 +86,14 @@ export default function ActivatePage() {
   };
 
   const formatCode = (value: string) => {
-    // Format as XXXX-XXXX-XXXX (matches website activation key format)
     const cleaned = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    // FO- prefix format: FO-XXXX-XXXX (founder_os keys)
+    if (cleaned.startsWith('FO')) {
+      if (cleaned.length <= 2) return cleaned;
+      if (cleaned.length <= 6) return `FO-${cleaned.slice(2)}`;
+      return `FO-${cleaned.slice(2, 6)}-${cleaned.slice(6, 10)}`;
+    }
+    // Standard format: XXXX-XXXX-XXXX
     if (cleaned.length <= 4) return cleaned;
     if (cleaned.length <= 8) return `${cleaned.slice(0, 4)}-${cleaned.slice(4)}`;
     return `${cleaned.slice(0, 4)}-${cleaned.slice(4, 8)}-${cleaned.slice(8, 12)}`;
@@ -127,7 +133,7 @@ export default function ActivatePage() {
               type="text"
               value={code}
               onChange={(e) => setCode(formatCode(e.target.value))}
-              placeholder="XXXX-XXXX-XXXX"
+              placeholder="Enter activation code"
               className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white text-center text-xl font-mono tracking-wider focus:outline-none focus:ring-2 focus:ring-gh-purple-500 focus:border-transparent"
               maxLength={14}
               disabled={loading}

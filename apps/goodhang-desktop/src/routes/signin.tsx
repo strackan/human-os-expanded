@@ -27,6 +27,8 @@ export default function SigninPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -137,7 +139,7 @@ export default function SigninPage() {
       if (sessionId) {
         navigate('/results');
       } else if (product === 'founder_os') {
-        navigate('/founder-os/onboarding');
+        navigate('/founder-os/production');
       } else {
         navigate('/dashboard');
       }
@@ -145,6 +147,33 @@ export default function SigninPage() {
       console.error('Signin error:', err);
       const message =
         err instanceof Error ? err.message : 'Failed to sign in. Please try again.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        formData.email,
+        { redirectTo: `${import.meta.env.VITE_APP_URL || 'https://goodhang.vercel.app'}/auth/reset-password` }
+      );
+
+      if (resetError) throw resetError;
+      setResetSent(true);
+    } catch (err: unknown) {
+      console.error('Reset password error:', err);
+      const message = err instanceof Error ? err.message : 'Failed to send reset email';
       setError(message);
     } finally {
       setLoading(false);
@@ -238,100 +267,180 @@ export default function SigninPage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-                className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-300 mb-1"
-              >
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                required
-                className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
-                placeholder="Your password"
-              />
-            </div>
-
-            {error && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-sm"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-gh-purple-600 hover:bg-gh-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors mt-2"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    viewBox="0 0 24 24"
-                    fill="none"
+          {resetMode ? (
+            // Password Reset Form
+            resetSent ? (
+              <div className="text-center py-4">
+                <div className="text-green-400 text-lg font-medium mb-2">Check your email</div>
+                <p className="text-gray-400 text-sm mb-4">
+                  We sent a password reset link to <span className="text-white">{formData.email}</span>
+                </p>
+                <button
+                  onClick={() => { setResetMode(false); setResetSent(false); setError(null); }}
+                  className="text-gh-purple-400 hover:text-gh-purple-300 text-sm"
+                >
+                  Back to sign in
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="reset-email"
+                    className="block text-sm font-medium text-gray-300 mb-1"
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Signing in...
-                </span>
-              ) : (
-                'Sign In & Reveal Character'
-              )}
-            </button>
-          </form>
+                    Email
+                  </label>
+                  <input
+                    id="reset-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
+                    placeholder="you@example.com"
+                  />
+                </div>
 
-          <p className="mt-4 text-center text-gray-500 text-sm">
-            Don't have an account?{' '}
-            <button
-              onClick={() => navigate('/signup')}
-              className="text-gh-purple-400 hover:text-gh-purple-300"
-            >
-              Create one
-            </button>
-          </p>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-sm"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-gh-purple-600 hover:bg-gh-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors mt-2"
+                >
+                  {loading ? 'Sending...' : 'Send Reset Link'}
+                </button>
+
+                <p className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => { setResetMode(false); setError(null); }}
+                    className="text-gh-purple-400 hover:text-gh-purple-300 text-sm"
+                  >
+                    Back to sign in
+                  </button>
+                </p>
+              </form>
+            )
+          ) : (
+            // Normal Sign In Form
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-300 mb-1"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
+                    placeholder="you@example.com"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label
+                      htmlFor="password"
+                      className="block text-sm font-medium text-gray-300"
+                    >
+                      Password
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setResetMode(true); setError(null); }}
+                      className="text-xs text-gh-purple-400 hover:text-gh-purple-300"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                  <input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    required
+                    className="w-full px-4 py-3 bg-gh-dark-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gh-purple-500"
+                    placeholder="Your password"
+                  />
+                </div>
+
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-3 bg-red-900/30 border border-red-700 rounded-lg text-red-300 text-sm"
+                  >
+                    {error}
+                  </motion.div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-gh-purple-600 hover:bg-gh-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors mt-2"
+                >
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg
+                        className="animate-spin h-5 w-5"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
+                      </svg>
+                      Signing in...
+                    </span>
+                  ) : (
+                    'Sign In & Reveal Character'
+                  )}
+                </button>
+              </form>
+
+              <p className="mt-4 text-center text-gray-500 text-sm">
+                Don't have an account?{' '}
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="text-gh-purple-400 hover:text-gh-purple-300"
+                >
+                  Create one
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </motion.div>
     </div>

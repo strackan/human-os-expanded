@@ -121,7 +121,7 @@ export default function AuthCallbackPage() {
         if (sessionId) {
           navigate('/results');
         } else if (product === 'founder_os') {
-          navigate('/founder-os/onboarding');
+          navigate('/founder-os/production');
         } else {
           navigate('/dashboard');
         }

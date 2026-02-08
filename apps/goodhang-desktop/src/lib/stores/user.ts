@@ -147,15 +147,15 @@ export function getRecommendedRoute(status: UserStatus | null): string {
           ? `/founder-os/tutorial?session=${sessionId}`
           : '/founder-os/tutorial';
       }
-      // Tutorial completed, go to onboarding for remaining steps
-      return '/founder-os/onboarding';
+      // Tutorial completed, go to production
+      return '/founder-os/production';
     }
 
     if (identity?.completed) {
       return '/founder-os/production';
     }
 
-    return '/founder-os/onboarding';
+    return '/founder-os/production';
   }
 
   // Check GoodHang second
@@ -168,7 +168,7 @@ export function getRecommendedRoute(status: UserStatus | null): string {
     case 'view_assessment':
       return '/goodhang/results';
     case 'start_onboarding':
-      return '/founder-os/onboarding';
+      return '/founder-os/production';
     case 'continue_context':
       return '/founder-os/dashboard';
     case 'complete_assessment':

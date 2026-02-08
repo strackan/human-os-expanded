@@ -540,7 +540,7 @@ export default function WelcomeFlowPage() {
                 className="flex gap-4 justify-center"
               >
                 <button
-                  onClick={() => navigate('/founder-os/onboarding')}
+                  onClick={() => navigate('/founder-os/production')}
                   className="px-8 py-4 bg-gh-dark-700 hover:bg-gh-dark-600 text-gray-300 rounded-xl text-lg transition-colors"
                 >
                   Later

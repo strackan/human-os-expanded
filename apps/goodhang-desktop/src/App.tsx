@@ -8,7 +8,6 @@ import SigninPage from './routes/signin';
 import AuthCallbackPage from './routes/auth-callback';
 import ResultsPage from './routes/results';
 import DashboardPage from './routes/dashboard';
-import FounderOSOnboardingPage from './routes/founder-os/onboarding';
 import WelcomeFlowPage from './routes/founder-os/welcome';
 import TutorialModePage from './routes/founder-os/tutorial-router';
 import QuestionEPage from './routes/founder-os/question-e';
@@ -63,7 +62,7 @@ function App() {
       if (recommendedRoute === '/dashboard' && product) {
         console.log('[App] Overriding dashboard route with product from activation:', product);
         if (product === 'founder_os') {
-          return '/founder-os/onboarding';
+          return '/founder-os/production';
         } else if (product === 'goodhang') {
           return '/goodhang/results';
         }
@@ -74,7 +73,7 @@ function App() {
     if (product) {
       console.log('[App] Using product from device registration:', product);
       if (product === 'founder_os') {
-        return '/founder-os/onboarding';
+        return '/founder-os/production';
       } else if (product === 'goodhang') {
         return '/goodhang/results';
       }
@@ -128,8 +127,8 @@ function App() {
           {/* Founder OS routes */}
           <Route path="/founder-os/tutorial" element={<TutorialModePage />} />
           <Route path="/founder-os/welcome" element={<WelcomeFlowPage />} />
-          <Route path="/founder-os/onboarding" element={<FounderOSOnboardingPage />} />
-          <Route path="/founder-os/dashboard" element={<FounderOSOnboardingPage />} />
+          <Route path="/founder-os/onboarding" element={<Navigate to="/founder-os/production" replace />} />
+          <Route path="/founder-os/dashboard" element={<Navigate to="/founder-os/production" replace />} />
           <Route path="/founder-os/question-e" element={<QuestionEPage />} />
           <Route path="/founder-os/question-e-complete" element={<QuestionECompletePage />} />
           <Route path="/founder-os/renubu-chat" element={<RenubuChatPage />} />

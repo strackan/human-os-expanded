@@ -247,7 +247,7 @@ export default function QuestionEPage() {
               Try Again
             </button>
             <button
-              onClick={() => navigate('/founder-os/onboarding')}
+              onClick={() => navigate('/founder-os/production')}
               className="px-4 py-2 border border-gray-600 hover:bg-gray-800 rounded-lg text-gray-300"
             >
               Go Back
@@ -265,7 +265,7 @@ export default function QuestionEPage() {
         <div className="text-center">
           <p className="text-gray-400 mb-4">No questions available.</p>
           <button
-            onClick={() => navigate('/founder-os/onboarding')}
+            onClick={() => navigate('/founder-os/production')}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
           >
             Go Back
@@ -336,7 +336,7 @@ export default function QuestionEPage() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <button
-            onClick={() => navigate('/founder-os/onboarding')}
+            onClick={() => navigate('/founder-os/production')}
             className="text-gray-400 hover:text-white transition-colors flex items-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

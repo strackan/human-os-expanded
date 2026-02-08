@@ -33,7 +33,7 @@ export default function DashboardPage() {
         // Fallback to product from activation if status doesn't have a specific route
         console.log('[Dashboard] Using activation product for routing:', product);
         if (product === 'founder_os') {
-          navigate('/founder-os/onboarding', { replace: true });
+          navigate('/founder-os/production', { replace: true });
         } else if (product === 'goodhang') {
           navigate('/goodhang/results', { replace: true });
         }
@@ -44,14 +44,14 @@ export default function DashboardPage() {
         // Have product from activation, route there
         console.log('[Dashboard] No status but have activation product:', product);
         if (product === 'founder_os') {
-          navigate('/founder-os/onboarding', { replace: true });
+          navigate('/founder-os/production', { replace: true });
         } else if (product === 'goodhang') {
           navigate('/goodhang/results', { replace: true });
         }
       } else if (userId) {
         // Have userId but no product - likely founder_os user, try onboarding
         console.log('[Dashboard] No status/product but have userId, trying founder-os:', userId);
-        navigate('/founder-os/onboarding', { replace: true });
+        navigate('/founder-os/production', { replace: true });
       }
     }
   }, [loading, status, navigate, product, userId]);
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="bg-gh-dark-800 rounded-2xl p-6 border border-blue-500/30 cursor-pointer hover:border-blue-500/60"
-            onClick={() => navigate('/founder-os/onboarding')}
+            onClick={() => navigate('/founder-os/production')}
           >
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">

@@ -164,7 +164,7 @@ export default function QuestionECompletePage() {
           className="space-y-3"
         >
           <button
-            onClick={() => navigate('/founder-os/onboarding')}
+            onClick={() => navigate('/founder-os/production')}
             className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg text-lg transition-colors"
           >
             Return to Founder OS
