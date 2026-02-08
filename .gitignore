@@ -57,3 +57,12 @@ package-lock.json
 
 # Git worktrees (code orchestrator isolation)
 .worktrees/
+
+# User context data (lives in Supabase storage, not git)
+# Keep _shared/, _base/, prompts/, journal-modes/ — those are codebase templates
+contexts/*
+!contexts/_shared/
+!contexts/_base/
+!contexts/prompts/
+!contexts/journal-modes/
+test-output/
