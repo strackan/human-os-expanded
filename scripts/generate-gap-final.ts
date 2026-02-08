@@ -233,7 +233,7 @@ async function main() {
 
   console.log(`=== Generating GAP_ANALYSIS_FINAL for ${entitySlug} ===\n`);
 
-  // Step 1: Try to get transcript from storage
+  // Step 1: Try to get transcript from storage, local file, or session metadata
   let transcript: string | null = null;
 
   const storagePath = `contexts/${entitySlug}/SCULPTOR_TRANSCRIPT.md`;
@@ -251,8 +251,53 @@ async function main() {
     }
   }
 
+  // Fallback: extract from sculptor session conversation_history
   if (!transcript) {
-    console.error('❌ Could not find SCULPTOR_TRANSCRIPT.md');
+    console.log('📝 No transcript file found, extracting from sculptor session metadata...');
+
+    const { data: session } = await supabase
+      .from('sculptor_sessions')
+      .select('id, entity_name, entity_slug, metadata')
+      .eq('entity_slug', entitySlug)
+      .eq('status', 'completed')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (session?.metadata?.conversation_history) {
+      const history = session.metadata.conversation_history as Array<{ role: string; content: string }>;
+      const entityName = session.entity_name || entitySlug;
+
+      // Build transcript markdown
+      let md = `# Sculptor Transcript: ${entityName}\n\n`;
+      md += `**Entity:** ${entitySlug}\n`;
+      md += `**Generated:** ${new Date().toISOString()}\n`;
+      md += `**Messages:** ${history.length}\n\n---\n\n`;
+
+      for (const msg of history) {
+        const label = msg.role === 'user' ? entityName.toUpperCase() : 'SCULPTOR';
+        md += `## ${label}\n\n${msg.content}\n\n---\n\n`;
+      }
+
+      transcript = md;
+      console.log(`✅ Extracted transcript from session metadata (${history.length} messages, ${transcript.length} chars)`);
+
+      // Upload to storage for future use
+      const blob = new Blob([transcript], { type: 'text/markdown' });
+      const { error: uploadErr } = await supabase.storage
+        .from(BUCKET)
+        .upload(storagePath, blob, { contentType: 'text/markdown', upsert: true });
+
+      if (uploadErr) {
+        console.error(`⚠️ Failed to upload transcript: ${uploadErr.message}`);
+      } else {
+        console.log(`✅ Uploaded transcript to ${BUCKET}/${storagePath}`);
+      }
+    }
+  }
+
+  if (!transcript) {
+    console.error('❌ Could not find SCULPTOR_TRANSCRIPT.md or session conversation_history');
     process.exit(1);
   }
 

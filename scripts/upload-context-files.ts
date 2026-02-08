@@ -13,9 +13,10 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 
 // Load environment variables
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+dotenv.config({ path: path.join(__dirname, '../apps/goodhang/.env.local') });
 
-const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 if (!supabaseUrl || !supabaseServiceKey) {

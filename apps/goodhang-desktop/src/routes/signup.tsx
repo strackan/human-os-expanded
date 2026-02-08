@@ -116,14 +116,9 @@ export default function SignupPage() {
       sessionStorage.removeItem('product');
       sessionStorage.removeItem('alreadyRedeemed');
 
-      // Navigate based on product type
-      if (sessionId) {
-        navigate('/results');
-      } else if (product === 'founder_os') {
-        navigate('/founder-os/production');
-      } else {
-        navigate('/dashboard');
-      }
+      // Navigate to root — centralized routing in App.tsx will use
+      // getRecommendedRoute() to decide tutorial vs production vs results
+      navigate('/');
     } catch (err: unknown) {
       console.error('Signup error:', err);
       const message = err instanceof Error ? err.message : 'Failed to create account. Please try again.';

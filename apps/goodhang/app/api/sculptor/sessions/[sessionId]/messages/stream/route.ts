@@ -167,6 +167,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         })
         .eq('id', sessionId);
 
+      // Auto-trigger finalization when session completes
+      if (isSessionComplete && sessionStatus !== 'completed') {
+        const edgeFunctionUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/sculptor-gap-final`;
+        fetch(edgeFunctionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ session_id: sessionId }),
+        })
+          .then(res => console.log(`[API /sculptor/messages/stream] Auto-finalize triggered: ${res.status}`))
+          .catch(err => console.error('[API /sculptor/messages/stream] Auto-finalize failed:', err));
+      }
+
       return {
         content: cleanedContent,
         tokensUsed: finalResult?.tokensUsed ?? { input: 0, output: 0, total: 0 },

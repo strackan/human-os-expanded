@@ -23,16 +23,19 @@ async function fix() {
   console.log('Found human_os user:', humanOsUser);
   if (userError) console.log('User lookup error:', userError.message);
   
+  const scottSessionId = '408c50a8-748d-4ba2-9852-c49b95c26345';
+
   if (humanOsUser) {
-    // Re-link the activation key (keep redeemed_at null so he can re-activate)
+    // Re-link the activation key with session_id
     const { data, error } = await supabase
       .from('activation_keys')
-      .update({ 
+      .update({
         user_id: authId,
-        human_os_user_id: humanOsUser.id 
+        human_os_user_id: humanOsUser.id,
+        session_id: scottSessionId
       })
       .eq('code', 'B744-DD4D-6D47')
-      .select('code, user_id, human_os_user_id, redeemed_at');
+      .select('code, user_id, human_os_user_id, session_id, redeemed_at');
     
     console.log('Updated key:', data);
     if (error) console.error('Update error:', error.message);
@@ -40,9 +43,9 @@ async function fix() {
     console.log('No human_os user found - just linking auth user');
     const { data, error } = await supabase
       .from('activation_keys')
-      .update({ user_id: authId })
+      .update({ user_id: authId, session_id: scottSessionId })
       .eq('code', 'B744-DD4D-6D47')
-      .select('code, user_id, human_os_user_id, redeemed_at');
+      .select('code, user_id, human_os_user_id, session_id, redeemed_at');
     
     console.log('Updated key:', data);
     if (error) console.error('Update error:', error.message);

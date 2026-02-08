@@ -135,14 +135,9 @@ export default function SigninPage() {
       sessionStorage.removeItem('product');
       sessionStorage.removeItem('alreadyRedeemed');
 
-      // Navigate based on product type
-      if (sessionId) {
-        navigate('/results');
-      } else if (product === 'founder_os') {
-        navigate('/founder-os/production');
-      } else {
-        navigate('/dashboard');
-      }
+      // Navigate to root — centralized routing in App.tsx will use
+      // getRecommendedRoute() to decide tutorial vs production vs results
+      navigate('/');
     } catch (err: unknown) {
       console.error('Signin error:', err);
       const message =

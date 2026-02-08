@@ -20,7 +20,9 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
+import { User } from 'lucide-react';
 import type { ProductionMode } from '@/lib/types/production';
+import { useUserStatusStore } from '@/lib/stores/user';
 
 interface ProductionSidebarProps {
   currentMode: ProductionMode;
@@ -137,7 +139,32 @@ export function ProductionSidebar({
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      {/* User identity */}
+      <UserBadge collapsed={collapsed} />
     </motion.aside>
+  );
+}
+
+function UserBadge({ collapsed }: { collapsed: boolean }) {
+  const { status } = useUserStatusStore();
+  const name = status?.user?.full_name || status?.contexts?.active || '...';
+  const slug = status?.contexts?.active || '';
+
+  return (
+    <div className={`border-t border-gh-dark-700 p-2 ${collapsed ? 'flex justify-center' : ''}`}>
+      <div
+        className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-gray-500 ${
+          collapsed ? 'justify-center' : ''
+        }`}
+        title={`${name} (${slug})`}
+      >
+        <User className="w-4 h-4 flex-shrink-0" />
+        {!collapsed && (
+          <span className="text-xs truncate">{name}</span>
+        )}
+      </div>
+    </div>
   );
 }
 
