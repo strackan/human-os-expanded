@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://*.supabase.co https://api.goodhang.com https://goodhang-staging.vercel.app http://localhost:3200; img-src 'self' data: https:; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; connect-src 'self' http://ipc.localhost https://ipc.localhost https://*.supabase.co https://api.goodhang.com https://goodhang.com https://goodhang-staging.vercel.app http://localhost:3200; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://goodhang.com"
     }
   },
   "bundle": {
