@@ -29,6 +29,7 @@ interface Release {
 interface LatestReleases {
   windows: Release | null;
   macos: Release | null;
+  'macos-arm64': Release | null;
   linux: Release | null;
   latest_version: string | null;
   release_notes: string | null;
@@ -51,7 +52,8 @@ interface GitHubRelease {
 // Asset name patterns for each platform
 const PLATFORM_PATTERNS: Record<string, RegExp> = {
   windows: /\.msi$/i,
-  macos: /\.dmg$/i,
+  'macos-arm64': /_aarch64\.dmg$/i,
+  macos: /_x64\.dmg$/i,
   linux: /\.AppImage$/i,
 };
 
@@ -84,6 +86,7 @@ export async function GET(request: NextRequest) {
     const result: LatestReleases = {
       windows: null,
       macos: null,
+      'macos-arm64': null,
       linux: null,
       latest_version: version,
       release_notes: release.body || null,
@@ -105,9 +108,7 @@ export async function GET(request: NextRequest) {
             published_at: release.published_at,
           };
 
-          if (platformKey === 'windows') result.windows = releaseObj;
-          else if (platformKey === 'macos') result.macos = releaseObj;
-          else if (platformKey === 'linux') result.linux = releaseObj;
+          result[platformKey as keyof LatestReleases] = releaseObj as never;
           break;
         }
       }
@@ -118,6 +119,7 @@ export async function GET(request: NextRequest) {
       const filtered: LatestReleases = {
         windows: platform === 'windows' ? result.windows : null,
         macos: platform === 'macos' ? result.macos : null,
+        'macos-arm64': platform === 'macos' ? result['macos-arm64'] : null,
         linux: platform === 'linux' ? result.linux : null,
         latest_version: result.latest_version,
         release_notes: result.release_notes,
@@ -157,6 +159,7 @@ function getMockReleases(platform: string | null): LatestReleases {
     return {
       windows: platform === 'windows' ? mockRelease('windows') : null,
       macos: platform === 'macos' ? mockRelease('macos') : null,
+      'macos-arm64': null,
       linux: platform === 'linux' ? mockRelease('linux') : null,
       latest_version: mockVersion,
       release_notes: 'Initial release',
@@ -166,6 +169,7 @@ function getMockReleases(platform: string | null): LatestReleases {
   return {
     windows: mockRelease('windows'),
     macos: null,
+    'macos-arm64': null,
     linux: null,
     latest_version: mockVersion,
     release_notes: 'Initial release - includes activation key support and multi-product routing.',
