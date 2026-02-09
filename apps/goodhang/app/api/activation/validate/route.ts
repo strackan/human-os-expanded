@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Check if there's an existing user linked to this key
     // Need to return both auth_id (for Supabase auth) and human_os_user_id (for founder_os data)
     let authUserId: string | null = null;
-    let humanOsUserId: string | null = keyData.human_os_user_id || null;
+    const humanOsUserId: string | null = keyData.human_os_user_id || null;
 
     if (keyData.human_os_user_id) {
       // Look up the human_os.users record to get auth_id

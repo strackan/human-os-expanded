@@ -69,9 +69,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Load voice pack (all voice files from storage)
+    console.log('[voice-test/generate] Session lookup result:', {
+      session_id: session.id,
+      entity_slug: session.entity_slug,
+      has_metadata: !!session.metadata,
+      has_persona_fingerprint: !!session.persona_fingerprint,
+    });
+
     const pack = session.entity_slug
       ? await loadVoicePack(supabase, session.entity_slug)
       : undefined;
+
+    console.log('[voice-test/generate] Voice pack loaded:', {
+      entity_slug: session.entity_slug ?? '(none)',
+      pack_loaded: !!pack,
+      digest_length: pack?.digest?.length ?? 0,
+      total_files: pack?.files.length ?? 0,
+      roles_found: pack ? Object.keys(pack.byRole).sort() : [],
+      file_names: pack?.files.map(f => f.filename).sort() ?? [],
+    });
 
     // Build voice context from session metadata (fallback for users without voice files)
     const voiceContext: VoiceContext = {};

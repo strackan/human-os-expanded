@@ -46,10 +46,19 @@ export function getGenerationSystemPrompt(
 
   // When we have a voice pack, build a rich prompt from discovered files
   if (hasVoicePack) {
-    return buildVoicePackPrompt(pack, styleGuidance, voiceContext);
+    console.log('[voice-test/prompts] USING VOICE PACK PATH — building rich prompt with', {
+      has_digest: !!pack.digest,
+      digest_length: pack.digest?.length ?? 0,
+      file_count: pack.files.length,
+      roles: Object.keys(pack.byRole).sort(),
+    });
+    const prompt = buildVoicePackPrompt(pack, styleGuidance, voiceContext);
+    console.log('[voice-test/prompts] System prompt length:', prompt.length, 'chars');
+    return prompt;
   }
 
   // Fallback: metadata-only prompt (no voice files available)
+  console.log('[voice-test/prompts] USING FALLBACK PATH — no voice pack available, metadata only');
   const voiceDescription = buildVoiceDescription(voiceContext);
 
   return `You are a skilled content writer who captures the authentic voice of the person you're writing for.

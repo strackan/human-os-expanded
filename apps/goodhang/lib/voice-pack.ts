@@ -162,12 +162,15 @@ export async function loadVoicePack(
   entitySlug: string,
 ): Promise<VoicePack> {
   const voiceDir = `contexts/${entitySlug}/voice`;
+  console.log(`[voice-pack] loadVoicePack called for slug="${entitySlug}", voiceDir="${voiceDir}"`);
 
   // Load digest (always at root level) and list voice directory in parallel
   const [digest, listing] = await Promise.all([
     loadStorageFile(supabase, `contexts/${entitySlug}/DIGEST.md`),
     supabase.storage.from('human-os').list(voiceDir),
   ]);
+
+  console.log(`[voice-pack] DIGEST: ${digest ? `${digest.length} chars` : 'NOT FOUND'}`);
 
   const files: VoiceFile[] = [];
   const byRole: Record<string, VoiceFile> = {};
@@ -176,6 +179,8 @@ export async function loadVoicePack(
     console.warn(`[voice-pack] Could not list ${voiceDir}:`, listing.error?.message);
     return { entitySlug, digest, files, byRole };
   }
+
+  console.log(`[voice-pack] Directory listing: ${listing.data.length} entries, names: [${listing.data.map(f => f.name).join(', ')}]`);
 
   // Filter to .md files only
   const mdFiles = listing.data.filter(f => f.name.endsWith('.md'));
@@ -220,6 +225,8 @@ export async function loadVoicePack(
 
   // Sort files by filename for consistent ordering
   files.sort((a, b) => a.filename.localeCompare(b.filename));
+
+  console.log(`[voice-pack] LOADED: ${files.length} files, roles: [${Object.keys(byRole).sort().join(', ')}], digest: ${digest ? 'YES' : 'NO'}`);
 
   return { entitySlug, digest, files, byRole };
 }
