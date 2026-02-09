@@ -1,15 +1,9 @@
 /**
  * POST /api/voice/generate-samples
  *
- * Generate 3 voice content samples based on corpus analysis + interview data.
- *
- * Priority signal chain:
- *   1. Corpus voice analysis (DIGEST.md) — PRIMARY
- *   2. Writing rules (WRITING_ENGINE.md) — ALWAYS/NEVER patterns
- *   3. Template framework (TEMPLATE_COMPONENTS.md, BLEND_RECIPES.md) — structure
- *   4. Persona fingerprint (sculptor_sessions) — quantified dimensions
- *   5. Interview answers (request body) — SUPPLEMENTARY anecdotes
- *   6. Voice OS commandments (session metadata) — override when available
+ * Generate 3 voice content samples using discovery-based voice pack loading.
+ * Loads ALL voice files from the user's voice directory via loadVoicePack(),
+ * then organizes them by role for prompt construction.
  *
  * Falls back gracefully: corpus-rich users get 95% accuracy,
  * new users without corpus data fall back to interview-only generation.
@@ -18,7 +12,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadVoicePack, type VoicePack } from '@/lib/voice-pack';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -61,109 +55,17 @@ interface PersonaFingerprint {
   vulnerability_as_tool: number;
 }
 
-interface CorpusData {
-  digest: string | null;
-  writingEngine: string | null;
-  // Tier 1 structural files
-  openings: string | null;
-  middles: string | null;
-  endings: string | null;
-  examples: string | null;
-  // Tier 2 DEV files
-  themes: string | null;
-  guardrails: string | null;
-  stories: string | null;
-  anecdotes: string | null;
-  context: string | null;
-  // Legacy fallback
-  templateComponents: string | null;
-  blendRecipes: string | null;
-}
-
-// =============================================================================
-// STORAGE HELPERS
-// =============================================================================
-
-async function loadStorageFile(
-  supabase: SupabaseClient,
-  filePath: string,
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.storage
-      .from('human-os')
-      .download(filePath);
-
-    if (error || !data) {
-      return null;
-    }
-
-    return await data.text();
-  } catch {
-    return null;
-  }
-}
-
-async function loadCorpusData(
-  supabase: SupabaseClient,
-  entitySlug: string,
-): Promise<CorpusData> {
-  const [
-    digest, writingEngine,
-    openings, middles, endings, examples,
-    themes, guardrails, stories, anecdotes, context,
-    templateComponents, blendRecipes,
-  ] = await Promise.all([
-    // Tier 1
-    loadStorageFile(supabase, `contexts/${entitySlug}/DIGEST.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/01_WRITING_ENGINE.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/06_OPENINGS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/07_MIDDLES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/08_ENDINGS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/10_EXAMPLES.md`),
-    // Tier 2
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/02_THEMES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/03_GUARDRAILS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/04_STORIES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/05_ANECDOTES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/CONTEXT.md`),
-    // Legacy fallback
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/02_TEMPLATE_COMPONENTS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/04_BLEND_RECIPES.md`),
-  ]);
-
-  return {
-    digest, writingEngine,
-    openings, middles, endings, examples,
-    themes, guardrails, stories, anecdotes, context,
-    templateComponents, blendRecipes,
-  };
-}
-
-async function loadVoiceCommandments(
-  supabase: SupabaseClient,
-  entitySlug: string,
-): Promise<{ voice: string | null; themes: string | null; guardrails: string | null }> {
-  const [voice, themes, guardrails] = await Promise.all([
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/VOICE.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/THEMES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/GUARDRAILS.md`),
-  ]);
-
-  return { voice, themes, guardrails };
-}
-
 // =============================================================================
 // PROMPT CONSTRUCTION
 // =============================================================================
 
 function buildSystemPrompt(opts: {
-  corpus: CorpusData;
+  pack: VoicePack;
   personaFingerprint: PersonaFingerprint | null;
-  commandments: { voice: string | null; themes: string | null; guardrails: string | null };
   voiceContext: { tone?: string; style?: string; characteristics?: string[]; summary?: string };
 }): string {
-  const { corpus, personaFingerprint, commandments, voiceContext } = opts;
-  const hasCorpus = corpus.digest || corpus.writingEngine;
+  const { pack, personaFingerprint, voiceContext } = opts;
+  const hasCorpus = !!(pack.digest || pack.byRole.writing_engine);
 
   let prompt = `You are generating voice-calibrated content samples. Your job is to write as this specific person would write -- matching their exact patterns, vocabulary, rhythm, and personality.
 
@@ -174,48 +76,71 @@ You will generate 3 pieces of content:
 
 `;
 
-  // Layer 1: Corpus Voice Analysis (PRIMARY)
-  if (corpus.digest) {
+  // START_HERE as routing preamble
+  if (pack.byRole.start_here) {
+    prompt += `## OPERATING SYSTEM (START HERE)
+
+${pack.byRole.start_here.content}
+
+`;
+  }
+
+  // DIGEST as voice fingerprint
+  if (pack.digest) {
     prompt += `## VOICE FINGERPRINT (from corpus analysis)
 
-${corpus.digest}
+${pack.digest}
 
 `;
   }
 
-  // Layer 2: Writing Rules
-  if (corpus.writingEngine) {
-    prompt += `## WRITING RULES
+  // Organized by role
+  const roleSections: { role: string; heading: string }[] = [
+    { role: 'writing_engine', heading: 'WRITING RULES' },
+    { role: 'openings', heading: 'OPENING PATTERNS' },
+    { role: 'middles', heading: 'MIDDLE PATTERNS' },
+    { role: 'endings', heading: 'ENDING PATTERNS' },
+    { role: 'examples', heading: 'ANNOTATED EXAMPLES' },
+    { role: 'blends', heading: 'BLEND RECIPES' },
+    { role: 'themes', heading: 'THEMES' },
+    { role: 'guardrails', heading: 'GUARDRAILS' },
+    { role: 'stories', heading: 'KEY STORIES' },
+    { role: 'anecdotes', heading: 'ANECDOTES' },
+    { role: 'context', heading: 'CONTEXT' },
+  ];
 
-${corpus.writingEngine}
+  const usedPaths = new Set<string>();
+  if (pack.byRole.start_here) usedPaths.add(pack.byRole.start_here.path);
+
+  for (const { role, heading } of roleSections) {
+    const file = pack.byRole[role];
+    if (file) {
+      const isDev = file.frontmatter.status === 'dev';
+      const qualifier = isDev ? ' (preliminary — subject to refinement)' : '';
+      prompt += `## ${heading}${qualifier}
+
+${file.content}
 
 `;
+      usedPaths.add(file.path);
+    }
   }
 
-  // Layer 3: Structural Templates (Tier 1 or legacy fallback)
-  if (corpus.openings || corpus.middles || corpus.endings) {
-    if (corpus.openings) {
-      prompt += `## OPENING PATTERNS\n\n${corpus.openings}\n\n`;
+  // Supplementary context: files that weren't matched to a known role
+  const supplementary = pack.files.filter(f => !usedPaths.has(f.path));
+  if (supplementary.length > 0) {
+    prompt += `## SUPPLEMENTARY CONTEXT
+
+`;
+    for (const file of supplementary) {
+      prompt += `### ${file.filename}
+${file.content}
+
+`;
     }
-    if (corpus.middles) {
-      prompt += `## MIDDLE PATTERNS\n\n${corpus.middles}\n\n`;
-    }
-    if (corpus.endings) {
-      prompt += `## ENDING PATTERNS\n\n${corpus.endings}\n\n`;
-    }
-    if (corpus.examples) {
-      prompt += `## ANNOTATED EXAMPLES\n\n${corpus.examples}\n\n`;
-    }
-  } else if (corpus.templateComponents) {
-    // Legacy fallback
-    prompt += `## TEMPLATE FRAMEWORK\n\n${corpus.templateComponents}\n\n`;
   }
 
-  if (corpus.blendRecipes) {
-    prompt += `## BLEND RECIPES (proven combinations)\n\n${corpus.blendRecipes}\n\n`;
-  }
-
-  // Layer 4: Quantified Voice Profile
+  // Quantified voice profile
   if (personaFingerprint) {
     prompt += `## PERSONALITY DIMENSIONS (0-10 scale — calibrate tone intensity to these scores)
 
@@ -231,60 +156,22 @@ ${corpus.writingEngine}
 `;
   }
 
-  // Layer 5: Tier 2 DEV files (sculptor-derived context)
-  if (corpus.themes || corpus.guardrails || corpus.stories || corpus.anecdotes) {
-    const isDev = corpus.themes?.includes('status: "dev"');
-    if (isDev) {
-      prompt += `## SUPPLEMENTARY CONTEXT (preliminary — from sculptor session, subject to refinement)\n\n`;
-    }
-    if (corpus.themes) {
-      prompt += `### THEMES\n${corpus.themes}\n\n`;
-    }
-    if (corpus.guardrails) {
-      prompt += `### GUARDRAILS\n${corpus.guardrails}\n\n`;
-    }
-    if (corpus.stories) {
-      prompt += `### KEY STORIES\n${corpus.stories}\n\n`;
-    }
-    if (corpus.anecdotes) {
-      prompt += `### ANECDOTES\n${corpus.anecdotes}\n\n`;
-    }
-    if (corpus.context) {
-      prompt += `### CONTEXT\n${corpus.context}\n\n`;
-    }
-  }
-
-  // Layer 6: Existing Voice OS Commandments (override when available)
-  if (commandments.voice || commandments.themes || commandments.guardrails) {
-    prompt += `## VOICE OS COMMANDMENTS (from synthesis — these override interview-inferred style)
-
-`;
-    if (commandments.voice) {
-      prompt += `### VOICE\n${commandments.voice}\n\n`;
-    }
-    if (commandments.themes) {
-      prompt += `### THEMES\n${commandments.themes}\n\n`;
-    }
-    if (commandments.guardrails) {
-      prompt += `### GUARDRAILS\n${commandments.guardrails}\n\n`;
-    }
-  }
-
   // Fallback: basic voice context from executive_report (only if no corpus)
   if (!hasCorpus && voiceContext.tone) {
     prompt += `## VOICE PROFILE (from executive report)
 Tone: ${voiceContext.tone}
-Style: ${voiceContext.style || 'Natural'}
-Characteristics: ${voiceContext.characteristics?.join(', ') || 'Authentic, clear'}
-Summary: ${voiceContext.summary || 'Write naturally.'}
+Style: ${voiceContext.style ?? 'Natural'}
+Characteristics: ${voiceContext.characteristics?.join(', ') ?? 'Authentic, clear'}
+Summary: ${voiceContext.summary ?? 'Write naturally.'}
 
 `;
   }
 
   // Flavor elements and transitions (when writing engine has them)
-  if (corpus.writingEngine) {
-    const hasFlavorElements = corpus.writingEngine.includes('FLAVOR ELEMENTS') || corpus.writingEngine.includes('F1:');
-    const hasTransitions = corpus.writingEngine.includes('TRANSITIONS') || corpus.writingEngine.includes('T1:');
+  const writingEngine = pack.byRole.writing_engine;
+  if (writingEngine) {
+    const hasFlavorElements = writingEngine.content.includes('FLAVOR ELEMENTS') || writingEngine.content.includes('F1:');
+    const hasTransitions = writingEngine.content.includes('TRANSITIONS') || writingEngine.content.includes('T1:');
 
     if (hasFlavorElements) {
       prompt += `## FLAVOR ELEMENTS
@@ -312,7 +199,7 @@ The WRITING_ENGINE contains transition types (T1-T4). Use these to glue sections
   }
 
   // Blend recipe instructions
-  if (corpus.blendRecipes) {
+  if (pack.byRole.blends) {
     prompt += `## BLEND SELECTION
 
 A blend recipe file is available above. For each sample, select a PROVEN blend recipe (if one matches the content type) or use an EXPERIMENTAL blend. Note which blend you used.
@@ -408,7 +295,7 @@ function buildUserPrompt(opts: {
 `;
   }
 
-  // Layer 5: Interview answers (SUPPLEMENTARY)
+  // Interview answers (SUPPLEMENTARY)
   if (answerEntries.length > 0) {
     prompt += `${hasCorpus ? 'SUPPLEMENTARY CONTEXT — ' : ''}INTERVIEW ANSWERS (use for real anecdotes and personality detail):
 `;
@@ -495,7 +382,7 @@ export async function POST(request: NextRequest) {
           const cachedSamples: VoiceSample[] = JSON.parse(cachedText);
           console.log('[voice/generate-samples] Using cached samples from storage');
           return NextResponse.json({ samples: cachedSamples }, { headers: corsHeaders });
-        } catch (parseErr) {
+        } catch {
           console.warn('[voice/generate-samples] Failed to parse cached samples, generating fresh');
         }
       } else {
@@ -503,21 +390,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Load corpus data and voice commandments in parallel
-    let corpus: CorpusData = {
-      digest: null, writingEngine: null,
-      openings: null, middles: null, endings: null, examples: null,
-      themes: null, guardrails: null, stories: null, anecdotes: null, context: null,
-      templateComponents: null, blendRecipes: null,
-    };
-    let commandments = { voice: null as string | null, themes: null as string | null, guardrails: null as string | null };
-
-    if (session.entity_slug) {
-      [corpus, commandments] = await Promise.all([
-        loadCorpusData(supabase, session.entity_slug),
-        loadVoiceCommandments(supabase, session.entity_slug),
-      ]);
-    }
+    // Load voice pack (replaces loadCorpusData + loadVoiceCommandments)
+    const pack = session.entity_slug
+      ? await loadVoicePack(supabase, session.entity_slug)
+      : { entitySlug: '', digest: null, files: [], byRole: {} } satisfies VoicePack;
 
     // Extract persona fingerprint
     const personaFingerprint: PersonaFingerprint | null =
@@ -544,36 +420,25 @@ export async function POST(request: NextRequest) {
     // Use interview answers from request or try to get from session
     const answers = interview_answers || session.metadata?.interview_answers || {};
 
-    const hasCorpus = !!(corpus.digest || corpus.writingEngine);
-    const hasStructuralTemplates = !!(corpus.openings || corpus.middles || corpus.endings || corpus.templateComponents);
-    const hasTier2 = !!(corpus.themes || corpus.guardrails || corpus.stories || corpus.anecdotes);
-    const sourcesLoaded = {
-      digest: !!corpus.digest,
-      writingEngine: !!corpus.writingEngine,
-      openings: !!corpus.openings,
-      middles: !!corpus.middles,
-      endings: !!corpus.endings,
-      examples: !!corpus.examples,
-      themes: !!corpus.themes,
-      guardrails: !!corpus.guardrails,
-      stories: !!corpus.stories,
-      anecdotes: !!corpus.anecdotes,
-      context: !!corpus.context,
-      templateComponents: !!corpus.templateComponents,
-      blendRecipes: !!corpus.blendRecipes,
-      personaFingerprint: !!personaFingerprint,
-      commandments: !!(commandments.voice || commandments.themes || commandments.guardrails),
-      voiceContext: !!voiceContext.tone,
-      answerCount: Object.keys(answers).length,
-    };
+    const hasCorpus = !!(pack.digest || pack.byRole.writing_engine);
+    const hasStructuralTemplates = !!(pack.byRole.openings || pack.byRole.middles || pack.byRole.endings);
+    const hasTier2 = !!(pack.byRole.themes || pack.byRole.guardrails || pack.byRole.stories || pack.byRole.anecdotes);
 
-    console.log('[voice/generate-samples] Sources loaded:', sourcesLoaded);
+    console.log('[voice/generate-samples] Voice pack loaded:', {
+      totalFiles: pack.files.length,
+      roles: Object.keys(pack.byRole),
+      hasDigest: !!pack.digest,
+      hasCorpus,
+      hasStructuralTemplates,
+      hasTier2,
+      personaFingerprint: !!personaFingerprint,
+      answerCount: Object.keys(answers).length,
+    });
 
     // Build prompts
     const systemPrompt = buildSystemPrompt({
-      corpus,
+      pack,
       personaFingerprint,
-      commandments,
       voiceContext,
     });
 

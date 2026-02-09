@@ -5,15 +5,15 @@
  * Takes the original content plus whatDidntWork / whatWouldHelp
  * and returns a rewritten version that applies the feedback.
  *
- * Now includes corpus-derived voice context (DIGEST.md, WRITING_ENGINE,
- * persona fingerprint) to ensure regenerated content stays in voice
- * rather than drifting toward generic.
+ * Uses loadVoicePack() for discovery-based voice context loading,
+ * ensuring regenerated content stays in voice rather than drifting
+ * toward generic -- and automatically picks up any new/custom files.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadVoicePack } from '@/lib/voice-pack';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -61,29 +61,6 @@ interface PersonaFingerprint {
 }
 
 // =============================================================================
-// STORAGE HELPERS
-// =============================================================================
-
-async function loadStorageFile(
-  supabase: SupabaseClient,
-  filePath: string,
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.storage
-      .from('human-os')
-      .download(filePath);
-
-    if (error || !data) {
-      return null;
-    }
-
-    return await data.text();
-  } catch {
-    return null;
-  }
-}
-
-// =============================================================================
 // PROMPT CONSTRUCTION
 // =============================================================================
 
@@ -94,16 +71,16 @@ function buildSystemPrompt(voiceContext: {
   middles: string | null;
   endings: string | null;
   guardrails: string | null;
+  supplementary: { filename: string; content: string }[];
   personaFingerprint: PersonaFingerprint | null;
 }): string {
-  const { digest, writingEngine, openings, middles, endings, guardrails, personaFingerprint } = voiceContext;
-  const hasCorpus = digest || writingEngine;
+  const { digest, writingEngine, openings, middles, endings, guardrails, supplementary, personaFingerprint } = voiceContext;
+  const hasCorpus = !!(digest || writingEngine);
 
   let prompt = `You are rewriting a piece of LinkedIn content based on the user's specific feedback. Your job is to apply their instructions precisely while keeping the same topic, format, and approximate length.
 
 `;
 
-  // Include corpus voice context when available
   if (digest) {
     prompt += `## VOICE FINGERPRINT (write in this person's voice)
 
@@ -120,7 +97,6 @@ ${writingEngine}
 `;
   }
 
-  // Include structural patterns for reference
   if (openings || middles || endings) {
     if (openings) {
       prompt += `## OPENING PATTERNS\n${openings}\n\n`;
@@ -135,6 +111,14 @@ ${writingEngine}
 
   if (guardrails) {
     prompt += `## GUARDRAILS\n${guardrails}\n\n`;
+  }
+
+  // Include supplementary context (extra files not matched to known roles)
+  if (supplementary.length > 0) {
+    prompt += `## SUPPLEMENTARY CONTEXT\n\n`;
+    for (const file of supplementary) {
+      prompt += `### ${file.filename}\n${file.content}\n\n`;
+    }
   }
 
   if (personaFingerprint) {
@@ -249,24 +233,34 @@ export async function POST(request: NextRequest) {
       .eq('id', session_id)
       .single();
 
-    // Load voice context in parallel (graceful — works without it)
+    // Load voice context via discovery (graceful — works without it)
     let digest: string | null = null;
     let writingEngine: string | null = null;
     let openings: string | null = null;
     let middles: string | null = null;
     let endings: string | null = null;
     let guardrails: string | null = null;
+    let supplementary: { filename: string; content: string }[] = [];
     let personaFingerprint: PersonaFingerprint | null = null;
 
     if (session?.entity_slug) {
-      [digest, writingEngine, openings, middles, endings, guardrails] = await Promise.all([
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/DIGEST.md`),
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/01_WRITING_ENGINE.md`),
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/06_OPENINGS.md`),
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/07_MIDDLES.md`),
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/08_ENDINGS.md`),
-        loadStorageFile(supabase, `contexts/${session.entity_slug}/voice/03_GUARDRAILS.md`),
-      ]);
+      const pack = await loadVoicePack(supabase, session.entity_slug);
+
+      digest = pack.digest;
+      writingEngine = pack.byRole.writing_engine?.content ?? null;
+      openings = pack.byRole.openings?.content ?? null;
+      middles = pack.byRole.middles?.content ?? null;
+      endings = pack.byRole.endings?.content ?? null;
+      guardrails = pack.byRole.guardrails?.content ?? null;
+
+      // Collect supplementary files (not matched to the roles we explicitly use)
+      const usedRoles = new Set(['start_here', 'writing_engine', 'openings', 'middles', 'endings', 'guardrails']);
+      supplementary = pack.files
+        .filter(f => {
+          const role = f.frontmatter.role as string | undefined;
+          return !role || !usedRoles.has(role);
+        })
+        .map(f => ({ filename: f.filename, content: f.content }));
     }
 
     if (session) {
@@ -285,6 +279,7 @@ export async function POST(request: NextRequest) {
       hasVoiceContext,
       hasStructuralTemplates: !!(openings || middles || endings),
       hasGuardrails: !!guardrails,
+      supplementaryFiles: supplementary.length,
     });
 
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
@@ -296,6 +291,7 @@ export async function POST(request: NextRequest) {
       middles,
       endings,
       guardrails,
+      supplementary,
       personaFingerprint,
     });
 

@@ -73,7 +73,8 @@ function splitTemplateComponents(content: string): SplitResult {
   }
 
   const openings = `---
-status: "prod"
+status: "bespoke"
+role: "openings"
 ---
 # OPENINGS: Justin Strackany
 
@@ -83,7 +84,8 @@ ${openingsMatch[1]!.trim()}
 `;
 
   const middles = `---
-status: "prod"
+status: "bespoke"
+role: "middles"
 ---
 # MIDDLES: Justin Strackany
 
@@ -93,7 +95,8 @@ ${middlesMatch[1]!.trim()}
 `;
 
   const endings = `---
-status: "prod"
+status: "bespoke"
+role: "endings"
 ---
 # ENDINGS: Justin Strackany
 
@@ -140,7 +143,11 @@ async function main() {
   const templateComponents = readLocalFile('02_TEMPLATE_COMPONENTS.md');
   const split = splitTemplateComponents(templateComponents);
 
-  const enrichedWritingEngine = writingEngine + split.writingEngineAppendix;
+  // Ensure writing engine has role frontmatter
+  let enrichedWritingEngine = writingEngine + split.writingEngineAppendix;
+  if (!enrichedWritingEngine.startsWith('---')) {
+    enrichedWritingEngine = `---\nstatus: "bespoke"\nrole: "writing_engine"\n---\n${enrichedWritingEngine}`;
+  }
   if (await uploadFile(`${prefix}/01_WRITING_ENGINE.md`, enrichedWritingEngine)) {
     uploaded++;
   } else {
@@ -158,19 +165,28 @@ async function main() {
 
   // 3. BLEND_RECIPES -> 09_BLENDS
   console.log('\n--- Step 3: BLEND_RECIPES ---');
-  const blends = readLocalFile('04_BLEND_RECIPES.md');
+  let blends = readLocalFile('04_BLEND_RECIPES.md');
+  if (!blends.startsWith('---')) {
+    blends = `---\nstatus: "bespoke"\nrole: "blends"\n---\n${blends}`;
+  }
   if (await uploadFile(`${prefix}/09_BLENDS.md`, blends)) uploaded++;
   else failed++;
 
   // 4. TEST_EXAMPLE -> 10_EXAMPLES
   console.log('\n--- Step 4: TEST_EXAMPLE ---');
-  const examples = readLocalFile('09_TEST_EXAMPLE.md');
+  let examples = readLocalFile('09_TEST_EXAMPLE.md');
+  if (!examples.startsWith('---')) {
+    examples = `---\nstatus: "bespoke"\nrole: "examples"\n---\n${examples}`;
+  }
   if (await uploadFile(`${prefix}/10_EXAMPLES.md`, examples)) uploaded++;
   else failed++;
 
   // 5. START_HERE -> 00_START_HERE
   console.log('\n--- Step 5: START_HERE ---');
-  const startHere = readLocalFile('00_JUSTIN_OS_V2_START_HERE.md');
+  let startHere = readLocalFile('00_JUSTIN_OS_V2_START_HERE.md');
+  if (!startHere.startsWith('---')) {
+    startHere = `---\nstatus: "bespoke"\nrole: "start_here"\n---\n${startHere}`;
+  }
   if (await uploadFile(`${prefix}/00_START_HERE.md`, startHere)) uploaded++;
   else failed++;
 

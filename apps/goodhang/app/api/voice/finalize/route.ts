@@ -8,12 +8,18 @@
  * - 00_START_HERE.md (master routing document)
  *
  * Called after voice calibration is complete (all 3 samples confirmed).
+ * Uses loadVoicePack() for discovery-based loading, writes with frontmatter.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import {
+  loadVoicePack,
+  uploadStorageFile,
+  buildFrontmatter,
+  type VoicePack,
+} from '@/lib/voice-pack';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -38,94 +44,6 @@ interface VoiceCalibrationSample {
 interface FinalizeRequest {
   session_id: string;
   voice_calibration_feedback: Record<string, VoiceCalibrationSample>;
-}
-
-// =============================================================================
-// STORAGE HELPERS
-// =============================================================================
-
-async function loadStorageFile(
-  supabase: SupabaseClient,
-  filePath: string,
-): Promise<string | null> {
-  try {
-    const { data, error } = await supabase.storage
-      .from('human-os')
-      .download(filePath);
-
-    if (error || !data) return null;
-    return await data.text();
-  } catch {
-    return null;
-  }
-}
-
-async function uploadStorageFile(
-  supabase: SupabaseClient,
-  filePath: string,
-  content: string,
-): Promise<boolean> {
-  try {
-    const blob = new Blob([content], { type: 'text/markdown' });
-    const { error } = await supabase.storage
-      .from('human-os')
-      .upload(filePath, blob, {
-        contentType: 'text/markdown',
-        upsert: true,
-      });
-
-    if (error) {
-      console.error(`[voice/finalize] Upload error for ${filePath}:`, error);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`[voice/finalize] Upload exception for ${filePath}:`, err);
-    return false;
-  }
-}
-
-interface AllVoiceFiles {
-  // Tier 1
-  digest: string | null;
-  writingEngine: string | null;
-  openings: string | null;
-  middles: string | null;
-  endings: string | null;
-  examples: string | null;
-  // Tier 2 DEV
-  themes: string | null;
-  guardrails: string | null;
-  stories: string | null;
-  anecdotes: string | null;
-  context: string | null;
-}
-
-async function loadAllVoiceFiles(
-  supabase: SupabaseClient,
-  entitySlug: string,
-): Promise<AllVoiceFiles> {
-  const [
-    digest, writingEngine, openings, middles, endings, examples,
-    themes, guardrails, stories, anecdotes, context,
-  ] = await Promise.all([
-    loadStorageFile(supabase, `contexts/${entitySlug}/DIGEST.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/01_WRITING_ENGINE.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/06_OPENINGS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/07_MIDDLES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/08_ENDINGS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/10_EXAMPLES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/02_THEMES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/03_GUARDRAILS.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/04_STORIES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/05_ANECDOTES.md`),
-    loadStorageFile(supabase, `contexts/${entitySlug}/voice/CONTEXT.md`),
-  ]);
-
-  return {
-    digest, writingEngine, openings, middles, endings, examples,
-    themes, guardrails, stories, anecdotes, context,
-  };
 }
 
 // =============================================================================
@@ -154,19 +72,19 @@ function formatFeedback(feedback: Record<string, VoiceCalibrationSample>): strin
 async function generateRCFiles(
   anthropic: Anthropic,
   entityName: string,
-  voiceFiles: AllVoiceFiles,
+  pack: VoicePack,
   feedback: Record<string, VoiceCalibrationSample>,
   personaFingerprint: Record<string, number> | null,
 ): Promise<{ themes: string; guardrails: string; stories: string; anecdotes: string }> {
   const feedbackText = formatFeedback(feedback);
 
   let context = '';
-  if (voiceFiles.digest) context += `## DIGEST\n${voiceFiles.digest}\n\n`;
-  if (voiceFiles.writingEngine) context += `## WRITING ENGINE\n${voiceFiles.writingEngine}\n\n`;
-  if (voiceFiles.themes) context += `## CURRENT THEMES (DEV)\n${voiceFiles.themes}\n\n`;
-  if (voiceFiles.guardrails) context += `## CURRENT GUARDRAILS (DEV)\n${voiceFiles.guardrails}\n\n`;
-  if (voiceFiles.stories) context += `## CURRENT STORIES (DEV)\n${voiceFiles.stories}\n\n`;
-  if (voiceFiles.anecdotes) context += `## CURRENT ANECDOTES (DEV)\n${voiceFiles.anecdotes}\n\n`;
+  if (pack.digest) context += `## DIGEST\n${pack.digest}\n\n`;
+  if (pack.byRole.writing_engine) context += `## WRITING ENGINE\n${pack.byRole.writing_engine.content}\n\n`;
+  if (pack.byRole.themes) context += `## CURRENT THEMES (DEV)\n${pack.byRole.themes.content}\n\n`;
+  if (pack.byRole.guardrails) context += `## CURRENT GUARDRAILS (DEV)\n${pack.byRole.guardrails.content}\n\n`;
+  if (pack.byRole.stories) context += `## CURRENT STORIES (DEV)\n${pack.byRole.stories.content}\n\n`;
+  if (pack.byRole.anecdotes) context += `## CURRENT ANECDOTES (DEV)\n${pack.byRole.anecdotes.content}\n\n`;
   if (personaFingerprint) context += `## PERSONA FINGERPRINT\n${JSON.stringify(personaFingerprint, null, 2)}\n\n`;
 
   const response = await anthropic.messages.create({
@@ -174,7 +92,7 @@ async function generateRCFiles(
     max_tokens: 12000,
     system: `You are upgrading DEV voice files to RC (release candidate) quality by incorporating voice calibration feedback. The user tested voice samples and provided feedback on what worked and what didn't. Use this to refine the files into operational playbooks.
 
-Output a JSON object with 4 keys: themes, guardrails, stories, anecdotes. Each value is a complete markdown document with status: "rc" in the frontmatter.
+Output a JSON object with 4 keys: themes, guardrails, stories, anecdotes. Each value is a complete markdown document. Do NOT include frontmatter in the values -- it will be added programmatically.
 
 Quality standard for each file:
 
@@ -209,7 +127,6 @@ ${feedbackText}
 ---
 
 Generate RC versions that incorporate the feedback. For each file:
-- Replace status: "dev" with status: "rc"
 - Refine content based on what worked/didn't in the voice samples
 - If user edited a sample, use the edits as signal for voice preferences
 - Make every entry operational and deployable -- not abstract descriptions
@@ -228,26 +145,28 @@ Return JSON with keys: themes, guardrails, stories, anecdotes`,
 async function generateBlends(
   anthropic: Anthropic,
   entityName: string,
-  voiceFiles: AllVoiceFiles,
+  pack: VoicePack,
   feedback: Record<string, VoiceCalibrationSample>,
 ): Promise<string> {
   const feedbackText = formatFeedback(feedback);
 
   let context = '';
-  if (voiceFiles.openings) context += `## OPENINGS\n${voiceFiles.openings}\n\n`;
-  if (voiceFiles.middles) context += `## MIDDLES\n${voiceFiles.middles}\n\n`;
-  if (voiceFiles.endings) context += `## ENDINGS\n${voiceFiles.endings}\n\n`;
-  if (voiceFiles.writingEngine) context += `## WRITING ENGINE\n${voiceFiles.writingEngine}\n\n`;
+  if (pack.byRole.openings) context += `## OPENINGS\n${pack.byRole.openings.content}\n\n`;
+  if (pack.byRole.middles) context += `## MIDDLES\n${pack.byRole.middles.content}\n\n`;
+  if (pack.byRole.endings) context += `## ENDINGS\n${pack.byRole.endings.content}\n\n`;
+  if (pack.byRole.writing_engine) context += `## WRITING ENGINE\n${pack.byRole.writing_engine.content}\n\n`;
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 6000,
     system: `You are a voice blend architect. Given Opening/Middle/Ending patterns and voice calibration feedback, generate a BLENDS recipe file -- an operational playbook of proven and experimental template combinations.
 
-Your output should read like a decision-support document: "Want high engagement? Use these blends. Want shares? Use these."`,
+Your output should read like a decision-support document: "Want high engagement? Use these blends. Want shares? Use these."
+
+Do NOT include frontmatter (---/status/---) in your output. It will be added programmatically.`,
     messages: [{
       role: 'user',
-      content: `Generate 09_BLENDS.md for ${entityName}.
+      content: `Generate BLENDS content for ${entityName}.
 
 ${context}
 
@@ -256,12 +175,8 @@ ${feedbackText}
 
 ---
 
-Generate a markdown document with this exact structure:
+Generate a markdown document with this structure:
 
-\`\`\`
----
-status: "prod"
----
 # BLENDS: ${entityName}
 
 ## TOP 5 RECIPES
@@ -297,7 +212,6 @@ For each:
 **Want high reach (shares)?** → [blend names]
 **Want relationship building?** → [blend names]
 **Want thought leadership positioning?** → [blend names]
-\`\`\`
 
 Return ONLY the markdown content (not JSON).`,
     }],
@@ -310,19 +224,20 @@ Return ONLY the markdown content (not JSON).`,
 async function generateStartHere(
   anthropic: Anthropic,
   entityName: string,
-  voiceFiles: AllVoiceFiles,
+  pack: VoicePack,
 ): Promise<string> {
+  // Build file list from discovered files
   let fileList = '';
-  if (voiceFiles.digest) fileList += '- DIGEST.md: Identity, beliefs, voice patterns\n';
-  if (voiceFiles.writingEngine) fileList += '- 01_WRITING_ENGINE.md: Decision tree, ALWAYS/NEVER rules\n';
-  if (voiceFiles.openings) fileList += '- 06_OPENINGS.md: Opening patterns (O1-O6+)\n';
-  if (voiceFiles.middles) fileList += '- 07_MIDDLES.md: Middle patterns (M1-M7+)\n';
-  if (voiceFiles.endings) fileList += '- 08_ENDINGS.md: Ending patterns (E1-E6+)\n';
-  if (voiceFiles.examples) fileList += '- 10_EXAMPLES.md: Annotated corpus samples\n';
+  if (pack.digest) fileList += '- DIGEST.md: Identity, beliefs, voice patterns\n';
+  for (const file of pack.files) {
+    const role = file.frontmatter.role as string | undefined;
+    if (role === 'start_here') continue; // Don't list START_HERE in its own file map
+    fileList += `- ${file.filename}: ${role ?? 'supplementary context'}\n`;
+  }
 
   let context = '';
-  if (voiceFiles.digest) context += voiceFiles.digest.substring(0, 2000) + '\n\n';
-  if (voiceFiles.writingEngine) context += voiceFiles.writingEngine.substring(0, 1500) + '\n\n';
+  if (pack.digest) context += pack.digest.substring(0, 2000) + '\n\n';
+  if (pack.byRole.writing_engine) context += pack.byRole.writing_engine.content.substring(0, 1500) + '\n\n';
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
@@ -331,19 +246,15 @@ async function generateStartHere(
 
 It must be a quick-reference card -- NOT a wall of text. Think cheat sheet, not manual. An AI agent should be able to scan this in 5 seconds and know exactly where to go.
 
-The system works if the person says "Does this land right?" not "Use template C."`,
+The system works if the person says "Does this land right?" not "Use template C."
+
+Do NOT include frontmatter (---/status/---) in your output. It will be added programmatically.`,
     messages: [{
       role: 'user',
-      content: `Generate 00_START_HERE.md for ${entityName}.
+      content: `Generate START_HERE content for ${entityName}.
 
 ## Available Files
 ${fileList}
-- 02_THEMES.md: Core beliefs with evidence, frequency, anti-patterns
-- 03_GUARDRAILS.md: YES/NO/THE LINE structure, hard NOs
-- 04_STORIES.md: Deployable narrative fragments with vulnerability tags
-- 05_ANECDOTES.md: Brief examples with use-case tags
-- 09_BLENDS.md: Proven O+M+E combinations with performance data
-- CONTEXT.md: Day-to-day quick reference
 
 ## Key Context
 ${context}
@@ -352,10 +263,6 @@ ${context}
 
 Generate a markdown document with this structure:
 
-\`\`\`
----
-status: "prod"
----
 # ${entityName.toUpperCase()} - OPERATING SYSTEM
 
 **Quick Reference Card**
@@ -381,7 +288,6 @@ When needing a story → Read 04_STORIES.md + 05_ANECDOTES.md
 
 ## System Check
 System works if: [person] says "Does this land right?" not "Use template C"
-\`\`\`
 
 Return ONLY the markdown content (not JSON).`,
     }],
@@ -443,45 +349,56 @@ export async function POST(request: NextRequest) {
 
     console.log('[voice/finalize] Starting Tier 3 finalization for:', entitySlug);
 
-    // Load all existing voice files
-    const voiceFiles = await loadAllVoiceFiles(supabase, entitySlug);
+    // Load all existing voice files via discovery
+    const pack = await loadVoicePack(supabase, entitySlug);
 
-    const loadedCount = Object.values(voiceFiles).filter(Boolean).length;
-    console.log('[voice/finalize] Loaded voice files:', loadedCount);
+    console.log('[voice/finalize] Voice pack loaded:', {
+      totalFiles: pack.files.length,
+      roles: Object.keys(pack.byRole),
+      hasDigest: !!pack.digest,
+    });
 
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
     // Generate RC files, BLENDS, and START_HERE in parallel
-    const [rcFiles, blendsContent, startHereContent] = await Promise.all([
+    const [rcFiles, blendsBody, startHereBody] = await Promise.all([
       generateRCFiles(
         anthropic,
         session.metadata?.entity_name || entitySlug,
-        voiceFiles,
+        pack,
         voice_calibration_feedback,
         personaFingerprint,
       ),
       generateBlends(
         anthropic,
         session.metadata?.entity_name || entitySlug,
-        voiceFiles,
+        pack,
         voice_calibration_feedback,
       ),
       generateStartHere(
         anthropic,
         session.metadata?.entity_name || entitySlug,
-        voiceFiles,
+        pack,
       ),
     ]);
 
-    // Upload all finalized files
+    // Add frontmatter to generated content
+    const prefix = `contexts/${entitySlug}/voice`;
+
     console.log('[voice/finalize] Uploading finalized files...');
     const uploadResults = await Promise.all([
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/02_THEMES.md`, rcFiles.themes),
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/03_GUARDRAILS.md`, rcFiles.guardrails),
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/04_STORIES.md`, rcFiles.stories),
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/05_ANECDOTES.md`, rcFiles.anecdotes),
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/09_BLENDS.md`, blendsContent),
-      uploadStorageFile(supabase, `contexts/${entitySlug}/voice/00_START_HERE.md`, startHereContent),
+      uploadStorageFile(supabase, `${prefix}/02_THEMES.md`,
+        buildFrontmatter('rc', 'themes') + rcFiles.themes),
+      uploadStorageFile(supabase, `${prefix}/03_GUARDRAILS.md`,
+        buildFrontmatter('rc', 'guardrails') + rcFiles.guardrails),
+      uploadStorageFile(supabase, `${prefix}/04_STORIES.md`,
+        buildFrontmatter('rc', 'stories') + rcFiles.stories),
+      uploadStorageFile(supabase, `${prefix}/05_ANECDOTES.md`,
+        buildFrontmatter('rc', 'anecdotes') + rcFiles.anecdotes),
+      uploadStorageFile(supabase, `${prefix}/09_BLENDS.md`,
+        buildFrontmatter('prod', 'blends') + blendsBody),
+      uploadStorageFile(supabase, `${prefix}/00_START_HERE.md`,
+        buildFrontmatter('prod', 'start_here') + startHereBody),
     ]);
 
     const allUploaded = uploadResults.every(Boolean);
@@ -496,7 +413,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           ...session.metadata,
           voice_files_finalized: new Date().toISOString(),
-          voice_files_count: uploadedCount + loadedCount,
+          voice_files_count: uploadedCount + pack.files.length,
         },
       })
       .eq('id', session_id);

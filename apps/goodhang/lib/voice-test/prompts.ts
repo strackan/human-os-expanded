@@ -2,8 +2,10 @@
  * Voice Test Prompts Library
  *
  * System prompts for voice test content generation and commandments synthesis.
+ * Uses VoicePack for discovery-based loading of all voice files.
  */
 
+import type { VoicePack } from '@/lib/voice-pack';
 import type { ContentType, ContentStyle, VoiceFeedback, GenerationAttempt } from './types';
 
 // =============================================================================
@@ -36,10 +38,19 @@ export interface PreviousAttempt {
 export function getGenerationSystemPrompt(
   contentType: ContentType,
   style: ContentStyle,
-  voiceContext: VoiceContext
+  voiceContext: VoiceContext,
+  pack?: VoicePack | undefined,
 ): string {
-  const voiceDescription = buildVoiceDescription(voiceContext);
   const styleGuidance = getStyleGuidance(contentType, style);
+  const hasVoicePack = pack && (pack.digest || pack.files.length > 0);
+
+  // When we have a voice pack, build a rich prompt from discovered files
+  if (hasVoicePack) {
+    return buildVoicePackPrompt(pack, styleGuidance, voiceContext);
+  }
+
+  // Fallback: metadata-only prompt (no voice files available)
+  const voiceDescription = buildVoiceDescription(voiceContext);
 
   return `You are a skilled content writer who captures the authentic voice of the person you're writing for.
 
@@ -60,6 +71,152 @@ OUTPUT:
 - Return ONLY the content, no explanations or meta-commentary
 - Do not include quotation marks around the content
 - Do not say things like "Here's a post..." - just write the post`;
+}
+
+function buildVoicePackPrompt(
+  pack: VoicePack,
+  styleGuidance: string,
+  voiceContext: VoiceContext,
+): string {
+  let prompt = `You are writing content as a specific person. You have their complete voice operating system below -- use it. Write EXACTLY as they would write.
+
+${styleGuidance}
+
+`;
+
+  // START_HERE as routing preamble
+  if (pack.byRole.start_here) {
+    prompt += `## OPERATING SYSTEM (START HERE)
+
+${pack.byRole.start_here.content}
+
+`;
+  }
+
+  // DIGEST as voice fingerprint
+  if (pack.digest) {
+    prompt += `## VOICE FINGERPRINT (from corpus analysis)
+
+${pack.digest}
+
+`;
+  }
+
+  // Organized by role -- same order as generate-samples for consistency
+  const roleSections: { role: string; heading: string }[] = [
+    { role: 'writing_engine', heading: 'WRITING RULES' },
+    { role: 'openings', heading: 'OPENING PATTERNS' },
+    { role: 'middles', heading: 'MIDDLE PATTERNS' },
+    { role: 'endings', heading: 'ENDING PATTERNS' },
+    { role: 'examples', heading: 'ANNOTATED EXAMPLES' },
+    { role: 'blends', heading: 'BLEND RECIPES' },
+    { role: 'themes', heading: 'THEMES' },
+    { role: 'guardrails', heading: 'GUARDRAILS' },
+    { role: 'stories', heading: 'KEY STORIES' },
+    { role: 'anecdotes', heading: 'ANECDOTES' },
+    { role: 'context', heading: 'CONTEXT' },
+  ];
+
+  const usedPaths = new Set<string>();
+  if (pack.byRole.start_here) usedPaths.add(pack.byRole.start_here.path);
+
+  for (const { role, heading } of roleSections) {
+    const file = pack.byRole[role];
+    if (file) {
+      const isDev = file.frontmatter.status === 'dev';
+      const qualifier = isDev ? ' (preliminary — subject to refinement)' : '';
+      prompt += `## ${heading}${qualifier}
+
+${file.content}
+
+`;
+      usedPaths.add(file.path);
+    }
+  }
+
+  // Supplementary context: files that weren't matched to a known role
+  const supplementary = pack.files.filter(f => !usedPaths.has(f.path));
+  if (supplementary.length > 0) {
+    prompt += `## SUPPLEMENTARY CONTEXT
+
+`;
+    for (const file of supplementary) {
+      prompt += `### ${file.filename}
+${file.content}
+
+`;
+    }
+  }
+
+  // Persona fingerprint from session metadata (complements voice files)
+  if (voiceContext.personaFingerprint) {
+    const pf = voiceContext.personaFingerprint;
+    prompt += `## PERSONALITY DIMENSIONS (0-10 scale — calibrate tone intensity)
+
+- Self-Deprecation: ${pf.self_deprecation}/10
+- Directness: ${pf.directness}/10
+- Warmth: ${pf.warmth}/10
+- Intellectual Signaling: ${pf.intellectual_signaling}/10
+- Comfort with Sincerity: ${pf.comfort_with_sincerity}/10
+- Absurdism Tolerance: ${pf.absurdism_tolerance}/10
+- Format Awareness: ${pf.format_awareness}/10
+- Vulnerability as Tool: ${pf.vulnerability_as_tool}/10
+
+`;
+  }
+
+  // Flavor elements and transitions detection
+  const writingEngine = pack.byRole.writing_engine;
+  if (writingEngine) {
+    const hasFlavorElements = writingEngine.content.includes('FLAVOR ELEMENTS') || writingEngine.content.includes('F1:');
+    const hasTransitions = writingEngine.content.includes('TRANSITIONS') || writingEngine.content.includes('T1:');
+
+    if (hasFlavorElements) {
+      prompt += `## FLAVOR ELEMENTS
+The WRITING_ENGINE contains flavor elements. Sprinkle these throughout:
+- Self-deprecation style, parenthetical asides, vocabulary whiplash
+- Strategic profanity for rhythm (not gratuitous)
+- Spacing as pacing (visual rhythm on the page)
+
+`;
+    }
+
+    if (hasTransitions) {
+      prompt += `## TRANSITIONS
+The WRITING_ENGINE contains transition types. Use these to glue sections:
+- Pivot transitions ("But here's the thing...")
+- Zoom transitions ("Let's get specific.")
+- Parenthetical transitions ("(Quick tangent: ...)")
+
+`;
+    }
+  }
+
+  // Blend selection guidance
+  if (pack.byRole.blends) {
+    prompt += `## BLEND SELECTION
+A blend recipe file is available above. Select a PROVEN blend recipe that matches the content type, or use an EXPERIMENTAL blend.
+
+`;
+  }
+
+  prompt += `## CRITICAL RULES
+- Write as this specific person would write -- not a generic professional
+- Match their vocabulary, sentence rhythm, and personality dimensions
+- Apply ALL "always" patterns from the writing rules
+- Avoid ALL "never" patterns (no corporate jargon, no em dashes, no thought leader voice)
+- Do NOT use em dashes -- use double hyphens (--) instead
+- Use specific stories/anecdotes from the voice files when relevant
+- Do NOT sanitize their voice or smooth out rough edges
+- If flavor elements exist, deploy at least 2-3 per piece
+- If blend recipes exist, select an appropriate blend
+
+OUTPUT:
+- Return ONLY the content, no explanations or meta-commentary
+- Do not include quotation marks around the content
+- Do not say things like "Here's a post..." - just write the post`;
+
+  return prompt;
 }
 
 function buildVoiceDescription(voiceContext: VoiceContext): string {

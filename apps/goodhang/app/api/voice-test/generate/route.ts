@@ -2,11 +2,14 @@
  * POST /api/voice-test/generate
  *
  * Generate content using user's voice profile and feedback from previous attempts.
+ * Now loads the full voice pack (DIGEST, WRITING_ENGINE, OPENINGS, etc.) via
+ * discovery-based loading so the LLM has the complete voice OS to work with.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
+import { loadVoicePack } from '@/lib/voice-pack';
 import {
   getGenerationSystemPrompt,
   getGenerationUserPrompt,
@@ -53,7 +56,7 @@ export async function POST(request: NextRequest) {
     // Fetch session data for voice context
     const { data: session, error: sessionError } = await supabase
       .from('sculptor_sessions')
-      .select('id, entity_slug, metadata')
+      .select('id, entity_slug, metadata, persona_fingerprint')
       .eq('id', session_id)
       .single();
 
@@ -65,12 +68,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build voice context from session metadata
+    // Load voice pack (all voice files from storage)
+    const pack = session.entity_slug
+      ? await loadVoicePack(supabase, session.entity_slug)
+      : undefined;
+
+    // Build voice context from session metadata (fallback for users without voice files)
     const voiceContext: VoiceContext = {};
 
-    // Get persona fingerprint from session metadata
-    if (session.metadata?.persona_fingerprint) {
-      voiceContext.personaFingerprint = session.metadata.persona_fingerprint;
+    // Get persona fingerprint
+    const personaFingerprint =
+      session.persona_fingerprint || session.metadata?.persona_fingerprint || null;
+    if (personaFingerprint) {
+      voiceContext.personaFingerprint = personaFingerprint;
     }
 
     // Try to get voice data from executive report if cached
@@ -92,22 +102,27 @@ export async function POST(request: NextRequest) {
     // Generate content using Claude
     const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-    const systemPrompt = getGenerationSystemPrompt(content_type, style, voiceContext);
-    const userPrompt = getGenerationUserPrompt(user_prompt, mappedAttempts);
+    const systemPrompt = getGenerationSystemPrompt(content_type, style, voiceContext, pack);
+    const userPromptText = getGenerationUserPrompt(user_prompt, mappedAttempts);
 
     console.log('[voice-test/generate] Generating content for:', {
       session_id,
       content_type,
       style,
       previousAttemptsCount: mappedAttempts.length,
-      hasVoiceContext: !!voiceContext.tone || !!voiceContext.personaFingerprint,
+      hasVoicePack: !!(pack && pack.files.length > 0),
+      voicePackFiles: pack?.files.length ?? 0,
+      voicePackRoles: pack ? Object.keys(pack.byRole) : [],
+      hasDigest: !!pack?.digest,
+      hasPersonaFingerprint: !!personaFingerprint,
+      hasMetadataFallback: !!voiceContext.tone,
     });
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 2000,
       messages: [
-        { role: 'user', content: userPrompt }
+        { role: 'user', content: userPromptText }
       ],
       system: systemPrompt,
     });
@@ -126,14 +141,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate a simple voice score based on context availability
-    // In a more sophisticated version, this could use embedding similarity
+    // Voice score reflects how much context was available
     let voiceScore = 50; // Base score
-    if (voiceContext.tone) voiceScore += 10;
-    if (voiceContext.style) voiceScore += 10;
-    if (voiceContext.characteristics?.length) voiceScore += 10;
-    if (voiceContext.examples?.length) voiceScore += 10;
-    if (voiceContext.personaFingerprint) voiceScore += 10;
+    if (pack?.digest) voiceScore += 15;
+    if (pack?.byRole.writing_engine) voiceScore += 15;
+    if (pack?.byRole.openings) voiceScore += 5;
+    if (pack?.byRole.blends) voiceScore += 5;
+    if (personaFingerprint) voiceScore += 10;
+    // Fallback metadata contributes less
+    if (!pack?.digest && voiceContext.tone) voiceScore += 5;
+    if (!pack?.digest && voiceContext.characteristics?.length) voiceScore += 5;
 
     const result: GenerateContentResponse = {
       content: generatedContent,
