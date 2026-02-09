@@ -176,7 +176,7 @@ export default function TutorialModePage() {
     // Check completion markers and resume at the right step
     const tutorialComplete = localStorage.getItem('founder-os-tutorial-completed');
     if (tutorialComplete) {
-      navigate('/founder-os/dashboard');
+      navigate('/founder-os/production');
       return;
     }
 
@@ -458,7 +458,8 @@ export default function TutorialModePage() {
   const handleQuickAction = (value: string) => {
     switch (value) {
       case 'go_to_dashboard':
-        navigate('/founder-os/dashboard');
+        localStorage.setItem('founder-os-tutorial-completed', new Date().toISOString());
+        navigate('/founder-os/production');
         return;
       case 'show_report':
         handleShowReport();

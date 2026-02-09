@@ -228,7 +228,9 @@ export default function TutorialWorkflowMode() {
 
       // Handle special quick action values that require navigation
       if (actionValue === 'go_to_dashboard') {
-        navigate('/founder-os/dashboard');
+        // Mark tutorial as complete before navigating to production
+        localStorage.setItem('founder-os-tutorial-completed', new Date().toISOString());
+        navigate('/founder-os/production');
         return null;
       }
 
@@ -411,7 +413,7 @@ export default function TutorialWorkflowMode() {
 
   const handleWorkflowComplete = useCallback(() => {
     localStorage.setItem('founder-os-tutorial-completed', new Date().toISOString());
-    navigate('/founder-os/dashboard');
+    navigate('/founder-os/production');
   }, [navigate]);
 
   const handleReset = useCallback(async () => {
@@ -1088,7 +1090,7 @@ export default function TutorialWorkflowMode() {
 
     const tutorialComplete = localStorage.getItem('founder-os-tutorial-completed');
     if (tutorialComplete) {
-      navigate('/founder-os/dashboard');
+      navigate('/founder-os/production');
       return;
     }
 
