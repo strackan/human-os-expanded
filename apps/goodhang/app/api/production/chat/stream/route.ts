@@ -7,7 +7,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   AnthropicService,
   type ConversationMessage,
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     // Determine the layer from entity_slug
-    const layer = `founder:${entity_slug.split('-')[0] || entity_slug}`;
+    const layer: `founder:${string}` = `founder:${entity_slug.split('-')[0] || entity_slug}`;
 
     // ==========================================================================
     // STEP 0: Mode detection
@@ -398,7 +398,7 @@ export async function POST(request: NextRequest) {
 // =============================================================================
 
 async function handleStartupGreeting(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient,
   entitySlug: string,
   layer: string,
   mode: ProductionMode,

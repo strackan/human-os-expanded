@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { v4 as uuidv4, validate as isValidUuid } from 'uuid';
+import { validate as isValidUuid } from 'uuid';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
