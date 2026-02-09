@@ -354,10 +354,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = getHumanOSAdminClient();
 
-    // Fetch session data (include persona_fingerprint)
+    // Fetch session data
     const { data: session, error: sessionError } = await supabase
       .from('sculptor_sessions')
-      .select('id, entity_slug, metadata, persona_fingerprint')
+      .select('id, entity_slug, metadata')
       .eq('id', session_id)
       .single();
 
@@ -395,9 +395,9 @@ export async function POST(request: NextRequest) {
       ? await loadVoicePack(supabase, session.entity_slug)
       : { entitySlug: '', digest: null, files: [], byRole: {} } satisfies VoicePack;
 
-    // Extract persona fingerprint
+    // Extract persona fingerprint from session metadata
     const personaFingerprint: PersonaFingerprint | null =
-      session.persona_fingerprint || session.metadata?.persona_fingerprint || null;
+      session.metadata?.persona_fingerprint || null;
 
     // Build fallback voice context from executive report
     const voiceContext: {
