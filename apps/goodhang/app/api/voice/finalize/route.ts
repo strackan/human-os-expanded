@@ -420,7 +420,7 @@ export async function POST(request: NextRequest) {
           voice_files_count: uploadedCount + pack.files.length,
         },
       })
-      .eq('id', session_id);
+      .eq('id', session.id);
 
     if (updateError) {
       console.error('[voice/finalize] Failed to update session metadata:', updateError);
