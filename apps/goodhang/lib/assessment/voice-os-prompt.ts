@@ -1,7 +1,9 @@
 // Voice OS Commandments Extraction Prompt
 // Maps FOS Consolidated Interview answers to Voice OS Ten Commandments
 
-export const VOICE_OS_SYSTEM_PROMPT = `You are extracting structured insights from a Founder-OS interview to populate the Voice OS Ten Commandments - a set of protocols for content generation that captures someone's authentic voice.
+export const VOICE_OS_SYSTEM_PROMPT = `You are extracting structured insights from a Founder-OS interview to populate the Voice OS Ten Commandments -- an operational playbook for content generation that captures someone's authentic voice.
+
+Your output must be production-quality: concrete structural patterns, not abstract descriptions. Extract HOW they communicate (patterns, structures, rhythms) not just WHAT they say.
 
 ## Input: FOS Consolidated Interview (12 Questions)
 
@@ -23,80 +25,74 @@ export const VOICE_OS_SYSTEM_PROMPT = `You are extracting structured insights fr
 - c4-social-rapport: What makes them want to hang out vs just work with someone
 - c5-ideal-ai: 3-4 most important considerations for ideal AI assistant
 
-## Output: Voice OS Ten Commandments Mapping
+## Output: Voice OS Ten Commandments
 
-Extract insights from answers to populate these voice protocol files:
-
-### 1. VOICE
-**Sources**: c3-feedback-challenge (communication style), c4-social-rapport (conversational patterns), b2-simple-thing (values that show in language)
+### 1. WRITING_ENGINE
+**Sources**: c3 (communication style), c4 (conversational patterns), b2 (values in language), all answers (vocabulary and rhythm analysis)
 **Extract**:
-- Always patterns: Sentence structures, emphasis patterns they naturally use
-- Never patterns: Tones or phrasings that would feel wrong
-- Vocabulary: Words/phrases they overuse or gravitate toward
-- Rhythm: Short vs long sentences, how they build to points
+- ALWAYS rules: 5-10 voice patterns they consistently use (sentence structures, punctuation habits, emphasis patterns, formatting choices)
+- NEVER rules: 5-7 anti-patterns (tones that feel wrong, phrasings they'd never use)
+- Vocabulary fingerprint: Distinctive words/phrases they gravitate toward
+- Decision tree: Content type → recommended approach (inferred from how they tell different kinds of stories)
+- Vulnerability boundary: YES (what they'll allude to) / NO (what's off limits) / THE LINE (where the boundary sits)
 
-### 2. THEMES
-**Sources**: b1-core-identity (beliefs), a1-turning-point (formative beliefs), c1-peak-performance (work philosophy)
+### 2. SIGNATURE_MOVES
+**Sources**: All answers -- look for HOW they communicate uniquely
 **Extract**:
-- Core beliefs: Philosophical positions they'd defend
-- Current focus: What matters to them right now
-- Values: What they stand for
+- 3-5 unique techniques that make their voice distinctive
+- For each: name it, describe the structure, when to deploy it
+- Examples: tangent style, humor deployment, vocabulary shifts, pacing techniques, storytelling devices
 
-### 3. GUARDRAILS
-**Sources**: c3-feedback-challenge (boundaries), b3-relationship-need (sensitivities), c5-ideal-ai (preferences)
+### 3. OPENINGS
+**Sources**: a1-a4 (how they start stories), c3 (how they engage), c4 (connection style)
 **Extract**:
-- Topics to avoid: What they don't want to discuss publicly
-- Tones to avoid: How they don't want to sound
+- 4-6 opening patterns with labels (O1: VULNERABILITY, O2: SCENE-SETTING, etc.)
+- For each: description, energy match, "use for" contexts, 1-2 example phrases from their answers
+
+### 4. MIDDLES
+**Sources**: c3 (argument style), b1 (reasoning patterns), a1-a4 (narrative structure)
+**Extract**:
+- 4-7 middle/body patterns with labels (M1: STORY ARC, M2: PHILOSOPHICAL ESCALATION, etc.)
+- For each: structural template, "pairs with" which openers
+
+### 5. ENDINGS
+**Sources**: c3 (how they close), c5 (action orientation), a4 (resolution style)
+**Extract**:
+- 4-6 ending patterns with labels (E1: OPEN QUESTION, E2: CALLBACK, etc.)
+- For each: "pairs with" which O+M combinations, "use for" contexts
+
+### 6. THEMES
+**Sources**: b1 (core identity/beliefs), a1 (formative beliefs), c1 (work philosophy)
+**Extract**:
+- Core beliefs: Philosophical positions they'd defend, with evidence quotes
+- Frequency: How often each theme appears across answers
+- Anti-patterns: What the opposite of each theme sounds like (to catch drift)
+
+### 7. GUARDRAILS
+**Sources**: c3 (boundaries), b3 (sensitivities), c5 (preferences)
+**Extract in YES/NO/THE LINE format**:
+- YES: Topics and tones that are safe/encouraged
+- NO: Hard boundaries, things they'd never say or do publicly
+- THE LINE: Where the boundary sits
 - Sacred cows: Positions they'd never contradict
-- Hard NOs: Things they'd never say or do
 
-### 4. STORIES
-**Sources**: a1-turning-point, a2-happiest-memory, a3-difficult-time, a4-redemption
+### 8. STORIES
+**Sources**: a1-a4 (narratives), all sections for additional story material
 **Extract**:
-- Key narratives: Major life stories they reference
-- Story themes: Recurring patterns (resilience, growth, etc.)
-- Vulnerability level: How deep they go publicly
+- Key narrative fragments: Actual story text (2-4 sentences, deployable), not just descriptions
+- For each: vulnerability level tag (low/medium/high), use-case tags (inspiration, credibility, humor, connection)
 
-### 5. ANECDOTES
-**Sources**: All sections - extract specific examples and illustrations
+### 9. ANECDOTES
+**Sources**: All sections -- extract specific examples and illustrations
 **Extract**:
-- Brief examples: Short stories that illustrate points
-- Proof points: Evidence they use to back up claims
-- Personal references: Things they mention in passing
+- Brief deployable examples: Actual text (1-2 sentences, copy-paste ready)
+- For each: category tag, when to use
 
-### 6. OPENINGS
-**Sources**: c3-feedback-challenge (how they engage), c4-social-rapport (connection style)
+### 10. BLEND_HYPOTHESES
+**Sources**: All sections -- infer content archetypes from how they combine storytelling with analysis
 **Extract**:
-- Hook styles: How they grab attention
-- Greeting patterns: How they start conversations/content
-- Tone openers: What energy they lead with
-
-### 7. MIDDLES
-**Sources**: c3-feedback-challenge (argument style), b1-core-identity (reasoning patterns)
-**Extract**:
-- Argument structures: How they build a case
-- Evidence patterns: What kind of proof they use
-- Transition styles: How they move between points
-
-### 8. ENDINGS
-**Sources**: c3-feedback-challenge (how they close), c5-ideal-ai (action orientation)
-**Extract**:
-- Closing patterns: How they wrap up
-- Call-to-action style: How they invite engagement
-- Mic-drop lines: Memorable endings they use
-
-### 9. BLENDS
-**Sources**: All sections - infer content archetypes
-**Extract**:
-- Content types: What kinds of content they'd naturally create
-- Format preferences: Long-form vs short-form, storytelling vs tactical
-- Mixing patterns: How they combine personal and professional
-
-### 10. EXAMPLES
-**Sources**: All sections - extract or generate representative samples
-**Extract**:
-- Sample content: What their content would sound like
-- Before/after: What generic vs their version looks like
+- 3-5 content archetypes with recommended O+M+E component combinations
+- For each: name (e.g. "The Authentic Founder"), components, "when to use", "why it works"
 
 ## Output Format
 
@@ -105,58 +101,86 @@ Return a JSON object with this structure:
 \`\`\`json
 {
   "commandments": {
-    "voice": {
-      "always_patterns": ["sentence structures, emphasis patterns they use"],
-      "never_patterns": ["tones or phrasings that feel wrong"],
-      "vocabulary_fingerprint": ["words/phrases they gravitate toward"],
-      "rhythm": "description of their sentence rhythm and build patterns"
+    "writing_engine": {
+      "always_rules": ["5-10 concrete voice patterns they consistently use"],
+      "never_rules": ["5-7 anti-patterns to avoid"],
+      "vocabulary_fingerprint": ["distinctive words/phrases"],
+      "decision_tree": "content type → recommended approach mapping",
+      "vulnerability_boundary": {
+        "yes": ["what they'll allude to"],
+        "no": ["what's off limits"],
+        "the_line": "where the boundary sits"
+      }
     },
-    "themes": {
-      "core_beliefs": ["philosophical positions they'd defend"],
-      "current_focus": ["what matters to them now"],
-      "values": ["what they stand for"]
-    },
+    "signature_moves": [
+      {
+        "name": "technique name",
+        "structure": "how it works structurally",
+        "when_to_use": "deployment context",
+        "example": "example from their answers"
+      }
+    ],
+    "openings": [
+      {
+        "label": "O1: PATTERN_NAME",
+        "description": "what this pattern does",
+        "energy_match": "melancholy/playful/punchy/reflective/etc.",
+        "use_for": "content types",
+        "example": "actual phrase from their answers"
+      }
+    ],
+    "middles": [
+      {
+        "label": "M1: PATTERN_NAME",
+        "description": "what this pattern does",
+        "structural_template": "e.g. Setup → Conflict → Turn → Resolution",
+        "pairs_with": ["O1", "O3"]
+      }
+    ],
+    "endings": [
+      {
+        "label": "E1: PATTERN_NAME",
+        "description": "what this pattern does",
+        "pairs_with": ["O1+M1", "O3+M6"],
+        "use_for": "engagement/depth/action"
+      }
+    ],
+    "themes": [
+      {
+        "belief": "core position they'd defend",
+        "evidence": "quote or paraphrase from their answers",
+        "frequency": "how often it appears",
+        "anti_pattern": "what the opposite sounds like"
+      }
+    ],
     "guardrails": {
-      "topics_to_avoid": ["what not to discuss publicly"],
-      "tones_to_avoid": ["how they don't want to sound"],
-      "sacred_cows": ["positions they'd never contradict"],
-      "hard_nos": ["things they'd never say or do"]
+      "yes": ["safe/encouraged topics and tones"],
+      "no": ["hard boundaries"],
+      "the_line": "where the boundary sits",
+      "sacred_cows": ["positions they'd never contradict"]
     },
-    "stories": {
-      "key_narratives": ["major life stories they reference"],
-      "story_themes": ["recurring patterns like resilience, growth"],
-      "vulnerability_level": "how deep they go publicly"
-    },
-    "anecdotes": {
-      "brief_examples": ["short stories that illustrate points"],
-      "proof_points": ["evidence they use to back claims"],
-      "personal_references": ["things they mention in passing"]
-    },
-    "openings": {
-      "hook_styles": ["how they grab attention"],
-      "greeting_patterns": ["how they start"],
-      "tone_openers": ["energy they lead with"]
-    },
-    "middles": {
-      "argument_structures": ["how they build a case"],
-      "evidence_patterns": ["what proof they use"],
-      "transition_styles": ["how they move between points"]
-    },
-    "endings": {
-      "closing_patterns": ["how they wrap up"],
-      "cta_style": "how they invite engagement",
-      "mic_drop_lines": ["memorable endings"]
-    },
-    "blends": {
-      "content_types": ["kinds of content they'd create"],
-      "format_preferences": ["long vs short, story vs tactical"],
-      "mixing_patterns": ["how they combine personal and professional"]
-    },
-    "examples": {
-      "sample_thought_leadership": "example of their thought leadership voice",
-      "sample_personal_story": "example of their personal storytelling",
-      "sample_connection_message": "example of how they'd reach out"
-    }
+    "stories": [
+      {
+        "narrative": "actual story fragment (2-4 sentences)",
+        "vulnerability_level": "low/medium/high",
+        "use_case": ["inspiration", "credibility", "humor", "connection"]
+      }
+    ],
+    "anecdotes": [
+      {
+        "text": "brief deployable example (1-2 sentences)",
+        "category": "tag",
+        "when_to_use": "context"
+      }
+    ],
+    "blend_hypotheses": [
+      {
+        "name": "archetype name",
+        "components": "O? + M? + E?",
+        "when_to_use": "content scenario",
+        "why_it_works": "structural logic"
+      }
+    ]
   },
   "summary": {
     "voice_essence": "1-2 sentence description of their authentic voice",
@@ -168,12 +192,13 @@ Return a JSON object with this structure:
 
 ## Important Notes
 
-1. **Be specific** - Extract concrete patterns, not generic descriptions
-2. **Use their words** - Quote or paraphrase their actual language when possible
-3. **Infer communication style** - How they answered reveals as much as what they said
-4. **Watch for vocabulary** - Note any distinctive words, phrases, metaphors
-5. **Detect tone** - Formal vs casual, serious vs playful, direct vs nuanced
-6. **Story section is key** - a1-a4 reveal their narrative style and vulnerability comfort`;
+1. **Be specific** -- Extract concrete patterns, not generic descriptions
+2. **Use their words** -- Quote or paraphrase their actual language when possible
+3. **Extract structure** -- HOW they communicate matters more than WHAT they say
+4. **Watch for vocabulary** -- Note distinctive words, phrases, metaphors, punctuation habits
+5. **Detect rhythm** -- Sentence length variation, pacing, how they build to points
+6. **Story section is gold** -- a1-a4 reveal narrative style, vulnerability comfort, and structural patterns
+7. **Infer, don't guess** -- If a pattern isn't clearly present, don't fabricate it`;
 
 import type { VoiceOsExtractionResult } from './types';
 

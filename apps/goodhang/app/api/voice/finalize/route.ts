@@ -172,9 +172,31 @@ async function generateRCFiles(
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 12000,
-    system: `You are upgrading DEV voice files to RC (release candidate) quality by incorporating voice calibration feedback. The user tested voice samples and provided feedback on what worked and what didn't. Use this to refine the files.
+    system: `You are upgrading DEV voice files to RC (release candidate) quality by incorporating voice calibration feedback. The user tested voice samples and provided feedback on what worked and what didn't. Use this to refine the files into operational playbooks.
 
-Output a JSON object with 4 keys: themes, guardrails, stories, anecdotes. Each value is a complete markdown document with status: "rc" in the frontmatter.`,
+Output a JSON object with 4 keys: themes, guardrails, stories, anecdotes. Each value is a complete markdown document with status: "rc" in the frontmatter.
+
+Quality standard for each file:
+
+**THEMES RC** -- Not just topic labels. Each theme needs:
+- Core belief statement (what they'd defend)
+- Evidence quotes from corpus/feedback that prove this theme
+- Frequency indicator (how often this shows up)
+- Anti-pattern (what the opposite of this theme sounds like -- to catch drift)
+
+**GUARDRAILS RC** -- YES/NO/THE LINE structure:
+- YES: Topics and tones that are safe/encouraged
+- NO: Hard boundaries, things they'd never say or do publicly
+- THE LINE: Where the boundary is -- "refer to the mess, don't be IN the mess"
+- Sacred cows: Positions they'd never contradict
+
+**STORIES RC** -- Full narrative excerpts ready to deploy:
+- Each story with: title, the actual narrative text (2-4 sentences min), vulnerability level tag (low/medium/high), use-case tags (inspiration, credibility, humor, connection)
+- Not just descriptions -- actual deployable story fragments
+
+**ANECDOTES RC** -- Brief deployable examples with tags:
+- Each anecdote: the actual example text (1-2 sentences), category tag, when to use
+- These should be copy-paste ready, not descriptions of anecdotes`,
     messages: [{
       role: 'user',
       content: `Upgrade these DEV voice files to RC for ${entityName}.
@@ -188,9 +210,9 @@ ${feedbackText}
 
 Generate RC versions that incorporate the feedback. For each file:
 - Replace status: "dev" with status: "rc"
-- Remove the DEV comment marker
 - Refine content based on what worked/didn't in the voice samples
 - If user edited a sample, use the edits as signal for voice preferences
+- Make every entry operational and deployable -- not abstract descriptions
 
 Return JSON with keys: themes, guardrails, stories, anecdotes`,
     }],
@@ -219,8 +241,10 @@ async function generateBlends(
 
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 4000,
-    system: `You are a voice blend architect. Given Opening/Middle/Ending patterns and voice calibration feedback, generate a BLENDS recipe file that documents which template combinations work for this person.`,
+    max_tokens: 6000,
+    system: `You are a voice blend architect. Given Opening/Middle/Ending patterns and voice calibration feedback, generate a BLENDS recipe file -- an operational playbook of proven and experimental template combinations.
+
+Your output should read like a decision-support document: "Want high engagement? Use these blends. Want shares? Use these."`,
     messages: [{
       role: 'user',
       content: `Generate 09_BLENDS.md for ${entityName}.
@@ -232,20 +256,48 @@ ${feedbackText}
 
 ---
 
-Generate a markdown document with:
+Generate a markdown document with this exact structure:
+
+\`\`\`
 ---
 status: "prod"
 ---
 # BLENDS: ${entityName}
 
-## TOP 5 RECIPES (proven — based on voice samples that worked)
-For each: Name, Opening pattern + Middle pattern + Ending pattern, Why it works, Best for
+## TOP 5 RECIPES
 
-## EXPERIMENTAL (hypothesized from voice patterns)
-For each: Name, O+M+E combo, Hypothesis, Risk level
+For each proven blend:
+### N. [BLEND NAME] (e.g. "The Authentic Founder")
+**Components:** O? (name) + M? (name) + E? (name)
+**When to use:** [content types and scenarios]
+**Energy match:** [melancholy/playful/punchy/reflective/etc.]
+**Why it works:** [1-2 sentences on the structural logic]
+**Estimated engagement:** [high comments / high shares / high saves]
 
-## FAILED (from voice test feedback)
-For each: What was tried, Why it didn't work, Lesson
+## EXPERIMENTAL BLENDS (2-4)
+
+For each:
+### [BLEND NAME]
+**Components:** O? + M? + E?
+**Hypothesis:** [why this might work]
+**Risk level:** [low/medium/high]
+**Next test:** [suggested content topic to try it on]
+
+## FAILED BLENDS (1-2)
+
+For each:
+### [BLEND NAME]
+**Components:** O? + M? + E?
+**Why it failed:** [what went wrong]
+**Lesson:** [what to avoid next time]
+
+## BLEND PERFORMANCE BY GOAL
+
+**Want high engagement (comments)?** → [blend names]
+**Want high reach (shares)?** → [blend names]
+**Want relationship building?** → [blend names]
+**Want thought leadership positioning?** → [blend names]
+\`\`\`
 
 Return ONLY the markdown content (not JSON).`,
     }],
@@ -275,18 +327,22 @@ async function generateStartHere(
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 4000,
-    system: `You are generating a master routing document for an AI voice system. This is the first file an AI agent reads before writing content as this person. It should provide a decision tree pointing to specific files.`,
+    system: `You are generating the master routing document for an AI voice system. This is the FIRST file an AI reads before writing content as this person.
+
+It must be a quick-reference card -- NOT a wall of text. Think cheat sheet, not manual. An AI agent should be able to scan this in 5 seconds and know exactly where to go.
+
+The system works if the person says "Does this land right?" not "Use template C."`,
     messages: [{
       role: 'user',
       content: `Generate 00_START_HERE.md for ${entityName}.
 
 ## Available Files
 ${fileList}
-- 02_THEMES.md: Core beliefs, values hierarchy
-- 03_GUARDRAILS.md: Topics/tones to avoid, hard NOs
-- 04_STORIES.md: Extended narratives
-- 05_ANECDOTES.md: Brief examples, one-liners
-- 09_BLENDS.md: Proven O+M+E combinations
+- 02_THEMES.md: Core beliefs with evidence, frequency, anti-patterns
+- 03_GUARDRAILS.md: YES/NO/THE LINE structure, hard NOs
+- 04_STORIES.md: Deployable narrative fragments with vulnerability tags
+- 05_ANECDOTES.md: Brief examples with use-case tags
+- 09_BLENDS.md: Proven O+M+E combinations with performance data
 - CONTEXT.md: Day-to-day quick reference
 
 ## Key Context
@@ -294,18 +350,38 @@ ${context}
 
 ---
 
-Generate a markdown document:
+Generate a markdown document with this structure:
+
+\`\`\`
 ---
 status: "prod"
 ---
-# START HERE: ${entityName}
+# ${entityName.toUpperCase()} - OPERATING SYSTEM
 
-Sections:
-1. Quick Identity (2-3 sentences)
-2. Decision Tree: "When asked to write..." → point to specific files for each scenario
-3. Quick-Reference Personality Dimensions (from DIGEST)
-4. Critical Rules (top 3 ALWAYS and top 3 NEVER from WRITING_ENGINE)
-5. File Map (which file to consult for what)
+**Quick Reference Card**
+
+## The North Star
+[Their core value in one line -- e.g. "Make Work Joyful"]
+
+## Decision Routing
+When writing content → Read 01_WRITING_ENGINE.md
+When choosing structure → Read 06_OPENINGS + 07_MIDDLES + 08_ENDINGS
+When stuck on a blend → Read 09_BLENDS.md
+When checking boundaries → Read 03_GUARDRAILS.md
+When needing a story → Read 04_STORIES.md + 05_ANECDOTES.md
+
+## Top 3 ALWAYS Rules
+[Extract from WRITING_ENGINE -- the 3 most critical voice patterns]
+
+## Top 3 NEVER Rules
+[Extract from WRITING_ENGINE -- the 3 most critical anti-patterns]
+
+## File Map
+[One-line description per file]
+
+## System Check
+System works if: [person] says "Does this land right?" not "Use template C"
+\`\`\`
 
 Return ONLY the markdown content (not JSON).`,
     }],

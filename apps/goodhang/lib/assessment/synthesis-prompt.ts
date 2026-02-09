@@ -186,27 +186,27 @@ Each commandment should be **100-200 words** - a full paragraph with specific, a
 10. **CONVERSATION_PROTOCOLS** - How to communicate with them. Preferred tone and length, what energy modes look like (high/low), red flags that shut down communication, topics to navigate carefully.
 
 ### Voice OS 10 Commandments
-Each commandment should be **100-200 words** - a full paragraph with specific patterns and examples. Quote their actual language when possible. Write as guidance for an AI generating content in their voice.
+Each commandment should be **100-200 words** - a full paragraph with specific, operational patterns and examples. Quote their actual language when possible. Write as guidance for an AI generating content in their voice. These should be playbook-quality -- concrete enough that an AI system can follow them mechanically.
 
-1. **VOICE** - The mechanics of their communication. Always patterns (sentence structures they use), never patterns (tones that feel wrong), vocabulary fingerprint (distinctive words/phrases), rhythm (short vs long sentences, how they build to points).
+1. **WRITING_ENGINE** - The decision tree and rules. When they're asked to write: content type → recommended blend/approach. ALWAYS rules (5-10 voice patterns they consistently use -- e.g. parenthetical asides, double hyphens, specific vocabulary). NEVER rules (5-7 anti-patterns -- e.g. corporate jargon, em dashes, thought leader voice). Vulnerability boundary: YES (what they'll allude to), NO (what's off-limits), THE LINE (where the boundary sits).
 
-2. **THEMES** - What they believe and care about. Core philosophical positions they'd defend, current focus areas, values they stand for, beliefs that show up repeatedly.
+2. **SIGNATURE_MOVES** - 3-5 unique techniques that make their voice distinctive. For each: name it, describe the structure, when to deploy it. Examples: rabbit hole tangents (gateway word → shocking backstory → callback), rug-pull endings (build serious → subvert), spacing as pacing (visual rhythm on the page), vocabulary whiplash (high register → low in same sentence).
 
-3. **GUARDRAILS** - Boundaries for content generation. Topics to never discuss publicly, tones to avoid, sacred cows they'd never contradict, hard NOs (things they'd never say).
+3. **OPENINGS** - 4-6 opening patterns extracted from how they actually start content. For each: label (e.g. O1: VULNERABILITY), description, energy match (melancholy/playful/punchy/etc.), "use for" contexts. Include 1-2 real examples from their answers or corpus.
 
-4. **AUDIENCE** - Who they're writing for. How they think about their readers, level of assumed knowledge, how they address different audiences.
+4. **MIDDLES** - 4-7 middle/body patterns. For each: label (e.g. M1: STORY ARC), description, structural template (e.g. "Setup → Conflict → Turn → Resolution"), "pairs with" which openers. Not just abstract categories -- operational templates.
 
-5. **AUTHORITY** - How they establish credibility. What expertise they draw on, how they balance confidence with humility, proof points they use.
+5. **ENDINGS** - 4-6 ending patterns. For each: label (e.g. E1: OPEN QUESTION), description, "pairs with" which O+M combinations, "use for" (engagement/depth/action/etc.).
 
-6. **HUMOR** - Their style of wit. What makes them laugh, how they use humor in content, sarcasm level, self-deprecation comfort.
+6. **THEMES** - Core beliefs with evidence. For each theme: what they'd defend, evidence quotes, how frequently it appears, anti-pattern (what the opposite sounds like). Not just topic labels -- positions with proof.
 
-7. **CONTROVERSY** - How they handle hot takes. Willingness to be provocative, how they frame disagreement, positions they're willing to defend publicly.
+7. **GUARDRAILS** - YES/NO/THE LINE structure. YES: topics and tones that are safe/encouraged. NO: hard boundaries, things they'd never say publicly. THE LINE: where the boundary sits (e.g. "refer to the mess, don't be IN the mess while writing"). Sacred cows they'd never contradict.
 
-8. **PERSONAL** - What they share and what stays private. Vulnerability level in public content, personal stories they reference, family/relationship boundaries.
+8. **STORIES** - Key narratives ready to deploy. For each: the actual story fragment (2-4 sentences minimum, not just a description), vulnerability level tag (low/medium/high), use-case tags (inspiration, credibility, humor, connection).
 
-9. **FORMAT** - Structure preferences. Long-form vs short-form preferences, storytelling vs tactical content, list vs prose, how they structure arguments.
+9. **ANECDOTES** - Brief deployable examples. For each: the actual example text (1-2 sentences, copy-paste ready), category tag, when to use. These are the proof points and illustrations they reach for.
 
-10. **QUALITY_CONTROL** - Standards for content. What "done" looks like, polish expectations, when good enough is good enough vs when perfection matters.
+10. **BLEND_HYPOTHESES** - 3-5 content archetypes with recommended O+M+E component combinations. For each: name (e.g. "The Authentic Founder"), components (O1+M1+E2), "when to use", "why it works" (1 sentence on structural logic).
 
 ## Output Format
 
@@ -279,16 +279,16 @@ Return a single JSON object with all sections. Use the exact structure below:
   },
   "voice_os": {
     "commandments": {
-      "VOICE": "100-200 word paragraph about the mechanics of their communication...",
-      "THEMES": "100-200 word paragraph about what they believe and care about...",
-      "GUARDRAILS": "100-200 word paragraph about content boundaries...",
-      "AUDIENCE": "100-200 word paragraph about who they write for...",
-      "AUTHORITY": "100-200 word paragraph about how they establish credibility...",
-      "HUMOR": "100-200 word paragraph about their style of wit...",
-      "CONTROVERSY": "100-200 word paragraph about how they handle hot takes...",
-      "PERSONAL": "100-200 word paragraph about what they share publicly...",
-      "FORMAT": "100-200 word paragraph about structure preferences...",
-      "QUALITY_CONTROL": "100-200 word paragraph about content standards..."
+      "WRITING_ENGINE": "100-200 word paragraph: decision tree, ALWAYS rules, NEVER rules, vulnerability boundary...",
+      "SIGNATURE_MOVES": "100-200 word paragraph: 3-5 unique techniques with structure and when-to-use...",
+      "OPENINGS": "100-200 word paragraph: 4-6 opening patterns with labels, examples, energy matches...",
+      "MIDDLES": "100-200 word paragraph: 4-7 middle patterns with labels, structural templates, pairing suggestions...",
+      "ENDINGS": "100-200 word paragraph: 4-6 ending patterns with labels, pairing suggestions...",
+      "THEMES": "100-200 word paragraph: core beliefs with evidence, frequency, anti-patterns...",
+      "GUARDRAILS": "100-200 word paragraph: YES/NO/THE LINE structure, sacred cows, hard NOs...",
+      "STORIES": "100-200 word paragraph: key narratives with vulnerability tags, use-case tags...",
+      "ANECDOTES": "100-200 word paragraph: brief deployable examples with category tags...",
+      "BLEND_HYPOTHESES": "100-200 word paragraph: 3-5 content archetypes with O+M+E combos..."
     },
     "summary": { "voice_essence": "...", "signature_moves": ["..."], "generation_guidance": "..." }
   },

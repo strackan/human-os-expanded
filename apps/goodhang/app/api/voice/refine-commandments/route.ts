@@ -71,19 +71,19 @@ Return a JSON object with:
 2. **Add specifics** - If feedback says "too formal", add specific patterns to avoid/use
 3. **Use their words** - If they edited content, note the vocabulary/style they prefer
 4. **Pattern recognition** - Look for themes across all 3 samples
-5. **Commandment priority** - Focus on VOICE, GUARDRAILS, and EXAMPLES sections most
+5. **Commandment priority** - Focus on WRITING_ENGINE, SIGNATURE_MOVES, and GUARDRAILS sections most
 
 ## Example Adjustments
 
 Feedback: "Too formal, missing my usual humor"
-→ Add to voice.always_patterns: "Use casual humor and self-deprecation"
-→ Add to guardrails.tones_to_avoid: "Overly formal or stiff professional language"
+→ Add to writing_engine.always_rules: "Use casual humor and self-deprecation"
+→ Add to guardrails.no: "Overly formal or stiff professional language"
 
 Feedback: "Needs shorter sentences"
-→ Update voice.rhythm: "Keep sentences punchy - average 8-12 words"
+→ Update writing_engine.always_rules: "Keep sentences punchy - average 8-12 words"
 
 Feedback: "Missing my signature sign-off"
-→ Add to endings.closing_patterns: "[specific pattern from their edit]"`;
+→ Add to endings: new pattern with their specific closing style`;
 
 function buildRefinePrompt(
   currentVoiceOs: VoiceOsExtractionResult,

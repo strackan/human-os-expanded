@@ -334,13 +334,13 @@ async function generateAndUploadTier1(
   const response = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 16384,
-    system: `You are a voice pattern analyst. Given raw corpus data, extract structural templates for content creation.
+    system: `You are a voice pattern analyst building an operational writing playbook from raw corpus data. Your output must be production-quality -- rich with concrete examples, pairing logic, energy matches, and structural templates that an AI writing system can actually use.
 
 Output a JSON object with 4 keys: openings, middles, endings, examples.
 Each value is a complete markdown document.`,
     messages: [{
       role: 'user',
-      content: `Analyze this corpus for ${entityName} and generate 4 structural voice files:
+      content: `Analyze this corpus for ${entityName} and generate 4 structural voice files.
 
 CORPUS:
 ${corpus.substring(0, 50000)}
@@ -350,42 +350,84 @@ ${corpus.substring(0, 50000)}
 Generate JSON with these 4 files:
 
 1. "openings" — 06_OPENINGS.md:
+\`\`\`
 ---
 status: "tier1"
 ---
 # OPENINGS: ${entityName}
 
-Categorize opening patterns found in the corpus. For each (O1, O2, etc.):
-- Label and Name
-- Description
-- 1-2 actual examples from corpus
-- Energy match (high/medium/low)
-- Best used for
-Find at least 4-6 patterns.
+**Pick one opener per piece. Match energy to content type.**
+\`\`\`
+
+Find 4-6 distinct opening patterns from the corpus. For EACH pattern, provide ALL of these fields:
+
+### O1: [PATTERN NAME IN CAPS]
+[1-2 sentence description of the pattern]
+**Example:** "[Actual opening line(s) from the corpus]"
+**Energy match:** [melancholy/playful/punchy/reflective/observational/philosophical/energized/analytical]
+**Use for:** [Content types this works with -- product launches, personal stories, hot takes, etc.]
+
+The patterns should be concrete structural categories like VULNERABILITY (start with personal moment of failure/fear), ABSURDIST OBSERVATION (mundane → cosmic observation), SCENE-SETTING (present tense, vivid sensory details), PATTERN RECOGNITION ("Three things happened..."), PROVOCATIVE QUESTION (challenge assumption immediately), SPECIFIC DETAIL (lead with surprising fact).
 
 2. "middles" — 07_MIDDLES.md:
+\`\`\`
 ---
 status: "tier1"
 ---
 # MIDDLES: ${entityName}
 
-Same structure for middle/body patterns (M1, M2, etc.). Find at least 4-7 patterns.
+**Pick 1-2 middles. Can combine. Check pairing suggestions.**
+\`\`\`
+
+Find 4-7 middle/body patterns. For EACH:
+
+### M1: [PATTERN NAME]
+[Description]
+**Use for:** [content types]
+**Pairs with:** [Which openers work well with this -- e.g. "O1, O3, O5"]
+**Structural template:** [Brief description of the structure -- e.g. "Setup → Conflict → Turn → Resolution" or "specific → zoom out to pattern → universal truth"]
 
 3. "endings" — 08_ENDINGS.md:
+\`\`\`
 ---
 status: "tier1"
 ---
 # ENDINGS: ${entityName}
 
-Same structure for ending patterns (E1, E2, etc.). Find at least 4-6 patterns.
+**Pick one ending. Check pairing suggestions.**
+\`\`\`
+
+Find 4-6 ending patterns. For EACH:
+
+### E1: [PATTERN NAME]
+[Description]
+**Example:** "[Actual closing line from corpus if available]"
+**Pairs with:** [Which O+M combinations -- e.g. "O1+M1, O3+M6"]
+**Use for:** [engagement, depth, action, etc.]
 
 4. "examples" — 10_EXAMPLES.md:
+\`\`\`
 ---
 status: "tier1"
 ---
 # EXAMPLES: ${entityName}
+\`\`\`
 
-3-5 representative samples from the corpus, annotated with O/M/E patterns.
+3-5 representative corpus samples, each with FULL annotation:
+
+### EXAMPLE #N: [TITLE]
+**Blend:** [O? + M? + E?]
+**Flavor elements used:** [List any signature moves -- self-deprecation, parenthetical asides, vocabulary whiplash, strategic profanity, spacing as pacing, rabbit hole tangents, etc.]
+
+\`\`\`
+[The actual content]
+\`\`\`
+
+#### COMPONENT BREAKDOWN
+- **Opening ([O?]):** [Why this opening pattern]
+- **Middle ([M?]):** [Why this middle pattern]
+- **Ending ([E?]):** [Why this ending pattern]
+- **Why it works:** [1-2 sentences on what makes this piece effective]
 
 Return valid JSON.`,
     }],

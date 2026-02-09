@@ -281,6 +281,45 @@ Summary: ${voiceContext.summary || 'Write naturally.'}
 `;
   }
 
+  // Flavor elements and transitions (when writing engine has them)
+  if (corpus.writingEngine) {
+    const hasFlavorElements = corpus.writingEngine.includes('FLAVOR ELEMENTS') || corpus.writingEngine.includes('F1:');
+    const hasTransitions = corpus.writingEngine.includes('TRANSITIONS') || corpus.writingEngine.includes('T1:');
+
+    if (hasFlavorElements) {
+      prompt += `## FLAVOR ELEMENTS
+
+The WRITING_ENGINE contains flavor elements (F1-F10). Sprinkle these throughout each sample:
+- Self-deprecation style, parenthetical asides, vocabulary whiplash
+- Strategic profanity for rhythm (not gratuitous)
+- Spacing as pacing (visual rhythm on the page)
+- Any signature moves like rabbit hole tangents or rug-pull endings
+
+`;
+    }
+
+    if (hasTransitions) {
+      prompt += `## TRANSITIONS
+
+The WRITING_ENGINE contains transition types (T1-T4). Use these to glue sections together:
+- Pivot transitions ("But here's the thing...")
+- Zoom transitions ("Let's get specific.")
+- Parenthetical transitions ("(Quick tangent: ...)")
+- Time jump transitions ("Fast forward 6 months.")
+
+`;
+    }
+  }
+
+  // Blend recipe instructions
+  if (corpus.blendRecipes) {
+    prompt += `## BLEND SELECTION
+
+A blend recipe file is available above. For each sample, select a PROVEN blend recipe (if one matches the content type) or use an EXPERIMENTAL blend. Note which blend you used.
+
+`;
+  }
+
   // Generation rules
   prompt += `## CRITICAL GENERATION RULES
 
@@ -291,7 +330,9 @@ Summary: ${voiceContext.summary || 'Write naturally.'}
 - Use specific stories/anecdotes from the corpus when relevant
 - Each sample MUST feel indistinguishable from content this person actually wrote
 - Do NOT sanitize their voice or smooth out rough edges
-- Do NOT use em dashes — use double hyphens (--) instead
+- Do NOT use em dashes -- use double hyphens (--) instead
+- If blend recipes exist, select an appropriate blend for each sample type
+- If flavor elements exist, explicitly deploy at least 2-3 per sample
 
 OUTPUT FORMAT (JSON):
 {

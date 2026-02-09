@@ -281,23 +281,22 @@ export interface FounderOsExtractionResult {
 }
 
 export interface VoiceOsCommandments {
-  VOICE: string;           // Mechanics of their communication
-  THEMES: string;          // What they believe and care about
-  GUARDRAILS: string;      // Content boundaries
-  AUDIENCE: string;        // Who they write for
-  AUTHORITY: string;       // How they establish credibility
-  HUMOR: string;           // Their style of wit
-  CONTROVERSY: string;     // How they handle hot takes
-  PERSONAL: string;        // What they share publicly
-  FORMAT: string;          // Structure preferences
-  QUALITY_CONTROL: string; // Content standards
+  WRITING_ENGINE: string;    // Decision tree, ALWAYS/NEVER rules, vulnerability boundary, flavor elements
+  SIGNATURE_MOVES: string;   // 3-5 unique techniques with structure and when-to-use
+  OPENINGS: string;          // 4-6 opening patterns with examples and energy matches
+  MIDDLES: string;           // 4-7 middle patterns with pairing suggestions
+  ENDINGS: string;           // 4-6 ending patterns with pairing suggestions
+  THEMES: string;            // Core beliefs with evidence, frequency, anti-patterns
+  GUARDRAILS: string;        // YES/NO/THE LINE structure, hard NOs, sacred cows
+  STORIES: string;           // Key narratives with vulnerability level tags
+  ANECDOTES: string;         // Brief deployable examples
+  BLEND_HYPOTHESES: string;  // 3-5 content archetypes with O+M+E combos
 }
 
 export interface VoiceOsSummary {
-  voice_type: string;
-  key_characteristics: string[];
-  content_focus: string[];
-  recommended_platforms: string[];
+  voice_essence: string;
+  signature_moves: string[];
+  generation_guidance: string;
 }
 
 export interface VoiceOsExtractionResult {

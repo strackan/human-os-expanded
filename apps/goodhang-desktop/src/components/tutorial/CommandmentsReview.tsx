@@ -53,23 +53,16 @@ const FOUNDER_OS_DEFAULTS: Record<string, { title: string; description: string; 
 };
 
 const VOICE_OS_DEFAULTS: Record<string, { title: string; description: string; icon: string }> = {
-  VOICE: { title: 'Voice', description: 'Always/never patterns, vocabulary fingerprint, rhythm', icon: '🎤' },
-  THEMES: { title: 'Themes', description: 'Core beliefs, current focus, values', icon: '📚' },
-  GUARDRAILS: { title: 'Guardrails', description: 'Topics/tones to avoid, sacred cows, hard NOs', icon: '🚧' },
-  AUDIENCE: { title: 'Audience', description: 'Who you write for and how to address them', icon: '👥' },
-  AUTHORITY: { title: 'Authority', description: 'Your expertise and how to convey it', icon: '🏆' },
-  HUMOR: { title: 'Humor', description: 'Your style of wit and when to use it', icon: '😄' },
-  CONTROVERSY: { title: 'Controversy', description: 'How you handle hot takes and pushback', icon: '🔥' },
-  PERSONAL: { title: 'Personal', description: 'What you share and what stays private', icon: '🔐' },
-  FORMAT: { title: 'Format', description: 'Structure preferences and content types', icon: '📝' },
-  QUALITY_CONTROL: { title: 'Quality Control', description: 'Standards and polish expectations', icon: '✨' },
-  STORIES: { title: 'Stories', description: 'Key narratives, story themes, vulnerability level', icon: '📖' },
-  ANECDOTES: { title: 'Anecdotes', description: 'Brief examples, proof points, personal references', icon: '💬' },
-  OPENINGS: { title: 'Openings', description: 'Hook styles, greeting patterns, tone openers', icon: '🚀' },
-  MIDDLES: { title: 'Middles', description: 'Argument structures, evidence patterns, transitions', icon: '📊' },
-  ENDINGS: { title: 'Endings', description: 'Closing patterns, CTA style, mic-drop lines', icon: '🎬' },
-  BLENDS: { title: 'Blends', description: 'Content types, format preferences, mixing patterns', icon: '🎨' },
-  EXAMPLES: { title: 'Examples', description: 'Sample thought leadership, story, connection message', icon: '📝' },
+  WRITING_ENGINE: { title: 'Writing Engine', description: 'Decision tree, ALWAYS/NEVER rules, vulnerability boundary', icon: '🎤' },
+  SIGNATURE_MOVES: { title: 'Signature Moves', description: 'Unique techniques with structure and when-to-use', icon: '✨' },
+  OPENINGS: { title: 'Openings', description: 'Opening patterns with examples and energy matches', icon: '🚀' },
+  MIDDLES: { title: 'Middles', description: 'Middle patterns with pairing suggestions', icon: '📊' },
+  ENDINGS: { title: 'Endings', description: 'Ending patterns with pairing suggestions', icon: '🎬' },
+  THEMES: { title: 'Themes', description: 'Core beliefs with evidence, frequency, anti-patterns', icon: '📚' },
+  GUARDRAILS: { title: 'Guardrails', description: 'YES/NO/THE LINE structure, hard NOs, sacred cows', icon: '🚧' },
+  STORIES: { title: 'Stories', description: 'Key narratives with vulnerability level tags', icon: '📖' },
+  ANECDOTES: { title: 'Anecdotes', description: 'Brief deployable examples with use-case tags', icon: '💬' },
+  BLEND_HYPOTHESES: { title: 'Blend Hypotheses', description: 'Content archetypes with O+M+E combos', icon: '🎨' },
 };
 
 // Helper to format key to title (SNAKE_CASE -> Title Case)

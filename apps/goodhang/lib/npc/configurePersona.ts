@@ -325,3 +325,7 @@ export function configureNPCPersona(
 export function getNPCSystemPrompt(fingerprint?: PersonaFingerprint): string {
   return generateSystemPromptAddition(fingerprint || DEFAULT_FINGERPRINT);
 }
+
+// Re-export archetype matching utilities
+export { findNearestArchetypes, buildConstellationDescription } from './archetypes';
+export type { ConstellationMatch } from './archetypes';

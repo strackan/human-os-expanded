@@ -522,16 +522,16 @@ async function uploadCommandments(
 
   // Generate Voice OS commandment files (10)
   const voiceOsKeys = [
-    'VOICE',
+    'WRITING_ENGINE',
+    'SIGNATURE_MOVES',
+    'OPENINGS',
+    'MIDDLES',
+    'ENDINGS',
     'THEMES',
     'GUARDRAILS',
-    'AUDIENCE',
-    'AUTHORITY',
-    'HUMOR',
-    'CONTROVERSY',
-    'PERSONAL',
-    'FORMAT',
-    'QUALITY_CONTROL',
+    'STORIES',
+    'ANECDOTES',
+    'BLEND_HYPOTHESES',
   ] as const;
 
   for (const key of voiceOsKeys) {
@@ -592,16 +592,16 @@ function generateCommandmentMarkdown(
     WORK_STYLE: 'Work Style',
     CONVERSATION_PROTOCOLS: 'Conversation Protocols',
     // Voice OS
-    VOICE: 'Voice',
+    WRITING_ENGINE: 'Writing Engine',
+    SIGNATURE_MOVES: 'Signature Moves',
+    OPENINGS: 'Openings',
+    MIDDLES: 'Middles',
+    ENDINGS: 'Endings',
     THEMES: 'Themes',
     GUARDRAILS: 'Guardrails',
-    AUDIENCE: 'Audience',
-    AUTHORITY: 'Authority',
-    HUMOR: 'Humor',
-    CONTROVERSY: 'Controversy',
-    PERSONAL: 'Personal',
-    FORMAT: 'Format',
-    QUALITY_CONTROL: 'Quality Control',
+    STORIES: 'Stories',
+    ANECDOTES: 'Anecdotes',
+    BLEND_HYPOTHESES: 'Blend Hypotheses',
   };
 
   const title = friendlyNames[name] || name;

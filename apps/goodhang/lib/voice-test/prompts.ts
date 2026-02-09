@@ -228,25 +228,25 @@ OUTPUT FORMAT (JSON):
 }
 
 COMMANDMENT CATEGORIES TO COVER:
-1. THEMES - What topics/beliefs they return to
-2. VOICE - Sentence structure, vocabulary, rhythm
-3. GUARDRAILS - What to NEVER do
-4. STORIES - How they tell stories
-5. ANECDOTES - Short examples they use
-6. OPENINGS - How they start content
-7. MIDDLES - How they structure arguments
-8. ENDINGS - How they close/CTAs
-9. BLENDS - Content archetypes they prefer
-10. EXAMPLES - Reference outputs to emulate
+1. WRITING_ENGINE - Decision tree (content type → approach), ALWAYS rules (5-10 voice patterns), NEVER rules (5-7 anti-patterns), vulnerability boundary (YES/NO/THE LINE)
+2. SIGNATURE_MOVES - 3-5 unique techniques: name, structure, when to deploy (e.g. rabbit hole tangents, rug-pull endings, spacing as pacing)
+3. OPENINGS - 4-6 opening patterns with labels (O1-O6), energy matches, "use for" contexts
+4. MIDDLES - 4-7 middle patterns with labels (M1-M7), structural templates, pairing suggestions
+5. ENDINGS - 4-6 ending patterns with labels (E1-E6), pairing suggestions
+6. THEMES - Core beliefs with evidence quotes, frequency, anti-patterns
+7. GUARDRAILS - YES/NO/THE LINE structure, sacred cows, hard NOs
+8. STORIES - Key narratives with vulnerability level tags and use-case tags
+9. ANECDOTES - Brief deployable examples with category tags
+10. BLEND_HYPOTHESES - 3-5 content archetypes with O+M+E component combos
 
 ANALYSIS APPROACH:
-1. Look at highly rated content (9-10) - these are "ALWAYS" patterns
-2. Look at feedback about what didn't work - these are "NEVER" patterns
-3. Look at "what a 10 looks like" - these are aspirational targets
-4. Look at "helpful instructions" - these reveal preferences
-5. Find patterns across content types
+1. Highly rated content (9-10) → extract ALWAYS patterns, identify successful O+M+E combos
+2. Feedback about what didn't work → extract NEVER patterns, identify failed blends
+3. "What a 10 looks like" → signature moves, ideal blend descriptions
+4. "Helpful instructions" → reveal preferences and structural patterns
+5. Across content types → identify flavor elements (self-deprecation style, profanity patterns, parenthetical asides, vocabulary whiplash, spacing as pacing, etc.)
 
-Be SPECIFIC and ACTIONABLE. Bad: "Be authentic". Good: "Open with a question or bold statement, never a greeting."`;
+Be SPECIFIC and OPERATIONAL. Bad: "Be authentic". Good: "Open with a vulnerability pattern (O1) or provocative question (O5), never a generic greeting. Use double hyphens (--) not em dashes."`;
 }
 
 export function getCommandmentsUserPrompt(allAttempts: GenerationAttempt[]): string {

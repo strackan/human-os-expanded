@@ -170,16 +170,16 @@ export async function loadScottDataForToolTesting(): Promise<{
   ];
 
   const voiceOsKeys = [
-    'VOICE',
+    'WRITING_ENGINE',
+    'SIGNATURE_MOVES',
+    'OPENINGS',
+    'MIDDLES',
+    'ENDINGS',
     'THEMES',
     'GUARDRAILS',
-    'AUDIENCE',
-    'AUTHORITY',
-    'HUMOR',
-    'CONTROVERSY',
-    'PERSONAL',
-    'FORMAT',
-    'QUALITY_CONTROL',
+    'STORIES',
+    'ANECDOTES',
+    'BLEND_HYPOTHESES',
   ];
 
   const founderOsCommandments: Record<string, string> = {};
@@ -239,10 +239,9 @@ export async function loadScottDataForToolTesting(): Promise<{
     voice_os: {
       commandments: voiceOsCommandments as unknown as VoiceOsCommandments,
       summary: {
-        voice_type: 'Bold, direct, authentic',
-        key_characteristics: ['Harsh truths', 'Kind but direct', 'No bullshit'],
-        content_focus: ['Sales leadership', 'Founder journey', 'Overcoming adversity'],
-        recommended_platforms: ['LinkedIn', 'Podcasts', 'Speaking'],
+        voice_essence: 'Bold, direct, authentic -- no-BS storyteller who turns pain into fuel',
+        signature_moves: ['Vulnerability as hook', 'Direct challenge', 'Harsh truth + warmth'],
+        generation_guidance: 'Lead with directness, use specific stories from his journey, never hedge or sanitize',
       },
     },
     executive_report: {
