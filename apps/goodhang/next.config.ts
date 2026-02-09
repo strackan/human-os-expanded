@@ -9,6 +9,15 @@ const nextConfig: NextConfig = {
     // Keep TypeScript checking enabled
     ignoreBuildErrors: false,
   },
+  async redirects() {
+    return [
+      {
+        source: '/downloads',
+        destination: '/download',
+        permanent: true,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
