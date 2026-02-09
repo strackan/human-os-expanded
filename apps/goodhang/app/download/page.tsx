@@ -134,6 +134,7 @@ export default function DownloadPage() {
   };
 
   const primaryRelease = getPrimaryRelease();
+  const primaryConfig = detectedPlatform ? PLATFORM_CONFIG[detectedPlatform] : null;
   const otherPlatforms = getOtherPlatforms();
 
   return (
@@ -183,14 +184,14 @@ export default function DownloadPage() {
             ) : (
               <>
                 {/* Primary Download */}
-                {primaryRelease && detectedPlatform && (
+                {primaryRelease && primaryConfig && (
                   <div className="bg-background/50 border border-neon-cyan/30 rounded-lg p-8 mb-8">
                     <div className="flex items-center justify-center gap-4 mb-6">
                       <span className="neon-cyan">
-                        {PLATFORM_CONFIG[detectedPlatform].icon}
+                        {primaryConfig.icon}
                       </span>
                       <h2 className="text-2xl font-mono font-bold">
-                        {PLATFORM_CONFIG[detectedPlatform].name}
+                        {primaryConfig.name}
                       </h2>
                     </div>
 
@@ -216,20 +217,24 @@ export default function DownloadPage() {
                       Other platforms
                     </h3>
                     <div className="flex justify-center gap-4 flex-wrap">
-                      {otherPlatforms.map(({ platform, release }) => (
+                      {otherPlatforms.map(({ platform, release }) => {
+                        const config = PLATFORM_CONFIG[platform];
+                        if (!config) return null;
+                        return (
                         <a
                           key={platform}
                           href={release.download_url}
                           className="flex items-center gap-2 px-4 py-2 border border-neon-purple/30 rounded-lg hover:border-neon-purple/60 transition-colors"
                         >
                           <span className="text-neon-purple">
-                            {PLATFORM_CONFIG[platform].icon}
+                            {config.icon}
                           </span>
                           <span className="font-mono">
-                            {PLATFORM_CONFIG[platform].name}
+                            {config.name}
                           </span>
                         </a>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
