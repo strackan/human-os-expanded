@@ -354,15 +354,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = getHumanOSAdminClient();
 
-    // Fetch session data
+    // Fetch session data — session_id may be a UUID (session id) or an entity slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session_id);
+    const lookupColumn = isUuid ? 'id' : 'entity_slug';
+
     const { data: session, error: sessionError } = await supabase
       .from('sculptor_sessions')
       .select('id, entity_slug, metadata')
-      .eq('id', session_id)
+      .eq(lookupColumn, session_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (sessionError || !session) {
-      console.error('[voice/generate-samples] Session not found:', sessionError?.message);
+      console.error(`[voice/generate-samples] Session not found (${lookupColumn}=${session_id}):`, sessionError?.message);
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404, headers: corsHeaders }

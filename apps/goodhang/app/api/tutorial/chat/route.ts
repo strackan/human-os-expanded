@@ -380,15 +380,20 @@ export async function POST(request: NextRequest) {
     // Create Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch session data
+    // Fetch session data — session_id may be a UUID or an entity slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session_id);
+    const lookupColumn = isUuid ? 'id' : 'entity_slug';
+
     const { data: session, error: sessionError } = await supabase
       .from('sculptor_sessions')
       .select('id, entity_slug, entity_name, metadata')
-      .eq('id', session_id)
+      .eq(lookupColumn, session_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (sessionError || !session) {
-      console.error('[tutorial/chat] Session not found:', sessionError);
+      console.error(`[tutorial/chat] Session not found (${lookupColumn}=${session_id}):`, sessionError);
       return NextResponse.json(
         { error: 'Session not found' },
         { status: 404, headers: corsHeaders }

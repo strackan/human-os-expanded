@@ -226,11 +226,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = getHumanOSAdminClient();
 
-    // Fetch session to get entity_slug and persona_fingerprint
+    // Fetch session to get entity_slug — session_id may be a UUID or entity slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session_id);
+    const lookupColumn = isUuid ? 'id' : 'entity_slug';
+
     const { data: session } = await supabase
       .from('sculptor_sessions')
-      .select('entity_slug, persona_fingerprint, metadata')
-      .eq('id', session_id)
+      .select('entity_slug, metadata')
+      .eq(lookupColumn, session_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     // Load voice context via discovery (graceful — works without it)
@@ -264,8 +269,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (session) {
-      personaFingerprint =
-        session.persona_fingerprint || session.metadata?.persona_fingerprint || null;
+      personaFingerprint = session.metadata?.persona_fingerprint || null;
     }
 
     const hasVoiceContext = !!(digest || writingEngine || personaFingerprint);

@@ -322,11 +322,16 @@ export async function POST(request: NextRequest) {
 
     const supabase = getHumanOSAdminClient();
 
-    // Fetch session
+    // Fetch session — session_id may be a UUID or entity slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session_id);
+    const lookupColumn = isUuid ? 'id' : 'entity_slug';
+
     const { data: session, error: sessionError } = await supabase
       .from('sculptor_sessions')
-      .select('id, entity_slug, metadata, persona_fingerprint')
-      .eq('id', session_id)
+      .select('id, entity_slug, metadata')
+      .eq(lookupColumn, session_id)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (sessionError || !session) {
@@ -344,8 +349,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const personaFingerprint =
-      session.persona_fingerprint || session.metadata?.persona_fingerprint || null;
+    const personaFingerprint = session.metadata?.persona_fingerprint || null;
 
     console.log('[voice/finalize] Starting Tier 3 finalization for:', entitySlug);
 
