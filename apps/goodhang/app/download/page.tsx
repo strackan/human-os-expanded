@@ -82,9 +82,9 @@ export default function DownloadPage() {
       if (ua.includes('win')) {
         setDetectedPlatform('windows');
       } else if (ua.includes('mac')) {
-        // Detect Apple Silicon: ARM-based Macs report "arm" in platform
+        // Detect Apple Silicon: M-series Macs still report "MacIntel" but have touch points
         const isAppleSilicon =
-          navigator.platform === 'MacIntel' && typeof (navigator as Record<string, unknown>).maxTouchPoints === 'number' && (navigator as Record<string, unknown>).maxTouchPoints as number > 0
+          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 0)
           || /arm/i.test(navigator.platform);
         setDetectedPlatform(isAppleSilicon ? 'macos-arm64' : 'macos');
       } else if (ua.includes('linux')) {
