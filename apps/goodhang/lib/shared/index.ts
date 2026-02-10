@@ -10,3 +10,15 @@ export {
   getLightweightGrounding,
   type GroundingContext,
 } from './agent-grounding';
+
+export {
+  getTemperature,
+  TEMPERATURE_MAP,
+  type Doctype,
+} from './llm-config';
+
+export {
+  extractAndValidate,
+  type LLMJsonResult,
+  type LLMJsonError,
+} from './llm-json';

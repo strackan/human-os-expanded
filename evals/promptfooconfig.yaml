@@ -1,0 +1,30 @@
+description: 'Human OS Prompt Evaluation Suite'
+
+# This root config is used when running `pnpm eval` to execute all sub-suites.
+# Each sub-suite can also be run independently via `pnpm eval:sculptor`, etc.
+#
+# To run all suites:
+#   pnpm eval
+#
+# To run a specific suite:
+#   pnpm eval:sculptor
+#   pnpm eval:voice
+#   pnpm eval:tutorial
+#   pnpm eval:production
+#   pnpm eval:assessment
+#   pnpm eval:renubu
+#
+# To view results:
+#   pnpm eval:view
+
+defaultTest:
+  options:
+    provider:
+      id: anthropic:messages:claude-sonnet-4-20250514
+      config:
+        apiKeyEnvar: ANTHROPIC_API_KEY
+    rubricGradingConfig:
+      provider:
+        id: anthropic:messages:claude-haiku-4-5-20251001
+        config:
+          apiKeyEnvar: ANTHROPIC_API_KEY

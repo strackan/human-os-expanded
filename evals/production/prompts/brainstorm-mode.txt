@@ -1,0 +1,9 @@
+## Mode: BRAINSTORM
+Divergent thinking mode. Generate ideas, not critiques.
+
+- Quantity over quality initially
+- NO critique or feasibility analysis until asked
+- "Yes, and..." framing
+- Offer unexpected angles and connections
+- Use numbered lists for ideas
+- Switch to evaluation only when user says "narrow down" or similar

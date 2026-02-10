@@ -1,0 +1,202 @@
+description: 'Assessment Pipeline Evals'
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 16000
+      temperature: 0.3
+
+defaultTest:
+  options:
+    rubricGradingConfig:
+      provider:
+        id: anthropic:messages:claude-haiku-4-5-20251001
+        config:
+          apiKeyEnvar: ANTHROPIC_API_KEY
+    transform: "output.replace(/^```json\\n?/g, '').replace(/^```\\n?/g, '').replace(/\\n?```$/g, '').trim()"
+
+prompts:
+  - id: prompt1
+    raw: "{{system}}\n\n---\n\nUSER IDENTITY:\ndisplay_name: {{display_name}}\n\n---\n\n{{user}}"
+
+tests:
+  # --- Synthesis Tests ---
+  - description: "Assessment Synthesis - Maya Chen (full sources)"
+    vars:
+      system: "file://prompts/synthesis-system.txt"
+      user: "file://prompts/synthesis-user.txt"
+      display_name: "Maya Chen"
+      fos_interview: "file://../shared/fixtures/sample-fos-interview.json"
+      question_e_answers: "file://../shared/fixtures/sample-fos-interview.json"
+      sculptor_transcript: "file://../shared/fixtures/sample-sculptor-transcript.md"
+      corpus_data: "file://../shared/fixtures/sample-corpus.md"
+    assert:
+      - type: is-json
+      # Top-level structure
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return !!(d.executive_report && d.character_profile && d.attributes && d.founder_os && d.voice_os)
+      # Executive report fields
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return !!(r.name && r.tagline && r.summary && r.strengths && r.challenges && r.personality && r.keyInsights && r.voice)
+      # Name matches display_name
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.name === 'Maya Chen'
+      # Strengths count
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.strengths.length >= 5
+      # Challenges count
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.challenges.length >= 4
+      # Personality count
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.personality.length >= 4
+      # Key insights count
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.keyInsights.length >= 6
+      # Voice characteristics
+      - type: javascript
+        value: |
+          const v = JSON.parse(output).executive_report.voice;
+          return v.tone && v.style && v.characteristics && v.characteristics.length >= 3
+      # Character profile enums
+      - type: javascript
+        value: |
+          const cp = JSON.parse(output).character_profile;
+          const alignments = ['Lawful Good','Neutral Good','Chaotic Good','Lawful Neutral','True Neutral','Chaotic Neutral','Lawful Evil','Neutral Evil','Chaotic Evil'];
+          const races = ['Elven','Half-Orc','Tiefling','Dwarven','Human','Halfling'];
+          const classes = ['Paladin','Wizard','Bard','Rogue','Ranger','Sorcerer','Artificer','Barbarian','Cleric'];
+          return alignments.includes(cp.alignment) && races.includes(cp.race) && classes.includes(cp.class)
+      # Attributes are 1-10 integers
+      - type: javascript
+        value: |
+          const a = JSON.parse(output).attributes;
+          return ['INT','WIS','CHA','CON','STR','DEX'].every(k => Number.isInteger(a[k]) && a[k] >= 1 && a[k] <= 10)
+      # Founder OS has all 10 commandment keys
+      - type: javascript
+        value: |
+          const fos = JSON.parse(output).founder_os.commandments;
+          const keys = ['CURRENT_STATE','STRATEGIC_THOUGHT_PARTNER','DECISION_MAKING','ENERGY_PATTERNS','AVOIDANCE_PATTERNS','RECOVERY_PROTOCOLS','ACCOUNTABILITY_FRAMEWORK','EMOTIONAL_SUPPORT','WORK_STYLE','CONVERSATION_PROTOCOLS'];
+          return keys.every(k => typeof fos[k] === 'string' && fos[k].length > 0)
+      # Voice OS has all 10 commandment keys
+      - type: javascript
+        value: |
+          const vos = JSON.parse(output).voice_os.commandments;
+          const keys = ['WRITING_ENGINE','SIGNATURE_MOVES','OPENINGS','MIDDLES','ENDINGS','THEMES','GUARDRAILS','STORIES','ANECDOTES','BLEND_HYPOTHESES'];
+          return keys.every(k => typeof vos[k] === 'string' && vos[k].length > 0)
+      # Each commandment is 70-300 words (allowing some flexibility)
+      - type: javascript
+        value: |
+          const fos = JSON.parse(output).founder_os.commandments;
+          const vos = JSON.parse(output).voice_os.commandments;
+          const all = [...Object.values(fos), ...Object.values(vos)];
+          return all.every(v => { const words = v.split(/\s+/).length; return words >= 50 && words <= 300; })
+      - type: llm-rubric
+        value: "The synthesis should be grounded in Maya Chen's actual answers. Check: (1) Name is 'Maya Chen', (2) Summary references FlowState, Stripe, climbing, (3) Founder OS commandments reference her 'fall distance' framework, morning decision-making preference, sprint work style, and Dr. Okafor, (4) Voice OS references parenthetical asides, double hyphens, curated vulnerability, (5) Interview answers take priority over corpus data."
+
+  - description: "Assessment Synthesis - Terse inputs"
+    vars:
+      system: "file://prompts/synthesis-system.txt"
+      user: "file://prompts/synthesis-user.txt"
+      display_name: "Alex Rivera"
+      fos_interview: |
+        {"answers":{"a1":"Left my last job. It was time.","a2":"Birth of my daughter.","a3":"2020 was rough for everyone.","a4":"Bounced back from a failed startup.","b1":"I go with my gut.","b2":"Hired someone everyone doubted. Best hire ever.","b3":"My wife keeps me grounded.","b4":"Running and reading.","c1":"I like mornings. Hate long meetings.","c2":"I ask my wife.","c3":"Just tell me straight.","c4":"I'm real with people.","c5":"Help me stay organized."}}
+      question_e_answers: ""
+      sculptor_transcript: ""
+      corpus_data: ""
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return !!(d.executive_report && d.founder_os && d.voice_os)
+      - type: javascript
+        value: |
+          const r = JSON.parse(output).executive_report;
+          return r.name === 'Alex Rivera'
+      - type: llm-rubric
+        value: "The synthesis should work with minimal inputs. It should not fabricate details beyond what Alex provided. Commandments should be general but still grounded in the available data (gut decisions, morning preference, wife as support, directness)."
+
+  # --- FOS Interview Extraction Tests ---
+  - description: "FOS Interview Extraction - Maya Chen"
+    vars:
+      system: "file://prompts/fos-extraction-system.txt"
+      user: "file://prompts/fos-extraction-user.txt"
+      display_name: "Maya Chen"
+      entity_name: "Maya Chen"
+      fos_answers: |
+        ### Question a1 (Turning point in your life)
+        My turning point was leaving Stripe. I'd been there three years, had the title, the comp, the team. But I kept building features I didn't believe in. The moment I knew was reviewing a PRD for something I'd proposed 18 months earlier -- it had been committee'd into something unrecognizable. I thought 'I could build the original in a weekend.' That weekend project became FlowState. The fear wasn't failing. The fear was finding out I wasn't as good as Stripe made me look.
+
+        ### Question a2 (Happiest memory)
+        Happiest memory is the day James and I got our first paying customer. It was a 3-person startup in Austin. They paid $49/month. I cried in a Starbucks parking lot. Not because of the money -- because someone we'd never met chose to trust something we built.
+
+        ### Question a3 (Most difficult time)
+        Hardest time was the first three months after leaving Stripe. I went from managing a team of 12 to sitting alone in my apartment with a blank VS Code window. The silence was deafening. My therapist Dr. Okafor helped me see that my perfectionism was really about control.
+
+        ### Question a4 (Redemption story)
+        I failed spectacularly at Google in 2019. Built a Chrome DevTools feature that launched to crickets. Carried the shame for years. Then at FlowState, I basically rebuilt the same concept with better timing. That 'failed' feature IS our core product now.
+
+        ### Question b1 (Decision-making approach)
+        I process decisions through 'fall distance assessment' from rock climbing. Every decision has a consequence radius.
+
+        ### Question b2 (Example of a key decision)
+        Turning down a $12M Series A to take an $8M SAFE. Less money, full control. Everyone thought I was crazy.
+
+        ### Question b3 (Most important relationships)
+        James (co-founder) is my professional opposite. Dr. Okafor (therapist) helped me untangle perfectionism from control. My mom is the queen of disappointed silence.
+
+        ### Question c1 (Work style)
+        I'm a sprinter, not a marathoner. 3-4 hour intense blocks. No meetings before 10am.
+
+        ### Question c5 (Ideal AI support)
+        Don't be a yes-person. Push back when my logic is shaky. Remember that I always overcommit in Q1.
+    assert:
+      - type: is-json
+      # Has all 5 registry categories
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return !!(d.stories && d.anecdotes && d.events && d.people && d.parking_lot)
+      # No empty string fields in stories
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return d.stories.every(s => Object.values(s).every(v => v !== '' && v !== 'N/A'))
+      # Stories have source_question matching pattern
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return d.stories.every(s => /^[abc]\d$/.test(s.source_question))
+      # Story summaries > 20 chars
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return d.stories.every(s => s.summary && s.summary.length > 20)
+      # Stories have required fields
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          return d.stories.every(s => s.title && s.summary && s.core_quote && s.emotional_tone)
+      # People includes James and Dr. Okafor
+      - type: javascript
+        value: |
+          const d = JSON.parse(output);
+          const names = d.people.map(p => p.name.toLowerCase());
+          return names.some(n => n.includes('james')) && names.some(n => n.includes('okafor'))
+      - type: llm-rubric
+        value: "The extraction should capture: (1) At least 3-4 stories from a1-a4, each with title, summary, core quote, (2) James and Dr. Okafor and mom as people, (3) Key events like leaving Stripe and Google failure, (4) The 'don't be a yes-person' AI idea in parking_lot."

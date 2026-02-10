@@ -1,0 +1,32 @@
+# Shared provider configurations for Human OS evals
+
+providers:
+  # Primary generation model (matches production)
+  sonnet:
+    id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 8192
+      temperature: 0.5
+
+  # Higher token limit for large outputs (synthesis, tier1/tier2)
+  sonnet-large:
+    id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 16384
+      temperature: 0.3
+
+  # Theatrical/creative (sculptor sessions)
+  sonnet-creative:
+    id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 2000
+      temperature: 0.8
+
+  # Cost-effective grader for llm-rubric assertions
+  haiku-grader:
+    id: anthropic:messages:claude-haiku-4-5-20251001
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY

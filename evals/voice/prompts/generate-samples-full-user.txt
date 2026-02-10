@@ -1,0 +1,27 @@
+## VOICE PROFILE
+
+{{digest}}
+
+---
+
+{{writing_engine}}
+
+---
+
+{{openings}}
+
+---
+
+{{middles}}
+
+---
+
+{{endings}}
+
+---
+
+{{examples}}
+
+---
+
+Generate 3 voice samples for Maya Chen using the voice profile above. Return valid JSON.

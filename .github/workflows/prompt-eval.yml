@@ -1,0 +1,306 @@
+name: Prompt Evaluation
+
+on:
+  pull_request:
+    paths:
+      # Sculptor pipeline
+      - 'supabase/functions/sculptor-onboard/**'
+      - 'supabase/functions/sculptor-gap-final/**'
+      - 'evals/sculptor/**'
+      # Voice pipeline
+      - 'apps/goodhang/app/api/voice/**'
+      - 'evals/voice/**'
+      # Tutorial chat
+      - 'apps/goodhang/lib/tutorial/**'
+      - 'apps/goodhang/app/api/tutorial/**'
+      - 'evals/tutorial/**'
+      # Production chat
+      - 'apps/goodhang/lib/production/**'
+      - 'apps/goodhang/app/api/production/**'
+      - 'evals/production/**'
+      # Assessment
+      - 'apps/goodhang/lib/assessment/**'
+      - 'apps/goodhang/app/api/tutorial/synthesize/**'
+      - 'evals/assessment/**'
+      # Renubu
+      - 'apps/renubu/src/lib/workflows/**'
+      - 'evals/renubu/**'
+      # Shared
+      - 'evals/shared/**'
+      - 'evals/promptfooconfig.yaml'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Which eval suite to run (all, sculptor, voice, tutorial, production, assessment, renubu)'
+        required: false
+        default: 'all'
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      sculptor: ${{ steps.changes.outputs.sculptor }}
+      voice: ${{ steps.changes.outputs.voice }}
+      tutorial: ${{ steps.changes.outputs.tutorial }}
+      production: ${{ steps.changes.outputs.production }}
+      assessment: ${{ steps.changes.outputs.assessment }}
+      renubu: ${{ steps.changes.outputs.renubu }}
+      shared: ${{ steps.changes.outputs.shared }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            sculptor:
+              - 'supabase/functions/sculptor-onboard/**'
+              - 'supabase/functions/sculptor-gap-final/**'
+              - 'evals/sculptor/**'
+            voice:
+              - 'apps/goodhang/app/api/voice/**'
+              - 'evals/voice/**'
+            tutorial:
+              - 'apps/goodhang/lib/tutorial/**'
+              - 'apps/goodhang/app/api/tutorial/**'
+              - 'evals/tutorial/**'
+            production:
+              - 'apps/goodhang/lib/production/**'
+              - 'apps/goodhang/app/api/production/**'
+              - 'evals/production/**'
+            assessment:
+              - 'apps/goodhang/lib/assessment/**'
+              - 'apps/goodhang/app/api/tutorial/synthesize/**'
+              - 'evals/assessment/**'
+            renubu:
+              - 'apps/renubu/src/lib/workflows/**'
+              - 'evals/renubu/**'
+            shared:
+              - 'evals/shared/**'
+              - 'evals/promptfooconfig.yaml'
+
+  eval-sculptor:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.sculptor == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'sculptor'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Sculptor Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/sculptor && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sculptor-eval-results
+          path: evals/sculptor/results.json
+
+  eval-voice:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.voice == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'voice'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Voice Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/voice && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voice-eval-results
+          path: evals/voice/results.json
+
+  eval-tutorial:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.tutorial == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'tutorial'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Tutorial Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/tutorial && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tutorial-eval-results
+          path: evals/tutorial/results.json
+
+  eval-production:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.production == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Production Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/production && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-eval-results
+          path: evals/production/results.json
+
+  eval-assessment:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.assessment == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'assessment'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Assessment Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/assessment && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: assessment-eval-results
+          path: evals/assessment/results.json
+
+  eval-renubu:
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.renubu == 'true' ||
+      needs.detect-changes.outputs.shared == 'true' ||
+      github.event.inputs.suite == 'all' ||
+      github.event.inputs.suite == 'renubu'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Run Renubu Evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: cd evals/renubu && npx promptfoo eval --no-cache --output results.json
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renubu-eval-results
+          path: evals/renubu/results.json
+
+  post-results:
+    needs:
+      - eval-sculptor
+      - eval-voice
+      - eval-tutorial
+      - eval-production
+      - eval-assessment
+      - eval-renubu
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: results
+          merge-multiple: false
+
+      - name: Generate summary comment
+        id: summary
+        run: |
+          echo "## Prompt Evaluation Results" > comment.md
+          echo "" >> comment.md
+          echo "| Suite | Status |" >> comment.md
+          echo "|-------|--------|" >> comment.md
+
+          for dir in results/*/; do
+            suite=$(basename "$dir" | sed 's/-eval-results//')
+            if [ -f "$dir/results.json" ]; then
+              total=$(jq '.results.stats.successes + .results.stats.failures' "$dir/results.json" 2>/dev/null || echo "?")
+              passed=$(jq '.results.stats.successes' "$dir/results.json" 2>/dev/null || echo "?")
+              failed=$(jq '.results.stats.failures' "$dir/results.json" 2>/dev/null || echo "?")
+              if [ "$failed" = "0" ]; then
+                echo "| $suite | :white_check_mark: $passed/$total passed |" >> comment.md
+              else
+                echo "| $suite | :x: $passed/$total passed ($failed failed) |" >> comment.md
+              fi
+            else
+              echo "| $suite | :grey_question: No results |" >> comment.md
+            fi
+          done
+
+          echo "" >> comment.md
+          echo "_Generated by [promptfoo](https://promptfoo.dev) prompt evaluation_" >> comment.md
+
+      - name: Post PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          path: comment.md

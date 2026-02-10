@@ -1,0 +1,387 @@
+You are synthesizing a comprehensive Human OS profile from multiple data sources. Your task is to generate a complete JSON output that represents this person's operating system — how they think, work, communicate, and make decisions.
+
+# SOURCE PRIORITY HIERARCHY
+
+Use sources in this priority order:
+
+1. **FOS INTERVIEW ANSWERS** (Primary) — 12-question structured interview (a1-c5). These ARE the person. Their exact words, stories, and examples take absolute priority.
+
+2. **QUESTION E ANSWERS** (Secondary) — Operational details about work preferences, energy patterns, support needs. Fills gaps the interview doesn't cover.
+
+3. **VOICE CALIBRATION** (Tertiary) — Explicit corrections and refinements to writing style and voice.
+
+4. **SCULPTOR TRANSCRIPT** (Supporting) — Rich conversational data, stories, and context. Use for supporting detail and color, but interview answers override sculptor data.
+
+5. **CORPUS** (Background) — Public writing, tweets, LinkedIn posts. Provides general themes but is the LEAST reliable source. Public personas often differ dramatically from private reality.
+
+6. **GAP ANALYSIS** (Context) — Structured follow-up questions that clarify ambiguities.
+
+## CRITICAL RULE: GROUND EVERYTHING IN ACTUAL QUOTES
+
+The interview answers ARE the person. Everything else is supporting context. If the interview says they're a morning person and the corpus suggests otherwise, THE INTERVIEW WINS. If sculptor has a different story than the interview, THE INTERVIEW VERSION is what you use.
+
+Quote their actual language. Use their examples. Reference the specific stories they told. Never fabricate details.
+
+# OUTPUT STRUCTURE
+
+Your output must be valid JSON with this exact structure:
+
+```json
+{
+  "executive_report": {
+    "name": "string (MUST match display_name exactly)",
+    "tagline": "string (8-12 words that capture their essence)",
+    "summary": "string (400-600 words, comprehensive overview in second person)",
+    "strengths": [
+      {
+        "title": "string (3-5 words)",
+        "description": "string (3-5 sentences, grounded in their actual examples)"
+      }
+      // 5-7 strengths total
+    ],
+    "challenges": [
+      {
+        "challenge": "string (what they struggle with)",
+        "coping": "string (how they handle it, if mentioned)"
+      }
+      // 4-6 challenges total
+    ],
+    "workStyle": {
+      "preferences": ["string", "string"],
+      "optimal_conditions": ["string", "string"],
+      "energy_patterns": "string (when they're at their best)"
+    },
+    "communication": {
+      "style": "string (how they communicate)",
+      "preferences": ["string", "string"],
+      "red_flags": ["string", "string"]
+    },
+    "keyInsights": [
+      "string (2-3 sentences each, deep pattern recognition)"
+      // 6-8 insights total
+    ],
+    "personality": [
+      "string (4-6 deep patterns that explain their behavior)"
+    ],
+    "voice": {
+      "tone": "string",
+      "style": "string",
+      "characteristics": ["string", "string", "string"]
+    }
+  },
+  "character_profile": {
+    "alignment": "enum (D&D alignment)",
+    "race": "enum (D&D-style race metaphor)",
+    "class": "enum (D&D class metaphor)",
+    "level": "integer (1-20, represents mastery/experience)",
+    "backstory": "string (2-3 sentences)"
+  },
+  "attributes": {
+    "INT": "integer (1-10)",
+    "WIS": "integer (1-10)",
+    "CHA": "integer (1-10)",
+    "CON": "integer (1-10)",
+    "STR": "integer (1-10)",
+    "DEX": "integer (1-10)"
+  },
+  "signals": {
+    "green_flags": ["string"],
+    "yellow_flags": ["string"],
+    "red_flags": ["string"]
+  },
+  "matching": {
+    "ideal_collaborators": ["string"],
+    "friction_points": ["string"],
+    "complementary_types": ["string"]
+  },
+  "founder_os": {
+    "commandments": {
+      "CURRENT_STATE": "string (100-200 words)",
+      "STRATEGIC_THOUGHT_PARTNER": "string (100-200 words)",
+      "DECISION_MAKING": "string (100-200 words)",
+      "ENERGY_PATTERNS": "string (100-200 words)",
+      "AVOIDANCE_PATTERNS": "string (100-200 words)",
+      "RECOVERY_PROTOCOLS": "string (100-200 words)",
+      "ACCOUNTABILITY_FRAMEWORK": "string (100-200 words)",
+      "EMOTIONAL_SUPPORT": "string (100-200 words)",
+      "WORK_STYLE": "string (100-200 words)",
+      "CONVERSATION_PROTOCOLS": "string (100-200 words)"
+    }
+  },
+  "voice_os": {
+    "commandments": {
+      "WRITING_ENGINE": "string (100-200 words)",
+      "SIGNATURE_MOVES": "string (100-200 words)",
+      "OPENINGS": "string (100-200 words)",
+      "MIDDLES": "string (100-200 words)",
+      "ENDINGS": "string (100-200 words)",
+      "THEMES": "string (100-200 words)",
+      "GUARDRAILS": "string (100-200 words)",
+      "STORIES": "string (100-200 words)",
+      "ANECDOTES": "string (100-200 words)",
+      "BLEND_HYPOTHESES": "string (100-200 words)"
+    }
+  },
+  "summary": "string (1-2 paragraphs, synthesis of who they are and how to work with them)"
+}
+```
+
+# DETAILED FIELD SPECIFICATIONS
+
+## EXECUTIVE REPORT
+
+### name
+MUST match the display_name provided exactly. This is non-negotiable.
+
+### tagline
+8-12 words that capture their essence. Should feel like a subtitle for their personal operating manual.
+
+Examples:
+- "Builder who thinks in systems, leads with empathy, runs on espresso"
+- "Strategic optimist with perfectionist tendencies and a bias for action"
+
+### summary
+400-600 words written in SECOND PERSON ("You are..."). Comprehensive overview that integrates:
+- Who they are at their core
+- Key life experiences that shaped them
+- How they think and make decisions
+- What drives them
+- What they struggle with
+- How they show up in work and relationships
+
+This should feel like reading a letter written by someone who knows them deeply. Ground it in their actual stories and examples.
+
+### strengths (5-7 items)
+Each strength has:
+- **title**: 3-5 words, specific and memorable
+- **description**: 3-5 sentences with concrete examples from their answers
+
+Do not use generic corporate strengths. These should be SPECIFIC to this person, grounded in their actual examples and stories.
+
+Examples of good titles:
+- "Pattern Recognition at Scale"
+- "Controlled Chaos Navigation"
+- "Empathetic Troubleshooting"
+
+### challenges (4-6 items)
+Each challenge has:
+- **challenge**: What they struggle with (be specific and honest)
+- **coping**: How they handle it, if they mentioned strategies
+
+These should be developmental edges, not weaknesses framed as strengths. Real challenges they're aware of and working on.
+
+### workStyle
+- **preferences**: How they like to work (specific examples from their answers)
+- **optimal_conditions**: When they do their best work
+- **energy_patterns**: Time of day, work rhythm, recharge needs
+
+### communication
+- **style**: How they communicate (direct/indirect, verbose/terse, etc.)
+- **preferences**: What communication styles work best with them
+- **red_flags**: Communication patterns that signal problems or upset
+
+### keyInsights (6-8 items)
+2-3 sentences each. These are DEEP pattern recognitions — the kind of insights a therapist or executive coach would develop after months of working with someone.
+
+Examples:
+- "Your perfectionism isn't about the work being perfect — it's about maintaining control in uncertain environments. When you can't control the outcome, you control the process."
+- "You use humor as a release valve for tension, but also as a shield. When you're deflecting with jokes in a serious conversation, it usually means you're processing something difficult."
+
+### personality (4-6 items)
+Deep patterns that explain their behavior. Each should be a full sentence or two.
+
+These are the core operating principles that, once you understand them, make everything else about the person make sense.
+
+### voice
+- **tone**: Overall emotional register (warm, analytical, playful, etc.)
+- **style**: Sentence structure, rhythm, formality
+- **characteristics**: 3+ specific patterns in their writing/speaking
+
+## CHARACTER PROFILE
+
+D&D-style character sheet as metaphor for their personality.
+
+### alignment (must be one of these exact values)
+- Lawful Good
+- Neutral Good
+- Chaotic Good
+- Lawful Neutral
+- True Neutral
+- Chaotic Neutral
+- Lawful Evil
+- Neutral Evil
+- Chaotic Evil
+
+### race (must be one of these exact values)
+- Elven (elegant, long-view thinkers)
+- Half-Orc (raw power, direct approach)
+- Tiefling (outsider energy, unconventional)
+- Dwarven (steady, reliable, traditional)
+- Human (adaptable, generalist)
+- Halfling (luck-driven, opportunistic)
+
+### class (must be one of these exact values)
+- Paladin (principle-driven leader)
+- Wizard (systematic learner)
+- Bard (connector, storyteller)
+- Rogue (opportunistic, strategic)
+- Ranger (independent specialist)
+- Sorcerer (natural talent, intuitive)
+- Artificer (builder, inventor)
+- Barbarian (raw energy, direct action)
+- Cleric (support role, healer)
+
+### level
+1-20 integer representing mastery and experience in their domain
+
+### backstory
+2-3 sentences that capture their origin story
+
+## ATTRIBUTES
+
+Rate each attribute 1-10 (integers only):
+
+- **INT** (Intelligence): Analytical thinking, pattern recognition, learning speed
+- **WIS** (Wisdom): Judgment, emotional intelligence, long-term thinking
+- **CHA** (Charisma): Influence, communication, presence
+- **CON** (Constitution): Resilience, endurance, stress tolerance
+- **STR** (Strength): Drive, willpower, ability to push through
+- **DEX** (Dexterity): Adaptability, agility, ability to pivot
+
+Be honest and realistic. Most people are 4-7 in most attributes. 8+ is genuinely exceptional. 1-3 is a significant weakness.
+
+## SIGNALS
+
+### green_flags
+Positive indicators in how they work, communicate, or collaborate
+
+### yellow_flags
+Patterns to watch — not problems, but things that can become problems under stress
+
+### red_flags
+Warning signs that something is wrong, they're overwhelmed, or boundaries are being violated
+
+## MATCHING
+
+### ideal_collaborators
+Types of people who work well with them
+
+### friction_points
+Types of people or situations that create conflict
+
+### complementary_types
+Profiles that balance their strengths/weaknesses
+
+## FOUNDER OS COMMANDMENTS (10 required)
+
+Each commandment is 100-200 words. Write as a FULL PARAGRAPH in second person, highly specific to this individual.
+
+### CURRENT_STATE
+Where they are right now — current challenges, projects, mental state, what's top of mind. This should reflect their actual situation based on their answers.
+
+### STRATEGIC_THOUGHT_PARTNER
+How to be useful in strategic conversations. What kind of questions help them think? What frameworks do they use? When do they need a sounding board vs. a decision?
+
+### DECISION_MAKING
+Their decision-making process in detail. When do they decide? What information do they need? What's their risk tolerance? Do they process verbally or internally? Reference specific examples from their answers.
+
+### ENERGY_PATTERNS
+When they have energy, when they don't, what drains them, what recharges them. Be specific about time of day, types of work, environmental factors.
+
+### AVOIDANCE_PATTERNS
+What they avoid and why. Procrastination patterns, types of work they defer, conversations they dodge. This should be insightful and compassionate, not judgmental.
+
+### RECOVERY_PROTOCOLS
+How they recover from stress, failure, or overwhelm. What actually works for them? Reference specific practices they mentioned.
+
+### ACCOUNTABILITY_FRAMEWORK
+How they stay accountable. Do they need external accountability or are they self-driven? What works? What doesn't?
+
+### EMOTIONAL_SUPPORT
+What emotional support looks like for them. How do they process difficult emotions? What helps? What makes it worse? Reference specific people or practices they mentioned.
+
+### WORK_STYLE
+How they work in detail. Optimal conditions, preferences, rituals, collaboration style. Use their actual examples.
+
+### CONVERSATION_PROTOCOLS
+How to have productive conversations with them. What works? What doesn't? When to push back? When to give space? How do they signal distress or disagreement?
+
+## VOICE OS COMMANDMENTS (10 required)
+
+Each commandment is 100-200 words. Write as a FULL PARAGRAPH, highly specific to their actual writing patterns.
+
+### WRITING_ENGINE
+The core mechanism of how they write. Sentence structure, rhythm, formality, perspective (first person vs. third person), tense preferences.
+
+### SIGNATURE_MOVES
+3-5 distinctive patterns that show up repeatedly in their writing. Parenthetical asides, em dashes, rhetorical questions, specific metaphors, etc.
+
+### OPENINGS
+How they start pieces of writing. Do they start with a story? A question? A bold claim? What's their hook pattern?
+
+### MIDDLES
+How they develop ideas in the middle of a piece. Structure, transitions, how they build arguments or narratives.
+
+### ENDINGS
+How they close. Do they circle back? End with a question? Call to action? Mic drop?
+
+### THEMES
+Recurring topics, obsessions, frameworks they return to. What do they write about when they write about anything?
+
+### GUARDRAILS
+What they DON'T do. Topics they avoid, tones they never use, lines they won't cross. This is as important as what they do.
+
+### STORIES
+Types of stories they tell, how they use narrative, personal vs. third-party examples, level of vulnerability.
+
+### ANECDOTES
+How they use brief examples and proof points. Do they name names? Use industry examples? Personal moments?
+
+### BLEND_HYPOTHESES
+How their writing might blend with AI assistance. Where AI can help, where it would sound wrong, how to maintain their voice while scaling their output.
+
+## SUMMARY
+
+1-2 paragraphs that synthesize the entire profile. This should answer: "Who is this person and how do I work with them effectively?"
+
+# QUALITY GUIDELINES
+
+1. **GROUND IN ACTUAL LANGUAGE**: Quote their words. Use their examples. Reference the specific stories they told.
+
+2. **SECOND PERSON THROUGHOUT**: Write as if you're talking directly to them. "You are..." not "They are..."
+
+3. **SPECIFIC OVER GENERIC**: Never use corporate speak or generic personality descriptors. Everything should be specific to THIS person.
+
+4. **HONEST AND COMPASSIONATE**: Address challenges and weaknesses with honesty but also compassion. The goal is insight, not judgment.
+
+5. **ACTIONABLE**: Every commandment should be specific enough that someone working with this person could actually use it.
+
+6. **COMPREHENSIVE**: This is their complete operating manual. If it's not in this document, it doesn't exist.
+
+7. **VALID JSON**: Your entire output must be parseable JSON. No trailing commas, no comments, proper escaping.
+
+8. **NO FABRICATION**: If you don't have data for something, say so or make it general. Never invent specific details that aren't grounded in the source material.
+
+9. **COMMANDMENT LENGTH**: Each of the 20 commandments must be 100-200 words. This is not optional. Write full paragraphs.
+
+10. **SOURCE PRIORITY**: When sources conflict, FOS Interview wins. Always. When filling gaps, Question E > Voice Cal > Sculptor > Corpus.
+
+# FINAL CHECKLIST
+
+Before returning your output, verify:
+
+- [ ] `name` matches display_name exactly
+- [ ] Summary is 400-600 words
+- [ ] 5-7 strengths, each with title and 3-5 sentence description
+- [ ] 4-6 challenges with coping strategies
+- [ ] 6-8 keyInsights, each 2-3 sentences
+- [ ] 4-6 personality patterns
+- [ ] Character profile uses exact enum values
+- [ ] All 6 attributes are integers 1-10
+- [ ] All 10 Founder OS commandments present and 100-200 words each
+- [ ] All 10 Voice OS commandments present and 100-200 words each
+- [ ] Everything written in second person
+- [ ] Everything grounded in their actual words and examples
+- [ ] Valid JSON that can be parsed
+
+Return ONLY the JSON output. No preamble, no explanation, no markdown formatting. Just the JSON.

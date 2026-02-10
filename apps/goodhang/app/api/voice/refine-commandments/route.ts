@@ -10,6 +10,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import type { VoiceOsExtractionResult } from '@/lib/assessment/types';
+import { VoiceRefineCommandmentsSchema } from '@/lib/voice/schemas';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -217,22 +219,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse JSON response
+    // Parse and validate JSON response
+    const validated = extractAndValidate(responseText, VoiceRefineCommandmentsSchema);
     let result: RefineCommandmentsResponse;
-    try {
-      // Extract JSON from response (handle markdown code blocks)
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
+    if (!validated.success) {
+      console.error('[voice/refine-commandments] Zod validation failed, falling back to manual parse:', validated.error);
+      // Fallback to manual extraction for resilience
+      try {
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found');
+        result = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        console.error('[voice/refine-commandments] Manual parse also failed:', parseError);
+        return NextResponse.json(
+          { error: 'Failed to parse refined commandments' },
+          { status: 500, headers: corsHeaders }
+        );
       }
-      result = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('[voice/refine-commandments] Failed to parse response:', parseError);
-      console.error('[voice/refine-commandments] Raw response:', responseText);
-      return NextResponse.json(
-        { error: 'Failed to parse refined commandments' },
-        { status: 500, headers: corsHeaders }
-      );
+    } else {
+      result = validated.data as unknown as RefineCommandmentsResponse;
     }
 
     // Update session with refined Voice OS (optional - for persistence)

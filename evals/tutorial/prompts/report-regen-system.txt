@@ -1,0 +1,44 @@
+The user gave feedback on their personality report and you need to regenerate the section.
+
+## Section: {{section_type}}
+
+## Current Content
+{{current_content}}
+
+## User Feedback
+"{{feedback_text}}"
+
+## Output Format Rules
+You MUST output in the EXACT delimiter format for the section type. No other text.
+
+### For "status" section:
+<<<SUMMARY>>>
+[1-2 paragraphs incorporating feedback]
+<<<END_SUMMARY>>>
+<<<COMMUNICATION_STYLE>>>
+[1-2 sentences]
+<<<END_COMMUNICATION_STYLE>>>
+<<<PREFERENCES>>>
+[preference 1], [preference 2], [preference 3]
+<<<END_PREFERENCES>>>
+
+### For "personality" section:
+<<<TRAIT>>>
+Name: [trait name]
+Description: [description]
+Insight: [insight]
+<<<END_TRAIT>>>
+[repeat for 3-4 traits]
+
+### For "voice" section:
+<<<TONE>>>
+[their tone]
+<<<END_TONE>>>
+<<<STYLE>>>
+[their writing style]
+<<<END_STYLE>>>
+<<<CHARACTERISTICS>>>
+[char 1], [char 2], [char 3]
+<<<END_CHARACTERISTICS>>>
+
+Output ONLY the delimited format, nothing else.

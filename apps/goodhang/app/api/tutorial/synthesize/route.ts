@@ -9,11 +9,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient, SupabaseClient } from '@supabase/supabase-js';
 import Anthropic from '@anthropic-ai/sdk';
 import {
-  buildSynthesisPrompt,
-  parseSynthesisResponse,
+  buildExecutiveProfilePrompt,
+  buildFounderOsPrompt,
+  buildVoiceOsPrompt,
   type SynthesisInput,
   type SynthesisOutput,
 } from '@/lib/assessment/synthesis-prompt';
+import { getTemperature } from '@/lib/shared/llm-config';
+import {
+  ExecutiveProfileOutputSchema,
+  FounderOsOutputSchema,
+  VoiceOsOutputSchema,
+} from '@/lib/assessment/synthesis-schema';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 import {
   FOS_INTERVIEW_EXTRACTION_SYSTEM,
   getFosInterviewExtractionPrompt,
@@ -91,7 +99,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Gather all sources
-    const sources = await gatherSources(supabase, session_id, entity_slug);
+    const sources = await gatherSources(supabase, session_id, user_id, entity_slug);
 
     // Build synthesis input (only include optional fields when defined)
     const synthesisInput: SynthesisInput = {
@@ -106,31 +114,49 @@ export async function POST(request: NextRequest) {
       ...(sources.gap_analysis && { gap_analysis: sources.gap_analysis }),
       ...(sources.gap_analysis_final && { gap_analysis_final: sources.gap_analysis_final }),
       ...(sources.persona_fingerprint && { persona_fingerprint: sources.persona_fingerprint }),
+      ...(sources.display_name && { display_name: sources.display_name }),
     };
 
-    // Build the full prompt
-    const prompt = buildSynthesisPrompt(synthesisInput);
+    // Build sub-prompts for parallel synthesis
+    const executivePrompt = buildExecutiveProfilePrompt(synthesisInput);
+    const founderOsPrompt = buildFounderOsPrompt(synthesisInput);
+    const voiceOsPrompt = buildVoiceOsPrompt(synthesisInput);
     const effectiveEntitySlug = entity_slug || sources.entity_slug || 'unknown';
 
     console.log(
-      `[synthesize] Prompt built, length: ${prompt.length} chars. Calling Claude...`
+      `[synthesize] Sub-prompts built. Executive: ${executivePrompt.length}, FOS: ${founderOsPrompt.length}, Voice: ${voiceOsPrompt.length} chars. Calling Claude (3 parallel)...`
     );
 
-    // Call Claude for synthesis + FOS extraction + load existing registries IN PARALLEL
+    // Run all 3 synthesis sub-calls + FOS extraction + registry load IN PARALLEL
     const anthropic = new Anthropic();
-
     const shouldExtractRegistries = effectiveEntitySlug !== 'unknown';
 
-    const [response, fosExtractionResponse, existingRegistryFiles] = await Promise.all([
-      // Existing synthesis (Sonnet, ~30-60s)
+    const [executiveResponse, founderOsResponse, voiceOsResponse, fosExtractionResponse, existingRegistryFiles] = await Promise.all([
+      // Sub-call 1: Executive Profile (~4K tokens)
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 6000,
+        temperature: getTemperature('scoring'),
+        messages: [{ role: 'user', content: executivePrompt }],
+      }),
+
+      // Sub-call 2: Founder OS Commandments (~6K tokens)
       anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 8000,
-        temperature: 0.3,
-        messages: [{ role: 'user', content: prompt }],
+        temperature: getTemperature('scoring'),
+        messages: [{ role: 'user', content: founderOsPrompt }],
       }),
 
-      // NEW: FOS registry extraction (Haiku, ~3-8s)
+      // Sub-call 3: Voice OS Commandments (~6K tokens)
+      anthropic.messages.create({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+        temperature: getTemperature('scoring'),
+        messages: [{ role: 'user', content: voiceOsPrompt }],
+      }),
+
+      // FOS registry extraction (Haiku, ~3-8s)
       shouldExtractRegistries
         ? anthropic.messages.create({
             model: 'claude-3-5-haiku-20241022',
@@ -150,7 +176,7 @@ export async function POST(request: NextRequest) {
           })
         : Promise.resolve(null),
 
-      // NEW: Load existing registries from storage
+      // Load existing registries from storage
       shouldExtractRegistries
         ? loadExistingRegistries(supabase, effectiveEntitySlug).catch((err) => {
             console.error('[synthesize] Failed to load existing registries:', err);
@@ -175,7 +201,6 @@ export async function POST(request: NextRequest) {
 
         if (registryItemCount > 0) {
           const registryFiles = generateMergedRegistryMarkdown(merged, effectiveEntitySlug);
-          // Fire-and-forget upload
           uploadRegistries(supabase, effectiveEntitySlug, registryFiles)
             .catch((err) => console.error('[synthesize] Registry upload error:', err));
         }
@@ -184,26 +209,60 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const firstContent = response.content[0];
-    const responseText =
-      firstContent?.type === 'text' ? firstContent.text : '';
+    // Extract text from each sub-call response
+    const extractText = (r: Anthropic.Message) => {
+      const block = r.content[0];
+      return block?.type === 'text' ? block.text : '';
+    };
+
+    const executiveText = extractText(executiveResponse);
+    const founderOsText = extractText(founderOsResponse);
+    const voiceOsText = extractText(voiceOsResponse);
 
     console.log(
-      `[synthesize] Claude response received, length: ${responseText.length} chars`
+      `[synthesize] All 3 sub-calls complete. Executive: ${executiveText.length}, FOS: ${founderOsText.length}, Voice: ${voiceOsText.length} chars`
     );
 
-    // Parse the response
-    let synthesisOutput: SynthesisOutput;
-    try {
-      synthesisOutput = parseSynthesisResponse(responseText);
-    } catch (parseError) {
-      console.error('[synthesize] Failed to parse response:', parseError);
-      console.error('[synthesize] Raw response:', responseText.slice(0, 1000));
+    // Validate and merge the 3 sub-call outputs
+    const executiveResult = extractAndValidate(executiveText, ExecutiveProfileOutputSchema);
+    const founderOsResult = extractAndValidate(founderOsText, FounderOsOutputSchema);
+    const voiceOsResult = extractAndValidate(voiceOsText, VoiceOsOutputSchema);
+
+    if (!executiveResult.success) {
+      console.error('[synthesize] Executive profile validation failed:', executiveResult.error);
       return NextResponse.json(
-        { error: 'Failed to parse synthesis response' },
+        { error: `Executive profile failed: ${executiveResult.error}` },
         { status: 500, headers: corsHeaders }
       );
     }
+
+    if (!founderOsResult.success) {
+      console.error('[synthesize] Founder OS validation failed:', founderOsResult.error);
+      return NextResponse.json(
+        { error: `Founder OS failed: ${founderOsResult.error}` },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    if (!voiceOsResult.success) {
+      console.error('[synthesize] Voice OS validation failed:', voiceOsResult.error);
+      return NextResponse.json(
+        { error: `Voice OS failed: ${voiceOsResult.error}` },
+        { status: 500, headers: corsHeaders }
+      );
+    }
+
+    // Merge into unified SynthesisOutput
+    const synthesisOutput: SynthesisOutput = {
+      executive_report: executiveResult.data.executive_report as SynthesisOutput['executive_report'],
+      character_profile: executiveResult.data.character_profile as SynthesisOutput['character_profile'],
+      attributes: executiveResult.data.attributes as SynthesisOutput['attributes'],
+      signals: (executiveResult.data.signals || {}) as SynthesisOutput['signals'],
+      matching: (executiveResult.data.matching || {}) as SynthesisOutput['matching'],
+      founder_os: founderOsResult.data as SynthesisOutput['founder_os'],
+      voice_os: voiceOsResult.data as SynthesisOutput['voice_os'],
+      summary: executiveResult.data.summary || '',
+    };
 
     // Store results
     await storeResults(supabase, session_id, user_id, synthesisOutput);
@@ -249,6 +308,7 @@ export async function POST(request: NextRequest) {
 
 interface GatheredSources {
   entity_slug?: string;
+  display_name?: string;
   sculptor_transcript?: string;
   corpus_summary?: string;
   gap_analysis?: string;
@@ -271,6 +331,7 @@ interface GatheredSources {
 async function gatherSources(
   supabase: SupabaseClient,
   sessionId: string,
+  userId: string,
   entitySlug?: string
 ): Promise<GatheredSources> {
   const sources: GatheredSources = {};
@@ -279,7 +340,7 @@ async function gatherSources(
     // 1. Try to get sculptor session data
     const { data: sculptorSession } = await supabase
       .from('sculptor_sessions')
-      .select('entity_slug, conversation_history, persona_fingerprint')
+      .select('entity_slug, user_id, conversation_history, persona_fingerprint')
       .eq('id', sessionId)
       .single();
 
@@ -296,6 +357,20 @@ async function gatherSources(
       // Extract persona fingerprint
       if (sculptorSession.persona_fingerprint) {
         sources.persona_fingerprint = sculptorSession.persona_fingerprint;
+      }
+    }
+
+    // 1b. Look up display_name from human_os.users
+    const lookupUserId = sculptorSession?.user_id || userId;
+    if (lookupUserId) {
+      const { data: userRecord } = await supabase
+        .schema('human_os')
+        .from('users')
+        .select('display_name')
+        .eq('id', lookupUserId)
+        .single();
+      if (userRecord?.display_name) {
+        sources.display_name = userRecord.display_name;
       }
     }
 

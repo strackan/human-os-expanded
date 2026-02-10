@@ -1,0 +1,90 @@
+Generate a CORPUS_SUMMARY.md for {{entity_name}} based on this raw data:
+
+{{corpus_raw}}
+
+Use this template structure:
+
+# CORPUS SUMMARY: {{entity_name}}
+
+Synthesized from raw input data.
+
+---
+
+## Identity Snapshot
+
+- **Name:**
+- **Location:**
+- **Current Role:**
+- **Background:**
+- **Self-Description:**
+
+---
+
+## Professional Focus
+
+### Primary Work
+-
+
+### Adjacent Roles
+-
+
+### Core Thesis
+[What they believe about their domain]
+
+---
+
+## Thinking Patterns & Philosophy
+
+### On [Their Domain]
+-
+
+### On Career & Identity
+-
+
+### On Personal Effectiveness
+-
+
+---
+
+## Communication Style
+
+### Voice Characteristics
+-
+
+### Recurring Phrases/Themes
+-
+
+---
+
+## Key Relationships & Network
+
+### Mentioned Collaborators
+-
+
+### Mentor Figures
+-
+
+---
+
+## Personal Details
+
+### Family
+-
+
+### Health/Wellness
+-
+
+### Origin
+-
+
+---
+
+## Notable Quotes
+
+> "Quote 1"
+
+> "Quote 2"
+
+> "Quote 3"
+
+Fill in all sections based on what you find in the raw data. Leave sections empty with "Not in corpus" if no data available.

@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import {
   type TutorialStep,
   type TutorialProgress,
@@ -486,7 +487,7 @@ export async function POST(request: NextRequest) {
         systemPrompt: 'You are helping update an executive personality report based on user feedback. Output ONLY the requested content in the exact format specified.',
         model: CLAUDE_SONNET_CURRENT,
         maxTokens: 1000,
-        temperature: 0.5,
+        temperature: getTemperature('structured-generation'),
       });
 
       // Parse the regenerated section
@@ -508,7 +509,7 @@ export async function POST(request: NextRequest) {
 Be warm and conversational. Don't be sycophantic. Keep it to 3-4 sentences total.`,
         model: CLAUDE_SONNET_CURRENT,
         maxTokens: 200,
-        temperature: 0.7,
+        temperature: getTemperature('conversational'),
       });
 
       return NextResponse.json({
@@ -546,7 +547,7 @@ Be warm and conversational. Don't be sycophantic. Keep it to 3-4 sentences total
       systemPrompt,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 800,
-      temperature: 0.7,
+      temperature: getTemperature('conversational'),
     });
 
     // Parse action from response

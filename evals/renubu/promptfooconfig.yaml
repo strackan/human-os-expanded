@@ -1,0 +1,174 @@
+description: 'Renubu CSM Workflow Evals'
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 2000
+      temperature: 0.5
+
+defaultTest:
+  options:
+    rubricGradingConfig:
+      provider:
+        id: anthropic:messages:claude-haiku-4-5-20251001
+        config:
+          apiKeyEnvar: ANTHROPIC_API_KEY
+
+prompts:
+  - id: prompt1
+    raw: "{{system}}\n\n---\n\n{{user}}"
+
+tests:
+  # --- Greeting Tests ---
+  - description: "Greeting - With customer data"
+    vars:
+      system: "file://prompts/greeting-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Customer Data
+        Customer: Acme Corp
+        ARR: $120,000
+        Health Score: 72/100
+        Renewal Date: 2026-04-15
+        Last QBR: 2025-12-10
+        Key Contact: Jennifer Walsh, VP of Operations
+        Recent Activity: Usage dropped 15% in January
+        INTEL: Acme is evaluating competitors after budget cuts. Jennifer mentioned exploring "simpler tools" in last QBR.
+
+        ---
+
+        Generate a greeting for this renewal workflow.
+    assert:
+      - type: javascript
+        value: |
+          const sentences = output.split(/[.!?]+/).filter(s => s.trim().length > 0);
+          return sentences.length >= 2 && sentences.length <= 10
+      - type: llm-rubric
+        value: "The greeting references specific data: Acme Corp by name, the usage drop, health score, and/or renewal date. It's opinionated about what matters most (likely the usage drop or competitor evaluation). Ends with encouragement."
+
+  - description: "Greeting - Minimal data"
+    vars:
+      system: "file://prompts/greeting-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Customer Data
+        Customer: TechStartup Inc
+        ARR: $24,000
+        Renewal Date: 2026-06-01
+
+        ---
+
+        Generate a greeting for this renewal workflow.
+    assert:
+      - type: llm-rubric
+        value: "The greeting works with limited data. It mentions TechStartup Inc by name and references what data is available (ARR, renewal date). It does NOT fabricate health scores or contacts that weren't provided."
+
+  # --- Pricing Recommendation Tests ---
+  - description: "Pricing Recommendation - Three scenarios"
+    vars:
+      system: "file://prompts/pricing-recommendation-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Customer Context
+        Customer: Acme Corp
+        Current ARR: $120,000
+        Contract End: 2026-04-15
+        Health Score: 72/100
+        Usage Trend: -15% over 3 months
+        Competitive Risk: Evaluating simpler/cheaper alternatives
+        Feature Adoption: Core features at 85%, advanced features at 30%
+        Expansion Opportunity: 2 additional departments showed interest
+
+        ---
+
+        Generate a pricing recommendation for Acme Corp's renewal.
+    assert:
+      - type: contains-any
+        value:
+          - "Conservative"
+          - "conservative"
+          - "CONSERVATIVE"
+      - type: contains-any
+        value:
+          - "Recommended"
+          - "recommended"
+          - "RECOMMENDED"
+      - type: contains-any
+        value:
+          - "Aggressive"
+          - "aggressive"
+          - "AGGRESSIVE"
+      - type: llm-rubric
+        value: "Presents exactly 3 scenarios (Conservative, Recommended, Aggressive). Each scenario has a clear pricing direction and rationale. Discusses trade-offs between revenue and retention. References the competitive risk and usage decline in the recommendation logic."
+
+  # --- Health Dashboard Tests ---
+  - description: "Health Dashboard - Mixed signals"
+    vars:
+      system: "file://prompts/health-dashboard-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Health Metrics
+        Customer: Acme Corp
+        Overall Health: 72/100
+        Usage Score: 65/100 (down from 80)
+        Engagement Score: 85/100
+        Support Score: 90/100
+        NPS: 7
+        Feature Adoption: Core 85%, Advanced 30%
+        Active Users: 45/60 licensed
+        Login Frequency: 3.2x/week (down from 4.1x/week)
+
+        ---
+
+        Analyze the health dashboard for Acme Corp.
+    assert:
+      - type: llm-rubric
+        value: "The analysis explains BOTH positive factors (high engagement, good support score) AND negative factors (usage decline, low advanced adoption). It suggests specific actions (e.g., training on advanced features, investigating usage drop). It prioritizes the usage decline as the most urgent concern. It provides actionable insights, not just a restatement of numbers."
+
+  # --- Draft Email Tests ---
+  - description: "Draft Email - Renewal outreach"
+    vars:
+      system: "file://prompts/draft-email-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Context
+        Customer: Acme Corp
+        Contact: Jennifer Walsh, VP of Operations
+        CSM Name: David Park
+        Situation: Renewal in 60 days, usage has dropped, need to re-engage
+        Tone: Warm but professional, acknowledge the relationship
+
+        ---
+
+        Draft a renewal touchpoint email from David to Jennifer.
+    assert:
+      - type: llm-rubric
+        value: "The email has proper structure: greeting (addresses Jennifer), body (acknowledges the partnership, references specific context), closing (clear next step/CTA). Tone is warm but professional. It does NOT sound like a template. It references specific details (not generic 'valued customer' language)."
+      - type: contains-any
+        value:
+          - "Jennifer"
+          - "jennifer"
+      - type: contains-any
+        value:
+          - "David"
+          - "david"
+
+  - description: "Draft Email - Professional tone check"
+    vars:
+      system: "file://prompts/draft-email-system.txt"
+      base_csm: "file://prompts/base-csm-system.txt"
+      user: |
+        ## Context
+        Customer: Enterprise Global Inc
+        Contact: Michael Chang, CTO
+        CSM Name: Sarah Jimenez
+        Situation: Customer escalated a support issue last week. Issue is now resolved. Need to follow up professionally.
+        Tone: Professional, empathetic, solution-focused
+
+        ---
+
+        Draft a follow-up email from Sarah to Michael about the resolved escalation.
+    assert:
+      - type: llm-rubric
+        value: "The email acknowledges the escalation and its resolution. It's empathetic without being apologetic to excess. It includes a forward-looking element (next steps, prevention measures). Professional tone appropriate for a CTO. Does not overpromise."

@@ -1,0 +1,15 @@
+{{base_csm}}
+
+## Slide Type: GREETING
+Generate a warm workflow kickoff greeting.
+
+Rules:
+- Warm greeting + brief task summary (2-3 sentences max)
+- Reference 2-3 specific metrics or concerns from the customer data
+- Be opinionated — tell the CSM what matters most right now
+- End with an encouraging note to get started
+
+If customer intelligence (INTEL) is available:
+- Personalize with relationship strength, key contacts, recent updates
+- Reference upcoming events or strategic goals
+- Tailor tone to account health status

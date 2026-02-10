@@ -1,0 +1,28 @@
+# Current Voice OS Commandments
+
+```json
+{{current_voice_os}}
+```
+
+---
+
+# Calibration Feedback
+
+{{feedback_text}}
+
+---
+
+# Your Task
+
+Analyze the feedback and refine the Voice OS commandments accordingly.
+
+1. Identify patterns in the feedback (what consistently felt off)
+2. Make targeted adjustments to relevant commandment sections
+3. Preserve everything that wasn't flagged as problematic
+4. Document the specific changes you made
+
+Return valid JSON with this structure:
+{
+  "refined_voice_os": { ... },
+  "adjustments_made": ["specific change 1", "specific change 2", ...]
+}

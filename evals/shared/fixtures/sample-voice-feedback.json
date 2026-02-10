@@ -1,0 +1,45 @@
+{
+  "entity_name": "Maya Chen",
+  "samples": {
+    "thought_leadership": {
+      "id": "thought_leadership",
+      "type": "thought_leadership",
+      "label": "Thought Leadership Post",
+      "content": "Hot take: Most AI coding tools optimize for the wrong metric.\n\nThey measure keystrokes saved. Lines generated. Time to first commit.\n\nBut here's what actually matters -- did the developer make the right architectural decision? Did they catch the edge case that would've become a 3am production fire in 6 months?\n\nAt FlowState, we don't build autocomplete. We build the engineering judgment that takes 10 years to develop.\n\n(Yes, I'm biased. But I've also been the person debugging someone else's AI-generated spaghetti at 2am. So.)",
+      "topic": "Developer productivity metrics"
+    },
+    "personal_story": {
+      "id": "personal_story",
+      "type": "personal_story",
+      "label": "Personal Story Post",
+      "content": "Six months ago I turned down a $12M Series A.\n\nEveryone thought I was insane. My advisor literally said 'You're going to regret this.'\n\nThe terms were generous. The firm was top-tier. The only catch: a board seat and approval rights over key hires.\n\nI thought about it for exactly one climbing session. (That's where I make my best decisions -- 60 feet up, nowhere to hide from the truth.)\n\nThe answer was no.\n\nThree weeks later we closed an $8M SAFE. Less money. Full control.\n\nI haven't regretted it once. Speed is the only thing that matters when you're pre-PMF. Capital is a tool. Control is oxygen.\n\n(And yes, my mom was concerned about the smaller number. But she sent a heart emoji when I explained. We're good.)",
+      "topic": "Turning down funding for control"
+    },
+    "connection_request": {
+      "id": "connection_request",
+      "type": "connection_request",
+      "label": "Connection Request",
+      "content": "Hi -- saw your post on developer experience metrics. We're solving a similar problem at FlowState (measuring decision quality instead of output velocity). Would love to compare notes if you're up for it.",
+      "topic": "Developer experience networking"
+    }
+  },
+  "feedback": {
+    "thought_leadership": {
+      "edited": true,
+      "originalContent": "Hot take: Most AI coding tools optimize for the wrong metric.\n\nThey measure keystrokes saved. Lines generated. Time to first commit.\n\nBut here's what actually matters -- did the developer make the right architectural decision? Did they catch the edge case that would've become a 3am production fire in 6 months?\n\nAt FlowState, we don't build autocomplete. We build the engineering judgment that takes 10 years to develop.\n\n(Yes, I'm biased. But I've also been the person debugging someone else's AI-generated spaghetti at 2am. So.)",
+      "editedContent": "Hot take: Most AI coding tools optimize for the wrong metric.\n\nThey measure keystrokes saved. Lines generated. Time to first commit.\n\nNobody measures: did the developer avoid the rabbit hole? Did they catch the thing that becomes a 3am page in 6 months?\n\nWe're building FlowState for the second question.\n\n(Yes, I'm biased. But I've also been the one debugging AI-generated spaghetti at 2am. So.)",
+      "whatDidntWork": "Too long. The middle section was over-explaining. I'd never write 'engineering judgment that takes 10 years to develop' -- too formal, sounds like a pitch deck.",
+      "whatWouldHelp": "Keep it punchier. I write in short bursts, not paragraphs. And I say 'rabbit hole' not 'architectural decision' in casual posts."
+    },
+    "personal_story": {
+      "edited": false,
+      "whatDidntWork": "Pretty close. The climbing metaphor felt natural. Only thing -- I wouldn't write 'Capital is a tool. Control is oxygen.' That's too polished, too quotable. Real me would just say 'Money is replaceable. Speed isn't.'",
+      "whatWouldHelp": "Avoid aphorisms that sound like they belong on a motivational poster. My actual wisdom comes out messier."
+    },
+    "connection_request": {
+      "edited": false,
+      "whatDidntWork": null,
+      "whatWouldHelp": null
+    }
+  }
+}

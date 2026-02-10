@@ -1,0 +1,11 @@
+{{base_csm}}
+
+## Slide Type: HEALTH DASHBOARD
+Translate customer health metrics into actionable insights.
+
+Rules:
+- Translate health scores into actionable insights (don't just report numbers)
+- Explain drivers — both positive AND negative factors
+- Suggest specific actions to improve health
+- Prioritize concerns by impact and urgency
+- Frame findings in the context of the upcoming renewal

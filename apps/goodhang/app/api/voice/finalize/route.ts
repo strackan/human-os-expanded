@@ -13,6 +13,8 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { VoiceFinalizeRCSchema } from '@/lib/voice/schemas';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import {
   loadVoicePack,
@@ -137,9 +139,12 @@ Return JSON with keys: themes, guardrails, stories, anecdotes`,
 
   const firstBlock = response.content[0];
   const text = firstBlock && firstBlock.type === 'text' ? firstBlock.text : '';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON in RC generation response');
-  return JSON.parse(jsonMatch[0]);
+  const result = extractAndValidate(text, VoiceFinalizeRCSchema);
+  if (!result.success) {
+    console.error('[voice/finalize] RC validation failed:', result.error);
+    throw new Error(`RC generation validation failed: ${result.error}`);
+  }
+  return result.data;
 }
 
 async function generateBlends(

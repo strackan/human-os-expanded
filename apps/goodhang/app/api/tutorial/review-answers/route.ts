@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { AnthropicService } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import { type PersonaFingerprint, buildPersonaAdaptation } from '@/lib/renubu/prompts';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -224,7 +225,7 @@ export async function POST(request: NextRequest) {
       systemPrompt: reviewPrompt,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 300,
-      temperature: 0.5,
+      temperature: getTemperature('structured-generation'),
     });
 
     // Parse response

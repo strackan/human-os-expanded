@@ -13,6 +13,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import { loadVoicePack, type VoicePack } from '@/lib/voice-pack';
+import { VoiceGenerateSamplesSchema } from '@/lib/voice/schemas';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
@@ -486,24 +488,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse JSON response
-    let result: GenerateSamplesResponse;
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-      result = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('[voice/generate-samples] Failed to parse response:', parseError);
-      console.error('[voice/generate-samples] Raw response:', responseText);
+    // Parse and validate JSON response
+    const validated = extractAndValidate(responseText, VoiceGenerateSamplesSchema);
+    if (!validated.success) {
+      console.error('[voice/generate-samples] Validation failed:', validated.error);
+      console.error('[voice/generate-samples] Raw excerpt:', validated.raw);
       return NextResponse.json(
         { error: 'Failed to parse generated samples' },
         { status: 500, headers: corsHeaders }
       );
     }
 
-    return NextResponse.json(result, { headers: corsHeaders });
+    return NextResponse.json(validated.data as GenerateSamplesResponse, { headers: corsHeaders });
 
   } catch (error) {
     console.error('[voice/generate-samples] Error:', error);

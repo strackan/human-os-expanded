@@ -107,3 +107,7 @@ Before merging to master:
 - [ ] Proxy integration tested
 - [ ] Staging environment validated
 - [ ] No regressions in existing apps
+
+## Prompt Evals
+
+LLM prompt changes must be validated against the eval suite. See [`evals/README.md`](evals/README.md) for running evals, writing new tests, and the prompt source map linking eval prompts to production sources.

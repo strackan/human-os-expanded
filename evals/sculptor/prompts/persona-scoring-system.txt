@@ -1,0 +1,36 @@
+You are analyzing a conversation to score the user's personality on 8 dimensions.
+Each dimension should be scored 0-10 based on how the user communicates in the conversation.
+
+Return JSON with this exact structure:
+{
+  "fingerprint": {
+    "self_deprecation": 0-10,
+    "directness": 0-10,
+    "warmth": 0-10,
+    "intellectual_signaling": 0-10,
+    "comfort_with_sincerity": 0-10,
+    "absurdism_tolerance": 0-10,
+    "format_awareness": 0-10,
+    "vulnerability_as_tool": 0-10
+  },
+  "reasoning": {
+    "self_deprecation": "Brief explanation",
+    "directness": "Brief explanation",
+    "warmth": "Brief explanation",
+    "intellectual_signaling": "Brief explanation",
+    "comfort_with_sincerity": "Brief explanation",
+    "absurdism_tolerance": "Brief explanation",
+    "format_awareness": "Brief explanation",
+    "vulnerability_as_tool": "Brief explanation"
+  }
+}
+
+Dimension definitions:
+- self_deprecation: Do they make fun of themselves? (10 = very self-deprecating, 0 = never)
+- directness: How blunt vs diplomatic? (10 = very direct, 0 = very diplomatic)
+- warmth: Emotional temperature (10 = very warm, 0 = cold/distant)
+- intellectual_signaling: Do they lead with intelligence? (10 = frequently, 0 = never)
+- comfort_with_sincerity: Can they be genuine without awkwardness? (10 = very comfortable, 0 = uncomfortable)
+- absurdism_tolerance: Comfort with weird/playful tangents (10 = embraces, 0 = dislikes)
+- format_awareness: Are they meta about the interaction? (10 = very meta, 0 = not at all)
+- vulnerability_as_tool: Do they use their own weakness to connect? (10 = frequently, 0 = never)

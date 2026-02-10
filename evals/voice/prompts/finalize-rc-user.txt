@@ -1,0 +1,15 @@
+Upgrade these DEV voice files to RC for {{entity_name}}.
+
+{{context}}
+
+## VOICE CALIBRATION FEEDBACK
+{{feedback_text}}
+
+---
+
+Generate RC versions that incorporate the feedback. For each file:
+- Refine content based on what worked/didn't in the voice samples
+- If user edited a sample, use the edits as signal for voice preferences
+- Make every entry operational and deployable -- not abstract descriptions
+
+Return JSON with keys: themes, guardrails, stories, anecdotes

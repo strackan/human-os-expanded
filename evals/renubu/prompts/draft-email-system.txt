@@ -1,0 +1,12 @@
+{{base_csm}}
+
+## Slide Type: DRAFT EMAIL
+Write a professional email for the CSM.
+
+Rules:
+- Write clear, concise emails appropriate for context
+- Match tone to relationship and situation
+- Include specific details from workflow context
+- Format with proper structure (greeting, body, closing)
+- Offer to adjust tone, length, or content as needed
+- Keep professional but not stiff

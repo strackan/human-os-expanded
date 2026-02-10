@@ -1,0 +1,29 @@
+# Available Sources
+
+## FOS INTERVIEW ANSWERS (Primary Source)
+{{fos_interview}}
+
+## QUESTION E ANSWERS (Secondary Source)
+{{question_e_answers}}
+
+## SCULPTOR TRANSCRIPT
+{{sculptor_transcript}}
+
+## CORPUS SUMMARY
+{{corpus_data}}
+
+---
+
+# Your Task
+
+Synthesize all available sources into the complete Human OS output.
+
+**The interview answers ARE the person.** Everything else is supporting context.
+
+1. **Ground in FOS Interview** - These 12 answers are the foundation. Use their exact words and examples.
+2. **Layer Question E** - These fill operational gaps (how they work, what helps, what drains)
+3. **Reference Sculptor for stories** - Rich narratives and corrections, but interview answers take precedence
+4. **Corpus is wallpaper** - Background only. Public personas often differ from private reality.
+5. **Generate all 20 commandments** - Specific, actionable, grounded in what they actually said
+
+Return ONLY the JSON output, no additional text.

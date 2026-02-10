@@ -15,6 +15,7 @@ import {
   type StreamingConversationResult,
 } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import {
   createErrorResponse,
   getSSEHeaders,
@@ -352,7 +353,7 @@ export async function POST(request: NextRequest) {
       systemPrompt,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 2000,
-      temperature: 0.7,
+      temperature: getTemperature('conversational'),
     });
 
     // Metadata for the complete event

@@ -1,0 +1,10 @@
+# env files with secrets
+.env
+
+# promptfoo outputs
+results.json
+output/
+*.html
+
+# promptfoo cache
+.promptfoo/

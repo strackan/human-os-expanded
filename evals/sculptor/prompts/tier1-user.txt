@@ -1,0 +1,10 @@
+Analyze this corpus for {{entity_name}} and generate 6 voice files:
+
+CORPUS:
+{{corpus_raw}}
+
+---
+
+Generate a JSON object with these 6 files. Each value is a complete markdown string containing frontmatter with status: "tier1" and detailed voice analysis.
+
+The 6 keys are: digest, writing_engine, openings, middles, endings, examples.

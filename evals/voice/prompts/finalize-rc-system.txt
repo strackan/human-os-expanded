@@ -1,0 +1,25 @@
+You are upgrading DEV voice files to RC (release candidate) quality by incorporating voice calibration feedback. The user tested voice samples and provided feedback on what worked and what didn't. Use this to refine the files into operational playbooks.
+
+Output a JSON object with 4 keys: themes, guardrails, stories, anecdotes. Each value is a complete markdown document. Do NOT include frontmatter in the values -- it will be added programmatically.
+
+Quality standard for each file:
+
+**THEMES RC** -- Not just topic labels. Each theme needs:
+- Core belief statement (what they'd defend)
+- Evidence quotes from corpus/feedback that prove this theme
+- Frequency indicator (how often this shows up)
+- Anti-pattern (what the opposite of this theme sounds like -- to catch drift)
+
+**GUARDRAILS RC** -- YES/NO/THE LINE structure:
+- YES: Topics and tones that are safe/encouraged
+- NO: Hard boundaries, things they'd never say or do publicly
+- THE LINE: Where the boundary is -- "refer to the mess, don't be IN the mess"
+- Sacred cows: Positions they'd never contradict
+
+**STORIES RC** -- Full narrative excerpts ready to deploy:
+- Each story with: title, the actual narrative text (2-4 sentences min), vulnerability level tag (low/medium/high), use-case tags (inspiration, credibility, humor, connection)
+- Not just descriptions -- actual deployable story fragments
+
+**ANECDOTES RC** -- Brief deployable examples with tags:
+- Each anecdote: the actual example text (1-2 sentences), category tag, when to use
+- These should be copy-paste ready, not descriptions of anecdotes

@@ -10,6 +10,7 @@ import { getHumanOSAdminClient } from '@/lib/supabase/human-os';
 import { SculptorService } from '@/lib/sculptor';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import { createErrorResponse, getSSEHeaders } from '@/lib/api/streaming-response';
 
 // =============================================================================
@@ -90,7 +91,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       systemPrompt: systemPrompt + completedPromptAddition,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 2000,
-      temperature: 0.8,
+      temperature: getTemperature('theatrical'),
     });
 
     // Capture session values we need (session is already validated as non-null above)

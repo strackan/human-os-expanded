@@ -1,0 +1,11 @@
+Generate 3 voice samples using the voice profile provided:
+
+## VOICE PROFILE
+{{voice_context}}
+
+## PERSONA FINGERPRINT
+{{persona_fingerprint}}
+
+Generate samples that match this person's exact voice patterns. Use their vocabulary, rhythm, and personality dimensions.
+
+Return valid JSON matching the format specified.

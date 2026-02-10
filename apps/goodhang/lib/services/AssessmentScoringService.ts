@@ -2,6 +2,7 @@
 // Good Hang V2 - Personality assessment with 6 attributes
 
 import Anthropic from '@anthropic-ai/sdk';
+import { getTemperature } from '@/lib/shared/llm-config';
 import {
   PersonalityAssessmentResults,
   Attributes,
@@ -189,7 +190,7 @@ export class AssessmentScoringService {
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 8192,
-      temperature: 0.3,
+      temperature: getTemperature('scoring'),
       messages: [
         {
           role: 'user',
@@ -336,7 +337,7 @@ IMPORTANT: Never use em-dashes (—). Instead, use " -- " (space, dash, dash, sp
       const message = await anthropic.messages.create({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1024,
-        temperature: 0.7,
+        temperature: getTemperature('creative'),
         messages: [{ role: 'user', content: prompt }],
       });
 

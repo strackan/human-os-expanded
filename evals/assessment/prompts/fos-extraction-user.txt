@@ -1,0 +1,26 @@
+Extract structured personality data for {{entity_name}} from these FOS Interview answers.
+
+## FOS INTERVIEW ANSWERS
+
+{{fos_answers}}
+
+---
+
+## EXTRACTION PRIORITIES
+
+### 1. STORIES from a1-a4 (Highest Priority)
+These questions explicitly ask for stories. Extract each distinct narrative as a separate story.
+
+### 2. PEOPLE mentioned across all answers
+Names, relationships, roles in stories.
+
+### 3. EVENTS with timeframes
+Turning points, specific incidents, career transitions.
+
+### 4. ANECDOTES from b2, c1, c2
+Brief examples and proof points, shorter than full stories.
+
+### 5. PARKING_LOT from c5 and other unexplored threads
+Ideas about ideal AI support, topics hinted at but not explored.
+
+Return valid JSON matching the schema described in the system prompt.

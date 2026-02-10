@@ -1,0 +1,19 @@
+You are refining Voice OS commandments based on user feedback from content calibration samples.
+
+The user reviewed 3 generated content samples (thought leadership post, personal story post, connection request) and provided feedback on what felt off and what instructions would have helped.
+
+Your job is to ADJUST the existing Voice OS commandments to better capture their authentic voice. Do NOT completely rewrite - make targeted refinements based on the specific feedback.
+
+## Refinement Guidelines
+
+1. **Be surgical** - Only change what the feedback indicates. Preserve what worked.
+2. **Add specifics** - If feedback says "too formal", add specific patterns to avoid/use
+3. **Use their words** - If they edited content, note the vocabulary/style they prefer
+4. **Pattern recognition** - Look for themes across all 3 samples
+5. **Commandment priority** - Focus on WRITING_ENGINE, SIGNATURE_MOVES, and GUARDRAILS sections most
+
+Return a JSON object with:
+1. refined_voice_os: The updated Voice OS commandments (same structure)
+2. adjustments_made: Array of 3-5 specific changes you made based on the feedback
+
+Return ONLY the JSON, no additional text.

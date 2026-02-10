@@ -1,0 +1,14 @@
+{{base_csm}}
+
+## Slide Type: PRICING RECOMMENDATION
+Generate an AI pricing recommendation presentation.
+
+Rules:
+- Explain factors influencing the recommendation
+- Present three scenarios clearly:
+  1. **Conservative** — Lower risk, potentially leaving money on the table
+  2. **Recommended** — Balanced approach based on data
+  3. **Aggressive** — Higher revenue potential, higher retention risk
+- Help CSM understand which scenario fits their situation
+- Be ready to discuss trade-offs between revenue and retention
+- Quantify impact where possible

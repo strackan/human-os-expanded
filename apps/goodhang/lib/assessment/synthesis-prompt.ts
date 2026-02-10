@@ -14,6 +14,8 @@ import type {
   AssessmentSignals,
   MatchingProfile,
 } from './types';
+import { SynthesisOutputSchema } from './synthesis-schema';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 
 // =============================================================================
 // TYPES
@@ -38,6 +40,9 @@ export interface SynthesisInput {
       whatWouldHelp?: string;
     }
   >;
+
+  // User identity
+  display_name?: string; // User's actual name from human_os.users
 
   // Pre-existing data from Sculptor pipeline
   sculptor_transcript?: string; // Full conversation from Sculptor session
@@ -101,24 +106,24 @@ This is the foundational document that introduces who this person is. It should 
 \`\`\`typescript
 {
   // Basic identity
-  name: string; // Their name (from entity_slug or inferred from content)
+  name: string; // Their name — MUST match display_name if provided in USER IDENTITY section above
   tagline: string; // 1-liner that captures their essence, e.g., "Resilient builder who turns setbacks into fuel"
 
-  // Overall personality (2-3 paragraphs)
+  // Overall personality (3-4 paragraphs, 400-600 words. Quote their actual words.)
   summary: string; // Comprehensive personality overview - who they are, what drives them, how they show up
 
   // Strengths (what they're great at)
   strengths: Array<{
     strength: string; // e.g., "Resilience under pressure"
-    description: string; // How this shows up, with examples from their answers
-  }>; // 4-6 core strengths
+    description: string; // 3-5 sentences: how this shows up, with SPECIFIC examples from their answers. Quote them.
+  }>; // 5-7 core strengths
 
   // Challenges (areas that can be difficult)
   challenges: Array<{
     challenge: string; // e.g., "Decision paralysis when overwhelmed"
-    description: string; // How this manifests, what triggers it
-    coping: string; // How they overcome or manage this challenge
-  }>; // 3-5 key challenges with coping strategies
+    description: string; // 3-5 sentences: how this manifests, what triggers it. Use their specific triggers and strategies.
+    coping: string; // 2-3 sentences: how they overcome or manage this challenge
+  }>; // 4-6 key challenges with coping strategies
 
   // Work style
   workStyle: {
@@ -133,13 +138,20 @@ This is the foundational document that introduces who this person is. It should 
   };
 
   // Key insights (the most important things to know)
-  keyInsights: string[]; // 4-6 crucial insights about this person
+  keyInsights: string[]; // 6-8 crucial insights, each 2-3 sentences. Not one-liners.
+
+  // Deep personality patterns (NOT the same as strengths — these are the underlying wiring)
+  personality: Array<{
+    trait: string; // A distinctive label, e.g., "Paradox Navigator", not generic like "empathetic"
+    description: string; // 3-4 sentences: how this pattern manifests, with specific examples from their answers
+    insight: string; // 2-3 sentences: the deeper "why" — what this reveals about their psychological wiring
+  }>; // 4-6 deep patterns. Think psychologist's case notes. These explain WHY the strengths and challenges exist.
 
   // Voice profile (how they communicate)
   voice: {
     tone: string; // Overall tone
     style: string; // Writing/speaking style
-    characteristics: string[]; // 3-5 distinctive characteristics
+    characteristics: string[]; // 5-7 distinctive characteristics
   };
 }
 \`\`\`
@@ -234,6 +246,13 @@ Return a single JSON object with all sections. Use the exact structure below:
       "preferences": ["preference 1", "preference 2"]
     },
     "keyInsights": ["insight 1", "insight 2", "insight 3"],
+    "personality": [
+      {
+        "trait": "Paradox Navigator",
+        "description": "You hold contradictions comfortably — fiercely independent yet deeply loyal. In your answers you described...",
+        "insight": "This reflects core wiring where binary choices feel false. You process complexity by holding both poles simultaneously."
+      }
+    ],
     "voice": {
       "tone": "...",
       "style": "...",
@@ -250,7 +269,7 @@ Return a single JSON object with all sections. Use the exact structure below:
     "INT": 7, "WIS": 8, "CHA": 6, "CON": 5, "STR": 7, "DEX": 6
   },
   "signals": {
-    "enneagram_hint": "...",
+    "enneagram_hint": "Type X (inferred) — 1-sentence reasoning from specific answers",
     "interest_vectors": ["..."],
     "social_energy": "...",
     "relationship_style": "..."
@@ -306,7 +325,9 @@ Return a single JSON object with all sections. Use the exact structure below:
 6. **Voice feedback is gold** - Their edits and "what didn't work" comments are direct calibration signals
 7. **COMMANDMENTS MUST BE SUBSTANTIAL** - Each commandment should be 100-200 words, a full paragraph with specific guidance. Not bullet points or brief phrases - write complete, actionable paragraphs that an AI could follow.
 8. **Quote their language** - Use their actual words and phrases when possible. If they said "I need people to just listen, not fix", quote that.
-9. **Write in second person** - Address the person directly: "You prefer...", "When you're overwhelmed...", "Your communication style is..."`;
+9. **Write in second person** - Address the person directly: "You prefer...", "When you're overwhelmed...", "Your communication style is..."
+10. **Enneagram is a GUESS** — Unless the user explicitly stated their enneagram type, prefix with "(inferred)" and include 1-sentence reasoning. If signals conflict, list top 2 candidates.
+11. **EXECUTIVE REPORT MUST BE SUBSTANTIAL** — Each strength/challenge description should be 3-5 sentences with specific examples from their answers. Key insights should be 2-3 sentences each. The summary should be 400-600 words. The user invested significant time — the output must reflect that depth.`;
 
 /**
  * Build the full synthesis prompt with all sources
@@ -375,8 +396,13 @@ ${input.gap_analysis_final}
 ---`);
   }
 
-  return `${SYNTHESIS_SYSTEM_PROMPT}
+  let identitySection = '';
+  if (input.display_name) {
+    identitySection = `\n## USER IDENTITY\n\nThe user's name is **${input.display_name}**. Use this exact name in executive_report.name. Do NOT infer or guess a different name.\n`;
+  }
 
+  return `${SYNTHESIS_SYSTEM_PROMPT}
+${identitySection}
 ---
 
 # Available Sources
@@ -535,120 +561,177 @@ Use these scores to calibrate Voice OS tone and style.`;
 // =============================================================================
 
 /**
- * Parse the synthesis response from Claude
+ * Parse and validate the synthesis response from Claude using Zod schema.
  */
-/**
- * Attempt to repair common JSON issues from LLM output
- */
-function repairJson(jsonStr: string): string {
-  let repaired = jsonStr;
-
-  // Fix literal \n and \t sequences outside of string values (common LLM issue)
-  // The LLM sometimes outputs {\n  "key" instead of actual newlines
-  // We need to be careful to only convert these outside of string values
-  repaired = convertEscapesOutsideStrings(repaired);
-
-  // Remove trailing commas before ] or }
-  repaired = repaired.replace(/,(\s*[\]\}])/g, '$1');
-
-  return repaired;
-}
-
-// Convert literal \n and \t to actual whitespace, but only outside of string values
-function convertEscapesOutsideStrings(jsonStr: string): string {
-  const result: string[] = [];
-  let inString = false;
-  let i = 0;
-
-  while (i < jsonStr.length) {
-    const char = jsonStr[i]!;
-
-    if (char === '"' && (i === 0 || jsonStr[i - 1] !== '\\')) {
-      // Toggle string state on unescaped quotes
-      inString = !inString;
-      result.push(char);
-      i++;
-    } else if (!inString && char === '\\' && i + 1 < jsonStr.length) {
-      // Outside strings: convert \n and \t to actual whitespace
-      const nextChar = jsonStr[i + 1]!;
-      if (nextChar === 'n') {
-        result.push('\n');
-        i += 2;
-      } else if (nextChar === 't') {
-        result.push('\t');
-        i += 2;
-      } else {
-        result.push(char);
-        i++;
-      }
-    } else {
-      result.push(char);
-      i++;
-    }
-  }
-
-  return result.join('');
-}
-
 export function parseSynthesisResponse(response: string): SynthesisOutput {
-  try {
-    // Extract JSON from response (may have markdown code blocks)
-    const jsonMatch =
-      response.match(/```json\s*([\s\S]*?)\s*```/) ||
-      response.match(/```\s*([\s\S]*?)\s*```/) ||
-      response.match(/\{[\s\S]*\}/);
+  const result = extractAndValidate(response, SynthesisOutputSchema);
 
-    if (!jsonMatch) {
-      throw new Error('No JSON found in response');
+  if (!result.success) {
+    console.error('[parseSynthesisResponse] Validation failed:', result.error);
+    console.error('[parseSynthesisResponse] Raw excerpt:', result.raw);
+    if (result.zodError) {
+      console.error('[parseSynthesisResponse] Zod issues:', result.zodError.issues);
     }
-
-    let jsonStr = jsonMatch[1] || jsonMatch[0];
-
-    // First attempt: parse as-is
-    try {
-      const parsed = JSON.parse(jsonStr);
-      return validateAndReturn(parsed);
-    } catch (_firstError) {
-      console.log('[parseSynthesisResponse] First parse failed, attempting repair...');
-
-      // Second attempt: repair common issues
-      jsonStr = repairJson(jsonStr);
-      try {
-        const parsed = JSON.parse(jsonStr);
-        console.log('[parseSynthesisResponse] Repair successful');
-        return validateAndReturn(parsed);
-      } catch (secondError) {
-        // Log the problematic area
-        const errorMatch = (secondError as Error).message.match(/position (\d+)/);
-        if (errorMatch && errorMatch[1]) {
-          const pos = parseInt(errorMatch[1]);
-          console.error('[parseSynthesisResponse] Error near:', jsonStr.substring(Math.max(0, pos - 100), pos + 100));
-        }
-        throw secondError;
-      }
-    }
-  } catch (error) {
-    console.error('Failed to parse synthesis response:', error);
-    throw new Error('Invalid synthesis response format');
+    throw new Error(`Invalid synthesis response: ${result.error}`);
   }
+
+  return result.data as unknown as SynthesisOutput;
 }
 
-function validateAndReturn(parsed: unknown): SynthesisOutput {
-  const obj = parsed as Record<string, unknown>;
+// =============================================================================
+// SPLIT SYNTHESIS: THREE FOCUSED SUB-CALLS
+// =============================================================================
 
-  // Validate required fields
-  if (!obj.executive_report) {
-    throw new Error('Missing executive_report in response');
-  }
-  if (!obj.character_profile) {
-    throw new Error('Missing character_profile in response');
-  }
-  if (!obj.founder_os) {
-    throw new Error('Missing founder_os in response');
-  }
-  if (!obj.voice_os) {
-    throw new Error('Missing voice_os in response');
+/**
+ * Helper: build the shared source sections for sub-prompts.
+ */
+function buildSourceSections(input: SynthesisInput): string {
+  const sections: string[] = [];
+
+  sections.push(formatFosInterviewAnswers(input.fos_interview_answers));
+
+  if (input.question_e_answers && Object.keys(input.question_e_answers).length > 0) {
+    sections.push(formatQuestionEAnswers(input.question_e_answers));
   }
 
-  return obj as unknown as SynthesisOutput;
+  if (input.voice_calibration_feedback && Object.keys(input.voice_calibration_feedback).length > 0) {
+    sections.push(formatVoiceCalibrationFeedback(input.voice_calibration_feedback));
+  }
+
+  if (input.sculptor_transcript) {
+    sections.push(`## Sculptor Session Transcript\n\n${input.sculptor_transcript}`);
+  }
+
+  if (input.corpus_summary) {
+    sections.push(`## Corpus Summary\n\n${input.corpus_summary}`);
+  }
+
+  if (input.persona_fingerprint) {
+    sections.push(formatPersonaFingerprint(input.persona_fingerprint));
+  }
+
+  if (input.gap_analysis_final) {
+    sections.push(`## Gap Analysis Notes\n\n${input.gap_analysis_final}`);
+  }
+
+  let identitySection = '';
+  if (input.display_name) {
+    identitySection = `\n## USER IDENTITY\n\nThe user's name is **${input.display_name}**. Use this exact name in the output.\n`;
+  }
+
+  return `${identitySection}\n# Available Sources\n\n${sections.join('\n\n')}`;
+}
+
+// --- Sub-call 1: Executive Profile ---
+
+export const EXECUTIVE_PROFILE_SYSTEM = `You are generating an executive personality profile from multiple sources.
+
+Your task is to generate:
+1. **Executive Report** — briefing document: summary, strengths, challenges, work style, communication, key insights, personality patterns, voice profile
+2. **Character Profile** — D&D-style: alignment, race, class
+3. **Attributes** — 6 scores (INT, WIS, CHA, CON, STR, DEX) on 1-10 scale
+4. **Signals** — enneagram hint, interest vectors, social energy, relationship style
+5. **Matching** — group size, connection style, energy pattern, good/avoid matches
+6. **Summary** — 300-500 word personality summary
+
+## Source Priority (Most → Least Weight)
+1. FOS Interview Answers (a1-c5) — highest signal
+2. Question E Answers (E01-E12) — personality baseline
+3. Voice Calibration Feedback — voice preferences
+4. Sculptor Transcript — stories, corrections
+5. Corpus Summary — background context
+6. Gap Analysis — knowledge gaps
+
+## Important Notes
+- NEW DATA OVERRIDES OLD — interview answers are the TRUTH
+- Be specific — use concrete examples and quotes from their answers
+- Corpus is background — public persona may differ from private reality
+- Write in second person
+- Enneagram is a GUESS — prefix with "(inferred)" unless explicitly stated
+- EXECUTIVE REPORT MUST BE SUBSTANTIAL — strengths/challenges: 3-5 sentences each, key insights: 2-3 sentences, summary: 400-600 words
+- Name MUST match display_name if provided
+
+## Output Format
+Return JSON with: executive_report, character_profile, attributes, signals, matching, summary
+Use the exact field structure from the main synthesis prompt spec.
+Return ONLY the JSON, no additional text.`;
+
+export function buildExecutiveProfilePrompt(input: SynthesisInput): string {
+  return `${EXECUTIVE_PROFILE_SYSTEM}\n\n---\n\n${buildSourceSections(input)}\n\n---\n\nGenerate the executive profile, character profile, attributes, signals, matching, and summary. Return ONLY JSON.`;
+}
+
+// --- Sub-call 2: Founder OS Commandments ---
+
+export const FOUNDER_OS_SYSTEM = `You are generating 10 Founder OS commandments — operational guidance for an AI Chief of Staff to support this founder effectively.
+
+Each commandment should be **100-200 words** — a full paragraph with specific, actionable guidance. Include concrete examples from their answers. Write in second person.
+
+## The 10 Commandments
+1. **CURRENT_STATE** — Core identity, priorities, energy state
+2. **STRATEGIC_THOUGHT_PARTNER** — Decision frameworks, pivot moments, blind spots
+3. **DECISION_MAKING** — Decision style under pressure, paralysis triggers
+4. **ENERGY_PATTERNS** — What energizes/drains, focus conditions, depletion warnings
+5. **AVOIDANCE_PATTERNS** — What "stuck" looks like, procrastination triggers
+6. **RECOVERY_PROTOCOLS** — Reset methods, recovery timeline, support vs space
+7. **ACCOUNTABILITY_FRAMEWORK** — Check-in preferences, pushback methods
+8. **EMOTIONAL_SUPPORT** — Unasked emotional needs, boundaries
+9. **WORK_STYLE** — Priority presentation, autonomy/guidance balance
+10. **CONVERSATION_PROTOCOLS** — Tone, length, energy mode signals, red flags
+
+## Source Priority
+1. FOS Interview Answers — highest signal (questions directly map to commandments)
+2. Question E Answers — operational detail
+3. Sculptor Transcript — stories and corrections
+
+## Important Notes
+- COMMANDMENTS MUST BE SUBSTANTIAL — 100-200 words each, not bullet points
+- Quote their language when possible
+- Interview answers override corpus
+- Write in second person
+
+## Output Format
+Return JSON: { "commandments": { "CURRENT_STATE": "...", ... }, "summary": { "core_identity": "...", "support_philosophy": "...", "key_insight": "..." } }
+Return ONLY the JSON, no additional text.`;
+
+export function buildFounderOsPrompt(input: SynthesisInput): string {
+  return `${FOUNDER_OS_SYSTEM}\n\n---\n\n${buildSourceSections(input)}\n\n---\n\nGenerate all 10 Founder OS commandments. Return ONLY JSON.`;
+}
+
+// --- Sub-call 3: Voice OS Commandments ---
+
+export const VOICE_OS_SYSTEM = `You are generating 10 Voice OS commandments — operational playbook for an AI to generate content in this person's authentic voice.
+
+Each commandment should be **100-200 words** — concrete, operational patterns an AI can follow mechanically. Quote their actual language when possible.
+
+## The 10 Commandments
+1. **WRITING_ENGINE** — Decision tree, ALWAYS rules (5-10), NEVER rules (5-7), vulnerability boundary
+2. **SIGNATURE_MOVES** — 3-5 unique techniques with structure and when-to-use
+3. **OPENINGS** — 4-6 opening patterns with labels, examples, energy matches
+4. **MIDDLES** — 4-7 middle patterns with structural templates, pairing suggestions
+5. **ENDINGS** — 4-6 ending patterns with labels, pairing suggestions
+6. **THEMES** — Core beliefs with evidence, frequency, anti-patterns
+7. **GUARDRAILS** — YES/NO/THE LINE structure, sacred cows, hard NOs
+8. **STORIES** — Key narratives with vulnerability level tags, use-case tags
+9. **ANECDOTES** — Brief deployable examples with category tags
+10. **BLEND_HYPOTHESES** — 3-5 content archetypes with O+M+E combos
+
+## Source Priority
+1. Voice Calibration Feedback — direct voice preferences (their edits are gold)
+2. Corpus Summary — writing samples, language patterns
+3. Sculptor Transcript — language patterns, vocabulary
+4. Persona Fingerprint — tone calibration scores
+5. FOS Interview Answers — stories and language to reference
+
+## Important Notes
+- COMMANDMENTS MUST BE SUBSTANTIAL — 100-200 words each, operational not abstract
+- Voice feedback overrides corpus assumptions
+- Quote their actual language
+- Write as guidance for an AI system
+
+## Output Format
+Return JSON: { "commandments": { "WRITING_ENGINE": "...", ... }, "summary": { "voice_essence": "...", "signature_moves": ["..."], "generation_guidance": "..." } }
+Return ONLY the JSON, no additional text.`;
+
+export function buildVoiceOsPrompt(input: SynthesisInput): string {
+  return `${VOICE_OS_SYSTEM}\n\n---\n\n${buildSourceSections(input)}\n\n---\n\nGenerate all 10 Voice OS commandments. Return ONLY JSON.`;
 }

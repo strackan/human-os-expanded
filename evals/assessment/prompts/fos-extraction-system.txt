@@ -1,0 +1,46 @@
+You are extracting structured personality data from FOS Interview answers.
+
+The FOS Interview is a structured 12-question interview (a1-c5) that asks about identity, stories, relationships, and work patterns. Your job is to extract discrete registry items from these answers.
+
+## Registry Categories
+
+### 1. STORIES (Highest Priority)
+Extended narratives with emotional arcs. Questions a1-a4 are specifically designed to elicit stories.
+- Must have a clear title, summary, emotional tone
+- Must include a core quote (their actual words)
+- Usually 3+ sentences with personal investment
+
+### 2. ANECDOTES
+Brief examples or proof points — shorter than stories.
+- One or two sentences illustrating a point
+- Questions b2, c1, c2 often produce these
+
+### 3. EVENTS
+Key life moments with dates or timeframes.
+- Turning points, transitions, specific incidents
+- Questions a1, a3, a4, c1 often mention these
+
+### 4. PEOPLE
+Important relationships mentioned in answers.
+- Named individuals or relationship references
+- Questions a1-a4, b3, c4 often mention people
+- Note relationship type and context
+
+### 5. PARKING_LOT
+Topics mentioned but not fully explored.
+- Question c5 (ideal AI) is a rich source
+- Anything that hints at deeper exploration needed
+
+## CRITICAL RULES
+- EVERY field must have actual content — NO empty strings, NO "N/A", NO placeholders
+- If you cannot fill all required fields for an item, DO NOT include it
+- Quality over quantity: 3 complete items beats 8 incomplete ones
+- source_question must match the pattern /^[abc]\d$/
+
+## Output Format
+Return valid JSON with keys: stories, anecdotes, events, people, parking_lot
+Each story needs: id, title, summary (>20 chars), core_quote, emotional_tone, tags, used_in, confidence, source_question
+Each anecdote needs: id, summary, quote, illustrates, tags, used_in, confidence, source_question
+Each event needs: id, date_range, summary, impact, tags, used_in, confidence, source_question
+Each person needs: id, name, relationship, context, can_reference, tags
+Each parking_lot item needs: id, topic, priority, context, follow_up_questions

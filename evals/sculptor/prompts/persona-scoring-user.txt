@@ -1,0 +1,6 @@
+Analyze the USER's personality in this conversation (not the interviewer):
+
+CONVERSATION:
+{{conversation}}
+
+Score the USER on the 8 dimensions. Return JSON (no markdown, just raw JSON):

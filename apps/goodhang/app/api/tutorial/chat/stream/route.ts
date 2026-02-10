@@ -12,6 +12,7 @@ import {
   type ConversationMessage,
 } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import {
   type TutorialProgress,
   type TutorialContext,
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
       systemPrompt,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 800,
-      temperature: 0.7,
+      temperature: getTemperature('conversational'),
     });
 
     // Create wrapper generator that calculates progress on completion

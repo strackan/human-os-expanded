@@ -1,0 +1,67 @@
+- entity_name: "Maya Chen"
+  corpus_raw: "file://../../shared/fixtures/sample-corpus.md"
+  __expected:
+    - type: contains
+      value: "## Identity Snapshot"
+    - type: contains
+      value: "## Professional Focus"
+    - type: contains
+      value: "## Thinking Patterns"
+    - type: contains
+      value: "## Communication Style"
+    - type: contains
+      value: "## Key Relationships"
+    - type: contains
+      value: "## Personal Details"
+    - type: contains
+      value: "## Notable Quotes"
+    - type: not-contains
+      value: "Here is"
+    - type: not-contains
+      value: "I have"
+    - type: javascript
+      value: "output.length >= 500 && output.length <= 10000"
+    - type: llm-rubric
+      value: "The output is a comprehensive summary of Maya Chen that covers her professional background at Google and Stripe, her current role at FlowState AI, her communication style (direct, punchy, parenthetical asides), her personal details (rock climbing, surfing, dog Pixel), and her key beliefs about developer productivity. It should be specific and use details from the corpus."
+
+- entity_name: "Sparse User"
+  corpus_raw: |
+    John Smith - Software Engineer at Acme Corp.
+    I build stuff. Been doing it for 10 years.
+    Based in Austin.
+  __expected:
+    - type: contains
+      value: "## Identity Snapshot"
+    - type: contains
+      value: "Not in corpus"
+    - type: javascript
+      value: "output.length >= 500"
+    - type: llm-rubric
+      value: "The output correctly identifies sparse data and uses 'Not in corpus' for unknown sections. It does not fabricate details that aren't in the input."
+
+- entity_name: "Unusual Format User"
+  corpus_raw: |
+    ===ABOUT ME===
+    name: Dr. Aisha Patel
+    role: AI Ethics Researcher, Oxford
+
+    >>>BELIEFS<<<
+    1) AI systems should be auditable
+    2) Ethics is engineering, not philosophy
+    3) Regulation without understanding is dangerous
+
+    >>>WRITING<<<
+    My latest paper argues that fairness metrics are fundamentally broken.
+    We need to stop pretending that a single number can capture justice.
+    Published in Nature Machine Intelligence, cited 400+ times.
+
+    >>>PERSONAL<<<
+    Marathon runner (3:15 PR). Mother of two. Originally from Mumbai.
+    I cook elaborate Indian food on weekends as stress relief.
+  __expected:
+    - type: contains
+      value: "## Identity Snapshot"
+    - type: javascript
+      value: "output.length >= 500"
+    - type: llm-rubric
+      value: "The output correctly parses the non-standard format and extracts: Dr. Aisha Patel is an AI Ethics Researcher at Oxford, her beliefs about AI audibility and ethics as engineering, her writing about fairness metrics, and personal details about running and cooking. No information should be lost due to the unusual formatting."

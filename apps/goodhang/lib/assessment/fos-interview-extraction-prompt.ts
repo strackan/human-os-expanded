@@ -9,6 +9,8 @@
  */
 
 import type { ExtractedRegistryData } from './extraction-prompt';
+import { FosExtractionOutputSchema } from './fos-extraction-schema';
+import { extractAndValidate } from '@/lib/shared/llm-json';
 
 // =============================================================================
 // SYSTEM PROMPT
@@ -202,6 +204,7 @@ Return valid JSON matching the schema described in the system prompt.`;
 
 /**
  * Parse the Claude Haiku extraction response into ExtractedRegistryData.
+ * Uses Zod schema validation with fallback to manual filtering for resilience.
  * Gracefully handles malformed responses by returning empty arrays.
  */
 export function parseFosInterviewExtraction(
@@ -219,7 +222,30 @@ export function parseFosInterviewExtraction(
       return emptyRegistryData();
     }
 
-    // Extract JSON from response (may be wrapped in markdown code blocks)
+    // Try Zod-validated extraction first
+    const zodResult = extractAndValidate(text, FosExtractionOutputSchema);
+
+    if (zodResult.success) {
+      // Auto-generate IDs for items that don't have them (LLM rarely includes IDs).
+      // Cast through unknown because the Zod output type doesn't exactly match
+      // ExtractedRegistryData's id-required fields — we add IDs below.
+      const addIds = (items: Array<Record<string, unknown>>, prefix: string) =>
+        items.map((item, i) => ({ ...item, id: (item.id as string) || `${prefix}-${i + 1}` }));
+
+      return {
+        stories: addIds(zodResult.data.stories, 'story'),
+        anecdotes: addIds(zodResult.data.anecdotes, 'anecdote'),
+        events: addIds(zodResult.data.events, 'event'),
+        people: addIds(zodResult.data.people, 'person'),
+        corrections: [],
+        parking_lot: addIds(zodResult.data.parking_lot, 'parking'),
+      } as unknown as ExtractedRegistryData;
+    }
+
+    // Fallback: Haiku output may not pass strict Zod validation.
+    // Parse manually and filter with existing validators.
+    console.warn('[fos-extraction] Zod validation failed, falling back to manual parse:', zodResult.error);
+
     let cleaned = text.trim();
     const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -228,13 +254,12 @@ export function parseFosInterviewExtraction(
 
     const parsed = JSON.parse(cleaned);
 
-    // Validate and filter items
     return {
       stories: (parsed.stories || []).filter(isValidStory),
       anecdotes: (parsed.anecdotes || []).filter(isValidAnecdote),
       events: (parsed.events || []).filter(isValidEvent),
       people: (parsed.people || []).filter(isValidPerson),
-      corrections: [], // FOS Interview does not produce corrections
+      corrections: [],
       parking_lot: parsed.parking_lot || [],
     };
   } catch (e) {

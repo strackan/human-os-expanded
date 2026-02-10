@@ -1,0 +1,17 @@
+- conversation: "file://../../shared/fixtures/sample-sculptor-transcript.md"
+  __expected:
+    - type: is-json
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        const fp = data.fingerprint;
+        const dims = ['self_deprecation','directness','warmth','intellectual_signaling','comfort_with_sincerity','absurdism_tolerance','format_awareness','vulnerability_as_tool'];
+        dims.every(d => typeof fp[d] === 'number' && fp[d] >= 0 && fp[d] <= 10)
+    - type: javascript
+      value: |
+        const data = JSON.parse(output);
+        const reasoning = data.reasoning;
+        const dims = ['self_deprecation','directness','warmth','intellectual_signaling','comfort_with_sincerity','absurdism_tolerance','format_awareness','vulnerability_as_tool'];
+        dims.every(d => typeof reasoning[d] === 'string' && reasoning[d].length > 10)
+    - type: llm-rubric
+      value: "The persona scoring should reflect Maya Chen's actual communication patterns: high directness (8-10), moderate-high vulnerability as tool (6-9), high format awareness (6-9), and relatively lower absurdism tolerance (2-5). The reasoning should cite specific examples from the conversation."

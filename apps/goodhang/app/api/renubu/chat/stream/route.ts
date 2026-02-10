@@ -8,6 +8,7 @@
 import { NextRequest } from 'next/server';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { getTemperature } from '@/lib/shared/llm-config';
 import {
   getQuestionsSystemPrompt,
   getContextSystemPrompt,
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       systemPrompt,
       model: CLAUDE_SONNET_CURRENT,
       maxTokens: 500,
-      temperature: 0.7,
+      temperature: getTemperature('conversational'),
     });
 
     // Create wrapper to process stream and detect next_action

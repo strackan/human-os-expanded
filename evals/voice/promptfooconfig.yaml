@@ -1,0 +1,164 @@
+description: 'Voice Pipeline Evals'
+
+providers:
+  - id: anthropic:messages:claude-sonnet-4-20250514
+    config:
+      apiKeyEnvar: ANTHROPIC_API_KEY
+      max_tokens: 12000
+      temperature: 0.5
+
+defaultTest:
+  options:
+    rubricGradingConfig:
+      provider:
+        id: anthropic:messages:claude-haiku-4-5-20251001
+        config:
+          apiKeyEnvar: ANTHROPIC_API_KEY
+    transform: "output.replace(/^```json\\n?/g, '').replace(/^```\\n?/g, '').replace(/\\n?```$/g, '').trim()"
+
+prompts:
+  - id: prompt1
+    raw: "{{system}}\n\n---\n\n{{user}}"
+
+tests:
+  # --- Voice Finalize RC Tests ---
+  - description: "Voice Finalize RC - Full feedback"
+    vars:
+      system: "file://prompts/finalize-rc-system.txt"
+      user: "file://prompts/finalize-rc-user.txt"
+      entity_name: "Maya Chen"
+      context: "file://../shared/fixtures/sample-voice-pack/02_THEMES.md"
+      feedback_text: |
+        THOUGHT LEADERSHIP: Too long, middle section over-explains. I'd never write 'engineering judgment that takes 10 years to develop' -- too formal. Keep punchier, say 'rabbit hole' not 'architectural decision'.
+        PERSONAL STORY: Pretty close. Climbing metaphor felt natural. Don't write 'Capital is a tool. Control is oxygen.' -- too polished. Real me says 'Money is replaceable. Speed isn't.'
+        CONNECTION REQUEST: Nailed it.
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const keys = ['themes', 'guardrails', 'stories', 'anecdotes'];
+          return keys.every(k => typeof data[k] === 'string' && data[k].length > 200)
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.themes.includes('anti-pattern') || data.themes.includes('Anti-pattern') || data.themes.includes('Anti-Pattern')
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return (data.guardrails.includes('YES') || data.guardrails.includes('yes')) &&
+          (data.guardrails.includes('NO') || data.guardrails.includes('no')) &&
+          (data.guardrails.includes('THE LINE') || data.guardrails.includes('the line') || data.guardrails.includes('The Line'))
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.stories.includes('vulnerability') || data.stories.includes('Vulnerability')
+      - type: llm-rubric
+        value: "The RC files should incorporate the feedback: themes should have anti-patterns, guardrails should have YES/NO/THE LINE structure, stories should have vulnerability tags and actual narrative text (not just descriptions), anecdotes should be copy-paste ready. The feedback about 'punchier' and 'avoid polished aphorisms' should be reflected in the content."
+
+  # --- Generate Samples Tests ---
+  - description: "Voice Generate Samples - With full voice pack"
+    vars:
+      system: "file://prompts/generate-samples-system.txt"
+      user: "file://prompts/generate-samples-full-user.txt"
+      digest: "file://../shared/fixtures/sample-voice-pack/DIGEST.md"
+      writing_engine: "file://../shared/fixtures/sample-voice-pack/01_WRITING_ENGINE.md"
+      openings: "file://../shared/fixtures/sample-voice-pack/06_OPENINGS.md"
+      middles: "file://../shared/fixtures/sample-voice-pack/07_MIDDLES.md"
+      endings: "file://../shared/fixtures/sample-voice-pack/08_ENDINGS.md"
+      examples: "file://../shared/fixtures/sample-voice-pack/10_EXAMPLES.md"
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.samples && data.samples.length === 3
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const types = data.samples.map(s => s.type);
+          return types.includes('thought_leadership') && types.includes('personal_story') && types.includes('connection_request')
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const tl = data.samples.find(s => s.type === 'thought_leadership');
+          const words = tl.content.split(/\s+/).length;
+          return words >= 100 && words <= 400
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const cr = data.samples.find(s => s.type === 'connection_request');
+          const words = cr.content.split(/\s+/).length;
+          return words >= 30 && words <= 150
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return !data.samples.some(s => s.content.includes('\u2014'))
+        metric: no-em-dashes
+      - type: llm-rubric
+        value: "The samples should sound like Maya Chen wrote them. Look for: parenthetical asides, double hyphens (--) not em dashes, punchy short sentences mixed with longer ones, self-deprecating humor, specific details from her experience (FlowState, Stripe, climbing). The thought leadership post should have a contrarian angle. The personal story should show curated vulnerability. The connection request should be warm and direct."
+
+  - description: "Voice Generate Samples - Minimal context (no corpus)"
+    vars:
+      system: "file://prompts/generate-samples-system.txt"
+      user: "Generate 3 voice samples for a professional user. Use a natural, authentic voice. Return valid JSON matching the format specified."
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.samples && data.samples.length === 3
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const types = data.samples.map(s => s.type);
+          return types.includes('thought_leadership') && types.includes('personal_story') && types.includes('connection_request')
+
+  # --- Refine Commandments Tests ---
+  - description: "Voice Refine Commandments - With edits and feedback"
+    vars:
+      system: "file://prompts/refine-commandments-system.txt"
+      user: "file://prompts/refine-commandments-user.txt"
+      current_voice_os: |
+        {
+          "WRITING_ENGINE": "Write with directness and clarity. Use parenthetical asides for humor. Double hyphens for emphasis.",
+          "SIGNATURE_MOVES": "Contrarian hot takes, climbing metaphors, wry parenthetical closings.",
+          "OPENINGS": "O1: Contrarian Hot Take, O2: Emotional Scene-Setting, O3: List Declaration, O4: Universal Observation.",
+          "MIDDLES": "M1: Story Arc, M2: Evidence Stack, M3: Numbered List, M4: Analogy Bridge, M5: Contrast Reveal.",
+          "ENDINGS": "E1: Wry Parenthetical, E2: Callback, E3: Simple Truth, E4: Open Invitation.",
+          "THEMES": "Speed vs perfection, Control vs comfort, Curated vulnerability, Identity independence.",
+          "GUARDRAILS": "NO: Corporate jargon, motivational poster wisdom. YES: Self-deprecation, direct opinions.",
+          "STORIES": "The Committee'd PRD, The $12M No, The Google Feature Reborn, The Birthday.",
+          "ANECDOTES": "Cereal dinners, mediocre surfer, advisor warning, debugging at 2am.",
+          "BLEND_HYPOTHESES": "Authentic Founder: O2+M1+E2, Hot Take Expert: O1+M2+E1."
+        }
+      feedback_text: |
+        ### THOUGHT LEADERSHIP
+        **Edited:** Yes
+        **What Didn't Work:** Too long. Middle section over-explains. I'd never write 'engineering judgment that takes 10 years to develop' -- too formal.
+        **Instruction That Would Have Helped:** Keep it punchier. I write in short bursts. Say 'rabbit hole' not 'architectural decision' in casual posts.
+
+        ### PERSONAL STORY
+        **Edited:** No
+        **What Didn't Work:** I wouldn't write 'Capital is a tool. Control is oxygen.' Too polished, too quotable.
+        **Instruction That Would Have Helped:** Avoid aphorisms that sound like motivational posters. My wisdom comes out messier.
+
+        ### CONNECTION REQUEST
+        **Edited:** No
+        (No issues reported)
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.refined_voice_os && data.adjustments_made && Array.isArray(data.adjustments_made)
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return data.adjustments_made.length >= 3 && data.adjustments_made.length <= 5
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return typeof data.refined_voice_os === 'object' && Object.keys(data.refined_voice_os).length > 0
+      - type: llm-rubric
+        value: "The refinement should be SURGICAL, not a complete rewrite. It should: (1) add a rule about keeping posts punchier/shorter, (2) add 'rabbit hole' to preferred vocabulary, (3) add anti-aphorism rule to guardrails, (4) note that polished quotable phrases should be avoided. The structure of the Voice OS should be preserved with targeted changes."
