@@ -117,12 +117,25 @@ export function TabbedContainerArtifact({
   // Track which tabs have been reviewed (internal state)
   const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
 
-  // Mark a tab as reviewed
+  // Mark a tab as reviewed and auto-advance to next unreviewed tab
   const markTabReviewed = useCallback((tabId: string, reviewed: boolean) => {
     setReviewedTabs(prev => {
       const next = new Set(prev);
       if (reviewed) {
         next.add(tabId);
+
+        // Auto-advance: find the next unreviewed tab (starting from current, then wrapping)
+        const currentIndex = visibleTabs.findIndex(t => t.id === tabId);
+        if (currentIndex >= 0) {
+          // Search forward from the next tab
+          for (let i = 1; i < visibleTabs.length; i++) {
+            const candidate = visibleTabs[(currentIndex + i) % visibleTabs.length];
+            if (!next.has(candidate.id)) {
+              setActiveTabId(candidate.id);
+              break;
+            }
+          }
+        }
       } else {
         next.delete(tabId);
       }
@@ -132,7 +145,7 @@ export function TabbedContainerArtifact({
     if (onTabStatusChange) {
       onTabStatusChange(tabId, reviewed ? 'approved' : 'pending');
     }
-  }, [onTabStatusChange]);
+  }, [onTabStatusChange, visibleTabs]);
 
   // Check if a tab has been reviewed
   const isTabReviewed = useCallback((tabId: string): boolean => {

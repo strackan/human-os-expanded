@@ -4,6 +4,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getValidAccessToken } from '../utils/oauth.js';
 
 const GMAIL_API_BASE = 'https://gmail.googleapis.com/gmail/v1';
 
@@ -24,49 +25,10 @@ export interface GmailMessage {
 
 /**
  * Helper: Get valid access token for Gmail
+ * Uses the shared OAuth utility that handles decryption and automatic refresh
  */
 async function getAccessToken(supabase: SupabaseClient, userId: string): Promise<string> {
-  const { data: integration } = await supabase
-    .from('mcp_integrations')
-    .select('id')
-    .eq('slug', 'gmail')
-    .single();
-
-  if (!integration) {
-    throw new Error('Gmail integration not found');
-  }
-
-  const { data: userIntegration } = await supabase
-    .from('user_integrations')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('integration_id', integration.id)
-    .eq('status', 'active')
-    .is('deleted_at', null)
-    .single();
-
-  if (!userIntegration) {
-    throw new Error('Gmail not connected for this user');
-  }
-
-  const { data: tokenData } = await supabase
-    .rpc('decrypt_oauth_token', {
-      p_user_integration_id: userIntegration.id
-    });
-
-  if (!tokenData || !tokenData.access_token) {
-    throw new Error('No valid access token found');
-  }
-
-  const expiresAt = new Date(tokenData.expires_at);
-  const now = new Date();
-  const buffer = 5 * 60 * 1000;
-
-  if (expiresAt.getTime() - now.getTime() < buffer) {
-    throw new Error('Access token expired - please re-authenticate');
-  }
-
-  return tokenData.access_token;
+  return await getValidAccessToken(supabase, userId, 'gmail');
 }
 
 /**

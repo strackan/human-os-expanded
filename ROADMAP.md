@@ -1,6 +1,6 @@
 # Renubu Product Roadmap
 
-**Last Generated:** 2025-11-18
+**Last Generated:** 2025-12-10
 **Source:** Auto-generated from database (releases + features tables)
 
 ---
@@ -25,7 +25,19 @@ Details to be announced
 
 Human OS Check-In System with pattern recognition, personalized workflow suggestions, adaptive reminders, success tracking
 
-*No features assigned yet*
+**Key Update (Dec 10, 2025):** Human OS is now a production-ready external platform that Renubu will integrate with, rather than building these capabilities from scratch. This reduces the Human OS Check-Ins effort from 64h to 32h.
+
+**Infrastructure:**
+- Human OS Platform (external) - Production-ready with REST API & MCP servers
+- Human OS Integration (16h) - Connect Renubu to Human OS for context storage, graph queries, entity management
+
+**Features Enabled by Human OS:**
+- Pattern detection via Knowledge Graph API
+- Relationship tracking via wiki link parsing
+- "This worked for YOU before" via backlink analysis
+- Multi-tenant data isolation via `renubu:tenant-{id}` layers
+
+See [HUMAN_OS_INTEGRATION.md](docs/HUMAN_OS_INTEGRATION.md) for technical details.
 
 ---
 

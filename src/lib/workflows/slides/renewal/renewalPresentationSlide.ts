@@ -45,127 +45,22 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
       chat: {
         generateInitialMessage: true,
         initialMessage: {
-          text: `I've prepared a comprehensive renewal presentation for ${customerName}. This deck includes:\n\n• **Partnership Overview** - Your journey together\n• **Performance Highlights** - Key wins and metrics\n• **Value Delivered** - ROI and impact\n• **Renewal Proposal** - Pricing and terms\n• **Next Year Planning** - Strategic recommendations\n\nYou can review and customize each slide in the panel on the right. Would you like me to walk you through it, or would you prefer to review it yourself?`,
+          text: `I've prepared a renewal presentation for ${customerName} with 5 slides:\n\n- **Partnership Overview** — Your journey together\n- **Performance Dashboard** — Key wins and metrics\n- **Key Wins** — ROI and impact highlights\n- **Strategic Recommendations** — Pricing and growth opportunities\n- **Next Steps** — Action items and owners\n\nBrowse through the slides using the arrows. Once you've reviewed them, let me know how it looks.`,
           buttons: [
             {
-              label: 'Walk Me Through',
-              value: 'walkthrough',
-              'label-background': 'bg-purple-600',
-              'label-text': 'text-white',
-            },
-            {
-              label: 'I\'ll Review It',
-              value: 'self-review',
-              'label-background': 'bg-gray-500',
+              label: 'Looks Good',
+              value: 'looks-good',
+              'label-background': 'bg-green-600',
               'label-text': 'text-white',
             },
           ],
           nextBranches: {
-            'walkthrough': 'walkthrough-start',
-            'self-review': 'self-review-confirm',
+            'looks-good': 'deck-ready',
           },
         },
         branches: {
-          'walkthrough-start': {
-            response: `Great! Let's start with the **Title Slide**.\n\nThis sets the tone for the meeting. It includes:\n- ${customerName}'s company name prominently displayed\n- "Annual Partnership Review" as the subtitle\n- Today's date and your name as the presenter\n\nThe purple gradient matches InHerSight's brand. Does this look good, or would you like to adjust the subtitle?`,
-            buttons: [
-              {
-                label: 'Looks Good',
-                value: 'next-slide',
-                'label-background': 'bg-purple-600',
-                'label-text': 'text-white',
-              },
-              {
-                label: 'Edit Title',
-                value: 'edit-title',
-                'label-background': 'bg-gray-500',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'next-slide': 'walkthrough-metrics',
-              'edit-title': 'edit-title-prompt',
-            },
-          },
-          'walkthrough-metrics': {
-            response: `Next up is the **Performance Dashboard**.\n\nThis slide shows the key metrics from the past year:\n- Brand impressions and growth\n- Profile views and engagement\n- Application clicks generated\n- New employee ratings received\n\nAll metrics show positive trends. This is a strong story to tell!`,
-            buttons: [
-              {
-                label: 'Continue',
-                value: 'continue-highlights',
-                'label-background': 'bg-purple-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'continue-highlights': 'walkthrough-highlights',
-            },
-          },
-          'walkthrough-highlights': {
-            response: `Now the **Key Wins** slide - this is where we celebrate successes!\n\nI've included:\n- Recognition and awards received\n- Hiring impact metrics\n- How leadership has used InHerSight data\n- Policy improvements influenced by insights\n\nThese talking points help reinforce the partnership value.`,
-            buttons: [
-              {
-                label: 'Continue',
-                value: 'continue-recommendations',
-                'label-background': 'bg-purple-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'continue-recommendations': 'walkthrough-recommendations',
-            },
-          },
-          'walkthrough-recommendations': {
-            response: `The **Strategic Recommendations** slide presents growth opportunities:\n\n1. **Tier Upgrade** - Unlock additional features\n2. **Multi-year Commitment** - Lock in pricing\n3. **Expansion Options** - New markets or products\n\nEach recommendation includes a priority level and business justification.`,
-            buttons: [
-              {
-                label: 'Continue',
-                value: 'continue-nextsteps',
-                'label-background': 'bg-purple-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'continue-nextsteps': 'walkthrough-nextsteps',
-            },
-          },
-          'walkthrough-nextsteps': {
-            response: `Finally, the **Next Steps** slide outlines the action plan:\n\n- Schedule renewal discussion\n- Review pricing proposal\n- Finalize contract terms\n- Set up success planning for next year\n\nEach item has an owner and timeline. Ready to finalize the deck?`,
-            buttons: [
-              {
-                label: 'Generate Deck',
-                value: 'generate-deck',
-                'label-background': 'bg-green-600',
-                'label-text': 'text-white',
-              },
-              {
-                label: 'Make Changes',
-                value: 'make-changes',
-                'label-background': 'bg-gray-500',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'generate-deck': 'deck-ready',
-              'make-changes': 'edit-prompt',
-            },
-          },
-          'self-review-confirm': {
-            response: `No problem! Take your time reviewing the presentation in the panel on the right.\n\nYou can:\n- Use the arrows to navigate between slides\n- Click "Edit" to modify any content\n- Export to PowerPoint when ready\n\nLet me know when you're done or if you have questions!`,
-            buttons: [
-              {
-                label: 'I\'m Done Reviewing',
-                value: 'review-complete',
-                'label-background': 'bg-purple-600',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'review-complete': 'deck-ready',
-            },
-          },
           'deck-ready': {
-            response: `Your presentation is ready! You can:\n\n📥 **Download as PowerPoint** - Click the export button in the presentation panel\n📧 **Share via Email** - Attach the PPTX to your meeting invite\n🖥️ **Present Live** - Use the full-screen mode during your call\n\nWould you like to continue to scheduling the meeting, or do you need anything else with the deck?`,
+            response: `Great, your presentation is finalized! You can download it as PowerPoint or save it to Google Drive using the **Export** button in the presentation panel.\n\nReady to move on to scheduling the meeting?`,
             buttons: [
               {
                 label: 'Schedule Meeting',
@@ -174,7 +69,7 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
                 'label-text': 'text-white',
               },
               {
-                label: 'Download Deck',
+                label: 'Download Deck First',
                 value: 'download',
                 'label-background': 'bg-green-600',
                 'label-text': 'text-white',
@@ -186,7 +81,7 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
             },
           },
           'download-confirm': {
-            response: `Click the **Download** button in the presentation panel on the right to save your deck as a PowerPoint file.\n\nOnce downloaded, you can:\n- Email it to your customer before the meeting\n- Present it during your video call\n- Print it for in-person meetings\n\nReady to schedule the renewal meeting?`,
+            response: `Use the **Export** button in the presentation panel to download your deck as PowerPoint, save to Google Drive, or print as PDF.\n\nReady to schedule the renewal meeting?`,
             buttons: [
               {
                 label: 'Schedule Meeting',
@@ -194,30 +89,17 @@ export const renewalPresentationSlide: UniversalSlideBuilder = (context) => {
                 'label-background': 'bg-purple-600',
                 'label-text': 'text-white',
               },
-              {
-                label: 'Back to Deck',
-                value: 'back-to-deck',
-                'label-background': 'bg-gray-500',
-                'label-text': 'text-white',
-              },
             ],
             nextBranches: {
               'schedule-from-download': 'proceed-to-schedule',
-              'back-to-deck': 'deck-ready',
             },
           },
           'proceed-to-schedule': {
-            response: 'Great! Let\'s move on to scheduling the renewal meeting.',
+            response: 'Let\'s move on to scheduling the renewal meeting.',
             actions: ['nextSlide'],
           },
-          'edit-title-prompt': {
-            response: 'What would you like to change about the title slide? You can edit directly in the presentation panel on the right, or tell me what you\'d like to update.',
-          },
-          'edit-prompt': {
-            response: 'No problem! Use the presentation panel on the right to make your changes. Navigate between slides using the arrows, and click on any text to edit it. Let me know when you\'re ready to proceed.',
-          },
         },
-        defaultMessage: 'The presentation is ready in the panel on the right. Let me know if you need any help!',
+        defaultMessage: 'The presentation is ready in the panel on the right. Click the edit icon to make changes, or let me know if you need help!',
         userTriggers: {},
       },
 

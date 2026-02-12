@@ -19,8 +19,6 @@ import {
   ChevronRight,
   Download,
   Presentation,
-  Edit3,
-  Eye,
   FileSpreadsheet,
   Cloud,
   ChevronDown,
@@ -168,6 +166,7 @@ export function PresentationArtifact({
   subtitle,
   customerName = 'GrowthStack',
   slides = DEFAULT_SLIDES,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   editable = true,
   isLoading = false,
   error,
@@ -175,7 +174,6 @@ export function PresentationArtifact({
   onExport,
 }: PresentationArtifactProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [localSlides, setLocalSlides] = useState(slides);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -332,7 +330,7 @@ export function PresentationArtifact({
     const slideProps = {
       title: currentSlide.title,
       content: currentSlide.content as any,
-      editable: isEditMode,
+      editable: false, // Edit mode disabled until fully implemented across all slide types
       onContentChange: handleContentChange,
     };
 
@@ -377,20 +375,7 @@ export function PresentationArtifact({
           <span className="text-sm text-gray-500">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
-          {/* Edit/View toggle */}
-          {editable && (
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-2 rounded-lg transition-colors ${
-                isEditMode
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              }`}
-              title={isEditMode ? 'View mode' : 'Edit mode'}
-            >
-              {isEditMode ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-            </button>
-          )}
+          {/* Edit/View toggle - hidden until edit mode is fully implemented across all slide types */}
           {/* Export dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button

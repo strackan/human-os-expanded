@@ -4,6 +4,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { getValidAccessToken } from '../utils/oauth.js';
 
 const GOOGLE_CALENDAR_API_BASE = 'https://www.googleapis.com/calendar/v3';
 
@@ -43,55 +44,10 @@ export interface TimeSlot {
 
 /**
  * Helper: Get valid access token for Google Calendar
+ * Uses the shared OAuth utility that handles decryption and automatic refresh
  */
 async function getAccessToken(supabase: SupabaseClient, userId: string): Promise<string> {
-  // Get Google Calendar integration ID
-  const { data: integration } = await supabase
-    .from('mcp_integrations')
-    .select('id')
-    .eq('slug', 'google-calendar')
-    .single();
-
-  if (!integration) {
-    throw new Error('Google Calendar integration not found');
-  }
-
-  // Get user integration
-  const { data: userIntegration } = await supabase
-    .from('user_integrations')
-    .select('id')
-    .eq('user_id', userId)
-    .eq('integration_id', integration.id)
-    .eq('status', 'active')
-    .is('deleted_at', null)
-    .single();
-
-  if (!userIntegration) {
-    throw new Error('Google Calendar not connected for this user');
-  }
-
-  // Get OAuth token (decrypted)
-  const { data: tokenData } = await supabase
-    .rpc('decrypt_oauth_token', {
-      p_user_integration_id: userIntegration.id
-    });
-
-  if (!tokenData || !tokenData.access_token) {
-    throw new Error('No valid access token found');
-  }
-
-  // Check if token is expired and refresh if needed
-  const expiresAt = new Date(tokenData.expires_at);
-  const now = new Date();
-  const buffer = 5 * 60 * 1000; // 5 minutes
-
-  if (expiresAt.getTime() - now.getTime() < buffer) {
-    // Token is expired or about to expire - refresh needed
-    // For now, throw error (token refresh would need to be implemented)
-    throw new Error('Access token expired - please re-authenticate');
-  }
-
-  return tokenData.access_token;
+  return await getValidAccessToken(supabase, userId, 'google-calendar');
 }
 
 /**

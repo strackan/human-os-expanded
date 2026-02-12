@@ -84,27 +84,56 @@ Quick capture for non-time-sensitive ideas and tasks. Provides peace of mind tha
 ### Human OS Check-Ins
 **Status:** Planned (Phase 3)
 **Priority:** 1 (Highest)
-**Effort:** 64 hours
+**Effort:** 32 hours (reduced from 64h via Human OS platform integration)
 **Timeline:** Feb 3 - Mar 28, 2026
 
 **Business Case:**
 THE competitive moat. Creates learning loop where system discovers what works for each specific user. Justifies premium pricing ($200/user vs $50/user).
 
-**Technical Approach:**
-- Post-completion check-in prompts
-- Pattern detection service
-- Recommendation engine based on user's history
-- "This worked for YOU before" insights
+**Technical Approach (Updated Dec 2025):**
+Leverages Human OS platform as external service instead of building from scratch. Uses Context API for check-in storage, Graph API for pattern detection, and Entity API for relationship tracking.
+
+See [HUMAN_OS_INTEGRATION.md](./HUMAN_OS_INTEGRATION.md) for full API reference and integration patterns.
 
 **Success Criteria:**
 - 80%+ check-in completion rate
 - Patterns detected after 5+ workflows
 - Recommendations shown with 70%+ confidence
 - 2+ design partners find it useful
+- Human OS API response time <500ms
 
 **Phase:** 3
 **Category:** ai
-**Dependencies:** Workflow Snoozing (for completion tracking)
+**Dependencies:** Workflow Snoozing (for completion tracking), Human OS Integration (Phase 0.2)
+
+---
+
+### Human OS Integration
+**Status:** Planned (Phase 0.2)
+**Priority:** 1 (Highest)
+**Effort:** 16 hours
+**Timeline:** Phase 0.2 (Jan 2026)
+
+**Business Case:**
+Foundation for Human OS Check-Ins (Phase 3). Enables Renubu to store context, relationships, and patterns in the Human OS knowledge graph. Reduces Check-Ins implementation from 64h to 32h.
+
+**Technical Approach:**
+- API key provisioning for Renubu tenants
+- Context file storage for workflow completions (`renubu:tenant-{id}` layer)
+- Entity creation for people/companies mentioned in workflows
+- Graph queries for pattern detection and recommendations
+- Wiki link parsing for automatic relationship indexing
+
+**Success Criteria:**
+- Renubu can create context files in `renubu:tenant-{id}` layer
+- Entities auto-created from workflow data
+- Graph queries return relationship data
+- API key scoping works correctly per tenant
+- <500ms response time for common queries
+
+**Phase:** 0.2
+**Category:** infrastructure
+**Dependencies:** Human OS platform (ready), MCP registry infrastructure
 
 ---
 
@@ -432,17 +461,24 @@ Database registry for all features with status tracking, change logs, and approv
 Q4 2025 (Nov-Dec)
 ├── Phase 0.1: MCP Foundation (In Progress)
 ├── Phase 1: Workflow Snoozing (Nov 25 - Dec 20)
+└── Human OS Platform: Production-ready (Dec 10)
 
 Q1 2026 (Jan-Mar)
 ├── Phase 0.2: MCP Registry + Integrations (Jan)
+│   ├── Human OS Integration (16h) ← Foundation for Check-Ins
+│   ├── Google Calendar (8h)
+│   ├── Slack (8h)
+│   └── Gmail (6h)
 ├── Phase 2: Parking Lot (Jan 6-17)
-└── Phase 3: Human OS Check-Ins (Feb 3 - Mar 28)
+└── Phase 3: Human OS Check-Ins (Feb 3 - Mar 28, 32h)
 
 Q2 2026+
 ├── Weekly Planner (if 2+ customers request)
 ├── Custom MCP Servers (if demand proven)
 └── Additional integrations (HubSpot, Salesforce, etc.)
 ```
+
+**Note:** Human OS Check-Ins effort reduced from 64h to 32h by leveraging Human OS platform APIs instead of building pattern detection engine from scratch.
 
 ---
 

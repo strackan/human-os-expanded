@@ -124,6 +124,22 @@ export class MyService {
 - Merge conflicts manageable (7.7% rate)
 - See [LLM.md](./LLM.md) for details
 
+### Decision 5: Human OS Integration (Dec 2025)
+**Decision:** Renubu consumes Human OS as an external platform, not embedded
+**Rationale:**
+- Human OS is a standalone platform serving multiple products (Founder OS, Experts, Voice Packs)
+- Renubu is one consumer among many, not the sole owner
+- Multi-tenant isolation via layer system (`renubu:tenant-{id}`)
+- Shared knowledge graph enables cross-product intelligence
+- Accelerates Human OS Check-Ins development (API integration vs. building from scratch)
+- See [HUMAN_OS_INTEGRATION.md](./HUMAN_OS_INTEGRATION.md) for details
+
+**Integration Points:**
+- **Context API:** Store workflow completions, check-ins, patterns
+- **Graph API:** Query relationships, find patterns, traverse connections
+- **Entity API:** Create/manage people, companies, projects from workflow data
+- **Layer Convention:** `renubu:tenant-{tenantId}` for all Renubu tenant data
+
 ---
 
 ## Data Flow
@@ -342,6 +358,13 @@ See individual sections above for:
    - Purpose: Hire founding operator + validate workflow orchestration
    - Timeline: Q1 2026 (Jan 6 - Feb 28)
    - Impact: Pushes Parking Lot to Mar, Human OS to Apr-May
+
+4. **Dec 10, 2025:** Human OS Platform Integration
+   - Decision: Consume Human OS as external service, not build embedded
+   - Human OS platform now production-ready (9 packages, REST API, MCP servers)
+   - Renubu uses `renubu:tenant-{id}` layer for multi-tenant isolation
+   - Impact: Reduces Human OS Check-Ins effort from 64h to ~32h (API integration vs. engine building)
+   - Intelligence Files (Talent Orchestration) can leverage Human OS entities and graph
 
 ---
 

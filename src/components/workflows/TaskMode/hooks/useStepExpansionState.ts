@@ -48,14 +48,25 @@ export function useStepExpansionState({
     };
   }, []);
 
-  // When current step changes, expand the new step
+  // When current step changes, expand the new step and collapse the old one
   useEffect(() => {
     if (prevStepIndexRef.current !== currentStepIndex) {
-      // Expand new current step
-      setExpansionStates((prev) => ({
-        ...prev,
-        [currentStepIndex]: 'expanded',
-      }));
+      const prevIndex = prevStepIndexRef.current;
+
+      setExpansionStates((prev) => {
+        const updated = { ...prev };
+
+        // Collapse the previous step (unless pinned)
+        if (updated[prevIndex] !== 'pinned') {
+          updated[prevIndex] = 'collapsed';
+        }
+
+        // Expand new current step
+        updated[currentStepIndex] = 'expanded';
+
+        return updated;
+      });
+
       onExpansionChange?.(currentStepIndex, 'expanded');
       prevStepIndexRef.current = currentStepIndex;
     }
