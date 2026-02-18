@@ -26,28 +26,28 @@ interface HeroWorkflowCardProps {
   isLaunching?: boolean;
 }
 
-function getPriorityBadge(score: number): { label: string; className: string } {
-  if (score >= 80) return { label: 'Critical', className: 'bg-red-100 text-red-700' };
-  if (score >= 60) return { label: 'High', className: 'bg-orange-100 text-orange-700' };
-  if (score >= 40) return { label: 'Medium', className: 'bg-yellow-100 text-yellow-700' };
-  return { label: 'Low', className: 'bg-green-100 text-green-700' };
-}
-
 function formatArr(arr: number): string {
   if (arr >= 1_000_000) return `$${(arr / 1_000_000).toFixed(1)}M`;
   if (arr >= 1_000) return `$${Math.round(arr / 1_000)}K`;
   return `$${arr}`;
 }
 
-function getHealthColor(score: number): string {
-  if (score >= 80) return 'text-emerald-600';
-  if (score >= 60) return 'text-yellow-600';
-  return 'text-red-600';
+function getInitials(name: string): string {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 }
 
-function formatRenewalDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function getDueLabel(daysUntilRenewal?: number): string {
+  if (daysUntilRenewal === undefined) return 'UPCOMING';
+  if (daysUntilRenewal <= 0) return 'OVERDUE';
+  if (daysUntilRenewal <= 1) return 'DUE TODAY';
+  if (daysUntilRenewal <= 7) return `DUE IN ${daysUntilRenewal}D`;
+  if (daysUntilRenewal <= 30) return `DUE IN ${Math.ceil(daysUntilRenewal / 7)}W`;
+  return `DUE IN ${Math.round(daysUntilRenewal / 30)}MO`;
 }
 
 export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaunching }: HeroWorkflowCardProps) {
@@ -58,23 +58,24 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="relative overflow-hidden rounded-3xl px-12 py-14 border border-purple-200/50"
-        style={{ background: 'linear-gradient(135deg, #f8f7f4, #ede9fe, #e0e7ff)' }}
+        className="relative overflow-hidden rounded-3xl px-10 py-10"
+        style={{ background: 'linear-gradient(135deg, #2D2A53, #3D2A63, #2D2A53)' }}
       >
-        <div className="animate-pulse space-y-4">
+        <div className="animate-pulse space-y-5">
           <div className="flex justify-between">
-            <div className="h-6 w-24 bg-white/60 rounded-full" />
-            <div className="h-6 w-20 bg-white/60 rounded-full" />
+            <div className="h-5 w-40 bg-white/10 rounded-full" />
+            <div className="h-12 w-12 bg-white/10 rounded-full" />
           </div>
-          <div className="h-10 w-72 bg-white/60 rounded-lg" />
-          <div className="h-6 w-48 bg-white/40 rounded-lg" />
-          <div className="h-8 w-96 bg-white/30 rounded-full" />
-          <div className="flex gap-6 mt-6">
-            <div className="h-5 w-20 bg-white/40 rounded" />
-            <div className="h-5 w-20 bg-white/40 rounded" />
-            <div className="h-5 w-20 bg-white/40 rounded" />
+          <div className="h-8 w-[80%] bg-white/10 rounded-lg" />
+          <div className="h-6 w-[50%] bg-white/10 rounded-lg" />
+          <div className="h-16 w-full bg-white/5 rounded-xl" />
+          <div className="flex justify-between">
+            <div className="flex gap-2">
+              <div className="h-7 w-16 bg-white/10 rounded-full" />
+              <div className="h-7 w-24 bg-white/10 rounded-full" />
+            </div>
+            <div className="h-9 w-36 bg-white/10 rounded-lg" />
           </div>
-          <div className="h-12 w-48 bg-white/50 rounded-xl mt-4" />
         </div>
       </motion.div>
     );
@@ -87,16 +88,16 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="relative overflow-hidden rounded-3xl px-12 py-14 border border-gray-200 bg-gray-50 text-center"
+        className="relative overflow-hidden rounded-3xl px-10 py-14 text-center"
+        style={{ background: 'linear-gradient(135deg, #2D2A53, #3D2A63, #2D2A53)' }}
       >
-        <p className="text-lg text-gray-400">No workflows queued right now. Nice work!</p>
+        <p className="text-lg text-white/50">No workflows queued right now. Nice work!</p>
       </motion.div>
     );
   }
 
   const category = getCategoryConfig(workflow.workflowType);
   const bounty = calculateBountyPoints(workflow.priorityScore);
-  const priority = getPriorityBadge(workflow.priorityScore);
   const triggerReason = getTriggerReason({
     workflowType: workflow.workflowType,
     daysUntilRenewal: workflow.daysUntilRenewal,
@@ -104,102 +105,114 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
     healthScore: workflow.healthScore,
   });
 
+  // Build descriptive headline: "Prepare renewal strategy for GrowthStack — usage dropped 23%"
+  const headline = `${workflow.workflowName} \u2014 ${triggerReason.toLowerCase()}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
-      className="relative overflow-hidden rounded-3xl px-12 py-14 border border-purple-200/50"
-      style={{ background: 'linear-gradient(135deg, #f8f7f4, #ede9fe, #e0e7ff)' }}
+      className="relative overflow-hidden rounded-3xl px-10 py-10"
+      style={{ background: 'linear-gradient(135deg, #2D2A53, #3D2A63, #2D2A53)' }}
     >
       {/* Decorative gradient orb */}
       <motion.div
         animate={{ scale: [1, 1.15, 1] }}
         transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10"
+        className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-15"
         style={{ background: 'radial-gradient(circle, #a855f7, #6366f1, transparent)' }}
       />
 
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-6 relative z-10">
-        <div className="flex items-center gap-3">
-          <span className={`text-xs font-medium px-3 py-1 rounded-full border ${category.bgColor} ${category.textColor} ${category.borderColor}`}>
-            {category.label}
+      {/* Header: "TODAY'S ONE THING" + bounty circle */}
+      <div className="flex items-start justify-between mb-6 relative z-10">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          <span className="text-xs font-semibold tracking-widest text-white/60 uppercase">
+            Today&apos;s One Thing
           </span>
-          <span className="text-sm font-medium text-gray-500">Today&apos;s One Thing</span>
         </div>
-        <span
-          className="text-sm font-bold px-3 py-1 rounded-full bg-purple-100 text-purple-700"
-          style={{ fontFamily: 'var(--font-fraunces)' }}
-        >
-          +{bounty.points} pts
-        </span>
+        {/* Bounty circle */}
+        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-full border-2 border-amber-400/60 bg-white/5">
+          <span
+            className="text-lg font-bold leading-none text-white"
+            style={{ fontFamily: 'var(--font-fraunces)' }}
+          >
+            {bounty.points}
+          </span>
+          <span className="text-[9px] font-medium text-amber-400 uppercase tracking-wide">Points</span>
+        </div>
       </div>
 
-      {/* Customer name */}
+      {/* Descriptive headline */}
       <h2
-        className="text-3xl font-bold text-gray-900 mb-1 relative z-10"
+        className="text-2xl font-bold text-white leading-snug mb-6 relative z-10 max-w-[85%]"
         style={{ fontFamily: 'var(--font-nunito)' }}
       >
-        {workflow.customerName}
+        {headline}
       </h2>
 
-      {/* Workflow title */}
-      <p className="text-lg text-gray-600 mb-4 relative z-10">
-        {workflow.workflowName}
-      </p>
-
-      {/* Trigger reason chip */}
-      <div className="mb-6 relative z-10">
-        <span className="inline-block text-sm px-4 py-2 rounded-full bg-white/70 text-gray-700 border border-gray-200/60">
-          {triggerReason}
-        </span>
+      {/* Customer info bar */}
+      <div className="flex items-center gap-4 bg-white/5 rounded-xl px-5 py-4 mb-6 relative z-10">
+        {/* Initials avatar */}
+        <div className="w-10 h-10 rounded-lg bg-indigo-500 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-bold text-white">{getInitials(workflow.customerName)}</span>
+        </div>
+        {/* Name + context */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-white truncate">{workflow.customerName}</p>
+          <p className="text-xs text-white/40 truncate">{triggerReason}</p>
+        </div>
+        {/* ARR */}
+        {workflow.currentArr !== undefined && workflow.currentArr > 0 && (
+          <div className="text-right flex-shrink-0">
+            <span className="text-[10px] font-medium text-white/40 uppercase tracking-wide block">ARR</span>
+            <span
+              className="text-lg font-bold text-white leading-none"
+              style={{ fontFamily: 'var(--font-fraunces)' }}
+            >
+              {formatArr(workflow.currentArr)}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Metadata row */}
-      <div className="flex items-center gap-6 mb-8 text-sm relative z-10">
-        {workflow.currentArr && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400">ARR</span>
-            <span className="font-semibold text-gray-700">{formatArr(workflow.currentArr)}</span>
-          </div>
-        )}
-        {workflow.healthScore !== undefined && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400">Health</span>
-            <span className={`font-semibold ${getHealthColor(workflow.healthScore)}`}>{workflow.healthScore}</span>
-          </div>
-        )}
-        {workflow.renewalDate && (
-          <div className="flex items-center gap-1.5">
-            <span className="text-gray-400">Contract End</span>
-            <span className="font-semibold text-gray-700">{formatRenewalDate(workflow.renewalDate)}</span>
-          </div>
-        )}
-        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${priority.className}`}>
-          {priority.label}
-        </span>
-      </div>
-
-      {/* CTA button */}
-      <button
-        onClick={() => onLaunch(workflow)}
-        disabled={isLaunching}
-        className="relative z-10 px-8 py-3.5 rounded-xl text-white font-semibold text-base transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ backgroundColor: 'var(--dashboard-accent-primary, #2D2A53)' }}
-      >
-        {isLaunching ? (
-          <span className="flex items-center gap-2">
-            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            Launching...
+      {/* Bottom row: tags + launch button */}
+      <div className="flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-2">
+          {/* Category tag */}
+          <span className={`text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide ${category.heroTagBg} ${category.heroTagText}`}>
+            {category.shortLabel}
           </span>
-        ) : (
-          'Launch Task Mode'
-        )}
-      </button>
+          {/* Due date tag */}
+          <span className="text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 text-white/70 uppercase tracking-wide">
+            {getDueLabel(workflow.daysUntilRenewal)}
+          </span>
+        </div>
+        {/* Launch button */}
+        <button
+          onClick={() => onLaunch(workflow)}
+          disabled={isLaunching}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+        >
+          {isLaunching ? (
+            <>
+              <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Launching...
+            </>
+          ) : (
+            <>
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+              Launch Workflow
+            </>
+          )}
+        </button>
+      </div>
     </motion.div>
   );
 }

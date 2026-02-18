@@ -25,7 +25,6 @@ import { WorkflowConfig } from '@/components/artifacts/workflows/config/Workflow
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenceService';
 import { WorkflowQueryService, type WorkflowExecution } from '@/lib/workflows/actions/WorkflowQueryService';
-import { calculateBountyPoints } from '@/lib/workflows/bounty';
 import type { DashboardWorkflow } from '@/components/dashboard/HeroWorkflowCard';
 
 /**
@@ -254,7 +253,7 @@ export default function DashboardClient() {
       );
 
       if (resumable) {
-        setPendingWorkflowConfig(workflowConfig);
+        setPendingWorkflowConfig(workflowConfig as WorkflowConfig & { workflowName?: string });
         setPendingGreeting(greetingResult.text);
         setPendingLaunchWorkflow(workflow);
         setResumableExecution({
@@ -437,11 +436,6 @@ export default function DashboardClient() {
     setPendingLaunchWorkflow(null);
   };
 
-  // Calculate next workflow bounty points for the strip
-  const nextWorkflowPoints = heroWorkflow
-    ? calculateBountyPoints(heroWorkflow.priorityScore).points
-    : undefined;
-
   return (
     <div
       id="dashboard-root"
@@ -462,7 +456,6 @@ export default function DashboardClient() {
             earned={dailyBounty.earned}
             goal={dailyBounty.goal}
             streak={dailyBounty.streak}
-            nextWorkflowPoints={nextWorkflowPoints}
           />
         </section>
 
@@ -480,15 +473,29 @@ export default function DashboardClient() {
 
         {/* Secondary Workflow Cards */}
         {secondaryWorkflows.length > 0 && (
-          <section id="dashboard-secondary" data-testid="dashboard-secondary" className="grid grid-cols-3 gap-4">
-            {secondaryWorkflows.map((w, i) => (
-              <SecondaryWorkflowCard
-                key={w.id}
-                workflow={w}
-                onClick={handleLaunchWorkflow}
-                index={i}
-              />
-            ))}
+          <section id="dashboard-secondary" data-testid="dashboard-secondary">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.45 }}
+              className="flex items-center gap-3 mb-4"
+            >
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                Or Pick Another
+              </span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </motion.div>
+            <div className="grid grid-cols-3 gap-4">
+              {secondaryWorkflows.map((w, i) => (
+                <SecondaryWorkflowCard
+                  key={w.id}
+                  workflow={w}
+                  onClick={handleLaunchWorkflow}
+                  index={i}
+                />
+              ))}
+            </div>
           </section>
         )}
       </div>

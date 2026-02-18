@@ -86,7 +86,8 @@
       "mcp__claude_ai_Vercel__web_fetch_vercel_url",
       "Bash(pm2 delete:*)",
       "Bash(pm2 start:*)",
-      "Bash(pm2 logs:*)"
+      "Bash(pm2 logs:*)",
+      "Bash(npx jest:*)"
     ],
     "deny": [],
     "ask": []

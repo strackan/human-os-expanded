@@ -1,61 +1,63 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import BountyProgressRing from './BountyProgressRing';
 
 interface DailyBountyStripProps {
   earned: number;
   goal: number;
   streak: number;
-  nextWorkflowPoints?: number;
 }
 
-export default function DailyBountyStrip({ earned, goal, streak, nextWorkflowPoints }: DailyBountyStripProps) {
+export default function DailyBountyStrip({ earned, goal, streak }: DailyBountyStripProps) {
+  const percentage = Math.min((earned / goal) * 100, 100);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="flex items-center gap-6 bg-white/70 border border-gray-200/60 rounded-2xl px-6 py-4 max-w-2xl mx-auto"
+      className="flex items-center bg-white border border-gray-200 rounded-full px-6 py-3 max-w-2xl mx-auto shadow-sm"
     >
-      {/* Progress ring */}
-      <BountyProgressRing earned={earned} goal={goal} size={64} />
+      {/* Label */}
+      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mr-3 whitespace-nowrap">
+        Today&apos;s Score
+      </span>
 
-      {/* Points text */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-1">
-          <span
-            className="text-xl font-bold text-gray-900"
-            style={{ fontFamily: 'var(--font-fraunces)' }}
-          >
-            {earned}
-          </span>
-          <span className="text-sm text-gray-400">/ {goal} points</span>
-        </div>
-        <p className="text-xs text-gray-500 mt-0.5">Daily bounty progress</p>
+      {/* Score number */}
+      <span
+        className="text-2xl font-bold text-amber-500 mr-4 leading-none"
+        style={{ fontFamily: 'var(--font-fraunces)' }}
+      >
+        {earned}
+      </span>
+
+      {/* Linear progress bar */}
+      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden mr-3 min-w-[80px]">
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)' }}
+          initial={{ width: 0 }}
+          animate={{ width: `${percentage}%` }}
+          transition={{ duration: 1, delay: 0.4, ease: 'easeOut' }}
+        />
       </div>
 
-      {/* Streak badge */}
-      {streak > 0 && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-200">
-          <svg className="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
-          </svg>
-          <span className="text-xs font-semibold text-amber-700">{streak}-day streak</span>
-        </div>
-      )}
+      {/* Goal */}
+      <span className="text-sm text-gray-400 mr-4 whitespace-nowrap">
+        of <span className="font-medium text-gray-500">{goal}</span> pts
+      </span>
 
-      {/* Next workflow points preview */}
-      {nextWorkflowPoints !== undefined && nextWorkflowPoints > 0 && (
-        <div className="text-right">
-          <span className="text-xs text-gray-400 block">Next</span>
-          <span
-            className="text-sm font-bold text-purple-600"
-            style={{ fontFamily: 'var(--font-fraunces)' }}
-          >
-            +{nextWorkflowPoints} pts
-          </span>
-        </div>
+      {/* Divider + Streak */}
+      {streak > 0 && (
+        <>
+          <div className="w-px h-5 bg-gray-200 mr-4" />
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-semibold text-emerald-600">{streak}-day streak</span>
+          </div>
+        </>
       )}
     </motion.div>
   );

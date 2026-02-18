@@ -27,20 +27,36 @@ describe('getCategoryConfig', () => {
   it('returns blue styling for renewal', () => {
     const config = getCategoryConfig('renewal');
     expect(config.label).toBe('Data-Based');
+    expect(config.shortLabel).toBe('DATA');
     expect(config.bgColor).toBe('bg-blue-50');
     expect(config.textColor).toBe('text-blue-700');
     expect(config.borderColor).toBe('border-blue-200');
+    expect(config.accentColor).toBe('border-t-blue-500');
+    expect(config.heroTagBg).toBe('bg-blue-500/20');
+    expect(config.heroTagText).toBe('text-blue-300');
   });
 
   it('returns emerald styling for opportunity', () => {
     const config = getCategoryConfig('opportunity');
     expect(config.label).toBe('Opportunity-Based');
+    expect(config.shortLabel).toBe('OPPORTUNITY');
     expect(config.bgColor).toBe('bg-emerald-50');
+    expect(config.accentColor).toBe('border-t-emerald-500');
   });
 
-  it('returns amber styling for risk', () => {
+  it('returns red styling for risk', () => {
     const config = getCategoryConfig('risk');
     expect(config.label).toBe('Risk-Based');
-    expect(config.bgColor).toBe('bg-amber-50');
+    expect(config.shortLabel).toBe('RISK');
+    expect(config.bgColor).toBe('bg-red-50');
+    expect(config.textColor).toBe('text-red-600');
+    expect(config.accentColor).toBe('border-t-red-500');
+  });
+
+  it('returns default config for unknown types', () => {
+    const config = getCategoryConfig('nonexistent');
+    expect(config.category).toBe('data-based');
+    expect(config.shortLabel).toBe('DATA');
+    expect(config.accentColor).toBe('border-t-blue-500');
   });
 });
