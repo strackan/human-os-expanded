@@ -80,7 +80,13 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(source:*)",
       "Bash(STAGING_SUPABASE_SERVICE_ROLE_KEY=\"$SUPABASE_SERVICE_ROLE_KEY\" npx tsx:*)",
-      "Bash(git merge:*)"
+      "Bash(grep:*)",
+      "Bash(npx fix-react2shell-next --fix)",
+      "WebFetch(domain:fancyrobot.ai)",
+      "mcp__claude_ai_Vercel__web_fetch_vercel_url",
+      "Bash(pm2 delete:*)",
+      "Bash(pm2 start:*)",
+      "Bash(pm2 logs:*)"
     ],
     "deny": [],
     "ask": []

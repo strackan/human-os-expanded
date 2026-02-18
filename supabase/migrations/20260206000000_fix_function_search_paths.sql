@@ -10,7 +10,7 @@
 
 -- Parking lot functions
 ALTER FUNCTION public.get_parking_lot_items_for_evaluation(INTEGER) SET search_path = '';
-ALTER FUNCTION public.increment_category_usage(UUID) SET search_path = '';
+ALTER FUNCTION public.increment_category_usage(UUID, TEXT) SET search_path = '';
 ALTER FUNCTION public.seed_default_parking_lot_categories(UUID) SET search_path = '';
 
 -- Invite/company functions
