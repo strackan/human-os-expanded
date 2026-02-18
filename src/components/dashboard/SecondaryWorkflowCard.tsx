@@ -52,34 +52,26 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
 
         {/* Customer name */}
         <h3
-          className="text-base font-semibold text-gray-900 mb-1 group-hover:text-gray-700 transition-colors truncate"
+          className="text-lg font-bold text-gray-900 mb-1 group-hover:text-gray-700 transition-colors truncate"
           style={{ fontFamily: 'var(--font-nunito)' }}
         >
           {workflow.customerName}
         </h3>
 
-        {/* Workflow name */}
-        <p className="text-sm text-gray-500 mb-2 line-clamp-1">
-          {workflow.workflowName}
-        </p>
-
         {/* Trigger reason context */}
-        <p className="text-xs text-gray-400 line-clamp-1 mb-4">
+        <p className="text-sm text-gray-500 line-clamp-2 mb-4">
           {triggerReason}
         </p>
 
         {/* Bottom row: ARR + play button */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-auto">
           {workflow.currentArr !== undefined && workflow.currentArr > 0 ? (
-            <div>
-              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">ARR </span>
-              <span
-                className="text-sm font-bold text-gray-700"
-                style={{ fontFamily: 'var(--font-fraunces)' }}
-              >
-                {formatArr(workflow.currentArr)}
-              </span>
-            </div>
+            <span
+              className="text-base font-bold text-gray-700"
+              style={{ fontFamily: 'var(--font-fraunces)' }}
+            >
+              {formatArr(workflow.currentArr)} <span className="text-xs font-medium text-gray-400">ARR</span>
+            </span>
           ) : (
             <div />
           )}

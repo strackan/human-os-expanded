@@ -21,8 +21,8 @@ export interface CategoryConfig {
 const CATEGORY_MAP: Record<string, CategoryConfig> = {
   renewal: {
     category: 'data-based',
-    label: 'Data-Based',
-    shortLabel: 'DATA',
+    label: 'Date-Based',
+    shortLabel: 'DATE',
     bgColor: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
@@ -32,8 +32,8 @@ const CATEGORY_MAP: Record<string, CategoryConfig> = {
   },
   strategic: {
     category: 'data-based',
-    label: 'Data-Based',
-    shortLabel: 'DATA',
+    label: 'Date-Based',
+    shortLabel: 'DATE',
     bgColor: 'bg-blue-50',
     textColor: 'text-blue-700',
     borderColor: 'border-blue-200',
@@ -67,8 +67,8 @@ const CATEGORY_MAP: Record<string, CategoryConfig> = {
 
 const DEFAULT_CATEGORY: CategoryConfig = {
   category: 'data-based',
-  label: 'Data-Based',
-  shortLabel: 'DATA',
+  label: 'Date-Based',
+  shortLabel: 'DATE',
   bgColor: 'bg-blue-50',
   textColor: 'text-blue-700',
   borderColor: 'border-blue-200',

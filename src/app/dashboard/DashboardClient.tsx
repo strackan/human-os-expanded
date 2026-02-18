@@ -502,7 +502,7 @@ export default function DashboardClient() {
 
       {/* ===== BELOW THE FOLD ===== */}
       <div className="max-w-5xl mx-auto px-6 pb-16 space-y-6">
-        {/* When You're Ready divider */}
+        {/* When You're Ready divider — QuickActions revealed on expand */}
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -510,18 +510,11 @@ export default function DashboardClient() {
           id="dashboard-secondary-nav"
           data-testid="dashboard-secondary-nav"
         >
-          <WhenYouReReady />
-        </motion.section>
-
-        {/* Quick Actions */}
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3, delay: 0.8 }}
-          id="dashboard-quick-actions"
-          data-testid="dashboard-quick-actions"
-        >
-          <QuickActions expandByDefault={false} />
+          <WhenYouReReady>
+            <div id="dashboard-quick-actions" data-testid="dashboard-quick-actions">
+              <QuickActions expandByDefault={false} />
+            </div>
+          </WhenYouReReady>
         </motion.section>
       </div>
 

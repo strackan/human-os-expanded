@@ -132,21 +132,23 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
             Today&apos;s One Thing
           </span>
         </div>
-        {/* Bounty circle */}
-        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-full border-2 border-amber-400/60 bg-white/5">
-          <span
-            className="text-lg font-bold leading-none text-white"
-            style={{ fontFamily: 'var(--font-fraunces)' }}
-          >
-            {bounty.points}
-          </span>
-          <span className="text-[9px] font-medium text-amber-400 uppercase tracking-wide">Points</span>
+        {/* Bounty circle + label */}
+        <div className="flex flex-col items-center">
+          <div className="flex items-center justify-center w-14 h-14 rounded-full border-2 border-amber-400 bg-white/5">
+            <span
+              className="text-xl font-bold leading-none text-amber-400"
+              style={{ fontFamily: 'var(--font-fraunces)' }}
+            >
+              {bounty.points}
+            </span>
+          </div>
+          <span className="text-[9px] font-semibold text-amber-400 uppercase tracking-wider mt-1">Points</span>
         </div>
       </div>
 
       {/* Descriptive headline */}
       <h2
-        className="text-2xl font-bold text-white leading-snug mb-6 relative z-10 max-w-[85%]"
+        className="text-[1.75rem] font-extrabold text-white leading-snug mb-6 relative z-10 max-w-[85%]"
         style={{ fontFamily: 'var(--font-nunito)' }}
       >
         {headline}
@@ -193,7 +195,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         <button
           onClick={() => onLaunch(workflow)}
           disabled={isLaunching}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
         >
           {isLaunching ? (
             <>

@@ -24,10 +24,10 @@ describe('classifyWorkflow', () => {
 });
 
 describe('getCategoryConfig', () => {
-  it('returns blue styling for renewal', () => {
+  it('returns blue styling for renewal with DATE label', () => {
     const config = getCategoryConfig('renewal');
-    expect(config.label).toBe('Data-Based');
-    expect(config.shortLabel).toBe('DATA');
+    expect(config.label).toBe('Date-Based');
+    expect(config.shortLabel).toBe('DATE');
     expect(config.bgColor).toBe('bg-blue-50');
     expect(config.textColor).toBe('text-blue-700');
     expect(config.borderColor).toBe('border-blue-200');
@@ -56,7 +56,7 @@ describe('getCategoryConfig', () => {
   it('returns default config for unknown types', () => {
     const config = getCategoryConfig('nonexistent');
     expect(config.category).toBe('data-based');
-    expect(config.shortLabel).toBe('DATA');
+    expect(config.shortLabel).toBe('DATE');
     expect(config.accentColor).toBe('border-t-blue-500');
   });
 });
