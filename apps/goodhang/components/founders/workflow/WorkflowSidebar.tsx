@@ -1,0 +1,125 @@
+'use client';
+
+import { useCallback } from 'react';
+import { Check } from 'lucide-react';
+import { useWorkflowMode, useWorkflowUI, useWorkflowChat } from '@/lib/founders/workflow-context';
+import { ChatInput } from '@/components/founders/ChatInput';
+import { ChatPanel } from './ChatPanel';
+import type { WorkflowStep } from '@/lib/founders/workflow-types';
+
+function StepListHeader({ steps, currentStepIndex }: { steps: WorkflowStep[]; currentStepIndex: number }) {
+  const activeStep = steps[currentStepIndex];
+  const completedSteps = steps.slice(0, currentStepIndex);
+  return (
+    <div className="border-b border-[var(--gh-dark-700)] p-4">
+      {completedSteps.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {completedSteps.map((step) => (
+            <div key={step.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 rounded-lg text-[13px] text-green-400 border border-green-500/20" title={step.label}>
+              <Check className="w-3.5 h-3.5" /><span>{step.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {activeStep && (
+        <div className="flex items-center gap-4 px-4 py-4 bg-blue-500/10 border border-blue-500/30 rounded-xl">
+          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-base font-semibold text-white shadow-lg shadow-blue-500/20">{currentStepIndex + 1}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[15px] font-semibold text-white leading-tight">{activeStep.label}</div>
+            {activeStep.description && <div className="text-[13px] text-gray-400 mt-1">{activeStep.description}</div>}
+          </div>
+          <div className="flex-shrink-0 px-2.5 py-1 bg-[var(--gh-dark-700)] rounded-full">
+            <span className="text-[11px] text-gray-400 font-medium">{currentStepIndex + 1} of {steps.length}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UpcomingStepsFooter({ steps, currentStepIndex }: { steps: WorkflowStep[]; currentStepIndex: number }) {
+  const upcomingSteps = steps.slice(currentStepIndex + 1);
+  if (upcomingSteps.length === 0) return null;
+  return (
+    <div className="border-t border-[var(--gh-dark-700)] p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-px flex-1 bg-[var(--gh-dark-600)]" />
+        <span className="text-[11px] text-gray-500 uppercase tracking-wider font-medium">Up next</span>
+        <div className="h-px flex-1 bg-[var(--gh-dark-600)]" />
+      </div>
+      <div className="space-y-1">
+        {upcomingSteps.map((step, index) => (
+          <div key={step.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--gh-dark-700)]/50 transition-colors cursor-default">
+            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--gh-dark-600)] flex items-center justify-center text-[11px] font-medium text-gray-400">{currentStepIndex + 2 + index}</div>
+            <span className="text-[13px] text-gray-400">{step.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProgressFooter({ progress, onReset }: { progress: number; onReset?: () => void }) {
+  return (
+    <div className="border-t border-[var(--gh-dark-700)] p-3">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500">Progress</span>
+        <span className="text-xs text-gray-400">{Math.round(progress)}%</span>
+      </div>
+      <div className="w-full h-1.5 bg-[var(--gh-dark-600)] rounded-full overflow-hidden">
+        <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+      </div>
+      {onReset && (
+        <button onClick={onReset} className="mt-2 text-[11px] text-gray-500 hover:text-gray-400 transition-colors">Reset progress</button>
+      )}
+    </div>
+  );
+}
+
+export function WorkflowSidebar({ className, expandToFill = false, hideChatInput = false }: { className?: string; expandToFill?: boolean; hideChatInput?: boolean }) {
+  const { workflowState, onReset } = useWorkflowMode();
+  const { sidebarWidth, sidebarCollapsed } = useWorkflowUI();
+  const { inputValue, isLoading, setInputValue, sendMessage } = useWorkflowChat();
+
+  const steps = workflowState?.steps ?? [];
+  const requiredSteps = steps.filter(s => s.required);
+  const completedRequired = requiredSteps.filter(s => s.status === 'completed').length;
+  const progress = requiredSteps.length > 0 ? (completedRequired / requiredSteps.length) * 100 : 0;
+
+  const handleSend = useCallback(() => { if (inputValue.trim() && !isLoading) sendMessage(inputValue); }, [inputValue, isLoading, sendMessage]);
+  const currentStepIndex = steps.findIndex(s => s.status === 'in_progress');
+
+  const getWidth = () => {
+    if (sidebarCollapsed) return 60;
+    if (expandToFill) return '100%';
+    return sidebarWidth;
+  };
+
+  return (
+    <div style={{ width: getWidth(), transition: 'width 0.2s ease-in-out' }}
+      className={`relative h-full bg-[var(--gh-dark-800)] border-r border-[var(--gh-dark-700)] flex flex-col overflow-hidden ${className ?? ''}`}>
+      {sidebarCollapsed && (
+        <div className="flex-1 flex flex-col items-center py-4 gap-2">
+          {steps.map((step, index) => (
+            <div key={step.id} className={`w-8 h-8 rounded-full flex items-center justify-center ${step.status === 'completed' ? 'bg-green-500' : step.status === 'in_progress' ? 'bg-blue-500' : 'bg-[var(--gh-dark-600)]'}`} title={step.label}>
+              <span className="text-xs text-white">{index + 1}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {!sidebarCollapsed && (
+        <>
+          <div className="flex-shrink-0"><StepListHeader steps={steps} currentStepIndex={currentStepIndex >= 0 ? currentStepIndex : 0} /></div>
+          <ChatPanel className="flex-1 min-h-0 overflow-y-auto" />
+          {!hideChatInput && (
+            <div className="flex-shrink-0 border-t border-[var(--gh-dark-700)]">
+              <ChatInput value={inputValue} onChange={setInputValue} onSend={handleSend} disabled={isLoading} placeholder="Type your message..." sendButtonColor="blue" />
+            </div>
+          )}
+          <div className="flex-shrink-0"><UpcomingStepsFooter steps={steps} currentStepIndex={currentStepIndex >= 0 ? currentStepIndex : 0} /></div>
+          <div className="flex-shrink-0"><ProgressFooter progress={progress} {...(onReset ? { onReset } : {})} /></div>
+        </>
+      )}
+    </div>
+  );
+}

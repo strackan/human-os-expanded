@@ -1,0 +1,158 @@
+/**
+ * Founders Section Theme
+ *
+ * Dark theme with purple accents for the Founder OS experience.
+ * Replaces framer-motion animations with CSS transitions/keyframes.
+ */
+
+/* =============================================================================
+   COLOR CUSTOM PROPERTIES
+   ============================================================================= */
+
+:root {
+  --gh-dark-900: #0a0a0f;
+  --gh-dark-800: #111118;
+  --gh-dark-700: #1a1a24;
+  --gh-dark-600: #252530;
+  --gh-dark-500: #35354a;
+  --gh-purple-600: #7c3aed;
+  --gh-purple-500: #8b5cf6;
+  --gh-purple-400: #a78bfa;
+}
+
+/* =============================================================================
+   ANIMATIONS (replacing framer-motion)
+   ============================================================================= */
+
+@keyframes founders-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes founders-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes founders-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes founders-pulse-border {
+  0%,
+  100% {
+    border-color: var(--gh-purple-600);
+  }
+  50% {
+    border-color: var(--gh-purple-400);
+  }
+}
+
+.animate-founders-fade-in {
+  animation: founders-fade-in 0.3s ease-out forwards;
+}
+
+.animate-founders-slide-up {
+  animation: founders-slide-up 0.3s ease-out forwards;
+}
+
+.animate-founders-scale-in {
+  animation: founders-scale-in 0.2s ease-out forwards;
+}
+
+/* =============================================================================
+   FOUNDERS LAYOUT UTILITIES
+   ============================================================================= */
+
+.founders-dark-bg {
+  background-color: var(--gh-dark-900);
+}
+
+.founders-card {
+  background-color: var(--gh-dark-800);
+  border: 1px solid var(--gh-dark-600);
+  border-radius: 0.75rem;
+}
+
+.founders-input {
+  background-color: var(--gh-dark-700);
+  border: 1px solid var(--gh-dark-600);
+  color: white;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.founders-input:focus {
+  outline: none;
+  border-color: var(--gh-purple-600);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+.founders-input::placeholder {
+  color: #6b7280;
+}
+
+.founders-btn-primary {
+  background-color: var(--gh-purple-600);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.founders-btn-primary:hover:not(:disabled) {
+  background-color: var(--gh-purple-500);
+}
+
+.founders-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =============================================================================
+   CHAT BUBBLE ANIMATIONS
+   ============================================================================= */
+
+.chat-message-enter {
+  animation: founders-slide-up 0.3s ease-out forwards;
+}
+
+/* =============================================================================
+   SCROLLBAR STYLING
+   ============================================================================= */
+
+.founders-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.founders-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.founders-scrollbar::-webkit-scrollbar-thumb {
+  background-color: var(--gh-dark-500);
+  border-radius: 3px;
+}
+
+.founders-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: #4a4a6a;
+}

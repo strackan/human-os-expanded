@@ -61,6 +61,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
+  // Protect founders authenticated routes (tutorial + production)
+  if (
+    !user &&
+    (request.nextUrl.pathname.startsWith('/founders/tutorial') ||
+      request.nextUrl.pathname.startsWith('/founders/production'))
+  ) {
+    return NextResponse.redirect(new URL('/founders', request.url))
+  }
+
   // Check membership status for protected routes
   if (user && (
     request.nextUrl.pathname.startsWith('/members') &&
