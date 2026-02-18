@@ -1,5 +1,6 @@
 // Adventure Score — evaluates a ghost conversation session
 // Uses Claude to score discovery, action choice, and efficiency.
+// Returns enriched response with verdicts, achievements, outcome deltas.
 // Also handles saving sessions to the database.
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
@@ -36,6 +37,10 @@ serve(async (req: Request) => {
         score_action: body.score_action,
         score_efficiency: body.score_efficiency,
         score_total: body.score_total,
+        verdict: body.verdict || null,
+        outcome_delta: body.outcome_delta || null,
+        bonuses: body.bonuses || null,
+        baseline_score: 50,
       });
       if (error) console.error("Save session error:", error);
 
@@ -67,10 +72,12 @@ serve(async (req: Request) => {
     const factCount = (facts_discovered || []).length;
 
     // Build scoring prompt for Claude
-    const scoringSystemPrompt = `You are an expert customer success scoring engine. You evaluate ghost customer interview sessions.
+    const scoringSystemPrompt = `You are an expert customer success scoring engine. You evaluate ghost customer interview sessions using a BASELINE-DELTA model.
+
+Each scenario has a baseline outcome (score = 50) representing what actually happened. The player's score reflects whether they improved or worsened reality.
 
 You will receive:
-1. The scenario context and scoring rubric
+1. The scenario context, baseline outcome, and scoring rubric
 2. The full conversation transcript
 3. Which facts the player discovered
 4. What action the player chose
@@ -83,21 +90,41 @@ Based on which facts were discovered and their tier values:
 - Tier 2 (Signal): 4-5 pts each
 - Tier 3 (Deep): 6-8 pts each
 - Tier 4 (Personal): 3 pts each
+- Facts tagged as "outcome_changing" are worth MORE — they shift the result away from baseline
 - Expansion signals are worth MORE than risk signals
 Cap at 40.
 
 ## Action Score (0-40 pts)
-Based on the action chosen AND what was discovered:
+Scored as DELTA FROM BASELINE:
+- Action that significantly improves on reality: 25-40
+- Action that somewhat improves on reality: 15-24
+- Action that matches reality (what most people would do): 8-14
+- Action that's worse than reality: 0-7
 - An action only scores high if the player has the context to back it up
-- The BEST action with full context: 35-40 pts
-- A good action with partial context: 20-34 pts
-- A generic/safe action: 8-19 pts
-- A wrong/contradictory action: 0-7 pts
 
 ## Efficiency Score (0-20 pts)
 - Found expansion signal in ≤5 questions: +8 pts
 - High reveal rate (facts per question): +7 pts
 - Built rapport before probing (didn't interrogate): +5 pts
+
+## Achievement Detection
+Check for these achievements and include any that apply:
+- "the_pivot": First 3 questions got only tier 1 reveals, then shifted to tier 2+ probing
+- "first_instinct": Found a tier 2+ signal in first 3 questions
+- "the_silence": Triggered a tier 3 reveal
+- "against_the_grain": Chose an unconventional but high-scoring action (see rubric)
+- "called_it": Asked directly about the core issue (the main problem driving the scenario)
+
+## Verdict Selection
+Based on the total score, select the appropriate verdict tier:
+- 70+: "high" verdict
+- 40-69: "mid" verdict
+- <40: "low" verdict
+
+## Sentiment Assessment
+Based on the conversation flow, assess:
+- What emotional state the character started in
+- What emotional state they ended in
 
 Respond with ONLY valid JSON, no markdown:
 {
@@ -105,8 +132,10 @@ Respond with ONLY valid JSON, no markdown:
   "score_action": <number>,
   "score_efficiency": <number>,
   "score_total": <number>,
-  "result_label": "<one sentence outcome>",
+  "verdict_tier": "<high|mid|low>",
+  "achievements": ["<achievement_id>", ...],
   "missed_facts": ["<fact description 1>", "<fact description 2>", ...],
+  "sentiment_shift": { "start": "<emotional_state>", "end": "<emotional_state>" },
   "reasoning": "<brief explanation of scoring>"
 }`;
 
@@ -137,7 +166,7 @@ Score this session now. Return ONLY JSON.`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 800,
+        max_tokens: 1000,
         temperature: 0.3,
         system: scoringSystemPrompt,
         messages: [{ role: "user", content: scoringUserPrompt }],
@@ -172,6 +201,12 @@ Score this session now. Return ONLY JSON.`;
 
     // Ensure total is correct
     scores.score_total = (scores.score_discovery || 0) + (scores.score_action || 0) + (scores.score_efficiency || 0);
+
+    // Ensure arrays exist
+    scores.achievements = scores.achievements || [];
+    scores.missed_facts = scores.missed_facts || [];
+    scores.sentiment_shift = scores.sentiment_shift || { start: "guarded", end: "guarded" };
+    scores.verdict_tier = scores.verdict_tier || (scores.score_total >= 70 ? "high" : scores.score_total >= 40 ? "mid" : "low");
 
     return new Response(JSON.stringify(scores), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
