@@ -54,9 +54,10 @@
   --z-modal: 50;
 
   /* Dashboard Theme */
-  --dashboard-bg: #f8f7f4;
-  --dashboard-accent-primary: #2D2A53;
-  --dashboard-accent-secondary: #a855f7;
+  --dashboard-bg: #F4F1EC;
+  --dashboard-accent-primary: #1A1A2E;
+  --dashboard-accent-warm: #E8723A;
+  --dashboard-accent-gold: #D4A843;
 }
 
 /* ============================================

@@ -34,17 +34,18 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.5 + index * 0.1 }}
       onClick={() => onClick(workflow)}
-      className={`text-left w-full bg-white rounded-2xl border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all group overflow-hidden border-t-4 ${category.accentColor}`}
+      className={`text-left w-full bg-white rounded-2xl border border-gray-200 hover:border-transparent hover:-translate-y-0.5 transition-all group overflow-hidden`}
+      style={{ borderTop: `3px solid ${category.category === 'risk-based' ? '#D94F4F' : category.category === 'opportunity-based' ? '#2BA86A' : '#4A7FD4'}` }}
     >
       <div className="px-5 pt-5 pb-4">
         {/* Category tag + bounty points */}
-        <div className="flex items-center justify-between mb-3">
-          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wide ${category.bgColor} ${category.textColor}`}>
+        <div className="flex items-center justify-between mb-2.5">
+          <span className={`text-[0.68rem] font-semibold px-2.5 py-0.5 rounded-xl uppercase tracking-wide ${category.bgColor} ${category.textColor}`}>
             {category.shortLabel}
           </span>
           <span
-            className="text-xs font-bold text-amber-500"
-            style={{ fontFamily: 'var(--font-fraunces)' }}
+            className="text-sm font-bold"
+            style={{ fontFamily: 'var(--font-fraunces)', color: '#E8723A' }}
           >
             +{bounty.points} pts
           </span>
@@ -52,32 +53,33 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
 
         {/* Customer name */}
         <h3
-          className="text-lg font-bold text-gray-900 mb-1 group-hover:text-gray-700 transition-colors truncate"
-          style={{ fontFamily: 'var(--font-nunito)' }}
+          className="text-[0.95rem] font-semibold text-gray-900 mb-1 group-hover:text-gray-700 transition-colors truncate"
         >
           {workflow.customerName}
         </h3>
 
-        {/* Trigger reason context */}
-        <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+        {/* Trigger reason / signal text */}
+        <p className="text-[0.78rem] text-gray-500 leading-snug line-clamp-2 mb-3.5" style={{ minHeight: '2.2rem' }}>
           {triggerReason}
         </p>
 
         {/* Bottom row: ARR + play button */}
-        <div className="flex items-center justify-between mt-auto">
+        <div className="flex items-center justify-between">
           {workflow.currentArr !== undefined && workflow.currentArr > 0 ? (
             <span
-              className="text-base font-bold text-gray-700"
+              className="text-[0.85rem] font-semibold text-gray-500"
               style={{ fontFamily: 'var(--font-fraunces)' }}
             >
-              {formatArr(workflow.currentArr)} <span className="text-xs font-medium text-gray-400">ARR</span>
+              {formatArr(workflow.currentArr)} ARR
             </span>
           ) : (
             <div />
           )}
-          <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-gray-200 flex items-center justify-center transition-colors">
-            <svg className="w-3.5 h-3.5 text-gray-500 group-hover:text-gray-700 transition-colors" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          <div className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+            style={{ background: '#F8F6F2' }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400 group-hover:text-gray-900 transition-colors">
+              <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
           </div>
         </div>
