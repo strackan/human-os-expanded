@@ -87,7 +87,11 @@
       "Bash(pm2 delete:*)",
       "Bash(pm2 start:*)",
       "Bash(pm2 logs:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "mcp__claude_ai_Vercel__get_runtime_logs",
+      "mcp__claude_ai_Vercel__get_deployment",
+      "mcp__claude_ai_Vercel__list_deployments"
     ],
     "deny": [],
     "ask": []
