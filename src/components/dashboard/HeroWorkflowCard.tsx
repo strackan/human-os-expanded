@@ -138,7 +138,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: '#E8723A' }}
           />
-          <span className="text-xs font-medium tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <span className="hero-section-label tracking-widest uppercase">
             Today&apos;s One Thing
           </span>
         </div>
@@ -169,7 +169,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
 
       {/* Descriptive headline — Fraunces serif */}
       <h2
-        className="text-[1.65rem] font-semibold text-white leading-snug mb-4 relative z-10 max-w-[80%]"
+        className="leading-snug mb-4 relative z-10 max-w-[80%]"
         style={{ fontFamily: 'var(--font-fraunces)' }}
       >
         {headline}
@@ -198,15 +198,15 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         </div>
         {/* Name + context */}
         <div className="flex-1 min-w-0">
-          <p className="text-[0.95rem] font-semibold text-white truncate">{workflow.customerName}</p>
+          <p className="hero-customer-name text-[0.95rem] truncate">{workflow.customerName}</p>
           <p className="text-sm truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{triggerReason}</p>
         </div>
         {/* ARR */}
         {workflow.currentArr !== undefined && workflow.currentArr > 0 && (
           <div className="text-right flex-shrink-0">
-            <span className="text-[0.7rem] font-medium uppercase tracking-wide block" style={{ color: 'rgba(255,255,255,0.4)' }}>ARR</span>
+            <span className="hero-arr-label text-[0.7rem] font-medium uppercase tracking-wide block">ARR</span>
             <span
-              className="text-lg font-bold text-white leading-none"
+              className="hero-arr-value text-lg font-bold leading-none"
               style={{ fontFamily: 'var(--font-fraunces)' }}
             >
               {formatArr(workflow.currentArr)}
