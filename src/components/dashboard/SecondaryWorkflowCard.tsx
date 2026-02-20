@@ -59,7 +59,7 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
         </h3>
 
         {/* Trigger reason / signal text */}
-        <p className="text-[0.78rem] text-gray-500 leading-snug line-clamp-2 mb-3.5" style={{ minHeight: '2.2rem' }}>
+        <p className="text-[0.78rem] text-gray-400 leading-snug line-clamp-2 mb-3.5" style={{ minHeight: '2.2rem' }}>
           {triggerReason}
         </p>
 
@@ -67,7 +67,7 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
         <div className="flex items-center justify-between">
           {workflow.currentArr !== undefined && workflow.currentArr > 0 ? (
             <span
-              className="text-[0.85rem] font-semibold text-gray-500"
+              className="text-[0.85rem] font-bold text-gray-800"
               style={{ fontFamily: 'var(--font-fraunces)' }}
             >
               {formatArr(workflow.currentArr)} ARR

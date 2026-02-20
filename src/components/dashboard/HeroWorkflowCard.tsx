@@ -186,11 +186,11 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
       >
         {/* Initials avatar */}
         <div
-          className="w-[38px] h-[38px] rounded-lg flex items-center justify-center flex-shrink-0"
+          className="w-[46px] h-[46px] rounded-lg flex items-center justify-center flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, #4A7FD4, #6B9BE0)' }}
         >
           <span
-            className="text-sm font-bold text-white"
+            className="text-base font-bold text-white"
             style={{ fontFamily: 'var(--font-fraunces)' }}
           >
             {getInitials(workflow.customerName)}

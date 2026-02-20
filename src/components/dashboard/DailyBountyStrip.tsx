@@ -6,9 +6,10 @@ interface DailyBountyStripProps {
   earned: number;
   goal: number;
   streak: number;
+  message?: string;
 }
 
-export default function DailyBountyStrip({ earned, goal, streak }: DailyBountyStripProps) {
+export default function DailyBountyStrip({ earned, goal, streak, message }: DailyBountyStripProps) {
   const percentage = Math.min((earned / goal) * 100, 100);
 
   return (
@@ -53,15 +54,17 @@ export default function DailyBountyStrip({ earned, goal, streak }: DailyBountySt
         of <span className="font-semibold text-gray-800">{goal}</span> pts
       </span>
 
-      {/* Divider + Streak */}
-      {streak > 0 && (
+      {/* Divider + Streak/Message */}
+      {(message || streak > 0) && (
         <>
           <div className="w-px h-6 bg-gray-200 mr-4" />
           <div className="flex items-center gap-1.5 whitespace-nowrap">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="#E8723A">
               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
             </svg>
-            <span className="text-sm font-semibold" style={{ color: '#E8723A' }}>{streak}-day streak</span>
+            <span className="text-sm font-semibold" style={{ color: '#E8723A' }}>
+              {message || `${streak}-day streak`}
+            </span>
           </div>
         </>
       )}
