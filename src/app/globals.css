@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../styles/layout.css";
+@import "../styles/dashboard-theme.css";
 
 :root {
   --background: #ffffff;
@@ -226,7 +227,7 @@ p {
   color: rgb(203 213 225); /* slate-300 */
 }
 
-h1, h2, h3, h4, h5, h6 {
+:where(h1, h2, h3, h4, h5, h6) {
   color: rgb(17 24 39); /* gray-900 - headings should be darker */
   font-weight: 600;
 }

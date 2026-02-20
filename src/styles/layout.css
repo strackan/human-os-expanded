@@ -61,35 +61,6 @@
 }
 
 /* ============================================
-   DASHBOARD HERO CARD
-   ============================================ */
-
-#dashboard-hero h2 {
-  color: #FFFFFF !important;
-  font-size: 1.75rem;
-  font-weight: 700;
-}
-
-#dashboard-hero .hero-customer-name {
-  color: #FFFFFF !important;
-  font-weight: 700;
-}
-
-#dashboard-hero .hero-arr-value {
-  color: #FFFFFF !important;
-}
-
-#dashboard-hero .hero-arr-label {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-#dashboard-hero .hero-section-label {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
-}
-
-/* ============================================
    GLOBAL LAYOUT COMPONENTS
    ============================================ */
 

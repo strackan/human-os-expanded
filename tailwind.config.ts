@@ -31,6 +31,14 @@ const config = {
   theme: {
     extend: {
       colors: {
+        // Dashboard theme tokens (from CSS variables)
+        'bounty-orange': 'var(--color-bounty-orange)',
+        'bounty-gold': 'var(--color-bounty-gold)',
+        'category-risk': 'var(--color-category-risk)',
+        'category-opportunity': 'var(--color-category-opportunity)',
+        'category-date': 'var(--color-category-date)',
+        'cream-light': 'var(--color-cream-light)',
+        'dashboard-bg': 'var(--dashboard-bg)',
         // Custom color palette
         primary: {
           50: '#eff6ff',
@@ -96,6 +104,7 @@ const config = {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
         'medium': '0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         'large': '0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 2px 10px -2px rgba(0, 0, 0, 0.05)',
+        'hero': 'var(--shadow-hero-card)',
       },
       animation: {
         // Custom animations
@@ -148,6 +157,8 @@ const config = {
         // Custom font families
         sans: ['Arial', 'Helvetica', 'sans-serif'],
         mono: ['Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+        fraunces: ['var(--font-fraunces)'],
+        nunito: ['var(--font-nunito)'],
       },
       fontSize: {
         // Custom font sizes

@@ -1,0 +1,135 @@
+/**
+ * Dashboard Theme — centralized design tokens and utility classes
+ * for the dashboard hero card, bounty system, and secondary cards.
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES
+   ============================================ */
+
+:root {
+  /* Bounty accent colors */
+  --color-bounty-orange: #E8723A;
+  --color-bounty-gold: #D4A843;
+
+  /* Hero gradient stops */
+  --color-hero-start: #1A1A2E;
+  --color-hero-mid1: #2D2B55;
+  --color-hero-mid2: #3B2667;
+  --color-hero-end: #4A2D7A;
+
+  /* Category accent colors */
+  --color-category-risk: #D94F4F;
+  --color-category-opportunity: #2BA86A;
+  --color-category-date: #4A7FD4;
+
+  /* Avatar gradient */
+  --color-avatar-blue-start: #4A7FD4;
+  --color-avatar-blue-end: #6B9BE0;
+
+  /* Surface colors */
+  --color-cream-light: #F8F6F2;
+
+  /* Composite values */
+  --gradient-hero: linear-gradient(135deg, var(--color-hero-start) 0%, var(--color-hero-mid1) 40%, var(--color-hero-mid2) 70%, var(--color-hero-end) 100%);
+  --gradient-bounty: linear-gradient(135deg, var(--color-bounty-orange), var(--color-bounty-gold));
+  --gradient-avatar: linear-gradient(135deg, var(--color-avatar-blue-start), var(--color-avatar-blue-end));
+  --shadow-hero-card: 0 12px 48px rgba(74, 45, 122, 0.25);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+/* Hero card dark gradient background */
+.bg-hero-gradient {
+  background: var(--gradient-hero);
+}
+
+/* Bounty orange-to-gold gradient */
+.bg-bounty-gradient {
+  background: var(--gradient-bounty);
+}
+
+/* Avatar blue gradient */
+.bg-avatar-gradient {
+  background: var(--gradient-avatar);
+}
+
+/* Gradient text effect (bounty score) */
+.text-gradient-bounty {
+  font-family: var(--font-fraunces);
+  background: var(--gradient-bounty);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Fraunces serif font shorthand */
+.font-fraunces {
+  font-family: var(--font-fraunces);
+}
+
+/* Glassmorphism effects for dark-bg containers */
+.glass-card {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.glass-tag {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Hero card animated glow overlay */
+.hero-glow {
+  background: radial-gradient(ellipse at 30% 50%, rgba(232, 114, 58, 0.12) 0%, transparent 50%),
+              radial-gradient(ellipse at 70% 30%, rgba(212, 168, 67, 0.08) 0%, transparent 40%);
+}
+
+/* Bounty circle on hero card */
+.hero-bounty-circle {
+  background: rgba(232, 114, 58, 0.15);
+  border: 1.5px solid rgba(232, 114, 58, 0.4);
+}
+
+/* Bounty "Points" label under circle */
+.hero-bounty-label {
+  color: rgba(232, 114, 58, 0.7);
+}
+
+/* ============================================
+   DASHBOARD HERO CARD — SCOPED RULES
+   (moved from layout.css)
+   ============================================ */
+
+#dashboard-hero h2 {
+  color: #FFFFFF;
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+#dashboard-hero .hero-customer-name {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+#dashboard-hero .hero-arr-value {
+  color: #FFFFFF;
+}
+
+#dashboard-hero .hero-arr-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+#dashboard-hero .hero-section-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}

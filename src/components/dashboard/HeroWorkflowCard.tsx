@@ -58,8 +58,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="relative overflow-hidden rounded-2xl px-10 py-9"
-        style={{ background: 'linear-gradient(135deg, #1A1A2E 0%, #2D2B55 40%, #3B2667 70%, #4A2D7A 100%)' }}
+        className="relative overflow-hidden rounded-2xl px-10 py-9 bg-hero-gradient"
       >
         <div className="animate-pulse space-y-5">
           <div className="flex justify-between">
@@ -88,8 +87,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="relative overflow-hidden rounded-2xl px-10 py-14 text-center"
-        style={{ background: 'linear-gradient(135deg, #1A1A2E 0%, #2D2B55 40%, #3B2667 70%, #4A2D7A 100%)' }}
+        className="relative overflow-hidden rounded-2xl px-10 py-14 text-center bg-hero-gradient"
       >
         <p className="text-lg text-white/50">No workflows queued right now. Nice work!</p>
       </motion.div>
@@ -113,20 +111,13 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.3 }}
-      className="relative overflow-hidden rounded-2xl px-10 py-9 cursor-pointer transition-transform hover:-translate-y-0.5"
-      style={{
-        background: 'linear-gradient(135deg, #1A1A2E 0%, #2D2B55 40%, #3B2667 70%, #4A2D7A 100%)',
-        boxShadow: '0 12px 48px rgba(74, 45, 122, 0.25)',
-      }}
+      className="relative overflow-hidden rounded-2xl px-10 py-9 cursor-pointer transition-transform hover:-translate-y-0.5 bg-hero-gradient shadow-hero"
     >
       {/* Decorative gradient glow */}
       <motion.div
         animate={{ opacity: [0.6, 1, 0.6], scale: [1, 1.02, 1] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] pointer-events-none"
-        style={{
-          background: 'radial-gradient(ellipse at 30% 50%, rgba(232, 114, 58, 0.12) 0%, transparent 50%), radial-gradient(ellipse at 70% 30%, rgba(212, 168, 67, 0.08) 0%, transparent 40%)',
-        }}
+        className="absolute -top-1/2 -left-1/2 w-[200%] h-[200%] pointer-events-none hero-glow"
       />
 
       {/* Header: "TODAY'S ONE THING" + bounty circle */}
@@ -135,8 +126,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
           <motion.span
             animate={{ opacity: [0.5, 1, 0.5], scale: [1, 1.3, 1] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: '#E8723A' }}
+            className="w-2 h-2 rounded-full bg-bounty-orange"
           />
           <span className="hero-section-label tracking-widest uppercase">
             Today&apos;s One Thing
@@ -144,71 +134,40 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         </div>
         {/* Bounty circle + label */}
         <div className="flex flex-col items-center">
-          <div
-            className="flex items-center justify-center w-[52px] h-[52px] rounded-full relative z-10"
-            style={{
-              background: 'rgba(232, 114, 58, 0.15)',
-              border: '1.5px solid rgba(232, 114, 58, 0.4)',
-            }}
-          >
-            <span
-              className="text-lg font-bold leading-none"
-              style={{ fontFamily: 'var(--font-fraunces)', color: '#E8723A' }}
-            >
+          <div className="flex items-center justify-center w-[52px] h-[52px] rounded-full relative z-10 hero-bounty-circle">
+            <span className="text-lg font-bold leading-none font-fraunces text-bounty-orange">
               {bounty.points}
             </span>
           </div>
-          <span
-            className="text-[9px] font-medium uppercase tracking-wider mt-1"
-            style={{ color: 'rgba(232, 114, 58, 0.7)' }}
-          >
+          <span className="text-[9px] font-medium uppercase tracking-wider mt-1 hero-bounty-label">
             Points
           </span>
         </div>
       </div>
 
       {/* Descriptive headline — Fraunces serif */}
-      <h2
-        className="leading-snug mb-4 relative z-10 max-w-[80%]"
-        style={{ fontFamily: 'var(--font-fraunces)' }}
-      >
+      <h2 className="leading-snug mb-4 relative z-10 max-w-[80%] font-fraunces">
         {headline}
       </h2>
 
       {/* Customer info bar */}
-      <div
-        className="flex items-center gap-4 rounded-xl px-5 py-3.5 mb-4 relative z-10"
-        style={{
-          background: 'rgba(255, 255, 255, 0.06)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
+      <div className="flex items-center gap-4 rounded-xl px-5 py-3.5 mb-4 relative z-10 glass-card">
         {/* Initials avatar */}
-        <div
-          className="w-[46px] h-[46px] rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #4A7FD4, #6B9BE0)' }}
-        >
-          <span
-            className="text-base font-bold text-white"
-            style={{ fontFamily: 'var(--font-fraunces)' }}
-          >
+        <div className="w-[46px] h-[46px] rounded-lg flex items-center justify-center flex-shrink-0 bg-avatar-gradient">
+          <span className="text-base font-bold text-white font-fraunces">
             {getInitials(workflow.customerName)}
           </span>
         </div>
         {/* Name + context */}
         <div className="flex-1 min-w-0">
           <p className="hero-customer-name text-[0.95rem] truncate">{workflow.customerName}</p>
-          <p className="text-sm truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.5)' }}>{triggerReason}</p>
+          <p className="text-sm truncate mt-0.5 text-white/50">{triggerReason}</p>
         </div>
         {/* ARR */}
         {workflow.currentArr !== undefined && workflow.currentArr > 0 && (
           <div className="text-right flex-shrink-0">
             <span className="hero-arr-label text-[0.7rem] font-medium uppercase tracking-wide block">ARR</span>
-            <span
-              className="hero-arr-value text-lg font-bold leading-none"
-              style={{ fontFamily: 'var(--font-fraunces)' }}
-            >
+            <span className="hero-arr-value text-lg font-bold leading-none font-fraunces">
               {formatArr(workflow.currentArr)}
             </span>
           </div>
@@ -219,20 +178,11 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
       <div className="flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2.5">
           {/* Category tag */}
-          <span className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide ${category.heroTagBg} ${category.heroTagText}`}
-            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-          >
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide glass-tag ${category.heroTagBg} ${category.heroTagText}`}>
             {category.shortLabel}
           </span>
           {/* Due date tag */}
-          <span
-            className="text-xs font-medium px-3 py-1 rounded-full uppercase tracking-wide"
-            style={{
-              background: 'rgba(255,255,255,0.08)',
-              color: 'rgba(255,255,255,0.5)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
+          <span className="text-xs font-medium px-3 py-1 rounded-full uppercase tracking-wide text-white/50 glass-tag">
             {getDueLabel(workflow.daysUntilRenewal)}
           </span>
         </div>
@@ -240,12 +190,7 @@ export default function HeroWorkflowCard({ workflow, onLaunch, isLoading, isLaun
         <button
           onClick={() => onLaunch(workflow)}
           disabled={isLaunching}
-          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            color: 'rgba(255,255,255,0.7)',
-            border: '1px solid rgba(255,255,255,0.1)',
-          }}
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-semibold transition-all active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed glass-btn text-white/70"
         >
           {isLaunching ? (
             <>

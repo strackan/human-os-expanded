@@ -43,10 +43,7 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
           <span className={`text-[0.68rem] font-semibold px-2.5 py-0.5 rounded-xl uppercase tracking-wide ${category.bgColor} ${category.textColor}`}>
             {category.shortLabel}
           </span>
-          <span
-            className="text-sm font-bold"
-            style={{ fontFamily: 'var(--font-fraunces)', color: '#E8723A' }}
-          >
+          <span className="text-sm font-bold font-fraunces text-bounty-orange">
             +{bounty.points} pts
           </span>
         </div>
@@ -59,25 +56,20 @@ export default function SecondaryWorkflowCard({ workflow, onClick, index }: Seco
         </h3>
 
         {/* Trigger reason / signal text */}
-        <p className="text-[0.78rem] text-gray-400 leading-snug line-clamp-2 mb-3.5" style={{ minHeight: '2.2rem' }}>
+        <p className="text-[0.78rem] text-gray-400 leading-snug line-clamp-2 mb-3.5 min-h-[2.2rem]">
           {triggerReason}
         </p>
 
         {/* Bottom row: ARR + play button */}
         <div className="flex items-center justify-between">
           {workflow.currentArr !== undefined && workflow.currentArr > 0 ? (
-            <span
-              className="text-[0.85rem] font-bold text-gray-800"
-              style={{ fontFamily: 'var(--font-fraunces)' }}
-            >
+            <span className="text-[0.85rem] font-bold text-gray-800 font-fraunces">
               {formatArr(workflow.currentArr)} ARR
             </span>
           ) : (
             <div />
           )}
-          <div className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
-            style={{ background: '#F8F6F2' }}
-          >
+          <div className="w-7 h-7 rounded-full flex items-center justify-center transition-all bg-cream-light">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-400 group-hover:text-gray-900 transition-colors">
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
