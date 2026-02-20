@@ -360,31 +360,27 @@ function TutorialWorkflowMode() {
       return;
     }
 
-    setIsLoadingReport(true);
-    actions.addAssistantMessage("Hello! Let me check your profile status...");
+    actions.addAssistantMessage("Hello! Let's get started...");
 
     try {
       const data = await initializeTutorial(currentSessionId, progress, token);
       if (data.questions) setQuestions(data.questions);
 
-      const hasCompletedAssessment = status?.products?.goodhang?.assessment?.completed ?? false;
-
-      if (hasCompletedAssessment && data.report) {
+      // Always store report if available (for later use after interview)
+      if (data.report) {
         setOriginalReport(data.report);
         setReport(data.report);
-        setArtifactPhase('report');
-        setIsLoadingReport(false);
-        setTimeout(() => {
-          actions.addAssistantMessage("Here's your profile. Review each tab and confirm by clicking 'Looks Good'.");
-        }, 500);
-      } else {
-        setIsLoadingReport(false);
-        setArtifactPhase('interview');
-        setShowInlineAssessment(true);
-        setTimeout(() => {
-          actions.addAssistantMessage("Welcome! Let's get to know you through a brief interview.");
-        }, 500);
       }
+
+      // Always start with the FOS consolidated interview, regardless of
+      // GoodHang assessment status. The FOS interview is a separate set of
+      // questions that feeds into the synthesis pipeline.
+      setIsLoadingReport(false);
+      setArtifactPhase('interview');
+      setShowInlineAssessment(true);
+      setTimeout(() => {
+        actions.addAssistantMessage("Welcome! Let's get to know you through a brief interview.");
+      }, 500);
 
       if (data.currentQuestion) setCurrentQuestion(data.currentQuestion);
     } catch (error) {
