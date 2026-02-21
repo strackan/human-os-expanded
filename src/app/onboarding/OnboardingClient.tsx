@@ -57,6 +57,7 @@ export default function OnboardingClient() {
               onComplete(data);
             } else if (data.type === 'error') {
               setError(data.message);
+              setIsTyping(false);
             }
           } catch {
             // Skip malformed JSON
@@ -306,8 +307,8 @@ export default function OnboardingClient() {
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="rounded-full bg-orange-500 px-6 py-2.5 text-sm text-white
-                hover:bg-orange-600 transition-colors"
+              className="rounded-full bg-violet-600 px-6 py-2.5 text-sm text-white
+                hover:bg-violet-700 transition-colors"
             >
               Go to Dashboard
             </button>

@@ -83,7 +83,7 @@ export default function OnboardingChat({
               <div
                 className={`max-w-[75%] rounded-2xl px-4 py-3 ${
                   msg.role === 'user'
-                    ? 'bg-orange-500 text-white rounded-br-md'
+                    ? 'bg-violet-600 text-white rounded-br-md'
                     : 'bg-gray-100 text-gray-800 rounded-bl-md'
                 }`}
               >
@@ -117,15 +117,15 @@ export default function OnboardingChat({
             placeholder={isTyping ? '' : 'Type your message...'}
             disabled={disabled || isTyping}
             className="flex-1 rounded-full border border-gray-200 px-4 py-2.5 text-sm
-              focus:outline-none focus:border-orange-300 focus:ring-1 focus:ring-orange-200
+              focus:outline-none focus:border-violet-300 focus:ring-1 focus:ring-violet-200
               disabled:bg-gray-50 disabled:text-gray-400
               placeholder:text-gray-400"
           />
           <button
             type="submit"
             disabled={disabled || isTyping || !input.trim()}
-            className="rounded-full bg-orange-500 p-2.5 text-white
-              hover:bg-orange-600 transition-colors
+            className="rounded-full bg-violet-600 p-2.5 text-white
+              hover:bg-violet-700 transition-colors
               disabled:bg-gray-200 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

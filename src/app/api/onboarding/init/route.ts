@@ -52,8 +52,17 @@ export async function POST(request: Request) {
     const userName = profile?.full_name || user.email?.split('@')[0] || 'there';
     const systemPrompt = getSculptorSystemPrompt(userName);
 
-    // Sculptor initiates — empty conversation, assistant goes first
-    const messages = [{ role: 'user' as const, content: '[System: The user has just arrived at onboarding. Greet them warmly and ask your ice-breaker question. Keep it brief.]' }];
+    // Sculptor initiates — system trigger as first user message
+    const systemTrigger = '[System: The user has just arrived at onboarding. Greet them warmly and ask your ice-breaker question. Keep it brief.]';
+    const messages = [{ role: 'user' as const, content: systemTrigger }];
+
+    // Persist the system trigger so conversation_log starts with a user message
+    // (Anthropic API requires the first message to have role 'user')
+    await service.appendMessage(session.id, {
+      role: 'user',
+      content: systemTrigger,
+      timestamp: new Date().toISOString(),
+    });
 
     const encoder = new TextEncoder();
     let fullContent = '';

@@ -46,13 +46,13 @@ export default function OnboardingOptionCards({ onSelect, disabled }: Onboarding
           onClick={() => onSelect(option.key)}
           disabled={disabled}
           className="group relative rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm
-            p-4 text-left transition-all hover:border-orange-300 hover:shadow-md
+            p-4 text-left transition-all hover:border-violet-300 hover:shadow-md
             hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <div className="flex items-start gap-3">
             <span className="text-xl">{option.icon}</span>
             <div>
-              <h3 className="font-medium text-gray-900 text-sm group-hover:text-orange-600 transition-colors">
+              <h3 className="font-medium text-gray-900 text-sm group-hover:text-violet-600 transition-colors">
                 {option.title}
               </h3>
               <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
