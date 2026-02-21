@@ -17,6 +17,20 @@ interface SculptorMetadata {
   detected_signals?: string[];
 }
 
+/** Convert an async generator of Uint8Array chunks into a pull-based ReadableStream */
+function streamFromGenerator(gen: AsyncGenerator<Uint8Array, void, unknown>): ReadableStream<Uint8Array> {
+  return new ReadableStream({
+    async pull(controller) {
+      const { value, done } = await gen.next();
+      if (done) {
+        controller.close();
+      } else {
+        controller.enqueue(value);
+      }
+    },
+  });
+}
+
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
@@ -44,6 +58,8 @@ export async function POST(request: Request) {
       });
     }
 
+    const validSession = session;
+
     // Get user display name from profile
     const { data: profile } = await supabase
       .from('profiles')
@@ -59,7 +75,7 @@ export async function POST(request: Request) {
     const messages = [{ role: 'user' as const, content: systemTrigger }];
 
     // Persist the system trigger so conversation_log starts with a user message
-    await service.appendMessage(session.id, {
+    await service.appendMessage(validSession.id, {
       role: 'user',
       content: systemTrigger,
       timestamp: new Date().toISOString(),
@@ -68,75 +84,66 @@ export async function POST(request: Request) {
     console.log('[Onboarding Init] Starting stream for user:', userName);
 
     const encoder = new TextEncoder();
-    let fullContent = '';
-    let toolUseData: SculptorMetadata | null = null;
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          const gen = AnthropicService.generateStreamingConversation({
-            messages,
-            systemPrompt,
-            tools: [SCULPTOR_METADATA_TOOL],
-            model: CLAUDE_SONNET_CURRENT,
-            maxTokens: 500,
-            temperature: 0.8,
+    async function* generateSSEEvents(): AsyncGenerator<Uint8Array, void, unknown> {
+      let fullContent = '';
+      let toolUseData: SculptorMetadata | null = null;
+
+      try {
+        const gen = AnthropicService.generateStreamingConversation({
+          messages,
+          systemPrompt,
+          tools: [SCULPTOR_METADATA_TOOL],
+          model: CLAUDE_SONNET_CURRENT,
+          maxTokens: 500,
+          temperature: 0.8,
+        });
+
+        for await (const event of gen) {
+          if (event.type === 'text') {
+            fullContent += event.content;
+            yield encoder.encode(`data: ${JSON.stringify({ type: 'token', content: event.content })}\n\n`);
+          } else if (event.type === 'tool_use') {
+            toolUseData = event.toolUse.input as SculptorMetadata;
+          }
+        }
+      } catch (err) {
+        console.error('[Onboarding Init] Stream error:', err);
+        const errMsg = err instanceof Error ? err.message : 'Stream error';
+        yield encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMsg })}\n\n`);
+      }
+
+      // Always persist + send complete
+      try {
+        if (fullContent) {
+          await service.appendMessage(validSession.id, {
+            role: 'assistant',
+            content: fullContent,
+            timestamp: new Date().toISOString(),
           });
-
-          for await (const event of gen) {
-            if (event.type === 'text') {
-              fullContent += event.content;
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({ type: 'token', content: event.content })}\n\n`)
-              );
-            } else if (event.type === 'tool_use') {
-              toolUseData = event.toolUse.input as SculptorMetadata;
-            }
-          }
-        } catch (err) {
-          console.error('[Onboarding Init] Stream error:', err);
-          const errMsg = err instanceof Error ? err.message : 'Stream error';
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMsg })}\n\n`)
-          );
         }
 
-        // Always persist + send complete, even if stream errored
-        try {
-          if (fullContent) {
-            await service.appendMessage(session.id, {
-              role: 'assistant',
-              content: fullContent,
-              timestamp: new Date().toISOString(),
-            });
+        if (toolUseData) {
+          const updates: Record<string, unknown> = {};
+          if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
+          if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
+          if (Object.keys(updates).length > 0) {
+            await service.updateSession(validSession.id, updates as Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>>);
           }
-
-          if (toolUseData) {
-            const updates: Record<string, unknown> = {};
-            if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
-            if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
-            if (Object.keys(updates).length > 0) {
-              await service.updateSession(session.id, updates as Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>>);
-            }
-          }
-
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({
-              type: 'complete',
-              phase: toolUseData?.current_phase || 1,
-              shouldTransition: false,
-            })}\n\n`)
-          );
-        } catch (persistErr) {
-          console.error('[Onboarding Init] Persist error:', persistErr);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: 1, shouldTransition: false })}\n\n`)
-          );
         }
 
-        controller.close();
-      },
-    });
+        yield encoder.encode(`data: ${JSON.stringify({
+          type: 'complete',
+          phase: toolUseData?.current_phase || 1,
+          shouldTransition: false,
+        })}\n\n`);
+      } catch (persistErr) {
+        console.error('[Onboarding Init] Persist error:', persistErr);
+        yield encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: 1, shouldTransition: false })}\n\n`);
+      }
+    }
+
+    const stream = streamFromGenerator(generateSSEEvents());
 
     return new Response(stream, {
       headers: {
