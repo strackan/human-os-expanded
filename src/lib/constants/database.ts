@@ -49,6 +49,9 @@ export const DB_TABLES = {
   // Automation Rules tables (Release 1.4)
   AUTOMATION_RULES: 'automation_rules',
   AUTOMATION_RULE_EXECUTIONS: 'automation_rule_executions',
+
+  // Onboarding tables
+  ONBOARDING_SESSIONS: 'onboarding_sessions',
 } as const;
 
 // =====================================================

@@ -303,6 +303,107 @@ export class AnthropicService {
   }
 
   /**
+   * Generate a streaming conversation response with multi-turn + tool support.
+   *
+   * Yields events: { type: 'text', content } | { type: 'tool_use', toolUse } | { type: 'done', stopReason }
+   */
+  static async *generateStreamingConversation(
+    params: AnthropicConversationParams
+  ): AsyncGenerator<
+    | { type: 'text'; content: string }
+    | { type: 'tool_use'; toolUse: AnthropicToolUse }
+    | { type: 'done'; stopReason: string },
+    void,
+    unknown
+  > {
+    try {
+      const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+      if (!apiKey) {
+        throw new Error('Anthropic API key not found');
+      }
+
+      const client = new Anthropic({ apiKey });
+
+      const model = params.model || CLAUDE_HAIKU_CURRENT;
+      const maxTokens = params.maxTokens || 2000;
+      const temperature = params.temperature ?? 0.7;
+      const systemPrompt = params.systemPrompt || 'You are a helpful AI assistant.';
+
+      const requestParams: Record<string, unknown> = {
+        model,
+        max_tokens: maxTokens,
+        temperature,
+        system: systemPrompt,
+        messages: params.messages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
+        stream: true,
+      };
+
+      if (params.tools && params.tools.length > 0) {
+        requestParams.tools = params.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          input_schema: tool.input_schema,
+        }));
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const stream = await (client.messages.create as any).call(client.messages, requestParams);
+
+      // Track tool_use blocks being built up across delta events
+      let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
+
+      for await (const event of stream) {
+        if (event.type === 'content_block_start') {
+          if (event.content_block?.type === 'tool_use') {
+            currentToolUse = {
+              id: event.content_block.id,
+              name: event.content_block.name,
+              inputJson: '',
+            };
+          }
+        } else if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            yield { type: 'text', content: event.delta.text };
+          } else if (event.delta.type === 'input_json_delta' && currentToolUse) {
+            currentToolUse.inputJson += event.delta.partial_json;
+          }
+        } else if (event.type === 'content_block_stop') {
+          if (currentToolUse) {
+            let input: Record<string, unknown> = {};
+            try {
+              input = JSON.parse(currentToolUse.inputJson);
+            } catch {
+              // Partial JSON — best effort
+            }
+            yield {
+              type: 'tool_use',
+              toolUse: {
+                type: 'tool_use',
+                id: currentToolUse.id,
+                name: currentToolUse.name,
+                input,
+              },
+            };
+            currentToolUse = null;
+          }
+        } else if (event.type === 'message_stop') {
+          // End of message
+        } else if (event.type === 'message_delta') {
+          if (event.delta?.stop_reason) {
+            yield { type: 'done', stopReason: event.delta.stop_reason };
+          }
+        }
+      }
+    } catch (error) {
+      console.error('AnthropicService.generateStreamingConversation error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Test API key validity
    *
    * @returns True if API key works, false otherwise

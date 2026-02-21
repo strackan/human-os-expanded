@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { SunIcon, XMarkIcon, BookmarkIcon } from '@heroicons/react/24/outline';
@@ -22,6 +23,9 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const pathname = usePathname();
+  const isOnboarding = pathname?.startsWith('/onboarding');
+
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -93,6 +97,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }, [user?.id]);
 
 
+
+  // Bypass sidebar/header for onboarding route
+  if (isOnboarding) {
+    return <>{children}</>;
+  }
 
   return (
     <div id="app-layout-container" className="min-h-screen bg-gray-50 dark:bg-gray-900">
