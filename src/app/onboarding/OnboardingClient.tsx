@@ -375,6 +375,15 @@ export default function OnboardingClient() {
             </button>
           </div>
         )}
+
+        {/* Debug strip — remove after fixing */}
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1a1a2e', color: '#0f0', fontFamily: 'monospace', fontSize: '11px', padding: '4px 8px', zIndex: 9999, display: 'flex', gap: '16px' }}>
+          <span>phase={phase}</span>
+          <span>sid={sessionId ? sessionId.slice(0, 8) : 'null'}</span>
+          <span>typing={String(isTyping)}</span>
+          <span>msgs={messages.length}</span>
+          <span>err={error || 'none'}</span>
+        </div>
       </div>
     </div>
   );
