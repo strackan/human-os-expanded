@@ -10,9 +10,8 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { OnboardingService } from '@/lib/services/OnboardingService';
 import { AnthropicService } from '@/lib/services/AnthropicService';
 import { getSynthesisPrompt, buildSynthesisInput } from '@/lib/onboarding/synthesis-prompt';
-import { saveUserContext } from '@/lib/onboarding/human-os-client';
+import { saveUserContext, type IdentityProfileUpdate } from '@/lib/onboarding/human-os-client';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
-import type { IdentityProfileUpdate } from '@human-os/services';
 
 export async function POST(request: Request) {
   try {

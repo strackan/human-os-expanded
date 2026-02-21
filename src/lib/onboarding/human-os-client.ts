@@ -1,19 +1,39 @@
 /**
  * Human-OS Client
  *
- * Thin wrapper for calling identity profile handlers in human-os-expanded.
- * This is the single integration point — all Renubu features that need
- * user context go through this file.
+ * Thin wrapper for reading/writing identity profiles in human-os-expanded's
+ * Supabase (human_os.identity_profiles). This is the single integration point —
+ * all Renubu features that need user context go through this file.
+ *
+ * The query logic mirrors @human-os/services identity-service.ts.
+ * When that package is publishable to a registry, this can be replaced
+ * with a direct import.
  */
 
 import { createClient } from '@supabase/supabase-js';
-import {
-  getIdentityProfile,
-  updateIdentityProfile,
-  type IdentityProfileUpdate,
-} from '@human-os/services';
 
+const IDENTITY_SCHEMA = 'human_os';
 const LAYER = 'personal';
+
+export interface IdentityProfileUpdate {
+  core_values?: string[];
+  energy_patterns?: string;
+  communication_style?: string;
+  interest_vectors?: string[];
+  relationship_orientation?: string;
+  work_style?: string;
+  cognitive_profile?: string;
+}
+
+interface IdentityProfile {
+  core_values: string[] | null;
+  energy_patterns: string | null;
+  communication_style: string | null;
+  interest_vectors: string[] | null;
+  relationship_orientation: string | null;
+  work_style: string | null;
+  cognitive_profile: string | null;
+}
 
 function getHumanOsClient() {
   const url = process.env.HUMAN_OS_SUPABASE_URL;
@@ -37,16 +57,23 @@ function getHumanOsClient() {
  */
 export async function loadUserContext(userId: string): Promise<string | null> {
   try {
-    // Cast to any at package boundary — Renubu and @human-os/services
-    // may use different @supabase/supabase-js versions
-    const supabase = getHumanOsClient() as unknown;
-    const result = await getIdentityProfile({ supabase, userId, layer: LAYER });
+    const supabase = getHumanOsClient();
+    const schema = supabase.schema(IDENTITY_SCHEMA);
 
-    if (!result.success || !result.data) {
+    const { data, error } = await schema
+      .from('identity_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      console.error('[human-os-client] loadUserContext query error:', error.message);
       return null;
     }
 
-    const p = result.data;
+    if (!data) return null;
+
+    const p = data as IdentityProfile;
     const sections: string[] = ['## User Context (from onboarding)'];
 
     if (p.core_values?.length) {
@@ -86,14 +113,29 @@ export async function saveUserContext(
   profileUpdates: IdentityProfileUpdate
 ): Promise<boolean> {
   try {
-    const supabase = getHumanOsClient() as unknown;
-    const result = await updateIdentityProfile(
-      { supabase, userId, layer: LAYER },
-      profileUpdates
-    );
+    const supabase = getHumanOsClient();
+    const schema = supabase.schema(IDENTITY_SCHEMA);
 
-    if (!result.success) {
-      console.error('[human-os-client] saveUserContext error:', result.error);
+    const row: Record<string, unknown> = {
+      user_id: userId,
+      layer: LAYER,
+      sculptor_completed_at: new Date().toISOString(),
+    };
+
+    if (profileUpdates.core_values) row.core_values = profileUpdates.core_values;
+    if (profileUpdates.energy_patterns) row.energy_patterns = profileUpdates.energy_patterns;
+    if (profileUpdates.communication_style) row.communication_style = profileUpdates.communication_style;
+    if (profileUpdates.interest_vectors) row.interest_vectors = profileUpdates.interest_vectors;
+    if (profileUpdates.relationship_orientation) row.relationship_orientation = profileUpdates.relationship_orientation;
+    if (profileUpdates.work_style) row.work_style = profileUpdates.work_style;
+    if (profileUpdates.cognitive_profile) row.cognitive_profile = profileUpdates.cognitive_profile;
+
+    const { error } = await schema
+      .from('identity_profiles')
+      .upsert(row, { onConflict: 'user_id' });
+
+    if (error) {
+      console.error('[human-os-client] saveUserContext upsert error:', error.message);
       return false;
     }
 
