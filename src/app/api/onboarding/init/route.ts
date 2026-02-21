@@ -9,26 +9,13 @@ import { OnboardingService } from '@/lib/services/OnboardingService';
 import { AnthropicService } from '@/lib/services/AnthropicService';
 import { getSculptorSystemPrompt, SCULPTOR_METADATA_TOOL } from '@/lib/onboarding/sculptor-prompt';
 import { CLAUDE_SONNET_CURRENT } from '@/lib/constants/claude-models';
+import { SSE_HEADERS, sseEvent, streamFromGenerator } from '@/lib/onboarding/sse-helpers';
 
 interface SculptorMetadata {
   current_phase?: number;
   opener_used?: string;
   should_transition?: boolean;
   detected_signals?: string[];
-}
-
-/** Convert an async generator of Uint8Array chunks into a pull-based ReadableStream */
-function streamFromGenerator(gen: AsyncGenerator<Uint8Array, void, unknown>): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    async pull(controller) {
-      const { value, done } = await gen.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
-      }
-    },
-  });
 }
 
 export const maxDuration = 60;
@@ -83,8 +70,6 @@ export async function POST(request: Request) {
 
     console.log('[Onboarding Init] Starting stream for user:', userName);
 
-    const encoder = new TextEncoder();
-
     async function* generateSSEEvents(): AsyncGenerator<Uint8Array, void, unknown> {
       let fullContent = '';
       let toolUseData: SculptorMetadata | null = null;
@@ -102,7 +87,7 @@ export async function POST(request: Request) {
         for await (const event of gen) {
           if (event.type === 'text') {
             fullContent += event.content;
-            yield encoder.encode(`data: ${JSON.stringify({ type: 'token', content: event.content })}\n\n`);
+            yield sseEvent({ type: 'token', content: event.content });
           } else if (event.type === 'tool_use') {
             toolUseData = event.toolUse.input as SculptorMetadata;
           }
@@ -110,7 +95,7 @@ export async function POST(request: Request) {
       } catch (err) {
         console.error('[Onboarding Init] Stream error:', err);
         const errMsg = err instanceof Error ? err.message : 'Stream error';
-        yield encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMsg })}\n\n`);
+        yield sseEvent({ type: 'error', message: errMsg });
       }
 
       // Always persist + send complete
@@ -132,27 +117,20 @@ export async function POST(request: Request) {
           }
         }
 
-        yield encoder.encode(`data: ${JSON.stringify({
+        yield sseEvent({
           type: 'complete',
           phase: toolUseData?.current_phase || 1,
           shouldTransition: false,
-        })}\n\n`);
+        });
       } catch (persistErr) {
         console.error('[Onboarding Init] Persist error:', persistErr);
-        yield encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: 1, shouldTransition: false })}\n\n`);
+        yield sseEvent({ type: 'complete', phase: 1, shouldTransition: false });
       }
     }
 
     const stream = streamFromGenerator(generateSSEEvents());
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive',
-        'X-Accel-Buffering': 'no',
-      },
-    });
+    return new Response(stream, { headers: SSE_HEADERS });
   } catch (error) {
     console.error('[Onboarding Init API] error:', error);
     return new Response(

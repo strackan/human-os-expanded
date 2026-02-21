@@ -34,17 +34,39 @@ export default function OnboardingClient() {
       onComplete: (data: { phase: number; shouldTransition: boolean }) => void
     ) => {
       const reader = response.body?.getReader();
-      if (!reader) return;
+      if (!reader) {
+        console.error('[consumeSSE] response.body is null/undefined, status:', response.status);
+        setIsTyping(false);
+        return;
+      }
+      console.log('[consumeSSE] reader obtained, starting read loop');
 
       const decoder = new TextDecoder();
       let buffer = '';
-
       let gotComplete = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      // Timeout safety net: if no data arrives within 30s, bail out
+      let lastDataTime = Date.now();
+      const TIMEOUT_MS = 30_000;
 
+      while (true) {
+        const readPromise = reader.read();
+        const timeoutPromise = new Promise<{ done: true; value: undefined }>((resolve) => {
+          const remaining = TIMEOUT_MS - (Date.now() - lastDataTime);
+          setTimeout(() => resolve({ done: true, value: undefined }), Math.max(remaining, 0));
+        });
+
+        const { done, value } = await Promise.race([readPromise, timeoutPromise]);
+
+        if (done) {
+          if (Date.now() - lastDataTime >= TIMEOUT_MS) {
+            console.error('[consumeSSE] timeout — no data for', TIMEOUT_MS, 'ms');
+            setError('Response timed out. Please try again.');
+          }
+          break;
+        }
+
+        lastDataTime = Date.now();
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -53,6 +75,7 @@ export default function OnboardingClient() {
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
+            console.log('[consumeSSE] event:', data.type);
             if (data.type === 'token') {
               onToken(data.content);
             } else if (data.type === 'complete') {
@@ -67,6 +90,8 @@ export default function OnboardingClient() {
           }
         }
       }
+
+      console.log('[consumeSSE] stream ended, gotComplete:', gotComplete);
 
       // Safety net: if stream ended without a 'complete' event, clear typing
       if (!gotComplete) {
@@ -176,6 +201,7 @@ export default function OnboardingClient() {
   // =========================================================================
   const handleSendMessage = useCallback(
     async (message: string) => {
+      console.log('[handleSendMessage] called, sessionId:', sessionId, 'isTyping:', isTyping);
       if (!sessionId || isTyping) return;
 
       const userMsgId = `user-${Date.now()}`;
@@ -190,6 +216,8 @@ export default function OnboardingClient() {
           body: JSON.stringify({ message, sessionId }),
         });
 
+        console.log('[handleSendMessage] fetch completed, status:', res.status, 'body:', !!res.body);
+
         if (!res.ok) {
           setError('Failed to send message. Please try again.');
           setIsTyping(false);
@@ -201,6 +229,8 @@ export default function OnboardingClient() {
 
         // Add placeholder for streaming message
         setMessages((prev) => [...prev, { role: 'assistant', content: '', id: streamingMsgId }]);
+
+        console.log('[handleSendMessage] calling consumeSSE');
 
         await consumeSSE(
           res,
