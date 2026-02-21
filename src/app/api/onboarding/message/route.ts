@@ -100,15 +100,18 @@ export async function POST(request: Request) {
     const systemPrompt = getSculptorSystemPrompt(userName);
     const messages = buildMessages(updatedSession.conversation_log);
 
-    console.log('[Onboarding Message] Starting stream, messages count:', messages.length);
+    console.log('[Onboarding Message] Starting stream, messages count:', messages.length,
+      'first role:', messages[0]?.role, 'last role:', messages[messages.length - 1]?.role);
 
     const encoder = new TextEncoder();
     let fullContent = '';
     let toolUseData: SculptorMetadata | null = null;
+    let eventCount = 0;
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
+          console.log('[Onboarding Message] Calling Anthropic API...');
           const gen = AnthropicService.generateStreamingConversation({
             messages,
             systemPrompt,
@@ -119,16 +122,21 @@ export async function POST(request: Request) {
           });
 
           for await (const event of gen) {
+            eventCount++;
             if (event.type === 'text') {
               fullContent += event.content;
               controller.enqueue(
                 encoder.encode(`data: ${JSON.stringify({ type: 'token', content: event.content })}\n\n`)
               );
             } else if (event.type === 'tool_use') {
+              console.log('[Onboarding Message] Tool use:', event.toolUse.name);
               toolUseData = event.toolUse.input as SculptorMetadata;
+            } else if (event.type === 'done') {
+              console.log('[Onboarding Message] Done event, stopReason:', event.stopReason);
             }
-            // 'done' event just means the stream ended — we handle completion below
           }
+
+          console.log('[Onboarding Message] Stream finished. Events:', eventCount, 'Content length:', fullContent.length);
         } catch (err) {
           console.error('[Onboarding Message] Stream error:', err);
           const errMessage = err instanceof Error ? err.message : 'Stream error';
