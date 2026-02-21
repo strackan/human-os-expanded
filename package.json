@@ -23,6 +23,7 @@
     "smart-seed": "node scripts/smart-seed-selector.js",
     "schema-diff": "node scripts/schema-diff-manager.js",
     "schema-diff-report": "node scripts/schema-diff-manager.js --report",
+    "release": "npx tsx scripts/release.ts",
     "commit": "npx tsx scripts/commit-and-track.ts",
     "snapshot": "npx tsx scripts/snapshot-release.ts",
     "roadmap": "npx tsx scripts/generate-roadmap.ts",

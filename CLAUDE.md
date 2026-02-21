@@ -174,13 +174,24 @@ const mockSupabase = {
 
 ## Releases & Versioning
 
-- **Versioning:** `docs/VERSIONING.md` — Pre-1.0 scheme: `0.MAJOR.MINOR`
-- **Release Notes:** `RELEASE_NOTES.md` — All shipped + upcoming releases
-- **Git Strategy:** `docs/archive/2025-11-pre-reorg/GIT-WORKFLOW.md` — Branching model, merge strategies, protection rules
-- **Scope Docs:** `docs/scopes/releases/` — Per-release scope documents (template in `README.md`)
-- **Tag Format:** `v0.X.Y` for releases, `v0.X.Y-rc.N` for release candidates
-- **CI/CD:** `.github/workflows/deploy-staging.yml` — Auto-deploys on `v*.*.*` tags
-- **Scripts:** `npm run snapshot -- <version> <date>` (release snapshot), `npm run commit` (tracked commit), `npm run roadmap` (regenerate from DB)
+**Release commands** (single source of truth — updates package.json, `/api/version`, DB, git tag):
+```bash
+npm run release -- status              # Show current version + DB state
+npm run release -- rc                  # Bump RC (rc.0 → rc.1 → rc.2)
+npm run release -- ga                  # Promote RC to GA (creates v0.X.Y tag)
+npm run release -- new 0.2.6 "Name"   # Start new version as rc.0
+```
+
+**Lifecycle:** `new 0.2.6` → `v0.2.6-rc.0` → `rc` → `v0.2.6-rc.1` → `ga` → `v0.2.6`
+
+**Reference docs:**
+- `docs/VERSIONING.md` — Pre-1.0 versioning scheme (`0.MAJOR.MINOR`)
+- `RELEASE_NOTES.md` — All shipped + upcoming releases
+- `docs/archive/2025-11-pre-reorg/GIT-WORKFLOW.md` — Branching model, merge strategies
+- `docs/scopes/releases/` — Per-release scope docs (template in `README.md`)
+- `.github/workflows/deploy-staging.yml` — Auto-deploys on `v*.*.*` tags
+
+**Other scripts:** `npm run snapshot`, `npm run commit`, `npm run roadmap`
 
 ## Documentation
 Extensive docs in `/docs`:
