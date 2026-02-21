@@ -12,6 +12,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Dashboard theme colors — registers utilities for Tailwind v4 */
+  --color-bounty-orange: #E8723A;
+  --color-bounty-gold: #D4A843;
+  --color-category-risk: #D94F4F;
+  --color-category-opportunity: #2BA86A;
+  --color-category-date: #4A7FD4;
+  --color-cream-light: #F8F6F2;
 }
 
 /* Dark mode - activated via .dark class on <html> */

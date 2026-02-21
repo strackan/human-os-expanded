@@ -61,7 +61,7 @@ const CATEGORY_MAP: Record<string, CategoryConfig> = {
     borderColor: 'border-red-200',
     accentColor: 'border-t-red-500',
     heroTagBg: 'bg-red-500/20',
-    heroTagText: 'text-red-300',
+    heroTagText: 'text-category-risk',
   },
 };
 
