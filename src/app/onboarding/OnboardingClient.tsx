@@ -21,8 +21,6 @@ export default function OnboardingClient() {
   const [error, setError] = useState<string | null>(null);
 
   const initCalled = useRef(false);
-  const debugRef = useRef({ sseEvents: 0, lastEvent: 'none', rawChunks: 0 });
-  const [debugTick, setDebugTick] = useState(0);
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there';
 
@@ -35,13 +33,8 @@ export default function OnboardingClient() {
       onToken: (content: string) => void,
       onComplete: (data: { phase: number; shouldTransition: boolean }) => void
     ) => {
-      debugRef.current = { sseEvents: 0, lastEvent: 'starting', rawChunks: 0 };
-      setDebugTick((t) => t + 1);
-
       const reader = response.body?.getReader();
       if (!reader) {
-        debugRef.current.lastEvent = 'NO_READER';
-        setDebugTick((t) => t + 1);
         setIsTyping(false);
         return;
       }
@@ -54,7 +47,6 @@ export default function OnboardingClient() {
         const { done, value } = await reader.read();
         if (done) break;
 
-        debugRef.current.rawChunks++;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -63,9 +55,6 @@ export default function OnboardingClient() {
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            debugRef.current.sseEvents++;
-            debugRef.current.lastEvent = data.type;
-            setDebugTick((t) => t + 1);
 
             if (data.type === 'token') {
               onToken(data.content);
@@ -81,9 +70,6 @@ export default function OnboardingClient() {
           }
         }
       }
-
-      debugRef.current.lastEvent = gotComplete ? 'DONE' : 'ENDED_NO_COMPLETE';
-      setDebugTick((t) => t + 1);
 
       if (!gotComplete) {
         setIsTyping(false);
@@ -192,7 +178,6 @@ export default function OnboardingClient() {
   // =========================================================================
   const handleSendMessage = useCallback(
     async (message: string) => {
-      console.log('[handleSendMessage] called, sessionId:', sessionId, 'isTyping:', isTyping);
       if (!sessionId || isTyping) return;
 
       const userMsgId = `user-${Date.now()}`;
@@ -215,9 +200,6 @@ export default function OnboardingClient() {
 
         const data = await res.json();
         const fullContent: string = data.content || '';
-
-        debugRef.current = { sseEvents: 0, lastEvent: 'json', rawChunks: 0 };
-        setDebugTick((t) => t + 1);
 
         if (!fullContent) {
           setIsTyping(false);
@@ -255,7 +237,7 @@ export default function OnboardingClient() {
         setIsTyping(false);
       }
     },
-    [sessionId, isTyping, consumeSSE]
+    [sessionId, isTyping]
   );
 
   // =========================================================================
@@ -376,18 +358,6 @@ export default function OnboardingClient() {
           </div>
         )}
 
-        {/* Debug strip — remove after fixing */}
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#1a1a2e', color: '#0f0', fontFamily: 'monospace', fontSize: '11px', padding: '4px 8px', zIndex: 9999, display: 'flex', gap: '16px' }}>
-          <span>phase={phase}</span>
-          <span>sid={sessionId ? sessionId.slice(0, 8) : 'null'}</span>
-          <span>typing={String(isTyping)}</span>
-          <span>msgs={messages.length}</span>
-          <span>sse={debugRef.current.sseEvents}</span>
-          <span>chunks={debugRef.current.rawChunks}</span>
-          <span>last={debugRef.current.lastEvent}</span>
-          <span>err={error || 'none'}</span>
-          <span style={{ display: 'none' }}>{debugTick}</span>
-        </div>
       </div>
     </div>
   );

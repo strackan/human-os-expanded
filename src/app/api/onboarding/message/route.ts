@@ -97,8 +97,6 @@ export async function POST(request: Request) {
     const systemPrompt = getSculptorSystemPrompt(userName);
     const messages = buildMessages(reloadedSession.conversation_log);
 
-    console.log('[Onboarding Message] Calling Anthropic, messages:', messages.length);
-
     // Call Anthropic (blocking)
     const response = await AnthropicService.generateConversation({
       messages,
@@ -112,9 +110,6 @@ export async function POST(request: Request) {
     let fullContent = response.content;
     let toolUseData: SculptorMetadata | null = null;
 
-    console.log('[Onboarding Message] stopReason:', response.stopReason,
-      'contentLength:', fullContent.length, 'toolUses:', response.toolUses?.length || 0);
-
     // Extract sculptor metadata from tool use
     if (response.toolUses && response.toolUses.length > 0) {
       const metadataTool = response.toolUses.find(t => t.name === 'update_session_metadata');
@@ -123,10 +118,9 @@ export async function POST(request: Request) {
       }
     }
 
-    // When Claude stops for tool_use with no text, send tool results back
-    // so it continues with its conversational response
+    // When Claude stops for tool_use, send tool results back so it
+    // continues with its conversational text response
     if (response.stopReason === 'tool_use' && response.toolUses?.length) {
-      console.log('[Onboarding Message] Tool-use only response, sending tool results for continuation');
 
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
       const client = new Anthropic({ apiKey });
@@ -183,7 +177,6 @@ export async function POST(request: Request) {
         }
       }
 
-      console.log('[Onboarding Message] Follow-up content length:', fullContent.length);
     }
 
     // Persist assistant message

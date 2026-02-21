@@ -4,8 +4,172 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.1.13 (Dark Mode Infrastructure)
-**Next Release:** 0.2.0 - Human OS Integration (Target: Feb-Mar 2026)
+**Current Version:** 0.2.5-rc.0 (First Contact Onboarding)
+
+---
+
+## Release 0.2.5 - "First Contact Onboarding" (February 21, 2026)
+
+**Status:** RC0
+**Type:** Minor Release
+**Tag:** `v0.2.5-rc.0`
+
+### New Features
+
+- **First Contact Onboarding** — Conversational onboarding powered by Claude
+  - Sculptor persona greets new users with an ice-breaker question
+  - SSE streaming for sculptor's opening message (real-time token delivery)
+  - JSON + client-side typing animation for user message responses
+  - `update_session_metadata` tool for phase tracking and transition signals
+  - Option cards phase after conversation (4 workflow recommendations)
+  - Session persistence with conversation log restore on refresh
+  - Skip and reset flows
+
+- **Tool-Use Continuation Pattern** — Handles Claude's tool_use-only responses
+  - When Claude responds with `stopReason: "tool_use"` (metadata call, no text), sends tool results back automatically so Claude continues with its conversational text
+  - Merges metadata from both initial and follow-up responses
+
+### Enhancements
+
+- Purple palette rebrand for onboarding UI
+- Scoped CSS with semantic IDs and classes (replaces inline styles)
+- Shared SSE helpers (`sseEvent`, `streamFromGenerator`, `SSE_HEADERS`)
+- Tailwind v4 `@theme` block registration for dashboard colors
+- Removed `@human-os/services` file: dependency (inlined identity queries)
+
+### Files Changed
+
+- `src/app/onboarding/OnboardingClient.tsx` — Main onboarding orchestrator
+- `src/app/api/onboarding/init/route.ts` — SSE streaming init endpoint
+- `src/app/api/onboarding/message/route.ts` — JSON message endpoint with tool-use continuation
+- `src/app/api/onboarding/session/route.ts` — Session CRUD
+- `src/app/api/onboarding/complete/route.ts` — Completion + option selection
+- `src/app/api/onboarding/reset/route.ts` — Session reset
+- `src/lib/onboarding/sculptor-prompt.ts` — System prompt + metadata tool definition
+- `src/lib/onboarding/sse-helpers.ts` — Shared SSE utilities
+- `src/components/onboarding/OnboardingChat.tsx` — Chat UI
+- `src/components/onboarding/OnboardingHeader.tsx` — Header with skip/reset
+- `src/components/onboarding/OnboardingOptionCards.tsx` — Option card selection
+
+### Database Changes
+
+- Table: `onboarding_sessions` — Session state, conversation log, phase tracking
+
+---
+
+## Release 0.2.4 - "Dashboard Polish & Theme" (February 20, 2026)
+
+**Status:** Released
+**Type:** Patch Release
+**Tag:** `v0.2.4`
+
+### Enhancements
+
+- **Hero Card CSS Scoping** — Moved hero card styles to `#dashboard-hero` CSS scope
+- **Centralized Dashboard Theme** — Unified dashboard styles into centralized theme system, fixed heading specificity bug
+- **Dashboard Visual Polish** — White text fixes, bigger avatar, ARR styling improvements, streak message
+
+### Files Changed
+
+- `src/app/dashboard/` — Dashboard page styles
+- `src/app/globals.css` — Centralized theme variables
+
+---
+
+## Release 0.2.3 - "Dashboard Revamp" (February 18, 2026)
+
+**Status:** Released
+**Type:** Minor Release
+**Tag:** `v0.2.3`
+
+### New Features
+
+- **Bounty System** — Daily engagement tracking
+  - `bounty_daily_log` table, BountyService, `/api/bounty` endpoints
+  - Dashboard bounty card with streak tracking
+
+- **Dashboard Layout v3** — Complete visual redesign
+  - Hero card + 3 secondary cards layout
+  - Fraunces serif for numbers, Nunito for headings, Inter for body
+  - Orange palette matching reference design
+  - Warm cream background (`#f8f7f4`)
+
+- **Adventure Score** — Baseline-delta scoring model for edge function
+
+### Bug Fixes
+
+- Vercel Edge middleware fix for dashboard routes
+
+### Files Changed
+
+- `src/app/dashboard/DashboardClient.tsx` — New dashboard layout
+- `src/lib/services/BountyService.ts` — Bounty tracking service
+- `src/app/api/bounty/` — Bounty API endpoints
+- `supabase/functions/adventure-score/` — Edge function update
+
+---
+
+## Release 0.2.2 - "Cleanup & Workflow UX Polish" (January 9 – February 12, 2026)
+
+**Status:** Released
+**Type:** Minor Release
+**Tag:** `v0.2.2`
+
+### New Features
+
+- **Continue Buttons** — Improved workflow progression
+  - Continue button in chat after all tabs reviewed
+  - Continue button on intro planning checklist artifact
+  - Continue button on tabbed review when all tabs complete
+
+### Enhancements
+
+- **Presentation Workflow UX** — Streamlined presentation workflow interactions
+- **Documentation Consolidation** — Cleaned up redundant docs
+
+### Bug Fixes
+
+- User testing feedback — multiple UX bug fixes
+- PostgREST schema configuration fix
+- Removed sculptor code and dependencies (cleanup from 0.2.1)
+
+---
+
+## Release 0.2.1 - "Sculptor Sessions & Workflow Chat" (December 18, 2025 – January 5, 2026)
+
+**Status:** Released
+**Type:** Minor Release
+**Tag:** `v0.2.1`
+
+### New Features
+
+- **Per-Workflow LLM Mode** — Database-driven control of LLM behavior per workflow
+- **v0-Style Step Chat** — Collapsible chat layout within workflow steps
+- **Theatrical Sculptor Sessions** — AI interview system with character personas
+  - Hippie Sculptor (hippie-bill) with character resilience
+  - Markdown rendering and visual polish
+  - Standalone pages with hidden app layout
+  - Human-OS database client for cross-platform features
+  - Scott Leese prompt from SQL file with upsert pattern
+- **API Client Layer** — Frontend-backend separation for workflow components
+- **Pilot Tenants System** — Multi-tenant pilot with auto-cleanup
+- **Staging Deploy Workflow** — GitHub Actions CI/CD for staging + admin CLI
+- **LLM-Powered Talent Chat** — Conversational talent management interface
+- **Enhanced TaskMode** — Step chat panel improvements
+
+### Enhancements
+
+- API-first architecture restoration for workflow components
+- Middleware updated to allow API and sculptor routes without auth
+- Misc service improvements and refactoring
+
+---
+
+## Release 0.2.0 - "Human-OS Integration & LLM Workflow Architecture" (December 18, 2025)
+
+**Status:** Released
+**Type:** Major Release
+**Tag:** `v0.2.0`
 
 ---
 
@@ -836,128 +1000,24 @@ MCP_MEMORY_TTL=86400
 
 ## Upcoming Releases
 
-### Release 0.2.0 - "Human OS Integration" (Target: Feb-Mar 2026)
-
-**Status:** Planning
-**Type:** Major Release
-
-#### Planned Features
-
-- **Human-OS External Enrichment** - Triangulated intelligence via MCP
-  - Contact enrichment (LinkedIn profiles, headlines, recent posts)
-  - Company enrichment (funding rounds, news, growth signals)
-  - Relationship context (layer-scoped opinions)
-  - Skills files integration
-  - `HumanOSClient` MCP client implementation
-
-- **FastMCP 2.0 Features** - Enhanced workflow handling
-  - Mid-workflow LLM sampling (`ctx.sample()`)
-  - Progress reporting for long operations (`ctx.report_progress()`)
-  - External wake triggers (funding events, job changes, activity spikes)
-
-- **String-Tie Enrichment** - Reminders enriched with contact context
-  - Auto-detect contact mentions in reminder text
-  - LinkedIn data surfaced when reminder fires
-  - Triangulated insights ("Sarah just posted about expansion plans")
-
-- **Parking Lot Enhancement** - Expansion with Human-OS data
-  - Entity enrichment during idea capture
-  - Progress UI during long LLM operations
-  - External context in expansion analysis
-
-- **External Wake Triggers** - 5 new trigger types from Human-OS
-  - `company_funding_event` - Company raises funding
-  - `contact_job_change` - Contact changes roles
-  - `linkedin_activity_spike` - Contact becomes active
-  - `company_news_event` - Company in the news
-  - `relationship_opinion_added` - New opinion about contact
-
-#### Foundation Already Built (0.1.x)
-
-- MCP infrastructure (MCPManager, 4 servers: Supabase, PostgreSQL, Memory, Sequential Thinking)
-- String-tie voice-first reminders with LLM parsing
-- Parking lot idea capture with wake triggers
-- Workflow snooze with date + event triggers
-- IntelligenceFileService (synthesis and context)
-- Check-in conversation components
-
-#### Implementation Phases
-
-1. **Phase 1: Foundation** - HumanOSClient, MCPManager registration, env config
-2. **Phase 2: Workflow Integration** - Context enrichment, triangulation logic
-3. **Phase 3: Feature Enhancement** - String-tie + parking lot enrichment
-4. **Phase 4: External Triggers** - Wake trigger types, webhook handler
-
-#### Feature Flags
-
-All 0.2.0 features are behind feature flags for safe rollback:
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `MCP_ENABLE_HUMAN_OS` | `false` | Master toggle for Human-OS integration |
-| `FEATURE_STRING_TIE_ENRICHMENT` | `false` | Contact enrichment on string-tie reminders |
-| `FEATURE_PARKING_LOT_HUMAN_OS` | `false` | Human-OS expansion for parking lot |
-| `FEATURE_EXTERNAL_WAKE_TRIGGERS` | `false` | External event triggers from Human-OS |
-
-#### Reference Documentation
-
-- `docs/HUMAN_OS_INTEGRATION_GUIDE.md` - Complete implementation guide
-
-#### Development
-
-- **Branch:** `feature/human-os-integration`
-- **Strategy:** Feature flags enable incremental rollout and instant rollback
-
----
-
-### Release 0.2.1 - "Workflow Refresh" (Target: Q2 2026)
+### Release 0.2.6 - "Human-OS Enrichment" (Target: Q2 2026)
 
 **Status:** Planning
 **Type:** Minor Release
 
-#### Overview
-
-Leverage the Human-OS integration infrastructure from 0.2.0 to refresh existing workflows with triangulated intelligence.
-
 #### Planned Features
 
-- **Workflow Greeting Refresh** - Incorporate triangulated insights in opening slides
-  - External context (funding, news, LinkedIn activity)
-  - Suggested talking points from recent contact activity
-  - Risk/opportunity signals from combined data sources
+- **Human-OS External Enrichment** — Triangulated intelligence via MCP
+  - Contact enrichment (LinkedIn profiles, headlines, recent posts)
+  - Company enrichment (funding rounds, news, growth signals)
+  - `HumanOSClient` MCP client implementation
+- **External Wake Triggers** — 5 new trigger types from Human-OS
+- **String-Tie Enrichment** — Reminders enriched with contact context
+- **Workflow Greeting Refresh** — Triangulated insights in opening slides
 
-- **External Trigger Integration** - Add Human-OS triggers to existing workflows
-  - 90-Day Renewal: Wake on champion job change
-  - QBR Prep: Wake on company news/funding
-  - Risk Mitigation: Wake on health score + external signals
-  - Expansion: Wake on funding events
+#### Reference Documentation
 
-- **Smart Snooze Options** - Event-based snooze suggestions
-  - "Snooze until contact posts"
-  - "Snooze until funding announced"
-  - "Snooze until champion responds"
-
-- **Automated Context Steps** - Replace manual research with enrichment
-  - Auto-populate company background from GFT
-  - Auto-fetch recent LinkedIn activity
-  - Auto-summarize relationship opinions
-
-- **Enriched Artifact Generation** - External data in generated content
-  - Meeting decks reference recent company news
-  - Emails mention relevant LinkedIn posts
-  - Proposals incorporate funding context
-
-#### Workflows to Refresh
-
-1. **90-Day Renewal Workflow** - Full refresh with triangulation
-2. **QBR Preparation Workflow** - External context integration
-3. **Risk Mitigation Workflow** - External signal triggers
-4. **Expansion Opportunity Workflow** - Funding-triggered activation
-
-#### Dependencies
-
-- Requires 0.2.0 Human-OS integration complete
-- `MCP_ENABLE_HUMAN_OS=true` in production
+- `docs/HUMAN_OS_INTEGRATION_GUIDE.md` - Complete implementation guide
 
 ---
 

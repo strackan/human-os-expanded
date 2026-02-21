@@ -172,6 +172,16 @@ const mockSupabase = {
 - Full workflow execution (use manual QA)
 - API routes (test via integration or E2E)
 
+## Releases & Versioning
+
+- **Versioning:** `docs/VERSIONING.md` — Pre-1.0 scheme: `0.MAJOR.MINOR`
+- **Release Notes:** `RELEASE_NOTES.md` — All shipped + upcoming releases
+- **Git Strategy:** `docs/archive/2025-11-pre-reorg/GIT-WORKFLOW.md` — Branching model, merge strategies, protection rules
+- **Scope Docs:** `docs/scopes/releases/` — Per-release scope documents (template in `README.md`)
+- **Tag Format:** `v0.X.Y` for releases, `v0.X.Y-rc.N` for release candidates
+- **CI/CD:** `.github/workflows/deploy-staging.yml` — Auto-deploys on `v*.*.*` tags
+- **Scripts:** `npm run snapshot -- <version> <date>` (release snapshot), `npm run commit` (tracked commit), `npm run roadmap` (regenerate from DB)
+
 ## Documentation
 Extensive docs in `/docs`:
 - `ARCHITECTURE.md` - System architecture
