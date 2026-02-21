@@ -39,6 +39,8 @@ export default function OnboardingClient() {
       const decoder = new TextDecoder();
       let buffer = '';
 
+      let gotComplete = false;
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -54,6 +56,7 @@ export default function OnboardingClient() {
             if (data.type === 'token') {
               onToken(data.content);
             } else if (data.type === 'complete') {
+              gotComplete = true;
               onComplete(data);
             } else if (data.type === 'error') {
               setError(data.message);
@@ -63,6 +66,11 @@ export default function OnboardingClient() {
             // Skip malformed JSON
           }
         }
+      }
+
+      // Safety net: if stream ended without a 'complete' event, clear typing
+      if (!gotComplete) {
+        setIsTyping(false);
       }
     },
     []

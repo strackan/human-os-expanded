@@ -21,7 +21,6 @@ interface SculptorMetadata {
 const MAX_CONTEXT_MESSAGES = 20;
 
 function buildMessages(log: ConversationEntry[]): ConversationMessage[] {
-  // Always keep the first system trigger + last N messages
   let entries: ConversationEntry[];
   if (log.length <= MAX_CONTEXT_MESSAGES) {
     entries = log;
@@ -101,6 +100,8 @@ export async function POST(request: Request) {
     const systemPrompt = getSculptorSystemPrompt(userName);
     const messages = buildMessages(updatedSession.conversation_log);
 
+    console.log('[Onboarding Message] Starting stream, messages count:', messages.length);
+
     const encoder = new TextEncoder();
     let fullContent = '';
     let toolUseData: SculptorMetadata | null = null;
@@ -125,49 +126,56 @@ export async function POST(request: Request) {
               );
             } else if (event.type === 'tool_use') {
               toolUseData = event.toolUse.input as SculptorMetadata;
-            } else if (event.type === 'done') {
-              // Persist assistant response
-              if (fullContent) {
-                await service.appendMessage(session.id, {
-                  role: 'assistant',
-                  content: fullContent,
-                  timestamp: new Date().toISOString(),
-                  metadata: toolUseData ? { signals: toolUseData } : undefined,
-                });
-              }
-
-              // Update session metadata from tool call
-              const shouldTransition = !!toolUseData?.should_transition;
-              const phase = toolUseData?.current_phase || updatedSession.current_phase;
-
-              if (toolUseData) {
-                const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
-                if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
-                if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
-                if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
-                if (Object.keys(updates).length > 0) {
-                  await service.updateSession(session.id, updates);
-                }
-              }
-
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({
-                  type: 'complete',
-                  phase,
-                  shouldTransition,
-                })}\n\n`)
-              );
             }
+            // 'done' event just means the stream ended — we handle completion below
           }
-
-          controller.close();
         } catch (err) {
+          console.error('[Onboarding Message] Stream error:', err);
           const errMessage = err instanceof Error ? err.message : 'Stream error';
           controller.enqueue(
             encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMessage })}\n\n`)
           );
-          controller.close();
         }
+
+        // Always persist + send complete, even if stream errored or ended without 'done'
+        try {
+          if (fullContent) {
+            await service.appendMessage(session.id, {
+              role: 'assistant',
+              content: fullContent,
+              timestamp: new Date().toISOString(),
+              metadata: toolUseData ? { signals: toolUseData } : undefined,
+            });
+          }
+
+          const shouldTransition = !!toolUseData?.should_transition;
+          const phase = toolUseData?.current_phase || updatedSession.current_phase;
+
+          if (toolUseData) {
+            const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
+            if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
+            if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
+            if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
+            if (Object.keys(updates).length > 0) {
+              await service.updateSession(session.id, updates);
+            }
+          }
+
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'complete',
+              phase,
+              shouldTransition,
+            })}\n\n`)
+          );
+        } catch (persistErr) {
+          console.error('[Onboarding Message] Persist error:', persistErr);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: updatedSession.current_phase, shouldTransition: false })}\n\n`)
+          );
+        }
+
+        controller.close();
       },
     });
 

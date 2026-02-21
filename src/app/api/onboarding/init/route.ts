@@ -57,12 +57,13 @@ export async function POST(request: Request) {
     const messages = [{ role: 'user' as const, content: systemTrigger }];
 
     // Persist the system trigger so conversation_log starts with a user message
-    // (Anthropic API requires the first message to have role 'user')
     await service.appendMessage(session.id, {
       role: 'user',
       content: systemTrigger,
       timestamp: new Date().toISOString(),
     });
+
+    console.log('[Onboarding Init] Starting stream for user:', userName);
 
     const encoder = new TextEncoder();
     let fullContent = '';
@@ -88,44 +89,50 @@ export async function POST(request: Request) {
               );
             } else if (event.type === 'tool_use') {
               toolUseData = event.toolUse.input as SculptorMetadata;
-            } else if (event.type === 'done') {
-              // Persist the assistant message
-              if (fullContent) {
-                await service.appendMessage(session.id, {
-                  role: 'assistant',
-                  content: fullContent,
-                  timestamp: new Date().toISOString(),
-                });
-              }
+            }
+          }
+        } catch (err) {
+          console.error('[Onboarding Init] Stream error:', err);
+          const errMsg = err instanceof Error ? err.message : 'Stream error';
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMsg })}\n\n`)
+          );
+        }
 
-              // Update session metadata from tool call
-              if (toolUseData) {
-                const updates: Record<string, unknown> = {};
-                if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
-                if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
-                if (Object.keys(updates).length > 0) {
-                  await service.updateSession(session.id, updates as Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>>);
-                }
-              }
+        // Always persist + send complete, even if stream errored
+        try {
+          if (fullContent) {
+            await service.appendMessage(session.id, {
+              role: 'assistant',
+              content: fullContent,
+              timestamp: new Date().toISOString(),
+            });
+          }
 
-              controller.enqueue(
-                encoder.encode(`data: ${JSON.stringify({
-                  type: 'complete',
-                  phase: toolUseData?.current_phase || 1,
-                  shouldTransition: false,
-                })}\n\n`)
-              );
+          if (toolUseData) {
+            const updates: Record<string, unknown> = {};
+            if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
+            if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
+            if (Object.keys(updates).length > 0) {
+              await service.updateSession(session.id, updates as Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>>);
             }
           }
 
-          controller.close();
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Stream error';
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'error', message })}\n\n`)
+            encoder.encode(`data: ${JSON.stringify({
+              type: 'complete',
+              phase: toolUseData?.current_phase || 1,
+              shouldTransition: false,
+            })}\n\n`)
           );
-          controller.close();
+        } catch (persistErr) {
+          console.error('[Onboarding Init] Persist error:', persistErr);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: 1, shouldTransition: false })}\n\n`)
+          );
         }
+
+        controller.close();
       },
     });
 
