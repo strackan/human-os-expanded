@@ -242,6 +242,19 @@ export default function OnboardingClient() {
   );
 
   // =========================================================================
+  // Reset — delete session and reload fresh
+  // =========================================================================
+  const handleReset = useCallback(async () => {
+    try {
+      await fetch('/api/onboarding/reset', { method: 'POST' });
+    } catch (err) {
+      console.error('[OnboardingClient] reset error:', err);
+    }
+    // Full reload to re-init cleanly
+    window.location.reload();
+  }, []);
+
+  // =========================================================================
   // Skip
   // =========================================================================
   const handleSkip = useCallback(async () => {
@@ -276,7 +289,7 @@ export default function OnboardingClient() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f4] flex flex-col">
-      <OnboardingHeader userName={userName} onSkip={handleSkip} />
+      <OnboardingHeader userName={userName} onSkip={handleSkip} onReset={handleReset} />
 
       <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
         {/* Chat area */}

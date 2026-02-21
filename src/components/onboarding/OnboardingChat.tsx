@@ -87,7 +87,7 @@ export default function OnboardingChat({
                     : 'bg-gray-100 text-gray-800 rounded-bl-md'
                 }`}
               >
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                <p className={`text-sm leading-relaxed whitespace-pre-wrap ${msg.role === 'user' ? 'text-white' : 'text-gray-800'}`}>{msg.content}</p>
               </div>
             </motion.div>
           ))}
