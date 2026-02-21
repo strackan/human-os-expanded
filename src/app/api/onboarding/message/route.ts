@@ -3,11 +3,13 @@
  *
  * POST /api/onboarding/message — Send user message, get sculptor response
  *
- * Returns plain JSON (not SSE). The client handles typing animation locally.
- * SSE streaming works for the init route but fails to deliver tokens for this
- * route on Vercel regardless of approach (streaming, blocking+fake-stream, etc).
+ * Returns plain JSON. The client handles typing animation locally.
+ *
+ * When Claude responds with only a tool_use (no text), we send the tool
+ * results back so Claude continues with its conversational text response.
  */
 
+import Anthropic from '@anthropic-ai/sdk';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { OnboardingService, type ConversationEntry } from '@/lib/services/OnboardingService';
 import { AnthropicService, type ConversationMessage } from '@/lib/services/AnthropicService';
@@ -107,16 +109,81 @@ export async function POST(request: Request) {
       temperature: 0.8,
     });
 
-    const fullContent = response.content;
+    let fullContent = response.content;
     let toolUseData: SculptorMetadata | null = null;
 
-    console.log('[Onboarding Message] Got response, length:', fullContent.length);
+    console.log('[Onboarding Message] stopReason:', response.stopReason,
+      'contentLength:', fullContent.length, 'toolUses:', response.toolUses?.length || 0);
 
+    // Extract sculptor metadata from tool use
     if (response.toolUses && response.toolUses.length > 0) {
       const metadataTool = response.toolUses.find(t => t.name === 'update_session_metadata');
       if (metadataTool) {
         toolUseData = metadataTool.input as SculptorMetadata;
       }
+    }
+
+    // When Claude stops for tool_use with no text, send tool results back
+    // so it continues with its conversational response
+    if (response.stopReason === 'tool_use' && !fullContent.trim() && response.toolUses?.length) {
+      console.log('[Onboarding Message] Tool-use only response, sending tool results for continuation');
+
+      const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+      const client = new Anthropic({ apiKey });
+
+      // Build the full message history including the tool_use + tool_result turn
+      const apiMessages: Anthropic.MessageParam[] = messages.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
+      // Assistant's tool_use response
+      apiMessages.push({
+        role: 'assistant',
+        content: response.toolUses.map((tu) => ({
+          type: 'tool_use' as const,
+          id: tu.id,
+          name: tu.name,
+          input: tu.input,
+        })),
+      });
+
+      // User's tool_result
+      apiMessages.push({
+        role: 'user',
+        content: response.toolUses.map((tu) => ({
+          type: 'tool_result' as const,
+          tool_use_id: tu.id,
+          content: JSON.stringify({ success: true }),
+        })),
+      });
+
+      const followUp = await client.messages.create({
+        model: CLAUDE_SONNET_CURRENT,
+        max_tokens: 500,
+        temperature: 0.8,
+        system: systemPrompt,
+        messages: apiMessages,
+        tools: [
+          {
+            name: SCULPTOR_METADATA_TOOL.name,
+            description: SCULPTOR_METADATA_TOOL.description,
+            input_schema: SCULPTOR_METADATA_TOOL.input_schema as Anthropic.Tool['input_schema'],
+          },
+        ],
+      });
+
+      // Extract text from follow-up
+      for (const block of followUp.content) {
+        if (block.type === 'text') {
+          fullContent += block.text;
+        } else if (block.type === 'tool_use' && block.name === 'update_session_metadata') {
+          // Merge any additional metadata from follow-up
+          toolUseData = { ...toolUseData, ...(block.input as SculptorMetadata) };
+        }
+      }
+
+      console.log('[Onboarding Message] Follow-up content length:', fullContent.length);
     }
 
     // Persist assistant message
