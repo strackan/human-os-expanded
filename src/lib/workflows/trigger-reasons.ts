@@ -9,6 +9,8 @@ export interface TriggerReasonParams {
   currentArr?: number;
   healthScore?: number;
   opportunityScore?: number;
+  ariScoreDelta?: number;
+  ariScore?: number;
 }
 
 function formatArr(arr: number): string {
@@ -18,7 +20,7 @@ function formatArr(arr: number): string {
 }
 
 export function getTriggerReason(params: TriggerReasonParams): string {
-  const { workflowType, daysUntilRenewal, currentArr, healthScore, opportunityScore } = params;
+  const { workflowType, daysUntilRenewal, currentArr, healthScore, opportunityScore, ariScoreDelta, ariScore } = params;
   const arrStr = currentArr ? formatArr(currentArr) : '';
 
   switch (workflowType) {
@@ -54,6 +56,18 @@ export function getTriggerReason(params: TriggerReasonParams): string {
         return `Investment account \u2014 align on ${arrStr} growth plan`;
       }
       return 'Strategic account \u2014 align on growth plan';
+
+    case 'ari_drop':
+      if (ariScoreDelta !== undefined && ariScore !== undefined) {
+        return `AI visibility dropped ${Math.abs(ariScoreDelta).toFixed(1)} pts \u2014 ARI score now ${ariScore.toFixed(0)}`;
+      }
+      return 'AI visibility declined \u2014 review recommended';
+
+    case 'ari_surge':
+      if (ariScoreDelta !== undefined && ariScore !== undefined) {
+        return `AI visibility surged ${ariScoreDelta.toFixed(1)} pts \u2014 expansion signal`;
+      }
+      return 'AI visibility improved significantly \u2014 expansion opportunity';
 
     default:
       return 'Workflow requires attention';

@@ -52,6 +52,10 @@ export const DB_TABLES = {
 
   // Onboarding tables
   ONBOARDING_SESSIONS: 'onboarding_sessions',
+
+  // ARI tables
+  ARI_SCORE_SNAPSHOTS: 'ari_score_snapshots',
+  ARI_ENTITY_MAPPINGS: 'ari_entity_mappings',
 } as const;
 
 // =====================================================

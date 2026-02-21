@@ -78,6 +78,16 @@ export function getCalendarConnection() {
 }
 
 /**
+ * ARI Connection
+ */
+export function getARIConnection() {
+  return {
+    apiUrl: process.env.ARI_API_URL || 'http://localhost:4250',
+    apiPrefix: '/api/v1',
+  };
+}
+
+/**
  * Validate required environment variables
  */
 export function validateMCPEnvironment(): {
@@ -94,6 +104,10 @@ export function validateMCPEnvironment(): {
 
   if (process.env.MCP_ENABLE_POSTGRESQL === 'true') {
     required.push('MCP_POSTGRES_CONNECTION_STRING');
+  }
+
+  if (process.env.MCP_ENABLE_ARI === 'true') {
+    required.push('ARI_API_URL');
   }
 
   // Check for missing variables
@@ -130,6 +144,10 @@ export async function checkConnectionHealth() {
     memory: {
       configured: true,
       type: getMemoryStorageConfig().type,
+    },
+    ari: {
+      configured: !!getARIConnection().apiUrl,
+      url: getARIConnection().apiUrl,
     },
   };
 }
