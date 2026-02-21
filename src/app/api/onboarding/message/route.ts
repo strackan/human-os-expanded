@@ -125,7 +125,7 @@ export async function POST(request: Request) {
 
     // When Claude stops for tool_use with no text, send tool results back
     // so it continues with its conversational response
-    if (response.stopReason === 'tool_use' && !fullContent.trim() && response.toolUses?.length) {
+    if (response.stopReason === 'tool_use' && response.toolUses?.length) {
       console.log('[Onboarding Message] Tool-use only response, sending tool results for continuation');
 
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
