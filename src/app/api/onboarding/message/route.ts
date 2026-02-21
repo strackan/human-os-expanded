@@ -113,68 +113,77 @@ export async function POST(request: Request) {
 
     console.log('[Onboarding Message] Starting stream, messages:', messages.length);
 
-    // --- Async generator (runs lazily via pull-based stream) ---
+    // --- Non-streaming approach: fetch full response, then stream to client ---
+    // The pull-based generator pattern yields 0 tokens to the client on Vercel
+    // even though init (identical pattern) works. Use blocking call + fake stream.
+    let fullContent = '';
+    let toolUseData: SculptorMetadata | null = null;
+    let apiError: string | null = null;
+
+    try {
+      console.log('[Onboarding Message] Calling Anthropic (blocking)...');
+      const response = await AnthropicService.generateConversation({
+        messages,
+        systemPrompt,
+        tools: [SCULPTOR_METADATA_TOOL],
+        model: CLAUDE_SONNET_CURRENT,
+        maxTokens: 500,
+        temperature: 0.8,
+      });
+
+      fullContent = response.content;
+      console.log('[Onboarding Message] Got response, length:', fullContent.length);
+
+      if (response.toolUses && response.toolUses.length > 0) {
+        const metadataTool = response.toolUses.find(t => t.name === 'update_session_metadata');
+        if (metadataTool) {
+          toolUseData = metadataTool.input as SculptorMetadata;
+        }
+      }
+    } catch (err) {
+      console.error('[Onboarding Message] Anthropic error:', err);
+      apiError = err instanceof Error ? err.message : 'Failed to generate response';
+    }
+
+    // Persist assistant message
+    if (fullContent) {
+      await service.appendMessage(validSession.id, {
+        role: 'assistant',
+        content: fullContent,
+        timestamp: new Date().toISOString(),
+        metadata: toolUseData ? { signals: toolUseData } : undefined,
+      });
+    }
+
+    // Update session metadata
+    const shouldTransition = !!toolUseData?.should_transition;
+    const phase = toolUseData?.current_phase || currentPhase;
+
+    if (toolUseData) {
+      const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
+      if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
+      if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
+      if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
+      if (Object.keys(updates).length > 0) {
+        await service.updateSession(validSession.id, updates);
+      }
+    }
+
+    // Stream the pre-fetched response to client as SSE using pull-based generator
     async function* generateSSEEvents(): AsyncGenerator<Uint8Array, void, unknown> {
-      let fullContent = '';
-      let toolUseData: SculptorMetadata | null = null;
-
-      try {
-        const gen = AnthropicService.generateStreamingConversation({
-          messages,
-          systemPrompt,
-          tools: [SCULPTOR_METADATA_TOOL],
-          model: CLAUDE_SONNET_CURRENT,
-          maxTokens: 500,
-          temperature: 0.8,
-        });
-
-        for await (const event of gen) {
-          if (event.type === 'text') {
-            fullContent += event.content;
-            yield sseEvent({ type: 'token', content: event.content });
-          } else if (event.type === 'tool_use') {
-            toolUseData = event.toolUse.input as SculptorMetadata;
-          }
-        }
-      } catch (err) {
-        console.error('[Onboarding Message] Stream error:', err);
-        const errMsg = err instanceof Error ? err.message : 'Stream error';
-        yield sseEvent({ type: 'error', message: errMsg });
+      if (apiError) {
+        yield sseEvent({ type: 'error', message: apiError });
       }
 
-      // Persist assistant message + update session, then send complete
-      try {
-        if (fullContent) {
-          await service.appendMessage(validSession.id, {
-            role: 'assistant',
-            content: fullContent,
-            timestamp: new Date().toISOString(),
-            metadata: toolUseData ? { signals: toolUseData } : undefined,
-          });
+      // Yield content as word-boundary chunks for typing effect
+      if (fullContent) {
+        const chunks = fullContent.match(/.{1,12}/g) || [];
+        for (const chunk of chunks) {
+          yield sseEvent({ type: 'token', content: chunk });
         }
-
-        const shouldTransition = !!toolUseData?.should_transition;
-        const phase = toolUseData?.current_phase || currentPhase;
-
-        if (toolUseData) {
-          const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
-          if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
-          if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
-          if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
-          if (Object.keys(updates).length > 0) {
-            await service.updateSession(validSession.id, updates);
-          }
-        }
-
-        yield sseEvent({ type: 'complete', phase, shouldTransition });
-      } catch (persistErr) {
-        console.error('[Onboarding Message] Persist error:', persistErr);
-        yield sseEvent({
-          type: 'complete',
-          phase: currentPhase,
-          shouldTransition: false,
-        });
       }
+
+      yield sseEvent({ type: 'complete', phase, shouldTransition });
     }
 
     const stream = streamFromGenerator(generateSSEEvents());
