@@ -22,13 +22,24 @@ const MAX_CONTEXT_MESSAGES = 20;
 
 function buildMessages(log: ConversationEntry[]): ConversationMessage[] {
   // Always keep the first system trigger + last N messages
+  let entries: ConversationEntry[];
   if (log.length <= MAX_CONTEXT_MESSAGES) {
-    return log.map((e) => ({ role: e.role, content: e.content }));
+    entries = log;
+  } else {
+    const first2 = log.slice(0, 2);
+    const lastN = log.slice(-(MAX_CONTEXT_MESSAGES - 2));
+    entries = [...first2, ...lastN];
   }
 
-  const first2 = log.slice(0, 2);
-  const lastN = log.slice(-(MAX_CONTEXT_MESSAGES - 2));
-  return [...first2, ...lastN].map((e) => ({ role: e.role, content: e.content }));
+  const messages = entries.map((e) => ({ role: e.role, content: e.content }));
+
+  // Anthropic API requires the first message to have role 'user'.
+  // Guard against legacy sessions where the system trigger wasn't saved.
+  if (messages.length > 0 && messages[0].role !== 'user') {
+    messages.unshift({ role: 'user', content: '[Continue the onboarding conversation.]' });
+  }
+
+  return messages;
 }
 
 export async function POST(request: Request) {

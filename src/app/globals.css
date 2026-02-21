@@ -227,11 +227,12 @@ textarea::placeholder {
 }
 
 /* Typography defaults for consistent readability */
-p {
+/* :where() gives zero specificity so Tailwind utilities can override */
+:where(p) {
   color: rgb(55 65 81); /* gray-700 - standard body text */
 }
 
-.dark p {
+:where(.dark p) {
   color: rgb(203 213 225); /* slate-300 */
 }
 
