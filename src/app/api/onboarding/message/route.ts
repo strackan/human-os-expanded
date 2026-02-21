@@ -2,6 +2,9 @@
  * Onboarding Message API
  *
  * POST /api/onboarding/message — Send user message, get sculptor response via SSE
+ *
+ * Uses non-streaming Anthropic call + fake-stream to client for reliability.
+ * This avoids Vercel serverless issues with long-running streaming generators.
  */
 
 import { createServerSupabaseClient } from '@/lib/supabase-server';
@@ -40,20 +43,6 @@ function buildMessages(log: ConversationEntry[]): ConversationMessage[] {
   return messages;
 }
 
-/** Convert an async generator of Uint8Array chunks into a pull-based ReadableStream */
-function streamFromGenerator(gen: AsyncGenerator<Uint8Array, void, unknown>): ReadableStream<Uint8Array> {
-  return new ReadableStream({
-    async pull(controller) {
-      const { value, done } = await gen.next();
-      if (done) {
-        controller.close();
-      } else {
-        controller.enqueue(value);
-      }
-    },
-  });
-}
-
 export const maxDuration = 60;
 
 export async function POST(request: Request) {
@@ -88,11 +77,8 @@ export async function POST(request: Request) {
       });
     }
 
-    // Capture validated non-null values for the generator closure
-    const validSession = session;
-
     // Append user message to log
-    await service.appendMessage(validSession.id, {
+    await service.appendMessage(session.id, {
       role: 'user',
       content: message,
       timestamp: new Date().toISOString(),
@@ -107,8 +93,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const validUpdatedSession = updatedSession;
-
     // Get user display name
     const { data: profile } = await supabase
       .from('profiles')
@@ -118,84 +102,95 @@ export async function POST(request: Request) {
 
     const userName = profile?.full_name || user.email?.split('@')[0] || 'there';
     const systemPrompt = getSculptorSystemPrompt(userName);
-    const messages = buildMessages(validUpdatedSession.conversation_log);
+    const messages = buildMessages(updatedSession.conversation_log);
 
-    console.log('[Onboarding Message] messages count:', messages.length,
-      'first role:', messages[0]?.role, 'last role:', messages[messages.length - 1]?.role);
+    console.log('[Onboarding Message] Calling Anthropic (non-streaming), messages:', messages.length);
 
-    const encoder = new TextEncoder();
+    // --- Non-streaming call: get full response first, then stream to client ---
+    let fullContent = '';
+    let toolUseData: SculptorMetadata | null = null;
+    let apiError: string | null = null;
 
-    async function* generateSSEEvents(): AsyncGenerator<Uint8Array, void, unknown> {
-      let fullContent = '';
-      let toolUseData: SculptorMetadata | null = null;
+    try {
+      const response = await AnthropicService.generateConversation({
+        messages,
+        systemPrompt,
+        tools: [SCULPTOR_METADATA_TOOL],
+        model: CLAUDE_SONNET_CURRENT,
+        maxTokens: 500,
+        temperature: 0.8,
+      });
 
-      try {
-        console.log('[Onboarding Message] Creating Anthropic generator...');
-        const gen = AnthropicService.generateStreamingConversation({
-          messages,
-          systemPrompt,
-          tools: [SCULPTOR_METADATA_TOOL],
-          model: CLAUDE_SONNET_CURRENT,
-          maxTokens: 500,
-          temperature: 0.8,
-        });
+      fullContent = response.content;
+      console.log('[Onboarding Message] Got response, length:', fullContent.length,
+        'toolUses:', response.toolUses?.length || 0);
 
-        console.log('[Onboarding Message] Starting iteration...');
-        for await (const event of gen) {
-          if (event.type === 'text') {
-            fullContent += event.content;
-            yield encoder.encode(`data: ${JSON.stringify({ type: 'token', content: event.content })}\n\n`);
-          } else if (event.type === 'tool_use') {
-            toolUseData = event.toolUse.input as SculptorMetadata;
-          } else if (event.type === 'done') {
-            console.log('[Onboarding Message] Done, stopReason:', event.stopReason);
-          }
+      // Extract sculptor metadata from tool use
+      if (response.toolUses && response.toolUses.length > 0) {
+        const metadataTool = response.toolUses.find(t => t.name === 'update_session_metadata');
+        if (metadataTool) {
+          toolUseData = metadataTool.input as SculptorMetadata;
         }
-
-        console.log('[Onboarding Message] Stream finished. Content length:', fullContent.length);
-      } catch (err) {
-        console.error('[Onboarding Message] Stream error:', err);
-        const errMessage = err instanceof Error ? err.message : 'Stream error';
-        yield encoder.encode(`data: ${JSON.stringify({ type: 'error', message: errMessage })}\n\n`);
       }
+    } catch (err) {
+      console.error('[Onboarding Message] Anthropic error:', err);
+      apiError = err instanceof Error ? err.message : 'Failed to generate response';
+    }
 
-      // Always persist + send complete
-      try {
-        if (fullContent) {
-          await service.appendMessage(validSession.id, {
-            role: 'assistant',
-            content: fullContent,
-            timestamp: new Date().toISOString(),
-            metadata: toolUseData ? { signals: toolUseData } : undefined,
-          });
-        }
+    // Persist assistant message
+    if (fullContent) {
+      await service.appendMessage(session.id, {
+        role: 'assistant',
+        content: fullContent,
+        timestamp: new Date().toISOString(),
+        metadata: toolUseData ? { signals: toolUseData } : undefined,
+      });
+    }
 
-        const shouldTransition = !!toolUseData?.should_transition;
-        const phase = toolUseData?.current_phase || validUpdatedSession.current_phase;
+    // Update session metadata
+    const shouldTransition = !!toolUseData?.should_transition;
+    const phase = toolUseData?.current_phase || updatedSession.current_phase;
 
-        if (toolUseData) {
-          const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
-          if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
-          if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
-          if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
-          if (Object.keys(updates).length > 0) {
-            await service.updateSession(validSession.id, updates);
-          }
-        }
-
-        yield encoder.encode(`data: ${JSON.stringify({
-          type: 'complete',
-          phase,
-          shouldTransition,
-        })}\n\n`);
-      } catch (persistErr) {
-        console.error('[Onboarding Message] Persist error:', persistErr);
-        yield encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase: validUpdatedSession.current_phase, shouldTransition: false })}\n\n`);
+    if (toolUseData) {
+      const updates: Partial<Pick<import('@/lib/services/OnboardingService').OnboardingSession, 'current_phase' | 'opener_used' | 'opener_depth' | 'transition_trigger'>> = {};
+      if (toolUseData.current_phase) updates.current_phase = toolUseData.current_phase;
+      if (toolUseData.opener_used) updates.opener_used = toolUseData.opener_used;
+      if (shouldTransition) updates.transition_trigger = 'sculptor_tool';
+      if (Object.keys(updates).length > 0) {
+        await service.updateSession(session.id, updates);
       }
     }
 
-    // pull-based ReadableStream — consumer drives data production
-    const stream = streamFromGenerator(generateSSEEvents());
+    // --- Stream the pre-fetched response to client as SSE ---
+    const encoder = new TextEncoder();
+
+    // Chunk the response into word-sized pieces for a typing effect
+    const chunks = fullContent.match(/.{1,8}/g) || [];
+
+    const stream = new ReadableStream({
+      start(controller) {
+        // Send error if API call failed
+        if (apiError) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'error', message: apiError })}\n\n`)
+          );
+        }
+
+        // Send content as token chunks
+        for (const chunk of chunks) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: 'token', content: chunk })}\n\n`)
+          );
+        }
+
+        // Send complete event
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: 'complete', phase, shouldTransition })}\n\n`)
+        );
+
+        controller.close();
+      },
+    });
 
     return new Response(stream, {
       headers: {
