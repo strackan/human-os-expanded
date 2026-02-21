@@ -329,13 +329,13 @@ export class AnthropicService {
       const temperature = params.temperature ?? 0.7;
       const systemPrompt = params.systemPrompt || 'You are a helpful AI assistant.';
 
-      const requestParams: Record<string, unknown> = {
+      const requestParams: Anthropic.MessageCreateParams = {
         model,
         max_tokens: maxTokens,
         temperature,
         system: systemPrompt,
         messages: params.messages.map((m) => ({
-          role: m.role,
+          role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
         stream: true,
@@ -345,12 +345,11 @@ export class AnthropicService {
         requestParams.tools = params.tools.map((tool) => ({
           name: tool.name,
           description: tool.description,
-          input_schema: tool.input_schema,
+          input_schema: tool.input_schema as Anthropic.Tool['input_schema'],
         }));
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const stream = await (client.messages.create as any).call(client.messages, requestParams);
+      const stream = await client.messages.create(requestParams);
 
       // Track tool_use blocks being built up across delta events
       let currentToolUse: { id: string; name: string; inputJson: string } | null = null;

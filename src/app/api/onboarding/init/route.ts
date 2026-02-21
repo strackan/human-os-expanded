@@ -17,6 +17,8 @@ interface SculptorMetadata {
   detected_signals?: string[];
 }
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();
@@ -139,8 +141,9 @@ export async function POST(request: Request) {
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
       },
     });
   } catch (error) {
