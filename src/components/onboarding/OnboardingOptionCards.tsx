@@ -12,31 +12,31 @@ const OPTIONS = [
     key: 'A' as const,
     title: 'Show me my riskiest renewals',
     description: 'Jump into your renewal pipeline with health scores',
-    icon: '🎯',
+    icon: '\u{1F3AF}',
   },
   {
     key: 'B' as const,
     title: 'Help me prep for a customer meeting',
     description: 'AI-powered meeting prep with talking points',
-    icon: '🤝',
+    icon: '\u{1F91D}',
   },
   {
     key: 'C' as const,
     title: 'Walk me through a renewal workflow',
     description: 'See the full workflow system in action',
-    icon: '🔄',
+    icon: '\u{1F504}',
   },
   {
     key: 'D' as const,
     title: 'Just let me explore',
     description: 'Go straight to the dashboard',
-    icon: '🧭',
+    icon: '\u{1F9ED}',
   },
 ];
 
 export default function OnboardingOptionCards({ onSelect, disabled }: OnboardingOptionCardsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4 py-4">
+    <div id="onboarding-options">
       {OPTIONS.map((option, index) => (
         <motion.button
           key={option.key}
@@ -45,17 +45,13 @@ export default function OnboardingOptionCards({ onSelect, disabled }: Onboarding
           transition={{ duration: 0.3, delay: index * 0.1 }}
           onClick={() => onSelect(option.key)}
           disabled={disabled}
-          className="group relative rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm
-            p-4 text-left transition-all hover:border-violet-300 hover:shadow-md
-            hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="option-card"
         >
-          <div className="flex items-start gap-3">
-            <span className="text-xl">{option.icon}</span>
+          <div className="option-inner">
+            <span className="option-icon">{option.icon}</span>
             <div>
-              <h3 className="font-medium text-gray-900 text-sm group-hover:text-violet-600 transition-colors">
-                {option.title}
-              </h3>
-              <p className="text-xs text-gray-500 mt-0.5">{option.description}</p>
+              <h3 className="option-title">{option.title}</h3>
+              <p className="option-desc">{option.description}</p>
             </div>
           </div>
         </motion.button>

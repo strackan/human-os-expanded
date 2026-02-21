@@ -102,15 +102,17 @@ export default function OnboardingClient() {
 
         setSessionId(session.id);
 
-        // Restore existing conversation
+        // Restore existing conversation (skip system trigger messages)
         if (session.conversation_log?.length > 0) {
-          const restored: ChatMessage[] = session.conversation_log.map(
-            (entry: { role: string; content: string }, i: number) => ({
+          const restored: ChatMessage[] = session.conversation_log
+            .filter((entry: { role: string; content: string }) =>
+              !(entry.role === 'user' && entry.content.startsWith('[System:'))
+            )
+            .map((entry: { role: string; content: string }, i: number) => ({
               role: entry.role as 'user' | 'assistant',
               content: entry.content,
               id: `restored-${i}`,
-            })
-          );
+            }));
           setMessages(restored);
 
           // If already transitioned to options phase
@@ -250,7 +252,6 @@ export default function OnboardingClient() {
     } catch (err) {
       console.error('[OnboardingClient] reset error:', err);
     }
-    // Full reload to re-init cleanly
     window.location.reload();
   }, []);
 
@@ -281,19 +282,19 @@ export default function OnboardingClient() {
   // =========================================================================
   if (phase === 'loading') {
     return (
-      <div className="min-h-screen bg-[#f8f7f4] flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Loading...</div>
+      <div id="onboarding-loading">
+        <div className="loading-text">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f4] flex flex-col">
+    <div id="onboarding-page">
       <OnboardingHeader userName={userName} onSkip={handleSkip} onReset={handleReset} />
 
-      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full">
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', maxWidth: '42rem', margin: '0 auto', width: '100%' }}>
         {/* Chat area */}
-        <div className="flex-1">
+        <div style={{ flex: 1 }}>
           <OnboardingChat
             messages={messages}
             onSendMessage={handleSendMessage}
@@ -312,16 +313,15 @@ export default function OnboardingClient() {
 
         {/* Completed stub */}
         {phase === 'completed' && selectedOption && (
-          <div className="px-4 py-6 text-center">
-            <p className="text-sm text-gray-600 mb-4">
+          <div className="completed-section">
+            <p>
               {selectedOption === 'D'
                 ? "You got it — let's dive in."
                 : "Great choice! We'll set that up for you on the dashboard."}
             </p>
             <button
               onClick={() => router.push('/dashboard')}
-              className="rounded-full bg-violet-600 px-6 py-2.5 text-sm text-white
-                hover:bg-violet-700 transition-colors"
+              className="btn-dashboard"
             >
               Go to Dashboard
             </button>
@@ -330,12 +330,9 @@ export default function OnboardingClient() {
 
         {/* Error display */}
         {error && (
-          <div className="px-4 py-3 text-center">
-            <p className="text-sm text-red-500">{error}</p>
-            <button
-              onClick={() => setError(null)}
-              className="text-xs text-gray-400 hover:text-gray-600 mt-1"
-            >
+          <div className="error-section">
+            <p>{error}</p>
+            <button onClick={() => setError(null)}>
               Dismiss
             </button>
           </div>
