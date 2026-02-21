@@ -21,6 +21,8 @@ export default function OnboardingClient() {
   const [error, setError] = useState<string | null>(null);
 
   const initCalled = useRef(false);
+  const debugRef = useRef({ sseEvents: 0, lastEvent: 'none', rawChunks: 0 });
+  const [debugTick, setDebugTick] = useState(0);
 
   const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'there';
 
@@ -33,40 +35,26 @@ export default function OnboardingClient() {
       onToken: (content: string) => void,
       onComplete: (data: { phase: number; shouldTransition: boolean }) => void
     ) => {
+      debugRef.current = { sseEvents: 0, lastEvent: 'starting', rawChunks: 0 };
+      setDebugTick((t) => t + 1);
+
       const reader = response.body?.getReader();
       if (!reader) {
-        console.error('[consumeSSE] response.body is null/undefined, status:', response.status);
+        debugRef.current.lastEvent = 'NO_READER';
+        setDebugTick((t) => t + 1);
         setIsTyping(false);
         return;
       }
-      console.log('[consumeSSE] reader obtained, starting read loop');
 
       const decoder = new TextDecoder();
       let buffer = '';
       let gotComplete = false;
 
-      // Timeout safety net: if no data arrives within 30s, bail out
-      let lastDataTime = Date.now();
-      const TIMEOUT_MS = 30_000;
-
       while (true) {
-        const readPromise = reader.read();
-        const timeoutPromise = new Promise<{ done: true; value: undefined }>((resolve) => {
-          const remaining = TIMEOUT_MS - (Date.now() - lastDataTime);
-          setTimeout(() => resolve({ done: true, value: undefined }), Math.max(remaining, 0));
-        });
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        const { done, value } = await Promise.race([readPromise, timeoutPromise]);
-
-        if (done) {
-          if (Date.now() - lastDataTime >= TIMEOUT_MS) {
-            console.error('[consumeSSE] timeout — no data for', TIMEOUT_MS, 'ms');
-            setError('Response timed out. Please try again.');
-          }
-          break;
-        }
-
-        lastDataTime = Date.now();
+        debugRef.current.rawChunks++;
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
@@ -75,7 +63,10 @@ export default function OnboardingClient() {
           if (!line.startsWith('data: ')) continue;
           try {
             const data = JSON.parse(line.slice(6));
-            console.log('[consumeSSE] event:', data.type);
+            debugRef.current.sseEvents++;
+            debugRef.current.lastEvent = data.type;
+            setDebugTick((t) => t + 1);
+
             if (data.type === 'token') {
               onToken(data.content);
             } else if (data.type === 'complete') {
@@ -91,9 +82,9 @@ export default function OnboardingClient() {
         }
       }
 
-      console.log('[consumeSSE] stream ended, gotComplete:', gotComplete);
+      debugRef.current.lastEvent = gotComplete ? 'DONE' : 'ENDED_NO_COMPLETE';
+      setDebugTick((t) => t + 1);
 
-      // Safety net: if stream ended without a 'complete' event, clear typing
       if (!gotComplete) {
         setIsTyping(false);
       }
@@ -382,7 +373,11 @@ export default function OnboardingClient() {
           <span>sid={sessionId ? sessionId.slice(0, 8) : 'null'}</span>
           <span>typing={String(isTyping)}</span>
           <span>msgs={messages.length}</span>
+          <span>sse={debugRef.current.sseEvents}</span>
+          <span>chunks={debugRef.current.rawChunks}</span>
+          <span>last={debugRef.current.lastEvent}</span>
           <span>err={error || 'none'}</span>
+          <span style={{ display: 'none' }}>{debugTick}</span>
         </div>
       </div>
     </div>
