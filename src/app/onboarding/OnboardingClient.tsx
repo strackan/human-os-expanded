@@ -207,39 +207,48 @@ export default function OnboardingClient() {
           body: JSON.stringify({ message, sessionId }),
         });
 
-        console.log('[handleSendMessage] fetch completed, status:', res.status, 'body:', !!res.body);
-
         if (!res.ok) {
           setError('Failed to send message. Please try again.');
           setIsTyping(false);
           return;
         }
 
-        const streamingMsgId = `assistant-${Date.now()}`;
-        let streamedText = '';
+        const data = await res.json();
+        const fullContent: string = data.content || '';
 
-        // Add placeholder for streaming message
-        setMessages((prev) => [...prev, { role: 'assistant', content: '', id: streamingMsgId }]);
+        debugRef.current = { sseEvents: 0, lastEvent: 'json', rawChunks: 0 };
+        setDebugTick((t) => t + 1);
 
-        console.log('[handleSendMessage] calling consumeSSE');
+        if (!fullContent) {
+          setIsTyping(false);
+          return;
+        }
 
-        await consumeSSE(
-          res,
-          (token) => {
-            streamedText += token;
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === streamingMsgId ? { ...msg, content: streamedText } : msg
-              )
-            );
-          },
-          (data) => {
-            setIsTyping(false);
-            if (data.shouldTransition) {
-              setPhase('options');
-            }
+        // Fake-stream the response with local typing animation
+        const assistantMsgId = `assistant-${Date.now()}`;
+        setMessages((prev) => [...prev, { role: 'assistant', content: '', id: assistantMsgId }]);
+
+        const chunks = fullContent.match(/.{1,8}/g) || [fullContent];
+        let revealed = '';
+
+        for (let i = 0; i < chunks.length; i++) {
+          revealed += chunks[i];
+          const snapshot = revealed;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId ? { ...msg, content: snapshot } : msg
+            )
+          );
+          // Small delay between chunks for typing effect
+          if (i < chunks.length - 1) {
+            await new Promise((r) => setTimeout(r, 30));
           }
-        );
+        }
+
+        setIsTyping(false);
+        if (data.shouldTransition) {
+          setPhase('options');
+        }
       } catch (err) {
         console.error('[OnboardingClient] message error:', err);
         setError('Failed to send message. Please try again.');
