@@ -16,8 +16,14 @@ export { TaskService } from './task-service.js';
 export { AliasService } from './alias-service.js';
 export { TranscriptService } from './transcript-service.js';
 export { ActivationKeyService } from './activation-service.js';
+export { getIdentityProfile, updateIdentityProfile } from './identity-service.js';
 
 export type { ServiceContext, ServiceResult } from './types.js';
+export type {
+  IdentityProfile,
+  IdentityProfileUpdate,
+  ThemeEntry,
+} from './identity-service.js';
 export type {
   ActivationKeyResult,
   ValidationResult,

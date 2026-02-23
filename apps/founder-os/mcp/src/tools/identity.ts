@@ -8,6 +8,7 @@
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolContext } from '../lib/context.js';
 import { z } from 'zod';
+import { getIdentityProfile, updateIdentityProfile } from '@human-os/services';
 
 /** Schema where identity_profiles lives */
 const IDENTITY_SCHEMA = 'human_os';
@@ -133,23 +134,21 @@ export async function handleIdentityTools(
 
   switch (name) {
     case 'get_identity_profile': {
-      const { data, error } = await schema
-        .from('identity_profiles')
-        .select('*')
-        .eq('user_id', ctx.userUUID)
-        .single();
+      const serviceCtx = { supabase, userId: ctx.userUUID, layer: ctx.layer };
+      const result = await getIdentityProfile(serviceCtx);
 
-      if (error && error.code !== 'PGRST116') {
-        throw new Error(`Failed to get identity profile: ${error.message}`);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
-      if (!data) {
+      if (!result.data) {
         return {
           exists: false,
           message: 'No identity profile found. Use update_identity_profile to create one, ideally after The Sculptor conversation.',
         };
       }
 
+      const data = result.data;
       return {
         exists: true,
         profile: {
@@ -173,34 +172,14 @@ export async function handleIdentityTools(
     case 'update_identity_profile': {
       const input = UpdateProfileSchema.parse(args);
 
-      // Build update object
-      const updates: Record<string, unknown> = {};
-      if (input.core_values) updates.core_values = input.core_values;
-      if (input.energy_patterns) updates.energy_patterns = input.energy_patterns;
-      if (input.communication_style) updates.communication_style = input.communication_style;
-      if (input.interest_vectors) updates.interest_vectors = input.interest_vectors;
-      if (input.relationship_orientation) updates.relationship_orientation = input.relationship_orientation;
-      if (input.work_style) updates.work_style = input.work_style;
-      if (input.cognitive_profile) updates.cognitive_profile = input.cognitive_profile;
+      const serviceCtx = { supabase, userId: ctx.userUUID, layer: ctx.layer };
+      const result = await updateIdentityProfile(serviceCtx, input);
 
-      // Upsert the profile
-      const { data, error } = await schema
-        .from('identity_profiles')
-        .upsert({
-          user_id: ctx.userUUID,
-          layer: ctx.layer,
-          ...updates,
-          sculptor_completed_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id',
-        })
-        .select('*')
-        .single();
-
-      if (error) {
-        throw new Error(`Failed to update identity profile: ${error.message}`);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || 'Failed to update identity profile');
       }
 
+      const data = result.data;
       return {
         success: true,
         message: 'Identity profile updated.',
