@@ -1,0 +1,25 @@
+{
+  "name": "@human-os/documents-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server exposing document extraction tools (PDF, HTML, Slack, text)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "documents-mcp": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@human-os/documents": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.2"
+  }
+}

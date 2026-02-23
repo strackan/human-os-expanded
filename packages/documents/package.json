@@ -1,0 +1,35 @@
+{
+  "name": "@human-os/documents",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Document extraction and chunking - PDF, HTML, Slack, text",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "pdf-parse": "^1.1.1",
+    "cheerio": "^1.0.0",
+    "adm-zip": "^0.5.16",
+    "js-tiktoken": "^1.0.18",
+    "handlebars": "^4.7.8",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
+  }
+}

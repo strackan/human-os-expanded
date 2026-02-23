@@ -10,6 +10,10 @@
         "HUMAN_OS_LAYER": "founder:justin"
       }
     },
+    "documents-mcp": {
+      "command": "npx",
+      "args": ["tsx", "apps/documents-mcp/src/index.ts"]
+    },
     "human-os-workflows": {
       "command": "C:\\Python314\\python.exe",
       "args": ["-m", "fastmcp", "run", "C:\\Users\\strac\\dev\\human-os\\apps\\workflows\\server.py"],

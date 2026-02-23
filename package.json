@@ -12,9 +12,19 @@
     "typecheck": "turbo typecheck",
     "db:migrate": "supabase db push",
     "db:reset": "supabase db reset",
-    "db:types": "supabase gen types typescript --local > packages/core/src/database.types.ts"
+    "db:types": "supabase gen types typescript --local > packages/core/src/database.types.ts",
+    "eval": "npx promptfoo eval -c evals/sculptor/promptfooconfig.yaml -c evals/voice/promptfooconfig.yaml -c evals/tutorial/promptfooconfig.yaml -c evals/production/promptfooconfig.yaml -c evals/assessment/promptfooconfig.yaml -c evals/renubu/promptfooconfig.yaml",
+    "eval:ci": "npx promptfoo eval --no-cache --output evals/results.json -c evals/sculptor/promptfooconfig.yaml -c evals/voice/promptfooconfig.yaml -c evals/tutorial/promptfooconfig.yaml -c evals/production/promptfooconfig.yaml -c evals/assessment/promptfooconfig.yaml -c evals/renubu/promptfooconfig.yaml",
+    "eval:view": "cd evals && npx promptfoo view",
+    "eval:sculptor": "cd evals/sculptor && npx promptfoo eval",
+    "eval:voice": "cd evals/voice && npx promptfoo eval",
+    "eval:tutorial": "cd evals/tutorial && npx promptfoo eval",
+    "eval:production": "cd evals/production && npx promptfoo eval",
+    "eval:assessment": "cd evals/assessment && npx promptfoo eval",
+    "eval:renubu": "cd evals/renubu && npx promptfoo eval"
   },
   "devDependencies": {
+    "promptfoo": "^0.120.23",
     "tsx": "^4.19.0",
     "turbo": "^2.3.0",
     "typescript": "^5.7.2"
