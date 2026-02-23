@@ -51,6 +51,9 @@ import { relationshipTools, handleRelationshipTools } from './tools/relationship
 import { conductorTools, handleConductorTools } from './tools/conductor.js';
 import { codeTools, handleCodeTools } from './tools/code.js';
 import { crmTools, handleCrmTools } from './tools/crm/index.js';
+import { okrGoalTools, handleOKRGoalTools } from './tools/okr-goals.js';
+import { outreachTools, handleOutreachTools } from './tools/outreach.js';
+import { documentTools, handleDocumentTools } from './tools/documents.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -58,6 +61,7 @@ import { recallTools, handleRecallTools } from './tools/recall.js';
 import { learnAliasTools, handleLearnAliasTools } from './tools/learn-alias.js';
 
 import { createToolContext, withModeProperties, resolveUserUUID, type ToolHandler } from './lib/context.js';
+import { resolveBundleModules, getBundleFromEnv, getBundleDescription, type ModuleKey } from './bundles.js';
 
 // Declare globals for embedded data (set by bundle script for standalone exe)
 declare global {
@@ -89,44 +93,57 @@ if (process.argv.includes('--version') || process.argv.includes('-v')) {
 // =============================================================================
 
 /**
- * All tool modules with their handlers
- * Order matters - first matching handler wins
- *
- * NOTE: Alias tools (do, recall, learn_alias) are placed FIRST
- * so the natural language router is tried before direct tools.
- * This enables the "user vocabulary as API" pattern.
+ * Module registry — every tool module keyed by its bundle name.
+ * The registry is always complete; bundles select which keys are active.
  */
-const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = [
-  // Alias system - natural language routing (try first)
-  { tools: doTools, handler: handleDoTools },
-  { tools: recallTools, handler: handleRecallTools },
-  { tools: learnAliasTools, handler: handleLearnAliasTools },
+const moduleRegistry: Record<ModuleKey, { tools: typeof taskTools; handler: ToolHandler }> = {
+  // Infrastructure
+  'do':              { tools: doTools, handler: handleDoTools },
+  'recall':          { tools: recallTools, handler: handleRecallTools },
+  'learn-alias':     { tools: learnAliasTools, handler: handleLearnAliasTools },
+  'session':         { tools: sessionTools, handler: handleSessionTools },
+  // Core Platform
+  'context':         { tools: contextTools, handler: handleContextTools },
+  'search':          { tools: searchTools, handler: handleSearchTools },
+  'relationships':   { tools: relationshipTools, handler: handleRelationshipTools },
+  'glossary':        { tools: glossaryTools, handler: handleGlossaryTools },
+  'identity':        { tools: identityTools, handler: handleIdentityTools },
+  'documents':       { tools: documentTools, handler: handleDocumentTools },
+  // Founder OS productivity
+  'tasks':           { tools: taskTools, handler: handleTaskTools },
+  'queue':           { tools: queueTools, handler: handleQueueTools },
+  'projects':        { tools: projectTools, handler: handleProjectTools },
+  'priorities':      { tools: priorityTools, handler: handlePriorityTools },
+  'journal':         { tools: journalTools, handler: handleJournalTools },
+  'emotions':        { tools: emotionTools, handler: handleEmotionTools },
+  'moods':           { tools: moodTools, handler: handleMoodTools },
+  'email':           { tools: emailTools, handler: handleEmailTools },
+  'code':            { tools: codeTools, handler: handleCodeTools },
+  'okr-goals':       { tools: okrGoalTools, handler: handleOKRGoalTools },
+  // Product-specific
+  'voice':           { tools: voiceTools, handler: handleVoiceTools },
+  'skills':          { tools: skillsTools, handler: handleSkillsTools },
+  'conductor':       { tools: conductorTools, handler: handleConductorTools },
+  'gft-ingestion':   { tools: gftTools, handler: handleGFTTools },
+  'crm':             { tools: crmTools, handler: handleCrmTools },
+  'outreach':        { tools: outreachTools, handler: handleOutreachTools },
+  'demo':            { tools: demoTools, handler: handleDemoTools },
+  'transcripts':     { tools: transcriptTools, handler: handleTranscriptTools },
+  'community-intel': { tools: communityIntelTools, handler: handleCommunityIntelTools },
+};
 
-  // Direct tools (fallback when aliases don't match)
-  { tools: sessionTools, handler: handleSessionTools },
-  { tools: queueTools, handler: handleQueueTools },
-  { tools: taskTools, handler: handleTaskTools },
-  { tools: projectTools, handler: handleProjectTools },
-  { tools: glossaryTools, handler: handleGlossaryTools },
-  { tools: searchTools, handler: handleSearchTools },
-  { tools: gftTools, handler: handleGFTTools },
-  { tools: demoTools, handler: handleDemoTools },
-  { tools: transcriptTools, handler: handleTranscriptTools },
-  { tools: communityIntelTools, handler: handleCommunityIntelTools },
-  { tools: journalTools, handler: handleJournalTools },
-  { tools: emotionTools, handler: handleEmotionTools },
-  { tools: voiceTools, handler: handleVoiceTools },
-  { tools: skillsTools, handler: handleSkillsTools },
-  { tools: contextTools, handler: handleContextTools },
-  { tools: identityTools, handler: handleIdentityTools },
-  { tools: priorityTools, handler: handlePriorityTools },
-  { tools: emailTools, handler: handleEmailTools },
-  { tools: moodTools, handler: handleMoodTools },
-  { tools: relationshipTools, handler: handleRelationshipTools },
-  { tools: conductorTools, handler: handleConductorTools },
-  { tools: codeTools, handler: handleCodeTools },
-  { tools: crmTools, handler: handleCrmTools },
-];
+/**
+ * Resolve active bundle from environment and filter the registry.
+ *
+ * Infrastructure modules (do, recall, learn-alias, session) are always
+ * placed first so the natural language router is tried before direct tools.
+ */
+const bundleEnv = getBundleFromEnv();
+const { resolvedBundle, modules: activeModuleKeys } = resolveBundleModules(bundleEnv);
+
+const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = activeModuleKeys
+  .map(key => moduleRegistry[key])
+  .filter(Boolean);
 
 /** Flat list of all tools for MCP registration, with mode property added */
 const allTools = withModeProperties(toolModules.flatMap(m => m.tools));
@@ -193,6 +210,9 @@ async function main() {
     contextEngine,
     knowledgeGraph,
   });
+
+  // Expose active tools for bundle-aware discovery (used by do.ts)
+  ctx.activeTools = allTools;
 
   // Get instructions path
   let instructionsPath = '';
@@ -411,6 +431,7 @@ async function main() {
 
   const versionStr = buildInfo ? `v${buildInfo.version} (${buildInfo.gitHash})` : `v${version}`;
   console.error(`Founder OS MCP Server ${versionStr} running on stdio`);
+  console.error(`Bundle: ${resolvedBundle} (${getBundleDescription(resolvedBundle)}) — ${allTools.length} tools from ${activeModuleKeys.length} modules`);
 }
 
 main().catch((error) => {

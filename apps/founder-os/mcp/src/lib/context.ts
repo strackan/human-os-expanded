@@ -114,6 +114,8 @@ export interface ToolContext {
   knowledgeGraph: KnowledgeGraph;
   /** Get lazily-initialized Supabase client (singleton per context) */
   getClient: () => SupabaseClient;
+  /** Active tools for the current bundle (set at startup, used by do.ts for discovery) */
+  activeTools?: import('@modelcontextprotocol/sdk/types.js').Tool[];
 }
 
 /**

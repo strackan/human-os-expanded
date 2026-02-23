@@ -225,8 +225,8 @@ async function executeDoRequest(
     // STEP 2b: Semantic Tool Discovery (Tier 4 fallback)
     // ==========================================================================
 
-    // Get all available tools for semantic search
-    const allTools = await getAllAvailableTools();
+    // Get all available tools for semantic search (bundle-aware)
+    const allTools = getAllAvailableTools(ctx);
     const toolDiscovery = new ToolDiscoveryService(allTools, {
       generateEmbedding: embeddingProvider
         ? (text) => embeddingProvider.generate(text)
@@ -319,7 +319,11 @@ async function executeDoRequest(
 
 /**
  * Invoke an internal tool by name
- * This is used by the executor to call tools during action chain execution
+ * This is used by the executor to call tools during action chain execution.
+ *
+ * Uses dynamic imports to avoid circular dependencies with do.ts.
+ * All non-infrastructure modules are included so alias chains can
+ * call any tool in the registry.
  */
 async function invokeToolInternal(
   toolName: string,
@@ -327,16 +331,61 @@ async function invokeToolInternal(
   ctx: ToolContext
 ): Promise<unknown> {
   // Import handlers dynamically to avoid circular dependencies
-  const { handleSessionTools } = await import('./session.js');
-  const { handleQueueTools } = await import('./queue.js');
-  const { handleTaskTools } = await import('./tasks.js');
-  const { handleGlossaryTools } = await import('./glossary.js');
-  const { handleSearchTools } = await import('./search.js');
-  const { handleTranscriptTools } = await import('./transcripts.js');
-  const { handleCommunityIntelTools } = await import('./community-intel.js');
-  const { handleProjectTools } = await import('./projects/index.js');
-  const { handleJournalTools } = await import('./journal.js');
-  const { handleEmotionTools } = await import('./emotions.js');
+  const [
+    { handleSessionTools },
+    { handleQueueTools },
+    { handleTaskTools },
+    { handleGlossaryTools },
+    { handleSearchTools },
+    { handleTranscriptTools },
+    { handleCommunityIntelTools },
+    { handleProjectTools },
+    { handleJournalTools },
+    { handleEmotionTools },
+    { handleVoiceTools },
+    { handleSkillsTools },
+    { handleContextTools },
+    { handleIdentityTools },
+    { handlePriorityTools },
+    { handleEmailTools },
+    { handleMoodTools },
+    { handleRelationshipTools },
+    { handleConductorTools },
+    { handleCodeTools },
+    { handleCrmTools },
+    { handleOKRGoalTools },
+    { handleOutreachTools },
+    { handleDocumentTools },
+    { handleDemoTools },
+    { handleGFTTools },
+  ] = await Promise.all([
+    import('./session.js'),
+    import('./queue.js'),
+    import('./tasks.js'),
+    import('./glossary.js'),
+    import('./search.js'),
+    import('./transcripts.js'),
+    import('./community-intel.js'),
+    import('./projects/index.js'),
+    import('./journal.js'),
+    import('./emotions.js'),
+    import('./voice.js'),
+    import('./skills.js'),
+    import('./context.js'),
+    import('./identity.js'),
+    import('./priorities.js'),
+    import('./email.js'),
+    import('./moods.js'),
+    import('./relationships.js'),
+    import('./conductor.js'),
+    import('./code.js'),
+    import('./crm/index.js'),
+    import('./okr-goals.js'),
+    import('./outreach.js'),
+    import('./documents.js'),
+    import('./demo.js'),
+    import('./gft-ingestion.js'),
+  ]);
 
   const handlers = [
     handleSessionTools,
@@ -349,6 +398,22 @@ async function invokeToolInternal(
     handleProjectTools,
     handleJournalTools,
     handleEmotionTools,
+    handleVoiceTools,
+    handleSkillsTools,
+    handleContextTools,
+    handleIdentityTools,
+    handlePriorityTools,
+    handleEmailTools,
+    handleMoodTools,
+    handleRelationshipTools,
+    handleConductorTools,
+    handleCodeTools,
+    handleCrmTools,
+    handleOKRGoalTools,
+    handleOutreachTools,
+    handleDocumentTools,
+    handleDemoTools,
+    handleGFTTools,
   ];
 
   for (const handler of handlers) {
@@ -394,76 +459,21 @@ async function listAvailableAliases(
 }
 
 /**
- * Get all available tools from the MCP server
- * Used for semantic tool discovery when alias matching fails
+ * Get all available tools from the active bundle.
+ * Used for semantic tool discovery when alias matching fails.
+ *
+ * Reads ctx.activeTools (populated at startup from the bundle filter)
+ * and excludes do/recall/learn_alias to avoid recursion.
  */
-async function getAllAvailableTools(): Promise<Tool[]> {
-  // Dynamically import all tool modules to get their definitions
-  const [
-    { taskTools },
-    { queueTools },
-    { glossaryTools },
-    { searchTools },
-    { sessionTools },
-    { gftTools },
-    { transcriptTools },
-    { communityIntelTools },
-    { projectTools },
-    { journalTools },
-    { emotionTools },
-    { voiceTools },
-    { skillsTools },
-    { contextTools },
-    { identityTools },
-    { priorityTools },
-    { emailTools },
-    { moodTools },
-    { relationshipTools },
-    { conductorTools },
-  ] = await Promise.all([
-    import('./tasks.js'),
-    import('./queue.js'),
-    import('./glossary.js'),
-    import('./search.js'),
-    import('./session.js'),
-    import('./gft-ingestion.js'),
-    import('./transcripts.js'),
-    import('./community-intel.js'),
-    import('./projects/index.js'),
-    import('./journal.js'),
-    import('./emotions.js'),
-    import('./voice.js'),
-    import('./skills.js'),
-    import('./context.js'),
-    import('./identity.js'),
-    import('./priorities.js'),
-    import('./email.js'),
-    import('./moods.js'),
-    import('./relationships.js'),
-    import('./conductor.js'),
-  ]);
+function getAllAvailableTools(ctx: ToolContext): Tool[] {
+  const EXCLUDED = new Set(['do', 'list_aliases', 'recall', 'learn_alias']);
 
-  // Combine all tools (excluding do/recall/learn_alias to avoid recursion)
-  return [
-    ...taskTools,
-    ...queueTools,
-    ...glossaryTools,
-    ...searchTools,
-    ...sessionTools,
-    ...gftTools,
-    ...transcriptTools,
-    ...communityIntelTools,
-    ...projectTools,
-    ...journalTools,
-    ...emotionTools,
-    ...voiceTools,
-    ...skillsTools,
-    ...contextTools,
-    ...identityTools,
-    ...priorityTools,
-    ...emailTools,
-    ...moodTools,
-    ...relationshipTools,
-    ...conductorTools,
-  ];
+  if (ctx.activeTools) {
+    return ctx.activeTools.filter(t => !EXCLUDED.has(t.name));
+  }
+
+  // Fallback: should not happen in normal operation, but return empty
+  // rather than crash if activeTools wasn't populated
+  console.error('[do] Warning: ctx.activeTools not populated, tool discovery will be empty');
+  return [];
 }
