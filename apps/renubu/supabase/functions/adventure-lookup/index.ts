@@ -39,7 +39,7 @@ serve(async (req: Request) => {
 
     const { data, error } = await supabase
       .from("adventure_visitors")
-      .select("id, name, company, role, context, played, replay_code")
+      .select("id, name, company, role, context, played, replay_code, welcome_letter, executive_summary, secret_message, headline, linkedin_url")
       .eq("slug", slug)
       .single();
 
@@ -58,6 +58,11 @@ serve(async (req: Request) => {
         role: data.role,
         context: data.context,
         played: data.played,
+        welcome_letter: data.welcome_letter,
+        executive_summary: data.executive_summary,
+        secret_message: data.secret_message,
+        headline: data.headline,
+        linkedin_url: data.linkedin_url,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
