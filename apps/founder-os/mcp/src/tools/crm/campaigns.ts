@@ -211,10 +211,10 @@ export async function handleCampaignTools(
 ): Promise<unknown | null> {
   switch (name) {
     case 'create_campaign':
-      return createCampaign(ctx, args as CreateCampaignParams);
+      return createCampaign(ctx, args as unknown as CreateCampaignParams);
 
     case 'update_campaign':
-      return updateCampaign(ctx, args as UpdateCampaignParams);
+      return updateCampaign(ctx, args as unknown as UpdateCampaignParams);
 
     case 'get_campaign':
       return getCampaign(ctx, args.campaign_id as string);
@@ -226,19 +226,19 @@ export async function handleCampaignTools(
       return addToCampaign(ctx, args.campaign_id as string, args.contact_ids as string[]);
 
     case 'update_campaign_member':
-      return updateCampaignMember(ctx, args as UpdateMemberParams);
+      return updateCampaignMember(ctx, args as unknown as UpdateMemberParams);
 
     case 'get_campaign_members':
-      return getCampaignMembers(ctx, args as GetMembersParams);
+      return getCampaignMembers(ctx, args as unknown as GetMembersParams);
 
     case 'get_outreach_queue':
       return getOutreachQueue(ctx, args.campaign_id as string, (args.limit as number) || 10);
 
     case 'log_outreach':
-      return logOutreach(ctx, args as LogOutreachParams);
+      return logOutreach(ctx, args as unknown as LogOutreachParams);
 
     case 'convert_lead':
-      return convertLead(ctx, args as ConvertLeadParams);
+      return convertLead(ctx, args as unknown as ConvertLeadParams);
 
     default:
       return null;
@@ -373,7 +373,8 @@ async function getCampaign(ctx: ToolContext, campaignId: string) {
   // Get stats
   const { data: stats } = await ctx
     .getClient()
-    .rpc('crm.get_campaign_stats', {
+    .schema(CRM_SCHEMA)
+    .rpc('get_campaign_stats', {
       p_campaign_id: campaignId,
     });
 
@@ -518,7 +519,8 @@ async function getCampaignMembers(ctx: ToolContext, params: GetMembersParams) {
 async function getOutreachQueue(ctx: ToolContext, campaignId: string, limit: number) {
   const { data, error } = await ctx
     .getClient()
-    .rpc('crm.get_members_to_contact', {
+    .schema(CRM_SCHEMA)
+    .rpc('get_members_to_contact', {
       p_campaign_id: campaignId,
       p_limit: limit,
     });
@@ -577,7 +579,8 @@ async function logOutreach(ctx: ToolContext, params: LogOutreachParams) {
 async function convertLead(ctx: ToolContext, params: ConvertLeadParams) {
   const { data, error } = await ctx
     .getClient()
-    .rpc('crm.convert_member_to_opportunity', {
+    .schema(CRM_SCHEMA)
+    .rpc('convert_member_to_opportunity', {
       p_member_id: params.member_id,
       p_opportunity_name: params.opportunity_name,
       p_expected_value: params.expected_value || null,

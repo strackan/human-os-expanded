@@ -40,24 +40,21 @@ import {
 export const doTools: Tool[] = [
   {
     name: 'do',
-    description: `Execute any Human-OS action using natural language. This is the preferred way to interact with the system.
+    description: `PREFERRED: Route all user requests through do() first. This reduces context bloat by returning concise summaries instead of raw data.
 
-Examples:
-- "check my os" - Load session context and urgent tasks
-- "what's urgent" - Show urgent tasks
-- "who is Grace" - Get full context on a person
-- "what do I think about John" - Retrieve opinions and notes
-- "tie a string to Sarah after Q1" - Set contextual reminder
-- "what would Scott say about this pricing" - Get expert perspective
-- "add refactor auth to my queue" - Queue item for later
+Handles natural language commands like:
+- "check my os" / "what's urgent" / "my tasks" / "my projects"
+- "who is {person}" / "my relationships" / "overdue contacts"
+- "add task {title}" / "create project {name}" / "journal {content}"
+- "define {term}" / "search {query}" / "find {query}"
+- "I talked to {name}" / "remember {name} is {relationship}"
+- "check in" / "gratitude" / "reflect" / "daily review"
+- "code {task}" / "code status" / "queue {item}"
+- "my priorities" / "my journal" / "my pipeline" / "my identity"
+- "start session" / "load {mode} mode" / "what's on my plate"
+- "what do I think about {person}" / "my transcripts" / "my deals"
 
-The system will:
-1. Match your request to a known alias pattern
-2. Extract variables (person names, timing, topics)
-3. Execute the appropriate tools
-4. Return a concise summary
-
-If no alias matches, will search available tools and suggest creating one.`,
+Only call individual tools directly when do() returns no match or when you need specific parameters not expressible in natural language.`,
     inputSchema: {
       type: 'object',
       properties: {
@@ -144,6 +141,7 @@ async function executeDoRequest(
 ): Promise<{
   success: boolean;
   summary: string;
+  data?: unknown;
   matchedAlias?: string;
   matchType?: string;
   confidence?: number;
@@ -274,6 +272,7 @@ async function executeDoRequest(
     generateEmbedding: embeddingProvider
       ? (text) => embeddingProvider.generate(text)
       : undefined,
+    summarize: async (steps) => summarizeSteps(steps),
   };
 
   const executor = new AliasExecutor(executorConfig);
@@ -305,9 +304,16 @@ async function executeDoRequest(
   // Execute the alias
   const result = await executor.execute(match.alias, match.extractedVars, request, execCtx);
 
+  // Extract the actual data from the last completed step
+  const completedSteps = result.steps.filter(s => !s.skipped && !s.error);
+  const lastResult = completedSteps.length > 0
+    ? completedSteps[completedSteps.length - 1]!.result
+    : undefined;
+
   return {
     success: result.success,
     summary: result.summary,
+    data: lastResult,
     matchedAlias: match.alias.pattern,
     matchType: match.matchType,
     confidence: match.confidence,
@@ -315,6 +321,97 @@ async function executeDoRequest(
     resolvedEntities: Object.keys(injectedContext.entityMap),
     canTraverseNetwork: injectedContext.canTraverseNetwork,
   };
+}
+
+/**
+ * Summarize execution steps into a human-readable string.
+ * Rule-based: inspects result shape and extracts counts, messages, key fields.
+ */
+function summarizeSteps(steps: { tool: string; result?: unknown; error?: string; skipped?: boolean }[]): string {
+  const completed = steps.filter(s => !s.skipped && !s.error);
+  if (completed.length === 0) {
+    const failed = steps.find(s => s.error);
+    return failed ? `Failed: ${failed.error}` : 'No actions executed';
+  }
+
+  const parts: string[] = [];
+
+  for (const step of completed) {
+    const r = step.result;
+    if (r == null) {
+      parts.push(`${step.tool}: done`);
+      continue;
+    }
+
+    if (typeof r === 'string') {
+      parts.push(r);
+      continue;
+    }
+
+    if (typeof r !== 'object') {
+      parts.push(`${step.tool}: ${String(r)}`);
+      continue;
+    }
+
+    const obj = r as Record<string, unknown>;
+
+    // If result has a message field, use it
+    if (typeof obj['message'] === 'string') {
+      parts.push(obj['message']);
+      continue;
+    }
+
+    // Look for common list patterns: { items: [...], count: N } or { data: [...] }
+    const listKey = ['items', 'data', 'results', 'tasks', 'relationships', 'overdue',
+      'entries', 'transcripts', 'messages', 'meetings', 'priorities', 'goals',
+      'aliases', 'contexts', 'shares', 'categories', 'deals', 'campaigns',
+      'voices', 'profiles', 'interviews', 'skills'].find(
+      k => Array.isArray(obj[k])
+    );
+
+    if (listKey) {
+      const arr = obj[listKey] as unknown[];
+      const count = typeof obj['count'] === 'number' ? obj['count'] : arr.length;
+      const label = listKey.replace(/_/g, ' ');
+      if (count === 0) {
+        parts.push(`No ${label} found`);
+      } else {
+        // Show first few item names/titles if available
+        const previews = arr.slice(0, 3).map((item) => {
+          if (typeof item === 'string') return item;
+          if (item && typeof item === 'object') {
+            const o = item as Record<string, unknown>;
+            return o['name'] || o['title'] || o['pattern'] || o['term'] || o['subject'] || o['label'] || null;
+          }
+          return null;
+        }).filter(Boolean);
+
+        const previewStr = previews.length > 0 ? `: ${previews.join(', ')}` : '';
+        const moreStr = count > 3 ? ` (+${count - 3} more)` : '';
+        parts.push(`${count} ${label}${previewStr}${moreStr}`);
+      }
+      continue;
+    }
+
+    // Object with success field
+    if (typeof obj['success'] === 'boolean') {
+      const detail = obj['id'] || obj['name'] || obj['slug'] || '';
+      parts.push(`${step.tool}: ${obj['success'] ? 'success' : 'failed'}${detail ? ` — ${detail}` : ''}`);
+      continue;
+    }
+
+    // Object with count
+    if (typeof obj['count'] === 'number') {
+      parts.push(`${step.tool}: ${obj['count']} result(s)`);
+      continue;
+    }
+
+    // Fallback: tool name + compact key summary
+    const keys = Object.keys(obj).filter(k => obj[k] != null).slice(0, 4);
+    parts.push(`${step.tool}: returned ${keys.join(', ')}`);
+  }
+
+  return parts.join(' → ');
 }
 
 /**
@@ -330,6 +427,12 @@ async function invokeToolInternal(
   params: Record<string, unknown>,
   ctx: ToolContext
 ): Promise<unknown> {
+  // Handle list_aliases directly (avoid importing handleDoTools which would be recursive)
+  if (toolName === 'list_aliases') {
+    const { listAvailableAliases: listAliasesFn } = await import('./do-list-aliases.js');
+    return listAliasesFn(params, ctx);
+  }
+
   // Import handlers dynamically to avoid circular dependencies
   const [
     { handleSessionTools },
@@ -358,6 +461,8 @@ async function invokeToolInternal(
     { handleDocumentTools },
     { handleDemoTools },
     { handleGFTTools },
+    { handleSharingTools },
+    { handleNominationTools },
   ] = await Promise.all([
     import('./session.js'),
     import('./queue.js'),
@@ -385,6 +490,8 @@ async function invokeToolInternal(
     import('./documents.js'),
     import('./demo.js'),
     import('./gft-ingestion.js'),
+    import('./sharing.js'),
+    import('./nominations.js'),
   ]);
 
   const handlers = [
@@ -414,6 +521,8 @@ async function invokeToolInternal(
     handleDocumentTools,
     handleDemoTools,
     handleGFTTools,
+    handleSharingTools,
+    handleNominationTools,
   ];
 
   for (const handler of handlers) {

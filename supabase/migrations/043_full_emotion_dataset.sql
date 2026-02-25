@@ -59,10 +59,12 @@ create index if not exists mood_category_mappings_category_idx on founder_os.moo
 alter table founder_os.mood_categories enable row level security;
 alter table founder_os.mood_category_mappings enable row level security;
 
+drop policy if exists "Allow all mood category operations" on founder_os.mood_categories;
 create policy "Allow all mood category operations"
   on founder_os.mood_categories for all
   using (true) with check (true);
 
+drop policy if exists "Allow all mood category mapping operations" on founder_os.mood_category_mappings;
 create policy "Allow all mood category mapping operations"
   on founder_os.mood_category_mappings for all
   using (true) with check (true);
@@ -157,11 +159,52 @@ insert into founder_os.mood_categories (name, slug, description, color_hex, icon
 on conflict (slug) do nothing;
 
 -- =============================================================================
+-- SCHEMA COMPATIBILITY: Detect actual table locations and fix FK if needed
+-- Tables may have been moved to human_os by later migrations (045, 060)
+-- =============================================================================
+
+DO $$
+DECLARE
+  v_mood_schema text;
+  v_cat_schema text;
+  v_sp text;
+BEGIN
+  -- Detect actual schema for mood_definitions (BASE TABLE only, not views)
+  SELECT table_schema INTO v_mood_schema FROM information_schema.tables
+    WHERE table_name = 'mood_definitions' AND table_type = 'BASE TABLE'
+    ORDER BY CASE table_schema WHEN 'human_os' THEN 0 WHEN 'public' THEN 1 ELSE 2 END
+    LIMIT 1;
+
+  -- Detect actual schema for mood_category_mappings
+  SELECT table_schema INTO v_cat_schema FROM information_schema.tables
+    WHERE table_name = 'mood_category_mappings' AND table_type = 'BASE TABLE'
+    ORDER BY CASE table_schema WHEN 'human_os' THEN 0 WHEN 'founder_os' THEN 1 ELSE 2 END
+    LIMIT 1;
+
+  v_mood_schema := COALESCE(v_mood_schema, 'public');
+  v_cat_schema := COALESCE(v_cat_schema, 'founder_os');
+
+  -- Fix FK on mood_category_mappings to point to actual mood_definitions location
+  BEGIN
+    EXECUTE format('ALTER TABLE %I.mood_category_mappings DROP CONSTRAINT IF EXISTS mood_category_mappings_mood_id_fkey', v_cat_schema);
+    EXECUTE format('ALTER TABLE %I.mood_category_mappings ADD CONSTRAINT mood_category_mappings_mood_id_fkey FOREIGN KEY (mood_id) REFERENCES %I.mood_definitions(id) ON DELETE CASCADE', v_cat_schema, v_mood_schema);
+    RAISE NOTICE '043: Fixed FK on %.mood_category_mappings → %.mood_definitions', v_cat_schema, v_mood_schema;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE NOTICE '043: FK fix skipped: %', SQLERRM;
+  END;
+
+  -- Set search_path for rest of this transaction so unqualified names resolve correctly
+  v_sp := v_mood_schema || ', ' || v_cat_schema || ', founder_os, public, extensions';
+  PERFORM set_config('search_path', v_sp, true);
+  RAISE NOTICE '043: search_path set to: %', v_sp;
+END $$;
+
+-- =============================================================================
 -- ADDITIONAL MOOD DEFINITIONS (beyond core 52)
 -- =============================================================================
 
 -- Extended emotional states
-insert into public.mood_definitions (name, joy_rating, trust_rating, fear_rating, surprise_rating, sadness_rating, anticipation_rating, anger_rating, disgust_rating, intensity, arousal_level, valence, dominance, is_core, category, color_hex) values
+insert into mood_definitions (name, joy_rating, trust_rating, fear_rating, surprise_rating, sadness_rating, anticipation_rating, anger_rating, disgust_rating, intensity, arousal_level, valence, dominance, is_core, category, color_hex) values
 -- Additional joy variants
 ('Blissful', 9, 3, 0, 0, 0, 0, 0, 0, 8, 6, 9, 6, false, 'joy-emotions', '#FCD34D'),
 ('Cheerful', 7, 2, 0, 0, 0, 0, 0, 0, 5, 6, 8, 5, false, 'joy-emotions', '#FBBF24'),
@@ -274,98 +317,98 @@ on conflict (name) do nothing;
 
 -- Map moods to emotional type categories based on their dominant Plutchik dimension
 -- Joy-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'joy-emotions'
   and m.joy_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Trust-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'trust-emotions'
   and m.trust_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Fear-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'fear-emotions'
   and m.fear_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Sadness-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'sadness-emotions'
   and m.sadness_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Anticipation-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'anticipation-emotions'
   and m.anticipation_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Anger-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'anger-emotions'
   and m.anger_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Disgust-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'disgust-emotions'
   and m.disgust_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Surprise-based emotions
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 1.00, true
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'surprise-emotions'
   and m.surprise_rating >= 5
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
@@ -374,38 +417,38 @@ where c.slug = 'surprise-emotions'
 -- =============================================================================
 
 -- Mild emotions (intensity 1-4)
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'mild'
   and m.intensity between 1 and 4
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Moderate emotions (intensity 5-7)
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'moderate'
   and m.intensity between 5 and 7
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
 -- Intense emotions (intensity 8-10)
-insert into founder_os.mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
+insert into mood_category_mappings (mood_id, category_id, relevance_score, is_primary)
 select m.id, c.id, 0.80, false
-from public.mood_definitions m
-cross join founder_os.mood_categories c
+from mood_definitions m
+cross join mood_categories c
 where c.slug = 'intense'
   and m.intensity between 8 and 10
   and not exists (
-    select 1 from founder_os.mood_category_mappings mcm
+    select 1 from mood_category_mappings mcm
     where mcm.mood_id = m.id and mcm.category_id = c.id
   );
 
@@ -450,7 +493,7 @@ as $$
     m.valence,
     m.color_hex,
     mcm.relevance_score
-  from public.mood_definitions m
+  from mood_definitions m
   join founder_os.mood_category_mappings mcm on m.id = mcm.mood_id
   join founder_os.mood_categories c on mcm.category_id = c.id
   where c.slug = p_category_slug
@@ -507,7 +550,7 @@ as $$
     m.intensity,
     m.valence,
     m.color_hex
-  from public.mood_definitions m
+  from mood_definitions m
   left join founder_os.mood_category_mappings mcm on m.id = mcm.mood_id
   left join founder_os.mood_categories c on mcm.category_id = c.id
   where

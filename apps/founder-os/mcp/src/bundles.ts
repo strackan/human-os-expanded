@@ -50,7 +50,10 @@ export type ModuleKey =
   | 'outreach'
   | 'demo'
   | 'transcripts'
-  | 'community-intel';
+  | 'community-intel'
+  | 'nominations'
+  | 'contacts'
+  | 'sharing';
 
 // =============================================================================
 // TIERS
@@ -72,6 +75,8 @@ const CORE_PLATFORM: ModuleKey[] = [
   'glossary',
   'identity',
   'documents',
+  'contacts',
+  'sharing',
 ];
 
 /** Founder OS — personal productivity suite */
@@ -99,6 +104,7 @@ const PRODUCT_SPECIFIC: ModuleKey[] = [
   'demo',
   'transcripts',
   'community-intel',
+  'nominations',
 ];
 
 // =============================================================================
@@ -151,6 +157,7 @@ const BUNDLES: Record<BundleName, BundleDefinition> = {
       'journal',
       'demo',
       'transcripts',
+      'nominations',
     ],
   },
 
@@ -177,6 +184,7 @@ const BUNDLES: Record<BundleName, BundleDefinition> = {
       'outreach',
       'email',
       'voice',
+      'nominations',
     ],
   },
 

@@ -234,7 +234,7 @@ export async function handleMoodTools(
       const input = GetMoodsByCategorySchema.parse(args);
 
       // Use the helper function
-      const { data, error } = await supabase.rpc('get_moods_by_category', {
+      const { data, error } = await schema.rpc('get_moods_by_category', {
         p_category_slug: input.category_slug,
       });
 
@@ -283,7 +283,7 @@ export async function handleMoodTools(
       const input = SearchMoodsSchema.parse(args);
 
       // Use the helper function
-      const { data, error } = await supabase.rpc('search_moods', {
+      const { data, error } = await schema.rpc('search_moods', {
         p_search_term: input.query || null,
         p_category_type: input.category_type || null,
         p_min_valence: input.min_valence || null,
@@ -325,7 +325,7 @@ export async function handleMoodTools(
       const input = GetMoodDetailsSchema.parse(args);
 
       // Use the helper function
-      const { data, error } = await supabase.rpc('get_mood_details', {
+      const { data, error } = await schema.rpc('get_mood_details', {
         p_mood_name: input.mood_name,
       });
 

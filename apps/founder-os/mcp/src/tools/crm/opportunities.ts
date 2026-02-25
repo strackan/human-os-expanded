@@ -200,10 +200,10 @@ export async function handleOpportunityTools(
 ): Promise<unknown | null> {
   switch (name) {
     case 'create_opportunity':
-      return createOpportunity(ctx, args as CreateOpportunityParams);
+      return createOpportunity(ctx, args as unknown as CreateOpportunityParams);
 
     case 'update_opportunity':
-      return updateOpportunity(ctx, args as UpdateOpportunityParams);
+      return updateOpportunity(ctx, args as unknown as UpdateOpportunityParams);
 
     case 'get_opportunity':
       return getOpportunity(ctx, args.opportunity_id as string);
@@ -227,7 +227,7 @@ export async function handleOpportunityTools(
       return loseDeal(ctx, args.opportunity_id as string, args.reason as string);
 
     case 'add_deal_activity':
-      return addDealActivity(ctx, args as AddActivityParams);
+      return addDealActivity(ctx, args as unknown as AddActivityParams);
 
     case 'init_pipeline':
       return initPipeline(ctx);
@@ -457,7 +457,8 @@ async function searchOpportunities(ctx: ToolContext, params: SearchOpportunities
 async function getPipelineSummary(ctx: ToolContext) {
   const { data, error } = await ctx
     .getClient()
-    .rpc('crm.get_pipeline_summary', {
+    .schema(CRM_SCHEMA)
+    .rpc('get_pipeline_summary', {
       p_owner_id: ctx.userUUID,
       p_tenant_id: null,
     });
@@ -629,7 +630,8 @@ async function addDealActivity(ctx: ToolContext, params: AddActivityParams) {
 async function initPipeline(ctx: ToolContext) {
   const { data, error } = await ctx
     .getClient()
-    .rpc('crm.initialize_pipeline', {
+    .schema(CRM_SCHEMA)
+    .rpc('initialize_pipeline', {
       p_owner_id: ctx.userUUID,
       p_tenant_id: null,
     });

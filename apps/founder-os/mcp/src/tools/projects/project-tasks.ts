@@ -275,7 +275,7 @@ async function getProjectDashboard(
   ctx: ToolContext,
   params: { project_id?: string; project_slug?: string }
 ) {
-  const projectResult = await getProject(ctx, params);
+  const projectResult = await getProject(ctx, { project_id: params.project_id, slug: params.project_slug });
   if (!projectResult.success) return projectResult;
 
   const projectId = projectResult.project.id;

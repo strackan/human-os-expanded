@@ -33,14 +33,14 @@ Call this at the beginning of every conversation.`,
       properties: {
         slug: {
           type: 'string',
-          description: 'Entity slug (e.g., "scott", "justin"). Required.',
+          description: 'Entity slug (e.g., "scott", "justin"). Defaults to current user if omitted.',
         },
         localPath: {
           type: 'string',
           description: 'Optional local directory path for bi-directional sync with Supabase.',
         },
       },
-      required: ['slug'],
+      required: [],
     },
   },
   {
@@ -61,7 +61,7 @@ Voice OS Commandments (10):
       properties: {
         slug: {
           type: 'string',
-          description: 'Entity slug (e.g., "scott", "justin")',
+          description: 'Entity slug (e.g., "scott", "justin"). Defaults to current user if omitted.',
         },
         type: {
           type: 'string',
@@ -69,7 +69,7 @@ Voice OS Commandments (10):
           description: 'Which commandments to load. Default: both',
         },
       },
-      required: ['slug'],
+      required: [],
     },
   },
   {
@@ -80,7 +80,7 @@ Voice OS Commandments (10):
       properties: {
         slug: {
           type: 'string',
-          description: 'Entity slug (e.g., "scott", "justin")',
+          description: 'Entity slug (e.g., "scott", "justin"). Defaults to current user if omitted.',
         },
         mode: {
           type: 'string',
@@ -88,7 +88,7 @@ Voice OS Commandments (10):
           enum: ['crisis', 'voice', 'decision', 'conversation', 'identity', 'founder_os'],
         },
       },
-      required: ['slug', 'mode'],
+      required: ['mode'],
     },
   },
 ];
@@ -108,23 +108,20 @@ export async function handleSessionTools(
 ): Promise<unknown | null> {
   switch (name) {
     case 'get_session_context': {
-      const slug = (args as { slug: string }).slug;
+      const slug = (args as { slug?: string }).slug || ctx.userId;
       const localPath = (args as { localPath?: string })?.localPath;
-      if (!slug) throw new Error('slug parameter is required');
       return getSessionContext(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, slug, localPath);
     }
 
     case 'load_commandments': {
-      const slug = (args as { slug: string }).slug;
+      const slug = (args as { slug?: string }).slug || ctx.userId;
       const type = (args as { type?: string })?.type || 'both';
-      if (!slug) throw new Error('slug parameter is required');
       return loadCommandments(ctx.supabaseUrl, ctx.supabaseKey, slug, type);
     }
 
     case 'load_mode': {
-      const slug = (args as { slug: string }).slug;
+      const slug = (args as { slug?: string }).slug || ctx.userId;
       const mode = (args as { mode: string })?.mode;
-      if (!slug) throw new Error('slug parameter is required');
       if (!mode) throw new Error('mode parameter is required');
       return loadMode(ctx.supabaseUrl, ctx.supabaseKey, ctx.userId, slug, mode);
     }

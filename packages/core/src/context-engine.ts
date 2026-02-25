@@ -268,7 +268,10 @@ export class ContextEngine {
   }
 
   /**
-   * Get merged context across all accessible layers for an entity
+   * Get merged context across all accessible layers for an entity.
+   *
+   * For shared layers (other users' founder layers), only includes
+   * content when the entity slug matches a shared context topic.
    */
   async getMergedContext(slug: string): Promise<MergedContext | null> {
     // Get entity
@@ -289,6 +292,11 @@ export class ContextEngine {
     const layers: MergedContext['layers'] = [];
 
     for (const layer of accessibleLayers) {
+      // For shared layers, enforce topic-scoped access
+      if (!this.privacyModel.canReadSharedContext(slug, layer)) {
+        continue;
+      }
+
       // Try common folders
       for (const folder of ['people', 'companies', 'experts', 'topics', 'goals', 'tasks']) {
         try {

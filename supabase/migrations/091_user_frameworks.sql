@@ -111,21 +111,25 @@ CREATE INDEX IF NOT EXISTS idx_user_frameworks_fts
 ALTER TABLE human_os.user_frameworks ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own frameworks
+DROP POLICY IF EXISTS "Users see own frameworks" ON human_os.user_frameworks;
 CREATE POLICY "Users see own frameworks"
   ON human_os.user_frameworks FOR SELECT
   USING (user_id = auth.uid() AND deleted_at IS NULL);
 
 -- Users can insert their own frameworks
+DROP POLICY IF EXISTS "Users can add frameworks" ON human_os.user_frameworks;
 CREATE POLICY "Users can add frameworks"
   ON human_os.user_frameworks FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
 -- Users can update their own frameworks
+DROP POLICY IF EXISTS "Users can update own frameworks" ON human_os.user_frameworks;
 CREATE POLICY "Users can update own frameworks"
   ON human_os.user_frameworks FOR UPDATE
   USING (user_id = auth.uid() AND deleted_at IS NULL);
 
 -- Users can soft-delete their own frameworks
+DROP POLICY IF EXISTS "Users can remove own frameworks" ON human_os.user_frameworks;
 CREATE POLICY "Users can remove own frameworks"
   ON human_os.user_frameworks FOR DELETE
   USING (user_id = auth.uid());
@@ -175,10 +179,12 @@ CREATE INDEX IF NOT EXISTS idx_framework_chunks_user
 -- RLS for chunks
 ALTER TABLE human_os.framework_chunks ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users see own framework chunks" ON human_os.framework_chunks;
 CREATE POLICY "Users see own framework chunks"
   ON human_os.framework_chunks FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "System can manage framework chunks" ON human_os.framework_chunks;
 CREATE POLICY "System can manage framework chunks"
   ON human_os.framework_chunks FOR ALL
   USING (user_id = auth.uid());

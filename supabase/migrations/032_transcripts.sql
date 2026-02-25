@@ -41,6 +41,21 @@ CREATE TABLE IF NOT EXISTS founder_os.transcripts (
   updated_at timestamptz default now()
 );
 
+-- Ensure columns exist if table was created by an earlier migration
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS call_date date;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS call_type text;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS duration_minutes int;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS source_url text;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS participants jsonb DEFAULT '[]';
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS summary text;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS key_topics text[] DEFAULT '{}';
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS action_items jsonb DEFAULT '[]';
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS notable_quotes jsonb DEFAULT '[]';
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS relationship_insights text;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS raw_content text;
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS entity_ids uuid[] DEFAULT '{}';
+ALTER TABLE founder_os.transcripts ADD COLUMN IF NOT EXISTS context_tags text[] DEFAULT '{}';
+
 -- Indexes for search
 CREATE INDEX IF NOT EXISTS transcripts_call_date_idx on founder_os.transcripts(call_date desc);
 CREATE INDEX IF NOT EXISTS transcripts_call_type_idx on founder_os.transcripts(call_type);
@@ -63,6 +78,7 @@ alter table founder_os.transcripts enable row level security;
 
 -- For now, allow all operations (single-user system)
 -- Can be refined later with user_id/org_id if needed
+drop policy if exists "Allow all transcript operations" on founder_os.transcripts;
 create policy "Allow all transcript operations"
   on founder_os.transcripts for all
   using (true)

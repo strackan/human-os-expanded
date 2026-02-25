@@ -485,7 +485,7 @@ export async function handleRelationshipTools(
         .parse(args);
 
       // Use helper function
-      const { data, error } = await supabase.rpc('search_relationships', {
+      const { data, error } = await schema.rpc('search_relationships', {
         p_user_id: ctx.userUUID,
         p_query: input.query || null,
         p_relationship_type: input.relationship_type || null,
@@ -653,7 +653,7 @@ export async function handleRelationshipTools(
         .object({ days_overdue: z.number().optional() })
         .parse(args);
 
-      const { data, error } = await supabase.rpc('get_overdue_relationships', {
+      const { data, error } = await schema.rpc('get_overdue_relationships', {
         p_user_id: ctx.userUUID,
         p_days_overdue: days_overdue || 0,
       });

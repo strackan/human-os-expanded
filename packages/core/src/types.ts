@@ -38,6 +38,8 @@ export interface Viewer {
   userId?: string;
   tenantId?: string;
   powerpakSubscriptions?: string[];  // Expert slugs they subscribe to
+  /** Context sharing: slug → owner user IDs who share that topic with this viewer */
+  sharedContextSlugs?: Map<string, string[]>;
 }
 
 // =============================================================================

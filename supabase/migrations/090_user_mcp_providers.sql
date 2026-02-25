@@ -112,21 +112,25 @@ CREATE INDEX IF NOT EXISTS idx_user_mcp_providers_extraction
 ALTER TABLE human_os.user_mcp_providers ENABLE ROW LEVEL SECURITY;
 
 -- Users can only see their own providers
+DROP POLICY IF EXISTS "Users see own mcp providers" ON human_os.user_mcp_providers;
 CREATE POLICY "Users see own mcp providers"
   ON human_os.user_mcp_providers FOR SELECT
   USING (user_id = auth.uid() AND deleted_at IS NULL);
 
 -- Users can insert their own providers
+DROP POLICY IF EXISTS "Users can add mcp providers" ON human_os.user_mcp_providers;
 CREATE POLICY "Users can add mcp providers"
   ON human_os.user_mcp_providers FOR INSERT
   WITH CHECK (user_id = auth.uid());
 
 -- Users can update their own providers
+DROP POLICY IF EXISTS "Users can update own mcp providers" ON human_os.user_mcp_providers;
 CREATE POLICY "Users can update own mcp providers"
   ON human_os.user_mcp_providers FOR UPDATE
   USING (user_id = auth.uid() AND deleted_at IS NULL);
 
 -- Users can soft-delete their own providers
+DROP POLICY IF EXISTS "Users can remove own mcp providers" ON human_os.user_mcp_providers;
 CREATE POLICY "Users can remove own mcp providers"
   ON human_os.user_mcp_providers FOR DELETE
   USING (user_id = auth.uid());
@@ -177,10 +181,12 @@ CREATE INDEX IF NOT EXISTS idx_mcp_extraction_log_source
 -- RLS for extraction log
 ALTER TABLE human_os.mcp_extraction_log ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users see own extraction log" ON human_os.mcp_extraction_log;
 CREATE POLICY "Users see own extraction log"
   ON human_os.mcp_extraction_log FOR SELECT
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "System can insert extraction log" ON human_os.mcp_extraction_log;
 CREATE POLICY "System can insert extraction log"
   ON human_os.mcp_extraction_log FOR INSERT
   WITH CHECK (user_id = auth.uid());
@@ -237,6 +243,7 @@ ON CONFLICT (slug) DO UPDATE SET
 -- Allow all authenticated users to read the registry
 ALTER TABLE human_os.mcp_provider_registry ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can read provider registry" ON human_os.mcp_provider_registry;
 CREATE POLICY "Anyone can read provider registry"
   ON human_os.mcp_provider_registry FOR SELECT
   USING (auth.role() = 'authenticated');

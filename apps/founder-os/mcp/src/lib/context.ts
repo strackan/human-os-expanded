@@ -43,8 +43,30 @@ export const MODE_PROPERTY = {
 } as const;
 
 /**
- * Add mode property to a tool's input schema
- * This allows per-call mode override for any tool
+ * Record property — global flag to persist the interaction to the user's context layer.
+ * When true, the tool should save a record of this interaction (contact logged,
+ * decision made, note captured, etc.) to the context engine for future recall.
+ */
+export const RECORD_PROPERTY = {
+  record: {
+    type: 'boolean',
+    description:
+      'When true, persist a record of this interaction to the context layer ' +
+      'for future recall. Use for decisions, contacts, notable events, or ' +
+      'anything the user might want to reference later.',
+  },
+} as const;
+
+/**
+ * All global properties added to every tool input schema
+ */
+const GLOBAL_PROPERTIES = {
+  ...MODE_PROPERTY,
+  ...RECORD_PROPERTY,
+} as const;
+
+/**
+ * Add global properties (mode + record) to a tool's input schema
  */
 export function withModeProperty(tool: Tool): Tool {
   const schema = tool.inputSchema as {
@@ -60,14 +82,14 @@ export function withModeProperty(tool: Tool): Tool {
       type: 'object' as const,
       properties: {
         ...schema.properties,
-        ...MODE_PROPERTY,
+        ...GLOBAL_PROPERTIES,
       },
     },
   };
 }
 
 /**
- * Add mode property to multiple tools
+ * Add global properties to multiple tools
  */
 export function withModeProperties(tools: Tool[]): Tool[] {
   return tools.map(withModeProperty);
@@ -97,6 +119,58 @@ export function shouldUseDeterministicMode(
   if (mode === 'strategic') return false; // Force LLM/exploratory
   // Default: use inverse of LLM mode (if LLM mode is true, not deterministic)
   return defaultUseLlmMode === undefined ? false : !defaultUseLlmMode;
+}
+
+/**
+ * Check if the record flag is set on tool arguments
+ */
+export function getRecordFlag(args: Record<string, unknown>): boolean {
+  return args.record === true;
+}
+
+/**
+ * Record an interaction to the context layer.
+ * Call this from any tool handler when `record: true` is set.
+ *
+ * This is a global helper so tools don't need to duplicate recording logic.
+ */
+export async function recordInteraction(
+  ctx: ToolContext,
+  params: {
+    /** Short summary of what happened */
+    summary: string;
+    /** Tool that generated this record */
+    toolName: string;
+    /** Structured data to persist */
+    data: Record<string, unknown>;
+    /** Optional folder override (default: 'interactions') */
+    folder?: string;
+  }
+): Promise<void> {
+  try {
+    const date = new Date().toISOString().split('T')[0];
+    const slug = `${params.toolName}-${Date.now()}`;
+    const folder = params.folder || 'interactions';
+
+    const content = [
+      '---',
+      `tool: ${params.toolName}`,
+      `date: ${date}`,
+      `recorded: true`,
+      '---',
+      '',
+      `# ${params.summary}`,
+      '',
+      '```json',
+      JSON.stringify(params.data, null, 2),
+      '```',
+    ].join('\n');
+
+    await ctx.contextEngine.saveContext(ctx.layer, folder, slug, content);
+  } catch {
+    // Recording is best-effort — don't fail the tool
+    console.error(`Failed to record interaction: ${params.summary}`);
+  }
 }
 
 /**

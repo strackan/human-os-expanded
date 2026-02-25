@@ -54,6 +54,9 @@ import { crmTools, handleCrmTools } from './tools/crm/index.js';
 import { okrGoalTools, handleOKRGoalTools } from './tools/okr-goals.js';
 import { outreachTools, handleOutreachTools } from './tools/outreach.js';
 import { documentTools, handleDocumentTools } from './tools/documents.js';
+import { nominationTools, handleNominationTools } from './tools/nominations.js';
+import { contactTools, handleContactTools } from './tools/contacts.js';
+import { sharingTools, handleSharingTools } from './tools/sharing.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -130,6 +133,9 @@ const moduleRegistry: Record<ModuleKey, { tools: typeof taskTools; handler: Tool
   'demo':            { tools: demoTools, handler: handleDemoTools },
   'transcripts':     { tools: transcriptTools, handler: handleTranscriptTools },
   'community-intel': { tools: communityIntelTools, handler: handleCommunityIntelTools },
+  'nominations':     { tools: nominationTools, handler: handleNominationTools },
+  'contacts':        { tools: contactTools, handler: handleContactTools },
+  'sharing':         { tools: sharingTools, handler: handleSharingTools },
 };
 
 /**
@@ -189,10 +195,34 @@ async function main() {
     supabaseKey: SUPABASE_SERVICE_KEY,
   });
 
+  // Query shared context for this user
+  const sharedContextSlugs = new Map<string, string[]>();
+  try {
+    const { data: shares } = await supabase.schema('human_os').rpc('get_active_shares_for_user', {
+      p_user_id: USER_UUID,
+    });
+    if (shares) {
+      for (const share of shares) {
+        const slug = share.context_slug;
+        const ownerSlug = share.owner_slug;
+        if (slug && ownerSlug) {
+          const existing = sharedContextSlugs.get(slug) || [];
+          existing.push(ownerSlug);
+          sharedContextSlugs.set(slug, existing);
+        }
+      }
+    }
+    if (sharedContextSlugs.size > 0) {
+      console.error(`Loaded ${sharedContextSlugs.size} shared context topic(s)`);
+    }
+  } catch {
+    // Shared context not available yet — table may not exist
+  }
+
   const contextEngine = new ContextEngine({
     supabaseUrl: SUPABASE_URL,
     supabaseKey: SUPABASE_SERVICE_KEY,
-    viewer: { userId: USER_ID },
+    viewer: { userId: USER_ID, sharedContextSlugs },
   });
 
   const knowledgeGraph = new KnowledgeGraph({
@@ -303,7 +333,7 @@ async function main() {
 
     if (name === 'session_context') {
       const instructions = await getInstructions(instructionsPath);
-      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, USER_ID);
 
       return {
         description: 'Session initialization with instructions and current context',
@@ -320,7 +350,7 @@ async function main() {
     }
 
     if (name === 'crisis_mode') {
-      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, 'crisis');
+      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, USER_ID, 'crisis');
       return {
         description: 'Crisis support protocols loaded',
         messages: [
@@ -336,7 +366,7 @@ async function main() {
     }
 
     if (name === 'voice_mode') {
-      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, 'voice');
+      const modeContent = await loadMode(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, USER_ID, 'voice');
       return {
         description: 'Writing engine and templates loaded',
         messages: [
@@ -394,7 +424,7 @@ async function main() {
     }
 
     if (uri === 'founder-os://identity') {
-      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, USER_ID);
       return {
         contents: [
           {
@@ -407,7 +437,7 @@ async function main() {
     }
 
     if (uri === 'founder-os://state') {
-      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID);
+      const sessionContext = await getSessionContext(SUPABASE_URL, SUPABASE_SERVICE_KEY, USER_ID, USER_ID);
       return {
         contents: [
           {

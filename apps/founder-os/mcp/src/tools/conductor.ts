@@ -637,7 +637,7 @@ export async function handleConductorTools(
     case 'interview_protocol': {
       return {
         protocol: loadProtocol(),
-        attributeSets: Object.entries(ATTRIBUTE_SETS).map(([id, set]) => ({
+        attributeSets: Object.entries(ATTRIBUTE_SETS).map(([id, set]: [string, { name: string; description: string; attributes: unknown[]; requiredAttributes: unknown[] }]) => ({
           id,
           name: set.name,
           description: set.description,

@@ -26,11 +26,13 @@ export class PrivacyModel {
   private userId?: string;
   private tenantId?: string;
   private subscriptions: string[];
+  private sharedContextSlugs: Map<string, string[]>;
 
   constructor(viewer: Viewer) {
     this.userId = viewer.userId;
     this.tenantId = viewer.tenantId;
     this.subscriptions = viewer.powerpakSubscriptions || [];
+    this.sharedContextSlugs = viewer.sharedContextSlugs || new Map();
   }
 
   /**
@@ -197,7 +199,45 @@ export class PrivacyModel {
       layers.push(buildFounderLayer(this.userId));
     }
 
+    // Shared context layers — include other users' founder layers
+    // (actual access is topic-scoped via canReadSharedContext)
+    const sharedOwnerIds = new Set<string>();
+    for (const ownerIds of this.sharedContextSlugs.values()) {
+      for (const ownerId of ownerIds) {
+        sharedOwnerIds.add(ownerId);
+      }
+    }
+    for (const ownerId of sharedOwnerIds) {
+      const sharedLayer = buildFounderLayer(ownerId);
+      if (!layers.includes(sharedLayer)) {
+        layers.push(sharedLayer);
+      }
+    }
+
     return layers;
+  }
+
+  /**
+   * Check if a specific context_slug is shared from a given owner's layer.
+   * Used during getMergedContext to enforce topic-scoped access.
+   */
+  canReadSharedContext(contextSlug: string, ownerLayer: Layer): boolean {
+    const ownerId = extractUserIdFromLayer(ownerLayer);
+    if (!ownerId) return false;
+
+    // If it's the viewer's own layer, always allow
+    if (ownerId === this.userId) return true;
+
+    // Check if this specific slug is shared by this owner
+    const ownerIds = this.sharedContextSlugs.get(contextSlug);
+    return ownerIds !== undefined && ownerIds.includes(ownerId);
+  }
+
+  /**
+   * Get all context slugs that are shared with this viewer
+   */
+  getSharedContextSlugs(): string[] {
+    return Array.from(this.sharedContextSlugs.keys());
   }
 
   /**

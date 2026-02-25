@@ -480,12 +480,12 @@ export async function handleJournalTools(
               valence: entry.valence,
             }
           : null,
-        moods: entry.moods?.map((m) => ({
+        moods: entry.moods?.map((m: any) => ({
           name: m.mood?.name,
           intensity: m.intensity,
           isPrimary: m.isPrimary,
         })),
-        entityMentions: entry.entityMentions?.map((em) => ({
+        entityMentions: entry.entityMentions?.map((em: any) => ({
           mentionText: em.mentionText,
           entityName: em.entity?.name,
           entityType: em.entity?.entityType,
@@ -515,7 +515,7 @@ export async function handleJournalTools(
       });
 
       return {
-        entries: result.entries.map((e) => ({
+        entries: result.entries.map((e: any) => ({
           id: e.id,
           title: e.title,
           entryType: e.entryType,
@@ -538,7 +538,7 @@ export async function handleJournalTools(
       const result = await service.searchEntries(data.query, data.limit);
 
       return {
-        results: result.results.map((r) => ({
+        results: result.results.map((r: any) => ({
           id: r.id,
           title: r.title,
           entryDate: r.entryDate.toISOString().split('T')[0],
@@ -567,7 +567,7 @@ export async function handleJournalTools(
         averageIntensity: Math.round(trends.averageIntensity * 10) / 10,
         totalEntries: trends.totalEntries,
         insights: trends.insights,
-        dailyTrends: trends.trends.map((t) => ({
+        dailyTrends: trends.trends.map((t: any) => ({
           date: t.date.toISOString().split('T')[0],
           primaryMood: t.primaryMood,
           averageValence: Math.round(t.averageValence * 10) / 10,
@@ -581,7 +581,7 @@ export async function handleJournalTools(
       const leads = await service.getPendingLeads();
 
       return {
-        leads: leads.map((l) => ({
+        leads: leads.map((l: any) => ({
           id: l.id,
           name: l.name,
           inferredRelationship: l.inferredRelationship,
@@ -664,7 +664,7 @@ export async function handleJournalTools(
       const recommendations = await service.getEmotionRecommendations(content);
 
       return {
-        recommendations: recommendations.slice(0, 5).map((r) => ({
+        recommendations: recommendations.slice(0, 5).map((r: any) => ({
           emotion: r.emotion,
           confidence: Math.round(r.confidence * 100) / 100,
           reason: r.reason,
