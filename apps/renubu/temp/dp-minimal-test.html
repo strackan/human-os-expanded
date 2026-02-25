@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Minimal Scroll Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .section {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: white;
+        }
+
+        .section:nth-child(1) { background: #e74c3c; }
+        .section:nth-child(2) { background: #3498db; }
+        .section:nth-child(3) { background: #2ecc71; }
+        .section:nth-child(4) { background: #f39c12; }
+        .section:nth-child(5) { background: #9b59b6; }
+        .section:nth-child(6) { background: #1abc9c; }
+        .section:nth-child(7) { background: #34495e; }
+
+        /* Conveyor belt demo */
+        #conveyor-container {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: rgba(255,255,255,0.1);
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        #conveyor-belt {
+            display: flex;
+            gap: 20px;
+            position: absolute;
+            white-space: nowrap;
+        }
+
+        .conveyor-item {
+            display: inline-block;
+            padding: 20px 40px;
+            background: white;
+            color: #1abc9c;
+            border-radius: 10px;
+            font-size: 1.5rem;
+        }
+
+        /* Interactive elements for testing */
+        .test-button {
+            padding: 15px 30px;
+            background: white;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .test-button:hover {
+            background: #f0f0f0;
+        }
+
+        .section-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="section">Section 1 - START</div>
+    <div class="section">Section 2 - CHALLENGE</div>
+    <div class="section">
+        Section 3 - TRADITIONAL
+        <div id="conveyor-container">
+            <div id="conveyor-belt">
+                <span class="conveyor-item">Feature 1</span>
+                <span class="conveyor-item">Feature 2</span>
+                <span class="conveyor-item">Feature 3</span>
+                <span class="conveyor-item">Feature 4</span>
+                <span class="conveyor-item">Feature 5</span>
+            </div>
+        </div>
+    </div>
+    <div class="section">
+        <div class="section-content">
+            <div>Section 4 - ACTION</div>
+            <button class="test-button" onclick="alert('Button clicked!')">Click Me (Interactive)</button>
+            <a href="#" class="test-button" onclick="alert('Link clicked!'); return false;">Link Button</a>
+            <input type="text" placeholder="Try typing here..." style="padding: 10px; font-size: 1rem;">
+        </div>
+    </div>
+    <div class="section">Section 5 - HI RENUBU</div>
+    <div class="section">Section 6 - HOW IT WORKS</div>
+    <div class="section">Section 7 - CONTACT</div>
+
+    <script>
+        // ULTRA MINIMAL SNAP SCROLL
+        let isScrolling = false;
+        let lastScrollTime = 0;
+        let currentSectionIndex = 0; // Track current section explicitly
+        let snapBackTimeout = null;
+
+        // Section configuration - positions in viewport heights (vh)
+        const SECTION_POSITIONS = [
+            0,      // Section 1 - START
+            100,    // Section 2 - CHALLENGE
+            200,    // Section 3 - TRADITIONAL
+            300,    // Section 4 - ACTION
+            400,    // Section 5 - HI RENUBU
+            490,    // Section 6 - HOW IT WORKS (custom position!)
+            590     // Section 7 - CONTACT (custom position!)
+        ];
+
+        // Function to snap to nearest section
+        function snapToSection(index) {
+            const vh = window.innerHeight;
+            const positionVh = SECTION_POSITIONS[index];
+            window.scrollTo({
+                top: (positionVh / 100) * vh,
+                behavior: 'smooth'
+            });
+        }
+
+        // Check if element is interactive (button, link, input, etc.)
+        function isInteractiveElement(element) {
+            if (!element) return false;
+
+            // Check the element itself
+            const tagName = element.tagName ? element.tagName.toLowerCase() : '';
+            const interactiveTags = ['button', 'a', 'input', 'select', 'textarea'];
+
+            if (interactiveTags.includes(tagName)) {
+                console.log('🛑 Interactive element detected:', tagName);
+                return true;
+            }
+
+            // Check if it has data-modal or role="button"
+            if (element.hasAttribute && (element.hasAttribute('data-modal') ||
+                element.getAttribute('role') === 'button')) {
+                console.log('🛑 Interactive element detected: modal or role=button');
+                return true;
+            }
+
+            // Check parents (up to 3 levels)
+            let parent = element.parentElement;
+            let depth = 0;
+            while (parent && depth < 3) {
+                const parentTag = parent.tagName ? parent.tagName.toLowerCase() : '';
+                if (interactiveTags.includes(parentTag) ||
+                    parent.hasAttribute('data-modal') ||
+                    parent.getAttribute('role') === 'button') {
+                    console.log('🛑 Interactive parent detected');
+                    return true;
+                }
+                parent = parent.parentElement;
+                depth++;
+            }
+
+            return false;
+        }
+
+        // Always prevent default scrolling (unless on interactive elements)
+        document.addEventListener('wheel', function(e) {
+            if (!isInteractiveElement(e.target)) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Handle scroll intent separately
+        document.addEventListener('wheel', function(e) {
+            // Skip if on interactive element
+            if (isInteractiveElement(e.target)) {
+                return;
+            }
+
+            const now = Date.now();
+
+            // Prevent if already scrolling OR if too soon since last scroll
+            if (isScrolling || now - lastScrollTime < 150) {
+                return;
+            }
+
+            // Only trigger on significant scroll
+            if (Math.abs(e.deltaY) < 30) {
+                return;
+            }
+
+            isScrolling = true;
+            lastScrollTime = now;
+
+            // Use explicit index instead of Math.round
+            const targetSection = e.deltaY > 0 ? currentSectionIndex + 1 : currentSectionIndex - 1;
+            const clampedTarget = Math.max(0, Math.min(SECTION_POSITIONS.length - 1, targetSection));
+
+            // Only scroll if target is different
+            if (clampedTarget === currentSectionIndex) {
+                isScrolling = false;
+                return;
+            }
+
+            currentSectionIndex = clampedTarget;
+
+            console.log(`Scrolling to section ${currentSectionIndex}`);
+
+            snapToSection(currentSectionIndex);
+
+            setTimeout(() => {
+                isScrolling = false;
+                // Snap back to correct position after scroll completes
+                snapToSection(currentSectionIndex);
+            }, 800);
+        }, { passive: true });
+
+        // Keyboard support
+        document.addEventListener('keydown', function(e) {
+            if (isScrolling) return;
+
+            if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+                e.preventDefault();
+                isScrolling = true;
+
+                const targetSection = Math.min(SECTION_POSITIONS.length - 1, currentSectionIndex + 1);
+                currentSectionIndex = targetSection;
+
+                snapToSection(currentSectionIndex);
+
+                setTimeout(() => { isScrolling = false; }, 800);
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                e.preventDefault();
+                isScrolling = true;
+
+                const targetSection = Math.max(0, currentSectionIndex - 1);
+                currentSectionIndex = targetSection;
+
+                snapToSection(currentSectionIndex);
+
+                setTimeout(() => { isScrolling = false; }, 800);
+            }
+        });
+
+        console.log('Minimal snap scroll initialized');
+
+        // ============================================
+        // KEYFRAME INJECTION & CONVEYOR ANIMATION
+        // ============================================
+
+        // Inject keyframes if not already present
+        (function() {
+            const styleSheets = [...document.styleSheets];
+            let keyframesExist = false;
+
+            try {
+                for (const sheet of styleSheets) {
+                    const rules = [...sheet.cssRules || []];
+                    if (rules.some(rule => rule.name === 'conveyor-scroll')) {
+                        keyframesExist = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                // Cross-origin stylesheet, can't check
+            }
+
+            if (!keyframesExist) {
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+
+                    @keyframes conveyor-scroll {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                    }
+                `;
+                document.head.appendChild(style);
+                console.log('✅ Keyframes injected via JavaScript');
+            } else {
+                console.log('✅ Keyframes already exist in CSS');
+            }
+        })();
+
+        // Trigger conveyor animation when section 3 becomes visible
+        const conveyorBelt = document.querySelector('#conveyor-belt');
+
+        if (conveyorBelt) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        console.log('🎬 Conveyor animation triggered!');
+
+                        // Add animation
+                        conveyorBelt.style.animation = 'conveyor-scroll 10s linear infinite';
+
+                        // Stop observing after first trigger
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.5 // Trigger when 50% visible
+            });
+
+            // Observe the container
+            observer.observe(document.querySelector('#conveyor-container'));
+            console.log('✅ Conveyor animation observer initialized');
+        }
+    </script>
+</body>
+</html>

@@ -1,16 +1,37 @@
 {
   "name": "@human-os/renubu",
-  "version": "0.1.12",
+  "version": "0.2.5",
   "private": true,
   "scripts": {
-    "dev": "next dev --port 3001",
+    "dev": "next dev",
+    "dev:staging": "npm run env:staging && next dev",
+    "dev:prod": "npm run env:prod && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "check": "npm run type-check && npm run lint && npm run build",
+    "env:staging": "node -e \"require('fs').copyFileSync('.env.local.staging', '.env.local')\" && echo Switched to STAGING environment",
+    "env:prod": "node -e \"require('fs').copyFileSync('.env.local.prod', '.env.local')\" && echo Switched to PRODUCTION environment",
+    "env:status": "node -e \"const fs=require('fs'); const env=fs.readFileSync('.env.local','utf8'); console.log(env.includes('amugmkrihnjsxlpwdzcy')?'📍 STAGING':'📍 PRODUCTION')\"",
+    "sync-schema": "node scripts/sync-schema.ts",
+    "validate-schema": "node scripts/validate-schema.js",
+    "clear-auth": "node scripts/clear-auth-cookies.js",
+    "check-env": "node scripts/check-env.js",
+    "check-oauth": "node scripts/check-oauth-config.js",
+    "detect-schema": "node scripts/detect-schema.js",
+    "smart-seed": "node scripts/smart-seed-selector.js",
+    "schema-diff": "node scripts/schema-diff-manager.js",
+    "schema-diff-report": "node scripts/schema-diff-manager.js --report",
+    "release": "npx tsx scripts/release.ts",
+    "commit": "npx tsx scripts/commit-and-track.ts",
+    "snapshot": "npx tsx scripts/snapshot-release.ts",
+    "roadmap": "npx tsx scripts/generate-roadmap.ts",
+    "parking-lot:evaluate": "npx tsx scripts/evaluate-parking-lot-triggers.ts",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
@@ -21,8 +42,8 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@tanstack/react-query": "^5.90.11",
-    "@types/handlebars": "^4.0.40",
     "@vercel/kv": "^3.0.0",
+    "@types/handlebars": "^4.0.40",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
@@ -35,6 +56,7 @@
     "lucide-react": "^0.539.0",
     "marked": "^17.0.1",
     "next": "^15.5.9",
+    "pg": "^8.16.3",
     "pptxgenjs": "^4.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -63,9 +85,13 @@
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "lint-staged": "^16.2.6",
-    "pg": "^8.16.3",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
   }
 }

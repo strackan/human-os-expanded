@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 // Current version - update this with each release
-const CURRENT_VERSION = '0.1.11';
-const CURRENT_VERSION_NAME = 'QBR Presentations';
+const CURRENT_VERSION = '0.2.5';
+const CURRENT_VERSION_NAME = 'First Contact Onboarding';
+const CURRENT_VERSION_TAG = 'rc.0'; // empty string for GA releases
 
 /**
  * GET /api/version
@@ -31,11 +32,16 @@ export async function GET() {
       .limit(1)
       .single();
 
+    const displayVersion = CURRENT_VERSION_TAG
+      ? `${CURRENT_VERSION}-${CURRENT_VERSION_TAG}`
+      : CURRENT_VERSION;
+
     if (error || !data) {
-      // Database doesn't have release info - use hardcoded version
       return NextResponse.json({
         version: CURRENT_VERSION,
+        displayVersion,
         name: CURRENT_VERSION_NAME,
+        tag: CURRENT_VERSION_TAG || null,
         source: 'code'
       });
     }
@@ -47,7 +53,9 @@ export async function GET() {
 
     return NextResponse.json({
       version: useCodeVersion ? CURRENT_VERSION : dbVersion,
+      displayVersion: useCodeVersion ? displayVersion : `v${dbVersion}`,
       name: useCodeVersion ? CURRENT_VERSION_NAME : data.name,
+      tag: useCodeVersion ? (CURRENT_VERSION_TAG || null) : null,
       shipped: useCodeVersion ? new Date().toISOString() : data.actual_shipped,
       source: useCodeVersion ? 'code' : 'database'
     });

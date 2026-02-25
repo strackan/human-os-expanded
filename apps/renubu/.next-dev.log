@@ -1,0 +1,731 @@
+
+> temp@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.5.2
+   - Local:        http://localhost:3000
+   - Network:      http://100.88.36.24:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1642ms
+ ○ Compiling /zen-dashboard ...
+ ✓ Compiled /zen-dashboard in 3.6s (1192 modules)
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T09:42:11.672Z
+ GET /zen-dashboard 200 in 4481ms
+ ○ Compiling /api/dashboard/today-workflows ...
+ ✓ Compiled /api/dashboard/today-workflows in 2.1s (1219 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+ GET /logo.png 404 in 2649ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ GET /zen-dashboard 200 in 682ms
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 3184ms
+ ○ Compiling /zen-dashboard-v2 ...
+ ✓ Compiled /zen-dashboard-v2 in 846ms (1260 modules)
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T09:42:21.817Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 1159ms
+ GET /logo.png 404 in 77ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 99ms
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 522ms
+ ○ Compiling /api/customers/[id]/metrics ...
+ ✓ Compiled /api/customers/[id]/metrics in 734ms (1265 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 161ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 1609ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 235ms
+ ✓ Compiled in 679ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 129ms
+ ✓ Compiled in 408ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 90ms
+ ✓ Compiled in 491ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 83ms
+ ✓ Compiled in 526ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 75ms
+ ✓ Compiled in 991ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 141ms
+ ✓ Compiled in 695ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 155ms
+ ✓ Compiled in 422ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 111ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T09:53:29.704Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 235ms
+ ✓ Compiled /_not-found in 266ms (663 modules)
+ GET /logo.png 404 in 443ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 347ms (700 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1735ms
+ ✓ Compiled in 834ms (1260 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 159ms
+ ✓ Compiled in 672ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 197ms
+ ✓ Compiled in 836ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 199ms
+ ✓ Compiled in 559ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 164ms
+ ✓ Compiled in 530ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 105ms
+ ✓ Compiled in 813ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 130ms
+ ✓ Compiled in 654ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 197ms
+ ✓ Compiled in 628ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 121ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 237ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 77ms
+ ✓ Compiled in 758ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 558ms
+ ✓ Compiled in 568ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 52ms
+ ✓ Compiled in 480ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 90ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 69ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 85ms
+ ✓ Compiled in 527ms (560 modules)
+ ✓ Compiled in 889ms (1220 modules)
+ ✓ Compiled in 783ms (1224 modules)
+ ✓ Compiled in 1281ms (1224 modules)
+ ✓ Compiled in 383ms (1224 modules)
+ ✓ Compiled in 370ms (1224 modules)
+ ✓ Compiled in 594ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 181ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 50ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 53ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 55ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 59ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 50ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 55ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T10:51:27.890Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 323ms
+ ✓ Compiled /_not-found in 337ms (665 modules)
+ GET /logo.png 404 in 570ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ○ Compiling /api/dashboard/today-workflows ...
+ ✓ Compiled /api/dashboard/today-workflows in 531ms (702 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1867ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 117ms
+ ✓ Compiled in 792ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 199ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 45ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 43ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 44ms
+ ✓ Compiled in 757ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 146ms
+ ✓ Compiled in 421ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 70ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 54ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 65ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T11:01:04.100Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 264ms
+ ✓ Compiled /_not-found in 318ms (665 modules)
+ GET /logo.png 404 in 581ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 454ms (702 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1192ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 111ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T15:05:08.205Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 327ms
+ GET /logo.png 404 in 74ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1915ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 60ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 64ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 64ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 55ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 58ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 43ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 56ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 106ms
+ GET /logo.png 404 in 67ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 560ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 41ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 51ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 53ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 53ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 44ms
+ ✓ Compiled /api/customers/[id]/metrics in 317ms (702 modules)
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 1506ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 217ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 81ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 61ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 56ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 669ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 221ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 304ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 237ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 71ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 117ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 60ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 103ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 1266ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 338ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 756ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 364ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 70ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 60ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 53ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 54ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 65ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 58ms
+ ✓ Compiled in 887ms (1224 modules)
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T15:40:45.453Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 353ms
+ ✓ Compiled /_not-found in 165ms (665 modules)
+ GET /logo.png 404 in 376ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 270ms (682 modules)
+ ✓ Compiled (704 modules)
+ GET /favicon.ico 200 in 635ms
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1567ms
+ ✓ Compiled in 448ms (1266 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 93ms
+ ✓ Compiled in 837ms (1266 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 94ms
+ ✓ Compiled in 523ms (1266 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 142ms
+ ✓ Compiled in 421ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 127ms
+ ✓ Compiled in 501ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 110ms
+ ✓ Compiled in 415ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 76ms
+ ✓ Compiled in 485ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 137ms
+ ✓ Compiled in 402ms (1224 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 77ms
+ ✓ Compiled in 442ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 142ms
+ ✓ Compiled in 394ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 70ms
+ ✓ Compiled in 469ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 129ms
+ ✓ Compiled in 905ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 189ms
+ ✓ Compiled in 653ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 110ms
+ ✓ Compiled in 285ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 59ms
+ ✓ Compiled in 446ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 94ms
+ ✓ Compiled in 395ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 121ms
+ ✓ Compiled in 297ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 38ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 85ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 89ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 61ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 116ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 85ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 206ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 74ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T16:21:51.226Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 323ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 558ms (663 modules)
+ GET /logo.png 404 in 917ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ○ Compiling /api/dashboard/today-workflows ...
+ ✓ Compiled /api/dashboard/today-workflows in 529ms (700 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1958ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 125ms
+ ✓ Compiled in 924ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 537ms
+ ✓ Compiled in 547ms (560 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 60ms
+ ✓ Compiled in 449ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 80ms
+ ✓ Compiled in 469ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 82ms
+ ✓ Compiled in 556ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 107ms
+ ✓ Compiled in 1141ms (1220 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 277ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 77ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T17:00:55.664Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 226ms
+ ✓ Compiled /_not-found in 392ms (663 modules)
+ GET /logo.png 404 in 586ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 352ms (700 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1823ms
+ ○ Compiling /settings ...
+ ✓ Compiled /settings in 788ms (1267 modules)
+ GET /settings 200 in 969ms
+ GET /settings 200 in 55ms
+ ○ Compiling / ...
+ ✓ Compiled / in 630ms (1274 modules)
+ GET / 200 in 781ms
+ GET / 200 in 52ms
+ ○ Compiling /workflows ...
+ ✓ Compiled /workflows in 838ms (1281 modules)
+ GET /workflows 200 in 934ms
+ GET /workflows 200 in 52ms
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 467ms
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 395ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 69ms
+ ✓ Compiled in 1636ms (1231 modules)
+ ✓ Compiled in 440ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 340ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T18:48:08.742Z
+ GET /zen-dashboard 200 in 308ms
+ ✓ Compiled /_not-found in 304ms (668 modules)
+ GET /logo.png 404 in 570ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 143ms (705 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 3156ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T18:48:13.462Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 249ms
+ GET /logo.png 404 in 73ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 62ms
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 269ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 50ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 66ms
+ ✓ Compiled in 1026ms (1231 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 323ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 116ms
+ ✓ Compiled in 499ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 457ms
+ ✓ Compiled in 468ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 47ms
+ ✓ Compiled in 297ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 51ms
+ ✓ Compiled in 410ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 127ms
+ ✓ Compiled in 275ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 39ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 58ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T19:40:17.650Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 257ms
+ ✓ Compiled /_not-found in 240ms (668 modules)
+ GET /logo.png 404 in 511ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 134ms (705 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1858ms
+ ○ Compiling /api/customers/[id]/metrics ...
+ ✓ Compiled /api/customers/[id]/metrics in 628ms (710 modules)
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 1238ms
+ GET /api/customers/550e8400-e29b-41d4-a716-446655440001/metrics 200 in 323ms
+ ✓ Compiled in 414ms (566 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 184ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 105ms
+ ✓ Compiled in 771ms (1231 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 280ms
+ ⨯ ./src/components/workflows/TaskModeFullscreen-v3.tsx
+Error:   [31mx[0m Unterminated regexp literal
+      ,-[[36;1;4mC:\Users\strac\dev\renubu\src\components\workflows\TaskModeFullscreen-v3.tsx[0m:1172:1]
+ [2m1169[0m |           </div>
+ [2m1170[0m |         )}
+ [2m1171[0m |       </div>
+ [2m1172[0m |     </div>
+      : [35;1m     ^^^^^[0m
+ [2m1173[0m |   );
+ [2m1174[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/workflows/TaskModeFullscreen-v3.tsx
+./src/app/zen-dashboard-v2/page.tsx
+ ○ Compiling /_error ...
+ ⨯ ./src/components/workflows/TaskModeFullscreen-v3.tsx
+Error:   [31mx[0m Unterminated regexp literal
+      ,-[[36;1;4mC:\Users\strac\dev\renubu\src\components\workflows\TaskModeFullscreen-v3.tsx[0m:1172:1]
+ [2m1169[0m |           </div>
+ [2m1170[0m |         )}
+ [2m1171[0m |       </div>
+ [2m1172[0m |     </div>
+      : [35;1m     ^^^^^[0m
+ [2m1173[0m |   );
+ [2m1174[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/workflows/TaskModeFullscreen-v3.tsx
+./src/app/zen-dashboard-v2/page.tsx
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 3033ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 193ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 147ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 260ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 208ms
+ ⨯ ./src/components/workflows/TaskModeFullscreen-v3.tsx
+Error:   [31mx[0m Unterminated regexp literal
+      ,-[[36;1;4mC:\Users\strac\dev\renubu\src\components\workflows\TaskModeFullscreen-v3.tsx[0m:1172:1]
+ [2m1169[0m |           </div>
+ [2m1170[0m |         )}
+ [2m1171[0m |       </div>
+ [2m1172[0m |     </div>
+      : [35;1m     ^^^^^[0m
+ [2m1173[0m |   );
+ [2m1174[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/workflows/TaskModeFullscreen-v3.tsx
+./src/app/zen-dashboard-v2/page.tsx
+ ⨯ ./src/components/workflows/TaskModeFullscreen-v3.tsx
+Error:   [31mx[0m Unterminated regexp literal
+      ,-[[36;1;4mC:\Users\strac\dev\renubu\src\components\workflows\TaskModeFullscreen-v3.tsx[0m:1172:1]
+ [2m1169[0m |           </div>
+ [2m1170[0m |         )}
+ [2m1171[0m |       </div>
+ [2m1172[0m |     </div>
+      : [35;1m     ^^^^^[0m
+ [2m1173[0m |   );
+ [2m1174[0m | }
+      `----
+
+Caused by:
+    Syntax Error
+
+Import trace for requested module:
+./src/components/workflows/TaskModeFullscreen-v3.tsx
+./src/app/zen-dashboard-v2/page.tsx
+ ✓ Compiled /_error in 1007ms (1573 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 28ms
+🟠 PlanningChecklistArtifact LOADED - Build timestamp: 2025-10-16T19:47:01.235Z
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 89ms
+ ✓ Compiled /_not-found in 323ms (857 modules)
+ GET /logo.png 404 in 600ms
+ ⨯ The requested resource isn't a valid image for /logo.png received null
+ ✓ Compiled /api/dashboard/today-workflows in 405ms (874 modules)
+ ✓ Compiled (896 modules)
+[Dashboard API] Fetching workflows for CSM: d152cc6c-8d71-4816-9b96-eccf249ed0ac isDemoCompanyUser: true
+[Orchestrator] getWorkflowQueueForCSM called with: {
+  csmId: 'd152cc6c-8d71-4816-9b96-eccf249ed0ac',
+  limit: 1,
+  demoMode: true,
+  isDemoCompanyUser: true,
+  hasCustomClient: true
+}
+[Orchestrator] NOT filtering by CSM (demo company user)
+[Orchestrator] Filtering for demo workflows only
+ GET /favicon.ico 200 in 731ms
+[Orchestrator] Query result: { count: 3, error: null }
+[Dashboard API] Queue result: 1 workflows
+ GET /api/dashboard/today-workflows 200 in 1254ms
+ ✓ Compiled in 634ms (1615 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 200ms
+ ✓ Compiled in 840ms (1617 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 105ms
+ ✓ Compiled in 436ms (720 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 146ms
+ ✓ Compiled in 322ms (720 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 41ms
+ ✓ Compiled in 304ms (720 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 45ms
+ ✓ Compiled in 442ms (720 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 120ms
+ ✓ Compiled in 337ms (720 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 46ms
+ ✓ Compiled in 761ms (1575 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 156ms
+ ✓ Compiled in 537ms (1585 modules)
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 200 in 100ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json',
+  page: '/zen-dashboard-v2'
+}
+ ⨯ Error: Cannot find module './5611.js'
+Require stack:
+- C:\Users\strac\dev\renubu\.next\server\webpack-runtime.js
+- C:\Users\strac\dev\renubu\.next\server\app\zen-dashboard-v2\page.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\require.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\load-components.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\utils.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\options.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\index.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\next.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:327)
+    at Object.<anonymous> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:374) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json',
+  page: '/zen-dashboard-v2'
+}
+ ⨯ Error: Cannot find module './5611.js'
+Require stack:
+- C:\Users\strac\dev\renubu\.next\server\webpack-runtime.js
+- C:\Users\strac\dev\renubu\.next\server\app\zen-dashboard-v2\page.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\require.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\load-components.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\utils.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\options.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\index.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\next.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:327)
+    at Object.<anonymous> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:374) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json'
+}
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 1156ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 82ms
+ ⨯ [Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json',
+  page: '/zen-dashboard-v2'
+}
+ ⨯ Error: Cannot find module './5611.js'
+Require stack:
+- C:\Users\strac\dev\renubu\.next\server\webpack-runtime.js
+- C:\Users\strac\dev\renubu\.next\server\app\zen-dashboard-v2\page.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\require.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\load-components.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\utils.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\options.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\index.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\next.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:327)
+    at Object.<anonymous> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:374) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json',
+  page: '/zen-dashboard-v2'
+}
+ ⨯ Error: Cannot find module './5611.js'
+Require stack:
+- C:\Users\strac\dev\renubu\.next\server\webpack-runtime.js
+- C:\Users\strac\dev\renubu\.next\server\app\zen-dashboard-v2\page.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\require.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\load-components.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\utils.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\options.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\swc\index.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\build\next-config-ts\transpile-config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\config.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\next.js
+- C:\Users\strac\dev\renubu\node_modules\next\dist\server\lib\start-server.js
+    at <unknown> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:327)
+    at Object.<anonymous> (C:\Users\strac\dev\renubu\.next\server\pages\_document.js:1:374) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: ENOENT: no such file or directory, open 'C:\Users\strac\dev\renubu\.next\routes-manifest.json'] {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\strac\\dev\\renubu\\.next\\routes-manifest.json'
+}
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 757ms
+ GET /zen-dashboard-v2?sequence=bluesoft-demo-2025 500 in 96ms
+ ✓ Compiled in 470ms (725 modules)
+ ✓ Compiled in 413ms (725 modules)
+[?25h

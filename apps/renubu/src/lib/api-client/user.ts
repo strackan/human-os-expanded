@@ -4,7 +4,7 @@
  * Operations for user profile and preferences.
  */
 
-import { apiFetch, type FetchOptions } from './index';
+import { apiFetch } from './index';
 import { API_ROUTES } from '@/lib/constants/api-routes';
 import type { UserProfile, ApiResponse } from './types';
 

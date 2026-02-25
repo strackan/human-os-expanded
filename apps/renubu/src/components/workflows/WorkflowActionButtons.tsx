@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from 'react';
-import { Clock, X, UserPlus, CheckCircle, XCircle } from 'lucide-react';
+import { Clock, X, UserPlus } from 'lucide-react';
 import { WorkflowActionService } from '@/lib/workflows/actions';
 import { EnhancedSnoozeModal } from './EnhancedSnoozeModal';
 import { WakeTrigger } from '@/types/wake-triggers';
@@ -335,7 +335,7 @@ function EscalateModal({ executionId, userId, onClose, onSuccess, setIsProcessin
         <h3 className="text-lg font-semibold mb-4 text-gray-900">Escalate Workflow</h3>
 
         <p className="text-sm text-gray-600 mb-4">
-          Escalate this workflow to another team member. You'll be able to monitor progress but won't be able to manage it.
+          Escalate this workflow to another team member. You&apos;ll be able to monitor progress but won&apos;t be able to manage it.
         </p>
 
         <div className="space-y-4">

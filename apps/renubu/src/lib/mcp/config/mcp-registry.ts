@@ -39,6 +39,13 @@ export function getMCPClientConfigs(): MCPClientConfig[] {
       retryAttempts: 1,
       retryDelay: 1000,
     },
+    {
+      server: 'ari' as MCPServer,
+      enabled: process.env.MCP_ENABLE_ARI === 'true',
+      timeout: 120000, // ARI scans run all providers synchronously (30-60s)
+      retryAttempts: 1,
+      retryDelay: 2000,
+    },
   ];
 }
 
@@ -93,6 +100,9 @@ export const MCP_FEATURES = {
   // Phase 4: Documents (future)
   playwright_mcp: process.env.MCP_ENABLE_PLAYWRIGHT === 'true',
   ocr_mcp: process.env.MCP_ENABLE_OCR === 'true',
+
+  // ARI Integration
+  ari_mcp: process.env.MCP_ENABLE_ARI === 'true',
 } as const;
 
 /**

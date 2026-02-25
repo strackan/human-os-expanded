@@ -1,20 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getTimeBasedGreeting } from '@/lib/constants';
 
-// ===================================================================
-// EDITABLE PROMPTS - Modify these to change LLM-generated content
-// ===================================================================
-
-const FRIENDLY_MESSAGE_PROMPT = `Generate a short, warm, motivational greeting for a customer success manager starting their day. 2-5 words. Examples: "Let's make today count", "Ready to drive success?", "Time to create impact"`;
-
-const HELPFUL_THING_PROMPT = `Based on the user's workflow data, generate one concise helpful insight for the day. Examples: "3 workflows need attention", "2 critical renewals this week", "Perfect day for deep work"`;
-
-// ===================================================================
-// END EDITABLE PROMPTS
-// ===================================================================
+// Editable prompts for future LLM-generated content
+// const FRIENDLY_MESSAGE_PROMPT = `Generate a short, warm, motivational greeting for a customer success manager starting their day. 2-5 words.`;
+// const HELPFUL_THING_PROMPT = `Based on the user's workflow data, generate one concise helpful insight for the day.`;
 
 interface ZenGreetingProps {
   className?: string;
@@ -22,8 +15,6 @@ interface ZenGreetingProps {
 
 export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
   const { user } = useAuth();
-  const [friendlyMessage, setFriendlyMessage] = useState<string>('Let\'s make today count');
-  const [helpfulThing, setHelpfulThing] = useState<string>('3 workflows need attention');
   const [loading, setLoading] = useState<boolean>(true);
 
   // Extract first name from user data
@@ -61,40 +52,9 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
     return `${dayName}, ${monthDay}`;
   };
 
-  // Fetch LLM-generated messages
+  // TODO: Fetch LLM-generated messages (friendly greeting + helpful insight)
   useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        // TODO: Call LLM API to generate messages
-        // For now, use placeholder rotating messages
-        const friendlyMessages = [
-          'Let\'s make today count',
-          'Ready to drive success?',
-          'Time to create impact',
-          'Your customers are counting on you',
-          'Great things ahead'
-        ];
-
-        const helpfulThings = [
-          '3 workflows need attention',
-          '2 critical renewals this week',
-          'Perfect day for deep work',
-          '5 customers waiting for follow-up',
-          '1 high-risk account needs care'
-        ];
-
-        // Rotate based on day of week
-        const dayIndex = new Date().getDay();
-        setFriendlyMessage(friendlyMessages[dayIndex % friendlyMessages.length]);
-        setHelpfulThing(helpfulThings[dayIndex % helpfulThings.length]);
-      } catch (error) {
-        console.error('[ZenGreeting] Error fetching messages:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMessages();
+    setLoading(false);
   }, []);
 
   if (loading) {
@@ -112,7 +72,10 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
   }
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
       id="zen-greeting"
       data-testid="zen-greeting"
       data-loading="false"
@@ -121,7 +84,7 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
       <h1
         id="zen-greeting-title"
         data-testid="zen-greeting-title"
-        className="text-3xl font-light text-gray-700 zen-greeting__title"
+        className="text-3xl font-light text-gray-800 zen-greeting__title"
       >
         {getTimeBasedGreeting()}, {getFirstName()}
       </h1>
@@ -132,6 +95,6 @@ export default function ZenGreeting({ className = '' }: ZenGreetingProps) {
       >
         {getCurrentDayDate()}
       </p>
-    </div>
+    </motion.div>
   );
 }

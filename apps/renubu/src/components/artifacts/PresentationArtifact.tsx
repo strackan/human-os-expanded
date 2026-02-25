@@ -19,8 +19,6 @@ import {
   ChevronRight,
   Download,
   Presentation,
-  Edit3,
-  Eye,
   FileSpreadsheet,
   Cloud,
   ChevronDown,
@@ -28,7 +26,6 @@ import {
 } from 'lucide-react';
 import {
   ArtifactContainer,
-  ArtifactHeader,
 } from '@/components/artifacts/primitives';
 import {
   TitleSlide,
@@ -169,6 +166,7 @@ export function PresentationArtifact({
   subtitle,
   customerName = 'GrowthStack',
   slides = DEFAULT_SLIDES,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   editable = true,
   isLoading = false,
   error,
@@ -176,7 +174,6 @@ export function PresentationArtifact({
   onExport,
 }: PresentationArtifactProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [localSlides, setLocalSlides] = useState(slides);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -228,10 +225,12 @@ export function PresentationArtifact({
 
   // Export to PowerPoint via server API
   const handleExportPptx = useCallback(async () => {
+    console.log('[PresentationArtifact] Starting PPTX export...');
     setIsExporting(true);
     setExportError(null);
     setIsExportMenuOpen(false);
     try {
+      console.log('[PresentationArtifact] Sending request to /api/export/pptx');
       const response = await fetch('/api/export/pptx', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -242,13 +241,29 @@ export function PresentationArtifact({
         }),
       });
 
+      console.log('[PresentationArtifact] Response status:', response.status);
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to generate PowerPoint');
+        // Try to parse error as JSON, fall back to status text
+        let errorMessage = 'Failed to generate PowerPoint';
+        try {
+          const data = await response.json();
+          errorMessage = data.error || errorMessage;
+        } catch {
+          errorMessage = `Server error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
       // Download the file
+      console.log('[PresentationArtifact] Downloading blob...');
       const blob = await response.blob();
+      console.log('[PresentationArtifact] Blob size:', blob.size);
+
+      if (blob.size === 0) {
+        throw new Error('Generated file is empty');
+      }
+
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -257,8 +272,9 @@ export function PresentationArtifact({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      console.log('[PresentationArtifact] Download triggered successfully');
     } catch (err) {
-      console.error('Failed to export PPTX:', err);
+      console.error('[PresentationArtifact] Failed to export PPTX:', err);
       setExportError(err instanceof Error ? err.message : 'Failed to export PowerPoint');
     } finally {
       setIsExporting(false);
@@ -314,7 +330,7 @@ export function PresentationArtifact({
     const slideProps = {
       title: currentSlide.title,
       content: currentSlide.content as any,
-      editable: isEditMode,
+      editable: false, // Edit mode disabled until fully implemented across all slide types
       onContentChange: handleContentChange,
     };
 
@@ -359,20 +375,7 @@ export function PresentationArtifact({
           <span className="text-sm text-gray-500">
             {currentSlideIndex + 1} / {totalSlides}
           </span>
-          {/* Edit/View toggle */}
-          {editable && (
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-2 rounded-lg transition-colors ${
-                isEditMode
-                  ? 'bg-blue-100 text-blue-600'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-              }`}
-              title={isEditMode ? 'View mode' : 'Edit mode'}
-            >
-              {isEditMode ? <Eye className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-            </button>
-          )}
+          {/* Edit/View toggle - hidden until edit mode is fully implemented across all slide types */}
           {/* Export dropdown */}
           <div className="relative" ref={exportMenuRef}>
             <button

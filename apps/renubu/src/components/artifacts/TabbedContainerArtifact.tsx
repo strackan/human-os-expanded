@@ -19,7 +19,7 @@
 
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   BarChart3,
   FileText,
@@ -83,10 +83,12 @@ export interface TabbedContainerArtifactProps {
   phaseApprovals?: PhaseApproval[];
   onTabApprove?: (tabId: string, comments?: string) => void;
   onTabStatusChange?: (tabId: string, status: TabStatus) => void;
+  // Workflow state communication - triggers chat buttons when all tabs reviewed
+  onUpdateState?: (key: string, value: any) => void;
 }
 
 export function TabbedContainerArtifact({
-  artifactId = 'tabbed-container',
+  artifactId: _artifactId = 'tabbed-container',
   title = 'Account Review',
   subtitle,
   customerName,
@@ -98,9 +100,13 @@ export function TabbedContainerArtifact({
   sharedProps = {},
   showApprovalWorkflow = false,
   phaseApprovals = [],
-  onTabApprove,
+  onTabApprove: _onTabApprove,
   onTabStatusChange,
+  onUpdateState,
 }: TabbedContainerArtifactProps) {
+  // Suppress unused variable warnings for optional props
+  void _artifactId;
+  void _onTabApprove;
   // Filter tabs based on 'show' property (default to true if not specified)
   const visibleTabs = tabs.filter(tab => tab.show !== false);
 
@@ -111,12 +117,25 @@ export function TabbedContainerArtifact({
   // Track which tabs have been reviewed (internal state)
   const [reviewedTabs, setReviewedTabs] = useState<Set<string>>(new Set());
 
-  // Mark a tab as reviewed
+  // Mark a tab as reviewed and auto-advance to next unreviewed tab
   const markTabReviewed = useCallback((tabId: string, reviewed: boolean) => {
     setReviewedTabs(prev => {
       const next = new Set(prev);
       if (reviewed) {
         next.add(tabId);
+
+        // Auto-advance: find the next unreviewed tab (starting from current, then wrapping)
+        const currentIndex = visibleTabs.findIndex(t => t.id === tabId);
+        if (currentIndex >= 0) {
+          // Search forward from the next tab
+          for (let i = 1; i < visibleTabs.length; i++) {
+            const candidate = visibleTabs[(currentIndex + i) % visibleTabs.length];
+            if (!next.has(candidate.id)) {
+              setActiveTabId(candidate.id);
+              break;
+            }
+          }
+        }
       } else {
         next.delete(tabId);
       }
@@ -126,14 +145,32 @@ export function TabbedContainerArtifact({
     if (onTabStatusChange) {
       onTabStatusChange(tabId, reviewed ? 'approved' : 'pending');
     }
-  }, [onTabStatusChange]);
+  }, [onTabStatusChange, visibleTabs]);
 
   // Check if a tab has been reviewed
   const isTabReviewed = useCallback((tabId: string): boolean => {
     return reviewedTabs.has(tabId);
   }, [reviewedTabs]);
 
+  // Detect when all tabs are reviewed and notify workflow
+  useEffect(() => {
+    const allReviewed = visibleTabs.length > 0 && visibleTabs.every(tab => reviewedTabs.has(tab.id));
+
+    if (onUpdateState) {
+      onUpdateState('allTabsReviewed', allReviewed);
+
+      // Log for debugging
+      console.log('[TabbedContainerArtifact] All tabs reviewed:', allReviewed, {
+        total: visibleTabs.length,
+        reviewed: reviewedTabs.size,
+        tabs: visibleTabs.map(t => t.id),
+        reviewedTabs: Array.from(reviewedTabs),
+      });
+    }
+  }, [reviewedTabs, visibleTabs, onUpdateState]);
+
   const activeTab = visibleTabs.find(tab => tab.id === activeTabId);
+  const allTabsReviewed = visibleTabs.length > 0 && visibleTabs.every(tab => reviewedTabs.has(tab.id));
 
   // Get tab status from reviewed state, phaseApprovals, or tab definition
   const getTabStatus = useCallback((tabId: string): TabStatus => {
@@ -244,7 +281,7 @@ export function TabbedContainerArtifact({
             if (!ArtifactComponent) {
               return (
                 <div className="p-6 text-center text-gray-500">
-                  <p>Component "{activeTab.artifact}" not found in registry</p>
+                  <p>Component &quot;{activeTab.artifact}&quot; not found in registry</p>
                   <p className="text-xs mt-1">Check componentImports.ts</p>
                 </div>
               );
@@ -284,6 +321,17 @@ export function TabbedContainerArtifact({
                 }
               </span>
             </label>
+
+            {/* Continue button - appears right-justified when all tabs reviewed */}
+            {allTabsReviewed && onContinue && (
+              <button
+                onClick={onContinue}
+                className="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                Continue
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
           </div>
         )}
       </div>

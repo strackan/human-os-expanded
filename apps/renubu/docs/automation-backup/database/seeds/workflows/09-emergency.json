@@ -1,0 +1,143 @@
+{
+  "id": "emergency",
+  "name": "Emergency Renewal",
+  "description": "Final push to secure renewal in last 0-6 days before expiration",
+  "version": "1.0.0",
+  "trigger": {
+    "daysUntilRenewal": {
+      "min": 0,
+      "max": 6
+    },
+    "earlyTriggers": [
+      {
+        "condition": "critical_workflow_incomplete_at_day_6",
+        "description": "Critical workflow not resolved with 6 days remaining"
+      },
+      {
+        "condition": "renewal_marked_emergency",
+        "description": "CSM manually marks renewal as emergency"
+      }
+    ]
+  },
+  "context": {
+    "systemPrompt": "You are an AI assistant helping Customer Success Managers with EMERGENCY RENEWAL SITUATIONS.\n\nThe renewal date is 0-6 days away. This is EXTREME URGENCY - the absolute final chance to save this renewal.\n\nYour role:\n1. Conduct rapid status check (what's the current state?)\n2. Execute final push (last-ditch effort to secure renewal)\n3. Accept outcome (renewal secured or churn preparation)\n4. Document everything for post-mortem analysis\n\nEMERGENCY GUIDELINES:\n- Time is measured in HOURS, not days. Every hour matters.\n- Be brutally honest about the situation. No sugarcoating.\n- CEO involvement expected for deals >$100K ARR.\n- If customer says \"no\", accept it gracefully and prepare for churn.\n- Offer short-term extensions (1 week, 1 month) to buy time if needed.\n- Focus on what's achievable in the time remaining, not ideal outcomes.\n- Document everything - this will be a learning opportunity regardless of outcome.\n\nDECISION POINT:\nBy the end of this workflow, there are only 3 outcomes:\n1. ✅ Renewal secured (full, alternative, or extension)\n2. ⏳ Short-term extension bought more time\n3. ❌ Churn confirmed - begin offboarding\n\nThis is not the time for lengthy analysis or interviews. Act decisively.\n\nRemain professional, calm, and focused on the best possible outcome given the constraints."
+  },
+  "steps": [
+    {
+      "id": "emergency-status-check",
+      "name": "Emergency Status Check",
+      "type": "rapid_assessment",
+      "description": "Rapid assessment of current situation - facts only, no lengthy analysis",
+      "execution": {
+        "llmPrompt": "# EMERGENCY STATUS CHECK\n\n**URGENT SITUATION:**\n- Hours until renewal: {{workflow.hoursUntilRenewal}}\n- Customer: {{customer.name}}\n- ARR: {{customer.arr}}\n\n---\n\n## RAPID STATUS CHECK\n\n**Answer these questions BRIEFLY (1-2 sentences each):**\n\n1. **Contract Status:** Signed or unsigned?\n2. **Payment Status:** Received or pending?\n3. **Customer Intent:** Renewing, undecided, or churning?\n4. **Primary Blocker:** What's preventing completion?\n5. **Hours Needed:** How many hours to complete?\n\n---\n\n## IMMEDIATE DECISION\n\n**Path Forward:** [Select one]\n- FINAL_PUSH (customer willing, just needs completion)\n- EXTENSION_OFFER (need more time)\n- ACCEPT_CHURN (customer confirmed they're leaving)\n\n**Reasoning:** [1 sentence]\n\n---\n\n**Database Storage:**\n- Table: emergency_status_checks\n- Fields: customer_id, hours_remaining, contract_status, payment_status, customer_intent, primary_blocker, hours_needed, path_forward, reasoning",
+        "processor": "assessors/emergencyStatusChecker.js",
+        "storeIn": "emergency_status"
+      }
+    },
+    {
+      "id": "mandatory-team-escalation",
+      "name": "Mandatory Team Escalation",
+      "type": "escalation",
+      "description": "Alert all required team members - manager acknowledgment required before proceeding",
+      "execution": {
+        "llmPrompt": "# MANDATORY TEAM ESCALATION\n\n**Emergency Status:** {{emergency_status.path_forward}}\n**Hours Remaining:** {{workflow.hoursUntilRenewal}}\n**Customer:** {{customer.name}}\n**ARR:** {{customer.arr}}\n\n---\n\n## TEAM NOTIFICATION PLAN\n\n**Required Notifications:**\n1. Manager (must acknowledge before CSM can proceed)\n2. VP Customer Success\n3. CEO (if ARR >= $250K)\n4. Account Team (if strategic account)\n\n**Notification Message:**\nEMERGENCY: {{customer.name}} renewal has {{workflow.hoursUntilRenewal}} hours remaining. {{emergency_status.primary_blocker}} is blocking completion. Manager acknowledgment required to proceed.\n\n---\n\n## TEAM SYNC SCHEDULE\n\n**High-Value Renewals (>$100K):**\n- Frequency: Twice daily (9am, 3pm)\n- Duration: 15 minutes\n- Attendees: CSM, Manager, VP CS, CEO (if applicable)\n\n**Standard Renewals:**\n- Frequency: Daily (9am)\n- Duration: 15 minutes\n- Attendees: CSM, Manager, VP CS\n\n---\n\n**Database Storage:**\n- Table: emergency_escalations\n- Fields: customer_id, hours_remaining, team_notifications, sync_schedule, manager_acknowledgment_required",
+        "processor": "escalators/emergencyTeamEscalator.js",
+        "storeIn": "team_escalation"
+      },
+      "notifications": [
+        {
+          "type": "approval_needed",
+          "title": "Manager Acknowledgment Required",
+          "message": "Emergency renewal for {{customer.name}} (${{customer.arr}}) requires your immediate acknowledgment. {{workflow.hoursUntilRenewal}} hours remaining until renewal.",
+          "priority": 1,
+          "recipients": ["{{csm.manager}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "workflowStage": "emergency",
+            "hoursRemaining": "{{workflow.hoursUntilRenewal}}",
+            "arr": "{{customer.arr}}",
+            "requiresAcknowledgment": true,
+            "csmEmail": "{{csm.email}}",
+            "csmName": "{{csm.name}}"
+          }
+        },
+        {
+          "type": "workflow_started",
+          "title": "Emergency Team Escalation Initiated",
+          "message": "Your manager has been notified about {{customer.name}} emergency renewal. They must acknowledge before you can proceed with emergency actions.",
+          "priority": 2,
+          "recipients": ["{{csm.email}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "managerNotified": true,
+            "managerEmail": "{{csm.manager}}"
+          }
+        },
+        {
+          "condition": "{{gte workflow.renewalARR 250000}}",
+          "type": "escalation_required",
+          "title": "High-Value Emergency Renewal",
+          "message": "Emergency: ${{customer.arr}} renewal ({{customer.name}}) has {{workflow.hoursUntilRenewal}} hours remaining. Your visibility is requested.",
+          "priority": 1,
+          "recipients": ["{{company.ceo}}", "{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "arr": "{{customer.arr}}",
+            "hoursRemaining": "{{workflow.hoursUntilRenewal}}",
+            "highValue": true
+          }
+        },
+        {
+          "condition": "{{customer.hasAccountPlan}}",
+          "type": "escalation_required",
+          "title": "Strategic Account Emergency",
+          "message": "Strategic account {{customer.name}} in emergency status. Full account team has been alerted.",
+          "priority": 1,
+          "recipients": ["{{accountTeam.allEmails}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "isStrategic": true,
+            "hasAccountPlan": true,
+            "accountTeamNotified": true
+          }
+        },
+        {
+          "actionTriggered": "manager-acknowledge",
+          "type": "workflow_started",
+          "title": "Manager Acknowledged Emergency",
+          "message": "{{csm.managerName}} has acknowledged {{customer.name}} emergency renewal. You can now proceed with emergency actions.",
+          "priority": 2,
+          "recipients": ["{{csm.email}}", "{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "acknowledgedBy": "{{csm.managerName}}",
+            "acknowledgedAt": "{{workflow.currentTimestamp}}",
+            "managerEmail": "{{csm.manager}}"
+          }
+        }
+      ]
+    },
+    {
+      "id": "final-push",
+      "name": "Final Push",
+      "type": "execution",
+      "description": "Execute final attempt to secure renewal in remaining hours",
+      "execution": {
+        "llmPrompt": "# FINAL PUSH\n\n**Hours Remaining:** {{workflow.hoursUntilRenewal}}\n**Primary Blocker:** {{emergency_status.primary_blocker}}\n**Customer:** {{customer.name}}\n\n---\n\n## FINAL ACTIONS (Execute Immediately)\n\n**Based on Primary Blocker:**\n\nIF SIGNATURES PENDING:\n- [ ] Call customer NOW (not email)\n- [ ] Offer to walk through DocuSign on call\n- [ ] Send backup contract for wet signature\n- [ ] Executive-to-executive call if no response in 2 hours\n\nIF PAYMENT PENDING:\n- [ ] Call AP/finance NOW\n- [ ] Offer any payment method (credit card, ACH, wire)\n- [ ] Accept split payment or payment plan\n- [ ] Executive approval for flexibility\n\nIF CUSTOMER UNDECIDED:\n- [ ] Emergency discount (up to 20% with CEO approval)\n- [ ] Short-term extension (1 week, 1 month)\n- [ ] Reduced scope/seats to lower price\n- [ ] CEO-to-CEO call for strategic accounts\n\nIF CUSTOMER SAYS NO:\n- [ ] Accept gracefully\n- [ ] Ask for churn feedback\n- [ ] Offer to stay in touch\n- [ ] Begin churn preparation\n\n---\n\n## HOURLY UPDATES\n\nEvery hour until renewal or churn confirmed:\n- Update: [What happened in last hour]\n- Next: [What's happening in next hour]\n- Blockers: [Any new blockers]\n- ETA: [When will this be resolved]\n\n---\n\n**Database Storage:**\n- Table: final_push_attempts\n- Fields: customer_id, hours_remaining, actions_taken, hourly_updates, outcome, blockers_encountered",
+        "processor": "executors/finalPushExecutor.js",
+        "storeIn": "final_push"
+      }
+    },
+    {
+      "id": "outcome-resolution",
+      "name": "Outcome Resolution",
+      "type": "resolution",
+      "description": "Document outcome and next steps (renewal secured, extension, or churn)",
+      "execution": {
+        "llmPrompt": "# OUTCOME RESOLUTION\n\n**Customer:** {{customer.name}}\n**Final Outcome:** {{final_push.outcome}}\n\n---\n\n## OUTCOME DOCUMENTATION\n\n**Final Status:** [Select one]\n1. ✅ RENEWAL SECURED (full, alternative, or extension)\n2. ⏳ EXTENSION GRANTED (1 week, 1 month)\n3. ❌ CHURN CONFIRMED\n\n**Details:**\n- What was agreed?\n- Contract value/terms?\n- When does it start/end?\n- Any special conditions?\n\n---\n\n## NEXT STEPS\n\nIF RENEWAL SECURED:\n- [ ] Process contract immediately\n- [ ] Confirm payment received\n- [ ] Update Salesforce\n- [ ] Thank customer and team\n\nIF EXTENSION GRANTED:\n- [ ] Document new deadline\n- [ ] Create follow-up plan\n- [ ] Set daily reminders\n- [ ] Prepare for final decision\n\nIF CHURN CONFIRMED:\n- [ ] Begin offboarding process\n- [ ] Schedule exit interview\n- [ ] Document lessons learned\n- [ ] Plan post-mortem with team\n\n---\n\n## POST-MORTEM\n\n**What led to this emergency?**\n**What could we have done differently?**\n**What did we learn?**\n**How do we prevent this next time?**\n\n---\n\n**Database Storage:**\n- Table: renewal_outcomes\n- Fields: customer_id, final_status, outcome_details, next_steps, post_mortem_notes, lessons_learned",
+        "processor": "resolvers/outcomeResolver.js",
+        "storeIn": "outcome"
+      }
+    }
+  ]
+}

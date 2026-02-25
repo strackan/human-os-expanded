@@ -1,0 +1,78 @@
+# Deploy to Staging on Git Tags
+#
+# This workflow deploys to the staging Vercel project when a semantic version
+# tag (v*.*.*)  is pushed. This ensures staging only receives tagged releases.
+#
+# Setup required:
+#   1. Create secrets in GitHub repo settings:
+#      - VERCEL_TOKEN: Your Vercel personal access token
+#      - VERCEL_ORG_ID: Your Vercel organization/team ID
+#      - VERCEL_STAGING_PROJECT_ID: The Vercel project ID for staging
+#
+#   2. Get these values from Vercel:
+#      - Token: https://vercel.com/account/tokens
+#      - Org ID: vercel.json or `vercel link` output
+#      - Project ID: .vercel/project.json after `vercel link`
+
+name: Deploy to Staging
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type check
+        run: npm run type-check
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+
+      - name: Deploy to Vercel Staging
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_STAGING_PROJECT_ID }}
+          vercel-args: '--prod'
+          alias-domains: |
+            staging.renubu.com
+
+      - name: Create deployment summary
+        run: |
+          echo "## Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** v${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Staging" >> $GITHUB_STEP_SUMMARY
+          echo "**URL:** https://staging.renubu.com" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Perform QA testing on staging" >> $GITHUB_STEP_SUMMARY
+          echo "2. When ready, promote to production via Vercel CLI:" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "   vercel --prod --scope renubu --project renubu-prod" >> $GITHUB_STEP_SUMMARY
+          echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY

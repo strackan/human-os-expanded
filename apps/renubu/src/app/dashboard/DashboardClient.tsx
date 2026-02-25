@@ -3,14 +3,17 @@
 /**
  * Dashboard Client Component
  *
- * Main production dashboard with zen aesthetic + Phase 3F components
- * Based on obsidian-black-v3 design, database-driven
+ * Revamped dashboard with hero card, bounty system, and AI-native UX.
+ * Above fold: ZenGreeting, DailyBountyStrip, HeroWorkflowCard, 3x SecondaryWorkflowCards
+ * Below fold: "When You're Ready" divider, QuickActions
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import ZenGreeting from '@/components/dashboard/ZenGreeting';
-import PriorityWorkflowCard from '@/components/dashboard/PriorityWorkflowCard';
-import TodaysWorkflows from '@/components/dashboard/TodaysWorkflows';
+import HeroWorkflowCard from '@/components/dashboard/HeroWorkflowCard';
+import SecondaryWorkflowCard from '@/components/dashboard/SecondaryWorkflowCard';
+import DailyBountyStrip from '@/components/dashboard/DailyBountyStrip';
 import QuickActions from '@/components/dashboard/QuickActions';
 import WhenYouReReady from '@/components/dashboard/WhenYouReReady';
 import TaskModeFullscreen from '@/components/workflows/TaskMode';
@@ -21,10 +24,11 @@ import { registerWorkflowConfig } from '@/config/workflows/index';
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { composeFromDatabase } from '@/lib/workflows/db-composer';
 import { WorkflowPersistenceService } from '@/lib/persistence/WorkflowPersistenceService';
+import { WorkflowQueryService, type WorkflowExecution } from '@/lib/workflows/actions/WorkflowQueryService';
+import type { DashboardWorkflow } from '@/components/dashboard/HeroWorkflowCard';
 
 /**
  * Fetch LLM-generated greeting from server API
- * Includes customerId for cache support
  */
 async function fetchGreetingFromAPI(params: {
   customerName: string;
@@ -55,11 +59,19 @@ export default function DashboardClient() {
     title: string;
     customerId: string;
     customerName: string;
-    prefetchedGreeting?: string; // Include greeting here for atomic state update
+    prefetchedGreeting?: string;
   } | null>(null);
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [workflowStatus, setWorkflowStatus] = useState<string>('in_progress');
   const [isLaunchingWorkflow, setIsLaunchingWorkflow] = useState(false);
+
+  // Dashboard workflow state
+  const [heroWorkflow, setHeroWorkflow] = useState<DashboardWorkflow | null>(null);
+  const [secondaryWorkflows, setSecondaryWorkflows] = useState<DashboardWorkflow[]>([]);
+  const [isLoadingWorkflows, setIsLoadingWorkflows] = useState(true);
+
+  // Bounty state
+  const [dailyBounty, setDailyBounty] = useState({ earned: 0, goal: 100, streak: 0 });
 
   // Resume dialog state
   const [showResumeDialog, setShowResumeDialog] = useState(false);
@@ -68,10 +80,81 @@ export default function DashboardClient() {
     slideIndex: number;
     savedAt: string;
   } | null>(null);
-  const [pendingWorkflowConfig, setPendingWorkflowConfig] = useState<any>(null);
+  const [pendingWorkflowConfig, setPendingWorkflowConfig] = useState<(WorkflowConfig & { workflowName?: string }) | null>(null);
   const [pendingGreeting, setPendingGreeting] = useState<string | null>(null);
+  // Store which workflow is being launched for resume/fresh flow
+  const [pendingLaunchWorkflow, setPendingLaunchWorkflow] = useState<DashboardWorkflow | null>(null);
 
   const userId = user?.id;
+
+  // Fetch top 4 workflows on mount
+  const fetchDashboardWorkflows = useCallback(async () => {
+    if (!userId) return;
+
+    setIsLoadingWorkflows(true);
+    try {
+      const queryService = new WorkflowQueryService();
+      const result = await queryService.getActiveWorkflows(userId);
+
+      if (result.success && result.workflows && result.workflows.length > 0) {
+        const sorted = [...result.workflows].sort(
+          (a, b) => (b.priority_score || 0) - (a.priority_score || 0)
+        );
+
+        const toDashboardWorkflow = (w: WorkflowExecution & { customers?: { current_arr?: number; health_score?: number; renewal_date?: string } }): DashboardWorkflow => ({
+          id: w.id,
+          workflowConfigId: w.workflow_config_id,
+          workflowName: w.workflow_name,
+          workflowType: w.workflow_type || 'renewal',
+          customerId: w.customer_id,
+          customerName: w.customer_name || 'Unknown Customer',
+          priorityScore: w.priority_score || 0,
+          currentArr: w.customers?.current_arr ?? undefined,
+          healthScore: w.customers?.health_score ?? undefined,
+          renewalDate: w.customers?.renewal_date ?? undefined,
+        });
+
+        setHeroWorkflow(toDashboardWorkflow(sorted[0]));
+        setSecondaryWorkflows(sorted.slice(1, 4).map(toDashboardWorkflow));
+      } else {
+        setHeroWorkflow(null);
+        setSecondaryWorkflows([]);
+      }
+    } catch (error) {
+      console.error('[Dashboard] Error fetching workflows:', error);
+      setHeroWorkflow(null);
+      setSecondaryWorkflows([]);
+    } finally {
+      setIsLoadingWorkflows(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchDashboardWorkflows();
+  }, [fetchDashboardWorkflows]);
+
+  // Fetch bounty data on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchBounty = async () => {
+      try {
+        const res = await fetch('/api/bounty');
+        if (res.ok) {
+          const data = await res.json();
+          setDailyBounty({
+            earned: data.earned ?? 0,
+            goal: data.goal ?? 100,
+            streak: data.streak ?? 0,
+          });
+        }
+      } catch {
+        // Bounty fetch is non-critical
+      }
+    };
+
+    fetchBounty();
+  }, [userId]);
 
   const triggerConfetti = () => {
     const count = 200;
@@ -82,7 +165,7 @@ export default function DashboardClient() {
       gravity: 1.2,
     };
 
-    function fire(particleRatio: number, opts: any) {
+    function fire(particleRatio: number, opts: Record<string, number>) {
       confetti({
         ...defaults,
         ...opts,
@@ -97,91 +180,72 @@ export default function DashboardClient() {
     fire(0.1, { spread: 120, startVelocity: 90 });
   };
 
-  const handleLaunchWorkflow = async () => {
-    console.log('[Dashboard] handleLaunchWorkflow called');
+  const handleLaunchWorkflow = async (workflow: DashboardWorkflow) => {
+    console.log('[Dashboard] handleLaunchWorkflow called for:', workflow.customerName);
 
     if (!userId) {
       console.error('[Dashboard] No user ID available');
       return;
     }
 
-    // Prevent double-clicks
     if (isLaunchingWorkflow) {
       console.log('[Dashboard] Already launching workflow, ignoring click');
       return;
     }
 
-    console.log('[Dashboard] Setting isLaunchingWorkflow = true');
     setIsLaunchingWorkflow(true);
 
     try {
-      console.log('[Dashboard] Launching database-driven workflow with LLM prefetch...');
       console.time('[Dashboard] Total workflow launch time');
-      console.log('[Dashboard] Starting LLM prefetch API call...');
 
-      const workflowId = 'obsidian-black-renewal';
-      const customerId = '550e8400-e29b-41d4-a716-446655440001';
-      const customerName = 'Obsidian Black';
+      const workflowId = workflow.workflowConfigId;
+      const customerId = workflow.customerId;
+      const customerName = workflow.customerName;
 
-      // Run workflow config load AND LLM prefetch in parallel
-      console.log('[Dashboard] Starting Promise.all for workflow config + LLM prefetch');
       const startTime = Date.now();
 
       const [workflowConfig, greetingResult] = await Promise.all([
-        // Load workflow config from database
         composeFromDatabase(
           workflowId,
-          null, // company_id (null = stock workflow)
+          null,
           {
             name: customerName,
-            current_arr: 185000,
-            health_score: 87,
-            contract_end_date: '2026-10-21',
-            days_until_renewal: 365,
-            utilization: 87,
-            monthsToRenewal: 12,
-            seatCount: 50,
+            current_arr: workflow.currentArr || 0,
+            health_score: workflow.healthScore || 0,
+            contract_end_date: workflow.renewalDate || '',
+            days_until_renewal: workflow.daysUntilRenewal || 0,
+            utilization: 0,
+            monthsToRenewal: workflow.daysUntilRenewal ? Math.round(workflow.daysUntilRenewal / 30) : 0,
+            seatCount: 0,
           }
         ).then(result => {
           console.log('[Dashboard] Workflow config loaded in', Date.now() - startTime, 'ms');
           return result;
         }),
-        // Prefetch LLM greeting (cached by customerId)
         fetchGreetingFromAPI({
           customerName: customerName,
           customerId: customerId,
-          workflowType: 'renewal',
+          workflowType: workflow.workflowType,
           slideId: 'greeting',
           fallbackGreeting: `Good afternoon! Let's prepare for ${customerName}'s renewal.`,
         }).then(result => {
-          console.log('[Dashboard] LLM API returned in', Date.now() - startTime, 'ms', result.cached ? '(CACHED)' : '(fresh)');
-          console.log('[Dashboard] LLM greeting text:', result.text);
+          console.log('[Dashboard] LLM API returned in', Date.now() - startTime, 'ms');
           return result;
-        }).catch((error) => {
-          console.warn('[Dashboard] LLM prefetch failed after', Date.now() - startTime, 'ms:', error);
+        }).catch(() => {
           return { text: `Good afternoon! Let's prepare for ${customerName}'s renewal.`, toolsUsed: [], tokensUsed: 0 };
         }),
       ]);
 
-      console.log('[Dashboard] Promise.all completed in', Date.now() - startTime, 'ms');
-
       if (!workflowConfig) {
         console.error('[Dashboard] Failed to load workflow config');
         setIsLaunchingWorkflow(false);
-        alert('Workflow template not found. Please contact your administrator to set up the "obsidian-black-renewal" workflow definition in the database.');
+        alert('Workflow template not found. Please contact your administrator.');
         return;
       }
 
-      console.log('[Dashboard] Workflow loaded from database:', workflowConfig);
-      console.log('[Dashboard] LLM greeting prefetched:', greetingResult.text);
-      console.log('[Dashboard] Full greeting text length:', greetingResult.text.length);
-
-      // Register the config so TaskMode can find it
       registerWorkflowConfig(workflowId, workflowConfig as WorkflowConfig);
-      console.log('[Dashboard] Config registered in workflow registry');
 
-      // Check for resumable execution before creating a new one
-      console.log('[Dashboard] Checking for resumable execution...');
+      // Check for resumable execution
       const resumable = await WorkflowPersistenceService.checkForResumable(
         workflowId,
         customerId,
@@ -189,10 +253,9 @@ export default function DashboardClient() {
       );
 
       if (resumable) {
-        console.log('[Dashboard] Found resumable execution:', resumable.executionId);
-        // Store config and greeting for later use
-        setPendingWorkflowConfig(workflowConfig);
+        setPendingWorkflowConfig(workflowConfig as WorkflowConfig & { workflowName?: string });
         setPendingGreeting(greetingResult.text);
+        setPendingLaunchWorkflow(workflow);
         setResumableExecution({
           executionId: resumable.executionId,
           slideIndex: resumable.snapshot.currentSlideIndex,
@@ -203,11 +266,10 @@ export default function DashboardClient() {
         return;
       }
 
-      // No resumable execution - create new one
       const executionResult = await createWorkflowExecution({
         workflowConfigId: workflowId,
-        workflowName: (workflowConfig as any).workflowName || 'Renewal Planning',
-        workflowType: 'renewal',
+        workflowName: (workflowConfig as WorkflowConfig & { workflowName?: string }).workflowName || workflow.workflowName,
+        workflowType: workflow.workflowType,
         customerId: customerId,
         userId: userId,
         assignedCsmId: userId,
@@ -215,54 +277,68 @@ export default function DashboardClient() {
       });
 
       if (executionResult.success && executionResult.executionId) {
-        console.log('[Dashboard] Workflow execution created:', executionResult.executionId);
         setExecutionId(executionResult.executionId);
         setWorkflowStatus('in_progress');
       }
 
-      // Set active workflow (include prefetchedGreeting for atomic state update)
       setActiveWorkflow({
         workflowId: workflowId,
-        title: (workflowConfig as any).workflowName || 'Renewal Planning',
+        title: (workflowConfig as WorkflowConfig & { workflowName?: string }).workflowName || workflow.workflowName,
         customerId: customerId,
         customerName: customerName,
-        prefetchedGreeting: greetingResult.text
+        prefetchedGreeting: greetingResult.text,
       });
 
       setTaskModeOpen(true);
       console.timeEnd('[Dashboard] Total workflow launch time');
-    } catch (error: any) {
+    } catch (error) {
       console.error('[Dashboard] Error launching workflow:', error);
-      console.timeEnd('[Dashboard] Total workflow launch time');
 
-      // Provide helpful error messages based on error type
       let errorMessage = 'Error launching workflow. ';
-
-      if (error.message?.includes('WORKFLOW_NOT_FOUND')) {
-        errorMessage += 'The workflow template "obsidian-black-renewal" was not found in the database. Please contact your administrator to set up workflow definitions.';
-      } else if (error.message?.includes('DB_FETCH_ERROR')) {
-        errorMessage += 'Unable to connect to the database. Please check your connection and try again.';
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('WORKFLOW_NOT_FOUND')) {
+        errorMessage += 'The workflow template was not found in the database.';
+      } else if (message.includes('DB_FETCH_ERROR')) {
+        errorMessage += 'Unable to connect to the database.';
       } else {
-        errorMessage += 'Please check the console for details or contact support.';
+        errorMessage += 'Please check the console for details.';
       }
-
       alert(errorMessage);
     } finally {
       setIsLaunchingWorkflow(false);
     }
   };
 
-  const handleWorkflowClick = (workflowId: string) => {
-    console.log('[Dashboard] Workflow clicked:', workflowId);
-    handleLaunchWorkflow();
-  };
-
-  const handleWorkflowComplete = (completed?: boolean) => {
+  const handleWorkflowComplete = async (completed?: boolean) => {
     setTaskModeOpen(false);
 
     if (completed) {
+      // Record bounty points
+      if (heroWorkflow) {
+        try {
+          const res = await fetch('/api/bounty/record', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ priorityScore: heroWorkflow.priorityScore }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setDailyBounty(prev => ({
+              ...prev,
+              earned: data.earned ?? prev.earned,
+              streak: data.streak ?? prev.streak,
+            }));
+          }
+        } catch {
+          // Non-critical
+        }
+      }
+
       setTimeout(() => triggerConfetti(), 100);
       console.log('[Dashboard] Workflow completed!');
+
+      // Refresh workflows
+      fetchDashboardWorkflows();
     }
   };
 
@@ -273,87 +349,81 @@ export default function DashboardClient() {
       setWorkflowStatus('snoozed');
       setTaskModeOpen(false);
       setTimeout(() => {
-        alert('✅ Workflow snoozed! It will reappear when the snooze time expires.');
+        alert('Workflow snoozed! It will reappear when the snooze time expires.');
       }, 100);
     } else if (actionType === 'skip') {
       setWorkflowStatus('skipped');
       setTaskModeOpen(false);
       setTimeout(() => {
-        alert('✅ Workflow skipped and removed from your workflow list.');
+        alert('Workflow skipped and removed from your workflow list.');
       }, 100);
     } else if (actionType === 'escalate') {
       setWorkflowStatus('escalated');
       setTaskModeOpen(false);
       setTimeout(() => {
-        alert('✅ Workflow escalated! The new owner will see it in their workflow list.');
+        alert('Workflow escalated! The new owner will see it in their workflow list.');
       }, 100);
     }
+
+    // Refresh workflows after action
+    fetchDashboardWorkflows();
   };
 
   // Resume dialog handlers
   const handleResumeWorkflow = () => {
-    if (!resumableExecution || !pendingWorkflowConfig) return;
-
-    console.log('[Dashboard] Resuming workflow with execution:', resumableExecution.executionId);
+    if (!resumableExecution || !pendingWorkflowConfig || !pendingLaunchWorkflow) return;
 
     setExecutionId(resumableExecution.executionId);
     setWorkflowStatus('in_progress');
     setActiveWorkflow({
-      workflowId: 'obsidian-black-renewal',
-      title: pendingWorkflowConfig.workflowName || 'Renewal Planning',
-      customerId: '550e8400-e29b-41d4-a716-446655440001',
-      customerName: 'Obsidian Black',
-      prefetchedGreeting: undefined, // Don't use greeting when resuming - let state restore handle it
+      workflowId: pendingLaunchWorkflow.workflowConfigId,
+      title: pendingWorkflowConfig.workflowName || pendingLaunchWorkflow.workflowName,
+      customerId: pendingLaunchWorkflow.customerId,
+      customerName: pendingLaunchWorkflow.customerName,
+      prefetchedGreeting: undefined,
     });
 
-    // Clean up dialog state
     setShowResumeDialog(false);
     setResumableExecution(null);
     setPendingWorkflowConfig(null);
     setPendingGreeting(null);
+    setPendingLaunchWorkflow(null);
 
     setTaskModeOpen(true);
   };
 
   const handleStartFresh = async () => {
-    if (!pendingWorkflowConfig || !userId) return;
+    if (!pendingWorkflowConfig || !userId || !pendingLaunchWorkflow) return;
 
-    console.log('[Dashboard] Starting fresh - creating new execution');
     setShowResumeDialog(false);
 
-    const workflowId = 'obsidian-black-renewal';
-    const customerId = '550e8400-e29b-41d4-a716-446655440001';
-    const customerName = 'Obsidian Black';
-
-    // Create new execution (the old one will remain but won't be resumed)
     const executionResult = await createWorkflowExecution({
-      workflowConfigId: workflowId,
-      workflowName: pendingWorkflowConfig.workflowName || 'Renewal Planning',
-      workflowType: 'renewal',
-      customerId: customerId,
+      workflowConfigId: pendingLaunchWorkflow.workflowConfigId,
+      workflowName: pendingWorkflowConfig.workflowName || pendingLaunchWorkflow.workflowName,
+      workflowType: pendingLaunchWorkflow.workflowType,
+      customerId: pendingLaunchWorkflow.customerId,
       userId: userId,
       assignedCsmId: userId,
       totalSteps: pendingWorkflowConfig.slides?.length || 0,
     });
 
     if (executionResult.success && executionResult.executionId) {
-      console.log('[Dashboard] New execution created:', executionResult.executionId);
       setExecutionId(executionResult.executionId);
       setWorkflowStatus('in_progress');
     }
 
     setActiveWorkflow({
-      workflowId: workflowId,
-      title: pendingWorkflowConfig.workflowName || 'Renewal Planning',
-      customerId: customerId,
-      customerName: customerName,
+      workflowId: pendingLaunchWorkflow.workflowConfigId,
+      title: pendingWorkflowConfig.workflowName || pendingLaunchWorkflow.workflowName,
+      customerId: pendingLaunchWorkflow.customerId,
+      customerName: pendingLaunchWorkflow.customerName,
       prefetchedGreeting: pendingGreeting || undefined,
     });
 
-    // Clean up dialog state
     setResumableExecution(null);
     setPendingWorkflowConfig(null);
     setPendingGreeting(null);
+    setPendingLaunchWorkflow(null);
 
     setTaskModeOpen(true);
   };
@@ -363,53 +433,90 @@ export default function DashboardClient() {
     setResumableExecution(null);
     setPendingWorkflowConfig(null);
     setPendingGreeting(null);
+    setPendingLaunchWorkflow(null);
   };
 
   return (
-    <div id="dashboard-root" data-testid="dashboard-root" className="w-full">
+    <div
+      id="dashboard-root"
+      data-testid="dashboard-root"
+      className="w-full min-h-screen"
+      style={{ backgroundColor: 'var(--dashboard-bg, #f8f7f4)' }}
+    >
+      {/* ===== ABOVE THE FOLD ===== */}
+      <div className="max-w-5xl mx-auto px-6 pt-8 pb-12 space-y-8">
         {/* Zen Greeting */}
-        <section id="dashboard-greeting" data-testid="dashboard-greeting" className="dashboard-section dashboard-section--greeting">
-          <ZenGreeting className="mb-12" />
+        <section id="dashboard-greeting" data-testid="dashboard-greeting">
+          <ZenGreeting className="mb-4" />
         </section>
 
-        {/* Main Dashboard Content */}
-        <div id="dashboard-content" data-testid="dashboard-content" className="max-w-6xl mx-auto space-y-6 dashboard-content">
-          {/* Priority Workflow Card - Database-Driven */}
-          {userId && (
-            <section id="dashboard-priority-workflow" data-testid="dashboard-priority-workflow" className="dashboard-section dashboard-section--priority">
-              <PriorityWorkflowCard
-                userId={userId}
-                onLaunch={handleLaunchWorkflow}
-                isLoading={isLaunchingWorkflow}
-              />
-            </section>
-          )}
+        {/* Daily Bounty Strip */}
+        <section id="dashboard-bounty" data-testid="dashboard-bounty">
+          <DailyBountyStrip
+            earned={dailyBounty.earned}
+            goal={dailyBounty.goal}
+            streak={dailyBounty.streak}
+          />
+        </section>
 
-          {/* Two columns: Today's Workflows + Quick Actions */}
-          <section id="dashboard-main-grid" data-testid="dashboard-main-grid" className="grid grid-cols-2 gap-6 dashboard-section dashboard-section--main-grid">
-            <div id="dashboard-workflows-column" data-testid="dashboard-workflows-column" className="dashboard-column dashboard-column--workflows">
-              {userId ? (
-                <TodaysWorkflows
-                  userId={userId}
-                  onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
+        {/* Hero Workflow Card */}
+        {userId && (
+          <section id="dashboard-hero" data-testid="dashboard-hero">
+            <HeroWorkflowCard
+              workflow={heroWorkflow}
+              onLaunch={handleLaunchWorkflow}
+              isLoading={isLoadingWorkflows}
+              isLaunching={isLaunchingWorkflow}
+            />
+          </section>
+        )}
+
+        {/* Secondary Workflow Cards */}
+        {secondaryWorkflows.length > 0 && (
+          <section id="dashboard-secondary" data-testid="dashboard-secondary">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.45 }}
+              className="flex items-center gap-3 mb-4"
+            >
+              <div className="h-px flex-1 bg-gray-200" />
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+                Or Pick Another
+              </span>
+              <div className="h-px flex-1 bg-gray-200" />
+            </motion.div>
+            <div className="grid grid-cols-3 gap-4">
+              {secondaryWorkflows.map((w, i) => (
+                <SecondaryWorkflowCard
+                  key={w.id}
+                  workflow={w}
+                  onClick={handleLaunchWorkflow}
+                  index={i}
                 />
-              ) : (
-                <TodaysWorkflows
-                  onWorkflowClick={(workflow) => handleWorkflowClick(workflow.workflowId)}
-                />
-              )}
+              ))}
             </div>
+          </section>
+        )}
+      </div>
 
-            <div id="dashboard-actions-column" data-testid="dashboard-actions-column" className="dashboard-column dashboard-column--actions">
+      {/* ===== BELOW THE FOLD ===== */}
+      <div className="max-w-5xl mx-auto px-6 pb-16 space-y-6">
+        {/* When You're Ready divider — QuickActions revealed on expand */}
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, delay: 0.7 }}
+          id="dashboard-secondary-nav"
+          data-testid="dashboard-secondary-nav"
+        >
+          <WhenYouReReady>
+            <div id="dashboard-quick-actions" data-testid="dashboard-quick-actions">
               <QuickActions expandByDefault={false} />
             </div>
-          </section>
-
-          {/* When You're Ready Divider */}
-          <section id="dashboard-secondary-nav" data-testid="dashboard-secondary-nav" className="dashboard-section dashboard-section--secondary-nav">
-            <WhenYouReReady />
-          </section>
-        </div>
+          </WhenYouReReady>
+        </motion.section>
+      </div>
 
       {/* TaskMode Modal */}
       {taskModeOpen && activeWorkflow && (

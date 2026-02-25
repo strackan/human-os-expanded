@@ -45,14 +45,12 @@ This is a comprehensive account review covering:
 Provide a brief, friendly introduction (2-3 sentences) explaining that you'll be reviewing the account together. Mention that they can use the tabs on the right to explore different aspects of the account. Be conversational and helpful.`,
       initialMessage: {
         text: context?.variables?.message ||
-          `Let's review {{customer.name}}'s account together. I've organized everything into tabs on the right - you can explore their usage metrics, contract details, contacts, and more. Take your time reviewing, and let me know if you have any questions!`,
+          `Let's review {{customer.name}}'s account together. I've organized everything into tabs on the right - you can explore their usage metrics, contract details, contacts, and more.
+
+**Check the "reviewed" box on each tab as you complete your review.** Once all sections are reviewed, you'll be able to continue to pricing strategy.`,
+        // Note: "Continue" button appears dynamically when all tabs are reviewed
+        // via useTaskModeState's allTabsReviewed effect
         buttons: [
-          {
-            label: 'I\'ve reviewed everything',
-            value: 'reviewed',
-            'label-background': 'bg-blue-600',
-            'label-text': 'text-white',
-          },
           {
             label: 'Walk me through it',
             value: 'walkthrough',

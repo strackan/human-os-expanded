@@ -173,6 +173,7 @@ export default function ArtifactRenderer({
           customerName={customerName}
           customer={customer}
           sequenceInfo={sequenceInfo}
+          onNext={onNext}
           onComplete={onComplete}
         />
       );
@@ -218,7 +219,8 @@ export default function ArtifactRenderer({
         return null;
       }
       const props = section.data?.props || {};
-      return <Component {...props} />;
+      // Pass onUpdateState and onContinue to interactive components for workflow state communication
+      return <Component {...props} onUpdateState={onUpdateState} onContinue={onNext} />;
     }
 
     case 'inline':

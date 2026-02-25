@@ -21,7 +21,6 @@ import { ArtifactDisplay } from './ArtifactDisplay';
 import { CustomerMetrics } from './CustomerMetrics';
 import { WorkflowChatPanel } from './WorkflowChatPanel';
 import { TaskPanel } from './TaskPanel';
-import { AccountPlanIndicator } from './AccountPlanIndicator';
 import { AccountPlanType } from './AccountPlanSelector';
 import { WorkflowContextProvider } from '@/contexts/WorkflowContext';
 import { API_ROUTES } from '@/lib/constants/api-routes';
@@ -77,13 +76,9 @@ export interface WorkflowExecutorProps {
 // WorkflowExecutor Component
 // =====================================================
 
-export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
-  workflowDefinition,
-  customerId,
-  executionId: initialExecutionId,
-  onComplete,
-  onExit
-}) => {
+export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = (props) => {
+  const { workflowDefinition, customerId, executionId: initialExecutionId, onComplete } = props;
+  // onExit available via props if needed
   // State
   const [executionState, setExecutionState] = useState<WorkflowExecutionState>({
     executionId: initialExecutionId || '',
@@ -105,7 +100,8 @@ export const WorkflowExecutor: React.FC<WorkflowExecutorProps> = ({
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
   const [taskPanelOpen, setTaskPanelOpen] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
-  const [accountPlan, setAccountPlan] = useState<AccountPlanType | null>(null);
+  // Account plan state - setter used, getter available if needed
+  const [, setAccountPlan] = useState<AccountPlanType | null>(null);
   const [customerName, setCustomerName] = useState<string>('');
 
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);

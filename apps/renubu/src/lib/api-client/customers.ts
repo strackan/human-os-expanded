@@ -10,7 +10,6 @@ import type {
   Customer,
   CustomerFilters,
   CustomerSortOptions,
-  PaginatedResponse,
   ApiResponse,
 } from './types';
 

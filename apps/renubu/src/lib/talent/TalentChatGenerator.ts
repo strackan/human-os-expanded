@@ -128,7 +128,6 @@ export async function generateTalentChatResponse(
     intelligenceFile,
     conversationHistory,
     userMessage,
-    sessionType = 'check_in',
   } = params;
 
   try {

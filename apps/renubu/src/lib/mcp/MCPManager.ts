@@ -10,6 +10,7 @@ import { PostgreSQLMCPClient } from './clients/PostgreSQLMCPClient';
 import { MemoryMCPClient } from './clients/MemoryMCPClient';
 import { SequentialThinkingMCPClient } from './clients/SequentialThinkingMCPClient';
 import { HumanOSClient } from './clients/HumanOSClient';
+import { ARIClient } from './clients/ARIClient';
 import { MCPServerStatus } from './types/mcp.types';
 import type {
   MCPServer,
@@ -33,6 +34,7 @@ export class MCPManager {
   private memoryClient?: MemoryMCPClient;
   private sequentialThinkingClient?: SequentialThinkingMCPClient;
   private humanOSClient?: HumanOSClient;
+  private ariClient?: ARIClient;
 
   private config: MCPManagerConfig;
   private healthCheckInterval?: NodeJS.Timeout;
@@ -111,6 +113,10 @@ export class MCPManager {
 
       case 'human_os':
         this.humanOSClient = new HumanOSClient();
+        break;
+
+      case 'ari':
+        this.ariClient = new ARIClient();
         break;
 
       default:
@@ -234,6 +240,9 @@ export class MCPManager {
     if (this.humanOSClient) {
       tools.push(...this.humanOSClient.getToolDefinitions());
     }
+    if (this.ariClient) {
+      tools.push(...this.ariClient.getToolDefinitions());
+    }
 
     return tools as MCPTool[];
   }
@@ -323,7 +332,7 @@ export class MCPManager {
    */
   private getClient(
     server: MCPServer
-  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient | undefined {
+  ): SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient | ARIClient | undefined {
     switch (server) {
       case 'supabase':
         return this.supabaseClient;
@@ -335,6 +344,8 @@ export class MCPManager {
         return this.sequentialThinkingClient;
       case 'human_os':
         return this.humanOSClient;
+      case 'ari':
+        return this.ariClient;
       default:
         return undefined;
     }
@@ -348,13 +359,20 @@ export class MCPManager {
   }
 
   /**
+   * Get ARI client directly (typed accessor)
+   */
+  getARIClient(): ARIClient | undefined {
+    return this.ariClient;
+  }
+
+  /**
    * Get all active clients
    */
   private getActiveClients(): Array<
-    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient]
+    [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient | ARIClient]
   > {
     const clients: Array<
-      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient]
+      [MCPServer, SupabaseMCPClient | PostgreSQLMCPClient | MemoryMCPClient | SequentialThinkingMCPClient | HumanOSClient | ARIClient]
     > = [];
 
     if (this.supabaseClient) {
@@ -371,6 +389,9 @@ export class MCPManager {
     }
     if (this.humanOSClient) {
       clients.push(['human_os' as MCPServer, this.humanOSClient]);
+    }
+    if (this.ariClient) {
+      clients.push(['ari' as MCPServer, this.ariClient]);
     }
 
     return clients;

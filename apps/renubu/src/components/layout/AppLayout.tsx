@@ -23,6 +23,9 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
+  const pathname = usePathname();
+  const isOnboarding = pathname?.startsWith('/onboarding');
+
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
@@ -92,16 +95,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
       return () => clearInterval(interval);
     }
   }, [user?.id]);
-  // Check if we're on a standalone page (no app chrome)
-  const pathname = usePathname();
-  const isStandalonePage = pathname?.startsWith('/sculptor');
-  
-  // For standalone pages, just render children without app layout
-  if (isStandalonePage) {
+
+
+
+  // Bypass sidebar/header for onboarding route
+  if (isOnboarding) {
     return <>{children}</>;
   }
-
-
 
   return (
     <div id="app-layout-container" className="min-h-screen bg-gray-50 dark:bg-gray-900">

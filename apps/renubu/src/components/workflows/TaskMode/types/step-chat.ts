@@ -114,6 +114,9 @@ export interface StepContainerProps {
   /** Collapse this step */
   onCollapse: () => void;
 
+  /** Navigate to this step (for re-opening completed steps) */
+  onNavigateToStep?: () => void;
+
   /** Pin/unpin this step (prevents auto-collapse) */
   onPin: () => void;
   onUnpin: () => void;
@@ -155,6 +158,9 @@ export interface StepChatPanelProps {
 
   /** Collapse a specific step */
   onCollapseStep: (stepIndex: number) => void;
+
+  /** Navigate to a specific step (for re-opening completed steps) */
+  onNavigateToStep?: (stepIndex: number) => void;
 
   /** Toggle pin on a step */
   onTogglePin: (stepIndex: number) => void;
@@ -225,6 +231,9 @@ export interface StepHeaderProps {
 
   /** Toggle expand/collapse */
   onToggle: () => void;
+
+  /** Navigate to this step (for re-opening completed steps) */
+  onNavigateToStep?: () => void;
 
   /** Toggle pin state */
   onTogglePin: () => void;

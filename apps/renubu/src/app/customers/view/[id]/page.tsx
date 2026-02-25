@@ -26,6 +26,9 @@ import { composeFromDatabase } from '@/lib/workflows/db-composer';
 // This allows it to check for resumable executions first
 import { WorkflowConfig } from '@/components/artifacts/workflows/config/WorkflowConfig';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { ARIScoreCard } from '@/components/ari/ARIScoreCard';
+import { ARIEntityMapper } from '@/components/ari/ARIEntityMapper';
+import type { ARIScoreSnapshot } from '@/lib/mcp/types/ari.types';
 
 export default function CustomerViewPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -43,6 +46,11 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
     prefetchedGreeting?: string;
   } | null>(null);
   const [executionId, setExecutionId] = useState<string | null>(null);
+  const [ariScore, setAriScore] = useState<ARIScoreSnapshot | null>(null);
+  const [ariHistory, setAriHistory] = useState<ARIScoreSnapshot[]>([]);
+  const [ariHasMapping, setAriHasMapping] = useState<boolean | null>(null);
+  const [ariScanning, setAriScanning] = useState(false);
+  const [ariMapperOpen, setAriMapperOpen] = useState(false);
 
   useEffect(() => {
     const loadCustomer = async () => {
@@ -76,6 +84,36 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
 
     loadCustomer();
   }, [params]);
+
+  // Load ARI data when customer is available
+  useEffect(() => {
+    if (!customer) return;
+    const loadARI = async () => {
+      try {
+        const [scoreRes, mappingsRes] = await Promise.all([
+          fetch(`/api/ari/scores?customerId=${customer.id}`),
+          fetch(`/api/ari/mappings?customerId=${customer.id}`),
+        ]);
+        if (scoreRes.ok) {
+          const { score } = await scoreRes.json();
+          setAriScore(score || null);
+        }
+        if (mappingsRes.ok) {
+          const { mappings } = await mappingsRes.json();
+          setAriHasMapping(mappings && mappings.length > 0);
+        }
+        // Load history if we have a score
+        const histRes = await fetch(`/api/ari/scores/${customer.id}/history?limit=12`);
+        if (histRes.ok) {
+          const { history } = await histRes.json();
+          setAriHistory(history || []);
+        }
+      } catch {
+        // ARI is optional — silently degrade
+      }
+    };
+    loadARI();
+  }, [customer]);
 
 
   const getRiskLevel = (healthScore: number, daysUntilRenewal: number) => {
@@ -494,11 +532,11 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
-            {/* Timeline */}
+            {/* Timeline (most recent first) */}
             <div className="bg-white rounded-lg shadow-sm p-6">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
               <div className="space-y-4">
-                {sampleData?.timeline.map((item, index) => (
+                {sampleData?.timeline.slice().reverse().map((item, index) => (
                   <div key={index} className="flex items-start space-x-3">
                     <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-2 ${
                       item.type === 'success' ? 'bg-green-400' :
@@ -604,6 +642,48 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
               </div>
             </div>
 
+            {/* AI Visibility (ARI) */}
+            {ariHasMapping !== null && (
+              ariHasMapping ? (
+                <ARIScoreCard
+                  score={ariScore}
+                  history={ariHistory}
+                  scanning={ariScanning}
+                  onRunScan={async () => {
+                    setAriScanning(true);
+                    try {
+                      const res = await fetch('/api/ari/scores', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ customerId: customer.id, force: true }),
+                      });
+                      if (res.ok) {
+                        const { score } = await res.json();
+                        setAriScore(score);
+                        setAriHistory((prev) => [score, ...prev]);
+                      }
+                    } catch { /* silently degrade */ }
+                    finally { setAriScanning(false); }
+                  }}
+                />
+              ) : (
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                    AI Visibility
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Track how AI models recommend this customer across ChatGPT, Claude, Perplexity, and Gemini.
+                  </p>
+                  <button
+                    onClick={() => setAriMapperOpen(true)}
+                    className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Set Up ARI Tracking
+                  </button>
+                </div>
+              )
+            )}
+
             {/* Risk Assessment */}
             {sampleData && (
               <div className="bg-white rounded-lg shadow-sm p-6">
@@ -628,6 +708,20 @@ export default function CustomerViewPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+
+      {/* ARI Entity Mapper Modal */}
+      {customer && (
+        <ARIEntityMapper
+          isOpen={ariMapperOpen}
+          onClose={() => setAriMapperOpen(false)}
+          customerId={customer.id}
+          customerName={customer.name}
+          onMapped={() => {
+            setAriHasMapping(true);
+            setAriMapperOpen(false);
+          }}
+        />
+      )}
 
       {/* TaskMode Modal */}
       {taskModeOpen && activeWorkflow && (

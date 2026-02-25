@@ -23,6 +23,7 @@ export enum MCPServer {
   TWILIO = 'twilio',
   PLAYWRIGHT = 'playwright',
   OCR = 'ocr',
+  ARI = 'ari',
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { TrendingUp, AlertTriangle, DollarSign, BarChart3, Users, Activity, CheckCircle } from 'lucide-react';
+import { TrendingUp, AlertTriangle, DollarSign, BarChart3, Users, Activity, CheckCircle, Shield, Calendar, ChevronRight } from 'lucide-react';
 
 interface PricingAnalysisProps {
   data?: {
@@ -35,6 +35,13 @@ interface PricingAnalysisProps {
       newAnnualPrice?: number;
       reasons?: string[];
     };
+    // Business Impacting Terms (moved from Contract artifact per user feedback)
+    businessTerms?: {
+      pricingCaps?: string[];
+      nonStandardPricing?: string[];
+      nonStandardRenewal?: string[];
+    };
+    showBusinessTerms?: boolean;
   };
   isLoading?: boolean;
 }
@@ -283,6 +290,74 @@ const PricingAnalysisArtifact = React.memo(function PricingAnalysisArtifact({ da
             </div>
           </div>
         </div>
+
+        {/* Business Impacting Terms (per user feedback - now shown in pricing context) */}
+        {data.showBusinessTerms && data.businessTerms && (
+          <div className="border-t border-gray-200 pt-6">
+            <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-indigo-600" />
+              Business Impacting Terms
+            </h4>
+            <div className="space-y-3">
+              {data.businessTerms.pricingCaps && data.businessTerms.pricingCaps.length > 0 && (
+                <div className="border-l-4 border-blue-400 bg-blue-50 rounded-r-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <TrendingUp className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-blue-900 mb-1">Pricing Caps</p>
+                      <ul className="text-sm text-blue-700 space-y-1">
+                        {data.businessTerms.pricingCaps.map((term, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span>{term}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {data.businessTerms.nonStandardPricing && data.businessTerms.nonStandardPricing.length > 0 && (
+                <div className="border-l-4 border-amber-400 bg-amber-50 rounded-r-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <DollarSign className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-amber-900 mb-1">Non-Standard Pricing</p>
+                      <ul className="text-sm text-amber-700 space-y-1">
+                        {data.businessTerms.nonStandardPricing.map((term, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span>{term}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {data.businessTerms.nonStandardRenewal && data.businessTerms.nonStandardRenewal.length > 0 && (
+                <div className="border-l-4 border-purple-400 bg-purple-50 rounded-r-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-purple-900 mb-1">Non-Standard Renewal Terms</p>
+                      <ul className="text-sm text-purple-700 space-y-1">
+                        {data.businessTerms.nonStandardRenewal.map((term, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <ChevronRight className="w-3 h-3 mt-0.5 flex-shrink-0" />
+                            <span>{term}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Recommendation Section */}
         <div className="border-t border-gray-200 pt-6">

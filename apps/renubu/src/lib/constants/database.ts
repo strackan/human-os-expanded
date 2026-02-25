@@ -49,6 +49,13 @@ export const DB_TABLES = {
   // Automation Rules tables (Release 1.4)
   AUTOMATION_RULES: 'automation_rules',
   AUTOMATION_RULE_EXECUTIONS: 'automation_rule_executions',
+
+  // Onboarding tables
+  ONBOARDING_SESSIONS: 'onboarding_sessions',
+
+  // ARI tables
+  ARI_SCORE_SNAPSHOTS: 'ari_score_snapshots',
+  ARI_ENTITY_MAPPINGS: 'ari_entity_mappings',
 } as const;
 
 // =====================================================

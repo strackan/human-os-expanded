@@ -1,0 +1,198 @@
+{
+  "id": "overdue",
+  "name": "Overdue Renewal",
+  "description": "Administrative completion after renewal date passes",
+  "version": "1.0.0",
+  "trigger": {
+    "daysUntilRenewal": {
+      "max": -1
+    },
+    "manualTriggers": [
+      {
+        "condition": "renewal_marked_overdue",
+        "description": "CSM manually marks renewal as overdue but still in progress"
+      }
+    ]
+  },
+  "context": {
+    "systemPrompt": "You are an AI assistant helping Customer Success Managers complete OVERDUE RENEWALS.\n\nThe renewal date has passed, but the renewal is still in progress. The customer hasn't churned - they just haven't finished the paperwork yet.\n\nYour role:\n1. Check what's still pending (signatures, payment, Salesforce updates)\n2. Execute daily follow-ups to complete pending items\n3. Manage grace period (keep service active while completing)\n4. Track completion and finalize renewal\n\nIMPORTANT CONTEXT:\n- This is NOT a churn situation. The customer intends to renew.\n- The issue is ADMINISTRATIVE - paperwork hasn't been completed yet.\n- Tone should be operational urgency, not panic or desperation.\n- Focus on completing tasks, not saving the customer.\n\nTYPICAL SCENARIOS:\n- Signatures sent but customer hasn't signed yet (busy, forgot, email in spam)\n- Signatures complete but payment not processed (AP delay, invoice issue)\n- Everything done but Salesforce not updated (internal admin issue)\n- Customer verbally committed but DocuSign not sent yet (our delay)\n\nGRACE PERIOD:\n- Most SaaS companies allow 30 days grace period after renewal date\n- Service stays active during grace period\n- No disruption to customer experience\n- This gives time to complete paperwork without pressure\n\nDAILY ACTIONS:\n- Send signature reminder (if pending)\n- Follow up on payment (call AP if needed)\n- Update Salesforce when items complete\n- Mark renewal as \"Closed Won\" when fully complete\n\nRemain professional, helpful, and operationally focused."
+  },
+  "steps": [
+    {
+      "id": "overdue-status-check",
+      "name": "Overdue Status Check",
+      "type": "conditional_routing",
+      "description": "Check what's still pending and route to appropriate completion path",
+      "execution": {
+        "llmPrompt": "# OVERDUE STATUS CHECK\n\n**CURRENT SITUATION:**\n- Days overdue: {{workflow.daysOverdue}}\n- Customer: {{customer.name}}\n- ARR: {{customer.currentARR}}\n\n---\n\n## STATUS CHECKLIST\n\n**1. SIGNATURES**\n- [ ] DocuSign sent?\n- [ ] Customer signed?\n- [ ] Vendor signed?\n\n**2. PAYMENT**\n- [ ] Invoice sent?\n- [ ] Payment received?\n- [ ] PO received (if applicable)?\n\n**3. SALESFORCE**\n- [ ] Opportunity = \"Closed Won\"?\n- [ ] Contract end date updated?\n\n---\n\n## ROUTING DECISION\n\n**Route:** [Select: ALL_COMPLETE | SIGNATURES_PENDING | PAYMENT_PENDING | SALESFORCE_UPDATE]\n\n**Reasoning:** [Why this route?]\n\n---\n\n**Database Storage:**\n- Table: overdue_status_checks\n- Fields: customer_id, assessment_date, days_overdue, signatures_status, payment_status, salesforce_status, route_selected, reasoning",
+        "processor": "routers/overdueStatusRouter.js",
+        "storeIn": "overdue_status"
+      },
+      "routing": {
+        "routes": [
+          {
+            "id": "ALL_COMPLETE",
+            "nextStepId": "completion-confirmation",
+            "condition": "All items complete"
+          },
+          {
+            "id": "SIGNATURES_PENDING",
+            "nextStepId": "daily-follow-up",
+            "condition": "Waiting on signatures"
+          },
+          {
+            "id": "PAYMENT_PENDING",
+            "nextStepId": "daily-follow-up",
+            "condition": "Waiting on payment"
+          },
+          {
+            "id": "SALESFORCE_UPDATE",
+            "nextStepId": "daily-follow-up",
+            "condition": "Admin updates needed"
+          }
+        ],
+        "defaultRoute": "daily-follow-up"
+      }
+    },
+    {
+      "id": "daily-follow-up",
+      "name": "Daily Follow-Up",
+      "type": "action",
+      "description": "Execute daily follow-ups to complete pending items",
+      "execution": {
+        "llmPrompt": "# DAILY FOLLOW-UP\n\n**Days Overdue:** {{workflow.daysOverdue}}\n**Customer:** {{customer.name}}\n**Pending Items:** {{overdue_status.primary_blocker}}\n\n---\n\n## TODAY'S ACTIONS\n\nBased on what's pending, execute:\n\n**IF SIGNATURES PENDING:**\n- [ ] Send reminder email to signer\n- [ ] Call if no response in 24 hours\n- [ ] Check if signer changed (promotion, departure)\n- [ ] Resend DocuSign if needed\n\n**IF PAYMENT PENDING:**\n- [ ] Contact AP/finance directly\n- [ ] Confirm invoice received\n- [ ] Check PO status\n- [ ] Offer payment assistance\n\n**IF SALESFORCE UPDATE:**\n- [ ] Update opportunity stage\n- [ ] Confirm contract dates\n- [ ] Close as \"Closed Won\"\n- [ ] Create next year renewal\n\n---\n\n**Database Storage:**\n- Table: completion_follow_ups\n- Fields: customer_id, follow_up_date, days_overdue, actions_taken, next_steps, completion_status",
+        "processor": "executors/dailyFollowupExecutor.js",
+        "storeIn": "daily_followup"
+      },
+      "notifications": [
+        {
+          "condition": "{{eq workflow.daysOverdue 7}}",
+          "type": "manager_notification",
+          "title": "FYI: Renewal 7 Days Overdue",
+          "message": "{{customer.name}} renewal is 7 days past due. CSM {{csm.name}} is following up. Signatures/payment still pending. Expected completion: within 7 days.",
+          "priority": 3,
+          "recipients": ["{{csm.manager}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 7,
+            "notificationType": "fyi",
+            "arr": "{{customer.arr}}"
+          }
+        },
+        {
+          "condition": "{{eq workflow.daysOverdue 8}}",
+          "type": "manager_notification",
+          "title": "Manager Check-In: 8 Days Overdue",
+          "message": "{{customer.name}} (${{customer.arr}}) is 8 days overdue. Quick manager check-in recommended to ensure nothing is blocked. CSM: {{csm.name}}.",
+          "priority": 3,
+          "recipients": ["{{csm.manager}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 8,
+            "csmEmail": "{{csm.email}}",
+            "arr": "{{customer.arr}}"
+          }
+        },
+        {
+          "condition": "{{eq workflow.daysOverdue 15}}",
+          "type": "escalation_required",
+          "title": "🚨 VP CS Involvement Required",
+          "message": "{{customer.name}} (${{customer.arr}}) is 15 days overdue. VP CS has been looped in for strategic guidance. Manager involvement increased.",
+          "priority": 1,
+          "recipients": ["{{csm.email}}", "{{csm.manager}}", "{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 15,
+            "arr": "{{customer.arr}}",
+            "escalationLevel": "vp_cs"
+          }
+        },
+        {
+          "condition": "{{eq workflow.daysOverdue 22}}",
+          "type": "escalation_required",
+          "title": "⚠️ Daily Team Sync Required",
+          "message": "{{customer.name}} is 22 days overdue (${{customer.arr}}). Daily check-ins with manager and VP CS until resolved. High urgency.",
+          "priority": 2,
+          "recipients": ["{{csm.email}}", "{{csm.manager}}", "{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 22,
+            "arr": "{{customer.arr}}",
+            "escalationLevel": "daily_sync"
+          }
+        },
+        {
+          "condition": "{{eq workflow.daysOverdue 30}}",
+          "type": "escalation_required",
+          "title": "🚨 War Room: 30 Days Overdue",
+          "message": "{{customer.name}} is 30 days overdue (${{customer.arr}}). War room activated. Daily standups begin tomorrow. All hands required.",
+          "priority": 1,
+          "recipients": ["{{csm.email}}", "{{csm.manager}}", "{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 30,
+            "arr": "{{customer.arr}}",
+            "escalationLevel": "war_room",
+            "warRoomRequired": true
+          }
+        },
+        {
+          "condition": "{{and (eq workflow.daysOverdue 30) (gte customer.arr 250000)}}",
+          "type": "escalation_required",
+          "title": "🚨 CEO Alert: High-Value Overdue",
+          "message": "{{customer.name}} (${{customer.arr}}) is 30 days overdue. CEO involvement required for high-value renewal completion.",
+          "priority": 1,
+          "recipients": ["{{csm.email}}", "{{csm.manager}}", "{{company.vpCustomerSuccess}}", "{{company.ceo}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 30,
+            "arr": "{{customer.arr}}",
+            "escalationLevel": "ceo",
+            "highValue": true
+          }
+        },
+        {
+          "condition": "{{and (eq workflow.daysOverdue 8) customer.hasAccountPlan}}",
+          "type": "escalation_required",
+          "title": "⭐ Strategic Account: Accelerated Escalation",
+          "message": "{{customer.name}} (Strategic Account, ${{customer.arr}}) is 8 days overdue. Account team notified. Enhanced escalation due to account plan status.",
+          "priority": 1,
+          "recipients": ["{{csm.email}}", "{{accountTeam.allEmails}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 8,
+            "arr": "{{customer.arr}}",
+            "strategicAccount": true,
+            "accountPlanActive": true
+          }
+        },
+        {
+          "condition": "{{and (eq workflow.daysOverdue 8) customer.hasAccountPlan}}",
+          "type": "escalation_required",
+          "title": "⭐ Strategic Account: VP CS Early Involvement",
+          "message": "Strategic account {{customer.name}} is overdue. VP CS looped in early due to account plan. Enhanced monitoring active.",
+          "priority": 1,
+          "recipients": ["{{company.vpCustomerSuccess}}"],
+          "metadata": {
+            "customerId": "{{customer.id}}",
+            "daysOverdue": 8,
+            "arr": "{{customer.arr}}",
+            "strategicAccount": true,
+            "earlyEscalation": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "completion-confirmation",
+      "name": "Completion Confirmation",
+      "type": "completion",
+      "description": "Confirm all items complete and finalize renewal",
+      "execution": {
+        "llmPrompt": "# COMPLETION CONFIRMATION\n\n**Customer:** {{customer.name}}\n**Days Overdue:** {{workflow.daysOverdue}}\n\n---\n\n## FINAL CHECKLIST\n\n**All items must be complete:**\n- [x] Signatures complete\n- [x] Payment received\n- [x] Salesforce updated to \"Closed Won\"\n- [x] Contract dates confirmed\n- [x] Next year renewal created\n\n---\n\n## COMPLETION SUMMARY\n\n**Total Days to Complete:** {{workflow.daysOverdue}}\n**Final Status:** Completed\n**Lessons Learned:** [What delayed completion? How to prevent next time?]\n\n---\n\n**Database Storage:**\n- Table: overdue_completions\n- Fields: customer_id, completion_date, total_days_overdue, lessons_learned, next_year_renewal_created",
+        "processor": "completers/overdueCompletion.js",
+        "storeIn": "completion"
+      }
+    }
+  ]
+}

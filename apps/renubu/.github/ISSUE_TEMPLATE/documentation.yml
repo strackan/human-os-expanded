@@ -1,0 +1,68 @@
+name: Documentation
+description: Documentation updates or improvements
+title: "[Docs] "
+labels: ["documentation"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for documentation updates.
+
+  - type: dropdown
+    id: doc-type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation?
+      options:
+        - Living Document - Update existing doc (ARCHITECTURE.md, SCHEMA.md, etc.)
+        - API Reference - API.md updates
+        - Developer Guide - DEV-GUIDE.md updates
+        - README - README.md updates
+        - Code Comments - Inline documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What needs to be documented or updated?
+      placeholder: Describe what documentation is needed
+    validations:
+      required: true
+
+  - type: input
+    id: affected-file
+    attributes:
+      label: Affected File(s)
+      description: Which documentation file(s)?
+      placeholder: docs/ARCHITECTURE.md
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why is this documentation needed?
+      placeholder: |
+        - New feature implemented but not documented
+        - Documentation is outdated
+        - Clarification needed
+    validations:
+      required: false
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Documentation Checklist
+      description: What needs to be done?
+      placeholder: |
+        - [ ] Update living document
+        - [ ] Add code examples
+        - [ ] Update table of contents
+        - [ ] Add diagrams if needed
+    validations:
+      required: false

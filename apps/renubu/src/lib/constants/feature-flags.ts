@@ -116,12 +116,10 @@ export const FEATURE_FLAGS = {
    * Risk: Medium (layout + state structure change)
    * Rollback: Set NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT=false in .env.local
    *
-   * Default: Enabled in development only
+   * Default: Enabled everywhere (set to 'false' to disable)
    */
   USE_STEP_CHAT_LAYOUT:
-    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT === 'true' ||
-    (process.env.NODE_ENV === 'development' &&
-      process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT !== 'false'),
+    process.env.NEXT_PUBLIC_USE_STEP_CHAT_LAYOUT !== 'false',
 } as const;
 
 /**

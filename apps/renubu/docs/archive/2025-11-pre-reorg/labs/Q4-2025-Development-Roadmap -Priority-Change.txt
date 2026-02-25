@@ -1,0 +1,384 @@
+Q4 Roadmap Priority Change: Workflow Snoozing
+Executive Summary
+We're reprioritizing Q4 to focus on Workflow Snoozing as the primary deliverable, deferring Weekly Planner scope as needed. This aligns with our core "I won't let you forget" promise and delivers faster value to design partners.
+
+What We Realized
+What we initially called "idea parking lot" (a Labs dogfooding feature) is actually the core product abstraction:
+Any work is a workflow. Workflows can be active or snoozed. The system intelligently surfaces them when ready.
+This applies universally:
+
+CSM customer opportunities (snoozed until Q2 or implementation complete)
+Feature ideas to build (snoozed until 3 design partners closed)
+Weekly planning sessions (recurring workflow)
+Event prep (snoozed until 2 weeks before event)
+Anything someone needs to remember but not work on right now
+
+
+The Core Feature: Workflow Snoozing
+What It Does:
+The Problem:
+
+CSMs: "I'm drowning in 200 accounts. I know I'm forgetting things."
+Founder: "I have 47 ideas bouncing around. I can't focus because what if I forget?"
+
+The Solution:
+User: "I need to reach out to TechCo about EMEA expansion, 
+       but they're mid-implementation"
+
+Renubu: "Got it. I'm watching TechCo. When implementation 
+         wraps and I see expansion signals, I'll remind you. 
+         I won't let you forget."
+
+[3 weeks later, conditions met]
+
+Renubu: "Hey - TechCo just completed implementation and posted 
+         an EMEA sales job. Ready to reach out about expansion?"
+Core Functionality:
+1. Intelligent Snoozing:
+
+Date-based: "Remind me Dec 15"
+Condition-based: "When they complete implementation"
+Combo: "Q2 2026 AND budget cycle starts"
+Someday/maybe: "Hold this, I'll tell you when"
+
+2. Smart Wake Logic:
+pythondef should_surface_workflow(workflow):
+    # Check timing
+    if date_condition_met() or business_condition_met():
+        # Check user capacity
+        if not user_is_overwhelmed():
+            # Check dependencies
+            if all_dependencies_met():
+                return True  # Surface it now
+    return False  # Keep holding it
+```
+
+**3. Universal State Machine:**
+```
+Workflow Created
+    ↓
+[User chooses]
+    ↓
+Active (work on now) → Completed
+    OR
+Snoozed (hold for later) → [Conditions met] → Active → Completed
+    OR
+Abandoned (not doing)
+
+Specific Renubu Functionality
+For CSM Users (Primary):
+Use Cases:
+
+Expansion Opportunities: "Customer mentioned APAC expansion in Q2" → Snooze until Q2 budget cycle
+Renewal Prep: "Big renewal in 90 days" → Snooze until 30 days out
+Follow-ups: "They're mid-onboarding, check back later" → Snooze until implementation complete
+Risk Mitigation: "Usage dropping but they're launching new product" → Snooze, watch for launch completion
+
+Intelligence Signals:
+
+Time-based (dates, quarters, seasons)
+Customer lifecycle (implementation, renewal, expansion)
+Business events (funding, hiring, product launches)
+Engagement patterns (support tickets, usage, executive involvement)
+
+The Value:
+
+Relief from "what am I forgetting?" anxiety
+Trust that opportunities won't slip through cracks
+Clear "work on this today" vs "I'm holding everything else"
+Cognitive load reduction from 200 → 10 active items
+
+For Dogfooding (Justin):
+Use Cases:
+
+Feature Ideas: "Build Guy for That integration" → Snooze until 3 design partners closed
+Good Hang Event: "Launch event prep" → Snooze until Nov 7 (1 week before)
+Partnership Opportunities: "Explore Churn Assassin partnership" → Snooze until after product launch
+Strategic Decisions: "Decide on Q1 pricing model" → Snooze until December
+
+The Value:
+
+Proves the system works before selling to CSMs
+Justin can actually focus on closing design partners
+Ideas are safely stored, not bouncing around creating anxiety
+Same relief CSMs will feel
+
+
+Global Functionality (Beyond Renubu)
+The Universal Pattern Works For:
+Sales Teams:
+
+Deals snoozed until decision maker returns from vacation
+Follow-ups snoozed until product demo completed
+Opportunities snoozed until budget cycle
+
+Product Teams:
+
+Feature requests snoozed until technical dependency resolved
+User research snoozed until 100 users onboarded
+Strategic initiatives snoozed until Q2
+
+Founders/Executives:
+
+Hiring snoozed until Series A closes
+Market expansion snoozed until domestic product-market fit
+Strategic partnerships snoozed until brand established
+
+Personal Productivity:
+
+Home projects snoozed until weekend
+Learning goals snoozed until current course complete
+Relationship maintenance snoozed to specific dates
+
+Why This Is Platform-Level:
+The abstraction is universal: "Hold this for me until the right conditions are met, then remind me. I won't let you forget."
+This works for ANY domain where people are overwhelmed by managing complexity.
+
+Technical Scope
+Database Schema:
+sqlCREATE TABLE workflows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL,  
+    -- renewal_prep, expansion_outreach, feature_to_build, 
+    -- event_to_organize, deal_follow_up, etc.
+  
+  title TEXT NOT NULL,
+  description TEXT,
+  context JSONB,
+  
+  status TEXT DEFAULT 'active',
+    -- active, snoozed, completed, abandoned
+  
+  -- Snooze logic (ENHANCED from current)
+  snoozed_until_date TIMESTAMP,
+  snoozed_until_condition TEXT,
+    -- Examples: "after-3-design-partners", "q2-2026", 
+    --           "implementation_complete", "budget_cycle"
+  snooze_reason TEXT,
+  
+  -- Relationships
+  related_to_id UUID,
+  related_to_type TEXT,  -- customer, project, person, deal
+  
+  -- Intelligence
+  dependencies JSONB,
+  effort_estimate_hours INT,
+  priority TEXT,
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  last_surfaced_at TIMESTAMP
+);
+
+CREATE INDEX idx_status ON workflows(status);
+CREATE INDEX idx_snoozed_condition ON workflows(snoozed_until_condition);
+CREATE INDEX idx_type ON workflows(type);
+```
+
+### Core Features to Build:
+
+1. **Snooze UI:**
+   - "When should I remind you?" dialog
+   - Date picker + condition selector
+   - Optional reason field
+   - Confirmation: "Snoozed. I won't let you forget."
+
+2. **Condition Evaluator:**
+   - Check date conditions (daily)
+   - Check business conditions (on events)
+   - Check dependencies (on state changes)
+   - Determine when to wake workflows
+
+3. **Surface Logic:**
+   - Query snoozed workflows where conditions met
+   - Check user capacity/context
+   - Prioritize what to show
+   - Surface intelligently (not overwhelming)
+
+4. **Workflow Dashboard:**
+   - Active workflows (work on today)
+   - Snoozed workflows (I'm holding these)
+   - Recent completed (for confidence)
+   - Someday/maybe (long-term ideas)
+
+### What We're Enhancing:
+
+**Current codebase has:** Basic snooze functionality
+**We're adding:** 
+- Condition-based snoozing (not just dates)
+- Intelligent wake logic
+- Universal workflow abstraction
+- "I won't let you forget" UX language
+- Cross-domain applicability
+
+---
+
+## Why This Changes Q4 Priority
+
+### Strategic Reasons:
+
+1. **Core Product Definition:**
+   - This IS the "I won't let you forget" promise
+   - Not a Labs feature, it's THE feature
+   - Differentiates from every other CS platform
+
+2. **Faster Time to Value:**
+   - Ships 3 weeks earlier (Dec 1 vs Dec 20)
+   - 20-30 hours vs 40-60 hours
+   - Simpler architecture, less integration risk
+
+3. **Better Design Partner Demos:**
+   - Addresses primary pain point immediately
+   - "I'm drowning" → "I won't let you forget" 
+   - Compelling value prop, clear differentiation
+
+4. **Enables Future Features:**
+   - Weekly Planner is just a recurring workflow
+   - Coffee Check-ins can snooze based on responses
+   - Any future feature benefits from workflow abstraction
+
+5. **Platform Potential:**
+   - Not just CS tool, but workflow intelligence platform
+   - Expands TAM beyond CS teams
+   - Foundation for "Make Work Joyful" across domains
+
+### Tactical Reasons:
+
+1. **Dependency Order:**
+   - Weekly Planner needs workflow system
+   - Workflow system doesn't need Weekly Planner
+   - Building in right order = less rework
+
+2. **Dogfooding:**
+   - Justin needs this NOW (for idea management)
+   - Can prove it works before selling to CSMs
+   - Real user testing before design partner demos
+
+3. **Complexity:**
+   - Workflow snoozing is simpler than expected
+   - Weekly Planner has more edge cases
+   - Higher confidence in hitting Dec 1 ship date
+
+---
+
+## Intel Files & Fast/Slow Variability Framework
+
+### Context for Understanding User Profiles:
+
+The system builds increasingly detailed profiles using a three-layer variability framework:
+
+**Recent (Weekly Updates):**
+- Personal events, mood, current frustrations
+- Work priorities, project status, team changes
+- Customer situations, active deals, urgent issues
+- Wellness state, energy levels, capacity
+
+**Habits (4-6 Week Updates):**
+- Workflow preferences (async vs sync communication)
+- Work style (maker time vs manager time)
+- Goal-setting approach (quarterly planning cycles)
+- Decision-making patterns (data-driven vs intuitive)
+- Company earnings rhythms, product update cycles
+
+**Identity (Rarely Changes):**
+- Personality type (ENTP, ESTJ, etc.)
+- Behavior under stress (fight/flight/freeze patterns)
+- Core motivation style (achievement, affiliation, autonomy)
+- Values and beliefs (customer-first, innovation, etc.)
+
+**How This Informs Workflow Snoozing:**
+
+The system uses these layers to make intelligent decisions:
+```
+Example: Should we surface expansion opportunity now?
+
+Recent Layer: "CSM just closed big renewal, feeling confident"
+Habits Layer: "CSM makes expansion decisions in Q1 planning"
+Identity Layer: "Risk-averse, needs data to support recommendations"
+
+Decision: Surface now IF we have strong data + it's Q1 planning window
+         Otherwise: Snooze until conditions better aligned
+```
+
+**Storage:**
+- Markdown intel files (detailed context)
+- Supabase JSONB fields (structured metadata)
+- Referenced in workflow context when making surface/snooze decisions
+
+---
+
+## Requested Actions
+
+### Priority Changes:
+1. **ELEVATE:** Workflow Snoozing → Primary Q4 deliverable (was Labs)
+2. **DEFER:** Weekly Planner → Reduce scope or move to Q1 (totally fine if it pushes)
+
+### Scope Adjustments:
+- **Add hours to:** Workflow Snoozing (from 0 to 20-30h)
+- **Remove hours from:** Weekly Planner (from 40-60h to 0-20h)
+- **Net change:** Likely neutral or faster (simpler build)
+
+### Timeline:
+- **Target ship:** Workflow Snoozing by Dec 1
+- **Weekly Planner:** If ships in Q4, great. If Q1, totally fine.
+
+### Success Criteria:
+- Justin can snooze his ideas and trust they'll resurface
+- CSMs can snooze customer opportunities with confidence
+- System intelligently wakes workflows when conditions met
+- "I won't let you forget" promise is tangible and working
+
+---
+
+## Architecture Clarity
+
+### Where This Lives:
+
+**Database:** Renubu Supabase, `renubu.workflows` table
+
+**Codebase:** `/renubu/app/core/workflows` (NOT Labs - this is Core Product)
+
+**Relationship to Other Systems:**
+```
+RENUBU (Product)
+  ↓ uses
+GUY FOR THAT (Toolkit - data collection)
+  ↓ scrapes & stores
+INTEL FILES (Intelligence - context enrichment)
+  ↓ enriches
+MESSAGING ALGORITHM (Secret Sauce - generation)
+  ↓ generates
+Personalized Workflows (Output)
+
+All stored in → SUPABASE (Single Database, Multiple Schemas)
+Guy for That is infrastructure, not a competing product. It provides:
+
+Chrome plugin for LinkedIn scraping
+Database schema for contact/company data
+Port 3100 app for message generation
+Data that feeds Renubu's intelligence
+
+
+Questions for You
+
+Existing snooze code: What's already implemented? What needs enhancement?
+Condition types: Which conditions should we support in v1? (dates, customer lifecycle stages, business events?)
+UI placement: Where does snooze button appear in current workflows?
+Data migration: Any existing workflows that need status updates?
+Intel files integration: How do we want to leverage the fast/slow variability framework in surface decisions?
+
+
+First Workflow to Park (Test Case)
+Once this ships, the first workflow Justin will snooze:
+Title: Guy for That + ActivePieces + HeyReach Orchestration
+Type: integration_to_build
+Description: Full bi-directional intelligent outbound automation
+Status: snoozed
+Condition: "after-3-design-partners"
+Reason: Need to prove manual outreach works first
+Effort: 30 hours
+Priority: high
+This is the perfect test case - it's the idea that sparked building workflow snoozing in the first place.
+
+Let me know if you need clarification on any of this. The core insight is: this isn't scope creep, it's recognizing what the actual product is.
+"I won't let you forget" is the product. Workflow snoozing is how we deliver that promise.

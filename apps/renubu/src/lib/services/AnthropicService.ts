@@ -3,22 +3,10 @@
  *
  * Handles integration with Anthropic's Claude API for AI-powered email generation.
  * Uses Claude Haiku 4.5 for fast, cost-effective email composition.
- *
- * Integrates with @human-os/proxy for conversation capture (searchability).
  */
 
 import Anthropic from '@anthropic-ai/sdk';
 import { CLAUDE_HAIKU_CURRENT } from '@/lib/constants/claude-models';
-import { queueCapture, generateConversationId } from '@human-os/proxy/capture';
-import type { CapturePayload } from '@human-os/proxy';
-
-// Capture config - enabled when Supabase is configured
-const captureConfig = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
-  supabaseKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY,
-  kvUrl: process.env.KV_REST_API_URL,
-  enabled: !!(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY),
-};
 
 export interface AnthropicCompletionParams {
   prompt: string;
@@ -99,9 +87,6 @@ export class AnthropicService {
   static async generateCompletion(
     params: AnthropicCompletionParams
   ): Promise<AnthropicCompletionResponse> {
-    const startTime = Date.now();
-    const conversationId = generateConversationId();
-
     try {
       // Validate API key
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
@@ -142,25 +127,6 @@ export class AnthropicService {
         .filter((block) => block.type === 'text')
         .map((block) => ('text' in block ? block.text : ''))
         .join('\n');
-
-      // Fire-and-forget capture for searchability
-      const capturePayload: CapturePayload = {
-        conversation_id: conversationId,
-        user_id: null, // Server-side calls don't have user context here
-        model,
-        messages: [{ role: 'user', content: params.prompt }],
-        response: {
-          content: textContent,
-          stop_reason: response.stop_reason || 'end_turn',
-          usage: {
-            input_tokens: response.usage.input_tokens,
-            output_tokens: response.usage.output_tokens,
-          },
-        },
-        latency_ms: Date.now() - startTime,
-        timestamp: new Date().toISOString(),
-      };
-      queueCapture(capturePayload, captureConfig);
 
       // Build response object
       return {
@@ -203,9 +169,6 @@ export class AnthropicService {
   static async generateConversation(
     params: AnthropicConversationParams
   ): Promise<AnthropicConversationResponse> {
-    const startTime = Date.now();
-    const conversationId = generateConversationId();
-
     try {
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -261,25 +224,6 @@ export class AnthropicService {
         }
       }
 
-      // Fire-and-forget capture for searchability
-      const capturePayload: CapturePayload = {
-        conversation_id: conversationId,
-        user_id: null, // Server-side calls don't have user context here
-        model,
-        messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
-        response: {
-          content: textContent,
-          stop_reason: response.stop_reason || 'end_turn',
-          usage: {
-            input_tokens: response.usage.input_tokens,
-            output_tokens: response.usage.output_tokens,
-          },
-        },
-        latency_ms: Date.now() - startTime,
-        timestamp: new Date().toISOString(),
-      };
-      queueCapture(capturePayload, captureConfig);
-
       return {
         content: textContent,
         tokensUsed: {
@@ -309,7 +253,7 @@ export class AnthropicService {
   }
 
   /**
-   * Generate a streaming completion with capture
+   * Generate a streaming completion (for future use)
    *
    * @param params - Completion parameters
    * @returns AsyncGenerator that yields text chunks
@@ -317,16 +261,6 @@ export class AnthropicService {
   static async *generateStreamingCompletion(
     params: AnthropicCompletionParams
   ): AsyncGenerator<string, void, unknown> {
-    const startTime = Date.now();
-    const conversationId = generateConversationId();
-
-    // Accumulate for capture
-    let accumulatedContent = '';
-    let inputTokens = 0;
-    let outputTokens = 0;
-    let stopReason = 'end_turn';
-    let ttftMs: number | undefined;
-
     try {
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -355,54 +289,13 @@ export class AnthropicService {
       });
 
       for await (const event of stream) {
-        // Yield text chunks immediately
         if (
           event.type === 'content_block_delta' &&
           event.delta.type === 'text_delta'
         ) {
-          // Track time to first token
-          if (ttftMs === undefined) {
-            ttftMs = Date.now() - startTime;
-          }
-          accumulatedContent += event.delta.text;
           yield event.delta.text;
         }
-
-        // Capture usage from message events
-        if (event.type === 'message_start' && event.message?.usage) {
-          inputTokens = event.message.usage.input_tokens;
-        }
-        if (event.type === 'message_delta') {
-          if (event.usage?.output_tokens) {
-            outputTokens = event.usage.output_tokens;
-          }
-          if (event.delta?.stop_reason) {
-            stopReason = event.delta.stop_reason;
-          }
-        }
       }
-
-      // Fire-and-forget capture after stream completes
-      const capturePayload: CapturePayload = {
-        conversation_id: conversationId,
-        user_id: null,
-        model,
-        messages: [{ role: 'user', content: params.prompt }],
-        response: {
-          content: accumulatedContent,
-          stop_reason: stopReason,
-          usage: {
-            input_tokens: inputTokens,
-            output_tokens: outputTokens,
-          },
-        },
-        latency_ms: Date.now() - startTime,
-        ttft_ms: ttftMs,
-        streaming: true,
-        timestamp: new Date().toISOString(),
-      };
-      queueCapture(capturePayload, captureConfig);
-
     } catch (error) {
       console.error('AnthropicService.generateStreamingCompletion error:', error);
       throw error;
@@ -410,23 +303,19 @@ export class AnthropicService {
   }
 
   /**
-   * Generate a streaming conversation with capture
+   * Generate a streaming conversation response with multi-turn + tool support.
    *
-   * @param params - Conversation parameters
-   * @returns AsyncGenerator that yields text chunks
+   * Yields events: { type: 'text', content } | { type: 'tool_use', toolUse } | { type: 'done', stopReason }
    */
   static async *generateStreamingConversation(
     params: AnthropicConversationParams
-  ): AsyncGenerator<string, void, unknown> {
-    const startTime = Date.now();
-    const conversationId = generateConversationId();
-
-    let accumulatedContent = '';
-    let inputTokens = 0;
-    let outputTokens = 0;
-    let stopReason = 'end_turn';
-    let ttftMs: number | undefined;
-
+  ): AsyncGenerator<
+    | { type: 'text'; content: string }
+    | { type: 'tool_use'; toolUse: AnthropicToolUse }
+    | { type: 'done'; stopReason: string },
+    void,
+    unknown
+  > {
     try {
       const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -440,65 +329,73 @@ export class AnthropicService {
       const temperature = params.temperature ?? 0.7;
       const systemPrompt = params.systemPrompt || 'You are a helpful AI assistant.';
 
-      const stream = await client.messages.create({
+      const requestParams: Anthropic.MessageCreateParams = {
         model,
         max_tokens: maxTokens,
         temperature,
         system: systemPrompt,
         messages: params.messages.map((m) => ({
-          role: m.role,
+          role: m.role as 'user' | 'assistant',
           content: m.content,
         })),
         stream: true,
-      });
+      };
+
+      if (params.tools && params.tools.length > 0) {
+        requestParams.tools = params.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          input_schema: tool.input_schema as Anthropic.Tool['input_schema'],
+        }));
+      }
+
+      const stream = await client.messages.create(requestParams);
+
+      // Track tool_use blocks being built up across delta events
+      let currentToolUse: { id: string; name: string; inputJson: string } | null = null;
 
       for await (const event of stream) {
-        if (
-          event.type === 'content_block_delta' &&
-          event.delta.type === 'text_delta'
-        ) {
-          // Track time to first token
-          if (ttftMs === undefined) {
-            ttftMs = Date.now() - startTime;
+        if (event.type === 'content_block_start') {
+          if (event.content_block?.type === 'tool_use') {
+            currentToolUse = {
+              id: event.content_block.id,
+              name: event.content_block.name,
+              inputJson: '',
+            };
           }
-          accumulatedContent += event.delta.text;
-          yield event.delta.text;
-        }
-
-        if (event.type === 'message_start' && event.message?.usage) {
-          inputTokens = event.message.usage.input_tokens;
-        }
-        if (event.type === 'message_delta') {
-          if (event.usage?.output_tokens) {
-            outputTokens = event.usage.output_tokens;
+        } else if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            yield { type: 'text', content: event.delta.text };
+          } else if (event.delta.type === 'input_json_delta' && currentToolUse) {
+            currentToolUse.inputJson += event.delta.partial_json;
           }
+        } else if (event.type === 'content_block_stop') {
+          if (currentToolUse) {
+            let input: Record<string, unknown> = {};
+            try {
+              input = JSON.parse(currentToolUse.inputJson);
+            } catch {
+              // Partial JSON — best effort
+            }
+            yield {
+              type: 'tool_use',
+              toolUse: {
+                type: 'tool_use',
+                id: currentToolUse.id,
+                name: currentToolUse.name,
+                input,
+              },
+            };
+            currentToolUse = null;
+          }
+        } else if (event.type === 'message_stop') {
+          // End of message
+        } else if (event.type === 'message_delta') {
           if (event.delta?.stop_reason) {
-            stopReason = event.delta.stop_reason;
+            yield { type: 'done', stopReason: event.delta.stop_reason };
           }
         }
       }
-
-      // Fire-and-forget capture with TTFT metrics
-      const capturePayload: CapturePayload = {
-        conversation_id: conversationId,
-        user_id: null,
-        model,
-        messages: params.messages.map((m) => ({ role: m.role, content: m.content })),
-        response: {
-          content: accumulatedContent,
-          stop_reason: stopReason,
-          usage: {
-            input_tokens: inputTokens,
-            output_tokens: outputTokens,
-          },
-        },
-        latency_ms: Date.now() - startTime,
-        ttft_ms: ttftMs,
-        streaming: true,
-        timestamp: new Date().toISOString(),
-      };
-      queueCapture(capturePayload, captureConfig);
-
     } catch (error) {
       console.error('AnthropicService.generateStreamingConversation error:', error);
       throw error;

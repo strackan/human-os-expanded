@@ -12,11 +12,7 @@
  */
 
 import { HumanOSClient } from '@/lib/mcp/clients/HumanOSClient';
-import type {
-  ContactEnrichmentResult,
-  CompanyEnrichmentResult,
-} from '@/lib/mcp/types/humanOS.types';
-import type { Candidate, IntelligenceFile } from '@/types/talent';
+import type { IntelligenceFile } from '@/types/talent';
 
 /**
  * Enriched candidate data structure

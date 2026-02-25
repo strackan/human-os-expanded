@@ -324,11 +324,64 @@ export function useTaskModeState({
     }
   }, [currentSlideIndex, skippedSlides, snoozedSlides]);
 
+  // State for pending reopen confirmation
+  const [pendingReopenSlide, setPendingReopenSlide] = useState<number | null>(null);
+
   const goToSlide = useCallback((index: number) => {
-    if (completedSlides.has(index)) {
+    // Allow navigation to any previous slide (not just completed)
+    if (index < 0 || index >= slides.length) return;
+
+    // If navigating to current slide, do nothing
+    if (index === currentSlideIndex) return;
+
+    // Can always navigate forward to completed slides
+    if (index > currentSlideIndex && completedSlides.has(index)) {
+      setCurrentSlideIndex(index);
+      return;
+    }
+
+    // For previous slides that are completed, show confirmation
+    if (index < currentSlideIndex && completedSlides.has(index)) {
+      setPendingReopenSlide(index);
+      return;
+    }
+
+    // For non-completed previous slides, navigate directly
+    if (index < currentSlideIndex) {
       setCurrentSlideIndex(index);
     }
-  }, [completedSlides]);
+  }, [completedSlides, currentSlideIndex, slides.length]);
+
+  // Confirm reopening a completed slide
+  const confirmReopenSlide = useCallback(() => {
+    if (pendingReopenSlide === null) return;
+
+    // Mark the target slide and all subsequent slides as incomplete
+    setCompletedSlides(prev => {
+      const newCompleted = new Set(prev);
+      for (let i = pendingReopenSlide; i < slides.length; i++) {
+        newCompleted.delete(i);
+      }
+      // Keep slides before the target as completed
+      return newCompleted;
+    });
+
+    // Navigate to the target slide
+    setCurrentSlideIndex(pendingReopenSlide);
+    setPendingReopenSlide(null);
+
+    showToast({
+      message: 'Step reopened. You can now make changes.',
+      type: 'info',
+      icon: 'none',
+      duration: 3000
+    });
+  }, [pendingReopenSlide, slides.length, showToast]);
+
+  // Cancel reopening
+  const cancelReopenSlide = useCallback(() => {
+    setPendingReopenSlide(null);
+  }, []);
 
   // ============================================================
   // WORKFLOW LIFECYCLE HANDLERS
@@ -953,6 +1006,49 @@ export function useTaskModeState({
     console.log('[useTaskModeState] isSnoozeModalOpen changed to:', isSnoozeModalOpen);
   }, [isSnoozeModalOpen]);
 
+  // Track if we've already shown the "all reviewed" message to prevent duplicates
+  const allReviewedMessageShownRef = useRef<string | null>(null);
+
+  // Show "Continue" button in chat when all tabs are reviewed (for TabbedContainerArtifact)
+  useEffect(() => {
+    // Only react when allTabsReviewed becomes true
+    if (!workflowState.allTabsReviewed) {
+      return;
+    }
+
+    // Only show for account-review-tabbed slide
+    if (currentSlide?.id !== 'account-review-tabbed') {
+      return;
+    }
+
+    // Prevent duplicate messages for the same slide
+    const messageKey = `${currentSlideIndex}-allReviewed`;
+    if (allReviewedMessageShownRef.current === messageKey) {
+      return;
+    }
+
+    console.log('[useTaskModeState] All tabs reviewed - showing Continue button in chat');
+    allReviewedMessageShownRef.current = messageKey;
+
+    // Add a message with the Continue button
+    const reviewCompleteMessage: ChatMessage = {
+      id: `ai-review-complete-${currentSlideIndex}-${Date.now()}`,
+      text: "Great job reviewing all the sections! When you're ready, let's move on to pricing strategy.",
+      sender: 'ai',
+      timestamp: new Date(),
+      buttons: [
+        {
+          label: "Continue to Pricing Strategy",
+          value: 'reviewed',
+          'label-background': 'bg-blue-600',
+          'label-text': 'text-white',
+        },
+      ],
+    };
+
+    setChatMessages(prev => [...prev, reviewCompleteMessage]);
+  }, [workflowState.allTabsReviewed, currentSlide?.id, currentSlideIndex]);
+
   // ============================================================
   // RETURN STATE & HANDLERS
   // ============================================================
@@ -1034,5 +1130,10 @@ export function useTaskModeState({
     // Direct state setters for syncing with external sources
     setSnoozedSlides,
     setSkippedSlides,
+
+    // Step reopen (Bug 1 fix)
+    pendingReopenSlide,
+    confirmReopenSlide,
+    cancelReopenSlide,
   };
 }

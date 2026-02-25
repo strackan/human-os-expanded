@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/strac/dev/renubu/.claude/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

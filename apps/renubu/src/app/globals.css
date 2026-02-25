@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "../styles/layout.css";
+@import "../styles/dashboard-theme.css";
+@import "../styles/onboarding.css";
 
 :root {
   --background: #ffffff;
@@ -11,6 +13,14 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Dashboard theme colors — registers utilities for Tailwind v4 */
+  --color-bounty-orange: #E8723A;
+  --color-bounty-gold: #D4A843;
+  --color-category-risk: #D94F4F;
+  --color-category-opportunity: #2BA86A;
+  --color-category-date: #4A7FD4;
+  --color-cream-light: #F8F6F2;
 }
 
 /* Dark mode - activated via .dark class on <html> */
@@ -226,7 +236,7 @@ p {
   color: rgb(203 213 225); /* slate-300 */
 }
 
-h1, h2, h3, h4, h5, h6 {
+:where(h1, h2, h3, h4, h5, h6) {
   color: rgb(17 24 39); /* gray-900 - headings should be darker */
   font-weight: 600;
 }

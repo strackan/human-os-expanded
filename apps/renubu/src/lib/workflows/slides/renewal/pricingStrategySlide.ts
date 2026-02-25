@@ -58,86 +58,23 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
       stepMapping: 'pricing-strategy',
       chat: {
         initialMessage: {
-          text: `Here's your pricing strategy analysis for **{{customer.name}}**. I've analyzed their usage, market positioning, and value delivered to recommend an approach.\n\nReview the pricing recommendation on the right and let me know when you're ready to proceed.`,
+          text: `Here's the pricing strategy analysis for **{{customer.name}}**. I've analyzed their usage, market positioning, and value delivered to recommend an approach.\n\nReview the pricing recommendation on the right and let me know when you're ready to proceed.`,
           buttons: [
             {
-              label: 'Approve & Review Deck',
+              label: 'Looks Good, Continue',
               value: 'continue',
               'label-background': 'bg-green-600 hover:bg-green-700',
               'label-text': 'text-white',
             },
-            {
-              label: 'Adjust Strategy',
-              value: 'adjust',
-              'label-background': 'bg-gray-100 hover:bg-gray-200',
-              'label-text': 'text-gray-700',
-            },
           ],
           nextBranches: {
             continue: 'approved',
-            adjust: 'adjust-strategy',
           },
         },
         branches: {
           approved: {
             response: 'Great! The pricing strategy is locked in. Let\'s review the meeting deck.',
             actions: ['nextSlide'],
-          },
-          'adjust-strategy': {
-            response: 'No problem. What would you like to adjust about the pricing strategy? I can help you:\n\n• Change the price increase percentage\n• Consider a multi-year discount\n• Add expansion products\n• Discuss retention pricing\n\nJust let me know what you\'re thinking.',
-            buttons: [
-              {
-                label: 'Lower the increase',
-                value: 'lower-increase',
-                'label-background': 'bg-gray-100 hover:bg-gray-200',
-                'label-text': 'text-gray-700',
-              },
-              {
-                label: 'Add multi-year option',
-                value: 'multi-year',
-                'label-background': 'bg-gray-100 hover:bg-gray-200',
-                'label-text': 'text-gray-700',
-              },
-              {
-                label: 'Keep current strategy',
-                value: 'continue',
-                'label-background': 'bg-green-600 hover:bg-green-700',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              'lower-increase': 'lower-increase-response',
-              'multi-year': 'multi-year-response',
-              continue: 'approved',
-            },
-          },
-          'lower-increase-response': {
-            response: 'I\'ve noted your preference for a lower increase. You can discuss a 3-5% increase as a starting point - this keeps us competitive while still capturing value. Ready to proceed?',
-            buttons: [
-              {
-                label: 'Review Deck',
-                value: 'continue',
-                'label-background': 'bg-green-600 hover:bg-green-700',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              continue: 'approved',
-            },
-          },
-          'multi-year-response': {
-            response: 'Multi-year discounts are a great retention tool! Consider offering 5-10% off for a 2-year commitment, or 10-15% for 3 years. This locks in the customer and provides revenue predictability.',
-            buttons: [
-              {
-                label: 'Review Deck',
-                value: 'continue',
-                'label-background': 'bg-green-600 hover:bg-green-700',
-                'label-text': 'text-white',
-              },
-            ],
-            nextBranches: {
-              continue: 'approved',
-            },
           },
         },
       },
@@ -170,6 +107,13 @@ export const pricingStrategySlide: SlideBuilder = createSlideBuilder(
                   { level: 'low', description: 'Price sensitivity - strong relationship mitigates risk' },
                   { level: 'low', description: 'Competitive alternatives - high switching costs' },
                 ],
+                // Business Impacting Terms (moved from Contract artifact per user feedback)
+                businessTerms: context?.variables?.businessTerms || {
+                  pricingCaps: ['Maximum 15% annual increase', 'Volume discount caps at 25%'],
+                  nonStandardPricing: ['Custom pricing tier for enterprise features'],
+                  nonStandardRenewal: ['90-day notice period (standard: 30 days)'],
+                },
+                showBusinessTerms: true,
               },
             },
           },

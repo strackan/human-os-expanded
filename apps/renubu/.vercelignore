@@ -1,0 +1,12 @@
+# Exclude killertools from Vercel deployments
+# This directory contains a separate Next.js app with its own dependencies
+killertools/
+
+# Exclude documentation and archive directories
+archive/
+docs/
+
+# Exclude markdown files except README
+*.md
+!README.md
+# Trigger deployment Wed, Nov 12, 2025  5:56:41 PM

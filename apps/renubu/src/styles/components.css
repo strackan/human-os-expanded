@@ -1,10 +1,5 @@
 /* Component-specific styles that can't be easily handled by Tailwind */
 
-/* Progress bars and dynamic width elements */
-.progress-bar {
-  transition: width 0.3s ease-in-out;
-}
-
 /* Resizable panes */
 .resizable-pane {
   transition: width 0.075s ease-in-out;
@@ -16,13 +11,6 @@
 
 .resize-handle:hover {
   background-color: rgb(59 130 246); /* blue-500 */
-}
-
-/* Chart tooltips */
-.chart-tooltip {
-  min-width: 80px;
-  font-size: 12px;
-  pointer-events: none;
 }
 
 /* Chart legends */

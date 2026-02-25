@@ -20,6 +20,7 @@ export function StepContainer({
   isCurrentStep,
   onExpand,
   onCollapse,
+  onNavigateToStep,
   onPin,
   onUnpin,
   onTitleChange,
@@ -100,6 +101,7 @@ export function StepContainer({
         isExpanded={isExpanded}
         isPinned={isPinned}
         onToggle={handleToggle}
+        onNavigateToStep={onNavigateToStep}
         onTogglePin={handleTogglePin}
         onTitleChange={onTitleChange}
         isCurrentStep={isCurrentStep}

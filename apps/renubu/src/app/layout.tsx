@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Nunito, Fraunces } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { ChatProvider } from "@/context/ChatContext";
@@ -16,6 +16,8 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import VersionIndicator from "@/components/layout/VersionIndicator";
 
 const inter = Inter({ subsets: ["latin"] });
+const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito", weight: ["400", "600", "700"] });
+const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", weight: ["700", "800", "900"] });
 
 export const metadata: Metadata = {
   title: "Renubu - Expansion Intelligence Platform for Customer Success",
@@ -46,7 +48,7 @@ export default function RootLayout({
       <head>
         <Script src="https://kit.fontawesome.com/7419d8869f.js" crossOrigin="anonymous" strategy="beforeInteractive" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} ${nunito.variable} ${fraunces.variable}`}>
         <QueryProvider>
           <ThemeProvider>
             <ToastProvider>

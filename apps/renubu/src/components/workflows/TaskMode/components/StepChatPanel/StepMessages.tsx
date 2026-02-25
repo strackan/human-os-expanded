@@ -10,6 +10,8 @@
  */
 
 import React, { useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Bot, User, Loader2 } from 'lucide-react';
 import type { StepMessagesProps } from '../../types/step-chat';
 import type { ChatMessage } from '@/components/workflows/sections/ChatRenderer';
@@ -67,8 +69,17 @@ function MessageBubble({
               : 'bg-gray-100 text-gray-800'
           }`}
         >
-          {/* Simple text rendering - could be enhanced with markdown later */}
-          <span className="whitespace-pre-wrap break-words">{message.text}</span>
+          {isUser ? (
+            <span className="whitespace-pre-wrap break-words">{message.text}</span>
+          ) : (
+            <div className="step-message-markdown break-words prose prose-sm max-w-none
+              prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5
+              prose-headings:my-1 prose-strong:text-gray-900">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.text}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {/* Buttons (only for AI messages, only when active) */}

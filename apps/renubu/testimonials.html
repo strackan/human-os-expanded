@@ -1,0 +1,522 @@
+<div id="embed-09">
+<!-- Testimonial Slideshow Component - Fixed Version -->
+<div class="testimonial-slideshow-wrapper" id="testimonial-slideshow-main">
+    <div class="testimonial-slideshow-container">
+        <div class="testimonial-slide active" data-slide="0">
+            <div class="testimonial-avatar"></div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">Renubu transformed our renewal process completely. We went from manually tracking hundreds of renewals to having intelligent workflows that predict and automate everything.</p>
+                <p class="testimonial-author">Sarah Chen</p>
+                <p class="testimonial-role">VP Revenue Operations, TechFlow Solutions</p>
+            </div>
+            <div class="testimonial-icon-wrapper">⭐</div>
+        </div>
+        
+        <div class="testimonial-slide" data-slide="1">
+            <div class="testimonial-avatar"></div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">3.5% NRR improvement in just 6 months. The ROI was immediate and completely measurable. Our team went from reactive firefighting to proactive relationship building.</p>
+                <p class="testimonial-author">Marcus Rodriguez</p>
+                <p class="testimonial-role">Chief Revenue Officer, GrowthCorp</p>
+            </div>
+            <div class="testimonial-icon-wrapper">📈</div>
+        </div>
+        
+        <div class="testimonial-slide" data-slide="2">
+            <div class="testimonial-avatar"></div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">The intelligent workflows saved our team 20+ hours per week. It's like having a crystal ball for renewals and a dedicated data scientist for every customer relationship.</p>
+                <p class="testimonial-author">Emily Watson</p>
+                <p class="testimonial-role">Head of Customer Success, ScaleUp Inc</p>
+            </div>
+            <div class="testimonial-icon-wrapper">🚀</div>
+        </div>
+        
+        <div class="testimonial-slide" data-slide="3">
+            <div class="testimonial-avatar"></div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">We saved over $2M in potential churn in our first quarter alone. The predictive analytics caught at-risk renewals we would have completely missed otherwise.</p>
+                <p class="testimonial-author">David Kim</p>
+                <p class="testimonial-role">Director of Sales Operations, Enterprise Solutions</p>
+            </div>
+            <div class="testimonial-icon-wrapper">💎</div>
+        </div>
+        
+        <div class="testimonial-slide" data-slide="4">
+            <div class="testimonial-avatar"></div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">Our renewal rate jumped from 92% to 97% in just 8 months. The automation handles the complexity while we focus on building stronger customer relationships.</p>
+                <p class="testimonial-author">Lisa Park</p>
+                <p class="testimonial-role">VP Customer Success, Growth Dynamics</p>
+            </div>
+            <div class="testimonial-icon-wrapper">🎯</div>
+        </div>
+    </div>
+    
+    <div class="testimonial-controls">
+        <button class="testimonial-nav-btn testimonial-prev-btn">‹</button>
+        <div class="testimonial-dots">
+            <span class="testimonial-dot active" data-slide="0"></span>
+            <span class="testimonial-dot" data-slide="1"></span>
+            <span class="testimonial-dot" data-slide="2"></span>
+            <span class="testimonial-dot" data-slide="3"></span>
+            <span class="testimonial-dot" data-slide="4"></span>
+        </div>
+        <button class="testimonial-nav-btn testimonial-next-btn">›</button>
+    </div>
+<style>
+/* Testimonial Slideshow Component Styles */
+.testimonial-slideshow-wrapper {
+    max-width: 70vw;
+    margin: 50px auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #ffffff;
+    line-height: 1.6;
+}
+
+.testimonial-slideshow-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+}
+
+.testimonial-slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(45, 27, 105, 0.9), rgba(26, 14, 61, 0.9));
+    border-radius: 20px;
+    box-shadow: 0 30px 80px rgba(45, 27, 105, 0.4);
+    padding: 30px 40px;
+    gap: 40px;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    backdrop-filter: blur(20px);
+    box-sizing: border-box;
+}
+
+.testimonial-slide.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.testimonial-avatar {
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7ED95A, #5bb83a);
+    border: 3px solid rgba(126, 217, 90, 0.3);
+    box-shadow: 0 8px 24px rgba(126, 217, 90, 0.3);
+}
+
+.testimonial-content {
+    flex: 1;
+}
+
+.testimonial-quote {
+    font-size: 1.1rem;
+    line-height: 1.4;
+    margin-bottom: 16px;
+    color: #ffffff;
+    position: relative;
+    margin: 0 0 16px 0;
+    padding: 0;
+}
+
+@media (min-width: 1681px) {
+    .testimonial-quote {
+        font-size: 0.9rem;
+    }
+}
+
+.testimonial-quote::before {
+    content: '"';
+    font-size: 2.5rem;
+    color: rgba(126, 217, 90, 0.3);
+    position: absolute;
+    left: -18px;
+    top: -10px;
+    font-family: Georgia, serif;
+    line-height: 1;
+}
+
+.testimonial-author {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #7ED95A;
+    margin-bottom: 2px;
+    margin: 0 0 2px 0;
+    padding: 0;
+}
+
+.testimonial-role {
+    font-size: 0.9rem;
+    color: #A78BFA;
+    font-weight: 500;
+    margin: 0;
+    padding: 0;
+}
+
+.testimonial-icon-wrapper {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(126, 217, 90, 0.15), rgba(167, 139, 250, 0.15));
+    border: 2px solid rgba(167, 139, 250, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #7ED95A;
+    animation: testimonial-float 3s ease-in-out infinite;
+}
+
+@keyframes testimonial-float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Controls */
+.testimonial-controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+    align-items: center;
+}
+
+.testimonial-nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(126, 217, 90, 0.3);
+    color: #7ED95A;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    font-family: inherit;
+}
+
+.testimonial-nav-btn:hover {
+    background: rgba(126, 217, 90, 0.2);
+    border-color: rgba(126, 217, 90, 0.6);
+    transform: scale(1.1);
+    box-shadow: 0 5px 20px rgba(126, 217, 90, 0.3);
+}
+
+.testimonial-dots {
+    display: flex;
+    gap: 12px;
+}
+
+.testimonial-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(167, 139, 250, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: block;
+}
+
+.testimonial-dot.active {
+    background: #7ED95A;
+    transform: scale(1.3);
+    border-color: rgba(126, 217, 90, 0.5);
+    box-shadow: 0 0 10px rgba(126, 217, 90, 0.5);
+}
+
+.testimonial-dot:hover:not(.active) {
+    background: rgba(167, 139, 250, 0.6);
+    transform: scale(1.1);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .testimonial-slideshow-wrapper {
+        max-width: 95vw;
+    }
+    
+    .testimonial-slideshow-container {
+        height: 300px;
+    }
+    
+    .testimonial-slide {
+        flex-direction: column;
+        text-align: center;
+        padding: 25px 20px;
+        gap: 20px;
+    }
+    
+    .testimonial-avatar {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .testimonial-quote {
+        font-size: 1rem;
+    }
+    
+    .testimonial-quote::before {
+        font-size: 2rem;
+        left: -15px;
+        top: -8px;
+    }
+    
+    .testimonial-icon-wrapper {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+</style>
+
+<script>
+// More robust initialization with unique namespace
+window.TestimonialSlideshowInit = window.TestimonialSlideshowInit || function() {
+    'use strict';
+    
+    // Check if already initialized
+    if (window.testimonialSlideshowInitialized) {
+        return;
+    }
+    
+    const wrapper = document.getElementById('testimonial-slideshow-main');
+    if (!wrapper) {
+        console.log('Testimonial slideshow wrapper not found');
+        return;
+    }
+    
+    class TestimonialSlideshow {
+        constructor() {
+            this.currentSlide = 0;
+            this.totalSlides = 5;
+            this.testimonials = wrapper.querySelectorAll('.testimonial-slide');
+            this.dots = wrapper.querySelectorAll('.testimonial-dot');
+            this.prevBtn = wrapper.querySelector('.testimonial-prev-btn');
+            this.nextBtn = wrapper.querySelector('.testimonial-next-btn');
+            this.autoplayInterval = null;
+            
+            console.log('Testimonial slideshow initializing...', {
+                testimonials: this.testimonials.length,
+                dots: this.dots.length,
+                prevBtn: !!this.prevBtn,
+                nextBtn: !!this.nextBtn
+            });
+            
+            if (this.testimonials.length > 0 && this.prevBtn && this.nextBtn) {
+                this.init();
+            } else {
+                console.error('Testimonial slideshow: Missing required elements');
+            }
+        }
+        
+        init() {
+            // Event listeners
+            this.prevBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.prevSlide();
+                console.log('Previous slide clicked');
+            });
+            
+            this.nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.nextSlide();
+                console.log('Next slide clicked');
+            });
+            
+            this.dots.forEach((dot, index) => {
+                dot.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.goToSlide(index);
+                    console.log('Dot clicked:', index);
+                });
+            });
+            
+            // Auto-play
+            this.startAutoplay();
+            
+            // Pause on hover
+            const slideshow = wrapper.querySelector('.testimonial-slideshow-container');
+            if (slideshow) {
+                slideshow.addEventListener('mouseenter', () => this.stopAutoplay());
+                slideshow.addEventListener('mouseleave', () => this.startAutoplay());
+            }
+            
+            console.log('Testimonial slideshow initialized successfully');
+        }
+        
+        showSlide(index) {
+            console.log('=== SHOW SLIDE CALLED ===');
+            console.log('Index:', index);
+            console.log('Total testimonials:', this.testimonials.length);
+            console.log('Testimonials:', this.testimonials);
+            
+            // Hide all testimonials
+            this.testimonials.forEach((testimonial, i) => {
+                console.log(`Removing active from slide ${i}:`, testimonial);
+                testimonial.classList.remove('active');
+            });
+            
+            // Show current testimonial
+            if (this.testimonials[index]) {
+                console.log(`Adding active to slide ${index}:`, this.testimonials[index]);
+                this.testimonials[index].classList.add('active');
+                console.log('Classes after adding active:', this.testimonials[index].className);
+            } else {
+                console.error('Testimonial at index', index, 'not found!');
+            }
+            
+            // Update dots
+            this.dots.forEach((dot, i) => {
+                console.log(`Removing active from dot ${i}:`, dot);
+                dot.classList.remove('active');
+            });
+            if (this.dots[index]) {
+                console.log(`Adding active to dot ${index}:`, this.dots[index]);
+                this.dots[index].classList.add('active');
+                console.log('Dot classes after adding active:', this.dots[index].className);
+            }
+            
+            console.log('=== SHOW SLIDE END ===');
+        }
+        
+        nextSlide() {
+            console.log('=== NEXT SLIDE METHOD ===');
+            console.log('Current slide before calculation:', this.currentSlide);
+            console.log('Total slides:', this.totalSlides);
+            
+            const oldSlide = this.currentSlide;
+            this.currentSlide = (this.currentSlide + 1) % this.totalSlides;
+            
+            console.log('New slide calculated:', this.currentSlide);
+            console.log(`Moving from slide ${oldSlide} to slide ${this.currentSlide}`);
+            
+            this.showSlide(this.currentSlide);
+            console.log('=== NEXT SLIDE METHOD END ===');
+        }
+        
+        prevSlide() {
+            console.log('=== PREV SLIDE METHOD ===');
+            console.log('Current slide before calculation:', this.currentSlide);
+            
+            const oldSlide = this.currentSlide;
+            this.currentSlide = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
+            
+            console.log('New slide calculated:', this.currentSlide);
+            console.log(`Moving from slide ${oldSlide} to slide ${this.currentSlide}`);
+            
+            this.showSlide(this.currentSlide);
+            console.log('=== PREV SLIDE METHOD END ===');
+        }
+        
+        goToSlide(index) {
+            console.log('=== GO TO SLIDE METHOD ===');
+            console.log('Going to slide:', index);
+            
+            this.currentSlide = index;
+            this.showSlide(this.currentSlide);
+            console.log('=== GO TO SLIDE METHOD END ===');
+        }
+        
+        addDebugButtons() {
+            console.log('Adding debug buttons...');
+            
+            // Create debug container
+            const debugDiv = document.createElement('div');
+            debugDiv.style.cssText = 'margin: 20px 0; text-align: center; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px;';
+            
+            // Add debug buttons
+            const testNextBtn = document.createElement('button');
+            testNextBtn.textContent = 'DEBUG: Next Slide';
+            testNextBtn.style.cssText = 'margin: 5px; padding: 10px; background: red; color: white; border: none; border-radius: 5px; cursor: pointer;';
+            testNextBtn.addEventListener('click', () => {
+                console.log('DEBUG BUTTON: Manual next slide trigger');
+                this.nextSlide();
+            });
+            
+            const testPrevBtn = document.createElement('button');
+            testPrevBtn.textContent = 'DEBUG: Prev Slide';
+            testPrevBtn.style.cssText = 'margin: 5px; padding: 10px; background: blue; color: white; border: none; border-radius: 5px; cursor: pointer;';
+            testPrevBtn.addEventListener('click', () => {
+                console.log('DEBUG BUTTON: Manual prev slide trigger');
+                this.prevSlide();
+            });
+            
+            const infoBtn = document.createElement('button');
+            infoBtn.textContent = 'DEBUG: Show Info';
+            infoBtn.style.cssText = 'margin: 5px; padding: 10px; background: green; color: white; border: none; border-radius: 5px; cursor: pointer;';
+            infoBtn.addEventListener('click', () => {
+                console.log('=== DEBUG INFO ===');
+                console.log('Current slide:', this.currentSlide);
+                console.log('Total slides:', this.totalSlides);
+                console.log('Testimonials:', this.testimonials);
+                console.log('Dots:', this.dots);
+                console.log('Prev button:', this.prevBtn);
+                console.log('Next button:', this.nextBtn);
+                
+                // Check which slide is currently active
+                this.testimonials.forEach((slide, i) => {
+                    console.log(`Slide ${i} classes:`, slide.className);
+                });
+                console.log('=== DEBUG INFO END ===');
+            });
+            
+            debugDiv.appendChild(testPrevBtn);
+            debugDiv.appendChild(testNextBtn);
+            debugDiv.appendChild(infoBtn);
+            
+            // Insert debug buttons after the slideshow
+            const controls = wrapper.querySelector('.testimonial-controls');
+            controls.parentNode.insertBefore(debugDiv, controls.nextSibling);
+            
+            console.log('Debug buttons added');
+        }
+        
+        startAutoplay() {
+            this.stopAutoplay(); // Clear any existing interval
+            this.autoplayInterval = setInterval(() => this.nextSlide(), 5000);
+        }
+        
+        stopAutoplay() {
+            if (this.autoplayInterval) {
+                clearInterval(this.autoplayInterval);
+                this.autoplayInterval = null;
+            }
+        }
+    }
+
+    new TestimonialSlideshow();
+    window.testimonialSlideshowInitialized = true;
+};
+
+// Try to initialize immediately
+TestimonialSlideshowInit();
+
+// Also try after a short delay in case elements aren't ready
+setTimeout(TestimonialSlideshowInit, 100);
+
+// And as a fallback, try when the DOM is fully loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', TestimonialSlideshowInit);
+}
+</script>
+</div>
