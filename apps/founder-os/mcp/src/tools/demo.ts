@@ -493,16 +493,13 @@ async function pingPerson(
     .single();
 
   if (error) {
-    if (error.code === '42P01') {
-      return {
-        success: true,
-        message_id: `demo-${Date.now()}`,
-        to: toName,
-        content,
-        status: 'pending (simulated - table not yet created)',
-      };
-    }
-    throw new Error(`Failed to send message: ${error.message}`);
+    return {
+      success: false,
+      message_id: '',
+      to: toName,
+      content,
+      status: `failed: ${error.message} (code: ${error.code})`,
+    };
   }
 
   return {
@@ -526,13 +523,10 @@ async function grabMessages(ctx: ToolContext): Promise<{ messages: Message[]; su
     .order('created_at', { ascending: false });
 
   if (error) {
-    if (error.code === '42P01') {
-      return {
-        messages: [],
-        summary: 'No pending messages (messaging table not yet created).',
-      };
-    }
-    throw new Error(`Failed to fetch messages: ${error.message}`);
+    return {
+      messages: [],
+      summary: `Failed to fetch messages: ${error.message} (code: ${error.code})`,
+    };
   }
 
   const messages = data as Message[];
@@ -590,16 +584,13 @@ async function quickReply(
     .single();
 
   if (insertError) {
-    if (insertError.code === '42P01') {
-      return {
-        success: true,
-        message_id: `demo-reply-${Date.now()}`,
-        to: toName,
-        content,
-        status: 'pending (simulated)',
-      };
-    }
-    throw new Error(`Failed to send reply: ${insertError.message}`);
+    return {
+      success: false,
+      message_id: '',
+      to: toName,
+      content,
+      status: `failed: ${insertError.message} (code: ${insertError.code})`,
+    };
   }
 
   if (original) {
