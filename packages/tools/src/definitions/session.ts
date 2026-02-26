@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 import { defineTool } from '../registry.js';
-import { STORAGE_BUCKETS, buildFounderLayer } from '@human-os/core';
+import { STORAGE_BUCKETS, DB_SCHEMAS, buildFounderLayer } from '@human-os/core';
 
 // =============================================================================
 // GET SESSION CONTEXT
@@ -108,12 +108,44 @@ export const getSessionContext = defineTool({
         : 'No glossary terms defined yet. Use define_term to capture shorthand meanings.',
     };
 
+    // Check inbox for pending messages (read-only — does NOT mark as delivered)
+    let inbox: {
+      pendingCount: number;
+      messages: Array<{ from: string; subject: string | null; received: string }>;
+      hint: string;
+    } = { pendingCount: 0, messages: [], hint: 'No pending messages.' };
+
+    try {
+      const { data: pendingMessages } = await ctx.supabase
+        .schema(DB_SCHEMAS.FOUNDER_OS)
+        .from('messages')
+        .select('id, from_name, subject, created_at')
+        .eq('to_forest', layer)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (pendingMessages && pendingMessages.length > 0) {
+        inbox = {
+          pendingCount: pendingMessages.length,
+          messages: pendingMessages.map((m: { from_name: string; subject: string | null; created_at: string }) => ({
+            from: m.from_name,
+            subject: m.subject ?? null,
+            received: m.created_at,
+          })),
+          hint: `You have ${pendingMessages.length} message${pendingMessages.length > 1 ? 's' : ''} waiting. Use grab_messages to read them.`,
+        };
+      }
+    } catch {
+      // Graceful fallback — table may not exist yet
+    }
+
     return {
       identity,
       currentState,
       availableModes,
       startHereContent,
       glossary,
+      inbox,
     };
   },
 

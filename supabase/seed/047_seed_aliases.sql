@@ -31,13 +31,14 @@ VALUES
   ),
   (
     'check my os',
-    'Review personal operating system dashboard - load session context and urgent tasks',
+    'Review personal operating system dashboard - load session context, urgent tasks, and pending messages',
     'founder:justin',
     'tactical',
-    ARRAY['get_session_context', 'get_urgent_tasks'],
+    ARRAY['get_session_context', 'get_urgent_tasks', 'grab_messages'],
     '[
       {"tool": "get_session_context", "params": {}, "output": "session"},
-      {"tool": "get_urgent_tasks", "params": {"limit": 5}, "output": "urgent"}
+      {"tool": "get_urgent_tasks", "params": {"limit": 5}, "output": "urgent"},
+      {"tool": "grab_messages", "params": {}, "output": "inbox"}
     ]'::jsonb,
     10
   ),
