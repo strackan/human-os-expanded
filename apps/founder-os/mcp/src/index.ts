@@ -64,7 +64,7 @@ import { doTools, handleDoTools } from './tools/do.js';
 import { recallTools, handleRecallTools } from './tools/recall.js';
 import { learnAliasTools, handleLearnAliasTools } from './tools/learn-alias.js';
 
-import { createToolContext, withModeProperties, resolveUserUUID, type ToolHandler } from './lib/context.js';
+import { createToolContext, withModeProperties, withGateProperties, checkDirectCallGate, resolveUserUUID, type ToolHandler } from './lib/context.js';
 import { resolveBundleModules, getBundleFromEnv, getBundleDescription, type ModuleKey } from './bundles.js';
 
 // Declare globals for embedded data (set by bundle script for standalone exe)
@@ -153,8 +153,8 @@ const toolModules: Array<{ tools: typeof taskTools; handler: ToolHandler }> = ac
   .map(key => moduleRegistry[key])
   .filter(Boolean);
 
-/** Flat list of all tools for MCP registration, with mode property added */
-const allTools = withModeProperties(toolModules.flatMap(m => m.tools));
+/** Flat list of all tools for MCP registration, with mode + gate properties added */
+const allTools = withGateProperties(withModeProperties(toolModules.flatMap(m => m.tools)));
 
 // =============================================================================
 // HELPERS
@@ -286,6 +286,14 @@ async function main() {
     const { name, arguments: args } = request.params;
 
     try {
+      // Gate: block direct calls to heavy tools unless override is set
+      const gateMessage = checkDirectCallGate(name, args || {});
+      if (gateMessage) {
+        return {
+          content: [{ type: 'text', text: gateMessage }],
+        };
+      }
+
       // Try each handler until one returns a non-null result
       for (const { handler } of toolModules) {
         const result = await handler(name, args || {}, ctx);

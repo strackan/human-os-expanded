@@ -4,15 +4,76 @@
 
 Renubu is an intelligent workflow orchestration platform for Customer Success teams. This document tracks all releases from initial development through production launch.
 
-**Current Version:** 0.2.5-rc.0 (First Contact Onboarding)
+**Current Version:** 0.2.6 (Platform Integration)
+
+---
+
+## Release 0.2.6 - "Platform Integration" (February 21–28, 2026)
+
+**Status:** Released
+**Type:** Minor Release
+**Tag:** `v0.2.6`
+
+### New Features
+
+- **Embedded ARI Integration** — AI Recommendability Index scoring via MCP bridge
+  - `3cef1d3` Add embedded ARI integration via MCP
+  - Cross-product intelligence: ARI scores accessible from any HumanOS product
+
+- **MCP Bundle System** — Curated tool sets for packaged experiences (#19)
+  - `ba8cf16` Founder OS MCP packaging with selectable bundles
+  - Foundation for pricing tiers and expert-specific tool packs
+
+- **@human-os/documents Package** — Document intelligence pipeline
+  - `a2f8ccc` Documents-mcp server, eval scripts, and infrastructure config
+  - Unified document extraction across products
+
+- **extract() Tool** — Claude-powered entity extraction from free-text
+  - `73914c1` Natural language → structured entities (people, companies, topics)
+  - Feeds entity graph from unstructured input
+
+- **Fathom Meeting Integration** — Meeting intelligence pipeline
+  - `6280e38` Webhook receiver + MCP tools for meeting data
+  - Auto-capture meeting context into session
+
+- **Adventure Leaderboard** — Engagement tracking edge function
+  - `c9225e8` Leaderboard edge function for Good Hang
+  - `b8013ab` Adventure edge functions + remaining migrations
+
+- **Inbox Summary in Session Context** — Daily brief enrichment
+  - `feb099f` Surface inbox summary in get_session_context
+  - Chain grab_messages into "check my os" flow
+
+- **Cross-Product Contact Forms** — Shared CRM submission table
+  - `be5d231` crm.contact_submissions table for cross-product contact forms
+
+### Enhancements
+
+- **do() Routing Overhaul** — `ac5e143` Fix matching, slug resolution, CRM schema, alias coverage
+- **Identity Profile Extraction** — `7f721c0` Refactor identity profile logic into @human-os/services
+- **Unified Release Command** — `9fa8817` `npm run release` for version management
+- **Renubu Monorepo Sync** — `3c03fce` Sync Renew-Boo/renubu into apps/renubu
+- **Adventure Personalization** — `ad2d941` Return welcome_letter, executive_summary fields
+- **Messaging Reliability** — `5cf85b1` Stop faking success on insert failures
+- **RLS Bridge Functions** — `1e3a906` Add SECURITY DEFINER for RLS bypass
+
+### Bug Fixes
+
+- `2fc9a08` Scrub personal email from env.example
+
+### GitHub Issues Closed
+
+- #19 Founder OS MCP packaging + pricing
+- #7 [8.9] Streaming state machine UX
+- #25 Leaderboard
 
 ---
 
 ## Release 0.2.5 - "First Contact Onboarding" (February 21, 2026)
 
-**Status:** RC0
+**Status:** Released
 **Type:** Minor Release
-**Tag:** `v0.2.5-rc.0`
+**Tag:** `v0.2.5`
 
 ### New Features
 
@@ -1000,7 +1061,7 @@ MCP_MEMORY_TTL=86400
 
 ## Upcoming Releases
 
-### Release 0.2.6 - "Human-OS Enrichment" (Target: Q2 2026)
+### Release 0.2.7 - "Human-OS Enrichment" (Target: Q1 2026)
 
 **Status:** Planning
 **Type:** Minor Release
@@ -1034,29 +1095,36 @@ Details to be announced.
 
 | Version | Release Date | Status | Type | Key Feature |
 |---------|-------------|--------|------|-------------|
-| **0.1.13** | **Dec 7, 2025** | **Released** | **Minor** | **Dark Mode Infrastructure** |
+| **0.2.6** | **Feb 28, 2026** | **Released** | **Minor** | **Platform Integration** |
+| 0.2.5 | Feb 21, 2026 | Released | Minor | First Contact Onboarding |
+| 0.2.4 | Feb 20, 2026 | Released | Patch | Dashboard Polish & Theme |
+| 0.2.3 | Feb 18, 2026 | Released | Minor | Dashboard Revamp |
+| 0.2.2 | Feb 12, 2026 | Released | Minor | Cleanup & Workflow UX Polish |
+| 0.2.1 | Jan 5, 2026 | Released | Minor | Sculptor Sessions & Workflow Chat |
+| 0.2.0 | Dec 18, 2025 | Released | Major | Human-OS Integration |
+| 0.1.13 | Dec 7, 2025 | Released | Minor | Dark Mode Infrastructure |
 | 0.1.12 | Dec 2025 | Released | Minor | TaskMode Encapsulation |
 | 0.1.11 | Nov 28, 2025 | Released | Minor | QBR Presentations |
 | 0.1.10 | Nov 28, 2025 | Released | Minor | Workflow Persistence |
-| 0.1.9 | Jan 2025 | Released | Minor | InHerSight Integration |
+| 0.1.9 | Nov 22, 2025 | Released | Minor | InHerSight Integration |
 | 0.1.8 | Nov 2025 | Released | Minor | Code Optimizations |
 | 0.1.7 | Nov 22, 2025 | Released | Minor | MCP Foundation |
 | 0.1.6 | Nov 17, 2025 | Released | Minor | Workflow Templates |
-| 0.1.5 | Nov 15-16, 2025 | Released | Minor | String-Tie + Optimization |
+| 0.1.5 | Nov 15, 2025 | Released | Minor | String-Tie + Optimization |
 | 0.1.4 | Nov 15, 2025 | Released | Minor | Skip & Review Systems |
 | 0.1.3 | Nov 15, 2025 | Released | Minor | Parking Lot System |
-| 0.1.2 | Nov 7-12, 2025 | Released | Minor | MCP Registry |
-| 0.1.1 | Nov 2-8, 2025 | Released | Minor | Multi-Tenancy |
-| 0.1.0 | Oct 21 - Nov 6, 2025 | Released | Minor | Zen Dashboard |
-| 0.0.9 | Nov 1-6, 2025 | Released | Patch | Pre-Production Polish |
-| 0.0.8 | Oct 28-31, 2025 | Released | Patch | Labs Launch |
-| 0.0.7 | Oct 3-27, 2025 | Released | Patch | Orchestrator Birth |
-| 0.0.6 | Sep 5-28, 2025 | Released | Patch | Artifact Engine |
-| 0.0.5 | Aug 9-27, 2025 | Released | Patch | Backend Breakthrough |
-| 0.0.4 | Jun 13 - Jul 28, 2025 | Released | Patch | Authentication |
-| 0.0.3 | May 4-24, 2025 | Released | Patch | Workflow Experiments |
-| 0.0.2 | Apr 30 - May 3, 2025 | Released | Patch | Dashboard Core |
-| 0.0.1 | Apr 28-29, 2025 | Released | Initial | Genesis |
+| 0.1.2 | Nov 7, 2025 | Released | Minor | MCP Registry |
+| 0.1.1 | Nov 2, 2025 | Released | Minor | Multi-Tenancy |
+| 0.1.0 | Oct 21, 2025 | Released | Minor | Zen Dashboard |
+| 0.0.9 | Nov 1, 2025 | Released | Patch | Pre-Production Polish |
+| 0.0.8 | Oct 28, 2025 | Released | Patch | Labs Launch |
+| 0.0.7 | Oct 3, 2025 | Released | Patch | Orchestrator Birth |
+| 0.0.6 | Sep 5, 2025 | Released | Patch | Artifact Engine |
+| 0.0.5 | Aug 9, 2025 | Released | Patch | Backend Breakthrough |
+| 0.0.4 | Jun 13, 2025 | Released | Patch | Authentication |
+| 0.0.3 | May 4, 2025 | Released | Patch | Workflow Experiments |
+| 0.0.2 | Apr 30, 2025 | Released | Patch | Dashboard Core |
+| 0.0.1 | Apr 28, 2025 | Released | Initial | Genesis |
 
 ---
 
@@ -1068,5 +1136,5 @@ For bug reports, feature requests, or questions:
 
 ---
 
-**Last Updated:** December 7, 2025
-**Document Version:** 1.1
+**Last Updated:** February 28, 2026
+**Document Version:** 1.2

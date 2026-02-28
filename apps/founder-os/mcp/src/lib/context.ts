@@ -95,6 +95,93 @@ export function withModeProperties(tools: Tool[]): Tool[] {
   return tools.map(withModeProperty);
 }
 
+// =============================================================================
+// DIRECT-CALL GATE
+// =============================================================================
+
+/**
+ * Tools that bypass the direct-call gate.
+ * These are either routing tools (do, recall) or lightweight session tools
+ * that need to work without do() routing.
+ */
+export const UNGATED_TOOLS = new Set([
+  'do',
+  'list_aliases',
+  'learn_alias',
+  'recall',
+  'get_session_context',
+  'load_commandments',
+  'load_mode',
+  'extract',
+  'list_extraction_categories',
+  'flush',
+]);
+
+/**
+ * Override property added to all gated tool schemas.
+ * When true, bypasses the direct-call gate.
+ */
+export const OVERRIDE_PROPERTY = {
+  override: {
+    type: 'boolean',
+    description:
+      'Set to true to bypass the do() routing gate. ' +
+      'Direct tool calls dump full payloads into context — use do() instead for concise results. ' +
+      'Only override when explicitly asked or when do() cannot route the request.',
+  },
+} as const;
+
+/**
+ * Add override property to a tool's input schema (for gated tools only)
+ */
+export function withGateProperty(tool: Tool): Tool {
+  if (UNGATED_TOOLS.has(tool.name)) return tool;
+
+  const schema = tool.inputSchema as {
+    type: 'object';
+    properties?: Record<string, unknown>;
+    required?: string[];
+  };
+
+  return {
+    ...tool,
+    inputSchema: {
+      ...schema,
+      type: 'object' as const,
+      properties: {
+        ...schema.properties,
+        ...OVERRIDE_PROPERTY,
+      },
+    },
+  };
+}
+
+/**
+ * Add override property to multiple tools
+ */
+export function withGateProperties(tools: Tool[]): Tool[] {
+  return tools.map(withGateProperty);
+}
+
+/**
+ * Check if a direct tool call should be gated
+ * Returns the gate message if blocked, or null if allowed
+ */
+export function checkDirectCallGate(
+  name: string,
+  args: Record<string, unknown>
+): string | null {
+  if (UNGATED_TOOLS.has(name)) return null;
+  if (args.override === true) return null;
+
+  return (
+    `Direct call to "${name}" was blocked to prevent context bloat.\n\n` +
+    `Use do() instead: do({ request: "your intent in natural language" })\n\n` +
+    `To override: ${name}({ ...args, override: true })\n` +
+    `Only override when the user explicitly asks or do() cannot route the request.`
+  );
+}
+
 /**
  * Extract execution mode from tool arguments
  */
