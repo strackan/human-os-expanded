@@ -36,6 +36,7 @@ import { sessionTools, handleSessionTools, getSessionContext, loadMode } from '.
 import { gftTools, handleGFTTools } from './tools/gft-ingestion.js';
 import { demoTools, handleDemoTools } from './tools/demo.js';
 import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
+import { fathomTools, handleFathomTools } from './tools/fathom.js';
 import { communityIntelTools, handleCommunityIntelTools } from './tools/community-intel.js';
 import { projectTools, handleProjectTools } from './tools/projects/index.js';
 import { journalTools, handleJournalTools } from './tools/journal.js';
@@ -132,6 +133,7 @@ const moduleRegistry: Record<ModuleKey, { tools: typeof taskTools; handler: Tool
   'outreach':        { tools: outreachTools, handler: handleOutreachTools },
   'demo':            { tools: demoTools, handler: handleDemoTools },
   'transcripts':     { tools: transcriptTools, handler: handleTranscriptTools },
+  'fathom':          { tools: fathomTools, handler: handleFathomTools },
   'community-intel': { tools: communityIntelTools, handler: handleCommunityIntelTools },
   'nominations':     { tools: nominationTools, handler: handleNominationTools },
   'contacts':        { tools: contactTools, handler: handleContactTools },

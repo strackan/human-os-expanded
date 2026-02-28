@@ -15,6 +15,8 @@ export { QueueService } from './queue-service.js';
 export { TaskService } from './task-service.js';
 export { AliasService } from './alias-service.js';
 export { TranscriptService } from './transcript-service.js';
+export { fathomMeetingToTranscriptInput } from './fathom-transform.js';
+export type { FathomMeeting } from './fathom-transform.js';
 export { ActivationKeyService } from './activation-service.js';
 export { getIdentityProfile, updateIdentityProfile } from './identity-service.js';
 export { ContactService } from './contact-service.js';

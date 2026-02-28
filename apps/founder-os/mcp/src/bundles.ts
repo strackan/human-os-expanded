@@ -50,6 +50,7 @@ export type ModuleKey =
   | 'outreach'
   | 'demo'
   | 'transcripts'
+  | 'fathom'
   | 'community-intel'
   | 'nominations'
   | 'contacts'
@@ -103,6 +104,7 @@ const PRODUCT_SPECIFIC: ModuleKey[] = [
   'outreach',
   'demo',
   'transcripts',
+  'fathom',
   'community-intel',
   'nominations',
 ];

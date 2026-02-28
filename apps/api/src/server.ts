@@ -31,6 +31,7 @@ import { createQueueRoutes } from './routes/v1/queue.js';
 import { createTasksRoutes } from './routes/v1/tasks.js';
 import { createAliasesRoutes } from './routes/v1/aliases.js';
 import { createDoRoutes } from './routes/v1/do.js';
+import { createFathomWebhookRoutes } from './routes/webhooks/fathom.js';
 
 /**
  * Environment configuration
@@ -71,6 +72,11 @@ async function main() {
   // Security middleware
   app.use(helmet());
   app.use(cors());
+
+  // Webhook routes — must be registered BEFORE express.json()
+  // so the handler can access the raw body for signature verification
+  app.use('/webhooks/fathom', createFathomWebhookRoutes(supabase));
+
   app.use(express.json({ limit: '10mb' }));
 
   // Health check (no auth required)
