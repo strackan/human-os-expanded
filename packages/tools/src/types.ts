@@ -132,6 +132,27 @@ export interface ToolDefinition<TInput = unknown, TOutput = unknown> {
 
   /** Category for grouping (e.g., 'tasks', 'queue', 'search') */
   category?: string;
+
+  /**
+   * If true, this tool's input schema is available to extract() for
+   * auto-generating extraction categories from the registry.
+   * extract() will derive its prompt from extractable tools at runtime.
+   */
+  extractable?: boolean;
+
+  /**
+   * Category name used in extract() output (e.g., 'tasks', 'glossary_terms').
+   * Defaults to the tool name if not specified.
+   * Only used when extractable is true.
+   */
+  extractCategory?: string;
+
+  /**
+   * Hint text included in the extract() prompt for this category.
+   * Tells the LLM what kind of content maps to this tool.
+   * Only used when extractable is true.
+   */
+  extractHint?: string;
 }
 
 /**

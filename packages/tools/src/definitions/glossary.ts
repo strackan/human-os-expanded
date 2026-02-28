@@ -19,6 +19,11 @@ export const defineTerm = defineTool({
   platform: 'core',
   category: 'glossary',
 
+  extractable: true,
+  extractCategory: 'glossary_terms',
+  extractHint:
+    'Definitions, acronyms, shorthand, nicknames, slang. Look for patterns like "X means Y", "X = Y", "X (which is Y)", or context where a term is explained inline. Also extract when someone defines a person by role ("Ruth is my wife").',
+
   input: z.object({
     term: z.string().describe('The term to define (case-insensitive matching)'),
     definition: z.string().describe('Full definition/explanation of the term'),

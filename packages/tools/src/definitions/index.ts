@@ -13,6 +13,7 @@
 // Core platform tools (shared)
 export * from './glossary.js';
 export * from './search.js';
+export * from './extract.js';
 
 // Founder platform tools
 export * from './tasks.js';

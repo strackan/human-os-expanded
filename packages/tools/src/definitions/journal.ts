@@ -24,6 +24,11 @@ export const createJournalEntry = defineTool({
   platform: 'founder',
   category: 'journal',
 
+  extractable: true,
+  extractCategory: 'journal_entries',
+  extractHint:
+    'Reflective content, emotional processing, gratitude, self-talk. Only extract if there is clearly reflective/introspective content — not just facts or todos. Infer moods from emotional language.',
+
   input: z.object({
     content: z.string().describe('The journal entry content (markdown supported)'),
     title: z.string().optional().describe('Optional title for the entry'),

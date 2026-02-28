@@ -44,6 +44,7 @@
  */
 
 export { defineTool, ToolRegistry, getRegistry } from './registry.js';
+export { zodToPromptSchema } from './zod-prompt.js';
 export type {
   // Core types
   ToolDefinition,

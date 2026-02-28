@@ -19,6 +19,11 @@ export const addTask = defineTool({
   platform: 'founder',
   category: 'tasks',
 
+  extractable: true,
+  extractCategory: 'tasks',
+  extractHint:
+    'Action items, todos, things to do. Convert to imperative form ("Call Mike" not "Need to call Mike"). Infer priority from urgency signals. Convert relative dates to YYYY-MM-DD.',
+
   input: z.object({
     title: z.string().min(1).describe('Task title'),
     description: z.string().optional().describe('Detailed description'),
