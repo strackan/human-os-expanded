@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import article_pipeline, audit, deliverables, entities, lite_report, optimizer, prompts, publications, scores, testing
+from app.routers import article_pipeline, audit, content, deliverables, discovery, entities, lite_report, optimizer, prompts, publications, scores, search, testing
 
 settings = get_settings()
 
@@ -44,7 +44,11 @@ app.add_middleware(
         "http://localhost:4202",
         "http://localhost:4200",
         "http://localhost:4000",
+        "http://localhost:4001",
         "http://localhost:4010",
+        "http://localhost:4100",
+        "http://localhost:4401",
+        "http://localhost:4502",
         "https://fancyrobot.ai",
         "https://www.fancyrobot.ai",
         "https://fancy-robot.vercel.app",
@@ -65,6 +69,9 @@ app.include_router(audit.router, prefix=settings.api_v1_prefix, tags=["audit"])
 app.include_router(testing.router, prefix=settings.api_v1_prefix, tags=["testing"])
 app.include_router(article_pipeline.router, prefix=settings.api_v1_prefix, tags=["articles"])
 app.include_router(publications.router, prefix=settings.api_v1_prefix, tags=["publications"])
+app.include_router(search.router, prefix=settings.api_v1_prefix, tags=["search"])
+app.include_router(discovery.router, prefix=settings.api_v1_prefix, tags=["discovery"])
+app.include_router(content.router, prefix=settings.api_v1_prefix, tags=["content"])
 
 
 @app.get("/")

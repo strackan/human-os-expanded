@@ -21,12 +21,14 @@ from app.config import get_settings
 from app.models.article_pipeline import ConverterInput, OptimizerOutput
 from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.article_optimizer import ArticleOptimizer
+from app.services.llm_utils import extract_json_list
 
 logger = logging.getLogger(__name__)
 
 
 SUMMARY_PROMPT = """Generate a concise 1-2 sentence summary for each section of this article.
-Return ONLY valid JSON — a list of objects with "heading" and "summary" keys.
+Return ONLY valid JSON. Do not wrap in markdown code fences. Start with [ and end with ].
+Return a list of objects with "heading" and "summary" keys.
 
 ## Article Sections
 
@@ -219,7 +221,7 @@ class ArticleHtmlConverter:
             return {}
 
         try:
-            data = self._extract_json_list(response.text)
+            data = extract_json_list(response.text)
             return {item["heading"]: item["summary"] for item in data if "heading" in item and "summary" in item}
         except (json.JSONDecodeError, KeyError, ValueError):
             return {}
@@ -235,7 +237,7 @@ class ArticleHtmlConverter:
             return []
 
         try:
-            data = self._extract_json_list(response.text)
+            data = extract_json_list(response.text)
             return [
                 {"question": item["question"], "answer": item["answer"]}
                 for item in data
@@ -429,17 +431,6 @@ class ArticleHtmlConverter:
 {faq_html}
 </body>
 </html>"""
-
-    def _extract_json_list(self, text: str) -> list[dict]:
-        """Extract a JSON list from text that may have markdown formatting."""
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return json.loads(text.strip())
 
     @staticmethod
     def _escape_attr(text: str) -> str:

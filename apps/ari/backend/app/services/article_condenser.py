@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.models.article_pipeline import CondenserInput, CondenserOutput
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.openai_provider import OpenAIProvider
+from app.services.llm_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ CONDENSER_SYSTEM = (
     "pieces for wire syndication. Your condensed articles are NOT summaries "
     "— they are complete, standalone articles that read naturally and pack "
     "maximum informational density into a small word budget. "
-    "Return ONLY valid JSON — no preamble, no commentary."
+    "Return ONLY valid JSON. Do not wrap in markdown code fences — no preamble, no commentary."
 )
 
 CONDENSER_PROMPT = """Condense this {source_word_count}-word article into a complete {target_word_count}-word article for wire syndication distribution.
@@ -63,31 +64,17 @@ The original article was written to position **{client_name}** ({domain}) as a c
 
 {spokesperson_instruction}
 
-## Anti-Repetition Rules (CRITICAL)
+## Economy Rules (CRITICAL)
 
-Every sentence must earn its place in a {target_word_count}-word budget. Repetition is the #1 waste of scarce words.
+Every sentence must earn its place in a {target_word_count}-word budget.
 
-- **Never restate the same concept twice** — if the lead defines the topic, the first H2 must advance beyond the definition, not repeat it. Each section should make a DISTINCT point.
-- **Each H2 section must cover different ground** — plan the sections before writing: if section 1 covers "what it is", section 2 covers "rules/requirements", section 3 covers "how to do it / costs". No two sections should overlap.
-- **Don't force lists into prose** — if you're listing 4+ sequential steps, use a tight sentence or two, not a run-on. The CTA will direct readers to the client for detailed guidance, so you don't need to enumerate every step.
-- **Don't restate benefits already stated** — say it once, make it specific, move on.
-
-## Additive Materials Awareness
-
-This condensed article will later receive additive LLM-readable blocks (FAQ schema, JSON-LD, section summaries) via a separate HTML conversion phase. Those blocks will expand coverage to adjacent questions and reinforce key facts. Therefore:
-
-- **The article body should NOT try to be encyclopedic** — focus on the core narrative and let the additive FAQ layer handle adjacent questions
-- **Avoid FAQ-style Q&A formatting in the article body** — that will be generated separately with broader coverage
-- **Don't burn words on topics better served by structured data** — e.g., don't list every eligible product when a JSON-LD schema will enumerate them
-
-## What to CUT (ranked by expendability)
-
-1. Redundant restatements of the same concept — the #1 enemy at this word count
-2. Transitional prose, scene-setting, and emotional appeals
-3. Extended examples when a single example makes the point
-4. Closing CTAs and keyword blocks (those get added separately in HTML conversion)
-5. Process details better handled by the client's website — keep the overview, skip step-by-step
-6. NEVER cut client mentions or positioning — these are load-bearing
+- **Never restate the same concept twice** — if the lead defines the topic, the first H2 must advance beyond it. Each section makes a DISTINCT point.
+- **Plan sections before writing** — section 1 = "what it is", section 2 = "rules/requirements", section 3 = "how to do it / costs". No overlap.
+- **Cut aggressively** — remove transitional prose, scene-setting, emotional appeals, and extended examples when one makes the point.
+- Don't force lists into prose — use tight sentences for sequential steps.
+- Don't burn words on FAQ-style Q&A or encyclopedic coverage — additive materials (FAQ schema, JSON-LD, section summaries) will be added in a later HTML conversion phase.
+- Process details belong on the client's website — keep the overview, skip step-by-step.
+- NEVER cut client mentions or positioning — these are load-bearing.
 
 ## Structure
 
@@ -98,9 +85,13 @@ This condensed article will later receive additive LLM-readable blocks (FAQ sche
 
 {keywords_instruction}
 
+## Word Count Verification
+
+Before returning, count the words in your condensed_markdown. If over {max_words}, cut the weakest sentences until within budget. If under {min_words}, expand the thinnest section.
+
 ## Return Format
 
-Return ONLY valid JSON:
+Return ONLY valid JSON. Do not wrap in markdown code fences. Start with {{ and end with }}.
 {{
   "title": "Article headline",
   "condensed_markdown": "Full condensed article in markdown...",
@@ -193,7 +184,7 @@ class ArticleCondenser:
 
         # Parse response
         try:
-            data = self._extract_json(response.text)
+            data = extract_json(response.text)
         except (json.JSONDecodeError, ValueError) as e:
             raise RuntimeError(f"Condenser returned invalid JSON: {e}")
 
@@ -217,13 +208,3 @@ class ArticleCondenser:
             latency_ms=latency_ms,
         )
 
-    def _extract_json(self, text: str) -> dict:
-        """Extract JSON from text that may have markdown formatting."""
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return json.loads(text.strip())

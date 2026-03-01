@@ -55,6 +55,7 @@ class ArticleInput(BaseModel):
     target_word_count: int = Field(1600, ge=800, le=3000, description="Target word count")
     gumshoe_payload: str = Field("", description="Pre-formatted Gumshoe analysis payload markdown")
     customer_slug: str = Field("", description="Customer directory slug for file lookups")
+    voice_profile: str = Field("", description="VoiceOS profile rules to apply (e.g., 10 Commandments voice rules)")
 
 
 class WriterOutput(BaseModel):

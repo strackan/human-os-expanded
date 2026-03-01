@@ -18,6 +18,8 @@ from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.response_parser import ResponseParser
 from app.services.scoring_engine import ScoringEngine
+from app.storage.supabase_entities import find_or_create_entity, update_entity_ari_score
+from app.services.event_emitter import emit_score_event
 
 logger = logging.getLogger(__name__)
 
@@ -387,7 +389,7 @@ async def run_analysis(
             )
         )
 
-    return LiteAnalysisResult(
+    result = LiteAnalysisResult(
         overall_score=ari_score.overall_score,
         mention_rate=ari_score.mention_rate,
         total_prompts=ari_score.total_prompts,
@@ -396,3 +398,29 @@ async def run_analysis(
         persona_breakdown=persona_breakdowns,
         topic_breakdown=topic_breakdowns,
     )
+
+    # Write score to entity metadata + emit interaction event
+    try:
+        entity_id = await find_or_create_entity(
+            discovery.domain,
+            discovery.company_name,
+            industry=discovery.industry if hasattr(discovery, "industry") else None,
+        )
+        if entity_id:
+            await update_entity_ari_score(
+                entity_id=entity_id,
+                overall_score=ari_score.overall_score,
+                mention_rate=ari_score.mention_rate,
+            )
+            await emit_score_event(
+                entity_id=entity_id,
+                domain=discovery.domain,
+                overall_score=ari_score.overall_score,
+                mention_rate=ari_score.mention_rate,
+                total_prompts=ari_score.total_prompts,
+                source="snapshot",
+            )
+    except Exception as e:
+        logger.warning(f"Entity score update failed (non-blocking): {e}")
+
+    return result

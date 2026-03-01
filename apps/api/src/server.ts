@@ -31,6 +31,7 @@ import { createQueueRoutes } from './routes/v1/queue.js';
 import { createTasksRoutes } from './routes/v1/tasks.js';
 import { createAliasesRoutes } from './routes/v1/aliases.js';
 import { createDoRoutes } from './routes/v1/do.js';
+import { createAriRoutes } from './routes/v1/ari.js';
 import { createFathomWebhookRoutes } from './routes/webhooks/fathom.js';
 
 /**
@@ -102,6 +103,9 @@ async function main() {
   app.use('/v1/tasks', createTasksRoutes(supabase));
   app.use('/v1/aliases', createAliasesRoutes(supabase));
   app.use('/v1/do', createDoRoutes(supabase, contextEngine, knowledgeGraph));
+
+  // ARI / External Intelligence routes
+  app.use('/v1/ari', createAriRoutes(supabase));
 
   // 404 handler
   app.use((req, res) => {

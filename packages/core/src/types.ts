@@ -92,6 +92,7 @@ export type SourceSystem =
   | 'voice_os'
   | 'guyforthat'
   | 'powerpak'
+  | 'fancy_robot'
   | 'manual';
 
 /**

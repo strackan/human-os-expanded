@@ -11,6 +11,7 @@ from app.models.lite_report import (
     DiscoveryResult,
     LiteAnalysisResult,
 )
+from app.services.llm_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,13 @@ Description: {description}
 {topic_data}
 
 ## Your Task
-Analyze this data and produce ONLY valid JSON with the following fields. Be bold, specific, and data-driven. Never be generic or clinical.
+Analyze this data and produce ONLY valid JSON. Do not wrap in markdown code fences. Start with {{ and end with }}.
+
+Be bold, specific, and data-driven. Never be generic or clinical.
+
+key_findings guidelines: Generate exactly 5 findings. Start each with an emoji badge: 🔴 CRITICAL GAP, 🟢 STRENGTH, 🟡 OPPORTUNITY, or ⚠️ KEY INSIGHT. Use a mix of badges. Every finding must cite a specific number from the data.
+
+strategic_recommendations guidelines: Generate exactly 5 recommendations. Start each with an ALL CAPS action verb header (e.g., REFRAME, OWN, PUBLISH, TARGET, AMPLIFY) followed by a specific recommendation and 1-2 sentence explanation.
 
 {{
   "report_title": "A 3-6 word hook that captures the core insight about this brand's AI visibility. Think 'The Premium Bridesmaid' or 'Invisible to the Algorithm' or 'The Expertise Gap'. Make it memorable.",
@@ -48,20 +55,11 @@ Analyze this data and produce ONLY valid JSON with the following fields. Be bold
   "executive_summary": "2-3 paragraphs. First paragraph: open with what this company IS (their story, credentials, what makes them notable in their industry). Second paragraph: state the core tension — despite being [impressive thing], AI models [specific gap]. Cite the ARI score, mention rate, and the biggest competitor gap with actual numbers. Third paragraph: what this means and what's at stake. End with the score framed as either a warning or an opportunity.",
 
   "key_findings": [
-    "Use emoji badges at the START of each finding. Pick the right badge for each:",
-    "🔴 CRITICAL GAP — [specific finding about a major blind spot, cite the data]",
-    "🟢 STRENGTH — [something working well, cite the data]",
-    "🟡 OPPORTUNITY — [untapped area with potential, cite the data]",
-    "⚠️ KEY INSIGHT — [surprising pattern in the data, cite the data]",
-    "Generate exactly 5 findings. Mix of badges. Every finding must cite a specific number from the data above."
+    "// exactly 5 items, each starting with emoji badge (🔴, 🟢, 🟡, ⚠️) + finding with specific data"
   ],
 
   "strategic_recommendations": [
-    "REFRAME: [specific recommendation with ALL CAPS action verb header] — 1-2 sentence explanation",
-    "OWN: [specific recommendation] — 1-2 sentence explanation",
-    "PUBLISH: [specific recommendation] — 1-2 sentence explanation",
-    "TARGET: [specific recommendation] — 1-2 sentence explanation",
-    "AMPLIFY: [specific recommendation] — 1-2 sentence explanation"
+    "// exactly 5 items, each starting with ALL CAPS action verb + specific recommendation"
   ],
 
   "article_teasers": [
@@ -138,18 +136,6 @@ def _format_topic_data(analysis: LiteAnalysisResult) -> str:
     return "\n".join(lines)
 
 
-def _extract_json(text: str) -> dict:
-    """Extract JSON from text that may have markdown formatting."""
-    text = text.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    return json.loads(text.strip())
-
-
 async def synthesize(
     discovery: DiscoveryResult,
     analysis: LiteAnalysisResult,
@@ -201,7 +187,7 @@ async def synthesize(
     logger.info(f"Synthesis response length: {len(text)} chars, tokens: {response.tokens_used}")
 
     try:
-        data = _extract_json(text)
+        data = extract_json(text)
         analysis.report_title = data.get("report_title", "")
         analysis.core_finding = data.get("core_finding", "")
         analysis.core_finding_detail = data.get("core_finding_detail", "")

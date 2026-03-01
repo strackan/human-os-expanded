@@ -23,6 +23,7 @@ from app.models.article import (
     ScrapedData,
 )
 from app.services.ai_providers.openai_provider import OpenAIProvider
+from app.services.llm_utils import extract_json
 
 
 ANALYSIS_PROMPT = """Analyze this article and return structured JSON.
@@ -31,7 +32,8 @@ ANALYSIS_PROMPT = """Analyze this article and return structured JSON.
 {body_text}
 
 ## Instructions
-Analyze the article and return ONLY valid JSON in this exact format:
+Analyze the article and return ONLY valid JSON. Do not wrap in markdown code fences. Start with {{ and end with }}.
+Use this exact format:
 {{
   "weaknesses": ["list of structural/content weaknesses for AI discoverability"],
   "entities": ["list of key entities (people, companies, products) mentioned"],
@@ -501,7 +503,7 @@ class ArticleOptimizer:
             return LLMResults()
 
         try:
-            data = self._extract_json(response.text)
+            data = extract_json(response.text)
             faq_items = [
                 FAQItem(question=f["question"], answer=f["answer"])
                 for f in data.get("faq", [])
@@ -539,7 +541,7 @@ class ArticleOptimizer:
             return OptimizedContent()
 
         try:
-            data = self._extract_json(response.text)
+            data = extract_json(response.text)
             faq_items = [
                 FAQItem(question=f["question"], answer=f["answer"])
                 for f in data.get("faq", [])
@@ -574,7 +576,7 @@ class ArticleOptimizer:
             return EnhancementPack()
 
         try:
-            data = self._extract_json(response.text)
+            data = extract_json(response.text)
 
             # Build structured FAQ list
             faq_items = [
@@ -609,17 +611,6 @@ class ArticleOptimizer:
             )
         except (json.JSONDecodeError, KeyError, ValueError):
             return EnhancementPack()
-
-    def _extract_json(self, text: str) -> dict[str, Any]:
-        """Extract JSON from text that may have markdown formatting."""
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-        elif text.startswith("```"):
-            text = text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        return json.loads(text.strip())
 
 
 @lru_cache

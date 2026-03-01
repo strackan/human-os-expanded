@@ -24,3 +24,9 @@ export * from './journal.js';
 
 // GuyForThat platform tools
 export * from './guyforthat/index.js';
+
+// ARI / Fancy Robot platform tools (external intelligence)
+export * from './ari.js';
+export * from './web-search.js';
+export * from './company-intel.js';
+export * from './content-analysis.js';

@@ -12,7 +12,8 @@ from typing import Any
 
 from app.config import get_settings
 from app.models.audit import AuditRun, AuditRunStatus
-from app.storage.supabase_entities import find_or_create_entity
+from app.storage.supabase_entities import find_or_create_entity, update_entity_ari_score
+from app.services.event_emitter import emit_score_event
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,24 @@ async def save_audit_run(run: AuditRun) -> bool:
     try:
         client.schema("fancyrobot").table("audit_runs").upsert(row).execute()
         logger.info(f"Saved audit run for {run.domain} (entity_id={entity_id})")
+
+        # Write ARI score to entity metadata
+        if entity_id and run.overall_score is not None:
+            await update_entity_ari_score(
+                entity_id=entity_id,
+                overall_score=run.overall_score,
+                mention_rate=0.0,  # audit doesn't track mention_rate directly
+                run_id=str(run.id),
+            )
+            await emit_score_event(
+                entity_id=entity_id,
+                domain=run.domain,
+                overall_score=run.overall_score,
+                mention_rate=0.0,
+                total_prompts=0,
+                source="audit",
+                run_id=str(run.id),
+            )
 
         # Cross-pollinate: upsert snapshot_runs with audit's discovery data
         # so future snapshot requests benefit from the deeper profiling

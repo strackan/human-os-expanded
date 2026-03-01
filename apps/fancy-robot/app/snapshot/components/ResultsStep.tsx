@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { DiscoveryResult, SynthesisData } from "@/lib/lite-report-client";
 import { getDownloadUrl, validatePromoCode } from "@/lib/lite-report-client";
 import { submitEmailForReport } from "@/app/actions/contact";
 import type { Step } from "../lib/constants";
 import { ScoreGauge } from "./ScoreGauge";
 import { CompetitorBars } from "./CompetitorBars";
+import type { EntityContext as EntityContextType, AriHistoryEntry } from "@/lib/humanos-client";
 
 export function ResultsStep({
   step,
@@ -43,6 +44,9 @@ export function ResultsStep({
           {discovery?.company_name}
         </p>
       </div>
+
+      {/* HumanOS Entity Context — additive panel, graceful degradation */}
+      <EntityContextPanel domain={discovery?.domain || ""} />
 
       {/* Report title */}
       {synthesisData.report_title && (
@@ -603,5 +607,96 @@ function UngatedContent({
         </div>
       )}
     </>
+  );
+}
+
+// =============================================================================
+// ENTITY CONTEXT PANEL — HumanOS integration (graceful degradation)
+// =============================================================================
+
+function EntityContextPanel({ domain }: { domain: string }) {
+  const [entityCtx, setEntityCtx] = useState<EntityContextType | null>(null);
+  const [history, setHistory] = useState<AriHistoryEntry[]>([]);
+
+  useEffect(() => {
+    if (!domain) return;
+
+    // Dynamic import to avoid build-time dependency if HumanOS API unavailable
+    import("@/lib/humanos-client").then(async ({ getEntityContext, getAriHistory }) => {
+      const [entity, hist] = await Promise.all([
+        getEntityContext(domain),
+        getAriHistory(domain, 5),
+      ]);
+      if (entity) setEntityCtx(entity);
+      if (hist.length) setHistory(hist);
+    }).catch(() => {
+      // HumanOS client unavailable — silent degradation
+    });
+  }, [domain]);
+
+  // Don't render if no context available
+  if (!entityCtx?.ari && history.length === 0) return null;
+
+  return (
+    <div className="mb-6 rounded-3xl border border-border/50 bg-card/50 p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Entity Intelligence
+        </h4>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {/* Previous score delta */}
+        {entityCtx?.ari?.score_delta != null && (
+          <div className="rounded-xl border border-border bg-secondary/30 p-3">
+            <p className="text-xs text-muted-foreground">Score Change</p>
+            <p className={`text-lg font-bold ${
+              entityCtx.ari.score_delta > 0 ? "text-green-600" :
+              entityCtx.ari.score_delta < 0 ? "text-red-500" :
+              "text-muted-foreground"
+            }`}>
+              {entityCtx.ari.score_delta > 0 ? "+" : ""}
+              {entityCtx.ari.score_delta.toFixed(1)}
+            </p>
+            {entityCtx.ari.previous_score != null && (
+              <p className="text-xs text-muted-foreground">
+                from {entityCtx.ari.previous_score.toFixed(1)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Last scored timestamp */}
+        {entityCtx?.ari?.scored_at && (
+          <div className="rounded-xl border border-border bg-secondary/30 p-3">
+            <p className="text-xs text-muted-foreground">Last Scored</p>
+            <p className="text-sm font-medium text-foreground">
+              {new Date(entityCtx.ari.scored_at).toLocaleDateString()}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Score history trend */}
+      {history.length > 1 && (
+        <div className="mt-3">
+          <p className="text-xs text-muted-foreground mb-2">Score History</p>
+          <div className="flex items-end gap-1 h-10">
+            {history.slice().reverse().map((entry, i) => {
+              const height = entry.score ? Math.max(10, (entry.score / 100) * 100) : 10;
+              return (
+                <div
+                  key={i}
+                  className="flex-1 rounded-t bg-accent/40 transition-all"
+                  style={{ height: `${height}%` }}
+                  title={`${entry.score?.toFixed(1)} - ${new Date(entry.occurred_at).toLocaleDateString()}`}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

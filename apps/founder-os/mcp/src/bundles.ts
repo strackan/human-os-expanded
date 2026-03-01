@@ -41,6 +41,8 @@ export type ModuleKey =
   | 'email'
   | 'code'
   | 'okr-goals'
+  // External Intelligence (ARI)
+  | 'ari'
   // Product-specific
   | 'voice'
   | 'skills'
@@ -78,6 +80,7 @@ const CORE_PLATFORM: ModuleKey[] = [
   'documents',
   'contacts',
   'sharing',
+  'ari',
 ];
 
 /** Founder OS — personal productivity suite */

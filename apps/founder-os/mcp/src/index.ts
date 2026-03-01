@@ -58,6 +58,7 @@ import { documentTools, handleDocumentTools } from './tools/documents.js';
 import { nominationTools, handleNominationTools } from './tools/nominations.js';
 import { contactTools, handleContactTools } from './tools/contacts.js';
 import { sharingTools, handleSharingTools } from './tools/sharing.js';
+import { ariTools, handleAriTools } from './tools/ari.js';
 
 // Alias system tools (natural language routing)
 import { doTools, handleDoTools } from './tools/do.js';
@@ -138,6 +139,8 @@ const moduleRegistry: Record<ModuleKey, { tools: typeof taskTools; handler: Tool
   'nominations':     { tools: nominationTools, handler: handleNominationTools },
   'contacts':        { tools: contactTools, handler: handleContactTools },
   'sharing':         { tools: sharingTools, handler: handleSharingTools },
+  // External Intelligence (ARI)
+  'ari':             { tools: ariTools, handler: handleAriTools },
 };
 
 /**

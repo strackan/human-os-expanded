@@ -24,6 +24,14 @@ WRITER_SYSTEM = (
     "Return ONLY the article in markdown format — no preamble, no meta-commentary."
 )
 
+WRITER_SYSTEM_NO_SEARCH = (
+    "You are an award-winning business journalist writing for a major publication. "
+    "Your articles are data-rich, source-grounded, and written in a neutral journalistic voice "
+    "that naturally positions client expertise without reading as advertorial. "
+    "Verify facts using your training knowledge. Flag any claims you cannot confidently verify with hedging language. "
+    "Return ONLY the article in markdown format — no preamble, no meta-commentary."
+)
+
 WRITER_BASE = """Write a comprehensive, journalistic article on the following topic.
 
 ## Assignment
@@ -103,6 +111,17 @@ KEY_CLAIMS_SECTION = """
 Weave these claims/facts naturally into relevant sections (do NOT list them verbatim):
 {claims_list}"""
 
+VOICE_PROFILE_SECTION = """
+## Voice Profile
+
+Apply these voice/writing rules to the article's tone and style:
+
+<voice_rules>
+{voice_profile}
+</voice_rules>
+
+Follow these rules for word choice, sentence structure, and overall voice while maintaining the journalistic format above."""
+
 
 class ArticleWriter:
     """Phase 1 — Generates journalistic articles from client data."""
@@ -147,12 +166,12 @@ class ArticleWriter:
                 logger.warning(f"Perplexity failed: {response.error}, falling back to Anthropic")
                 response = None
 
-        # Fallback to Anthropic
+        # Fallback to Anthropic (no web search capability)
         if not response and self.fallback_provider:
             response = await self.fallback_provider.query(
                 prompt,
                 max_tokens=4096,
-                system=WRITER_SYSTEM,
+                system=WRITER_SYSTEM_NO_SEARCH,
             )
             provider_used = "anthropic"
 
@@ -227,6 +246,11 @@ class ArticleWriter:
             summary_lines = lines[:50]  # First 50 lines of gumshoe data
             sections.append(
                 GUMSHOE_SECTION.format(gumshoe_summary="\n".join(summary_lines))
+            )
+
+        if data.voice_profile:
+            sections.append(
+                VOICE_PROFILE_SECTION.format(voice_profile=data.voice_profile)
             )
 
         return "\n\n".join(sections)

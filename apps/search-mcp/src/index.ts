@@ -34,6 +34,7 @@ import { arxivTools, handleArxivTools } from './tools/arxiv.js';
 import { docTools, handleDocTools } from './tools/docs.js';
 import { recallTools, handleRecallTools } from './tools/recall.js';
 import { searchTools, handleSearchTools } from './tools/semantic.js';
+import { webTools, handleWebTools } from './tools/web.js';
 
 // Load .env from script directory
 const __filename = fileURLToPath(import.meta.url);
@@ -92,8 +93,8 @@ async function main() {
   // TOOLS
   // ---------------------------------------------------------------------------
 
-  // Combine all tools: external search, docs, recall (structured), search (semantic)
-  const allTools = [...arxivTools, ...docTools, ...recallTools, ...searchTools];
+  // Combine all tools: external search, docs, recall (structured), search (semantic), web
+  const allTools = [...arxivTools, ...docTools, ...recallTools, ...searchTools, ...webTools];
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: allTools };
@@ -134,6 +135,11 @@ async function main() {
         });
       }
 
+      // Try web tools (Brave Search via ARI backend)
+      if (result === null) {
+        result = await handleWebTools(name, args || {});
+      }
+
       if (result === null) {
         throw new Error(`Unknown tool: ${name}`);
       }
@@ -158,7 +164,7 @@ async function main() {
   await server.connect(transport);
 
   console.error('Search MCP Server v0.1.0 running on stdio');
-  console.error('Available: arXiv papers, Context7 docs, Human OS recall');
+  console.error('Available: arXiv papers, Context7 docs, Human OS recall, Web search (via ARI)');
   console.error(`Recall (Supabase): ${SUPABASE_URL ? 'enabled' : 'disabled (no credentials)'}`);
   console.error(`Context7 docs: ${CONTEXT7_API_KEY ? 'enabled' : 'disabled (no API key)'}`);
 }

@@ -24,6 +24,7 @@ from app.models.audit import (
     SEVERITY_DISPLAY,
 )
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
+from app.services.llm_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -193,7 +194,7 @@ Awards: {', '.join(profile.awards[:3]) if profile.awards else 'None identified'}
     async def _compose_executive_summary(self, ctx: str) -> str:
         prompt = f"""{TONE_DIRECTIVE}
 
-Write a 2-3 paragraph executive summary for this AI visibility audit.
+Write a 2-3 paragraph executive summary (200-300 words) for this AI visibility audit.
 
 {ctx}
 
@@ -209,11 +210,11 @@ Requirements:
     async def _compose_core_problem(self, ctx: str) -> tuple[str, str]:
         prompt = f"""{TONE_DIRECTIVE}
 
-Name the core problem this brand faces in AI visibility. Give it a 3-5 word name (like "The Premium Tax" or "The Mint Director Nobody Knows" or "The Decathlon Paradox").
+Name the core problem this brand faces in AI visibility (150-200 words for the explanation). Give it a 3-5 word name (like "The Premium Tax" or "The Mint Director Nobody Knows" or "The Decathlon Paradox").
 
 {ctx}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON. Do not wrap in markdown code fences. Start with {{ and end with }}.
 {{
   "problem_name": "The [Name] [Something]",
   "explanation": "2-3 paragraphs explaining what the problem is, why it's happening, and which anti-patterns contribute to it. Be specific with data. Reference competitors by name."
@@ -221,7 +222,7 @@ Return ONLY valid JSON:
 
         text = await self._llm_call(prompt)
         try:
-            data = _extract_json(text)
+            data = extract_json(text)
             return data.get("problem_name", "The Visibility Gap"), data.get("explanation", "")
         except (json.JSONDecodeError, ValueError):
             return "The Visibility Gap", text
@@ -229,7 +230,7 @@ Return ONLY valid JSON:
     async def _compose_competitive_landscape(self, ctx: str) -> str:
         prompt = f"""{TONE_DIRECTIVE}
 
-Write the competitive landscape section as a NARRATIVE (not a table). Show the AI-perceived hierarchy.
+Write the competitive landscape section (300-400 words) as a NARRATIVE (not a table). Show the AI-perceived hierarchy.
 
 {ctx}
 
@@ -245,7 +246,7 @@ Requirements:
     async def _compose_dimension_analysis(self, ctx: str) -> str:
         prompt = f"""{TONE_DIRECTIVE}
 
-Write the dimension-by-dimension analysis section.
+Write the dimension-by-dimension analysis section (400-500 words).
 
 {ctx}
 
@@ -271,7 +272,7 @@ Requirements:
 
         prompt = f"""{TONE_DIRECTIVE}
 
-Write 5-10 specific strategic recommendations, priority-ordered.
+Write 5-10 specific strategic recommendations (300-400 words total), priority-ordered.
 
 {ctx}
 
@@ -290,7 +291,7 @@ Requirements:
     async def _compose_pitch_hook(self, ctx: str, problem_name: str) -> str:
         prompt = f"""{TONE_DIRECTIVE}
 
-Write a pitch hook — 3-4 lines that follow this formula:
+Write a pitch hook (100-150 words) — 3-4 lines that follow this formula:
 1. Credential/achievement that establishes the founder/company's authority
 2. What AI actually says (the gap)
 3. The disconnect/sting
@@ -380,13 +381,3 @@ Requirements:
         return "\n".join(sections)
 
 
-def _extract_json(text: str) -> dict:
-    """Extract JSON from text that may have markdown formatting."""
-    text = text.strip()
-    if text.startswith("```json"):
-        text = text[7:]
-    elif text.startswith("```"):
-        text = text[3:]
-    if text.endswith("```"):
-        text = text[:-3]
-    return json.loads(text.strip())

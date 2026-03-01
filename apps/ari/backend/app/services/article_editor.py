@@ -30,6 +30,14 @@ EDITOR_SYSTEM = (
     "Return the hardened article followed by your Editor's Log."
 )
 
+EDITOR_SYSTEM_NO_SEARCH = (
+    "You are a senior editor at a top-tier business publication. You are meticulous about "
+    "factual accuracy, structural clarity, journalistic voice, and AI discoverability. "
+    "You make precise, surgical edits — never rewriting from scratch. "
+    "Verify facts using your training knowledge. Flag any claims you cannot confidently verify with hedging language. "
+    "Return the hardened article followed by your Editor's Log."
+)
+
 EDITOR_PROMPT_4PASS = """## Editorial Assignment
 
 You are editing the following draft article. Make **exactly four passes**, each with a specific focus. Apply all edits to a single output — do NOT return four separate versions.
@@ -272,7 +280,7 @@ class ArticleEditor:
             response = await self.fallback_provider.query(
                 prompt,
                 max_tokens=8000,
-                system=EDITOR_SYSTEM,
+                system=EDITOR_SYSTEM_NO_SEARCH,
             )
             provider_used = "anthropic"
 

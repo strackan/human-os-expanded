@@ -53,6 +53,8 @@ import {
 } from './tools/skills.js';
 import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 import { teamIntelTools, handleTeamIntelTools } from './tools/team-intel.js';
+import { ariEnrichmentTools, handleAriEnrichmentTools } from './tools/ari-enrichment.js';
+import { competitiveIntelTools, handleCompetitiveIntelTools } from './tools/competitive-intel.js';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -241,7 +243,15 @@ const skillsTools: Tool[] = [
   },
 ];
 
-const allTools: Tool[] = [...enrichmentTools, ...relationshipTools, ...skillsTools, ...transcriptTools, ...teamIntelTools];
+const allTools: Tool[] = [
+  ...enrichmentTools,
+  ...relationshipTools,
+  ...skillsTools,
+  ...transcriptTools,
+  ...teamIntelTools,
+  ...ariEnrichmentTools,
+  ...competitiveIntelTools,
+];
 
 // =============================================================================
 // TOOL HANDLERS
@@ -424,6 +434,8 @@ const toolHandlers: ToolHandler[] = [
   handleSkillsTools,
   handleTranscriptTools,
   handleTeamIntelTools,
+  handleAriEnrichmentTools,
+  handleCompetitiveIntelTools,
 ];
 
 // =============================================================================
@@ -482,7 +494,7 @@ async function main() {
   await server.connect(transport);
 
   console.error('Renubu Integration MCP Server running on stdio');
-  console.error('Permission boundary: GFT data only (contacts, companies, posts)');
+  console.error('Permission boundary: GFT data + ARI intelligence (contacts, companies, AI visibility)');
 }
 
 main().catch((error) => {
