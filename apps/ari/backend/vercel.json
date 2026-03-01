@@ -1,5 +1,6 @@
 {
   "installCommand": "pip install --break-system-packages -r requirements.txt",
+  "buildCommand": "",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api" }
   ]
