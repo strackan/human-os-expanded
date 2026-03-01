@@ -29,7 +29,7 @@
     "turbo": "^2.3.0",
     "typescript": "^5.7.2"
   },
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -43,6 +43,14 @@
     "overrides": {
       "@types/react": "^19.0.0",
       "@types/react-dom": "^19.0.0"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@prisma/client",
+      "@swc/core",
+      "esbuild",
+      "prisma",
+      "protobufjs",
+      "sharp"
+    ]
   }
 }
