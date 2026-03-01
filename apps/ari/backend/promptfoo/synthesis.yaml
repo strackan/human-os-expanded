@@ -1,0 +1,82 @@
+# Synthesis — Final report generation, JSON output critical
+description: "ARI Synthesis Prompt Tests"
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    label: claude-haiku-4.5
+    config:
+      temperature: 0.3
+      max_tokens: 4096
+
+prompts:
+  - id: prompt-synthesis
+    label: "Synthesis (Chain End)"
+    raw: "file://prompts/synthesis.txt"
+
+defaultTest:
+  options:
+    transform: file://transforms/strip-fences.js
+
+tests:
+  - description: "Synthesis — produces valid structured report JSON"
+    vars:
+      company_name: "U.S. Money Reserve"
+      domain: "usmoneyreserve.com"
+      industry: "Gold & Precious Metals Retail"
+      description: "Government-issued gold, silver, and platinum coin dealer"
+      overall_score: "32.5"
+      mention_rate_pct: "25.0"
+      mentions_count: "5"
+      total_prompts: "20"
+      competitor_data: "- U.S. Money Reserve (YOUR CLIENT): 25% mention rate\n- APMEX: 85% mention rate\n- JM Bullion: 70% mention rate\n- Goldco: 60% mention rate"
+      persona_data: "- Cautious First-Time Buyer: 30% mention rate (3/10)\n- Self-Directed IRA Maximizer: 20% mention rate (2/10)\n- Collectible Coin Enthusiast: 10% mention rate (1/10)\n- Multi-Generational Wealth Preserver: 40% mention rate (2/5)"
+      topic_data: "- Product Authenticity: 40% mention rate\n- Price Transparency: 10% mention rate\n- Retirement Account Compatibility: 20% mention rate\n- Buyback Guarantees: 30% mention rate"
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return Boolean(data.report_title && data.report_title.split(' ').length >= 3 &&
+                 data.report_title.split(' ').length <= 8);
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return Boolean(data.key_findings && data.key_findings.length === 5);
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return Boolean(data.strategic_recommendations && data.strategic_recommendations.length === 5);
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return Boolean(data.article_teasers && data.article_teasers.length === 3 &&
+                 data.article_teasers.every(t => t.title && t.rationale && t.target_gap));
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          return Boolean(data.executive_summary && data.executive_summary.length > 200);
+      - type: llm-rubric
+        value: "The key_findings array must have exactly 5 items. Each item must start with one of these emoji badges: 🔴, 🟢, 🟡, or ⚠️. Each finding must cite a specific number from the input data (like '25%', '85%', '32.5'). The strategic_recommendations must each start with an ALL CAPS verb like REFRAME, OWN, PUBLISH, TARGET, or AMPLIFY."
+
+  - description: "Synthesis — preserves specific data points from input"
+    vars:
+      company_name: "Toys for Tots"
+      domain: "toysfortots.org"
+      industry: "Holiday Toy Donation Charities"
+      description: "Marine Corps charity distributing toys to children in need"
+      overall_score: "67.8"
+      mention_rate_pct: "55.0"
+      mentions_count: "11"
+      total_prompts: "20"
+      competitor_data: "- Toys for Tots (YOUR CLIENT): 55% mention rate\n- Salvation Army: 90% mention rate\n- Goodwill: 45% mention rate"
+      persona_data: "- Digital-First Millennial Donor: 40% (4/10)\n- Corporate Partnership Manager: 60% (6/10)"
+      topic_data: "- Donation Impact Tracking: 50%\n- Volunteer Opportunities: 60%"
+    assert:
+      - type: is-json
+      - type: javascript
+        value: |
+          const data = JSON.parse(output);
+          const text = JSON.stringify(data);
+          return Boolean(text.includes("67") || text.includes("55") || text.includes("90"));
+      - type: llm-rubric
+        value: "The response must reference specific numbers from the input data. The executive summary must mention the ARI score (67.8), the mention rate (55%), and at least one competitor comparison. It should NOT contain generic statements without data backing."

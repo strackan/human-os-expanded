@@ -1,0 +1,39 @@
+# ARI Pipeline — Prompt Best Practices & Chain Integrity Scan
+#
+# Each prompt has its own config file to avoid cross-product test failures.
+# Run all:   npx promptfoo eval -c discovery.yaml -c response-parser.yaml -c synthesis.yaml -c condenser.yaml
+# Run one:   npx promptfoo eval -c discovery.yaml
+#
+# Or use the default config (this file) which references all four:
+
+description: "ARI Pipeline — Prompt Best Practices Scan (all prompts)"
+
+providers:
+  - id: anthropic:messages:claude-haiku-4-5-20251001
+    label: claude-haiku-4.5
+    config:
+      temperature: 0.3
+
+prompts:
+  - id: prompt-discovery
+    label: "1. Discovery (Chain Start)"
+    raw: "file://prompts/discovery.txt"
+
+  - id: prompt-response-parser
+    label: "2. Response Parser (Chain Middle)"
+    raw: "file://prompts/response-parser.txt"
+
+  - id: prompt-synthesis
+    label: "3. Synthesis (Chain End)"
+    raw: "file://prompts/synthesis.txt"
+
+  - id: prompt-condenser
+    label: "4. Condenser (Article Chain)"
+    raw: "file://prompts/condenser.txt"
+
+# NOTE: This file still runs cross-product (each test × each prompt).
+# For accurate results, run the individual config files:
+#   npx promptfoo eval -c discovery.yaml
+#   npx promptfoo eval -c response-parser.yaml
+#   npx promptfoo eval -c synthesis.yaml
+#   npx promptfoo eval -c condenser.yaml
