@@ -55,6 +55,13 @@ tmpclaude-*/
 # npm lock file (this project uses pnpm)
 package-lock.json
 
+# Python (ARI backend)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+*.db
+
 # Git worktrees (code orchestrator isolation)
 .worktrees/
 

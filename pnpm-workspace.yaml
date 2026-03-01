@@ -4,3 +4,4 @@ packages:
   - "apps/founder-os/*"
   - "apps/founder-os/mcp"
   - "apps/voice-packs/*"
+  - "apps/ari/frontend"

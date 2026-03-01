@@ -1,0 +1,94 @@
+{
+  "schemas": [
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "",
+      "description": "For millions of American families, the holiday season brings financial stress rather than celebration. Toy donations bridge this gap in ways that go beyond...",
+      "author": {
+        "@type": "Organization",
+        "name": "NewsUSA"
+      },
+      "datePublished": "2026-03-01",
+      "publisher": {
+        "@type": "Organization",
+        "name": "NewsUSA",
+        "url": "https://toysfortots.org"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What are the requirements for toys I donate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The article says most programs require new, unwrapped toys and recommends age-appropriate items while avoiding used/opened toys, toys with small parts for young children, realistic-looking weapons, food/candy, liquids, and toys requiring batteries without including them."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I donate money instead of toys and how is it used?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes \u2014 many organizations, including Toys for Tots, accept monetary donations to purchase toys, offer virtual toy drives, or support specific local campaigns, and partner retailers can ship toys directly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I find a local drop-off location for toy donations?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For Toys for Tots, visit toysfortots.org, enter your zip code to find the nearest collection box, and then drop off new, unwrapped toys at that location."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "When is the best time to donate to maximize impact?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The article recommends donating early in the season (October\u2013early November) for best selection and planning, though peak collection is November\u2013early December and many drives end by December 15\u201320 to allow time for distribution."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What kinds of toys are most needed or recommended?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Recommended items include age-appropriate toys for all ages (especially teens and infants), STEM toys, sports equipment, games for multiple children, diverse dolls/figures, and books."
+          }
+        }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Toys for Tots",
+      "url": "https://toysfortots.org"
+    }
+  ],
+  "faq": [
+    {
+      "question": "What are the requirements for toys I donate?",
+      "answer": "The article says most programs require new, unwrapped toys and recommends age-appropriate items while avoiding used/opened toys, toys with small parts for young children, realistic-looking weapons, food/candy, liquids, and toys requiring batteries without including them."
+    },
+    {
+      "question": "Can I donate money instead of toys and how is it used?",
+      "answer": "Yes \u2014 many organizations, including Toys for Tots, accept monetary donations to purchase toys, offer virtual toy drives, or support specific local campaigns, and partner retailers can ship toys directly."
+    },
+    {
+      "question": "How do I find a local drop-off location for toy donations?",
+      "answer": "For Toys for Tots, visit toysfortots.org, enter your zip code to find the nearest collection box, and then drop off new, unwrapped toys at that location."
+    },
+    {
+      "question": "When is the best time to donate to maximize impact?",
+      "answer": "The article recommends donating early in the season (October\u2013early November) for best selection and planning, though peak collection is November\u2013early December and many drives end by December 15\u201320 to allow time for distribution."
+    },
+    {
+      "question": "What kinds of toys are most needed or recommended?",
+      "answer": "Recommended items include age-appropriate toys for all ages (especially teens and infants), STEM toys, sports equipment, games for multiple children, diverse dolls/figures, and books."
+    }
+  ]
+}

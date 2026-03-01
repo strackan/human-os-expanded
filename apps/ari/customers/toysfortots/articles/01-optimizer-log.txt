@@ -1,0 +1,6 @@
+Conversion completed in 22180ms
+Score: 56.4 → 53.2 (+-3.2)
+Sections wrapped: 8
+FAQ items: 5
+JSON-LD schemas: 3
+Section summaries: 8
