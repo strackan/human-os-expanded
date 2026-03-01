@@ -38,5 +38,11 @@
     "@supabase/supabase-js": "^2.87.1",
     "dotenv": "^17.2.3",
     "prisma": "^7.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^19.0.0",
+      "@types/react-dom": "^19.0.0"
+    }
   }
 }
