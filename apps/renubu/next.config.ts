@@ -2,8 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
-  // Trace from monorepo root so workspace packages (@human-os/indexer, @human-os/proxy) are included
+  // Trace from monorepo root so workspace packages are included in output
   outputFileTracingRoot: path.join(__dirname, '../..'),
   eslint: {
     // Disable ESLint errors during builds (warnings are pre-existing)
