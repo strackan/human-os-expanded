@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { DomainSearchBar } from "@/components/shared/domain-search-bar";
 
 function ScoreGauge({ score }: { score: number }) {
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -121,19 +122,8 @@ export function Hero() {
               </p>
             </div>
 
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <a
-                href="/snapshot"
-                className="inline-flex items-center justify-center rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-110"
-              >
-                Get Your AI Visibility Score
-              </a>
-              <a
-                href="#how-it-works"
-                className="inline-flex items-center justify-center rounded-full border border-border bg-card px-8 py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-              >
-                See How It Works
-              </a>
+            <div className="mt-10 w-full">
+              <DomainSearchBar autoFocus />
             </div>
           </div>
 
