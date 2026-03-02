@@ -25,6 +25,7 @@ import { dirname, join } from 'path';
 import { WebClient } from '@slack/web-api';
 
 import { slackTools, handleSlackTools } from './tools/slack.js';
+import { bufferTools, handleBufferTools } from './tools/buffer.js';
 
 // Load .env from script directory
 const __filename = fileURLToPath(import.meta.url);
@@ -44,9 +45,13 @@ if (process.argv.includes('--version') || process.argv.includes('-v')) {
 async function main() {
   // Environment setup
   const SLACK_BOT_TOKEN = process.env['SLACK_BOT_TOKEN'] || '';
+  const BUFFER_API_KEY = process.env['BUFFER_API_KEY'] || '';
 
   if (!SLACK_BOT_TOKEN) {
     console.error('Warning: SLACK_BOT_TOKEN not set - slack_* tools will not work');
+  }
+  if (!BUFFER_API_KEY) {
+    console.error('Warning: BUFFER_API_KEY not set - buffer_* tools will not work');
   }
 
   // Initialize Slack client (lazy - only used if token exists)
@@ -59,6 +64,14 @@ async function main() {
       slackClient = new WebClient(SLACK_BOT_TOKEN);
     }
     return slackClient;
+  };
+
+  // Buffer API key (lazy check)
+  const getBufferApiKey = (): string => {
+    if (!BUFFER_API_KEY) {
+      throw new Error('BUFFER_API_KEY not configured');
+    }
+    return BUFFER_API_KEY;
   };
 
   // Create server
@@ -75,7 +88,7 @@ async function main() {
   // TOOLS
   // ---------------------------------------------------------------------------
 
-  const allTools = [...slackTools];
+  const allTools = [...slackTools, ...bufferTools];
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return { tools: allTools };
@@ -88,6 +101,16 @@ async function main() {
       // Handle Slack tools
       if (name.startsWith('slack_')) {
         const result = await handleSlackTools(name, args || {}, getSlackClient());
+        if (result !== null) {
+          return {
+            content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+          };
+        }
+      }
+
+      // Handle Buffer tools
+      if (name.startsWith('buffer_')) {
+        const result = await handleBufferTools(name, args || {}, getBufferApiKey());
         if (result !== null) {
           return {
             content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
@@ -114,6 +137,7 @@ async function main() {
 
   console.error('Send MCP Server v0.1.0 running on stdio');
   console.error(`Slack: ${SLACK_BOT_TOKEN ? 'enabled' : 'disabled (no token)'}`);
+  console.error(`Buffer: ${BUFFER_API_KEY ? 'enabled' : 'disabled (no key)'}`);
 }
 
 main().catch((error) => {
