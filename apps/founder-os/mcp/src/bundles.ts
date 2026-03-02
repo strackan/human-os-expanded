@@ -50,13 +50,15 @@ export type ModuleKey =
   | 'gft-ingestion'
   | 'crm'
   | 'outreach'
+  | 'social-posts'
   | 'demo'
   | 'transcripts'
   | 'fathom'
   | 'community-intel'
   | 'nominations'
   | 'contacts'
-  | 'sharing';
+  | 'sharing'
+  | 'voice-triggers';
 
 // =============================================================================
 // TIERS
@@ -95,6 +97,7 @@ const FOUNDER_OS: ModuleKey[] = [
   'email',
   'code',
   'okr-goals',
+  'voice-triggers',
 ];
 
 /** Product-specific modules */
@@ -105,6 +108,7 @@ const PRODUCT_SPECIFIC: ModuleKey[] = [
   'gft-ingestion',
   'crm',
   'outreach',
+  'social-posts',
   'demo',
   'transcripts',
   'fathom',
@@ -187,6 +191,7 @@ const BUNDLES: Record<BundleName, BundleDefinition> = {
       'gft-ingestion',
       'crm',
       'outreach',
+      'social-posts',
       'email',
       'voice',
       'nominations',
