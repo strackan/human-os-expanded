@@ -3,6 +3,7 @@
 import json
 from typing import Any
 
+from app.model_registry import PARSER_MODEL
 from app.models.response import ParsedMention, RecommendationType, Sentiment
 from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.llm_utils import extract_json
@@ -196,6 +197,6 @@ def get_parser(api_key: str | None = None) -> ResponseParser:
     """Factory function to create a parser with optional API key."""
     if api_key:
         # Use gpt-4o-mini for fast, cheap parsing
-        provider = OpenAIProvider(api_key=api_key, model="gpt-4o-mini")
+        provider = OpenAIProvider(api_key=api_key, model=PARSER_MODEL)
         return ResponseParser(parser_provider=provider)
     return ResponseParser()

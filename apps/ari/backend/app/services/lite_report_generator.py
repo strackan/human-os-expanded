@@ -6,6 +6,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.config import get_settings
+from app.model_registry import REPORT_MODEL
 from app.models.lite_report import (
     ArticleTeaser,
     DiscoveryResult,
@@ -157,7 +158,7 @@ async def synthesize(
         from app.services.ai_providers.anthropic_provider import AnthropicProvider
         provider = AnthropicProvider(
             api_key=settings.anthropic_api_key,
-            model="claude-sonnet-4-6",
+            model=REPORT_MODEL,
         )
     else:
         logger.warning("No AI provider available; skipping synthesis")

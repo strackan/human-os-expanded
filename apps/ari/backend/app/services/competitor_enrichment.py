@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 import httpx
 
 from app.config import get_settings
+from app.model_registry import COMPETITOR_VALIDATION_MODEL
 from app.models.lite_report import CompetitorInfo, DiscoveryResult
 
 logger = logging.getLogger(__name__)
@@ -230,7 +231,7 @@ async def _sonnet_validate_competitors(
             resp = await client.post(
                 "https://api.anthropic.com/v1/messages",
                 json={
-                    "model": "claude-sonnet-4-6",
+                    "model": COMPETITOR_VALIDATION_MODEL,
                     "max_tokens": 300,
                     "messages": [{"role": "user", "content": prompt}],
                 },

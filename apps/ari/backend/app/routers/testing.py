@@ -12,6 +12,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 from app.config import get_settings
+from app.model_registry import ANALYSIS_MODEL
 
 router = APIRouter()
 settings = get_settings()
@@ -422,7 +423,7 @@ Respond ONLY with valid JSON, no markdown formatting or code blocks."""
 
     try:
         response = await client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model=ANALYSIS_MODEL,
             max_tokens=2000,
             messages=[{"role": "user", "content": analysis_prompt}],
         )
@@ -439,7 +440,7 @@ Respond ONLY with valid JSON, no markdown formatting or code blocks."""
                 "entity_type": entity_type,
                 "ari_score": ari_score,
                 "analysis": analysis,
-                "model_used": "claude-sonnet-4-20250514"
+                "model_used": ANALYSIS_MODEL
             }
         except json.JSONDecodeError:
             return {
@@ -447,7 +448,7 @@ Respond ONLY with valid JSON, no markdown formatting or code blocks."""
                 "entity_type": entity_type,
                 "ari_score": ari_score,
                 "analysis_raw": analysis_text,
-                "model_used": "claude-sonnet-4-20250514",
+                "model_used": ANALYSIS_MODEL,
                 "parse_error": "Response was not valid JSON"
             }
 

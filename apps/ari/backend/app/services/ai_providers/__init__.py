@@ -5,6 +5,7 @@ from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.perplexity_provider import PerplexityProvider
 from app.services.ai_providers.gemini_provider import GeminiProvider
+from app.services.ai_providers.xai_provider import XAIProvider
 
 __all__ = [
     "AIProviderBase",
@@ -13,4 +14,5 @@ __all__ = [
     "AnthropicProvider",
     "PerplexityProvider",
     "GeminiProvider",
+    "XAIProvider",
 ]

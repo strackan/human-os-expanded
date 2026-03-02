@@ -16,7 +16,7 @@ class AnthropicProvider(AIProviderBase):
     operation in serverless environments (e.g. Vercel).
     """
 
-    def __init__(self, api_key: str, model: str = "claude-3-5-sonnet-20241022"):
+    def __init__(self, api_key: str, model: str):
         super().__init__(api_key, model)
         self.client = Anthropic(api_key=api_key)
 

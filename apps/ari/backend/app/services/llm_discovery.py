@@ -116,7 +116,6 @@ async def _openai_via_httpx(api_key: str, model: str, prompt: str, max_tokens: i
                     {"role": "user", "content": prompt},
                 ],
                 "max_completion_tokens": max_tokens,
-                "reasoning_effort": "low",
             },
         )
         resp.raise_for_status()

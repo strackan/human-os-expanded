@@ -9,6 +9,7 @@ import json
 import logging
 
 from app.config import get_settings
+from app.model_registry import EDITORIAL_MODEL
 from app.models.audit import BrandProfile, FounderProfile, ProductInfo
 from app.models.lite_report import DiscoveryResult
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
@@ -127,7 +128,7 @@ async def deep_profile(
 
     provider = AnthropicProvider(
         api_key=settings.anthropic_api_key,
-        model="claude-sonnet-4-6",
+        model=EDITORIAL_MODEL,
     )
 
     competitors_str = ", ".join(c.name for c in discovery.competitors[:5])

@@ -1,4 +1,4 @@
-"""OpenAI (ChatGPT) provider implementation."""
+"""xAI (Grok) provider implementation via OpenAI-compatible API."""
 
 import time
 
@@ -8,24 +8,26 @@ from app.models.response import AIProvider
 from app.services.ai_providers.base import AIProviderBase, ProviderResponse
 
 
-class OpenAIProvider(AIProviderBase):
-    """OpenAI/ChatGPT provider for ARI queries."""
+class XAIProvider(AIProviderBase):
+    """xAI/Grok provider for ARI queries.
+
+    Uses the OpenAI-compatible endpoint at https://api.x.ai/v1.
+    """
 
     def __init__(self, api_key: str, model: str):
         super().__init__(api_key, model)
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.client = AsyncOpenAI(
+            api_key=api_key,
+            base_url="https://api.x.ai/v1",
+        )
 
     @property
     def provider_name(self) -> AIProvider:
-        return AIProvider.OPENAI
+        return AIProvider.XAI
 
-    async def query(self, prompt: str, max_completion_tokens: int = 2000, max_tokens: int | None = None, **kwargs) -> ProviderResponse:
-        """Query OpenAI with a prompt."""
+    async def query(self, prompt: str, max_tokens: int = 2000, **kwargs) -> ProviderResponse:
+        """Query Grok with a prompt."""
         start_time = time.perf_counter()
-
-        # Accept max_tokens as alias for max_completion_tokens (Anthropic compat)
-        if max_tokens is not None:
-            max_completion_tokens = max_tokens
 
         try:
             response = await self.client.chat.completions.create(
@@ -37,7 +39,7 @@ class OpenAIProvider(AIProviderBase):
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_completion_tokens=max_completion_tokens,
+                max_tokens=max_tokens,
             )
 
             latency_ms = int((time.perf_counter() - start_time) * 1000)
@@ -56,7 +58,7 @@ class OpenAIProvider(AIProviderBase):
                 model_version=self.model,
                 tokens_used=None,
                 latency_ms=latency_ms,
-                error=f"OpenAI API error: {e.message}",
+                error=f"xAI API error: {e.message}",
             )
         except Exception as e:
             latency_ms = int((time.perf_counter() - start_time) * 1000)
@@ -69,12 +71,12 @@ class OpenAIProvider(AIProviderBase):
             )
 
     async def health_check(self) -> bool:
-        """Check if OpenAI is accessible."""
+        """Check if xAI is accessible."""
         try:
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": "Hello"}],
-                max_completion_tokens=100,
+                max_tokens=100,
             )
             return bool(response.choices)
         except Exception:

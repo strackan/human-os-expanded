@@ -13,6 +13,7 @@ from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.perplexity_provider import PerplexityProvider
 from app.services.ai_providers.gemini_provider import GeminiProvider
+from app.services.ai_providers.xai_provider import XAIProvider
 from app.services.response_parser import ResponseParser, get_parser
 from app.services.scoring_engine import ScoringEngine, get_scoring_engine
 
@@ -85,6 +86,12 @@ class PromptRunner:
             self.providers[AIProvider.GEMINI] = GeminiProvider(
                 api_key=self.settings.google_api_key,
                 model=self.settings.gemini_model,
+            )
+
+        if self.settings.has_xai():
+            self.providers[AIProvider.XAI] = XAIProvider(
+                api_key=self.settings.xai_api_key,
+                model=self.settings.xai_model,
             )
 
     async def run_prompt(

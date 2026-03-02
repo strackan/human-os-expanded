@@ -5,6 +5,15 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.model_registry import (
+    ANTHROPIC_FAST_CURRENT,
+    GOOGLE_FAST_CURRENT,
+    OPENAI_FAST_CURRENT,
+    PARSER_MODEL,
+    PERPLEXITY_FAST_CURRENT,
+    XAI_MEDIUM_CURRENT,
+)
+
 # Find .env file - check backend dir first, then project root
 _env_file = Path(__file__).parent.parent / ".env"
 if not _env_file.exists():
@@ -25,6 +34,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     perplexity_api_key: str = ""
     google_api_key: str = ""
+    xai_api_key: str = ""
 
     def model_post_init(self, __context) -> None:
         """Strip whitespace from all API keys."""
@@ -32,20 +42,26 @@ class Settings(BaseSettings):
         object.__setattr__(self, "anthropic_api_key", self.anthropic_api_key.strip())
         object.__setattr__(self, "perplexity_api_key", self.perplexity_api_key.strip())
         object.__setattr__(self, "google_api_key", self.google_api_key.strip())
+        object.__setattr__(self, "xai_api_key", self.xai_api_key.strip())
         object.__setattr__(self, "supabase_url", self.supabase_url.strip())
         object.__setattr__(self, "supabase_key", self.supabase_key.strip())
         object.__setattr__(self, "brave_search_api_key", self.brave_search_api_key.strip())
         object.__setattr__(self, "brave_answers_api_key", self.brave_answers_api_key.strip())
         object.__setattr__(self, "resend_api_key", self.resend_api_key.strip())
 
-    # AI Model Versions (Updated December 2025)
-    openai_model: str = "gpt-5-mini"
-    anthropic_model: str = "claude-3-5-haiku-latest"
-    perplexity_model: str = "sonar"  # Default Perplexity model
-    gemini_model: str = "gemini-2.5-flash"  # Stable 2.5 Flash
+    # AI Model Versions (defaults from model_registry)
+    openai_model: str = OPENAI_FAST_CURRENT
+    anthropic_model: str = ANTHROPIC_FAST_CURRENT
+    perplexity_model: str = PERPLEXITY_FAST_CURRENT
+    gemini_model: str = GOOGLE_FAST_CURRENT
+    xai_model: str = XAI_MEDIUM_CURRENT
 
     # Parser Model (fast + cheap for response extraction)
-    parser_model: str = "gpt-5-mini"
+    parser_model: str = PARSER_MODEL
+
+    # Tier flags (cost guard-rails for multi-provider scoring)
+    enable_medium_tier: bool = False
+    enable_heavy_tier: bool = False
 
     # Supabase Configuration
     supabase_url: str = ""
@@ -81,6 +97,10 @@ class Settings(BaseSettings):
         """Check if Gemini is configured."""
         return bool(self.google_api_key)
 
+    def has_xai(self) -> bool:
+        """Check if xAI (Grok) is configured."""
+        return bool(self.xai_api_key)
+
     def has_supabase(self) -> bool:
         """Check if Supabase is configured."""
         return bool(self.supabase_url and self.supabase_key)
@@ -108,6 +128,8 @@ class Settings(BaseSettings):
             providers.append("perplexity")
         if self.has_gemini():
             providers.append("gemini")
+        if self.has_xai():
+            providers.append("xai")
         return providers
 
 

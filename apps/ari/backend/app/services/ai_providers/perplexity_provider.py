@@ -13,7 +13,7 @@ class PerplexityProvider(AIProviderBase):
 
     BASE_URL = "https://api.perplexity.ai"
 
-    def __init__(self, api_key: str, model: str = "llama-3.1-sonar-large-128k-online"):
+    def __init__(self, api_key: str, model: str):
         super().__init__(api_key, model)
         self.headers = {
             "Authorization": f"Bearer {api_key}",

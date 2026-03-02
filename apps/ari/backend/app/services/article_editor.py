@@ -15,6 +15,7 @@ import re
 import time
 
 from app.config import get_settings
+from app.model_registry import EDITORIAL_MODEL
 from app.models.article_pipeline import EditorInput, EditorOutput, EditorsLog, PassResult
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.perplexity_provider import PerplexityProvider
@@ -237,7 +238,7 @@ class ArticleEditor:
         if settings.has_anthropic():
             self.fallback_provider = AnthropicProvider(
                 api_key=settings.anthropic_api_key,
-                model="claude-sonnet-4-6",
+                model=EDITORIAL_MODEL,
             )
 
     async def edit(self, input_data: EditorInput) -> EditorOutput:

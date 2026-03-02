@@ -10,6 +10,7 @@ import logging
 from typing import Callable
 
 from app.config import get_settings
+from app.model_registry import EDITORIAL_MODEL
 from app.models.audit import (
     AuditPromptDimension,
     AuditRenderedPrompt,
@@ -24,6 +25,7 @@ from app.services.ai_providers.base import AIProviderBase
 from app.services.ai_providers.gemini_provider import GeminiProvider
 from app.services.ai_providers.openai_provider import OpenAIProvider
 from app.services.ai_providers.perplexity_provider import PerplexityProvider
+from app.services.ai_providers.xai_provider import XAIProvider
 from app.services.response_parser import ResponseParser
 from app.services.scoring_engine import ScoringEngine
 
@@ -59,6 +61,12 @@ def _init_providers() -> dict[str, AIProviderBase]:
             model=settings.gemini_model,
         )
 
+    if settings.has_xai():
+        providers["xai"] = XAIProvider(
+            api_key=settings.xai_api_key,
+            model=settings.xai_model,
+        )
+
     return providers
 
 
@@ -87,7 +95,7 @@ async def run_audit(
     if settings.has_anthropic():
         parser_provider = AnthropicProvider(
             api_key=settings.anthropic_api_key,
-            model="claude-sonnet-4-6",
+            model=EDITORIAL_MODEL,
         )
     parser = ResponseParser(parser_provider=parser_provider)
 

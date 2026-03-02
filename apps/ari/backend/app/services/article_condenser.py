@@ -14,6 +14,7 @@ import re
 import time
 
 from app.config import get_settings
+from app.model_registry import EDITORIAL_MODEL
 from app.models.article_pipeline import CondenserInput, CondenserOutput
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.ai_providers.openai_provider import OpenAIProvider
@@ -110,7 +111,7 @@ class ArticleCondenser:
         if settings.has_anthropic():
             self.provider = AnthropicProvider(
                 api_key=settings.anthropic_api_key,
-                model="claude-sonnet-4-20250514",
+                model=EDITORIAL_MODEL,
             )
             self._provider_name = "anthropic"
         elif settings.has_openai():

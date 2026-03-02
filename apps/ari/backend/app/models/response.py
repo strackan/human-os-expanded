@@ -14,6 +14,7 @@ class AIProvider(str, Enum):
     ANTHROPIC = "anthropic"
     PERPLEXITY = "perplexity"
     GEMINI = "gemini"
+    XAI = "xai"
 
 
 class RecommendationType(str, Enum):

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from app.config import get_settings
+from app.model_registry import ARI_SCORING_MODEL
 from app.models.lite_report import (
     CompetitorScore,
     DiscoveryResult,
@@ -156,16 +157,16 @@ async def run_analysis(
     """
     settings = get_settings()
 
-    # Use OpenAI (reliable on Vercel serverless), fall back to Anthropic
-    if settings.has_openai():
+    # Use Anthropic Haiku (fast + reliable), fall back to OpenAI
+    if settings.has_anthropic():
+        provider = AnthropicProvider(
+            api_key=settings.anthropic_api_key,
+            model=ARI_SCORING_MODEL,
+        )
+    elif settings.has_openai():
         provider = OpenAIProvider(
             api_key=settings.openai_api_key,
             model=settings.openai_model,
-        )
-    elif settings.has_anthropic():
-        provider = AnthropicProvider(
-            api_key=settings.anthropic_api_key,
-            model="claude-sonnet-4-6",
         )
     else:
         raise ValueError("No AI provider available for analysis")

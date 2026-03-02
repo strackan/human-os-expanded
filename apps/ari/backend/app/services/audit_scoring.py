@@ -11,6 +11,7 @@ import json
 import logging
 
 from app.config import get_settings
+from app.model_registry import EDITORIAL_MODEL
 from app.models.audit import (
     AuditAnalysisResult,
     AuditPromptDimension,
@@ -109,7 +110,7 @@ class AuditScoringEngine:
 
         provider = AnthropicProvider(
             api_key=settings.anthropic_api_key,
-            model="claude-sonnet-4-6",
+            model=EDITORIAL_MODEL,
         )
 
         # Build ground truth
