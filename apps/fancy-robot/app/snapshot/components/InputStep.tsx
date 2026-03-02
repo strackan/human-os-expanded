@@ -26,7 +26,7 @@ export function InputStep({
           <span className="text-accent">your brand?</span>
         </h2>
         <p className="mt-4 max-w-lg mx-auto text-muted-foreground">
-          Enter your domain to get a free AI Visibility Snapshot. We'll
+          Enter your domain to get a free AI Visibility Snapshot. We&apos;ll
           analyze how AI models see your brand vs. competitors across key
           audience personas and topics.
         </p>

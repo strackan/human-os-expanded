@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { getSupabaseServer } from "@/lib/supabase-server";
 import type { SynthesisData, DiscoveryResult } from "@/lib/lite-report-client";
 import { ScoreGauge } from "../../components/ScoreGauge";
@@ -94,7 +95,7 @@ export default async function SharePage({
       {/* Header */}
       <header className="border-b border-border bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <a href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
               <span className="text-sm font-bold text-primary-foreground">
                 FR
@@ -103,13 +104,13 @@ export default async function SharePage({
             <span className="text-base font-bold tracking-tight text-foreground">
               Fancy Robot
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/snapshot"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Run Your Own Snapshot
-          </a>
+          </Link>
         </div>
       </header>
 
@@ -321,9 +322,9 @@ export default async function SharePage({
 
       {/* Footer */}
       <footer className="border-t border-border py-8 text-center text-xs text-muted-foreground">
-        <a href="/" className="hover:text-foreground">
+        <Link href="/" className="hover:text-foreground">
           Fancy Robot Creative
-        </a>{" "}
+        </Link>{" "}
         · AI Visibility Intelligence
       </footer>
     </div>

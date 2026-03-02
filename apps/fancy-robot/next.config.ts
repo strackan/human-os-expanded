@@ -4,7 +4,6 @@ const ARI_BACKEND =
   process.env.ARI_BACKEND_URL || "http://localhost:4250";
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
   async rewrites() {
     return [
       {

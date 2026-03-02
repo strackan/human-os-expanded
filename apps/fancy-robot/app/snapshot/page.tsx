@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { ContactModal } from "@/components/contact-modal";
 import { useSnapshotFlow } from "./hooks/useSnapshotFlow";
 import { InputStep } from "./components/InputStep";
@@ -28,7 +29,7 @@ function SnapshotContent() {
       {/* Minimal header */}
       <header className="border-b border-border bg-background/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <a href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary">
               <span className="text-sm font-bold text-primary-foreground">
                 FR
@@ -37,13 +38,13 @@ function SnapshotContent() {
             <span className="text-base font-bold tracking-tight text-foreground">
               Fancy Robot
             </span>
-          </a>
-          <a
+          </Link>
+          <Link
             href="/"
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </header>
 

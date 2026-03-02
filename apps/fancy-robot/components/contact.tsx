@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { submitContactForm } from "@/app/actions/contact";
 
@@ -144,14 +144,14 @@ export function ContactForm({ snapshotDomain = "" }: { snapshotDomain?: string }
   );
 }
 
-export function Contact() {
-  const [snapshotDomain, setSnapshotDomain] = useState("");
+function getInitialDomain() {
+  if (typeof window === "undefined") return "";
+  const params = new URLSearchParams(window.location.search);
+  return params.get("snapshot_domain") ?? "";
+}
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const domain = params.get("snapshot_domain");
-    if (domain) setSnapshotDomain(domain);
-  }, []);
+export function Contact() {
+  const [snapshotDomain] = useState(getInitialDomain);
 
   return (
     <section

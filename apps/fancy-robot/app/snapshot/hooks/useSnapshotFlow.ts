@@ -30,7 +30,7 @@ export function useSnapshotFlow() {
   // Analysis state
   const [analysisCurrent, setAnalysisCurrent] = useState(0);
   const [analysisTotal, setAnalysisTotal] = useState(0);
-  const [queryCount, setQueryCount] = useState(0);
+  const [, setQueryCount] = useState(0);
   const [statusMessage, setStatusMessage] = useState("");
   const [currentPrompt, setCurrentPrompt] = useState<PromptStart | null>(null);
   const [, setPromptResults] = useState<PromptResult[]>([]);
