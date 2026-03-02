@@ -187,6 +187,19 @@ export function useSnapshotFlow() {
     setPromptResults([]);
   };
 
+  const startFromDomain = useCallback(
+    (rawDomain: string) => {
+      const cleaned = rawDomain
+        .trim()
+        .replace(/^https?:\/\//, "")
+        .replace(/\/$/, "");
+      if (!cleaned) return;
+      setDomain(cleaned);
+      startAnalysis(cleaned);
+    },
+    [startAnalysis]
+  );
+
   const handleSuggestionSelect = (selectedDomain: string) => {
     setDomain(selectedDomain);
     setSuggestions([]);
@@ -236,5 +249,6 @@ export function useSnapshotFlow() {
     handleReset,
     handleSuggestionSelect,
     startAnalysis,
+    startFromDomain,
   };
 }

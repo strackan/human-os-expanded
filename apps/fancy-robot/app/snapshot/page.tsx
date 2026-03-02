@@ -1,5 +1,7 @@
 "use client";
 
+import { Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { ContactModal } from "@/components/contact-modal";
 import { useSnapshotFlow } from "./hooks/useSnapshotFlow";
 import { InputStep } from "./components/InputStep";
@@ -8,8 +10,18 @@ import { DiscoveryStep } from "./components/DiscoveryStep";
 import { AnalysisStep } from "./components/AnalysisStep";
 import { ResultsStep } from "./components/ResultsStep";
 
-export default function SnapshotPage() {
+function SnapshotContent() {
   const flow = useSnapshotFlow();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const domainParam = searchParams.get("domain");
+    if (domainParam && flow.step === "input" && !flow.domain) {
+      flow.startFromDomain(domainParam);
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -119,5 +131,13 @@ export default function SnapshotPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function SnapshotPage() {
+  return (
+    <Suspense>
+      <SnapshotContent />
+    </Suspense>
   );
 }
