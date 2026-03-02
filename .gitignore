@@ -62,6 +62,9 @@ __pycache__/
 .venv/
 *.db
 
+# Promptfoo test artifacts
+apps/ari/backend/promptfoo/*.json
+
 # Git worktrees (code orchestrator isolation)
 .worktrees/
 
