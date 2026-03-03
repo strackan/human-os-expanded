@@ -19,6 +19,21 @@ export const metadata: Metadata = {
   title: "Fancy Robot Creative — Does AI Recommend Your Brand?",
   description:
     "We measure how AI sees your brand, find the gaps, and fix them. Get your AI Visibility Score today.",
+  metadataBase: new URL("https://fancyrobot.com"),
+  openGraph: {
+    title: "Fancy Robot Creative — Does AI Recommend Your Brand?",
+    description:
+      "We measure how AI sees your brand across ChatGPT, Claude, Gemini, and more. Get your free AI Visibility Score in 30 seconds.",
+    url: "https://fancyrobot.com",
+    siteName: "Fancy Robot Creative",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Fancy Robot Creative — Does AI Recommend Your Brand?",
+    description:
+      "We measure how AI sees your brand across ChatGPT, Claude, Gemini, and more. Get your free AI Visibility Score in 30 seconds.",
+  },
 };
 
 export const viewport: Viewport = {

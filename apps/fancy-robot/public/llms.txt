@@ -1,0 +1,41 @@
+# Fancy Robot Creative — AI Visibility Intelligence
+
+> We measure how AI recommends your brand, find the gaps, and fix them.
+
+## What We Do
+
+Fancy Robot measures AI visibility — how often and how favorably AI assistants (ChatGPT, Claude, Gemini, Perplexity, and others) recommend a brand when users ask questions in its category.
+
+We use a proprietary scoring system called the **ARI (AI Recommendation Index)**, scored 0-100, based on:
+- **Mention Frequency** (40%) — How often AI mentions the brand
+- **Position Quality** (25%) — Where the brand ranks in recommendation lists
+- **Narrative Accuracy** (20%) — Whether AI describes the brand correctly
+- **Founder Retrieval** (15%) — Whether AI knows the people behind the brand
+
+## Services
+
+### Free AI Visibility Snapshot
+- Enter any domain at https://fancyrobot.com/snapshot
+- 20 open-ended prompts across 4 personas and 4 topics
+- Scored against a single AI model in ~30 seconds
+- Includes competitor comparison, persona breakdown, and strategic recommendations
+
+### Full AI Visibility Audit
+- 60+ prompts across 8 dimensions (category default, use case, comparison, attribute-specific, gift/social, founder/brand, geographic, adjacent category)
+- Tested across 4+ AI models (OpenAI, Anthropic, Google Gemini, Perplexity)
+- Anti-pattern detection (Kleenex Effect, Premium Tax, Founder Invisibility, etc.)
+- Consultant-quality narrative report with named core problem and strategic recommendations
+- PDF deliverable
+
+### AI Visibility Growth
+- Content strategy based on audit findings
+- Distribution through 2,500+ publication network
+- Structured data implementation
+- Re-measurement to confirm improvement
+
+## Industries
+Financial services, healthcare, SaaS, professional services, e-commerce, nonprofits.
+
+## Contact
+- Website: https://fancyrobot.com
+- Email: hello@fancyrobot.ai
