@@ -11,6 +11,8 @@
  *    - gft.li_posts (public LinkedIn posts)
  *    - gft.activities (interaction history)
  *    - relationship_context (layer-scoped opinions)
+ *    - human_os.entities (entity spine — goals, scores, metadata)
+ *    - human_os.interactions (goal activity, ARI events)
  *    - context_files (skills files in permitted layers)
  *    - skills_tools / skills_programs (tool/program definitions)
  *    - renubu.transcripts (tenant-scoped call transcripts)
@@ -55,6 +57,7 @@ import { transcriptTools, handleTranscriptTools } from './tools/transcripts.js';
 import { teamIntelTools, handleTeamIntelTools } from './tools/team-intel.js';
 import { ariEnrichmentTools, handleAriEnrichmentTools } from './tools/ari-enrichment.js';
 import { competitiveIntelTools, handleCompetitiveIntelTools } from './tools/competitive-intel.js';
+import { goalTools, handleGoalTools } from './tools/goals.js';
 
 // =============================================================================
 // TOOL DEFINITIONS
@@ -251,6 +254,7 @@ const allTools: Tool[] = [
   ...teamIntelTools,
   ...ariEnrichmentTools,
   ...competitiveIntelTools,
+  ...goalTools,
 ];
 
 // =============================================================================
@@ -436,6 +440,7 @@ const toolHandlers: ToolHandler[] = [
   handleTeamIntelTools,
   handleAriEnrichmentTools,
   handleCompetitiveIntelTools,
+  handleGoalTools,
 ];
 
 // =============================================================================
