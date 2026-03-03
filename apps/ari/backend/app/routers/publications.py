@@ -42,6 +42,7 @@ from app.models.publications import (
     DistributorCreate,
     GroupMemberAdd,
     GroupType,
+    PlacementStatus,
     Publication,
     PublicationCitation,
     PublicationGroup,
@@ -51,6 +52,7 @@ from app.models.publications import (
     StrategyImportRequest,
     StrategyImportResult,
 )
+from app.storage import supabase_publications as sb_pub
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,107 @@ _citations: list[PublicationCitation] = []           # raw citation rows
 _groups: dict[str, PublicationGroup] = {}            # slug → PublicationGroup
 _group_members: dict[str, set[str]] = {}            # group_slug → set of pub_ids
 _article_publications: dict[str, list[ArticlePublication]] = {}  # run_id → placements
+
+_loaded_from_db = False
+
+
+def load_from_supabase() -> dict[str, int]:
+    """Populate in-memory stores from Supabase. Returns counts per table."""
+    global _loaded_from_db
+    if _loaded_from_db:
+        return {}
+
+    counts: dict[str, int] = {}
+
+    # Distributors
+    for row in sb_pub.load_all_distributors():
+        slug = row["slug"]
+        _distributors[slug] = Distributor(
+            id=row["id"], name=row["name"], slug=slug,
+            website=row.get("website", ""), description=row.get("description", ""),
+        )
+    counts["distributors"] = len(_distributors)
+
+    # Publications
+    for row in sb_pub.load_all_publications():
+        pid = str(row["id"])
+        pub = Publication(
+            id=row["id"],
+            distributor_id=row.get("distributor_id"),
+            name=row["name"],
+            url=row.get("url", ""),
+            domain=row.get("domain", ""),
+            domain_authority=row.get("domain_authority"),
+            domain_rating=row.get("domain_rating"),
+            ai_score=row.get("ai_score"),
+            ai_tier=row.get("ai_tier", ""),
+            common_crawl=row.get("common_crawl", ""),
+            price_usd=row.get("price_usd"),
+            turnaround=row.get("turnaround", ""),
+            region=row.get("region", ""),
+            dofollow=row.get("dofollow", False),
+            publication_type=row.get("publication_type", "news"),
+            category=row.get("category", ""),
+            citation_count=row.get("citation_count", 0),
+            source_lists=row.get("source_lists") or [],
+            recommendation_tier=row.get("recommendation_tier"),
+            metadata=row.get("metadata") or {},
+        )
+        _publications[pid] = pub
+        if pub.url:
+            _pub_by_url[pub.url] = pid
+        if pub.domain and pub.domain not in _pub_by_domain:
+            _pub_by_domain[pub.domain] = pid
+    counts["publications"] = len(_publications)
+
+    # Citations
+    for row in sb_pub.load_all_citations():
+        _citations.append(PublicationCitation(
+            id=row["id"],
+            publication_id=row["publication_id"],
+            source_url=row.get("source_url", ""),
+            domain=row.get("domain", ""),
+            model=row.get("model", ""),
+            persona=row.get("persona", ""),
+            question=row.get("question", ""),
+            topics=row.get("topics") or [],
+            answer_id=row.get("answer_id", ""),
+            prompt_id=row.get("prompt_id", ""),
+        ))
+    counts["citations"] = len(_citations)
+
+    # Groups
+    for row in sb_pub.load_all_groups():
+        slug = row["slug"]
+        _groups[slug] = PublicationGroup(
+            id=row["id"], name=row["name"], slug=slug,
+            group_type=GroupType(row["group_type"]),
+            description=row.get("description", ""),
+            metadata=row.get("metadata") or {},
+        )
+        if slug not in _group_members:
+            _group_members[slug] = set()
+    counts["groups"] = len(_groups)
+
+    # Group members
+    member_count = 0
+    for row in sb_pub.load_all_group_members():
+        gid = row["group_id"]
+        pid = str(row["publication_id"])
+        # Find group slug by id
+        for slug, g in _groups.items():
+            if str(g.id) == gid:
+                if slug not in _group_members:
+                    _group_members[slug] = set()
+                _group_members[slug].add(pid)
+                member_count += 1
+                break
+    counts["group_members"] = member_count
+
+    _loaded_from_db = True
+    if any(v > 0 for v in counts.values()):
+        logger.info(f"Loaded publications data from Supabase: {counts}")
+    return counts
 
 
 # ---------------------------------------------------------------------------
@@ -310,7 +413,17 @@ async def import_csv(request: CSVImportRequest) -> CSVImportResult:
 
     _recompute_all_tiers()
 
-    logger.info(f"CSV import: {imported} new, {updated} updated from {request.distributor_name}")
+    # Persist to Supabase
+    sb_pub.upsert_distributor(distributor)
+    all_pubs = list(_publications.values())
+    persisted_pubs = sb_pub.upsert_publications_batch(all_pubs)
+    for slug in tier_groups_seen:
+        tier_slug = _slugify(slug)
+        if tier_slug in _groups:
+            sb_pub.upsert_group(_groups[tier_slug])
+            sb_pub.set_group_members(str(_groups[tier_slug].id), _group_members.get(tier_slug, set()))
+
+    logger.info(f"CSV import: {imported} new, {updated} updated from {request.distributor_name} ({persisted_pubs} persisted)")
     return CSVImportResult(
         distributor_id=str(distributor.id), distributor_name=distributor.name,
         publications_imported=imported, publications_updated=updated,
@@ -394,6 +507,11 @@ async def import_sources(request: SourcesImportRequest) -> SourcesImportResult:
 
     _recompute_all_tiers()
 
+    # Persist to Supabase
+    all_pubs = list(_publications.values())
+    sb_pub.upsert_publications_batch(all_pubs)
+    sb_pub.insert_citations_batch(_citations)
+
     logger.info(
         f"Sources import: {domains_imported} new domains, {domains_updated} updated, "
         f"{citations_created} citations from {request.filename}"
@@ -429,6 +547,10 @@ async def import_strategy(request: StrategyImportRequest) -> StrategyImportResul
             tagged += 1
 
     _recompute_all_tiers()
+
+    # Persist to Supabase
+    all_pubs = list(_publications.values())
+    sb_pub.upsert_publications_batch(all_pubs)
 
     total_strategy = sum(1 for p in _publications.values() if "strategy" in p.source_lists)
 
@@ -663,6 +785,7 @@ async def create_distributor(request: DistributorCreate) -> dict[str, Any]:
         raise HTTPException(status_code=409, detail=f"Distributor '{slug}' already exists")
     dist = Distributor(name=request.name, slug=slug, website=request.website, description=request.description)
     _distributors[slug] = dist
+    sb_pub.upsert_distributor(dist)
     return _dist_to_dict(dist)
 
 
@@ -693,6 +816,7 @@ async def create_group(request: PublicationGroupCreate) -> dict[str, Any]:
     )
     _groups[slug] = group
     _group_members[slug] = set()
+    sb_pub.upsert_group(group)
     return {
         "id": str(group.id), "name": group.name, "slug": group.slug,
         "group_type": group.group_type.value, "description": group.description,
@@ -719,6 +843,7 @@ async def add_group_members(group_id: str, request: GroupMemberAdd) -> dict[str,
         if pub_id_str in _publications:
             _group_members[group_slug].add(pub_id_str)
             added += 1
+    sb_pub.set_group_members(str(group.id), _group_members[group_slug])
     return {
         "group_id": str(group.id), "group_name": group.name,
         "members_added": added, "total_members": len(_group_members[group_slug]),
@@ -746,6 +871,7 @@ async def assign_article_publications(
             continue
         ap = ArticlePublication(article_run_id=UUID(run_id), publication_id=pub_id, status=request.status)
         _article_publications[run_id].append(ap)
+        sb_pub.upsert_article_publication(ap)
         created.append(str(ap.id))
     return {
         "run_id": run_id,

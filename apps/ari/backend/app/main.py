@@ -21,6 +21,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print(f"Available AI providers: {providers or 'None configured'}")
     print(f"Supabase configured: {settings.has_supabase()}")
 
+    # Load persisted publications data from Supabase
+    if settings.has_supabase():
+        counts = publications.load_from_supabase()
+        if counts:
+            print(f"Loaded publications from Supabase: {counts}")
+
     yield
 
     # Shutdown

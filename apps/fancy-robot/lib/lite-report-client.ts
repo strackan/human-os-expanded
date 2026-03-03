@@ -3,7 +3,10 @@
  * Uses POST-based SSE via fetch + ReadableStream (EventSource doesn't support POST).
  */
 
-const API_BASE = "/api/v1";
+const API_BASE =
+  typeof window !== "undefined" && window.location.hostname === "localhost"
+    ? "http://localhost:4250/api/v1"
+    : "/api/v1";
 
 // --- Data models ---
 

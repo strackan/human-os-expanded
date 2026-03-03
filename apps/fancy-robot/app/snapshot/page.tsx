@@ -17,10 +17,10 @@ function SnapshotContent() {
 
   useEffect(() => {
     const domainParam = searchParams.get("domain");
-    if (domainParam && flow.step === "input" && !flow.domain) {
+    if (domainParam) {
       flow.startFromDomain(domainParam);
     }
-    // Only run on mount
+    // Only run on mount — no deps so strict-mode re-mount restarts the fetch
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -10,12 +10,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.routers.publications import (
     import_csv, import_sources, import_strategy, get_tiers,
     create_group, add_group_members,
-    _publications, _pub_by_domain, _groups, _group_members,
+    _publications, _pub_by_domain, _groups, _group_members, _citations,
 )
 from app.models.publications import (
     CSVImportRequest, SourcesImportRequest, StrategyImportRequest,
     PublicationGroupCreate, GroupMemberAdd, GroupType,
 )
+from app.storage import supabase_publications as sb_pub
 
 ARI = Path(__file__).parent.parent.parent
 
@@ -152,6 +153,21 @@ async def main():
     for p in cross[:20]:
         lists = "+".join(p.source_lists)
         print(f"  T{p.recommendation_tier} {p.domain:30s} cites={p.citation_count:>4} score={str(p.ai_score or '-'):>5} [{lists}]")
+
+    # === SUPABASE PERSISTENCE SUMMARY ===
+    print("\n=== SUPABASE PERSISTENCE ===")
+    db_dists = sb_pub.load_all_distributors()
+    db_pubs = sb_pub.load_all_publications()
+    db_cites = sb_pub.load_all_citations()
+    db_groups = sb_pub.load_all_groups()
+    db_members = sb_pub.load_all_group_members()
+    print(f"  distributors:    {len(db_dists):>6}")
+    print(f"  publications:    {len(db_pubs):>6}")
+    print(f"  citations:       {len(db_cites):>6}")
+    print(f"  groups:          {len(db_groups):>6}")
+    print(f"  group_members:   {len(db_members):>6}")
+    if not db_pubs:
+        print("  ⚠ No data in Supabase — check SUPABASE_URL and SUPABASE_KEY in .env")
 
 
 asyncio.run(main())
