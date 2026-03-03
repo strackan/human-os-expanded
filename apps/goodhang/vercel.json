@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "rm -rf packages/*/node_modules apps/*/node_modules apps/goodhang/.next && pnpm install --no-frozen-lockfile",
+  "installCommand": "rm -rf apps/goodhang/.next && pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm turbo build --filter=@human-os/goodhang --force"
 }
