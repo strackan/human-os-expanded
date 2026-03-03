@@ -24,6 +24,50 @@ from app.services.event_emitter import emit_score_event
 
 logger = logging.getLogger(__name__)
 
+# ── Fuzzy entity deduplication ────────────────────────────────────────
+
+_NOISE_WORDS = {"the", "a", "an", "inc", "llc", "ltd", "corp", "co", "company", "foundation", "group", "organization"}
+
+
+def _normalize_tokens(name: str) -> set[str]:
+    """Extract meaningful tokens from a company name for fuzzy matching."""
+    import re
+    # Remove parenthetical suffixes and punctuation
+    name = re.sub(r"\s*\(.*?\)\s*", " ", name.lower())
+    name = re.sub(r"[^\w\s]", " ", name)
+    tokens = set(name.split()) - _NOISE_WORDS
+    return {t for t in tokens if len(t) > 1}
+
+
+def _names_match(a: str, b: str) -> bool:
+    """Check if two entity names likely refer to the same company.
+
+    Uses bidirectional substring check + token subset/overlap.
+    """
+    a_low, b_low = a.lower().strip(), b.lower().strip()
+
+    # Exact match
+    if a_low == b_low:
+        return True
+
+    # Bidirectional substring (catches "Toys for Tots" ⊂ "Marine Toys for Tots Foundation")
+    if a_low in b_low or b_low in a_low:
+        return True
+
+    # Token-based matching (strips noise words like "the", "inc", "foundation")
+    a_tok, b_tok = _normalize_tokens(a), _normalize_tokens(b)
+    if not a_tok or not b_tok:
+        return False
+
+    # Subset: one token set fully contains the other
+    # (catches "Salvation Army" ⊂ "Salvation Army Angel Tree")
+    if a_tok <= b_tok or b_tok <= a_tok:
+        return True
+
+    # Jaccard similarity for remaining cases
+    jaccard = len(a_tok & b_tok) / len(a_tok | b_tok)
+    return jaccard >= 0.6
+
 # Open-ended prompt templates — never name competitors.  Let the LLM
 # spontaneously recommend whoever it thinks is best so mention rates
 # reflect genuine AI visibility (Gumshoe-style methodology).
@@ -265,9 +309,18 @@ async def run_analysis(
             # Collect ALL mentioned entities (except the target company)
             for m in mentions:
                 entity_key = m.normalized_name
-                # Skip the target company itself
-                if entity_key == company_name.lower() or company_name.lower() in entity_key:
+                # Skip the target company itself (fuzzy — catches variants like
+                # "Marine Toys for Tots" vs "Toys for Tots")
+                if _names_match(entity_key, company_name):
                     continue
+
+                # Check if this entity matches an already-tracked one (dedup)
+                merged = False
+                for existing_key in list(discovered_entities.keys()):
+                    if _names_match(entity_key, existing_key):
+                        entity_key = existing_key  # merge into the earlier entry
+                        merged = True
+                        break
 
                 if entity_key not in discovered_entities:
                     discovered_entities[entity_key] = []
@@ -285,7 +338,7 @@ async def run_analysis(
                 # Track which competitor got mentioned most for this persona
                 for m in mentions:
                     entity_key = m.normalized_name
-                    if entity_key == company_name.lower() or company_name.lower() in entity_key:
+                    if _names_match(entity_key, company_name):
                         continue
                     comp_counts = persona_stats[prompt.persona]["comp_mentions"]
                     display = entity_display_names.get(entity_key, m.entity_name)
@@ -335,8 +388,8 @@ async def run_analysis(
         entity_ari = (sum(entity_scores) / (total_weight * 100)) * 100 if total_weight > 0 else 0.0
 
         # Determine source: "known" if in discovery.competitors, else "discovered"
-        source = "known" if entity_key in known_competitor_names or any(
-            entity_key == c.name.lower() or c.name.lower() in entity_key
+        source = "known" if any(
+            _names_match(entity_key, c.name)
             for c in discovery.competitors
         ) else "discovered"
 

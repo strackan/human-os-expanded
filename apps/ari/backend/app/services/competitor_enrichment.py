@@ -402,7 +402,14 @@ async def enrich_competitors(discovery: DiscoveryResult) -> DiscoveryResult:
             if not c.domain and domain_map.get(c.name):
                 c.domain = domain_map[c.name]
 
-    # 7. Cache
+    # 7. Filter out any competitor whose domain matches the target
+    target_domain = discovery.domain.lower().removeprefix("www.")
+    discovery.competitors = [
+        c for c in discovery.competitors
+        if not c.domain or c.domain.lower().removeprefix("www.") != target_domain
+    ]
+
+    # 8. Cache
     await _save_cached_competitors(
         discovery.domain, discovery.company_name, discovery.industry, discovery.competitors
     )

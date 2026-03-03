@@ -157,9 +157,11 @@ async def llm_discover(domain: str, site_text: str) -> DiscoveryResult:
 
     data = extract_json(response_text)
 
+    target_domain = domain.lower().removeprefix("www.")
     competitors = [
         CompetitorInfo(name=c["name"], domain=c.get("domain", ""))
         for c in data.get("competitors", [])
+        if c.get("domain", "").lower().removeprefix("www.") != target_domain
     ]
 
     return DiscoveryResult(

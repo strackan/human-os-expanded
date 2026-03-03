@@ -29,7 +29,7 @@ export function CompetitorBars({
             <span
               className={`text-sm ${
                 item.isCompany
-                  ? "font-bold text-accent"
+                  ? "font-bold text-emerald-600"
                   : item.source === "discovered"
                     ? "text-amber-500"
                     : "text-muted-foreground"
@@ -47,7 +47,7 @@ export function CompetitorBars({
             <div
               className={`h-full rounded-full transition-all duration-700 ease-out ${
                 item.isCompany
-                  ? "bg-accent"
+                  ? "bg-emerald-600"
                   : item.source === "discovered"
                     ? "bg-amber-500/40"
                     : "bg-muted-foreground/30"
