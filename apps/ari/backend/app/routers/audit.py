@@ -251,6 +251,36 @@ async def analyze(request: AuditAnalyzeRequest):
                 "gaps": [g.model_dump() for g in gaps[:8]],
             }})
 
+            # Phase 6.5: Zero-Mention Probing
+            from app.services.zero_mention_probe import detect_audit_zero_mentions, run_probes as run_zero_probes
+
+            audit_triggers = detect_audit_zero_mentions(profile, analysis)
+            if audit_triggers:
+                yield _sse_event({"type": "status", "status": "probing_zero_mentions", "message": f"Diagnosing {len(audit_triggers)} zero-mention blind spots..."})
+
+                from app.config import get_settings as get_audit_settings
+                from app.model_registry import ARI_SCORING_MODEL
+                from app.services.ai_providers.anthropic_provider import AnthropicProvider as AuditAnthropicProvider
+
+                audit_settings = get_audit_settings()
+                probe_provider = AuditAnthropicProvider(
+                    api_key=audit_settings.anthropic_api_key,
+                    model=ARI_SCORING_MODEL,
+                )
+
+                def on_probe_progress(evt: dict):
+                    queue.put_nowait(evt)
+
+                probe_results = await run_zero_probes(
+                    brand_name=profile.company_name,
+                    category=profile.entity_type or profile.industry,
+                    triggers=audit_triggers,
+                    provider=probe_provider,
+                    on_progress=on_probe_progress,
+                    max_probes=6,
+                )
+                analysis.zero_mention_probes = probe_results
+
             # Phase 7: Report Composition (streaming per-section)
             yield _sse_event({"type": "status", "status": "composing_report", "message": "Composing consultant-quality report..."})
 

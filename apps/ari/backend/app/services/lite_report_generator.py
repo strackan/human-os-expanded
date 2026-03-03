@@ -37,6 +37,9 @@ Description: {description}
 ## Topic Breakdown
 {topic_data}
 
+## Zero-Mention Probe Insights
+{probe_data}
+
 ## Your Task
 Analyze this data and produce ONLY valid JSON. Do not wrap in markdown code fences. Start with {{ and end with }}.
 
@@ -81,7 +84,9 @@ strategic_recommendations guidelines: Generate exactly 5 recommendations. Start 
     }}
   ],
 
-  "headline_stat": "A punchy one-liner comparison. Be specific with a multiplier or stark contrast. Examples: 'Competitor X appears 18x more often than {company_name}' or '{company_name} is invisible in 3 of 4 audience segments' or 'AI recommends the competition X% more often'."
+  "headline_stat": "A punchy one-liner comparison. Be specific with a multiplier or stark contrast. Examples: 'Competitor X appears 18x more often than {company_name}' or '{company_name} is invisible in 3 of 4 audience segments' or 'AI recommends the competition X% more often'.",
+
+  "zero_mention_analysis": "If zero-mention probe data is provided above, write 2-3 sentences synthesizing the key diagnostic findings: what the AI knows (or doesn't) about the brand, why it's being excluded, and the single most impactful action to fix it. If no probe data, return empty string."
 }}
 
 CRITICAL RULES:
@@ -90,6 +95,34 @@ CRITICAL RULES:
 - The strategic_recommendations array must have EXACTLY 5 items, each starting with an ALL CAPS action verb
 - Be provocative but fair — name real problems, don't sugarcoat
 - The report_title and core_finding should feel like something a client would remember and repeat"""
+
+
+def _format_probe_data(analysis: LiteAnalysisResult) -> str:
+    """Format zero-mention probe results for the synthesis prompt."""
+    if not analysis.zero_mention_probes:
+        return "No zero-mention triggers detected — brand appeared in all segments."
+
+    lines = []
+    for probe in analysis.zero_mention_probes:
+        context_parts = []
+        if probe.persona:
+            context_parts.append(f"persona={probe.persona}")
+        if probe.topic:
+            context_parts.append(f"topic={probe.topic}")
+        context = ", ".join(context_parts) if context_parts else "overall"
+
+        line = f"- [{probe.probe_type.value}] {context}: "
+        if probe.key_insight:
+            line += probe.key_insight
+        else:
+            line += f"knowledge={probe.knowledge_level.value}"
+        if probe.gap_types:
+            line += f" | gaps: {', '.join(g.value for g in probe.gap_types)}"
+        if probe.suggested_actions:
+            line += f" | actions: {'; '.join(probe.suggested_actions[:2])}"
+        lines.append(line)
+
+    return "\n".join(lines)
 
 
 def _format_competitor_data(analysis: LiteAnalysisResult, company_name: str) -> str:
@@ -176,6 +209,7 @@ async def synthesize(
         competitor_data=_format_competitor_data(analysis, discovery.company_name),
         persona_data=_format_persona_data(analysis),
         topic_data=_format_topic_data(analysis),
+        probe_data=_format_probe_data(analysis),
     )
 
     response = await provider.query(prompt, max_tokens=4096)
@@ -197,6 +231,7 @@ async def synthesize(
         analysis.strategic_recommendations = data.get("strategic_recommendations", [])[:5]
         analysis.opportunities = data.get("opportunities", [])[:3]
         analysis.headline_stat = data.get("headline_stat", "")
+        analysis.zero_mention_analysis = data.get("zero_mention_analysis", "")
 
         teasers = []
         for t in data.get("article_teasers", [])[:3]:

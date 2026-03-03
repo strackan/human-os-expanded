@@ -4,12 +4,15 @@ from enum import Enum
 
 from pydantic import BaseModel, Field
 
+from app.models.zero_mention_probe import ZeroMentionProbeResult
+
 
 class LiteReportStatus(str, Enum):
     """Status progression for a lite report job."""
 
     DISCOVERING = "discovering"
     ANALYZING = "analyzing"
+    PROBING = "probing"
     SCORING = "scoring"
     SYNTHESIZING = "synthesizing"
     GENERATING = "generating"
@@ -96,4 +99,6 @@ class LiteAnalysisResult(BaseModel):
     report_title: str = ""
     core_finding: str = ""
     core_finding_detail: str = ""
+    zero_mention_probes: list[ZeroMentionProbeResult] = Field(default_factory=list)
+    zero_mention_analysis: str = ""
     strategic_recommendations: list[str] = Field(default_factory=list)

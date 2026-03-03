@@ -21,6 +21,7 @@ from app.services.response_parser import ResponseParser
 from app.services.scoring_engine import ScoringEngine
 from app.storage.supabase_entities import find_or_create_entity, update_entity_ari_score
 from app.services.event_emitter import emit_score_event
+from app.services.zero_mention_probe import detect_lite_zero_mentions, run_probes
 
 logger = logging.getLogger(__name__)
 
@@ -452,6 +453,25 @@ async def run_analysis(
         persona_breakdown=persona_breakdowns,
         topic_breakdown=topic_breakdowns,
     )
+
+    # Zero-mention probing: diagnose blind spots
+    triggers = detect_lite_zero_mentions(discovery, result)
+    if triggers:
+        if on_progress:
+            on_progress({
+                "type": "status",
+                "status": "probing",
+                "message": f"Diagnosing {len(triggers)} zero-mention blind spots...",
+            })
+        probe_results = await run_probes(
+            brand_name=company_name,
+            category=discovery.entity_type,
+            triggers=triggers,
+            provider=provider,
+            on_progress=on_progress,
+            max_probes=6,
+        )
+        result.zero_mention_probes = probe_results
 
     # Write score to entity metadata + emit interaction event
     try:

@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field
 
 from app.models.lite_report import CompetitorInfo, DiscoveryResult
+from app.models.zero_mention_probe import ZeroMentionProbeResult
 
 
 # --- Enums ---
@@ -219,6 +220,9 @@ class AuditAnalysisResult(BaseModel):
     mentions_count: int = 0
     all_results: list[PromptAnalysisResult] = Field(default_factory=list)
 
+    # Zero-mention probes
+    zero_mention_probes: list[ZeroMentionProbeResult] = Field(default_factory=list)
+
     # Cost tracking
     total_tokens: int = 0
     estimated_cost_usd: float = 0.0
@@ -262,6 +266,7 @@ class AuditReport(BaseModel):
     dimension_analysis: str = ""
     anti_patterns_section: str = ""
     recommendations: str = ""
+    zero_mention_analysis: str = ""
     pitch_hook: str = ""
     full_markdown: str = ""
 
@@ -278,6 +283,7 @@ class AuditRunStatus(str, Enum):
     ANALYZING = "analyzing"
     SCORING = "scoring"
     DETECTING_PATTERNS = "detecting_patterns"
+    PROBING_ZERO_MENTIONS = "probing_zero_mentions"
     COMPOSING_REPORT = "composing_report"
     GENERATING_PDF = "generating_pdf"
     COMPLETED = "completed"

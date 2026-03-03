@@ -24,6 +24,7 @@ from app.models.audit import (
     GapAnalysis,
     SEVERITY_DISPLAY,
 )
+from app.models.zero_mention_probe import ZeroMentionProbeResult
 from app.services.ai_providers.anthropic_provider import AnthropicProvider
 from app.services.llm_utils import extract_json
 
@@ -95,6 +96,13 @@ class AuditReportComposer:
         # Stage 5: Recommendations
         emit("recommendations")
         report.recommendations = await self._compose_recommendations(ctx, gaps)
+
+        # Stage 5.5: Zero-Mention Blind Spot Analysis
+        if analysis.zero_mention_probes:
+            emit("zero_mention_analysis")
+            report.zero_mention_analysis = await self._compose_zero_mention_analysis(
+                ctx, analysis.zero_mention_probes
+            )
 
         # Stage 6: Pitch Hook
         emit("pitch_hook")
@@ -182,7 +190,26 @@ Awards: {', '.join(profile.awards[:3]) if profile.awards else 'None identified'}
 {ap_str}
 
 ## Total: {analysis.total_prompts} unique prompts, {analysis.total_responses} total responses across {len(analysis.provider_scores)} AI models
-"""
+{self._format_probe_context(analysis)}"""
+
+    def _format_probe_context(self, analysis: AuditAnalysisResult) -> str:
+        """Format probe results as context for report composition prompts."""
+        if not analysis.zero_mention_probes:
+            return ""
+
+        lines = ["\n## Zero-Mention Probe Insights"]
+        for p in analysis.zero_mention_probes:
+            parts = []
+            if p.persona:
+                parts.append(f"persona={p.persona}")
+            if p.dimension:
+                parts.append(f"dimension={p.dimension}")
+            context = ", ".join(parts) if parts else "overall"
+            line = f"  - [{p.probe_type.value}] {context}: knowledge={p.knowledge_level.value}"
+            if p.key_insight:
+                line += f" — {p.key_insight}"
+            lines.append(line)
+        return "\n".join(lines)
 
     async def _llm_call(self, prompt: str) -> str:
         """Make a single LLM call and return the text."""
@@ -289,6 +316,45 @@ Requirements:
 
         return await self._llm_call(prompt)
 
+    async def _compose_zero_mention_analysis(
+        self, ctx: str, probes: list[ZeroMentionProbeResult]
+    ) -> str:
+        probe_lines = []
+        for p in probes:
+            context_parts = []
+            if p.persona:
+                context_parts.append(f"persona={p.persona}")
+            if p.topic:
+                context_parts.append(f"topic={p.topic}")
+            if p.dimension:
+                context_parts.append(f"dimension={p.dimension}")
+            context = ", ".join(context_parts) if context_parts else "overall"
+            line = f"- [{p.probe_type.value}] {context}: knowledge={p.knowledge_level.value}"
+            if p.gap_types:
+                line += f", gaps={[g.value for g in p.gap_types]}"
+            if p.key_insight:
+                line += f" — {p.key_insight}"
+            probe_lines.append(line)
+        probe_str = "\n".join(probe_lines)
+
+        prompt = f"""{TONE_DIRECTIVE}
+
+Write a "Blind Spot Analysis" section (200-300 words) based on zero-mention probe results.
+
+{ctx}
+
+## Zero-Mention Probe Results
+{probe_str}
+
+Requirements:
+- Explain WHAT the AI knows (or doesn't know) about this brand in each blind-spot area
+- Diagnose WHY — is it a content gap, authority gap, category mismatch, or recency issue?
+- Identify the single most impactful action to fix visibility in these blind spots
+- Be specific: reference the personas, dimensions, or topics where the brand is invisible
+- 2-3 paragraphs, plain text"""
+
+        return await self._llm_call(prompt)
+
     async def _compose_pitch_hook(self, ctx: str, problem_name: str) -> str:
         prompt = f"""{TONE_DIRECTIVE}
 
@@ -352,6 +418,20 @@ Requirements:
             "",
             "---",
             "",
+        ]
+
+        # Conditional blind spot analysis section
+        if report.zero_mention_analysis:
+            sections.extend([
+                "## Blind Spot Analysis",
+                "",
+                report.zero_mention_analysis,
+                "",
+                "---",
+                "",
+            ])
+
+        sections.extend([
             "## Strategic Recommendations",
             "",
             report.recommendations,
@@ -377,7 +457,7 @@ Requirements:
             "",
             "*Prepared by Fancy Robot AI Intelligence Division*  ",
             "*Powered by the ARI (AI Recommendation Index) Platform*",
-        ]
+        ])
 
         return "\n".join(sections)
 

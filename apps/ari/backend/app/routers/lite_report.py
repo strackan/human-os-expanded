@@ -122,6 +122,8 @@ async def analyze(request: AnalyzeRequest, raw_request: Request):
                             "competitor_scores": [c.model_dump() for c in cached_analysis.competitor_scores],
                             "persona_breakdown": [p.model_dump() for p in cached_analysis.persona_breakdown],
                             "topic_breakdown": [t.model_dump() for t in cached_analysis.topic_breakdown],
+                            "zero_mention_probes": [p.model_dump() for p in cached_analysis.zero_mention_probes],
+                            "zero_mention_analysis": cached_analysis.zero_mention_analysis,
                         },
                     })
 
@@ -270,6 +272,8 @@ async def analyze(request: AnalyzeRequest, raw_request: Request):
                     "competitor_scores": [c.model_dump() for c in analysis.competitor_scores],
                     "persona_breakdown": [p.model_dump() for p in analysis.persona_breakdown],
                     "topic_breakdown": [t.model_dump() for t in analysis.topic_breakdown],
+                    "zero_mention_probes": [p.model_dump() for p in analysis.zero_mention_probes],
+                    "zero_mention_analysis": analysis.zero_mention_analysis,
                 },
             })
 
