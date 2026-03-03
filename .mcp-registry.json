@@ -1,0 +1,202 @@
+{
+  "version": "1.0",
+  "updated": "2026-02-21",
+  "servers": [
+    {
+      "name": "code-mcp",
+      "product": "core",
+      "path": "core/apps/code-mcp",
+      "transport": "stdio",
+      "tools": [
+        "code_start",
+        "code_status",
+        "code_list",
+        "code_merge",
+        "code_discard"
+      ],
+      "description": "Async code orchestration — start Claude Code tasks in isolated worktrees, track via GitHub issues"
+    },
+    {
+      "name": "search-mcp",
+      "product": "core",
+      "path": "core/apps/search-mcp",
+      "transport": "stdio",
+      "tools": [
+        "arxiv_search",
+        "arxiv_paper",
+        "arxiv_citations",
+        "doc_search",
+        "doc_read",
+        "doc_list",
+        "recall_person",
+        "recall_company",
+        "recall_project",
+        "recall_expert",
+        "recall_journal",
+        "recall_search",
+        "recall_connections"
+      ],
+      "description": "Federated search across arXiv, library docs (Context7), and HumanOS entity/memory recall"
+    },
+    {
+      "name": "send-mcp",
+      "product": "core",
+      "path": "core/apps/send-mcp",
+      "transport": "stdio",
+      "tools": [
+        "slack_send",
+        "slack_channels",
+        "slack_thread"
+      ],
+      "description": "Outbound communications — Slack messages, channel listing, thread replies"
+    },
+    {
+      "name": "think-mcp",
+      "product": "core",
+      "path": "core/apps/think-mcp",
+      "transport": "stdio",
+      "tools": [
+        "think_step",
+        "think_branch",
+        "think_compare",
+        "think_conclude",
+        "think_status",
+        "think_reset"
+      ],
+      "description": "Structured reasoning chains — step-by-step logic, branching, comparison, synthesis"
+    },
+    {
+      "name": "renubu-mcp",
+      "product": "core",
+      "path": "core/apps/renubu-mcp",
+      "transport": "stdio",
+      "tools": [
+        "enrich_contact",
+        "enrich_company",
+        "enrich_batch",
+        "get_contact_opinions",
+        "upsert_opinion",
+        "delete_opinion",
+        "search_opinions",
+        "get_opinion_summary",
+        "skills_list",
+        "skills_read",
+        "skills_search",
+        "skills_tools",
+        "skills_discover",
+        "transcript_list",
+        "transcript_read",
+        "team_intel_trends",
+        "team_intel_signals"
+      ],
+      "description": "Renubu CS enrichment bridge — contact/company intel, opinions, skills, transcripts, team intelligence"
+    },
+    {
+      "name": "mcp-server",
+      "product": "core",
+      "path": "core/packages/mcp-server",
+      "transport": "stdio",
+      "tools": [
+        "context_read",
+        "context_write",
+        "entity_create",
+        "entity_update",
+        "graph_connections"
+      ],
+      "description": "Core MCP package — context files, entity CRUD, knowledge graph queries"
+    },
+    {
+      "name": "founder-os-mcp",
+      "product": "founder-os",
+      "path": "founder-os/mcp",
+      "transport": "stdio",
+      "tools": [
+        "do",
+        "recall_person",
+        "recall_company",
+        "recall_project",
+        "learn_alias",
+        "session_check_in",
+        "session_modes",
+        "get_urgent_tasks",
+        "add_task",
+        "complete_task",
+        "list_all_tasks",
+        "get_stale_tasks",
+        "queue_add",
+        "queue_review",
+        "queue_move",
+        "queue_complete",
+        "project_create",
+        "project_list",
+        "project_update",
+        "okr_create",
+        "okr_list",
+        "glossary_add",
+        "glossary_search",
+        "transcript_ingest",
+        "transcript_analyze",
+        "transcript_search",
+        "journal_write",
+        "journal_search",
+        "journal_analyze",
+        "emotion_analyze",
+        "mood_log",
+        "mood_trends",
+        "voice_generate",
+        "voice_profile",
+        "skills_list",
+        "context_read",
+        "context_write",
+        "identity_get",
+        "identity_update",
+        "code_start",
+        "code_status",
+        "crm_campaigns",
+        "crm_opportunities",
+        "email_draft",
+        "priority_set",
+        "conductor_start",
+        "conductor_respond",
+        "demo_setup"
+      ],
+      "description": "Personal productivity meta-router — 28+ tool modules, natural language routing via do()"
+    },
+    {
+      "name": "powerpak-server",
+      "product": "powerpak",
+      "path": "powerpak/packages/powerpak-server",
+      "transport": "stdio",
+      "tools": [
+        "expert_search",
+        "expert_profile",
+        "expert_hire",
+        "expert_message",
+        "expert_book_meeting"
+      ],
+      "description": "Expert knowledge marketplace — query profiles, semantic search, hiring and booking workflows"
+    },
+    {
+      "name": "justin-voice-server",
+      "product": "powerpak",
+      "path": "powerpak/packages/justin-voice-server",
+      "transport": "stdio",
+      "tools": [
+        "voice_generate",
+        "voice_profile_get"
+      ],
+      "description": "Voice profile MCP — generate content in specific voice profiles"
+    },
+    {
+      "name": "universal-messenger-server",
+      "product": "powerpak",
+      "path": "powerpak/packages/universal-messenger-server",
+      "transport": "stdio",
+      "tools": [
+        "messenger_send",
+        "messenger_channels"
+      ],
+      "description": "Cross-platform messaging — unified send interface across platforms"
+    }
+  ]
+}
