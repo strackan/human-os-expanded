@@ -2,8 +2,8 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  // Explicitly set the project root to avoid Next.js using parent directory lockfile
-  outputFileTracingRoot: path.join(__dirname),
+  // Point to monorepo root so Next.js traces workspace packages (indexer, proxy)
+  outputFileTracingRoot: path.join(__dirname, '../..'),
   eslint: {
     // Disable ESLint errors during builds (warnings are pre-existing)
     ignoreDuringBuilds: true,
