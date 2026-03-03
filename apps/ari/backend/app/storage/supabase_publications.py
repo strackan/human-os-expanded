@@ -66,6 +66,10 @@ def _pub_row(pub: Publication) -> dict[str, Any]:
         "recommendation_tier": pub.recommendation_tier,
         "metadata": pub.metadata,
         "created_at": pub.created_at.isoformat(),
+        "viability_score": pub.viability_score,
+        "validated_hits": pub.validated_hits,
+        "total_attempts": pub.total_attempts,
+        "success_rate": pub.success_rate,
     }
 
 
@@ -331,3 +335,55 @@ def load_all_group_members() -> list[dict]:
     except Exception as e:
         logger.warning(f"Failed to load group members: {e}")
         return []
+
+
+def load_all_article_publications() -> list[dict]:
+    """Load all article_publications rows (paginated)."""
+    client = _get_client()
+    if not client:
+        return []
+    try:
+        all_rows: list[dict] = []
+        page_size = 1000
+        offset = 0
+        while True:
+            result = (
+                client.schema("fancyrobot")
+                .table("article_publications")
+                .select("*")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+            rows = result.data or []
+            all_rows.extend(rows)
+            if len(rows) < page_size:
+                break
+            offset += page_size
+        return all_rows
+    except Exception as e:
+        logger.warning(f"Failed to load article publications: {e}")
+        return []
+
+
+def update_article_publication_status(
+    ap_id: str, status: str, published_url: str, published_at: str | None,
+) -> bool:
+    """Update an article_publication's status and optional published fields."""
+    client = _get_client()
+    if not client:
+        return False
+    try:
+        update_data: dict[str, Any] = {
+            "status": status,
+            "published_url": published_url,
+            "updated_at": published_at or None,
+        }
+        if published_at:
+            update_data["published_at"] = published_at
+        client.schema("fancyrobot").table("article_publications").update(
+            update_data
+        ).eq("id", ap_id).execute()
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to update article publication {ap_id}: {e}")
+        return False

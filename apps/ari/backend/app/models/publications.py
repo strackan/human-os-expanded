@@ -120,6 +120,11 @@ class Publication(BaseModel):
     recommendation_tier: int | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    # PVI (Publication Viability Index) fields
+    viability_score: float | None = None
+    validated_hits: int = 0
+    total_attempts: int = 0
+    success_rate: float = 0.0
 
 
 # --- Citations ---
@@ -181,6 +186,11 @@ class ArticlePublication(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class PlacementStatusUpdate(BaseModel):
+    status: PlacementStatus
+    published_url: str = ""
+
+
 # --- Import Requests ---
 
 
@@ -224,3 +234,26 @@ class StrategyImportResult(BaseModel):
     domains_tagged: int
     domains_created: int
     total_strategy: int
+
+
+class NetworkImportRequest(BaseModel):
+    """Import a distributor's guaranteed placement network (e.g. NewsUSA Confidence Index).
+
+    These are outlets included in a flat-rate umbrella (e.g. $5,500/article)
+    rather than individually priced. Tagged with 'newsusa-network' in source_lists
+    and grouped under a 'NewsUSA Network' publication group.
+    """
+    customer_slug: str = Field(..., description="Customer directory slug (e.g. 'usmoneyreserve')")
+    filename: str = Field("newsusa_network_publications.csv", description="Network CSV filename")
+    distributor_name: str = Field("NewsUSA", description="Distributor name")
+
+
+class NetworkImportResult(BaseModel):
+    distributor_id: str
+    distributor_name: str
+    publications_imported: int
+    publications_updated: int
+    publications_skipped: int
+    group_name: str
+    group_id: str
+    total_network: int

@@ -7,6 +7,7 @@ Three-list Venn diagram recommendation engine:
 
 Endpoints:
   POST /publications/import-csv            — Import distributor CSV (List A)
+  POST /publications/import-network        — Import distributor network CSV (List A — umbrella-priced)
   POST /publications/import-sources        — Import Gumshoe citations (List B)
   POST /publications/import-strategy       — Import strategy targets (List C)
   GET  /publications/tiers                 — 7-tier Venn breakdown with counts + color codes
@@ -25,6 +26,7 @@ Endpoints:
 import csv
 import logging
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
@@ -42,7 +44,10 @@ from app.models.publications import (
     DistributorCreate,
     GroupMemberAdd,
     GroupType,
+    NetworkImportRequest,
+    NetworkImportResult,
     PlacementStatus,
+    PlacementStatusUpdate,
     Publication,
     PublicationCitation,
     PublicationGroup,
@@ -52,6 +57,7 @@ from app.models.publications import (
     StrategyImportRequest,
     StrategyImportResult,
 )
+from app.services.publication_scoring import get_viability_engine
 from app.storage import supabase_publications as sb_pub
 
 logger = logging.getLogger(__name__)
@@ -68,10 +74,12 @@ _distributors: dict[str, Distributor] = {}          # slug → Distributor
 _publications: dict[str, Publication] = {}          # str(id) → Publication
 _pub_by_url: dict[str, str] = {}                    # url → pub id (NewsUSA dedup)
 _pub_by_domain: dict[str, str] = {}                 # domain → first pub id (cross-list linking)
+_pub_by_name: dict[str, str] = {}                   # normalized name → pub id (network dedup)
 _citations: list[PublicationCitation] = []           # raw citation rows
 _groups: dict[str, PublicationGroup] = {}            # slug → PublicationGroup
 _group_members: dict[str, set[str]] = {}            # group_slug → set of pub_ids
 _article_publications: dict[str, list[ArticlePublication]] = {}  # run_id → placements
+_placements_by_pub: dict[str, list[ArticlePublication]] = {}    # pub_id → placements
 
 _loaded_from_db = False
 
@@ -117,12 +125,19 @@ def load_from_supabase() -> dict[str, int]:
             source_lists=row.get("source_lists") or [],
             recommendation_tier=row.get("recommendation_tier"),
             metadata=row.get("metadata") or {},
+            viability_score=row.get("viability_score"),
+            validated_hits=row.get("validated_hits", 0),
+            total_attempts=row.get("total_attempts", 0),
+            success_rate=row.get("success_rate", 0.0),
         )
         _publications[pid] = pub
         if pub.url:
             _pub_by_url[pub.url] = pid
         if pub.domain and pub.domain not in _pub_by_domain:
             _pub_by_domain[pub.domain] = pid
+        name_key = pub.name.strip().lower()
+        if name_key and name_key not in _pub_by_name:
+            _pub_by_name[name_key] = pid
     counts["publications"] = len(_publications)
 
     # Citations
@@ -168,6 +183,29 @@ def load_from_supabase() -> dict[str, int]:
                 member_count += 1
                 break
     counts["group_members"] = member_count
+
+    # Article publications (placements)
+    for row in sb_pub.load_all_article_publications():
+        run_id = str(row["article_run_id"])
+        pub_id = str(row["publication_id"])
+        ap = ArticlePublication(
+            id=row["id"],
+            article_run_id=row["article_run_id"],
+            publication_id=row["publication_id"],
+            status=PlacementStatus(row.get("status", "planned")),
+            published_url=row.get("published_url", ""),
+            published_at=row.get("published_at"),
+        )
+        if run_id not in _article_publications:
+            _article_publications[run_id] = []
+        _article_publications[run_id].append(ap)
+        if pub_id not in _placements_by_pub:
+            _placements_by_pub[pub_id] = []
+        _placements_by_pub[pub_id].append(ap)
+    counts["article_publications"] = sum(len(v) for v in _article_publications.values())
+
+    # Recompute PVI scores from loaded data
+    _recompute_all_viability()
 
     _loaded_from_db = True
     if any(v > 0 for v in counts.values()):
@@ -250,6 +288,38 @@ def _recompute_all_tiers() -> None:
         pub.recommendation_tier = _compute_tier(pub)
 
 
+def _recompute_viability_for_pub(pub_id: str) -> float | None:
+    """Recompute PVI for a single publication. Returns the new score."""
+    pub = _publications.get(pub_id)
+    if not pub:
+        return None
+    engine = get_viability_engine()
+    placements = _placements_by_pub.get(pub_id, [])
+    is_gumshoe = "gumshoe" in pub.source_lists
+    breakdown = engine.compute_viability(pub, placements, is_gumshoe)
+    pub.viability_score = breakdown.viability_score
+    pub.validated_hits = breakdown.validated_hits
+    pub.total_attempts = breakdown.total_attempts
+    pub.success_rate = breakdown.success_rate
+    return breakdown.viability_score
+
+
+def _recompute_all_viability() -> dict:
+    """Recompute PVI for all publications. Returns summary stats."""
+    engine = get_viability_engine()
+    scored = 0
+    for pub_id, pub in _publications.items():
+        placements = _placements_by_pub.get(pub_id, [])
+        is_gumshoe = "gumshoe" in pub.source_lists
+        breakdown = engine.compute_viability(pub, placements, is_gumshoe)
+        pub.viability_score = breakdown.viability_score
+        pub.validated_hits = breakdown.validated_hits
+        pub.total_attempts = breakdown.total_attempts
+        pub.success_rate = breakdown.success_rate
+        scored += 1
+    return {"scored": scored, "total": len(_publications)}
+
+
 def _get_or_create_domain_pub(domain: str, name: str = "") -> Publication:
     """Get existing publication for a domain, or create one (no distributor)."""
     if domain in _pub_by_domain:
@@ -263,8 +333,12 @@ def _get_or_create_domain_pub(domain: str, name: str = "") -> Publication:
         publication_type=_classify_publication_type(domain),
         category=_classify_category(domain),
     )
-    _publications[str(pub_id)] = pub
-    _pub_by_domain[domain] = str(pub_id)
+    pid_str = str(pub_id)
+    _publications[pid_str] = pub
+    _pub_by_domain[domain] = pid_str
+    name_key = (name or domain).strip().lower()
+    if name_key and name_key not in _pub_by_name:
+        _pub_by_name[name_key] = pid_str
     return pub
 
 
@@ -397,6 +471,9 @@ async def import_csv(request: CSVImportRequest) -> CSVImportResult:
                     _pub_by_url[url] = str(pub_id)
                 if domain and domain not in _pub_by_domain:
                     _pub_by_domain[domain] = str(pub_id)
+                name_key = name.strip().lower()
+                if name_key and name_key not in _pub_by_name:
+                    _pub_by_name[name_key] = str(pub_id)
                 imported += 1
 
             # Auto-create tier groups
@@ -560,6 +637,172 @@ async def import_strategy(request: StrategyImportRequest) -> StrategyImportResul
     )
 
 
+@router.post("/publications/import-network", response_model=NetworkImportResult)
+async def import_network(request: NetworkImportRequest) -> NetworkImportResult:
+    """Import a distributor's guaranteed placement network (List A — Network subset).
+
+    For outlets included in a flat-rate umbrella deal (e.g. NewsUSA $5,500/article).
+    Sets price_usd=0 (included), tags source_lists with both 'newsusa' and
+    'newsusa-network', and assigns all outlets to a 'NewsUSA Network' publication group.
+
+    Deduplicates by normalized outlet name (since network CSVs lack URLs).
+    Idempotent — re-importing updates metadata without creating duplicates.
+    """
+    csv_path = CUSTOMERS_DIR / request.customer_slug / request.filename
+    if not csv_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"Network CSV not found: {csv_path.relative_to(CUSTOMERS_DIR.parent)}",
+        )
+
+    dist_slug = _slugify(request.distributor_name)
+    if dist_slug not in _distributors:
+        _distributors[dist_slug] = Distributor(name=request.distributor_name, slug=dist_slug)
+    distributor = _distributors[dist_slug]
+
+    # Ensure "NewsUSA Network" publication group exists
+    network_group_slug = "newsusa-network"
+    if network_group_slug not in _groups:
+        _groups[network_group_slug] = PublicationGroup(
+            name="NewsUSA Network",
+            slug=network_group_slug,
+            group_type=GroupType.BUDGET,
+            description=(
+                "Outlets included in NewsUSA's guaranteed placement network. "
+                "Covered under flat-rate umbrella pricing — no per-placement cost."
+            ),
+            metadata={"umbrella_price": 5500, "distributor": "newsusa"},
+        )
+        _group_members[network_group_slug] = set()
+
+    imported = 0
+    updated = 0
+    skipped = 0
+    network_pub_ids: set[str] = set()
+
+    # US state → region mapping for richer region field
+    state_to_region = {
+        "AK": "Alaska", "AL": "Alabama", "AR": "Arkansas", "AZ": "Arizona",
+        "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DC": "District of Columbia",
+        "DE": "Delaware", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii",
+        "IA": "Iowa", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana",
+        "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "MA": "Massachusetts",
+        "MD": "Maryland", "ME": "Maine", "MI": "Michigan", "MN": "Minnesota",
+        "MO": "Missouri", "MS": "Mississippi", "MT": "Montana", "NC": "North Carolina",
+        "ND": "North Dakota", "NE": "Nebraska", "NH": "New Hampshire", "NJ": "New Jersey",
+        "NM": "New Mexico", "NV": "Nevada", "NY": "New York", "OH": "Ohio",
+        "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "PR": "Puerto Rico",
+        "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota",
+        "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VA": "Virginia",
+        "VI": "US Virgin Islands", "VT": "Vermont", "WA": "Washington",
+        "WI": "Wisconsin", "WV": "West Virginia", "WY": "Wyoming",
+    }
+
+    with open(csv_path, encoding="utf-8-sig") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            name = (row.get("Publication") or "").strip()
+            if not name:
+                skipped += 1
+                continue
+
+            name_key = name.strip().lower()
+            state = (row.get("State") or "").strip()
+            city = (row.get("City") or "").strip()
+            dma = (row.get("DMA") or "").strip()
+            dma_rank = _safe_int(row.get("DMA_Rank", ""))
+            reach = _safe_int(row.get("Reach", ""))
+            aev = _safe_float(row.get("AEV", ""))
+            dist_date = (row.get("Distribution_Date") or "").strip()
+            da = _safe_int(row.get("DA", ""))
+            pub_type = (row.get("Publication_Type") or "news").strip()
+            region = state_to_region.get(state, state)
+
+            meta = {}
+            if city:
+                meta["city"] = city
+            if state:
+                meta["state"] = state
+            if dma:
+                meta["dma"] = dma
+            if dma_rank is not None:
+                meta["dma_rank"] = dma_rank
+            if reach is not None:
+                meta["reach"] = reach
+            if aev is not None:
+                meta["aev"] = aev
+            if dist_date:
+                meta["distribution_date"] = dist_date
+            meta["pricing_model"] = "network-included"
+
+            # Dedup: check by name first, then by URL/domain
+            existing_id = _pub_by_name.get(name_key)
+
+            if existing_id and existing_id in _publications:
+                pub = _publications[existing_id]
+                pub.distributor_id = distributor.id
+                if da is not None:
+                    pub.domain_authority = da
+                pub.region = region
+                pub.price_usd = 0
+                pub.publication_type = pub_type
+                if "newsusa" not in pub.source_lists:
+                    pub.source_lists.append("newsusa")
+                if "newsusa-network" not in pub.source_lists:
+                    pub.source_lists.append("newsusa-network")
+                pub.metadata.update(meta)
+                network_pub_ids.add(existing_id)
+                updated += 1
+            else:
+                pub_id = uuid4()
+                pub = Publication(
+                    id=pub_id,
+                    distributor_id=distributor.id,
+                    name=name,
+                    domain_authority=da,
+                    price_usd=0,
+                    region=region,
+                    publication_type=pub_type,
+                    source_lists=["newsusa", "newsusa-network"],
+                    metadata=meta,
+                )
+                pid_str = str(pub_id)
+                _publications[pid_str] = pub
+                _pub_by_name[name_key] = pid_str
+                network_pub_ids.add(pid_str)
+                imported += 1
+
+    # Update group membership
+    _group_members[network_group_slug] = (
+        _group_members.get(network_group_slug, set()) | network_pub_ids
+    )
+
+    _recompute_all_tiers()
+
+    # Persist
+    sb_pub.upsert_distributor(distributor)
+    all_pubs = list(_publications.values())
+    sb_pub.upsert_publications_batch(all_pubs)
+    group = _groups[network_group_slug]
+    sb_pub.upsert_group(group)
+    sb_pub.set_group_members(str(group.id), _group_members[network_group_slug])
+
+    logger.info(
+        f"Network import: {imported} new, {updated} updated, {skipped} skipped "
+        f"from {request.distributor_name} ({len(network_pub_ids)} in network group)"
+    )
+    return NetworkImportResult(
+        distributor_id=str(distributor.id),
+        distributor_name=distributor.name,
+        publications_imported=imported,
+        publications_updated=updated,
+        publications_skipped=skipped,
+        group_name="NewsUSA Network",
+        group_id=str(group.id),
+        total_network=len(_group_members[network_group_slug]),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Tiers & Recommendations
 # ---------------------------------------------------------------------------
@@ -585,11 +828,8 @@ async def get_tiers(
     result_tiers = []
     for tier_num in range(1, 8):
         tier_pubs = tiers[tier_num]
-        # Sort: Tier 4 by citation_count (value of inclusion), others by ai_score then citations
-        if tier_num == 4:
-            tier_pubs.sort(key=lambda p: p.citation_count, reverse=True)
-        else:
-            tier_pubs.sort(key=lambda p: (p.ai_score or 0, p.citation_count), reverse=True)
+        # Sort: viability first within tier, then legacy signals as tiebreakers
+        tier_pubs.sort(key=lambda p: (p.viability_score or 0, p.ai_score or 0, p.citation_count), reverse=True)
 
         result_tiers.append({
             "tier": tier_num,
@@ -653,14 +893,13 @@ async def recommend_publications(
             continue
         results.append(pub)
 
-    # Sort by tier (ascending), then within tier by best signal
+    # Sort by tier (ascending), then viability within tier, then legacy signals
     def _sort_key(p: Publication) -> tuple:
         t = p.recommendation_tier or 7
-        # Tier 4 and 6: sort by citations (that's the primary signal)
+        v = -(p.viability_score or 0)
         if t in (4, 6):
-            return (t, -(p.citation_count or 0), -(p.ai_score or 0))
-        # Others: sort by AI score then citations
-        return (t, -(p.ai_score or 0), -(p.citation_count or 0))
+            return (t, v, -(p.citation_count or 0), -(p.ai_score or 0))
+        return (t, v, -(p.ai_score or 0), -(p.citation_count or 0))
 
     results.sort(key=_sort_key)
     return [_pub_to_dict(p) for p in results[:limit]]
@@ -734,7 +973,7 @@ async def list_publications(
         pubs = [p for p in pubs if source_list in p.source_lists]
 
     total = len(pubs)
-    pubs.sort(key=lambda p: (p.recommendation_tier or 7, -(p.ai_score or 0), -(p.citation_count or 0)))
+    pubs.sort(key=lambda p: (p.recommendation_tier or 7, -(p.viability_score or 0), -(p.ai_score or 0), -(p.citation_count or 0)))
     page = pubs[offset : offset + limit]
 
     return {
@@ -742,6 +981,101 @@ async def list_publications(
         "limit": limit,
         "offset": offset,
         "publications": [_pub_to_dict(p) for p in page],
+    }
+
+
+@router.patch("/articles/{run_id}/publications/{placement_id}")
+async def update_placement_status(
+    run_id: str, placement_id: str, request: PlacementStatusUpdate,
+) -> dict[str, Any]:
+    """Update a placement's status. Triggers PVI recompute on terminal states."""
+    placements = _article_publications.get(run_id, [])
+    ap = next((p for p in placements if str(p.id) == placement_id), None)
+    if not ap:
+        raise HTTPException(status_code=404, detail=f"Placement {placement_id} not found in run {run_id}")
+
+    ap.status = request.status
+    if request.published_url:
+        ap.published_url = request.published_url
+    published_at_str = None
+    if request.status == PlacementStatus.PUBLISHED:
+        ap.published_at = datetime.now(timezone.utc)
+        published_at_str = ap.published_at.isoformat()
+
+    # Persist
+    sb_pub.update_article_publication_status(
+        str(ap.id), request.status.value, ap.published_url, published_at_str,
+    )
+
+    # Recompute PVI on terminal states
+    pub_id = str(ap.publication_id)
+    if request.status in (PlacementStatus.PUBLISHED, PlacementStatus.REJECTED):
+        _recompute_viability_for_pub(pub_id)
+        pub = _publications.get(pub_id)
+        if pub:
+            sb_pub.upsert_publication(pub)
+
+    return {
+        "id": str(ap.id),
+        "status": ap.status.value,
+        "published_url": ap.published_url,
+        "published_at": ap.published_at.isoformat() if ap.published_at else None,
+        "viability_score": _publications.get(pub_id, Publication(name="")).viability_score,
+    }
+
+
+@router.post("/publications/recompute-viability")
+async def recompute_all_viability() -> dict[str, Any]:
+    """Bulk recompute PVI scores for all publications."""
+    stats = _recompute_all_viability()
+
+    # Persist updated scores
+    all_pubs = list(_publications.values())
+    persisted = sb_pub.upsert_publications_batch(all_pubs)
+
+    return {
+        "scored": stats["scored"],
+        "total": stats["total"],
+        "persisted": persisted,
+    }
+
+
+@router.get("/publications/{pub_id}/viability")
+async def get_publication_viability(pub_id: str) -> dict[str, Any]:
+    """Detailed PVI breakdown for a single publication."""
+    pub = _publications.get(pub_id)
+    if not pub:
+        raise HTTPException(status_code=404, detail=f"Publication {pub_id} not found")
+
+    engine = get_viability_engine()
+    placements = _placements_by_pub.get(pub_id, [])
+    is_gumshoe = "gumshoe" in pub.source_lists
+    breakdown = engine.compute_viability(pub, placements, is_gumshoe)
+
+    return {
+        "publication_id": pub_id,
+        "name": pub.name,
+        "domain": pub.domain,
+        "recommendation_tier": pub.recommendation_tier,
+        "viability_score": breakdown.viability_score,
+        "confidence": breakdown.confidence,
+        "empirical_score": breakdown.empirical_score,
+        "reputation_score": breakdown.reputation_score,
+        "empirical_weight": breakdown.empirical_weight,
+        "reputation_weight": breakdown.reputation_weight,
+        "success_rate": breakdown.success_rate,
+        "validated_hits": breakdown.validated_hits,
+        "total_attempts": breakdown.total_attempts,
+        "gumshoe_confirmed": breakdown.gumshoe_confirmed,
+        "gumshoe_bonus": breakdown.gumshoe_bonus,
+        "reputation_components": {
+            "da_normalized": breakdown.da_normalized,
+            "dr_normalized": breakdown.dr_normalized,
+            "ai_normalized": breakdown.ai_normalized,
+            "cit_normalized": breakdown.cit_normalized,
+        },
+        "is_gumshoe": breakdown.is_gumshoe,
+        "source_lists": breakdown.source_lists,
     }
 
 
@@ -871,6 +1205,9 @@ async def assign_article_publications(
             continue
         ap = ArticlePublication(article_run_id=UUID(run_id), publication_id=pub_id, status=request.status)
         _article_publications[run_id].append(ap)
+        if pub_id_str not in _placements_by_pub:
+            _placements_by_pub[pub_id_str] = []
+        _placements_by_pub[pub_id_str].append(ap)
         sb_pub.upsert_article_publication(ap)
         created.append(str(ap.id))
     return {
@@ -920,6 +1257,7 @@ def _pub_summary(pub: Publication) -> dict[str, Any]:
         "publication_type": pub.publication_type,
         "category": pub.category,
         "source_lists": pub.source_lists,
+        "viability_score": pub.viability_score,
     }
 
 
@@ -953,6 +1291,10 @@ def _pub_to_dict(pub: Publication) -> dict[str, Any]:
         "recommendation_tier": pub.recommendation_tier,
         "tier_label": TIER_LABELS.get(pub.recommendation_tier or 7, ""),
         "tier_color": TIER_COLORS.get(pub.recommendation_tier or 7, ""),
+        "viability_score": pub.viability_score,
+        "validated_hits": pub.validated_hits,
+        "total_attempts": pub.total_attempts,
+        "success_rate": pub.success_rate,
         "created_at": pub.created_at.isoformat(),
     }
 
