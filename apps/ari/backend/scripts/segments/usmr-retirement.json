@@ -1,0 +1,37 @@
+{
+  "description": "US Money Reserve — retirement-focused geographic targeting",
+  "segments": [
+    {
+      "name": "Retirement State",
+      "match": { "states": ["FL", "AZ", "TX", "NC", "SC", "NV", "NM", "HI"] }
+    },
+    {
+      "name": "New England",
+      "match": { "states": ["CT", "MA", "ME", "NH", "RI", "VT"] }
+    },
+    {
+      "name": "Retirement Metro",
+      "match": {
+        "dmas": [
+          "san diego", "palm springs", "los angeles", "miami", "tampa", "orlando",
+          "jacksonville", "fort myers", "sarasota", "naples", "phoenix", "tucson",
+          "new york", "chicago", "boston", "philadelphia", "san francisco",
+          "providence", "hartford", "pittsburgh", "seattle", "portland",
+          "savannah", "charleston", "asheville", "myrtle beach",
+          "las vegas", "reno", "albuquerque", "santa fe",
+          "boise", "colorado springs", "denver"
+        ]
+      }
+    },
+    {
+      "name": "Silicon Valley / Bay Area",
+      "match": { "dmas": ["san francisco", "san jose", "oakland", "sacramento", "stockton"] }
+    },
+    {
+      "name": "Southern California",
+      "match": {
+        "dmas": ["san diego", "palm springs", "los angeles", "riverside", "orange county", "santa barbara"]
+      }
+    }
+  ]
+}
