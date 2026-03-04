@@ -19,6 +19,7 @@ const features = {
     "Score tracking over time",
     "Strategic recommendations",
     "Content gap analysis",
+    "1 AI-optimized article/month",
     "PDF report downloads",
     "Email alerts on score changes",
   ],
@@ -30,6 +31,7 @@ const features = {
     "Fusion narrative report",
     "8 scoring dimensions",
     "Anti-pattern detection",
+    "5 AI-optimized articles/month",
     "Dedicated support",
   ],
 };

@@ -21,7 +21,7 @@ const tiers = [
   {
     name: "Growth",
     tagline: "Strategy + Execution",
-    description: "Content, 2,500+ pub distribution, re-measurement",
+    description: "AI-optimized articles, 2,500+ pub network, re-measurement",
     cta: "Let's Talk",
     href: "#contact",
     accent: false,

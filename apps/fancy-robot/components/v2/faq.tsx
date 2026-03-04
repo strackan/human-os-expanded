@@ -25,7 +25,11 @@ const faqs = [
   },
   {
     q: "How do you improve my AI visibility?",
-    a: "After the audit identifies gaps, we create targeted content, distribute it through our 2,500+ publication network, and implement structured data strategies. Then we re-measure to confirm improvement.",
+    a: "After the audit identifies gaps, we use our AI article generator to produce LLM-optimized content \u2014 drafted by AI, hardened through multi-pass editing, and scored for readability. Articles are distributed through our 2,500+ publication network. Then we re-measure to confirm improvement.",
+  },
+  {
+    q: "Can I generate articles without a subscription?",
+    a: "Yes \u2014 AI-optimized articles are available ad hoc for anyone. Pro subscribers get 1 article per month included, and Elite subscribers get 5 per month.",
   },
   {
     q: "Is the snapshot really free?",

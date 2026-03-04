@@ -33,17 +33,34 @@ const phases = [
   },
   {
     step: "03",
-    icon: Repeat,
-    title: "Execute & Re-Measure",
-    subtitle: "Campaign + Proof",
+    icon: FileText,
+    title: "Execute",
+    subtitle: "AI-Optimized Content Production",
     description:
-      "We produce and distribute strategic content through our publishing network. Every article is written to be LLM-friendly: clear narrative structure, authoritative sourcing, and semantic markup that helps AI models understand and surface your brand\u2019s story\u2014not just your keywords. At 30 and 60 days we re-run the full audit to prove it worked.",
-    deliverable: "Before/after visibility report with ROI analysis",
+      "We use our AI article generator to produce LLM-optimized content \u2014 drafted by AI, hardened through multi-pass editing, and scored for readability. Every piece integrates your spokesperson positioning and verified claims, with semantic formatting that AI models can parse and retell accurately. Articles are distributed through our 2,500+ publication network.",
+    deliverable:
+      "LLM-optimized articles with readability scores, distributed across 2,500+ publications",
     details: [
-      "LLM-optimized content production",
-      "2,500+ publication network",
-      "Narrative-first, not keyword-stuffed",
-      "30 & 60 day re-audits with proof",
+      "AI-drafted, editor-hardened articles",
+      "Spokesperson & claim integration",
+      "LLM readability scoring (before/after)",
+      "2,500+ publication distribution",
+    ],
+  },
+  {
+    step: "04",
+    icon: Repeat,
+    title: "Re-Measure",
+    subtitle: "Track & Expand",
+    description:
+      "Re-run the full audit at 30 and 60 days. Track visibility trends by persona to see which content moved which audiences. Heat maps show progression across dimensions, highlighting new opportunities to influence underserved personas with targeted content.",
+    deliverable:
+      "Before/after visibility report with persona heat maps and ROI analysis",
+    details: [
+      "30 & 60 day full re-audits",
+      "Persona-level trend tracking",
+      "Visibility heat maps by dimension",
+      "Content-to-persona influence mapping",
     ],
   },
 ];
@@ -60,7 +77,7 @@ export function HowItWorks() {
             How It Works
           </span>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-foreground sm:text-4xl text-balance">
-            Three phases. Clear deliverables. No mystery.
+            Four phases. Clear deliverables. No mystery.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             {"We like to keep things simple. (The data is complex enough.)"}
