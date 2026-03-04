@@ -27,8 +27,11 @@ export function getDemoModeConfig(): DemoModeConfig {
     const envDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
     const nodeEnv = process.env.NODE_ENV;
 
-    // Never enable in production builds
-    if (nodeEnv === 'production' && !process.env.NEXT_PUBLIC_ALLOW_DEMO_IN_PROD) {
+    // Allow demo mode in certified demo deployments
+    const isDemoDeployment = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+    // Never enable in production builds (unless it's a demo deployment)
+    if (nodeEnv === 'production' && !process.env.NEXT_PUBLIC_ALLOW_DEMO_IN_PROD && !isDemoDeployment) {
       return {
         enabled: false,
         userId: '',
@@ -49,9 +52,12 @@ export function getDemoModeConfig(): DemoModeConfig {
   // Client-side: Check URL
   const hostname = window.location.hostname;
   const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
-  const isProduction = hostname.includes('renubu.com') ||
+  const isDemoDeployment = hostname.includes('demo--') ||
+                          process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const isProduction = !isDemoDeployment && (
+                      hostname.includes('renubu.com') ||
                       hostname.includes('renubu.demo') ||
-                      (hostname.includes('vercel.app') && !hostname.includes('preview'));
+                      (hostname.includes('vercel.app') && !hostname.includes('preview')));
 
   // Explicit disable via env var
   const explicitDisable = process.env.NEXT_PUBLIC_DEMO_MODE === 'false';
