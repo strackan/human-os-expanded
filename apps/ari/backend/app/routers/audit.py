@@ -46,6 +46,7 @@ class AuditAnalyzeRequest(BaseModel):
     brand_profile_override: dict | None = None
     lite_discovery: DiscoveryResult | None = None
     force_rerun: bool = False
+    elite: bool = False
 
 
 class ProfileOnlyRequest(BaseModel):
@@ -173,6 +174,11 @@ async def analyze(request: AuditAnalyzeRequest):
             from app.services.audit_prompt_generator import generate_audit_matrix
 
             prompts = generate_audit_matrix(profile)
+
+            if request.elite:
+                from app.services.elite_prompt_generator import generate_elite_complementary
+                elite_prompts = generate_elite_complementary(profile)
+                prompts.extend(elite_prompts)
 
             yield _sse_event({"type": "matrix_complete", "data": {
                 "total_prompts": len(prompts),
@@ -342,6 +348,7 @@ async def analyze(request: AuditAnalyzeRequest):
                     domain=clean_domain,
                     company_name=profile.company_name,
                     status=AuditRunStatus.COMPLETED,
+                    report_type="elite" if request.elite else "full_audit",
                     brand_profile=profile,
                     analysis_result=analysis,
                     anti_patterns=anti_patterns,

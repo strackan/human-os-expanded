@@ -26,7 +26,7 @@ class SeverityBand(str, Enum):
 
 
 class AuditPromptDimension(str, Enum):
-    """The 8 prompt dimensions from the Fancy Robot methodology."""
+    """The 8 prompt dimensions from the Fancy Robot methodology, plus 2 Elite-only dimensions."""
 
     CATEGORY_DEFAULT = "category_default"
     USE_CASE = "use_case"
@@ -36,6 +36,9 @@ class AuditPromptDimension(str, Enum):
     FOUNDER_BRAND = "founder_brand"
     GEOGRAPHIC = "geographic"
     ADJACENT_CATEGORY = "adjacent_category"
+    # Elite-only dimensions
+    NEGATIVE_SENTIMENT = "negative_sentiment"
+    ANTI_PATTERN_PROBE = "anti_pattern_probe"
 
 
 class AntiPatternType(str, Enum):
