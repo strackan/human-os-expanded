@@ -1,0 +1,140 @@
+name: Demo Certification
+
+on:
+  pull_request:
+    branches: [demo]
+  workflow_dispatch:
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      renubu: ${{ steps.changes.outputs.renubu }}
+      goodhang: ${{ steps.changes.outputs.goodhang }}
+      fancy-robot: ${{ steps.changes.outputs.fancy-robot }}
+      seed: ${{ steps.changes.outputs.seed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            renubu:
+              - 'apps/renubu/**'
+              - 'packages/**'
+            goodhang:
+              - 'apps/goodhang/**'
+              - 'packages/**'
+            fancy-robot:
+              - 'apps/fancy-robot/**'
+              - 'apps/ari/**'
+              - 'packages/**'
+            seed:
+              - 'scripts/demo-seed/**'
+
+  typecheck-and-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - name: Typecheck
+        run: pnpm turbo typecheck
+      - name: Lint
+        run: pnpm turbo lint
+
+  build:
+    needs: detect-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: '@human-os/renubu'
+            changed: renubu
+          - app: 'fancy-robot'
+            changed: fancy-robot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - name: Build ${{ matrix.app }}
+        run: pnpm turbo build --filter=${{ matrix.app }}
+
+  seed-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - name: Dry-run seed script
+        env:
+          DEMO_SUPABASE_URL: ${{ secrets.DEMO_SUPABASE_URL }}
+          DEMO_SUPABASE_SERVICE_KEY: ${{ secrets.DEMO_SUPABASE_SERVICE_KEY }}
+        run: pnpm demo:seed:dry
+
+  smoke-tests:
+    needs: [build, seed-validation]
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - name: Wait for Vercel preview deploy
+        uses: patrickedqvist/wait-for-vercel-preview@v1.3.2
+        id: vercel
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          max_timeout: 300
+      - name: Run smoke tests
+        env:
+          DEMO_RENUBU_URL: ${{ steps.vercel.outputs.url }}
+          DEMO_SUPABASE_URL: ${{ secrets.DEMO_SUPABASE_URL }}
+          DEMO_SUPABASE_SERVICE_KEY: ${{ secrets.DEMO_SUPABASE_SERVICE_KEY }}
+        run: pnpm test:smoke
+
+  post-status:
+    needs: [typecheck-and-lint, build, seed-validation, smoke-tests]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post certification status
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            ## Demo Certification Results
+
+            | Check | Status |
+            |-------|--------|
+            | Typecheck & Lint | ${{ needs.typecheck-and-lint.result == 'success' && ':white_check_mark: Passed' || ':x: Failed' }} |
+            | Build | ${{ needs.build.result == 'success' && ':white_check_mark: Passed' || ':x: Failed' }} |
+            | Seed Validation | ${{ needs.seed-validation.result == 'success' && ':white_check_mark: Passed' || ':x: Failed' }} |
+            | Smoke Tests | ${{ needs.smoke-tests.result == 'success' && ':white_check_mark: Passed' || needs.smoke-tests.result == 'skipped' && ':grey_question: Skipped' || ':x: Failed' }} |

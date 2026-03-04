@@ -21,7 +21,11 @@
     "eval:tutorial": "cd evals/tutorial && npx promptfoo eval",
     "eval:production": "cd evals/production && npx promptfoo eval",
     "eval:assessment": "cd evals/assessment && npx promptfoo eval",
-    "eval:renubu": "cd evals/renubu && npx promptfoo eval"
+    "eval:renubu": "cd evals/renubu && npx promptfoo eval",
+    "demo:seed": "tsx scripts/demo-seed/orchestrator.ts",
+    "demo:seed:dry": "tsx scripts/demo-seed/orchestrator.ts --dry-run",
+    "demo:reset": "tsx scripts/demo-seed/orchestrator.ts --reset full",
+    "test:smoke": "node --experimental-vm-modules node_modules/.bin/jest --config tests/smoke/jest.config.ts --runInBand"
   },
   "devDependencies": {
     "promptfoo": "^0.120.23",

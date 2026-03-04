@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/cleanup-expired-tenants",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/demo/reset",
+      "schedule": "0 7 * * *"
     }
   ]
 }
