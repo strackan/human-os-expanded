@@ -165,7 +165,17 @@ export function startLiteAnalysis(
   })
     .then(async (response) => {
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        if (response.status === 404) {
+          throw new Error(
+            "Analysis service is temporarily unavailable. Please try again in a few minutes."
+          );
+        }
+        if (response.status >= 500) {
+          throw new Error(
+            "Something went wrong on our end. Please try again shortly."
+          );
+        }
+        throw new Error(`Request failed (${response.status}). Please try again.`);
       }
 
       const reader = response.body?.getReader();
