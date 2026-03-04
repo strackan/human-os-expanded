@@ -1,4 +1,4 @@
-"""Simple SQLite storage for ARI results."""
+"""Simple SQLite storage for ARI results (legacy — not used in production)."""
 
 import sqlite3
 import json
@@ -236,7 +236,3 @@ def get_all_runs() -> list[dict]:
     conn.close()
 
     return [dict(row) for row in rows]
-
-
-# Initialize database on module import
-init_db()
