@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavbarAuthed } from "@/components/navbar-authed";
+import { ARIQueryProvider } from "@/components/providers";
 import {
   LayoutDashboard,
   Camera,
   Building2,
   FileBarChart,
+  Shield,
   CreditCard,
   Settings,
 } from "lucide-react";
@@ -16,6 +18,7 @@ const sidebarLinks = [
   { label: "Overview", href: "/new-site/dashboard", icon: LayoutDashboard },
   { label: "Snapshots", href: "/new-site/dashboard/snapshots", icon: Camera },
   { label: "Brands", href: "/new-site/dashboard/brands", icon: Building2 },
+  { label: "Audit", href: "/new-site/dashboard/audit", icon: Shield },
   { label: "Reports", href: "/new-site/dashboard/reports", icon: FileBarChart },
   { label: "Billing", href: "/new-site/dashboard/billing", icon: CreditCard },
   { label: "Settings", href: "/new-site/dashboard/settings", icon: Settings },
@@ -60,7 +63,9 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-6 lg:p-8">
+          <ARIQueryProvider>{children}</ARIQueryProvider>
+        </main>
       </div>
     </>
   );

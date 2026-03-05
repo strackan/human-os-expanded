@@ -8,29 +8,23 @@ ARI measures "Does AI recommend your brand?" by querying multiple AI models with
 
 ## Location
 
-Now lives inside the HumanOS monorepo at `core/apps/ari/`. Managed via pm2:
+Backend lives inside the HumanOS monorepo at `core/apps/ari/backend/`. The frontend UI was absorbed into fancy-robot (port 4200) — see `core/apps/fancy-robot/CLAUDE.md`.
+
 - **Backend:** `dev start ari` → `fancyrobot:ari-backend` (port 4250)
-- **Frontend:** `dev start ari` → `fancyrobot:ari-frontend` (port 4202)
+- **Dashboard UI:** Part of fancy-robot at `/new-site/dashboard/brands`, `/audit`, `/reports`
 
 ## Quick Start
 
 ```bash
-# Backend
 cd apps/ari/backend
 uv sync  # or: pip install -r requirements.txt
 cp .env.example .env  # Add API keys
-dev start ari          # Starts both frontend + backend via pm2
-
-# Frontend (standalone, if needed)
-cd apps/ari/frontend
-npm install
-dev start ari
+dev start ari          # Starts backend via pm2
 ```
 
 ## Tech Stack
 
 - **Backend:** Python 3.11+, FastAPI, Supabase (PostgreSQL)
-- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS
 - **AI Providers:** OpenAI, Anthropic, Perplexity, Google Gemini
 
 ## Project Structure
@@ -44,8 +38,6 @@ ari/
 │   ├── storage/           # Database access
 │   ├── routers/           # API endpoints
 │   └── prompts/           # Prompt templates (YAML)
-├── frontend/src/          # React dashboard
-│   └── components/        # UI components
 ```
 
 ## Key Concepts
@@ -65,16 +57,6 @@ ari/
 - Variations: list size (1, 3, 5), intent (best, recommend, compare), specificity
 - Category: content_syndication (for Rick demo)
 
-## Current Phase: Phase 1 (Rick Demo)
-
-**Goal:** Demo showing NewsUSA vs NAPS and Rick Smith vs Dorothy York.
-
-**Demo entities:**
-- NewsUSA (company) - Rick's company
-- NAPS (company) - Competitor (North American Precis Syndicate)
-- Rick Smith (person) - NewsUSA founder
-- Dorothy York (person) - NAPS President & CEO
-
 ## API Endpoints
 
 ```
@@ -84,6 +66,8 @@ GET  /api/v1/scores/calculate/{job}/status  # Poll progress
 GET  /api/v1/scores/{id}                    # Get ARI score
 GET  /api/v1/scores/compare                 # Compare entities
 GET  /api/v1/responses/{id}/samples         # Get example AI responses
+POST /api/v1/audit/analyze                  # Full audit pipeline (SSE)
+GET  /api/v1/deliverables/                  # Client deliverables
 ```
 
 ## Environment Variables
@@ -104,11 +88,6 @@ SUPABASE_KEY=eyJ...
 - Implement retry with exponential backoff for API calls
 - Store raw responses for later re-parsing
 - Use Pydantic models for all data validation
-
-### Frontend
-- Use React Query for API data fetching
-- Framer Motion for score animations
-- Tailwind for styling (no custom CSS unless necessary)
 
 ### Prompts
 - Keep prompts in YAML files for easy editing

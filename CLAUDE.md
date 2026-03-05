@@ -14,8 +14,8 @@ Contextual intelligence platform — a unified context layer that makes AI usefu
 │   ├── apps/
 │   │   ├── renubu/               # Renubu web app (port 4000) ← CANONICAL
 │   │   ├── goodhang/             # GoodHang web app (port 4100) ← CANONICAL
-│   │   ├── fancy-robot/          # Fancy Robot marketing UI (port 4200) ← CANONICAL
-│   │   ├── ari/                  # ARI scoring engine (ports 4202/4250) ← CANONICAL
+│   │   ├── fancy-robot/          # Fancy Robot SaaS + ARI dashboard (port 4200) ← CANONICAL
+│   │   ├── ari/                  # ARI scoring engine backend (port 4250) ← CANONICAL
 │   │   ├── founder-os/           # FounderOS web + MCP + journal
 │   │   ├── goodhang-desktop/     # GoodHang Tauri app (port 4102, archived)
 │   │   ├── api/                  # REST gateway (port 4401)
@@ -76,7 +76,7 @@ Contextual intelligence platform — a unified context layer that makes AI usefu
 ```bash
 dev list                 # Show all apps with ports
 dev start renubu         # Start renubu apps
-dev start ari            # Start ARI frontend + backend
+dev start ari            # Start ARI backend
 dev start --all          # Start everything
 dev stop --all           # Stop everything
 dev logs goodhang        # Tail logs
@@ -92,7 +92,6 @@ dev logs goodhang        # Tail logs
 | roadtrip | goodhang:roadtrip | 4101 | Next.js | `goodhang/roadtrip` |
 | goodhang-desktop | goodhang:goodhang-desktop | 4102 | Vite+Tauri | `core/apps/goodhang-desktop` (archived) |
 | fancy-robot | fancyrobot:fancy-robot | 4200 | Next.js | `core/apps/fancy-robot` |
-| ari-frontend | fancyrobot:ari-frontend | 4202 | Vite | `core/apps/ari/frontend` |
 | ari-backend | fancyrobot:ari-backend | 4250 | FastAPI | `core/apps/ari/backend` |
 | powerpak-demo | powerpak:powerpak-demo | 4300 | Next.js | `powerpak/packages/better-chatbot` |
 | gtm-adventure | powerpak:gtm-adventure | 4301 | Vite | `gtm.consulting/adventure` (migrating to goodhang) |
