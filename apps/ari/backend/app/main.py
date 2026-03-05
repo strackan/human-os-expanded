@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
-from app.routers import article_pipeline, audit, content, deliverables, discovery, entities, lite_report, optimizer, prompts, publications, search, testing
+from app.routers import article_pipeline, audit, content, deliverables, discovery, entities, lite_report, optimizer, prompts, publications, scores, search, testing
 
 settings = get_settings()
 
@@ -66,6 +66,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(entities.router, prefix=settings.api_v1_prefix, tags=["entities"])
+app.include_router(scores.router, prefix=settings.api_v1_prefix, tags=["scores"])
 app.include_router(prompts.router, prefix=settings.api_v1_prefix, tags=["prompts"])
 app.include_router(deliverables.router, prefix=settings.api_v1_prefix, tags=["deliverables"])
 app.include_router(optimizer.router, prefix=settings.api_v1_prefix, tags=["optimizer"])

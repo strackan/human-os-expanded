@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import logging
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
@@ -11,18 +12,26 @@ from app.models.prompt import Intent, RenderedPrompt
 from app.models.score import ARIScore, ComparisonResult, PromptResponse
 from app.routers.prompts import CONTENT_SYNDICATION_PROMPTS
 from app.services.prompt_runner import get_prompt_runner
-from app.storage import sqlite_db as db
+
+# SQLite is optional — not available on Vercel's read-only filesystem
+try:
+    from app.storage import sqlite_db as db
+except Exception:
+    db = None  # type: ignore[assignment]
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/scores")
 
-# In-memory storage for jobs (runs are persisted to SQLite)
+# In-memory storage for jobs and scores
 _jobs: dict[UUID, dict] = {}
-# In-memory cache for scores (loaded from SQLite)
 _scores: dict[UUID, ARIScore] = {}
 
 
 def _load_score_from_db(entity_id: UUID, run_data: dict) -> None:
     """Load a score from the database into memory cache."""
+    if not db:
+        return
     # Get responses from database
     responses_data = db.get_run_responses(run_data["id"])
 
@@ -99,7 +108,8 @@ async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, e
         if not runner.providers:
             _jobs[job_id]["status"] = "failed"
             _jobs[job_id]["message"] = "No AI providers configured. Add API keys to .env"
-            db.fail_run(run_id, "No AI providers configured")
+            if db:
+                db.fail_run(run_id, "No AI providers configured")
             return
 
         _jobs[job_id]["message"] = f"Running with {len(runner.providers)} providers..."
@@ -141,43 +151,45 @@ async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, e
         # Store the score in memory cache
         _scores[entity_id] = ari_score
 
-        # Save to SQLite database
-        db.complete_run(
-            run_id=run_id,
-            overall_score=ari_score.overall_score,
-            provider_scores=ari_score.provider_scores,
-            mention_rate=ari_score.mention_rate,
-        )
-
-        # Save all responses to database
-        for response in ari_score.all_responses:
-            db.save_response(
+        # Save to SQLite database (local dev only)
+        if db:
+            db.complete_run(
                 run_id=run_id,
-                prompt_id=response.prompt_id,
-                prompt_text=response.prompt_text,
-                intent=response.intent,
-                provider=response.provider,
-                model_version=response.model_version,
-                raw_response=response.raw_response,
-                latency_ms=response.latency_ms,
-                tokens_used=response.tokens_used,
-                entity_mentioned=response.entity_mentioned,
-                entity_position=response.entity_position,
-                recommendation_type=response.recommendation_type,
-                all_mentions=response.all_mentions,
-                error=response.error,
-            )
-
-        # Save to score_history if user_id provided
-        if user_id:
-            from app.storage.supabase_entities import save_score_history
-            await save_score_history(
-                user_id=user_id,
-                domain=entity_name,
                 overall_score=ari_score.overall_score,
-                mention_rate=ari_score.mention_rate,
                 provider_scores=ari_score.provider_scores,
+                mention_rate=ari_score.mention_rate,
             )
+            for response in ari_score.all_responses:
+                db.save_response(
+                    run_id=run_id,
+                    prompt_id=response.prompt_id,
+                    prompt_text=response.prompt_text,
+                    intent=response.intent,
+                    provider=response.provider,
+                    model_version=response.model_version,
+                    raw_response=response.raw_response,
+                    latency_ms=response.latency_ms,
+                    tokens_used=response.tokens_used,
+                    entity_mentioned=response.entity_mentioned,
+                    entity_position=response.entity_position,
+                    recommendation_type=response.recommendation_type,
+                    all_mentions=response.all_mentions,
+                    error=response.error,
+                )
+
+        # Save to score_history if user_id provided (M2)
+        if user_id:
+            try:
+                from app.storage.supabase_entities import save_score_history
+                await save_score_history(
+                    user_id=user_id,
+                    domain=entity_name,
+                    overall_score=ari_score.overall_score,
+                    mention_rate=ari_score.mention_rate,
+                    provider_scores=ari_score.provider_scores,
+                )
+            except Exception as e:
+                logger.warning(f"Failed to save score history: {e}")
 
         _jobs[job_id]["status"] = "completed"
         _jobs[job_id]["progress"] = 100
@@ -186,7 +198,8 @@ async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, e
     except Exception as e:
         _jobs[job_id]["status"] = "failed"
         _jobs[job_id]["message"] = str(e)
-        db.fail_run(run_id, str(e))
+        if db:
+            db.fail_run(run_id, str(e))
 
 
 @router.post("/calculate/{entity_id}")
@@ -212,8 +225,8 @@ async def calculate_ari(
     if not entity:
         raise HTTPException(status_code=404, detail="Entity not found")
 
-    # Check for existing successful run (unless force=True)
-    if not force:
+    # Check for existing successful run (unless force=True) — SQLite only
+    if not force and db:
         existing_run = db.get_successful_run(str(entity_id))
         if existing_run:
             # Load the score into memory cache if not already there
@@ -228,20 +241,32 @@ async def calculate_ari(
                 "cached": True,
             }
 
-    # Save entity to database
-    db.save_entity(
-        entity_id=str(entity_id),
-        name=entity.name,
-        entity_type=entity.type.value,
-        category="content_syndication",
-        metadata={"aliases": entity.aliases} if entity.aliases else None,
-    )
+    # Check in-memory cache as fallback (when no SQLite)
+    if not force and not db and entity_id in _scores:
+        return {
+            "job_id": "in-memory",
+            "entity_id": str(entity_id),
+            "status": "completed",
+            "message": f"Using cached score ({_scores[entity_id].overall_score:.1f}). Use force=true to recalculate.",
+            "cached": True,
+        }
+
+    # Save entity to database (local dev only)
+    if db:
+        db.save_entity(
+            entity_id=str(entity_id),
+            name=entity.name,
+            entity_type=entity.type.value,
+            category="content_syndication",
+            metadata={"aliases": entity.aliases} if entity.aliases else None,
+        )
 
     job_id = uuid4()
     run_id = str(uuid4())
 
-    # Create run record in database
-    db.create_run(run_id, str(entity_id))
+    # Create run record in database (local dev only)
+    if db:
+        db.create_run(run_id, str(entity_id))
 
     # Create job record (in-memory for polling)
     _jobs[job_id] = {
@@ -277,6 +302,8 @@ async def get_calculation_status(job_id: UUID) -> dict:
 @router.get("/runs")
 async def list_all_runs() -> list[dict]:
     """List all analysis runs."""
+    if not db:
+        return []
     return db.get_all_runs()
 
 
@@ -391,9 +418,8 @@ async def quick_test() -> dict:
 @router.get("/{entity_id}", response_model=ARIScore)
 async def get_ari_score(entity_id: UUID) -> ARIScore:
     """Get the latest ARI score for an entity."""
-    # Try memory cache first
-    if entity_id not in _scores:
-        # Try loading from database
+    # Try memory cache first, then SQLite fallback
+    if entity_id not in _scores and db:
         existing_run = db.get_successful_run(str(entity_id))
         if existing_run:
             _load_score_from_db(entity_id, existing_run)
@@ -409,7 +435,7 @@ async def get_ari_score(entity_id: UUID) -> ARIScore:
 
 def _ensure_score_loaded(entity_id: UUID) -> bool:
     """Ensure a score is loaded into memory. Returns True if loaded."""
-    if entity_id not in _scores:
+    if entity_id not in _scores and db:
         existing_run = db.get_successful_run(str(entity_id))
         if existing_run:
             _load_score_from_db(entity_id, existing_run)
