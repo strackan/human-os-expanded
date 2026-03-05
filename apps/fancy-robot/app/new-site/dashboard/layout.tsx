@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NavbarAuthed } from "@/components/navbar-authed";
-import { ARIQueryProvider } from "@/components/providers";
 import {
   LayoutDashboard,
   Camera,
@@ -64,7 +63,7 @@ export default function DashboardLayout({
 
         {/* Main content */}
         <main className="flex-1 p-6 lg:p-8">
-          <ARIQueryProvider>{children}</ARIQueryProvider>
+          {children}
         </main>
       </div>
     </>
