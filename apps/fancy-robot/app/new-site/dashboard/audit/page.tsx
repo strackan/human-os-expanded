@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Suspense, useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   startAuditAnalysis,
@@ -79,6 +79,20 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
 }
 
 export default function AuditPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent border-t-transparent" />
+        </div>
+      }
+    >
+      <AuditPageInner />
+    </Suspense>
+  );
+}
+
+function AuditPageInner() {
   const searchParams = useSearchParams();
   const initialDomain = searchParams.get("domain") || "";
 
