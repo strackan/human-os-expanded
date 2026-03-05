@@ -2,7 +2,7 @@
 
 **Strategy:** ARI-Led Barbell (Path 7). ARI gets 80% of engineering time. Renubu gets 20% (context integration + design partner maintenance). Everything else sequences behind.
 
-**Last reconciled:** 2026-03-03. Aligned with Strategic Brief v2, codebase audit, and git reality.
+**Last reconciled:** 2026-03-04. Aligned with Strategic Brief v2, codebase audit, git reality, and Context Layer architecture decision.
 
 ---
 
@@ -42,6 +42,60 @@
 
 ---
 
+## Context Layer — Platform Intelligence Primitive (Parallel track, ~12h across sprints)
+
+**Goal:** A shared contextual intelligence pipeline that assembles multi-source data for any entity and delivers it to a conversational reasoning agent. This is not a separate sprint — it weaves into Sprints 1–3 as infrastructure that accelerates each.
+
+**Origin:** Started as renewal-planner optimization (Mar 4). Analysis revealed the intelligence gathering pattern (entity → parallel data assembly → scoring → structured brief → reasoning agent) is universal across all products. Built as platform primitive instead of CS-specific feature.
+
+**Architecture:** Two-agent pattern.
+- **Back of House** gathers intelligence in parallel (ARI, Brave Search, GFT, entity spine, narrative analysis). No user interaction. Returns a `ContextBrief`.
+- **Front of House** receives the brief, adopts a domain persona, and advises the user conversationally. Delivered via MCP tools (founder), web chat component (end users), or product-specific pages.
+
+### What's Done
+
+| Task | Status | Location |
+|------|--------|----------|
+| Back of House intelligence pipeline | **Done** | `renubu/renewal-planner/lib/gatherers/` |
+| Type definitions (IntelligenceBrief) | **Done** | `renubu/renewal-planner/lib/types/` |
+| Scoring engine (extracted, modular) | **Done** | `renubu/renewal-planner/lib/gatherers/scoring.ts` |
+| Gatherers: ARI, Brave, GFT, entity spine, narrative | **Done** | 5 parallel gatherers with independent error handling |
+| API endpoint (`POST /api/gather-intelligence`) | **Done** | `renubu/renewal-planner/app/api/gather-intelligence/` |
+| Hardcoded API key removed from generate-strategy | **Done** | Security fix |
+
+### What's Next (sequenced into sprints below)
+
+| Task | Effort | When | GitHub |
+|------|--------|------|--------|
+| Generalize types (`ContextBrief<TEntity, TScores>`) | ~2h | Before Sprint 2 | #171 |
+| Front of House MCP tools (`gather_intelligence`, `advise_on_entity`) | ~3h | Sprint 2 | #172 |
+| ARI domain adapter (visibility strategist persona) | ~3h | Sprint 1 M4 | #173 |
+| Move gatherers to `core/packages/` during absorption | ~5h | Sprint 3a | #174 |
+| GFT domain adapter (relationship strategist) | ~4h | Post-Sprint 1 | #173 |
+| FounderOS domain adapter (executive coach) | ~5h | Post-Sprint 1 | #173 |
+
+### Cross-Product Impact
+
+The Context Layer front-loads integration work that the Compound Phase (Months 3–6) was going to do piecemeal:
+
+| Compound Phase Task | Without Context Layer | With Context Layer | Savings |
+|---|---|---|---|
+| Renubu → HumanOS context wiring | ~24-32h | ~8-10h | ~16-22h |
+| GoodHang → entity enrichment | ~8h | ~5h | ~3h |
+| FounderOS multi-user groundwork | ~16h | ~14h | ~2h |
+| **Total** | ~48-56h | ~27-29h | **~21-27h** |
+
+### Where the UI Lives
+
+The intelligence gathering is a service in `core/packages/`. The conversational UI adapts to where the user already is:
+
+- **For the founder (now):** MCP tools in Claude Desktop. Zero UI to build.
+- **For ARI free tier (Sprint 1):** Product page with chat interface.
+- **For Renubu CSMs (Sprint 3a+):** Embedded panel in customer view.
+- **For GFT users (post-Sprint 1):** "Prepare for this person" in contact view.
+
+---
+
 ## Sprint 1 — ARI Paid Tier (Weeks 1–4, ~60h)
 
 **Goal:** Revenue. A stranger can find ARI, check their score for free, and pay for ongoing monitoring. This is the #1 priority. Nothing else matters until this ships.
@@ -69,13 +123,14 @@
 | Trend analysis and scoring methodology | ~4h | Rolling averages, model-weighted scores |
 | Data retention and migration for existing scores | ~4h | Backfill from existing snapshot data |
 
-### Milestone 4: LinkedIn Content Engine (~12h, parallel non-engineering work)
+### Milestone 4: LinkedIn Content Engine + Landing Page (~16h, partially parallel non-engineering work)
 | Task | Effort | Notes |
 |------|--------|-------|
 | Content calendar (first 30 days) | ~2h | "Does AI recommend your brand?" angle |
 | Draft first 10 posts | ~4h | Use VoiceOS for Justin's voice |
 | Establish posting cadence + measure engagement | ~2h | 3x/week minimum |
 | Free snapshot landing page optimization | ~4h | Conversion-focused, captures email |
+| ARI Context Layer adapter (visibility strategist) | ~3h | Free snapshot as conversation, not just a number. Uses Context Layer Back of House + ARI-specific Front of House prompt. Major conversion differentiator. (#173) |
 
 **Exit criteria:** A user can sign up, check a free snapshot, see a "upgrade to monitor" CTA, pay with Stripe, and access a monitoring dashboard with historical scores. LinkedIn content is posting weekly.
 
@@ -83,9 +138,9 @@
 
 ---
 
-## Sprint 2 — Platform Demo (Week 2–3, ~5h, overlaps Sprint 1)
+## Sprint 2 — Platform Demo (Week 2–3, ~7h, overlaps Sprint 1)
 
-**Goal:** The "I have a platform, not seven products" demo. Buildable in a focused afternoon because the bridge code already works.
+**Goal:** The "I have a platform, not seven products" demo. Now powered by the Context Layer — instead of scripted MCP calls, the demo shows a working product feature.
 
 | Task | Effort | Status |
 |------|--------|--------|
@@ -93,19 +148,20 @@
 | GFT → Entity spine (goals) | ~0h | **Already working.** `syncGoalToEntity()` in `gft/crm-web/src/lib/entity-sync.ts` |
 | Extend GFT sync to contacts + companies | ~2h | Same pattern as goal sync, different entity types |
 | Verify ARI bridge fires on score completion | ~0.5h | May already be triggered — check ARI save path |
-| Compose cross-product recall query | ~1h | Use search-mcp `recall_company` + `recall_connections` + `recall_journal` |
-| Script and rehearse demo | ~1.5h | The 5-step demo from Strategic Brief Part 12 |
+| Generalize Context Layer types | ~2h | `ContextBrief<TEntity, TScores>`, entity type routing, scoring adapter pattern (#171) |
+| Front of House MCP tools | ~3h | `gather_intelligence` + `advise_on_entity` as MCP tools. This IS the demo. (#172) |
+| Script and rehearse demo | ~1.5h | Updated demo script below |
 
-**Demo script:**
-1. "Recall companies with declining AI visibility" → ARI scores via entity metadata
-2. "Who do I know at those companies?" → `recall_connections` traverses GFT contacts
-3. "Show me my last interaction with [name]" → `recall_journal` from FounderOS
-4. "Draft a check-in email referencing their renewal timeline" → VoiceOS + Renubu context
-5. One conversation, four products, zero manual lookup.
+**Demo script (updated):**
+1. "Help me think about Acme's renewal" → Context Layer assembles ARI + GFT + journal + market data in 3 seconds
+2. Front of House surfaces top 3 findings: "Their ARI score dropped 8 points, your champion Sarah posted about 'new opportunities,' and there's a leadership change at Acme per recent news"
+3. "Who else do I know there?" → relationship context already in the brief, names decision makers and warm intros
+4. "Draft a re-engagement email to Sarah" → Front of House drafts using VoiceOS + full context
+5. One command, four products, contextual intelligence, not manual lookup.
 
-**Exit criteria:** The demo runs end-to-end in Claude Desktop. Recorded for advisor/investor conversations.
+**What changed:** The "compose cross-product recall query" task (~1h) is replaced by the Context Layer MCP tools (~3h + 2h for type generalization). Net +4h, but the demo shows a real product feature in a browser/Claude Desktop, not a scripted sequence. Materially better fundraising pitch.
 
-**Why only ~5h:** The Strategic Brief estimated 9h. Since then, the codebase audit confirmed ARI and GFT bridge code is implemented and integrated. The work is extending GFT sync from goals-only to contacts + companies, verifying ARI triggers, and composing the query.
+**Exit criteria:** The demo runs end-to-end in Claude Desktop using `gather_intelligence` and `advise_on_entity` MCP tools. Context assembles from ARI, GFT, entity spine, and Brave Search. Recorded for advisor/investor conversations.
 
 ---
 
@@ -113,15 +169,17 @@
 
 **Goal:** Reduce cognitive overhead AND consolidate the adventure game into GoodHang where it belongs architecturally.
 
-### 3a. Portfolio Simplification (~8h)
+### 3a. Portfolio Simplification (~10h)
 
 | Task | Effort | Notes |
 |------|--------|-------|
-| Absorb renewal-planner into Renubu as a route | ~3h | It's already under `renubu/renewal-planner/`. Make it a Renubu sub-route. |
-| Absorb Creativity Journal into FounderOS | ~2h | Core already has `@human-os/journal` package with Plutchik emotions. Delete standalone app, point PM2 at FounderOS module. |
+| Absorb renewal-planner: move gatherers to `core/packages/intelligence/` | ~5h | Intelligence pipeline becomes shared platform infrastructure. Renubu gets `/customers/[id]/strategy` route that imports from shared package. CS scoring adapter stays domain-specific. (#174) |
+| Absorb Creativity Journal into FounderOS | ~2h | Core already has `@human-os/journal` package with Plutchik emotions. Journal entries become a gatherer source for FounderOS's "help me decide" feature. Delete standalone app. |
 | Rename better-chatbot → powerpak-demo | ~1h | Package.json, PM2 config, directory name. Cosmetic but removes a narrative liability. |
 | Archive GoodHang Tauri desktop | ~0.5h | Remove from PM2 config. Leave code in place but stop investing. |
 | Update PM2 config + CLAUDE.md | ~1.5h | Reflect the simplified portfolio |
+
+**What changed from original plan:** Renewal-planner absorption is +2h (~3h → ~5h) because we move gatherers to `core/packages/` as shared infrastructure instead of copying into Renubu. The extra 2h buy a platform primitive that every product can use, and save ~21-27h in the Compound Phase.
 
 ### 3b. Adventure Game → GoodHang (~13h)
 
@@ -167,13 +225,15 @@ The adventure game from `gtm.consulting/adventure/` merges into GoodHang web as 
 
 Sequenced after ARI has revenue flowing. Priorities shift based on data from Sprint 1.
 
-| Task | Effort | Trigger |
-|------|--------|---------|
-| Renubu → HumanOS context wiring | ~24-32h | Design partners validate the context value prop |
-| ARI API tier for agencies | ~20h | Self-serve tier has proven conversion |
-| FounderOS multi-user groundwork | ~16h | MCP directories maturing, organic pull signals |
-| GoodHang → entity enrichment | ~8h | When assessment data has downstream consumers |
-| Entity deduplication (wire existing package) | ~8h | When entity count creates real duplication |
+**Context Layer impact:** The intelligence pipeline built in Sprints 1–3 front-loads much of the integration work. Each product gets a domain adapter (~3-5h) on top of shared gatherers, instead of custom wiring per product.
+
+| Task | Effort (original) | Effort (with Context Layer) | Trigger |
+|------|---|---|---------|
+| Renubu → HumanOS context wiring | ~24-32h | **~8-10h** | Design partners validate the context value prop |
+| ARI API tier for agencies | ~20h | ~18h | Self-serve tier has proven conversion |
+| FounderOS multi-user groundwork | ~16h | ~14h | MCP directories maturing, organic pull signals |
+| GoodHang → entity enrichment | ~8h | **~5h** | When assessment data has downstream consumers |
+| Entity deduplication (wire existing package) | ~8h | ~6h | When entity count creates real duplication |
 
 **This is NOT a commitment.** This is a menu. Pick based on what Sprint 1 teaches you.
 
@@ -188,9 +248,9 @@ Sequenced after ARI has revenue flowing. Priorities shift based on data from Spr
 - Solo founder energy levels (is this sustainable?)
 
 **If raising:**
-> "Four products sharing one context spine, 97+ MCP tools, privacy model, and self-serve revenue from ARI. Here's the platform demo. I need two engineers for three months to wire the full flywheel. The moat is accumulated context."
+> "Four products sharing one **contextual intelligence layer** that assembles multi-source intelligence for any entity in 3 seconds and advises users conversationally. Here's the live demo — I ask about a customer, and it pulls ARI visibility data, GFT relationship context, market news, and my interaction history, then helps me build a strategy. The same pipeline powers every product. I need two engineers to add domain adapters, not to build integration from scratch."
 
-First two hires: (1) full-stack engineer to wire entity spine across products, (2) growth engineer to scale ARI's self-serve funnel.
+First two hires: (1) full-stack engineer to build domain adapters and web components on the Context Layer, (2) growth engineer to scale ARI's self-serve funnel.
 
 **If bootstrapping:**
 Continue ARI scaling + selective integration. FounderOS packaging if MCP directories show organic pull. Renubu enterprise motion only if design partners convert.
@@ -295,14 +355,18 @@ Several paths reference the pre-monorepo layout (`fancy-robot/web` instead of `c
 | Item | Hours | Source |
 |------|-------|--------|
 | Phase 0 completion | ~4-6h | Codebase audit |
-| ARI paid tier (Sprint 1) | ~60h | Strategic Brief v2 |
-| Platform demo (Sprint 2) | ~5h | Revised down from 9h — bridge code done |
-| Portfolio simplification (Sprint 3a) | ~8h | Strategic Brief v2 |
+| Context Layer Back of House | **~7h (done)** | Mar 4 session — types, gatherers, API |
+| Context Layer type generalization | ~2h | Mar 4 planning |
+| Context Layer Front of House (MCP) | ~3h | Mar 4 planning |
+| Context Layer domain adapters (ARI, GFT, FounderOS) | ~12h | Mar 4 planning |
+| ARI paid tier (Sprint 1) | ~63h | Strategic Brief v2 + ARI adapter (+3h) |
+| Platform demo (Sprint 2) | ~7h | Revised up from 5h — Context Layer MCP tools replace scripted queries |
+| Portfolio simplification (Sprint 3a) | ~10h | +2h for proper architecture (gatherers → core/packages/) |
 | Adventure → GoodHang migration (Sprint 3b) | ~13h | Codebase audit, Mar 3 planning session |
 | Renubu design partner maintenance | ~2h/week | Strategic Brief v2 |
-| Renubu → HumanOS context wiring | ~24-32h | Strategic Brief v2 |
-| Full integration (all products → spine) | ~180-220h | Strategic Brief v2 |
-| Unified auth (SSO across products) | ~60-80h | Strategic Brief v2 |
+| Renubu → HumanOS context wiring | **~8-10h** | Down from 24-32h — Context Layer front-loads integration |
+| Full integration (all products → spine) | **~120-150h** | Down from 180-220h — shared gatherers, domain adapters |
+| Unified auth (SSO across products) | ~60-80h | Strategic Brief v2 (unchanged) |
 
 ---
 
