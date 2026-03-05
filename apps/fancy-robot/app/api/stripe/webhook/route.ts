@@ -22,6 +22,31 @@ function getSubPeriod(sub: Stripe.Subscription) {
   }
 }
 
+/**
+ * Check if we've already processed this event. If not, record it.
+ * Returns true if the event is a duplicate (already processed).
+ */
+async function isDuplicateEvent(
+  db: ReturnType<NonNullable<ReturnType<typeof getSupabaseServer>>['schema']>,
+  eventId: string,
+  eventType: string,
+): Promise<boolean> {
+  const { data: existing } = await db
+    .from('stripe_webhook_events')
+    .select('event_id')
+    .eq('event_id', eventId)
+    .maybeSingle()
+
+  if (existing) return true
+
+  await db.from('stripe_webhook_events').insert({
+    event_id: eventId,
+    event_type: eventType,
+  })
+
+  return false
+}
+
 export async function POST(request: Request) {
   const body = await request.text()
   const sig = request.headers.get('stripe-signature')
@@ -44,6 +69,11 @@ export async function POST(request: Request) {
   }
 
   const db = serviceClient.schema('fancyrobot')
+
+  // Idempotency check — skip if we've already processed this event
+  if (await isDuplicateEvent(db, event.id, event.type)) {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
 
   try {
     switch (event.type) {
@@ -76,10 +106,21 @@ export async function POST(request: Request) {
         } else if (session.mode === 'payment') {
           await db.from('elite_runs').insert({
             user_id: userId,
-            primary_domain: '',
+            primary_domain: session.metadata?.domain || '',
             stripe_payment_intent_id: session.payment_intent as string,
-            status: 'pending',
+            status: 'paid',
           })
+        }
+        break
+      }
+
+      case 'checkout.session.expired': {
+        // Clean up any pre-created records for abandoned checkouts
+        const expired = event.data.object as Stripe.Checkout.Session
+        if (expired.mode === 'payment' && expired.payment_intent) {
+          await db.from('elite_runs').delete()
+            .eq('stripe_payment_intent_id', expired.payment_intent as string)
+            .eq('status', 'pending')
         }
         break
       }
@@ -145,7 +186,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (err) {
-    console.error('Webhook processing error:', err)
+    console.error(`Webhook processing error [${event.type}]:`, err)
     return NextResponse.json({ error: 'Processing failed' }, { status: 500 })
   }
 

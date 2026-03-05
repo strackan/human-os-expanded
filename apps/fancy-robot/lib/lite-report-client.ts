@@ -8,6 +8,27 @@ const API_BASE =
     ? "http://localhost:4250/api/v1"
     : "/api/v1";
 
+// --- Promo code cookie persistence ---
+
+const PROMO_COOKIE_NAME = "fr_promo";
+const PROMO_COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
+
+export function getStoredPromoCode(): string {
+  if (typeof document === "undefined") return "";
+  const match = document.cookie.match(new RegExp(`(?:^|; )${PROMO_COOKIE_NAME}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : "";
+}
+
+export function storePromoCode(code: string): void {
+  if (typeof document === "undefined") return;
+  if (!code.trim()) {
+    // Clear cookie
+    document.cookie = `${PROMO_COOKIE_NAME}=; max-age=0; path=/; SameSite=Lax`;
+    return;
+  }
+  document.cookie = `${PROMO_COOKIE_NAME}=${encodeURIComponent(code.trim())}; max-age=${PROMO_COOKIE_MAX_AGE}; path=/; SameSite=Lax`;
+}
+
 // --- Data models ---
 
 export interface CompetitorInfo {

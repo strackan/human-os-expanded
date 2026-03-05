@@ -14,12 +14,14 @@ interface CompetitorComparisonProps {
   onEntityClick?: (entity: Entity) => void;
 }
 
-const barColors = [
-  "from-indigo-500 to-purple-500",
-  "from-pink-500 to-rose-500",
-  "from-amber-500 to-orange-500",
-  "from-emerald-500 to-teal-500",
-  "from-cyan-500 to-blue-500",
+// Uses CSS custom properties from the design system (globals.css --chart-*)
+// to avoid Tailwind default colors bleeding outside the palette
+const BAR_CHART_COLORS = [
+  { from: "var(--chart-1)", to: "var(--chart-5)" },
+  { from: "var(--chart-2)", to: "var(--chart-1)" },
+  { from: "var(--chart-4)", to: "var(--chart-2)" },
+  { from: "var(--chart-3)", to: "var(--chart-4)" },
+  { from: "var(--chart-5)", to: "var(--chart-3)" },
 ];
 
 export default function CompetitorComparison({
@@ -65,10 +67,11 @@ export default function CompetitorComparison({
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-secondary">
               <div
-                className={`h-full rounded-full bg-gradient-to-r transition-all duration-1000 ease-out ${barColors[index % barColors.length]}`}
+                className="h-full rounded-full transition-all duration-1000 ease-out"
                 style={{
                   width: mounted ? `${entity.score}%` : "0%",
                   transitionDelay: `${index * 100}ms`,
+                  backgroundImage: `linear-gradient(to right, ${BAR_CHART_COLORS[index % BAR_CHART_COLORS.length].from}, ${BAR_CHART_COLORS[index % BAR_CHART_COLORS.length].to})`,
                 }}
               />
             </div>

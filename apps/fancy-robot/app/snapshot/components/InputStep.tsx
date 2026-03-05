@@ -1,15 +1,21 @@
 import { useState } from "react";
-import { checkPromoCode } from "@/lib/lite-report-client";
+import { checkPromoCode, storePromoCode } from "@/lib/lite-report-client";
+import type { DomainValidation } from "@/lib/lite-report-client";
+import { Spinner } from "./Spinner";
 
 export function InputStep({
   domain,
   promoCode,
+  domainInfo,
+  statusMessage,
   onDomainChange,
   onPromoCodeChange,
   onSubmit,
 }: {
   domain: string;
   promoCode: string;
+  domainInfo?: DomainValidation | null;
+  statusMessage?: string;
   onDomainChange: (value: string) => void;
   onPromoCodeChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
@@ -17,6 +23,7 @@ export function InputStep({
   const [showPromo, setShowPromo] = useState(false);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const isRunning = !!domainInfo || !!statusMessage;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center">
@@ -41,14 +48,15 @@ export function InputStep({
               onChange={(e) => onDomainChange(e.target.value)}
               placeholder="yourdomain.com"
               autoFocus
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+              disabled={isRunning}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={!domain.trim()}
+              disabled={!domain.trim() || isRunning}
               className="w-full rounded-full bg-accent px-8 py-3.5 text-sm font-semibold text-accent-foreground transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Get Your AI Visibility Score
+              {isRunning ? "Analyzing..." : "Get Your AI Visibility Score"}
             </button>
             <p className="text-xs text-muted-foreground/70 text-center">
               ~30 seconds &middot; 20 AI prompts &middot; 4 personas
@@ -64,6 +72,7 @@ export function InputStep({
                 <button
                   onClick={() => {
                     onPromoCodeChange("");
+                    storePromoCode("");
                     setShowPromo(false);
                   }}
                   className="text-muted-foreground hover:text-foreground ml-1 underline"
@@ -106,6 +115,7 @@ export function InputStep({
                     try {
                       const valid = await checkPromoCode(code);
                       if (valid) {
+                        storePromoCode(code);
                         setShowPromo(false);
                       } else {
                         setPromoError("Invalid or expired promo code");
@@ -140,6 +150,34 @@ export function InputStep({
             </div>
           )}
         </div>
+
+        {/* Preview card — appears ~2s after submit while discovery continues */}
+        {domainInfo && (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 mt-4 rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground text-xs font-bold">
+                &#10003;
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground truncate">
+                  {domainInfo.title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {domainInfo.domain}
+                </p>
+              </div>
+              <Spinner size="sm" />
+            </div>
+            {domainInfo.meta_description && (
+              <p className="mt-2 text-xs text-muted-foreground/70 line-clamp-2">
+                {domainInfo.meta_description}
+              </p>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground/60">
+              {statusMessage || "Analyzing website and identifying competitors..."}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

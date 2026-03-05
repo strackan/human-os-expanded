@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
   startLiteAnalysis,
+  getStoredPromoCode,
+  storePromoCode,
   type DiscoveryResult,
   type LiteReportEvent,
   type SynthesisData,
@@ -10,9 +12,11 @@ import {
   type PromptStart,
   type PromptResult,
 } from "@/lib/lite-report-client";
+import { useUserPlan } from "@/lib/hooks/useUserPlan";
 import type { Step, DomainSuggestion } from "../lib/constants";
 
 export function useSnapshotFlow() {
+  const { plan } = useUserPlan();
   const [step, setStep] = useState<Step>("input");
   const [domain, setDomain] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +47,8 @@ export function useSnapshotFlow() {
   const [pdfAvailable, setPdfAvailable] = useState(false);
   const [isGated, setIsGated] = useState(true);
 
-  // Promo code state
-  const [promoCode, setPromoCode] = useState("");
+  // Promo code state — initialized from cookie if available
+  const [promoCode, setPromoCode] = useState(() => getStoredPromoCode());
 
   // Contact modal state
   const [showContactModal, setShowContactModal] = useState(false);
@@ -97,7 +101,8 @@ export function useSnapshotFlow() {
         break;
 
       case "gate_status":
-        setIsGated(event.gated);
+        // Pro subscribers always bypass the gate
+        setIsGated(plan === "pro" ? false : event.gated);
         break;
 
       case "domain_suggestions":
@@ -125,12 +130,16 @@ export function useSnapshotFlow() {
         setCurrentPrompt(null);
         break;
     }
-  }, []);
+  }, [plan]);
 
   const startAnalysis = useCallback(
     (domainStr: string, discoveryOverride?: DiscoveryResult) => {
       setError(null);
-      setStep("discovery");
+      // Stay on "input" step so the preview card renders inline;
+      // step transitions to "discovery" when discovery_complete fires
+      if (discoveryOverride) {
+        setStep("discovery");
+      }
       setStatusMessage("Discovering company information...");
 
       if (cleanupRef.current) cleanupRef.current();
@@ -175,7 +184,7 @@ export function useSnapshotFlow() {
     setJobId(null);
     setPdfAvailable(false);
     setIsGated(true);
-    setPromoCode("");
+    setPromoCode(getStoredPromoCode());
     setSuggestions([]);
     setSuggestionQuery("");
     setError(null);

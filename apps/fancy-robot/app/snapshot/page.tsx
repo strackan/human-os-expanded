@@ -66,6 +66,8 @@ function SnapshotContent() {
           <InputStep
             domain={flow.domain}
             promoCode={flow.promoCode}
+            domainInfo={flow.domainInfo}
+            statusMessage={flow.statusMessage}
             onDomainChange={flow.setDomain}
             onPromoCodeChange={flow.setPromoCode}
             onSubmit={flow.handleSubmit}

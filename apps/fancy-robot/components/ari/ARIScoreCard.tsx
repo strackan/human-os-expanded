@@ -11,10 +11,10 @@ interface ARIScoreCardProps {
 }
 
 function getScoreColor(s: number) {
-  if (s >= 80) return "from-green-400 to-emerald-500";
-  if (s >= 60) return "from-indigo-400 to-purple-500";
-  if (s >= 40) return "from-amber-400 to-orange-500";
-  return "from-red-400 to-rose-500";
+  if (s >= 80) return "from-[var(--chart-2)] to-[var(--chart-4)]";
+  if (s >= 60) return "from-[var(--chart-1)] to-[var(--chart-5)]";
+  if (s >= 40) return "from-[var(--chart-4)] to-[var(--chart-1)]";
+  return "from-[var(--chart-1)] to-[var(--chart-3)]";
 }
 
 function getScoreLabel(s: number) {

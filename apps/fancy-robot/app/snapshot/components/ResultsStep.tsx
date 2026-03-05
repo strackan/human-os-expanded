@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { DiscoveryResult, SynthesisData } from "@/lib/lite-report-client";
-import { getDownloadUrl, validatePromoCode } from "@/lib/lite-report-client";
+import { getDownloadUrl, validatePromoCode, storePromoCode } from "@/lib/lite-report-client";
 import { submitEmailForReport } from "@/app/actions/contact";
 import type { Step } from "../lib/constants";
 import { ScoreGauge } from "./ScoreGauge";
@@ -193,6 +193,7 @@ function GatedOverlay({
     try {
       const valid = await validatePromoCode(code);
       if (valid) {
+        storePromoCode(code);
         onUngate();
       } else {
         setPromoError("Invalid or expired promo code");
@@ -510,9 +511,17 @@ function UngatedContent({
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t.rationale}
                 </p>
-                <p className="mt-1 text-xs italic text-accent/70">
-                  Addresses: {t.target_gap}
-                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <p className="text-xs italic text-accent/70">
+                    Addresses: {t.target_gap}
+                  </p>
+                  <a
+                    href={`/article-generator?topic=${encodeURIComponent(t.title)}&domain=${encodeURIComponent(discovery?.domain || "")}`}
+                    className="shrink-0 rounded-full bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent border border-accent/20 transition-all hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Generate this article &mdash; $9.99 &rarr;
+                  </a>
+                </div>
               </div>
             ))}
           </div>

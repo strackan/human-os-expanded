@@ -29,16 +29,16 @@ export function CompetitorBars({
             <span
               className={`text-sm ${
                 item.isCompany
-                  ? "font-bold text-emerald-600"
+                  ? "font-bold text-accent"
                   : item.source === "discovered"
-                    ? "text-amber-500"
+                    ? "text-[var(--chart-4)]"
                     : "text-muted-foreground"
               }`}
             >
               {item.name}
             </span>
             {item.source === "discovered" && (
-              <span className="ml-1.5 inline-block rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-500 border border-amber-500/25">
+              <span className="ml-1.5 inline-block rounded bg-[var(--chart-4)]/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-[var(--chart-4)] border border-[var(--chart-4)]/25">
                 NEW
               </span>
             )}
@@ -47,9 +47,9 @@ export function CompetitorBars({
             <div
               className={`h-full rounded-full transition-all duration-700 ease-out ${
                 item.isCompany
-                  ? "bg-emerald-600"
+                  ? "bg-accent"
                   : item.source === "discovered"
-                    ? "bg-amber-500/40"
+                    ? "bg-[var(--chart-4)]/40"
                     : "bg-muted-foreground/30"
               }`}
               style={{ width: `${(item.rate / maxRate) * 100}%` }}
