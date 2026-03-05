@@ -12,8 +12,8 @@ export const queryKeys = {
   entity: (id: string) => ["entity", id] as const,
   entityByName: (name: string) => ["entity", "name", name] as const,
   score: (entityId: string) => ["score", entityId] as const,
-  scoreHistory: (entityId: string) =>
-    ["score", "history", entityId] as const,
+  scoreHistory: (domain?: string) =>
+    ["score", "history", domain ?? "all"] as const,
   comparison: (aId: string, bId: string) =>
     ["comparison", aId, bId] as const,
   calculationStatus: (jobId: string) => ["calculation", jobId] as const,
@@ -50,11 +50,10 @@ export function useARIScore(entityId: string) {
   });
 }
 
-export function useScoreHistory(entityId: string, limit = 10) {
+export function useScoreHistory(domain?: string, limit = 20) {
   return useQuery({
-    queryKey: [...queryKeys.scoreHistory(entityId), limit],
-    queryFn: () => ariClient.getScoreHistory(entityId, limit),
-    enabled: !!entityId,
+    queryKey: [...queryKeys.scoreHistory(domain), limit],
+    queryFn: () => ariClient.getScoreHistory(domain, limit),
   });
 }
 
@@ -70,9 +69,11 @@ export function useCalculateScore() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (entityId: string) => ariClient.calculateScore(entityId),
-    onSuccess: (_data, entityId) => {
+    mutationFn: ({ entityId, userId }: { entityId: string; userId?: string }) =>
+      ariClient.calculateScore(entityId, userId),
+    onSuccess: (_data, { entityId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.score(entityId) });
+      queryClient.invalidateQueries({ queryKey: ["score", "history"] });
     },
   });
 }

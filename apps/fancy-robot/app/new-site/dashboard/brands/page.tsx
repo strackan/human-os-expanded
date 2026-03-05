@@ -9,6 +9,7 @@ import {
   useCalculationStatus,
   queryKeys,
 } from "@/hooks/use-ari";
+import { useAuth } from "@/components/auth/AuthProvider";
 import ARIScoreCard from "@/components/ari/ARIScoreCard";
 import CompetitorComparison from "@/components/ari/CompetitorComparison";
 import ModelBreakdown from "@/components/ari/ModelBreakdown";
@@ -18,6 +19,7 @@ export default function BrandsPage() {
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [calculatingJob, setCalculatingJob] = useState<string | null>(null);
 
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: entities = [], isLoading: entitiesLoading } =
     useEntities("company");
@@ -49,9 +51,10 @@ export default function BrandsPage() {
 
   const handleRecalculate = () => {
     if (!selectedEntityId) return;
-    calculateScore.mutate(selectedEntityId, {
-      onSuccess: (data) => setCalculatingJob(data.job_id),
-    });
+    calculateScore.mutate(
+      { entityId: selectedEntityId, userId: user?.id },
+      { onSuccess: (data) => setCalculatingJob(data.job_id) },
+    );
   };
 
   // Build comparison data from all entities with scores

@@ -45,6 +45,15 @@ export interface ComparisonResult {
   summary: string;
 }
 
+export interface ScoreHistoryEntry {
+  id: string;
+  domain: string;
+  overall_score: number;
+  mention_rate: number;
+  provider_scores: Record<string, number>;
+  scored_at: string;
+}
+
 export interface CalculationJob {
   job_id: string;
   entity_id: string;
@@ -98,8 +107,9 @@ class ARIClient {
     return this.fetch<ARIScore>(`/scores/${entityId}`);
   }
 
-  async calculateScore(entityId: string): Promise<CalculationJob> {
-    return this.fetch<CalculationJob>(`/scores/calculate/${entityId}`, {
+  async calculateScore(entityId: string, userId?: string): Promise<CalculationJob> {
+    const params = userId ? `?user_id=${encodeURIComponent(userId)}` : "";
+    return this.fetch<CalculationJob>(`/scores/calculate/${entityId}${params}`, {
       method: "POST",
     });
   }
@@ -117,10 +127,15 @@ class ARIClient {
     );
   }
 
-  async getScoreHistory(entityId: string, limit = 10): Promise<ARIScore[]> {
-    return this.fetch<ARIScore[]>(
-      `/scores/${entityId}/history?limit=${limit}`,
-    );
+  async getScoreHistory(domain?: string, limit = 20): Promise<ScoreHistoryEntry[]> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (domain) params.set("domain", domain);
+    const res = await fetch(`/api/score-history?${params}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: "Unknown error" }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
   }
 
   async healthCheck(): Promise<{

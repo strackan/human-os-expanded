@@ -186,6 +186,42 @@ async def get_entity_ari_score(entity_id: str) -> dict[str, Any] | None:
         return None
 
 
+async def save_score_history(
+    user_id: str,
+    domain: str,
+    overall_score: float,
+    mention_rate: float,
+    provider_scores: dict[str, float] | None = None,
+) -> bool:
+    """Write a score snapshot to fancyrobot.score_history.
+
+    Fire-and-forget — failures are logged, never raised.
+    """
+    client = _get_client()
+    if not client:
+        return False
+
+    try:
+        row: dict[str, Any] = {
+            "user_id": user_id,
+            "domain": _clean_domain(domain),
+            "overall_score": round(overall_score, 1),
+            "mention_rate": round(mention_rate, 3) if mention_rate else 0,
+            "provider_scores": {
+                k: round(v, 1) for k, v in (provider_scores or {}).items()
+            },
+        }
+
+        client.schema("fancyrobot").table("score_history").insert(row).execute()
+        logger.info(
+            f"Saved score history for {domain} (user={user_id}): {overall_score:.1f}"
+        )
+        return True
+    except Exception as e:
+        logger.warning(f"Failed to save score history: {e}")
+        return False
+
+
 async def get_entity_by_domain(domain: str) -> dict[str, Any] | None:
     """Look up an entity by domain. Returns full entity row or None."""
     client = _get_client()

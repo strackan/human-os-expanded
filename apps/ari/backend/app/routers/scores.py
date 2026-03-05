@@ -88,7 +88,7 @@ def _load_score_from_db(entity_id: UUID, run_data: dict) -> None:
     _scores[entity_id] = score
 
 
-async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, entity_type: str, run_id: str) -> None:
+async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, entity_type: str, run_id: str, user_id: str | None = None) -> None:
     """Background task to run ARI calculation."""
     try:
         _jobs[job_id]["status"] = "running"
@@ -168,6 +168,17 @@ async def run_ari_calculation(job_id: UUID, entity_id: UUID, entity_name: str, e
                 error=response.error,
             )
 
+        # Save to score_history if user_id provided
+        if user_id:
+            from app.storage.supabase_entities import save_score_history
+            await save_score_history(
+                user_id=user_id,
+                domain=entity_name,
+                overall_score=ari_score.overall_score,
+                mention_rate=ari_score.mention_rate,
+                provider_scores=ari_score.provider_scores,
+            )
+
         _jobs[job_id]["status"] = "completed"
         _jobs[job_id]["progress"] = 100
         _jobs[job_id]["message"] = f"Score calculated: {ari_score.overall_score:.1f}"
@@ -183,6 +194,7 @@ async def calculate_ari(
     entity_id: UUID,
     background_tasks: BackgroundTasks,
     force: bool = Query(False, description="Force recalculation even if successful run exists"),
+    user_id: str | None = Query(None, description="User ID for score history tracking"),
 ) -> dict:
     """
     Trigger ARI score calculation for an entity.
@@ -242,7 +254,7 @@ async def calculate_ari(
     }
 
     # Trigger background calculation with entity type
-    background_tasks.add_task(run_ari_calculation, job_id, entity_id, entity.name, entity.type.value, run_id)
+    background_tasks.add_task(run_ari_calculation, job_id, entity_id, entity.name, entity.type.value, run_id, user_id)
 
     return {
         "job_id": str(job_id),
