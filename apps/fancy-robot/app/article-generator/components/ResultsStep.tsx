@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScoreGauge } from "@/app/snapshot/components/ScoreGauge";
-import type { ArticleRun } from "@/lib/article-client";
+import type { ArticleRun, TemplateInfo } from "@/lib/article-client";
+import { listTemplates, applyTemplate } from "@/lib/article-client";
+import { TemplatePicker } from "./TemplatePicker";
 import type { PhaseData } from "../hooks/useArticleFlow";
 
 interface ResultsStepProps {
@@ -17,17 +19,62 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
   const [tab, setTab] = useState<Tab>("rendered");
   const [copied, setCopied] = useState(false);
 
+  // Template state
+  const [templates, setTemplates] = useState<TemplateInfo[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState("bare");
+  const [styledHtml, setStyledHtml] = useState("");
+  const [templateLoading, setTemplateLoading] = useState(false);
+
   const optimizer = articleRun.optimizer_output;
   const condenser = articleRun.condenser_output;
   const editor = articleRun.editor_output;
   const writer = articleRun.writer_output;
 
-  // Use condensed markdown if available, else editor hardened, else writer draft
   const markdown = condenser?.condensed_markdown ?? editor?.hardened_markdown ?? writer?.article_markdown ?? "";
   const html = optimizer?.article_html ?? "";
   const title = condenser?.title ?? writer?.title ?? articleRun.article_topic;
   const scoreBefore = phaseData.scoreBefore ?? optimizer?.score_before ?? 0;
   const scoreAfter = phaseData.scoreAfter ?? optimizer?.score_after ?? 0;
+
+  // The HTML to display/download — use styled version if a template is applied
+  const displayHtml = styledHtml || html;
+
+  // Fetch templates on mount
+  useEffect(() => {
+    listTemplates()
+      .then(setTemplates)
+      .catch(() => {}); // Silently fail — templates are optional
+  }, []);
+
+  // Apply template when selection changes
+  const handleTemplateSelect = async (templateId: string) => {
+    setSelectedTemplate(templateId);
+
+    if (templateId === "bare") {
+      setStyledHtml("");
+      return;
+    }
+
+    if (!html) return;
+
+    setTemplateLoading(true);
+    try {
+      const result = await applyTemplate({
+        template_id: templateId,
+        article_html: html,
+        run_id: articleRun.id,
+        client_name: articleRun.input_data?.client_name as string ?? "",
+        domain: articleRun.domain,
+        industry: articleRun.input_data?.industry as string ?? "",
+      });
+      setStyledHtml(result.styled_html);
+    } catch {
+      // Fall back to bare on error
+      setStyledHtml("");
+    } finally {
+      setTemplateLoading(false);
+    }
+  };
 
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
@@ -48,6 +95,18 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
   const tabContent = () => {
     switch (tab) {
       case "rendered":
+        // When a non-bare template is applied, use an iframe for CSS isolation
+        if (styledHtml) {
+          return (
+            <iframe
+              srcDoc={styledHtml}
+              title="Article preview"
+              className="w-full rounded-xl border border-border"
+              style={{ height: "700px" }}
+              sandbox="allow-same-origin"
+            />
+          );
+        }
         return (
           <div
             className="prose prose-sm max-w-none dark:prose-invert"
@@ -63,7 +122,7 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
       case "html":
         return (
           <pre className="whitespace-pre-wrap text-xs text-foreground font-mono bg-muted/50 rounded-xl p-4 overflow-auto max-h-[600px]">
-            {html}
+            {displayHtml}
           </pre>
         );
     }
@@ -182,6 +241,16 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
         </div>
       )}
 
+      {/* Template Picker */}
+      {templates.length > 0 && html && (
+        <TemplatePicker
+          templates={templates}
+          selected={selectedTemplate}
+          onSelect={handleTemplateSelect}
+          loading={templateLoading}
+        />
+      )}
+
       {/* Article Preview */}
       <div className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden">
         {/* Tab bar */}
@@ -207,7 +276,7 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
         {/* Actions bar */}
         <div className="flex items-center gap-3 border-t border-border px-6 py-4">
           <button
-            onClick={() => handleCopy(tab === "html" ? html : markdown)}
+            onClick={() => handleCopy(tab === "html" ? displayHtml : markdown)}
             className="rounded-full bg-accent px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
           >
             {copied ? "Copied!" : "Copy to Clipboard"}
@@ -220,9 +289,9 @@ export function ResultsStep({ articleRun, phaseData, onReset }: ResultsStepProps
               Download .md
             </button>
           )}
-          {html && (
+          {displayHtml && (
             <button
-              onClick={() => handleDownload(html, "html")}
+              onClick={() => handleDownload(displayHtml, "html")}
               className="rounded-full border border-border px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               Download .html

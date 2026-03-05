@@ -47,8 +47,8 @@ export async function POST(request: Request) {
         .eq('id', user.id)
     }
 
-    // Elite ad-hoc uses payment mode; everything else is subscription
-    const isOneTime = priceKey === 'elite_adhoc'
+    // One-time purchases use payment mode; everything else is subscription
+    const isOneTime = priceKey === 'elite_adhoc' || priceKey === 'article'
 
     const origin = request.headers.get('origin') || 'http://localhost:4200'
 

@@ -23,6 +23,8 @@ export const PRICE_IDS = {
   pro_annual: process.env.STRIPE_PRICE_PRO_ANNUAL!,
   elite_adhoc: process.env.STRIPE_PRICE_ELITE_ADHOC!,
   elite_annual: process.env.STRIPE_PRICE_ELITE_ANNUAL!,
+  elite_monthly: process.env.STRIPE_PRICE_ELITE_MONTHLY!,
+  article: process.env.STRIPE_PRICE_ARTICLE!,
 } as const
 
 export type PriceKey = keyof typeof PRICE_IDS

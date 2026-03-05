@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { getSupabaseServer } from "@/lib/supabase-server";
 import type { SynthesisData, DiscoveryResult } from "@/lib/lite-report-client";
 import { ScoreGauge } from "../../components/ScoreGauge";
@@ -296,6 +297,13 @@ export default async function SharePage({
                   <p className="mt-1 text-xs italic text-accent/70">
                     Addresses: {t.target_gap}
                   </p>
+                  <Link
+                    href={`/buy-article?title=${encodeURIComponent(t.title)}&gap=${encodeURIComponent(t.target_gap)}`}
+                    className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent transition-colors hover:text-accent/80"
+                  >
+                    Generate this article — $9.99
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
                 </div>
               ))}
             </div>

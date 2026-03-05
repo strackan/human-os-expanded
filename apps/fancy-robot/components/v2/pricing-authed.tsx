@@ -90,7 +90,7 @@ export function PricingAuthed() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Ad-hoc
+              Monthly
             </button>
             <button
               onClick={() => setAnnual(true)}
@@ -191,12 +191,12 @@ export function PricingAuthed() {
                 ${annual ? "199" : "299"}
               </span>
               <span className="text-sm text-muted-foreground">
-                {annual ? "/yr" : " one-time"}
+                {annual ? "/yr" : "/mo"}
               </span>
             </div>
             {annual && (
               <p className="mt-1 text-xs text-accent">
-                Save $100 vs ad-hoc
+                Save over 40% vs monthly
               </p>
             )}
             <p className="mt-2 text-sm text-muted-foreground">
@@ -212,14 +212,14 @@ export function PricingAuthed() {
             </ul>
             <button
               onClick={() =>
-                handleCheckout(annual ? "elite_annual" : "elite_adhoc")
+                handleCheckout(annual ? "elite_annual" : "elite_monthly")
               }
               disabled={checkoutLoading !== null}
               className="mt-8 inline-flex items-center justify-center gap-2 rounded-full border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-all hover:bg-secondary disabled:opacity-50"
             >
-              {checkoutLoading === "elite_adhoc" || checkoutLoading === "elite_annual"
+              {checkoutLoading === "elite_monthly" || checkoutLoading === "elite_annual"
                 ? "Redirecting..."
-                : "Get Elite Audit"}
+                : "Go Elite"}
               <ArrowRight className="h-4 w-4" />
             </button>
           </div>

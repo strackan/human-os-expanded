@@ -120,6 +120,30 @@ export interface ArticleRun {
   completed_at: string | null;
 }
 
+// --- Template types ---
+
+export interface TemplateInfo {
+  id: string;
+  name: string;
+  description: string;
+  accent_color: string;
+}
+
+export interface ApplyTemplateParams {
+  template_id: string;
+  article_html?: string;
+  run_id?: string;
+  client_name?: string;
+  domain?: string;
+  industry?: string;
+}
+
+export interface ApplyTemplateResponse {
+  styled_html: string;
+  template_id: string;
+  template_name: string;
+}
+
 // --- API functions ---
 
 /**
@@ -188,6 +212,34 @@ export function startArticleGeneration(
  */
 export async function getArticleRun(runId: string): Promise<ArticleRun> {
   const res = await fetch(`${API_BASE}/articles/${runId}`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * List available article templates/skins.
+ */
+export async function listTemplates(): Promise<TemplateInfo[]> {
+  const res = await fetch(`${API_BASE}/articles/templates`);
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+/**
+ * Apply a template skin to article HTML.
+ */
+export async function applyTemplate(
+  params: ApplyTemplateParams
+): Promise<ApplyTemplateResponse> {
+  const res = await fetch(`${API_BASE}/articles/apply-template`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
   if (!res.ok) {
     throw new Error(`HTTP ${res.status}`);
   }
