@@ -24,18 +24,19 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-background-lighter: var(--background-lighter);
-  --color-foreground: var(--foreground);
-  --color-foreground-dim: var(--foreground-dim);
-  --color-neon-cyan: var(--neon-cyan);
-  --color-neon-magenta: var(--neon-magenta);
-  --color-neon-purple: var(--neon-purple);
-  --color-cyan-muted: var(--cyan-muted);
-  --color-magenta-muted: var(--magenta-muted);
-  --font-sans: var(--font-vt323);
-  --font-mono: var(--font-vt323);
-  --font-retro: var(--font-press-start);
+  /* Literal values — prevents Vercel toolbar CSS variable hijacking */
+  --color-background: #0a0a0f;
+  --color-background-lighter: #131318;
+  --color-foreground: #e0e0e0;
+  --color-foreground-dim: #808080;
+  --color-neon-cyan: #00ccdd;
+  --color-neon-magenta: #bb00aa;
+  --color-neon-purple: #7700cc;
+  --color-cyan-muted: #00cccc;
+  --color-magenta-muted: #cc00cc;
+  --font-sans: 'VT323', monospace;
+  --font-mono: 'VT323', monospace;
+  --font-retro: 'Press Start 2P', cursive;
 }
 
 body {

@@ -9,10 +9,11 @@
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Literal values — prevents Vercel toolbar CSS variable hijacking */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+  --font-sans: 'Geist Sans', 'Geist Sans Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
 
   /* Dashboard theme colors — registers utilities for Tailwind v4 */
   --color-bounty-orange: #E8723A;
